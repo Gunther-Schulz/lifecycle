@@ -33,19 +33,19 @@ from . import verbs
 NOT_YET_BUILT = {
     "lane new": "wave 2 (§3.8c) — a lane file from the format",
     "workflow bind": "wave 2 (§3.8c) — a template binding with its slots",
-    "lane list --json": "wave 2 (§3.8c) — the query surface for consumers",
 }
 
 #: Which wave this build carries, for the refusal messages above. A build
 #: that claimed its own coverage from a hardcoded sentence would say
 #: "stages 1-3" forever.
 #:
-#: `init` LEFT THIS DICT the day it was built (the L2a dispatch) — a
-#: withdrawn-but-left key would read exactly like a still-true one
-#: (`RETIRED_KEYS`'s own reasoning, one file over). `lane new` and
-#: `workflow bind` stay: a sibling lane's, serialized behind this one on
+#: `init` and `lane list --json` LEFT THIS DICT the day they were built (the
+#: L2a dispatch) — a withdrawn-but-left key would read exactly like a
+#: still-true one (`RETIRED_KEYS`'s own reasoning, one file over). `lane new`
+#: and `workflow bind` stay: a sibling lane's, serialized behind this one on
 #: `cli.py`.
-STAGES_BUILT = "wave 1 stages 1-9, the schema wave (1d), plus wave 2's init"
+STAGES_BUILT = "wave 1 stages 1-9, the schema wave (1d), plus wave 2's " \
+               "init and lane list --json"
 
 
 def resolve_repo(explicit: str | None) -> tuple[Path | None, str | None]:
@@ -357,6 +357,11 @@ def build_parser() -> argparse.ArgumentParser:
                     help="parse the lanes but do NOT execute their "
                          "predicates; each state is then COULD NOT VERIFY, "
                          "never quiet")
+    ll.add_argument("--json", action="store_true",
+                    help="wave 2 (§3.8c) — one JSON document on stdout "
+                         "instead of the longhand board; same exit code, "
+                         "same finding set (never a rendering-only change "
+                         "to the verdict)")
     lreg = lanes_sub.add_parser("register", help="put a repo on the roster — "
                                                  "the router's input")
     lreg.add_argument("repo_path", nargs="?",

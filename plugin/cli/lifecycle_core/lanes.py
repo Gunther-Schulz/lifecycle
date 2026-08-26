@@ -30,6 +30,7 @@ one-screen cap. This module parses `Trigger:` — what the router needs — and
 says so in its own output rather than implying it read the whole lane.
 """
 
+import json
 import os
 import re
 import subprocess
@@ -181,6 +182,16 @@ class RepoRow:
     declaration: dict | None = None
     decl_code: int = exits.CLEAN
     decl_notes: list = field(default_factory=list)
+    #: The SAME two halves `decl_notes` renders as prose, kept STRUCTURED —
+    #: `decl.Finding` objects and unverified-reason strings — so a consumer
+    #: (the `--json` emitter) can carry each finding's row id as its own
+    #: field rather than only inside a rendered bracketed-row-name string.
+    #: (Worded around the literal bracket form on purpose: the emit-site
+    #: coverage scan in `roster.py` reads this file's SOURCE for that exact
+    #: shape, and a docstring quoting it would report itself as an
+    #: unregistered site — `roster.py`'s own docstring names the same trap.)
+    decl_findings: list = field(default_factory=list)
+    decl_unverified: list = field(default_factory=list)
     lanes: list = field(default_factory=list)
     triggers: dict = field(default_factory=dict)
 
@@ -230,6 +241,8 @@ def resolve_repo_row(raw: str) -> RepoRow:
     res = decl.read(row.path)
     row.decl_code = res.code
     row.declaration = res.declaration
+    row.decl_findings = list(res.findings)
+    row.decl_unverified = list(res.unverified)
     row.decl_notes = ([f"FINDING [{f.row}] {f.message}" for f in res.findings]
                       + [f"COULD NOT VERIFY: {u}" for u in res.unverified])
     if res.declaration is None:
@@ -318,102 +331,310 @@ def cmd_lane_register(args, out) -> int:
 
 
 # --- `lane list` -------------------------------------------------------------
+#
+# WAVE 2: `--json`, beside the longhand, from ONE shared walk. Splitting the
+# walk from its two renderers is what makes "same exit code, same finding
+# set" (the design's own non-negotiable for `--json`) true BY CONSTRUCTION
+# rather than by two independently written passes that happen to agree
+# today: a single `gather_lane_list` computes every finding and the overall
+# code exactly once, and `render_*_longhand`/`render_*_json` only FORMAT what
+# it already decided. Neither renderer may compute a code or a finding of
+# its own.
 
-def cmd_lane_list(args, out) -> int:
-    """The generated router. LONGHAND, and it exits under the VERB contract.
+@dataclass
+class LaneRunResult:
+    """One declared lane's state, as the walk found it."""
+    name: str
+    parts_present: list = field(default_factory=list)
+    trigger: str | None = None
+    problem: str | None = None
+    not_run: bool = False
+    state: str | None = None          # FIRE / QUIET / BROKEN, or None
+    predicate_exit: int | None = None
+    detail: str = ""
+    #: Set to "trigger_broken" exactly where the longhand prints that
+    #: bracketed row name — never invented for a JSON-only purpose, since a
+    #: row id not proven by the refusal roster is not this walk's to mint.
+    row: str | None = None
 
-    Every state below is printed, including the zeros: a repo with no
-    declared lanes says so in a line of its own, because "0 lanes" and "this
-    repo was skipped" are different facts and only one of them is clean.
+
+@dataclass
+class RepoRunResult:
+    """One roster line's resolution and everything found beneath it."""
+    raw: str
+    resolution: str
+    repo_unresolved: bool = False
+    declaration_code: int | None = None
+    #: Mirrors `Result.declaration is None` from `decl.read()` exactly —
+    #: named rather than re-derived from the other fields, which is what a
+    #: repo with a CLEAN declaration but zero lanes and no findings would be
+    #: indistinguishable from under a re-derived guess.
+    declaration_present: bool = False
+    decl_findings: list = field(default_factory=list)       # decl.Finding
+    decl_unverified: list = field(default_factory=list)     # str
+    trigger_policy: object = None
+    lanes_declared: list = field(default_factory=list)
+    lane_runs: list = field(default_factory=list)            # LaneRunResult
+
+
+@dataclass
+class RosterRunResult:
+    """The whole `lane list` walk, computed once, rendered twice."""
+    roster_path: Path
+    roster_absent: bool
+    roster_error: str | None = None
+    roster_count: int = 0
+    repos: list = field(default_factory=list)                # RepoRunResult
+    total_lanes: int = 0
+    fired: int = 0
+    quiet: int = 0
+    broken: int = 0
+    code: int = exits.CLEAN
+
+
+def gather_lane_list(args) -> RosterRunResult:
+    """The generated router's WALK — every finding and the final code,
+    computed exactly once. No printing here; `render_*` below format this.
     """
     path = roster_path()
     entries, why = read_roster(path)
     if entries is None:
-        out(f"FINDING [roster_absent] {why}")
-        out(f"roster: {path}")
+        return RosterRunResult(roster_path=path, roster_absent=True,
+                               roster_error=why, code=exits.FINDING)
+
+    run = RosterRunResult(roster_path=path, roster_absent=False,
+                          roster_count=len(entries))
+    codes = [exits.CLEAN]
+    for raw in entries:
+        row = resolve_repo_row(raw)
+        rr = RepoRunResult(raw=raw, resolution=row.resolution,
+                           repo_unresolved=row.resolution.startswith("UNRESOLVED"))
+        if rr.repo_unresolved:
+            codes.append(exits.FINDING)
+            run.repos.append(rr)
+            continue
+
+        rr.declaration_code = row.decl_code
+        rr.decl_findings = row.decl_findings
+        rr.decl_unverified = row.decl_unverified
+        codes.append(row.decl_code)
+        if row.declaration is None:
+            run.repos.append(rr)
+            continue
+
+        rr.declaration_present = True
+        rr.trigger_policy = row.declaration.get("trigger-policy")
+        rr.lanes_declared = list(row.lanes)
+
+        for name in row.lanes:
+            run.total_lanes += 1
+            lane = read_lane(row.path, name)
+            if lane.problem:
+                run.broken += 1
+                codes.append(exits.FINDING)
+                rr.lane_runs.append(LaneRunResult(
+                    name=name, parts_present=lane.parts_present,
+                    trigger=lane.trigger, problem=lane.problem,
+                    row="trigger_broken"))
+                continue
+            if args.no_run:
+                codes.append(exits.COULD_NOT_VERIFY)
+                rr.lane_runs.append(LaneRunResult(
+                    name=name, parts_present=lane.parts_present,
+                    trigger=lane.trigger, not_run=True))
+                continue
+            t = evaluate_trigger(lane.trigger, cwd=row.path)
+            lr = LaneRunResult(name=name, parts_present=lane.parts_present,
+                               trigger=lane.trigger, state=t.state,
+                               predicate_exit=t.code, detail=t.detail)
+            if t.state == BROKEN:
+                lr.row = "trigger_broken"
+                run.broken += 1
+                codes.append(exits.FINDING)
+            elif t.state == FIRE:
+                run.fired += 1
+            else:
+                run.quiet += 1
+            rr.lane_runs.append(lr)
+        run.repos.append(rr)
+
+    run.code = exits.worst(codes)
+    return run
+
+
+def render_lane_list_longhand(run: RosterRunResult, out) -> None:
+    """The board a human reads. Every state printed, including the zeros: a
+    repo with no declared lanes says so in a line of its own, because "0
+    lanes" and "this repo was skipped" are different facts and only one of
+    them is clean.
+    """
+    if run.roster_absent:
+        out(f"FINDING [roster_absent] {run.roster_error}")
+        out(f"roster: {run.roster_path}")
         out("lane list: FINDING — the router could not be generated. This is "
             "a FINDING and not a could-not-verify: §3.3 names an absent "
             "roster BROKEN, which is a state of the system rather than a "
             "limit of this run.")
-        return exits.FINDING
+        return
 
-    out(f"roster: {path}")
-    out(f"roster count: {len(entries)} repo(s) listed")
+    out(f"roster: {run.roster_path}")
+    out(f"roster count: {run.roster_count} repo(s) listed")
     out("")
 
-    codes = [exits.CLEAN]
-    total_lanes = 0
-    fired = quiet = broken = 0
-    for raw in entries:
-        row = resolve_repo_row(raw)
-        out(f"repo: {raw}")
-        out(f"    resolution: {row.resolution}")
-        if row.resolution.startswith("UNRESOLVED"):
+    for rr in run.repos:
+        out(f"repo: {rr.raw}")
+        out(f"    resolution: {rr.resolution}")
+        if rr.repo_unresolved:
             out("    FINDING [repo_unresolved] the roster lists this repo and "
                 "it does not resolve. A router that dropped the line would "
                 "print a shorter board rather than a broken one.")
-            codes.append(exits.FINDING)
             out("")
             continue
 
-        out(f"    declaration: {exits.word(row.decl_code)}")
-        for note in row.decl_notes:
-            out(f"        {note}")
-        codes.append(row.decl_code)
-        if row.declaration is None:
+        out(f"    declaration: {exits.word(rr.declaration_code)}")
+        for f in rr.decl_findings:
+            out(f"        FINDING [{f.row}] {f.message}")
+        for u in rr.decl_unverified:
+            out(f"        COULD NOT VERIFY: {u}")
+        if _no_declaration_body(rr):
             out("")
             continue
 
-        policy = row.declaration.get("trigger-policy")
-        out(f"    trigger-policy: {policy}")
-        out(f"    declared lanes: {len(row.lanes)}"
-            + (f" — {', '.join(row.lanes)}" if row.lanes else
+        out(f"    trigger-policy: {rr.trigger_policy}")
+        out(f"    declared lanes: {len(rr.lanes_declared)}"
+            + (f" — {', '.join(rr.lanes_declared)}" if rr.lanes_declared else
                " — EMPTY, declared rather than absent (§3.0: an empty "
                "declared list is a stated fact)"))
 
-        for name in row.lanes:
-            total_lanes += 1
-            lane = read_lane(row.path, name)
-            if lane.problem:
-                out(f"    lane {name}: BROKEN — {lane.problem}")
+        for lr in rr.lane_runs:
+            if lr.problem:
+                out(f"    lane {lr.name}: BROKEN — {lr.problem}")
                 out("        FINDING [trigger_broken] a lane whose body or "
                     "trigger cannot be read has no state, and no state is "
                     "not quiet.")
-                broken += 1
-                codes.append(exits.FINDING)
                 continue
-            out(f"    lane {name}: parts present "
-                f"{', '.join(lane.parts_present) or '(none)'}")
-            out(f"        trigger: {lane.trigger}")
-            if args.no_run:
+            out(f"    lane {lr.name}: parts present "
+                f"{', '.join(lr.parts_present) or '(none)'}")
+            out(f"        trigger: {lr.trigger}")
+            if lr.not_run:
                 out("        NOT RUN (--no-run): the state below would be the "
                     "predicate's, and this run did not ask it. Not quiet.")
-                codes.append(exits.COULD_NOT_VERIFY)
                 continue
-            t = evaluate_trigger(lane.trigger, cwd=row.path)
-            out(f"        state: {t.state}   predicate exit: {t.code}")
-            if t.detail:
-                out(f"        detail: {t.detail}")
-            if t.state == BROKEN:
+            out(f"        state: {lr.state}   predicate exit: {lr.predicate_exit}")
+            if lr.detail:
+                out(f"        detail: {lr.detail}")
+            if lr.state == BROKEN:
                 out("        FINDING [trigger_broken] the predicate's exit is "
                     ">=2, which §3.3 RESERVES for BROKEN. Reported as a "
                     "finding rather than folded into quiet: a dead lane that "
                     "renders quiet is a clean board over a router that does "
                     "not work.")
-                broken += 1
-                codes.append(exits.FINDING)
-            elif t.state == FIRE:
-                fired += 1
-            else:
-                quiet += 1
         out("")
 
-    out(f"lanes: {total_lanes} total   FIRE {fired}   QUIET {quiet}   "
-        f"BROKEN {broken}")
+    out(f"lanes: {run.total_lanes} total   FIRE {run.fired}   "
+        f"QUIET {run.quiet}   BROKEN {run.broken}")
     out("this build parses `Trigger:` only; `Decides:`, the decision table "
         "and `Ends:` are reported by PRESENCE and are parsed in wave 2. The "
         "one-screen cap is wave 2's too — this run does not check it and does "
         "not imply it did.")
-    code = exits.worst(codes)
-    out(f"lane list: {exits.word(code)}")
-    return code
+    out(f"lane list: {exits.word(run.code)}")
+
+
+def _no_declaration_body(rr: "RepoRunResult") -> bool:
+    """True where `resolve_repo_row` never reached a readable declaration
+    (`decl.read()`'s own `Result.declaration is None`) — mirrored directly
+    via `declaration_present` rather than re-derived from the other fields,
+    which would misjudge a CLEAN declaration with zero lanes and no
+    findings as this case."""
+    return not rr.declaration_present
+
+
+def render_lane_list_json(run: RosterRunResult, out) -> None:
+    """ONE JSON document on stdout. Same exit code, same finding set as the
+    longhand — both renderers read the identical `RosterRunResult`, so
+    nothing here computes a verdict of its own; it only names each finding's
+    row id as a FIELD rather than only inside rendered prose (§B).
+    """
+    if run.roster_absent:
+        doc = {
+            "roster_path": str(run.roster_path),
+            "roster_absent": True,
+            "findings": [{"row": "roster_absent", "message": run.roster_error}],
+            "code": exits.word(run.code),
+            "exit": run.code,
+        }
+        out(json.dumps(doc, indent=2))
+        return
+
+    repos_out = []
+    for rr in run.repos:
+        entry = {"raw": rr.raw, "resolution": rr.resolution}
+        if rr.repo_unresolved:
+            entry["findings"] = [{
+                "row": "repo_unresolved",
+                "message": "the roster lists this repo and it does not "
+                           "resolve. A router that dropped the line would "
+                           "print a shorter board rather than a broken one.",
+            }]
+            repos_out.append(entry)
+            continue
+
+        entry["declaration"] = {
+            "code": exits.word(rr.declaration_code),
+            "findings": [{"row": f.row, "message": f.message}
+                        for f in rr.decl_findings],
+            "unverified": list(rr.decl_unverified),
+        }
+        if _no_declaration_body(rr):
+            repos_out.append(entry)
+            continue
+
+        entry["trigger_policy"] = rr.trigger_policy
+        entry["lanes_declared"] = list(rr.lanes_declared)
+        lane_rows = []
+        for lr in rr.lane_runs:
+            lane_entry = {
+                "name": lr.name,
+                "parts_present": list(lr.parts_present),
+                "trigger": lr.trigger,
+            }
+            if lr.problem:
+                lane_entry["problem"] = lr.problem
+            if lr.not_run:
+                lane_entry["not_run"] = True
+            if lr.state is not None:
+                lane_entry["state"] = lr.state
+                lane_entry["predicate_exit"] = lr.predicate_exit
+                if lr.detail:
+                    lane_entry["detail"] = lr.detail
+            if lr.row:
+                lane_entry["row"] = lr.row
+            lane_rows.append(lane_entry)
+        entry["lanes"] = lane_rows
+        repos_out.append(entry)
+
+    doc = {
+        "roster_path": str(run.roster_path),
+        "roster_count": run.roster_count,
+        "repos": repos_out,
+        "lanes_total": run.total_lanes,
+        "fired": run.fired,
+        "quiet": run.quiet,
+        "broken": run.broken,
+        "code": exits.word(run.code),
+        "exit": run.code,
+    }
+    out(json.dumps(doc, indent=2))
+
+
+def cmd_lane_list(args, out) -> int:
+    """The generated router. LONGHAND by default; `--json` selects the
+    machine-readable emitter. Both read the SAME walk (`gather_lane_list`):
+    same exit code, same finding set, whichever rendering was asked for.
+    """
+    run = gather_lane_list(args)
+    if getattr(args, "json", False):
+        render_lane_list_json(run, out)
+    else:
+        render_lane_list_longhand(run, out)
+    return run.code
