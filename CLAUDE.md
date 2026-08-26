@@ -78,13 +78,44 @@ it saw a `2`.
   copies too; the `test_*.py` files are this repo's own.
 - `plugin/cli/` — the `lifecycle` entry point and its package.
 
+## The two carrier invariants a reader must not conflate
+
+- **Conservation has a SIGN, and the two signs are two diagnoses.** SHORT
+  (`items + done` below `baseline + added − compacted`) means a body left by
+  a path that is not a closure — a hand deletion, a bad merge. OVER means
+  the homes hold more than was ever admitted, whose ordinary cause is an
+  interrupted close, and it is RECOVERABLE. One message for both told the
+  loss story over the recoverable case; that is why there are two rows.
+- **DUPLICATE is the move's design working, not corruption.** A close
+  appends to the done home, then deletes from the carrier, then commits. The
+  window between the first two holds two copies of one body, and the
+  opposite ordering would put that window on the LOSS side instead. So an id
+  in both homes is expected debris from an interrupted close: the repair is
+  to delete the LIVE copy once the done copy is confirmed complete, never to
+  pick one at random.
+
 ## Verify
 
 ```bash
 python3 -m unittest discover -s test -p 'test_*.py' -t .   # the CLI
+python3 tools/prove-rows.py                                # every row, red-first
 node --test test/absence-scan.test.mjs                     # the leak scan's bites
 node tools/absence-scan.mjs --git-range ..HEAD             # the leak scan itself
 ```
+
+`tools/prove-rows.py` is the RED half of "a check counts only once it has
+gone red", made re-runnable. For each recorded arrangement it disables one
+named condition, runs the whole roster, and asserts a PAIR: the named row's
+verdict changes, and no other row's does. A row whose mutation darkens
+nothing is passing for a reason nobody wrote down; a mutation that darkens
+four rows proves none of them. It restores by FILE COPY and clears
+`__pycache__` around every arm. Rows with no recorded mutation are LISTED at
+the end, never omitted — the roster says how much of itself is proven.
+
+**The verdict it compares is the exit code AND the row name in the output.**
+Codes alone do not discriminate here: every finding is a `2`, so a guard
+removed at one site while a shared one catches the same input under a
+different row's name reads as "unchanged" and the row reads as unproven.
 
 **One of the 51 node bites fails here and is EXPECTED to** — read it
 before treating it as a defect. `source: every UUID in a tracked

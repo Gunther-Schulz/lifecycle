@@ -67,6 +67,23 @@ class RefusalRows(unittest.TestCase):
         self.assertEqual(good.code, exits.CLEAN,
                          f"the control declaration is not clean:\n{good.output}")
 
+    def test_row_idents_are_unique(self):
+        """Two rows under one ident are one row in every report.
+
+        Found by hand while stages 4-6 added a CROSS-HOME duplicate row
+        beside stage 3's within-file one: both were called `duplicate_id`,
+        and `--test`'s roster, a failure message and this suite's own
+        subTest label would each have named one of them without saying
+        which. The hand-derivation is the prototype; this is the mechanism.
+        """
+        seen = {}
+        for row in refusals.ROWS:
+            seen.setdefault(row.ident, []).append(row.firing_input)
+        clashes = {k: v for k, v in seen.items() if len(v) > 1}
+        self.assertEqual(clashes, {},
+                         "row idents must be unique; use `finding_row` where "
+                         "two roster rows prove one refusal")
+
     def test_prose_rest_rows_are_labelled_not_dropped(self):
         self.assertTrue(refusals.PROSE_REST)
         for name, why in refusals.PROSE_REST:

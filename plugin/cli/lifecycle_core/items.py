@@ -86,6 +86,10 @@ class Parsed:
     #: (row-id, line-number, message) — shape problems, never grade problems.
     problems: list = field(default_factory=list)
     archive_lines: int = 0
+    #: The archive section's raw body. Held rather than discarded because
+    #: conservation COUNTS it while the shape check skips it — two different
+    #: questions over the same bytes, and only one of them is about shape.
+    archive_text: str = ""
     #: Set when the file is stamped above the floor: nothing below the head
     #: was parsed, and no count from this object means anything.
     refused: bool = False
@@ -190,6 +194,7 @@ def parse(text: str) -> Parsed:
                 _close_block(out, current, seen_order)
                 current = None
             out.archive_lines = len(lines) - i
+            out.archive_text = "\n".join(lines[i:])
             break
 
         m = _BLOCK_HEADING.match(raw)
@@ -281,6 +286,262 @@ def check_ids(parsed: Parsed, prefix: str | None) -> list:
     return [(it.ident, it.line) for it in parsed.items if not pat.match(it.ident)]
 
 
+# --- typed blockers ----------------------------------------------------------
+
+#: §3.1's edge types, closed: an item id, a decision question, an evidence
+#: predicate. "No other edge types" is the design's own sentence, and it is
+#: what makes a blocker MECHANICALLY resolvable — an untyped one is prose,
+#: and prose is what the aging rules cannot route to anybody's court.
+BLOCKER_TYPES = ("item", "decision", "evidence")
+BLOCKER_NONE = "NONE"
+
+
+def classify_blocker(value: str, prefix: str | None):
+    """`(type, detail)` — type in BLOCKER_TYPES, `"none"`, or None (untyped).
+
+    `prefix` comes from the DECLARATION. Without it an item-id blocker
+    cannot be told from prose that happens to look like one, and the caller
+    is told so rather than guessed at — see `check_file`.
+    """
+    v = (value or "").strip()
+    if not v or v == BLOCKER_NONE:
+        return "none", ""
+    if v.startswith("decision "):
+        rest = v[len("decision "):].strip()
+        return ("decision", rest) if rest else (None, "")
+    if v.startswith("evidence "):
+        rest = v[len("evidence "):].strip()
+        return ("evidence", rest) if rest else (None, "")
+    if prefix and re.fullmatch(rf"{re.escape(prefix)}-\d+", v):
+        return "item", v
+    return None, ""
+
+
+# --- writing: the shape, spelled in exactly one place ------------------------
+
+def render_block(ident: str, slots: dict) -> str:
+    """One item block. THE ONLY place the on-disk shape is spelled.
+
+    Slot ORDER comes from `SLOTS`, never from the caller's dict, so a caller
+    that builds its mapping in another order cannot write a file the shape
+    check then reports as out of order.
+    """
+    out = [f"## {ident}"]
+    for slot in SLOTS:
+        out.append(f"{slot}: {slots[slot]}")
+    return "\n".join(out) + "\n"
+
+
+def slot_value_problem(slot: str, value: str) -> str | None:
+    """Why `value` cannot be written into `slot`, or None.
+
+    Refused at the WRITER. A multi-line value parses as a shape break at
+    read time — so the tool that wrote it would have produced a file its own
+    check rejects, and the reader could not tell that from a hand edit.
+    """
+    v = "" if value is None else str(value)
+    if not v.strip():
+        return (f"slot {slot!r} is empty. Every slot is written; a blank one "
+                "is the undeclared-stage shape at item scale — a plausible "
+                "face on a gap.")
+    if "\n" in v or "\r" in v:
+        return (f"slot {slot!r} spans more than one line. Slot values are ONE "
+                "line — a wrapped value is a shape break, not a long value, "
+                "and the parser reports it as one.")
+    return None
+
+
+def next_ident(prefix: str, *parsed) -> tuple[str | None, str | None]:
+    """`(next-id, why-not)` — the lowest unused `<prefix>-<n>`, n from 1.
+
+    EVERY home is read, live and closed. Ids are immutable across moves, so
+    an id allocator that looked only at the live carrier would re-issue the
+    id of everything ever closed — and the collision would surface as a
+    DUPLICATE finding months later, in a file nobody was editing.
+    """
+    if not prefix:
+        return None, ("no `id-prefix` in the declaration, so an id cannot be "
+                      "allocated. Ids are `<prefix>-<n>` and the prefix is "
+                      "declared, never inferred from the ids already there.")
+    used = set()
+    pat = re.compile(rf"^{re.escape(prefix)}-(\d+)$")
+    for p in parsed:
+        if p is None:
+            continue
+        for it in p.items:
+            m = pat.match(it.ident)
+            if m:
+                used.add(int(m.group(1)))
+    n = 1
+    while n in used:
+        n += 1
+    return f"{prefix}-{n}", None
+
+
+def replace_body(text: str, ident: str) -> tuple[str | None, str | None]:
+    """`(text-without-that-block, the-block)` — or `(None, None)` if absent.
+
+    Operates on the LIVE section only: everything from the archive heading
+    onward is returned untouched, because those bodies are held verbatim and
+    a text edit is exactly what "verbatim" forbids.
+    """
+    lines = text.split("\n")
+    cut = len(lines)
+    for i, ln in enumerate(lines):
+        if ln.strip() == ARCHIVE_HEADING:
+            cut = i
+            break
+    start = None
+    end = None
+    for i in range(cut):
+        m = _BLOCK_HEADING.match(lines[i])
+        if not m:
+            continue
+        if start is None and m.group(1) == ident:
+            start = i
+            continue
+        if start is not None:
+            end = i
+            break
+    if start is None:
+        return None, None
+    if end is None:
+        end = cut
+    body = "\n".join(lines[start:end]).rstrip("\n") + "\n"
+    kept = lines[:start] + lines[end:]
+    return "\n".join(kept), body
+
+
+# --- conservation ------------------------------------------------------------
+
+#: A top-level bullet in the archive — the entry notion the OLD carrier used
+#: and `backlog-census.py` still uses, so the count that crosses the
+#: migration is the same count on both sides of it.
+_ARCHIVE_BULLET = re.compile(r"^- ")
+
+
+def archive_entries(archive_text: str) -> int:
+    return sum(1 for ln in archive_text.split("\n")
+               if _ARCHIVE_BULLET.match(ln))
+
+
+def conservation(items_parsed: Parsed, done_parsed: Parsed | None,
+                 done_unreadable: str | None = None) -> dict:
+    """`items + done == baseline + added − compacted`, re-runnable at will.
+
+    THE IDENTITY IS THE POINT, not the numbers. It says the carrier has lost
+    nothing silently: every body ever admitted is either live or in the done
+    home, minus what compaction deliberately folded away. A closure moves a
+    body between the two sides and the identity does not move — which is why
+    a FAILING identity means a body left by some path that is not a closure.
+
+    THREE ANSWERS. A missing head key or an unreadable done home is COULD
+    NOT VERIFY, never a clean identity: an unread done home contributes 0,
+    and 0 is a number shaped exactly like a pass.
+    """
+    out = {"ok": None, "why": None, "items": len(items_parsed.items),
+           "done": None, "archive": None, "baseline": None, "added": None,
+           "compacted": None, "expected": None, "actual": None}
+
+    missing = [k for k in ("baseline", "added", "compacted")
+               if k not in items_parsed.head]
+    if missing:
+        out["why"] = (
+            "the carrier head declares no " + ", ".join(f"`{k}`" for k in missing)
+            + ". The identity's right-hand side is PERSISTED, not recomputed "
+            "— a baseline re-derived from the files it grades would move with "
+            "every corruption and stay green on all of them.")
+        return out
+    if done_parsed is None:
+        out["why"] = (done_unreadable or "the done home could not be read")
+        out["baseline"] = items_parsed.head["baseline"]
+        return out
+
+    out["archive"] = archive_entries(done_parsed.archive_text)
+    out["done"] = len(done_parsed.items) + out["archive"]
+    out["baseline"] = items_parsed.head["baseline"]
+    out["added"] = items_parsed.head["added"]
+    out["compacted"] = items_parsed.head["compacted"]
+    out["actual"] = out["items"] + out["done"]
+    out["expected"] = out["baseline"] + out["added"] - out["compacted"]
+    out["ok"] = out["actual"] == out["expected"]
+    return out
+
+
+def report_conservation(c: dict, out) -> int:
+    """Render a conservation result and answer with one of the three codes."""
+    if c["ok"] is None:
+        out(f"COULD NOT VERIFY: conservation — {c['why']}")
+        return exits.COULD_NOT_VERIFY
+    out(f"conservation: items {c['items']} + done {c['done']} "
+        f"(of which archive {c['archive']}) = {c['actual']}   "
+        f"baseline {c['baseline']} + added {c['added']} − compacted "
+        f"{c['compacted']} = {c['expected']}")
+    if c["ok"]:
+        out("conservation: CLEAN — nothing left the carrier by a path that "
+            "is not a closure.")
+        return exits.CLEAN
+    delta = c["actual"] - c["expected"]
+    # THE SIGN IS THE DIAGNOSIS, and one message for both signs told the
+    # wrong story over the recoverable case. Found by the interrupted-move
+    # test: a crash between the append and the delete leaves a SURPLUS
+    # (+1), and a single message describing "a body left the carrier by a
+    # path that is not a closure" reads as LOSS over exactly the state the
+    # design says must never read as loss. Two conditions, two rows.
+    if delta < 0:
+        out(f"FINDING [conservation_short] the identity is SHORT by "
+            f"{-delta}. A body left the carrier by a path that is not a "
+            "closure — a hand deletion, a bad merge, a half-applied patch. "
+            "The bodies are in git; this says one is missing from the "
+            "files, not that it is gone.")
+    else:
+        out(f"FINDING [conservation_surplus] the identity is OVER by "
+            f"{delta}: the homes hold MORE bodies than were ever admitted. "
+            "This is not loss and must not be repaired as if it were. The "
+            "ordinary cause is an interrupted close — the move appends to "
+            "the done home before deleting from the carrier, so a crash "
+            "between the two leaves both copies and both are counted. Check "
+            "the DUPLICATE line above first: if an id is in both homes, this "
+            "number is that same event and the repair is the same one.")
+    return exits.FINDING
+
+
+# --- the move's own integrity ------------------------------------------------
+
+def check_move_integrity(items_parsed: Parsed, done_parsed: Parsed | None,
+                         out, done_unreadable: str | None = None) -> int:
+    """An id present in BOTH homes: DUPLICATE, recoverable, never loss.
+
+    THE WHOLE REASON THE MOVE IS SPECIFIED AS APPEND-THEN-DELETE. The window
+    between the two writes holds two copies of one body; a crash there is
+    survivable and this is what makes it visible. The opposite ordering —
+    delete then append — would put the window on the LOSS side, where a
+    crash destroys the body and nothing afterwards can tell that it existed.
+    So this finding is the design working, and its message says so: a reader
+    who takes DUPLICATE for corruption will "repair" it by deleting one copy
+    at random.
+    """
+    if done_parsed is None:
+        out("COULD NOT VERIFY: the done home could not be read, so an id "
+            f"present in both homes would not be seen. {done_unreadable or ''}")
+        return exits.COULD_NOT_VERIFY
+    live = {it.ident: it.line for it in items_parsed.items}
+    both = [(d.ident, live[d.ident], d.line)
+            for d in done_parsed.items if d.ident in live]
+    for ident, live_line, done_line in both:
+        out(f"FINDING [duplicate_id] id {ident!r} is in BOTH homes — live at "
+            f"line {live_line}, done at line {done_line}. This is DUPLICATE "
+            "and RECOVERABLE, never loss: a close appends to the done home "
+            "and then deletes from the carrier, so a crash between the two "
+            "leaves exactly this. The repair is to delete the LIVE copy once "
+            "the done copy is confirmed complete — not to pick one at random.")
+    if both:
+        return exits.FINDING
+    out(f"move integrity: CLEAN — no id in both homes ({len(live)} live, "
+        f"{len(done_parsed.items)} done).")
+    return exits.CLEAN
+
+
 # --- the census: three answers -----------------------------------------------
 
 def census(parsed: Parsed) -> dict:
@@ -334,6 +595,18 @@ def check_file(path: Path, out, prefix: str | None = None) -> int:
             f"match the declared prefix {prefix!r} — ids are "
             f"`{prefix}-<n>` and immutable across moves.")
 
+    untyped, blockers_unverified = check_parked_blockers(parsed, prefix)
+    for ident, line, value in untyped:
+        out(f"FINDING [parked_without_typed_blocker] {path.name}:{line}: "
+            f"block {ident!r} is PARKED with an untyped `blocked-by`: "
+            f"{value!r}. The types are closed — `<{prefix or 'prefix'}-<n>>`, "
+            "`decision <question>`, `evidence <predicate>` — because an "
+            "aging item is routed by WHOSE COURT it sits in, and prose sits "
+            "in nobody's. A parked item nothing can re-evaluate is a drop "
+            "waiting to happen quietly.")
+    if blockers_unverified:
+        out(f"COULD NOT VERIFY: {blockers_unverified}")
+
     c = census(parsed)
     out(f"census: open {c['open']}  closed {c['closed']}  "
         f"unknown {sum(c['unknown'].values())}  (total {c['total']})")
@@ -345,12 +618,36 @@ def check_file(path: Path, out, prefix: str | None = None) -> int:
             f"{ARCHIVE_HEADING!r}, held verbatim and not shape-checked.")
 
     code = exits.CLEAN
-    if parsed.problems or bad_ids:
+    if parsed.problems or bad_ids or untyped:
         code = exits.FINDING
-    if c["unknown"]:
+    if c["unknown"] or blockers_unverified:
         code = exits.worst([code, exits.COULD_NOT_VERIFY])
 
     out(f"item check: {exits.word(code)} — "
-        f"{len(parsed.problems) + len(bad_ids)} shape finding(s), "
-        f"{len(c['unknown'])} unclassifiable grade word(s).")
+        f"{len(parsed.problems) + len(bad_ids) + len(untyped)} shape "
+        f"finding(s), {len(c['unknown'])} unclassifiable grade word(s).")
     return code
+
+
+def check_parked_blockers(parsed: Parsed, prefix: str | None):
+    """`([(id, line, value)], could-not-verify-reason)` for PARKED blocks.
+
+    "A PARKED item without a typed blocker is a checker finding" (§3.1), and
+    it is checked HERE — over the file — rather than only at `item park`,
+    because the verb is not the only way a block reaches the file. A merge
+    and a hand edit both do, and a rule enforced only on the write path is a
+    convention with a mechanism's reputation.
+    """
+    parked = [it for it in parsed.items if it.grade == "PARKED"]
+    if not parked:
+        return [], None
+    if not prefix:
+        return [], ("`blocked-by` typing on PARKED blocks was not checked: "
+                    "no `id-prefix` in the declaration, so an item-id blocker "
+                    "cannot be told from prose that resembles one.")
+    untyped = []
+    for it in parked:
+        kind, _detail = classify_blocker(it.slots.get("blocked-by", ""), prefix)
+        if kind is None or kind == "none":
+            untyped.append((it.ident, it.line, it.slots.get("blocked-by", "")))
+    return untyped, None

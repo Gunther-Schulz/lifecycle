@@ -37,6 +37,37 @@ tool can migrate itself.
   template extraction, which is what makes the scan a thing the
   plugin must SHIP rather than a thing this repo runs.
 
+- **PARKED 2026-08-26 — `item ready` cannot evaluate an `evidence`
+  blocker.** §3.1 says an evidence predicate is evaluated like a
+  trigger; the trigger evaluator is §3.3/§3.4, built in stage 7
+  (`lane list`), which is W1c's. Today `item ready` reports COULD NOT
+  VERIFY for such a blocker. Missing evidence/decision: stage 7's
+  evaluator, and whether `item ready` calls it directly or through a
+  shared predicate runner. Design, decided in part: it must be ONE
+  evaluator — two would disagree about the `>=2` BROKEN case first.
+
+- **PARKED 2026-08-26 — a detector's home repo is taken from the cwd,
+  not from a registry.** §3.1 says detectors register their home repo;
+  the detector registry is wave 3. So `--source detector:<name>` is
+  origin-checked exactly like a session add. Missing evidence: the
+  registry's shape. Nothing in wave 1 depends on the answer, and the
+  coarse check is not wrong today — it is narrower than the design.
+
+- **READY 2026-08-26 — `tools/prove-rows.py` records a mutation for 16
+  of 28 rows; the other 12 have none.** They are the stage 1-3 rows,
+  proven by their own plant/control pair but never shown to go dark
+  when the condition they name is removed. The tool lists them at the
+  end of every run rather than omitting them, so the gap is visible;
+  closing it is mechanical. Design, decided: one MUTATIONS entry per
+  row, anchored on the single site where that row's finding is decided,
+  and each must darken its row ALONE — where two rows share a decision
+  site, the two entries send each row's own case down the wrong branch
+  (the pattern `conservation_short`/`conservation_surplus` already
+  uses). Write-set: `tools/prove-rows.py`. Verifier:
+  `python3 tools/prove-rows.py` prints "rows with a recorded mutation:
+  28 of 28" and exits 0. Done-criterion: no row is listed under "rows
+  with NO mutation recorded".
+
 - **READY 2026-08-26 — `dev-notes/` needs its OBSERVATIONS carrier.**
   Design, decided: copy dispatch-guards' four-slot form (incident +
   basis · class · pre-formulated rule text · consumer + drain seam)

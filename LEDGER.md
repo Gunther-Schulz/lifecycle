@@ -146,6 +146,123 @@ Boundaries: work items go to `BACKLOG.md`, standing rules to
   ident for every ident that does not contain it, which reads as "no
   mapping needed" whether or not one is. The assertion also tightened
   from a prefix match (`[name`) to the full token (`[name]`).
+- **2026-08-26 — DEVIATION: stages 4, 5 and 6 land in ONE commit, not
+  three.** The brief's commit plan says one per stage; D-d's stage
+  ORDER cannot be honoured as a commit order because stage 4 depends on
+  both later stages. §3.2's intake join must print matching `rejected:`
+  ledger lines (stage 6's reader) and its `supersede` disposition must
+  move a body to the done home (stage 5's move). Reconstructing three
+  commits would mean committing two states that fail their own
+  verifier, in an order the work never had. Reported to the desk as an
+  ordering defect in D-d rather than resolved here.
+- **2026-08-26 — the join is TWO-PHASE because a CLI has no dialogue.**
+  §3.2 says "the caller answers merge-into / supersede / new". An add
+  that finds candidates and carries no `--join` REFUSES (exit 2) and
+  prints them with their `rejected:` lines; the caller re-runs with the
+  answer. Rejected alternative: write first and report candidates
+  afterwards — that is an insert with a report attached, and the whole
+  point of §3.2 is that the question precedes the write.
+- **2026-08-26 — the join's matching rule, and why the two halves
+  differ.** Write-set: EXACT equality over comma-separated normalized
+  entries, `NONE` and `UNKNOWN` never matching (§3.2 states UNKNOWN;
+  NONE is the same argument one level over — two items realizing
+  nowhere are not thereby related). Deliberately not substring or
+  prefix matching: `tools/x.py` and `tools/x.py.bak` share a prefix and
+  are different write-sets, and a substring test is a prefix match in
+  an equality's costume. Requirement: >= 2 shared tokens
+  (`MATCH_MIN_TOKENS`), token = a >=4-char word minus a short stopword
+  list. One token would match nearly every pair in a repo whose
+  vocabulary is its own domain, and a join listing forty candidates is
+  one nobody reads — the over-firing guard that trains the reflex to
+  skip it.
+- **2026-08-26 — the cost test needs `--hunks` and says so rather than
+  clearing.** The tool can count the write-set's files; it cannot see
+  hunks, so the caller states the count. A one-path write-set with no
+  `--hunks` is COULD NOT VERIFY (exit 3), never a pass: a cost test
+  that silently cleared every add it could not evaluate would clear
+  exactly the adds worth vetoing. Veto = one path + one hunk + a
+  non-operator source. `--source operator` skips the VETO and never the
+  join (§3.2), because whether a thing is already booked is a question
+  about the carrier and authority does not answer it.
+- **2026-08-26 — `--absence` is required for EVERY `new`, candidates or
+  not.** §3.2 puts the named absence on `new` itself, not on the
+  contested case; the join only decides whether `new` is the right
+  disposition. Rejected alternative: require it only when candidates
+  exist — that would make the uncontested add, which is most adds, the
+  one path with no cost question at all.
+- **2026-08-26 — `merge-into` writes NOTHING to the carrier.** That is
+  what makes a detector safe to run twice (§3.2's own reason for the
+  disposition): the second sighting of one problem is the same problem,
+  and any carrier write would make it two. The event is recorded in the
+  fire log (`detail=merge-into <id>`) — an id, never a body, so the
+  fire log's no-payload rule holds.
+- **2026-08-26 — the move's COMMIT belongs to the caller, not to
+  `move_to_done`.** §3.1's "append, delete, commit" is three steps, and
+  the third one's FILE SET depends on the act: a plain close commits
+  two files, a drop and a supersede commit three (the ledger line).
+  Committing the pair inside the move would leave the ledger line
+  recording a move that the same commit did not contain. Commits are by
+  PATHSPEC — the index is shared with whatever else runs in the work
+  tree, so `git add` then commit would carry a co-writer's staged paths
+  out under this message.
+- **2026-08-26 — FINDING, fixed: the conservation identity told the
+  LOSS story over the RECOVERABLE case.** One message for both signs of
+  the delta. Found by the interrupted-move test, not by review: the
+  crash window leaves two copies, so `actual − expected` is +1, and the
+  message read "a body left the carrier by a path that is not a
+  closure — a hand deletion". A reader following it would hunt for a
+  deletion that never happened, next to a DUPLICATE line saying the
+  opposite. Now two rows: `conservation_short` (delta < 0, a real loss)
+  and `conservation_surplus` (delta > 0, ordinarily an interrupted
+  close, recoverable, cross-referencing the duplicate line).
+  **`conservation_surplus` is NOT a §3.9 row** — the table names only
+  "conservation short". Surfaced to the desk.
+- **2026-08-26 — FINDING about the INSTRUMENT: comparing exit codes
+  alone does not discriminate between two refusals.** `tools/prove-rows.py`
+  first compared each row's plant by exit code. It reported
+  `parked_without_typed_blocker` unproven: disabling `item park`'s own
+  typed-blocker guard left the code at 2, because the shared
+  `_check_blocker` catches the same input under a DIFFERENT row's name.
+  Every finding in this system is a 2, so a code comparison separates
+  something-happened from nothing-happened when the question is WHICH
+  refusal fired. The verdict signature is now `code` + whether the
+  row's own name appears in its output, and the row proves cleanly
+  (`2/named -> 2/unnamed`).
+- **2026-08-26 — `item ready` answers COULD NOT VERIFY on an `evidence`
+  blocker, deliberately.** §3.1 says an evidence predicate is
+  "evaluated like a trigger", and trigger evaluation plus its policy is
+  §3.3/§3.4 — `lane list`, stage 7, which is W1c's. Building a second
+  evaluator here would put two bodies behind one contract and they
+  would disagree about the `>=2` BROKEN case first. So the blocker's
+  state is reported as unknown, which is not the same as still blocked.
+  Open for W1c: `item ready` should call stage 7's evaluator once it
+  exists.
+- **2026-08-26 — `item ratio` has no stage in D-d.** W1a's
+  `NOT_YET_BUILT` mapped it to stage 5, but D-d's stage 5 is
+  `item ready|park|close` and the W1b brief's scope repeats that list
+  without ratio. Left unbuilt rather than given a stage this desk did
+  not assign; the refusal message now says so instead of naming a stage
+  that would have been contradicted the moment stage 5 shipped.
+- **2026-08-26 — FINDING: `foreign_origin_item` was in NEITHER the row
+  list nor PROSE_REST before stage 4.** §3.9 names it ("public repo,
+  foreign-origin item"), and the roster's whole contract is that a row
+  it cannot fire is LABELLED. A row in neither list is the one state
+  the two lists exist to make impossible. Now an executable row.
+- **2026-08-26 — the declaration names the closure home TWICE and the
+  disagreement is a finding.** Top-level `closure-home` and the `done
+  bodies` kind's `home` are two spellings of one fact. Resolution runs
+  through `closure-home`; a `done bodies` home that differs is
+  `closure_home_split`, refused rather than tie-broken. A reader
+  resolves through whichever it happens to open, and the two diverge
+  from the moment they disagree. Also not a §3.9 row — surfaced.
+- **2026-08-26 — `item check` now answers for the whole carrier
+  SYSTEM, so its answer can be COULD NOT VERIFY where it was CLEAN.**
+  It runs the single-file shape check, then the cross-home duplicate
+  check, then conservation. A repo whose done home is absent now gets
+  exit 3 rather than 0 — correct under the three-answer rule (an unread
+  done home contributes 0, and 0 is a number shaped like a pass), but
+  it is a behaviour change to a verb stage 3 shipped. Stage 3's own
+  unit tests are unaffected: they call `items.check_file` directly.
 - **2026-08-26 — the fire log lives under XDG state, never
   `~/.claude/`.** `$XDG_STATE_HOME/lifecycle/fire.jsonl` (default
   `~/.local/state/lifecycle/fire.jsonl`). Basis: on this machine

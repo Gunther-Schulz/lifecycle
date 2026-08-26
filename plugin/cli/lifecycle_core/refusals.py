@@ -22,6 +22,7 @@ list does, and `test/test_refusals.py` executes it today.
 """
 
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -362,12 +363,14 @@ ROWS = [
 #: never deleted — a roster that dropped them would report a completeness it
 #: does not have.
 PROSE_REST = [
-    ("unknown grade word on write", "needs `item add`, wave 1 stage 4"),
-    ("PARKED without a typed blocker", "needs `item park`, wave 1 stage 5"),
-    ("conservation short", "needs the close verb's baseline deltas, stage 5"),
-    ("dangling typed reference (`blocked-by cf-9999`)",
-     "the declaration half fires today (see `dangling_reference`); the ITEM "
-     "half needs `item park --blocked-by`, stage 5"),
+    # RETIRED FROM THIS LIST IN STAGES 4-6, each now an executable row above:
+    # "unknown grade word on write" -> `unknown_grade_write`;
+    # "PARKED without a typed blocker" -> `parked_without_typed_blocker`;
+    # "conservation short" -> `conservation_short`;
+    # "dangling typed reference", ITEM half -> `dangling_reference_item`;
+    # "public repo, foreign-origin item" -> `foreign_origin_item`, which was
+    # in NEITHER list before stage 4 — a §3.9 row that was neither fired nor
+    # labelled, which is the one state this list exists to make impossible.
     ("lane body over one screen", "lanes are wave 2"),
     ("unbound required slot", "template bindings are wave 2"),
     ("exact template duplication in a repo", "templates are wave 2"),
@@ -387,3 +390,393 @@ PROSE_REST = [
      "the design's own prose-rest row: no predicate exists, operator is the "
      "backstop"),
 ]
+
+
+# --- stages 4-6: a repo the CLI can actually be run against -------------------
+#
+# The rows above read modules directly, which was enough while every refusal
+# lived inside one function. From stage 4 on, the refusals are properties of
+# a VERB — the join, the cost test, the move, the conservation identity — and
+# a row that called the checker function directly would exercise everything
+# except the path a caller takes. So these rows run `cli.main`, in a real git
+# work tree, and read the exit code the contract promises.
+
+#: A declaration valid in every respect, with all three wave-1 kinds. Written
+#: from the design's own stage list and D-h's assigned values, never read back
+#: out of a repo: an expectation derived from the artifact it grades moves
+#: with the mutant.
+GOOD_FULL_DECLARATION = {
+    "schema": 1, "id-prefix": "xx", "public": False, "laws": "LAWS.md",
+    "closure-home": "ITEMS-DONE.md", "trigger-policy": "on-demand",
+    "goals": ["see", "attribute", "mitigate", "verify", "retire"],
+    "ready-cap": 10, "head-rule": {"lead-goal": "mitigate"},
+    "lanes": [], "template-bindings": {},
+    "kinds": {
+        "items": {
+            "home": "ITEMS.md",
+            "writer": "tool — lifecycle item add|ready|park|close only",
+            "reader": ["the drain lane", "lifecycle item ratio"],
+            "staleness": "change-coupling — the cited record no longer resolves",
+            "exit": {"action": "move",
+                     "recording-act": "the item close fire-log line"},
+            "bound": "unbounded, declared why: the ready-cap bounds the head",
+        },
+        "done bodies": {
+            "home": "ITEMS-DONE.md",
+            "writer": "tool — lifecycle item close, the atomic move",
+            "reader": ["the retire lane's conservation check"],
+            "staleness": "none, declared why: a closure record is history",
+            "exit": {"action": "compact",
+                     "recording-act": "a ledger decision line naming the range"},
+            "bound": "unbounded, declared why: this is the archive",
+        },
+        "ledger lines": {
+            "home": "LEDGER.md",
+            "writer": "tool for the slots, session for the reason prose",
+            "reader": ["the grade workflow's rejected gate"],
+            "staleness": "none, declared why: append-only decision history",
+            "exit": {"action": "never", "recording-act": "compaction only"},
+            "bound": "unbounded, declared why: one line per decision event",
+        },
+    },
+}
+
+#: A carrier head whose conservation identity balances against ONE live item.
+SEED_ITEMS = """schema: 1
+baseline: 1
+added: 0
+compacted: 0
+
+## xx-1
+grade: READY
+requirement: the harvest timer double-fires on a rotated capture — LEDGER.md
+goal: mitigate
+write-set: tools/harvest.mjs
+done-criterion: one fire per window, shown on the rotated fixture
+evidence: none yet
+blocked-by: NONE
+"""
+
+EMPTY_ITEMS = "schema: 1\nbaseline: 0\nadded: 0\ncompacted: 0\n"
+EMPTY_DONE = "schema: 1\n"
+
+#: A complete, valid `item add` — the argument baseline every row below
+#: mutates exactly one thing away from. A row that built its own argument
+#: list would drift from this one, and the drift would look like the row.
+# Its requirement shares NO token with `SEED_ITEMS`, deliberately: the join
+# is what most of these rows run through, and a baseline that matched the
+# seed would fire `join_undisposed` in every control. Measured once by the
+# control going red — the fixture was the suspect, not the verdict.
+GOOD_ADD = [
+    "item", "add",
+    "--requirement", "the serving config is read from defaults — docs/x.md",
+    "--goal", "verify",
+    "--write-set", "tools/replay.mjs",
+    "--done-criterion", "the gate reads what is serving",
+    "--evidence", "none yet",
+    "--hunks", "4",
+    "--absence", "the decision belongs to a desk this session is not",
+]
+
+
+class _Repo:
+    """A real git work tree with a declaration and both carrier homes."""
+
+    def __init__(self, *, declaration=None, items=None, done=None,
+                 ledger_text=None, public=None):
+        self.dir = Path(tempfile.mkdtemp(prefix="lifecycle-verb-"))
+        d = declaration if declaration is not None else GOOD_FULL_DECLARATION
+        if public is not None:
+            d = json.loads(json.dumps(d))
+            d["public"] = public
+        self._run(["git", "init", "-q", "-b", "main"])
+        # The machine's global core.hooksPath must not reach into an
+        # instrument: an unrelated gate firing here would be read as this
+        # row's own verdict.
+        self._run(["git", "config", "core.hooksPath", str(self.dir / ".nohooks")])
+        self._run(["git", "config", "user.email", "row@lifecycle.invalid"])
+        self._run(["git", "config", "user.name", "refusal row"])
+        (self.dir / ".claude").mkdir(exist_ok=True)
+        (self.dir / ".claude" / "lifecycle.json").write_text(
+            json.dumps(d, indent=2), encoding="utf-8")
+        (self.dir / "LAWS.md").write_text("law\n", encoding="utf-8")
+        (self.dir / "ITEMS.md").write_text(
+            EMPTY_ITEMS if items is None else items, encoding="utf-8")
+        (self.dir / "ITEMS-DONE.md").write_text(
+            EMPTY_DONE if done is None else done, encoding="utf-8")
+        (self.dir / "LEDGER.md").write_text(
+            "schema: 1\n" if ledger_text is None else ledger_text,
+            encoding="utf-8")
+        self._run(["git", "add", "-A"])
+        self._run(["git", "commit", "-qm", "seed"])
+
+    def _run(self, argv):
+        subprocess.run(argv, cwd=str(self.dir), capture_output=True, text=True)
+
+    def close(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+        return False
+
+
+def _cli(argv, *, cwd=None, **repo_kw) -> Fired:
+    """Run one `lifecycle` invocation in a scratch repo. `cli` is imported
+    HERE rather than at module scope: stage 8's `--test` will print this
+    roster from inside `cli`, and a module-level import would close the
+    cycle."""
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    with _Repo(**repo_kw) as r:
+        here = os.getcwd()
+        try:
+            os.chdir(str(cwd) if cwd else str(r.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(r.dir)] + list(argv))
+            return Fired(code, buf.getvalue())
+        finally:
+            os.chdir(here)
+
+
+def _cli_foreign(argv, **repo_kw) -> Fired:
+    """Same, but run from INSIDE ANOTHER git repo — the foreign-origin arm."""
+    with _Repo() as elsewhere:
+        return _cli(argv, cwd=elsewhere.dir, **repo_kw)
+
+
+def _mutate(text: str, old: str, new: str) -> str:
+    assert old in text, f"the plant's anchor {old!r} is not in the text"
+    return text.replace(old, new, 1)
+
+
+VERB_ROWS = [
+    Row(
+        ident="unknown_grade_write",
+        refusal="unknown grade word on write",
+        firing_input="`item add --grade FOO`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(GOOD_ADD + ["--grade", "FOO"]),
+        control=lambda: _cli(GOOD_ADD + ["--grade", "READY"]),
+        stage="wave 1, stage 4",
+    ),
+    Row(
+        ident="foreign_origin_item",
+        refusal="public repo, foreign-origin item",
+        firing_input="`item add` from another repo's cwd against `public: true`",
+        expect=exits.FINDING,
+        fire=lambda: _cli_foreign(GOOD_ADD, public=True),
+        # SAME public repo, SAME add — only the cwd differs, so origin is
+        # what separates them and not the `public` flag.
+        control=lambda: _cli(GOOD_ADD, public=True),
+        stage="wave 1, stage 4",
+    ),
+    Row(
+        ident="join_undisposed",
+        refusal="intake is a MERGE: candidates found, no disposition given "
+                "(§3.2 — the caller answers merge-into / supersede / new)",
+        firing_input="an `item add` whose write-set path a live item already "
+                     "carries, with no `--join`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(
+            _mutate_add("--write-set", "tools/harvest.mjs"), items=SEED_ITEMS),
+        # The identical add against a carrier holding the SAME item under a
+        # different write-set and different requirement words: the join runs
+        # and finds nothing, so the refusal is the MATCH and not the join.
+        control=lambda: _cli(GOOD_ADD, items=SEED_ITEMS),
+        stage="wave 1, stage 4",
+    ),
+    Row(
+        ident="new_without_absence",
+        refusal="`new` is taken only with a named absence (§3.2)",
+        firing_input="`item add` with no `--absence`",
+        expect=exits.FINDING,
+        fire=lambda: _cli([a for i, a in enumerate(GOOD_ADD)
+                           if a != "--absence"
+                           and GOOD_ADD[i - 1] != "--absence"]),
+        control=lambda: _cli(GOOD_ADD),
+        stage="wave 1, stage 4",
+    ),
+    Row(
+        ident="cost_test_veto",
+        refusal="the cost test — a one-file, one-hunk write-set with the "
+                "session live is do-it-now, not book-it (§3.2)",
+        firing_input="`item add --hunks 1` over a one-path write-set, "
+                     "source session",
+        expect=exits.FINDING,
+        fire=lambda: _cli(_mutate_add("--hunks", "1")),
+        # The SAME one-file one-hunk add, from the OPERATOR: the veto is
+        # skipped, the join never is. So the arms differ in the source alone.
+        control=lambda: _cli(_mutate_add("--hunks", "1")
+                             + ["--source", "operator"]),
+        stage="wave 1, stage 4",
+    ),
+    Row(
+        ident="cost_test_unverified",
+        refusal="the cost test could not be evaluated — one file named, hunk "
+                "count not stated. COULD NOT VERIFY, never a pass",
+        firing_input="`item add` over a one-path write-set with no `--hunks`",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _cli([a for i, a in enumerate(GOOD_ADD)
+                           if a != "--hunks" and GOOD_ADD[i - 1] != "--hunks"]),
+        control=lambda: _cli(GOOD_ADD),
+        stage="wave 1, stage 4",
+    ),
+    Row(
+        ident="blocker_untyped",
+        refusal="a blocker that is prose rather than one of §3.1's three "
+                "closed edge types",
+        firing_input="`item add --blocked-by 'we should think about it'`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(GOOD_ADD + ["--blocked-by",
+                                      "we should think about it"]),
+        control=lambda: _cli(GOOD_ADD + ["--blocked-by",
+                                         "decision which window is canonical"]),
+        stage="wave 1, stage 4",
+    ),
+    Row(
+        ident="dangling_reference_item",
+        finding_row="dangling_reference",
+        refusal="dangling typed reference — `blocked-by <item-id>` naming an "
+                "id no home holds (the ITEM half of §3.9's row; the "
+                "declaration half is `dangling_reference` above)",
+        firing_input="`item add --blocked-by xx-9999`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(GOOD_ADD + ["--blocked-by", "xx-9999"],
+                          items=SEED_ITEMS),
+        control=lambda: _cli(GOOD_ADD + ["--blocked-by", "xx-1"],
+                             items=SEED_ITEMS),
+        stage="wave 1, stage 4",
+    ),
+    Row(
+        ident="parked_without_typed_blocker",
+        refusal="PARKED without a typed blocker",
+        firing_input="`item park <id>` with prose only",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
+                           "we should think about it"], items=SEED_ITEMS),
+        control=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
+                              "decision which window is canonical"],
+                             items=SEED_ITEMS),
+        stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="duplicate_id_cross_home",
+        finding_row="duplicate_id",
+        refusal="duplicate on move, ACROSS THE TWO HOMES — the within-file "
+                "row above cannot see this one: a close appends to the done "
+                "home and then deletes from the carrier, so the crash window "
+                "leaves one copy in EACH file and no single-file check looks "
+                "at both. DUPLICATE and RECOVERABLE, never loss",
+        firing_input="one id present in BOTH homes",
+        expect=exits.FINDING,
+        # baseline 2 so CONSERVATION balances in both arms: without that the
+        # plant would go red for two reasons and the row would not know
+        # which one it proved.
+        fire=lambda: _cli(
+            ["item", "check"],
+            items=_mutate(SEED_ITEMS, "baseline: 1", "baseline: 2"),
+            done=EMPTY_DONE + "\n" + SEED_ITEMS.split("\n\n", 1)[1].replace(
+                "grade: READY", "grade: DONE")),
+        control=lambda: _cli(
+            ["item", "check"],
+            items=_mutate(SEED_ITEMS, "baseline: 1", "baseline: 2"),
+            done=EMPTY_DONE + "\n" + SEED_ITEMS.split("\n\n", 1)[1].replace(
+                "grade: READY", "grade: DONE").replace("## xx-1", "## xx-2")),
+        stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="conservation_short",
+        refusal="conservation short — a body left the carrier by a path that "
+                "is not a closure",
+        firing_input="a body deleted by hand → the delta fails",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "check"],
+                          items=_mutate(SEED_ITEMS, "baseline: 1",
+                                        "baseline: 2")),
+        control=lambda: _cli(["item", "check"], items=SEED_ITEMS),
+        stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="conservation_surplus",
+        refusal="conservation OVER — the homes hold more bodies than were "
+                "ever admitted. NOT loss, and it must not be repaired as if "
+                "it were: the ordinary cause is an interrupted close. This "
+                "row is not in §3.9, which names only 'conservation short'; "
+                "it was found by the interrupted-move test, where the single "
+                "short-message told a deletion story over the recoverable "
+                "case (surfaced to the desk)",
+        firing_input="a carrier whose head under-counts what the two homes "
+                     "hold (here: the interrupted move's two copies)",
+        expect=exits.FINDING,
+        fire=lambda: _cli(
+            ["item", "check"],
+            items=SEED_ITEMS,
+            done=EMPTY_DONE + "\n" + SEED_ITEMS.split("\n\n", 1)[1].replace(
+                "grade: READY", "grade: DONE").replace("## xx-1", "## xx-2")),
+        control=lambda: _cli(["item", "check"], items=SEED_ITEMS),
+        stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="conservation_unverified",
+        refusal="the conservation identity could not be computed — the head "
+                "declares no baseline. COULD NOT VERIFY, never a clean "
+                "identity",
+        firing_input="a carrier head with `baseline` removed",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _cli(["item", "check"],
+                          items=SEED_ITEMS.replace("baseline: 1\n", "", 1)),
+        control=lambda: _cli(["item", "check"], items=SEED_ITEMS),
+        stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="ledger_body",
+        refusal="the ledger carries NO BODIES — one fixed-slot line per "
+                "decision event (§3.6)",
+        firing_input="a `ledger add` whose reason spans more than one line",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["ledger", "add", "dropped", "xx-1", "--reason",
+                           "overtaken by the rework\n\nand here is the body "
+                           "that does not belong in a ledger"]),
+        control=lambda: _cli(["ledger", "add", "dropped", "xx-1", "--reason",
+                              "overtaken by the rework"]),
+        stage="wave 1, stage 6",
+    ),
+    Row(
+        ident="closure_home_split",
+        refusal="the declaration names TWO closure homes — one fact, one "
+                "home (§3.1's closure MOVE has one destination)",
+        firing_input="`closure-home` and the `done bodies` kind's `home` "
+                     "disagreeing",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "check"],
+                          declaration=_split_closure_home()),
+        control=lambda: _cli(["item", "check"]),
+        stage="wave 1, stage 5",
+    ),
+]
+
+
+def _mutate_add(flag: str, value: str) -> list:
+    """`GOOD_ADD` with one flag's value replaced — one thing at a time."""
+    out = list(GOOD_ADD)
+    if flag in out:
+        out[out.index(flag) + 1] = value
+    else:
+        out += [flag, value]
+    return out
+
+
+def _split_closure_home() -> dict:
+    d = json.loads(json.dumps(GOOD_FULL_DECLARATION))
+    d["kinds"]["done bodies"]["home"] = "SOMEWHERE-ELSE.md"
+    return d
+
+
+ROWS = ROWS + VERB_ROWS
