@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 1
+added: 3
 compacted: 0
 
 ## lc-1
@@ -83,3 +83,21 @@ write-set: tools/absence-scan.mjs, test/absence-scan.test.mjs
 done-criterion: a planted foreign home path in a tracked .md in this repo fires foreign-path and the same file without it is clean, both shown
 evidence: .claude/lifecycle.json leak-scan.reason; tools/absence-scan.mjs CLASSES, the foreign-path entry scoped corpus; JOURNAL J6
 blocked-by: decision the scanner is a byte-identical copy of claude-code-cache-fix's and both copies move together, so the widening lands there first
+
+## lc-10
+grade: READY
+requirement: §3.11's intake cost test has three conjuncts and the third is unimplemented: cost_test() never receives the typed blocker — record: wave2 L1 booking run, 2026-08-26
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_items.py
+done-criterion: an item with a typed decision blocker and a one-file write-set is graded NEW without the do-it-now ask, red-first against the current implementation
+evidence: verbs.py:268 signature is cost_test(write_set, hunks, source) — no blocker parameter, and its docstring cites §3.2 not §3.11; observed live when a booking carrying a typed decision blocker was held for a hunk count
+blocked-by: NONE
+
+## lc-11
+grade: READY
+requirement: item add leaves a 0-byte ITEMS.md.lock in the repo root and nothing ignores it — record: wave2 L1 booking run, 2026-08-26
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py,decision:lock-lifetime-vs-gitignore
+done-criterion: after item add, either the lock is gone or the repo's .gitignore (written by init) covers it; git status shows no stray lock
+evidence: observed after four item add runs in claude-code-cache-fix: ITEMS.md.lock present, 0 bytes, git check-ignore returns no match
+blocked-by: decision whether the lock is released by deletion or covered by the .gitignore init writes
