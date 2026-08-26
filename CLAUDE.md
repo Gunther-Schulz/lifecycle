@@ -74,14 +74,28 @@ it saw a `2`.
   edited here. That repo keeps its own copy and its own wiring, and
   the de-duplication is a later wave's act with the hook rewiring in
   the same change. Two copies for one wave is the deliberate cost.
-- `test/` — `absence-scan.test.mjs` and its fixture, likewise
-  byte-identical copies. Run: `node --test test/`.
+- `test/` — `absence-scan.test.mjs` and its fixture are byte-identical
+  copies too; the `test_*.py` files are this repo's own.
 - `plugin/cli/` — the `lifecycle` entry point and its package.
 
 ## Verify
 
 ```bash
-node --test test/                          # the leak scan's own bites
-python3 -m unittest discover -s test -p 'test_*.py' -t .   # the CLI's
-node tools/absence-scan.mjs --git-range ..HEAD             # the leak scan
+python3 -m unittest discover -s test -p 'test_*.py' -t .   # the CLI
+node --test test/absence-scan.test.mjs                     # the leak scan's bites
+node tools/absence-scan.mjs --git-range ..HEAD             # the leak scan itself
 ```
+
+**One of the 51 node bites fails here and is EXPECTED to** — read it
+before treating it as a defect. `source: every UUID in a tracked
+SOURCE_SCANNABLE file is on the synthetic allowlist` guards itself
+against a silent scope collapse by asserting the walk reached
+`test/`, `tools/`, `proxy/` and `docs/`, that `BACKLOG.md` is in it,
+and that it enumerated more than 500 files. Those anchors are
+claude-code-cache-fix's tree, and the file is a byte-identical copy
+that is not edited here — so the bite structurally cannot pass in
+this repo. It is a COULD NOT VERIFY for that one bite, never a
+statement about the scanner: the other 50 pass, and the scanner is
+separately red-proven on this repo's own files by the pre-push hook.
+Making it portable means parameterising the anchors in cache-fix
+first, so both copies move together.
