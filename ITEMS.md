@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 13
+added: 14
 compacted: 0
 
 ## lc-1
@@ -190,4 +190,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: a bullet whose grade word sits mid-title classifies by that word, red-first on a fixture drawn from the real idiom, and a closed entry never lands in the open carrier. AND the over-fire half: a bullet carrying a capitalised NON-grade word mid-title must still read as ungraded — without that arm a matcher loosened until the counts improve scores identically to one that got the distinction right.
 evidence: split out of lc-19 on the reporting peer's own correction, 2026-08-26 — they had conflated two mechanisms and retracted the diagnosis while the measurement held. Verified here at 40b9c36 by executing the module: UNGRADED_RULE at migrate.py:67 is ('NEW', ...) and is assigned at :219, so an ungraded entry migrates OPEN rather than unclassified. Peer measurement, over files this session did not open: 7 root entries and 1 corpus entry, all with grade_word None, all sitting in a '## Done' section, would be written back as open work.
+blocked-by: NONE
+
+## lc-22
+grade: READY
+requirement: The closure MOVE has no guard against carrying a LIVE obligation into an archive. An entry can name itself the carrier for a pointer another desk still owes — 'this entry is the carrier that moves with it', its own words — and when its own work closes, the move takes that clause into the done home, which is headed for pruning at reviews. The obligation then reads as closed because its carrier is filed as closed. `item close` should grep the entry body for a forward-carrier clause and REFUSE the move with the clause quoted, so a human splits the residue out first.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: red-first against the L10 entry's body at dotfiles bb8edd4: `item close` refuses and quotes the carrier clause. Green once the clause is gone or the residue has its own entry. AND the over-fire arm, which decides whether this is shippable at all: an ordinary entry that merely DISCUSSES carriers or pointers in its prose must NOT be refused — a phrase-matching predicate over free prose is exactly the shape that fires on legitimate work, so the match anchors on a declared clause form rather than on words occurring anywhere in the body.
+evidence: the L10 case at the dotfiles desk, 2026-08-26: the corpus-consolidation entry named itself the carrier for this desk's accretion-module residue and then closed. The peer halted the move by hand, took it to the judgment desk, and the residue was split into its own entry (dotfiles e3b3ebf) — a hand catch where a mechanism should have refused. Clause text is the peer's quotation, not read here; the entry body at dotfiles bb8edd4 is the red-first input. Booked on the judgment desk's instruction.
 blocked-by: NONE
