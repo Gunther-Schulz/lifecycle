@@ -14,7 +14,10 @@ finding at all:
     tolerated — and the same block after it is a shape break;
   * a closure CLEARS the wait, and records the decision half only;
   * the flow ratio is a ratio and not a size;
-  * a schema migration REFUSES to guess, and the apply is blocked per repo.
+  * a schema migration REFUSES to guess, and the apply is blocked per repo;
+  * `SCHEMA_FLOOR` is single-sourced: `items.py` and `ledger.py` import
+    `declaration.py`'s rather than each restating the number, so a bump to
+    one can no longer leave the others silently behind.
 """
 
 import io
@@ -29,7 +32,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
-from lifecycle_core import cli, exits, items, retire  # noqa: E402
+from lifecycle_core import cli, exits, items, ledger, retire  # noqa: E402
 from lifecycle_core import declaration as decl  # noqa: E402
 from lifecycle_core.refusals import (  # noqa: E402
     EMPTY_DONE, GOOD_FULL_DECLARATION, SEED_ITEMS)
@@ -399,6 +402,20 @@ class TheSweepAnchorsOnSegments(unittest.TestCase):
                                             "docs/audits/a.md"))
         self.assertFalse(retire._home_claims("docs/audits/*.md",
                                              "docs/other/a.md"))
+
+
+class SchemaFloorSingleSourced(unittest.TestCase):
+    """`SCHEMA_FLOOR` used to be defined three times, independently, and
+    nothing pinned them equal (`declaration.py`, `items.py`, `ledger.py`).
+    `items.py` and `ledger.py` now IMPORT `declaration.py`'s rather than
+    restating the literal — this is the test that was missing, and it is
+    what makes a future bump to one module's floor unable to leave the
+    other two silently behind.
+    """
+
+    def test_all_three_floors_are_equal(self):
+        self.assertEqual(items.SCHEMA_FLOOR, decl.SCHEMA_FLOOR)
+        self.assertEqual(ledger.SCHEMA_FLOOR, decl.SCHEMA_FLOOR)
 
 
 if __name__ == "__main__":

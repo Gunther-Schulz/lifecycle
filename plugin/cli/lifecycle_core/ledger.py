@@ -32,10 +32,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import exits
+from . import declaration as decl
 
 #: The ledger format this build understands, same floor rule as `ITEMS.md`,
 #: and the SAME NUMBER: one schema version per repo (§3.8c).
-SCHEMA_FLOOR = 2
+#:
+#: SINGLE-SOURCED (2026-08-26): imported from `declaration.py` rather than
+#: restated as its own literal — see `items.py`'s copy of this note for why
+#: the restatement was a silent defect nothing caught.
+SCHEMA_FLOOR = decl.SCHEMA_FLOOR
 
 #: Slot separator, and the decision line's question/answer separator. Both
 #: are the design's own spellings and are matched literally.

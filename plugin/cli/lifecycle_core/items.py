@@ -33,6 +33,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import exits
+from . import declaration as decl
 
 #: The carrier format this build understands. A file stamped ABOVE it is
 #: refused rather than parsed: an old tool reading a new file drops the slots
@@ -42,7 +43,14 @@ from . import exits
 #: be the same number, and `schema_mismatch` fires where a repo's carrier and
 #: its declaration disagree. The floor answers "can this build read the file";
 #: the mismatch answers "does this repo agree with itself".
-SCHEMA_FLOOR = 2
+#:
+#: SINGLE-SOURCED (2026-08-26): this used to be its own literal `= 2`, and so
+#: did `ledger.py`'s, with nothing pinning the three equal — a bump to one
+#: could leave the others silently behind, and no test caught it
+#: (`test_schema.SchemaFloorSingleSourced` is the one that now would).
+#: `declaration.py` is the home because the declaration's own schema rule
+#: lives there and `test_schema.py` already pointed at it.
+SCHEMA_FLOOR = decl.SCHEMA_FLOOR
 
 #: §3.1 — five grades, closed. A repo's declared EXTRA grade words are not
 #: accepted; the migration maps their meanings and its report says so per
