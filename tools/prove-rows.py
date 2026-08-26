@@ -12,12 +12,25 @@ arrangement lives here, executable, one entry per row.
 WHAT IT ASSERTS, and it is a PAIR like every row itself. For each mutation:
 
   * the named row's verdict CHANGES  — the row was reading that condition;
-  * EXACTLY ONE row's verdict changes — the mutation removed that condition
-    and not its neighbours.
+  * every row that changed proves THE SAME REFUSAL — the mutation removed
+    that condition and not its neighbours.
 
 The second half is the one that catches a mutation deleting adjacent
-machinery instead of the named condition. A mutation that darkens four rows
-has not proven any of them; it has proven that something large broke.
+machinery instead of the named condition. A mutation that darkens four
+unrelated rows has not proven any of them; it has proven that something
+large broke.
+
+WHY THE SECOND HALF IS NOT "EXACTLY ONE ROW", which is what it used to say.
+Two roster rows can prove two firing inputs of ONE refusal — the roster
+declares that with `Row.finding_row`, and `declaration_ignored` and
+`declaration_ignored_tracked` are the case: an ignored declaration, once
+untracked and once committed. The single site where THAT refusal is decided
+is one branch, so a mutation there necessarily darkens both, and "exactly
+one" made the honest mutation indistinguishable from a careless one. The
+sibling set is DERIVED from the roster's own `finding_row` mapping, never
+hand-listed here: a hand list would be a second body for the same fact and
+would go stale the day a row was added. For a row with no sibling the
+assertion is bit-for-bit the old one.
 
 A ROW WHOSE MUTATION DARKENS NOTHING is the loud case: the condition it
 names is not what produces its verdict, so the row is passing for a reason
@@ -161,6 +174,210 @@ MUTATIONS = [
      "    if done_home and done_home != closure:",
      "    if False:",
      "the comparison between the two declared closure homes"),
+
+    # --- ASSIGNED ITEM C: the stage 1-3 rows, which passed their plant and
+    # control pair but had never been shown to go dark. Each mutation below
+    # folds one VERDICT into another rather than removing machinery: a
+    # mutation that crashes proves the branch is on the executed path, not
+    # that the row discriminates.
+
+    ("declaration_absent", "declaration.py",
+     "    if not path.exists():\n"
+     '        res.add("declaration_absent",',
+     "    if not path.exists():\n"
+     "        res.cannot_verify(",
+     "the FINDING answer for a repo with no declaration — folded into "
+     "could-not-verify, which is refuse-unless-declared-private turning into "
+     "a shrug"),
+
+    ("declaration_malformed", "declaration.py",
+     '        res.add("declaration_malformed",\n'
+     '                f"{DECLARATION_REL} is not valid JSON: {exc.msg} "',
+     "        res.cannot_verify(\n"
+     '                f"{DECLARATION_REL} is not valid JSON: {exc.msg} "',
+     "the FINDING answer for bytes that are present and wrong — folded into "
+     "could-not-verify, which is the one distinction `exits.py` exists to "
+     "keep"),
+
+    ("declaration_malformed_missing_key", "declaration.py",
+     "    missing = [k for k in REQUIRED_KEYS if k not in doc]",
+     "    missing = []",
+     "the required-key set's test — an ABSENT key then reads exactly like an "
+     "empty declared one, which is the distinction §3.0 turns on"),
+
+    # SHARES ITS SITE with `declaration_ignored_tracked` above, and that is
+    # correct rather than sloppy: the two roster rows prove two firing inputs
+    # (untracked, tracked) of ONE refusal, which is what `finding_row`
+    # declares. The sibling rule in this tool's header is why both may darken.
+    ("declaration_ignored", "declaration.py",
+     "    elif ign:",
+     "    elif False:",
+     "the ignored-declaration verdict itself — the repo then reports a clean "
+     "board over a declaration git cannot see"),
+
+    ("kind_stage_undeclared", "declaration.py",
+     "    absent = [s for s in KIND_STAGES if s not in body]",
+     "    absent = []",
+     "the closed stage list's completeness test — the primitive of the whole "
+     "design, since a kind with an undeclared stage is where the Begehung's "
+     "thirty findings sorted"),
+
+    ("dangling_reference", "declaration.py",
+     "            if lane and lane not in lane_names:",
+     "            if False:",
+     "referential integrity on a declaration's `lane:` reference — a "
+     "declaration pointing at a lane that does not exist then reads exactly "
+     "like one pointing at a lane that does"),
+
+    ("laws_over_cap", "declaration.py",
+     "    if n > LAWS_CAP_LINES:",
+     "    if n > 999999:",
+     "the 60-line cap comparison — the cap is the MECHANISM behind \"laws, "
+     "never method\", and without it the injected prefix has no bound"),
+
+    # NOT `if False:` here. Removing the branch lets `read_text` raise
+    # FileNotFoundError, which the next `except (OSError, …)` turns into the
+    # SAME could-not-verify — the row would not move and the mutation would
+    # read as a row that does not discriminate. So the ANSWER is folded into
+    # silence instead: the parenthesised message becomes a discarded value.
+    ("laws_absent_could_not_verify", "declaration.py",
+     "    if not path.is_file():\n"
+     "        res.cannot_verify(",
+     "    if not path.is_file():\n"
+     "        _folded = (",
+     "the could-not-verify ANSWER for a laws file that is not in the working "
+     "tree — folded into CLEAN, which is the index-resolved zero the design "
+     "names explicitly"),
+
+    ("schema_above_floor", "items.py",
+     '    elif out.head["schema"] > SCHEMA_FLOOR:',
+     "    elif False:",
+     "the version floor's comparison — an old tool then parses a newer file "
+     "and drops every slot it does not recognise, silently"),
+
+    ("item_shape", "items.py",
+     "    if missing:\n        out.problems.append((\n"
+     '            "item_shape", item.line,',
+     "    if False:\n        out.problems.append((\n"
+     '            "item_shape", item.line,',
+     "the missing-slot report in `_close_block` — a hand-written block then "
+     "passes the check that makes \"the tool is the only writer\" a mechanism"),
+
+    ("duplicate_id", "items.py",
+     "        if len(at) > 1:",
+     "        if len(at) > 999:",
+     "the within-file id collision test — two copies of one body then read "
+     "as two bodies"),
+
+    ("unknown_grade_read", "items.py",
+     '    if c["unknown"] or blockers_unverified:',
+     "    if blockers_unverified:",
+     "the census's THIRD ANSWER being carried into the exit code — an "
+     "unclassifiable grade word then rides out under a CLEAN, and every "
+     "count printed beside it is provisional"),
+
+    # --- stages 7-9's own rows, and the six the emit-site coverage check
+    # found already emitting under no registered row.
+
+    ("roster_absent", "lanes.py",
+     "    if entries is None:\n"
+     '        out(f"FINDING [roster_absent] {why}")',
+     "    if entries is None:\n"
+     '        out(f"COULD NOT VERIFY: {why}")\n'
+     "        return exits.COULD_NOT_VERIFY",
+     "the FINDING answer for an absent roster — folded into could-not-verify, "
+     "so a missing board reads as a limit of the run rather than a state of "
+     "the system"),
+
+    ("repo_unresolved", "lanes.py",
+     '        if row.resolution.startswith("UNRESOLVED"):',
+     "        if False:",
+     "the unresolved-repo report — the router then prints a SHORTER board "
+     "rather than a broken one"),
+
+    ("trigger_broken", "lanes.py",
+     "            if t.state == BROKEN:",
+     "            if False:",
+     "the >=2 reserved code being read as BROKEN — a dead predicate then "
+     "falls through to the quiet count, which is a clean board over a router "
+     "that does not work"),
+
+    ("unknown_item", "verbs.py",
+     '        out(f"FINDING [unknown_item] no live block {args.ident!r} in "\n'
+     '            f"{ctx.items_path.name}.")\n'
+     "        return exits.FINDING\n\n    done_parsed, done_why = "
+     "_load(ctx.done_path)",
+     '        out(f"FINDING [unknown_item] no live block {args.ident!r} in "\n'
+     '            f"{ctx.items_path.name}.")\n'
+     "        return exits.CLEAN\n\n    done_parsed, done_why = "
+     "_load(ctx.done_path)",
+     "the exit code behind `item ready`'s unknown-item message — the finding "
+     "is still PRINTED and the run exits CLEAN, which is the shape a caller "
+     "reading only the code cannot see"),
+
+    ("unknown_source", "verbs.py",
+     "    if source not in (SOURCE_SESSION, SOURCE_OPERATOR) and not \\",
+     "    if False and not \\",
+     "the closed door set on `--source` — an unrecognised source then "
+     "decides the cost test's veto silently"),
+
+    ("new_without_typed_blocker", "verbs.py",
+     '        kind, _d = items_mod.classify_blocker(slots["blocked-by"], '
+     "ctx.prefix)\n        if kind in (None, \"none\"):",
+     '        kind, _d = items_mod.classify_blocker(slots["blocked-by"], '
+     "ctx.prefix)\n        if False:",
+     "the typed-blocker requirement on an INCOMPLETE item — it is then "
+     "admitted with nothing to wait for, which is the entry that ages in "
+     "nobody's court"),
+
+    ("move_uncommitted", "verbs.py",
+     "    if r.returncode != 0:",
+     "    if False:",
+     "the commit's own return code — the move's two halves are then reported "
+     "durable together when the third step did not run"),
+
+    ("ledger_shape", "ledger.py",
+     '        out.problems.append(("ledger_shape", 1,\n'
+     '                             "the ledger carries no `schema: <n>` head '
+     'line."))',
+     '        out.head["schema"] = SCHEMA_FLOOR',
+     "the missing-version report on a ledger — the file is then STAMPED with "
+     "the floor by the reader, so a future tool can never refuse it"),
+
+    ("unregistered_kind", "cli.py",
+     '            out(f"FINDING [unregistered_kind] {args.name!r} is not a "\n'
+     "                f\"registered kind. Registered: {', '.join(kinds) or "
+     "'(none)'}\")\n            return exits.FINDING",
+     '            out(f"FINDING [unregistered_kind] {args.name!r} is not a "\n'
+     "                f\"registered kind. Registered: {', '.join(kinds) or "
+     "'(none)'}\")\n            return exits.CLEAN",
+     "the exit code behind `kind show`'s unregistered-kind message"),
+
+    ("emit_site_unregistered", "roster.py",
+     "    if not uncovered:",
+     "    if True:",
+     "assigned item B's own verdict — the coverage check then reports CLEAN "
+     "over a finding emitted under no registered row, which is the "
+     "clean-forever check it exists to prevent"),
+
+    ("migrate_would_overwrite", "migrate.py",
+     "    if not args.force:",
+     "    if False:",
+     "the refusal to overwrite an existing successor carrier — a second "
+     "migration then replaces real work with a re-derivation of the carrier "
+     "it replaced"),
+
+    ("migration_unclassified", "migrate.py",
+     "    if unclassified:",
+     "    if False:",
+     "D-f's report of entries no rule covers — they are then absent from "
+     "both the carrier and the run's verdict, which is a silent loss"),
+
+    ("migration_ledger_nonzero", "migrate.py",
+     "    elif ledger_count != 0:",
+     "    elif False:",
+     "the acceptance criterion 'zero entries routed to the ledger', checked "
+     "at the artifact"),
 ]
 
 
@@ -208,6 +425,29 @@ def verdicts(only=None) -> dict:
     return json.loads(r.stdout.strip().split("\n")[-1])
 
 
+def sibling_map() -> dict:
+    """`{ident: finding_row}` read from the UNMUTATED roster, once.
+
+    Read from the roster rather than restated here: the mapping is the
+    roster's own declaration, and a copy of it in this file would be a second
+    body that goes stale the day a row is added.
+    """
+    src = (
+        "import json, sys\n"
+        f"sys.path.insert(0, {str(CLI)!r})\n"
+        "from lifecycle_core import refusals\n"
+        "print(json.dumps({r.ident: r.expected_finding_row\n"
+        "                  for r in refusals.ROWS}))\n"
+    )
+    r = subprocess.run([sys.executable, "-c", src], capture_output=True,
+                       text=True, cwd=str(REPO))
+    if r.returncode != 0:
+        raise SystemExit(f"the roster's mapping could not be read:\n"
+                         f"{r.stderr[-2000:]}")
+    import json
+    return json.loads(r.stdout.strip().split("\n")[-1])
+
+
 def main(argv) -> int:
     wanted = set(argv) or None
     rows = [m for m in MUTATIONS if wanted is None or m[0] in wanted]
@@ -222,6 +462,7 @@ def main(argv) -> int:
     for f in CORE.glob("*.py"):
         shutil.copy2(f, backup / f.name)
 
+    siblings = sibling_map()
     clear_pycache()
     print("BASELINE — the unmutated roster, stated rather than assumed.")
     print("(Over an already-red baseline a mutate-and-restore proof is "
@@ -253,21 +494,29 @@ def main(argv) -> int:
 
         changed = sorted(k for k in base
                          if base.get(k) != after.get(k))
+        refusal = siblings.get(ident, ident)
+        family = sorted(k for k, v in siblings.items() if v == refusal)
+        strays = [k for k in changed if siblings.get(k, k) != refusal]
         ok_named = ident in changed
-        ok_alone = len(changed) == 1
+        ok_alone = not strays
         verdict = "PROVEN" if (ok_named and ok_alone) else "FAILED"
         print(f"\n[{ident}] {verdict}")
         print(f"    disabled: {what}")
         print(f"    {fname}: {anchor.splitlines()[0][:66]}…")
         print(f"    verdict {base.get(ident)} -> {after.get(ident)}")
         print(f"    rows changed: {', '.join(changed) or 'NONE'}")
+        if len(family) > 1:
+            print(f"    refusal {refusal!r} is proven by {len(family)} roster "
+                  f"row(s): {', '.join(family)} — a mutation at the single "
+                  "site where that refusal is decided darkens the family, "
+                  "and that is not a stray.")
         if not ok_named:
             print("    -> the row did NOT change. The condition this "
                   "mutation names is not what produces its verdict.")
         if not ok_alone:
-            print("    -> more than one row changed. This mutation removed "
-                  "adjacent machinery, so it proves nothing about any one "
-                  "row.")
+            print(f"    -> row(s) proving ANOTHER refusal changed: "
+                  f"{', '.join(strays)}. This mutation removed adjacent "
+                  "machinery, so it proves nothing about any one row.")
         if verdict == "FAILED":
             failures.append(ident)
 
@@ -286,7 +535,7 @@ def main(argv) -> int:
         print(f"\nFAILED: {', '.join(failures)}")
         return FINDING
     print("\nevery recorded arrangement held: the named row went dark, and "
-          "it went dark alone.")
+          "nothing proving another refusal went dark with it.")
     return CLEAN
 
 
