@@ -150,7 +150,7 @@ test("the LEDGER is exempt from ONE class, not from the file", () => {
   assert.deepEqual([...exemptClasses(`${CORPUS}/pinned-s-4b6a435234bf-26-28.json`)], []);
 });
 
-test("this test file itself is exempt from capture-uuid ONLY, not a full skip", () => {
+test("this test file itself is exempt from TWO named classes, not a full skip", () => {
   // The 2026-08-10 companion to the two exemptions above: SOURCE_UUID_ALLOWLIST
   // below carries ~15 deliberately synthetic UUIDs, and scanSourceText's
   // capture-uuid fix (same day) now flags every one of them on a git-range
@@ -159,10 +159,18 @@ test("this test file itself is exempt from capture-uuid ONLY, not a full skip", 
   // re-verifies every UUID it carries against that same allowlist on every
   // `npm test` run. Class-scoped: capture-key-prefix (and everything else)
   // still applies.
+  //
+  // `foreign-path` JOINED IT 2026-08-26, when the class was widened to source
+  // scope: without that bootstrap exemption the widened class denies the
+  // scanner's own source and the change cannot land. The scanner is mandated
+  // byte-identical across both repos, so this assertion moves with it.
+  // Deliberately an EXACT list: a third class appearing here would be a scrub
+  // verdict wearing a bootstrap exemption's costume, and an exact list is what
+  // makes that visible instead of silently absorbed.
   const self = "test/absence-scan.test.mjs";
-  assert.deepEqual([...exemptClasses(self)], ["capture-uuid"]);
+  assert.deepEqual([...exemptClasses(self)].sort(), ["capture-uuid", "foreign-path"]);
   assert.equal(isAllowlisted(self), false,
-    "isAllowlisted means exempt from EVERY class — this file is not, only from one");
+    "isAllowlisted means exempt from EVERY class — this file is not, only from two");
 });
 
 test("a capture UUID planted into the LEDGER is still caught", () => {
