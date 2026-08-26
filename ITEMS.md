@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 11
+added: 12
 compacted: 0
 
 ## lc-1
@@ -172,4 +172,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: a bullet carrying its grade word mid-title classifies correctly, red-first on a fixture drawn from the real idiom; and a bullet carrying a capitalised NON-grade word mid-title must NOT classify — the over-fire half, without which a looser matcher scores identically to a correct one
 evidence: verified here at cf92ad9: the ^ anchor is present at migrate.py:105 and both call sites match against the stripped bullet. The 83/172 and 17/65 counts are the peer's executed measurement, not re-measured here
+blocked-by: NONE
+
+## lc-20
+grade: READY
+requirement: `lifecycle init`'s laws-file branch keys on the git AUTHOR HISTORY of CLAUDE.md, so it answers differently in any mirror, worktree or fresh clone than in the origin — and the wrong answers are plausible enough to book. The deciding rule has three branches (own repo -> CLAUDE.md; foreign tracked CLAUDE.md -> the local overlay; absent -> could-not-verify), and which one fires depends on state the operator does not think of as input: whether the file is tracked at all, and who authored the commits. Nothing in the output announces that the answer is arrangement-dependent.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py
+done-criterion: init states the laws branch it took AND the evidence it read (tracked or not; the author set it found), so a wrong branch is visible in the output rather than silent; red-first against a mirror whose author history differs from its origin, showing the same repo yielding different branches with the reason named each time.
+evidence: peer measurement (dotfiles desk, 2026-08-26), three runs of `lifecycle init` in a scratch mirror of dotfiles giving three different `laws` readings: (1) 'no tracked CLAUDE.md -> overlay branch', the mirror's tree untracked because a `git add -q` had silently failed; (2) 'foreign branch', the mirror's commit authored x@y; (3) the correct 'operator-only branch' once committed as the operator's own address. NOT a test defect: lifecycle's own test_init.py pins the fixture author deliberately, with a persisted user.email/user.name for what determine_laws reads and a per-commit -c override for authoring history as someone else — verified here at cf92ad9. This is the verb in the field.
 blocked-by: NONE
