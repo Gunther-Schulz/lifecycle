@@ -21,6 +21,7 @@ from . import items as items_mod
 from . import migrate as migrate_mod
 from . import retire as retire_mod
 from . import verbs
+from . import workflows as workflows_mod
 
 #: Verbs the design names that this build does not carry yet. Listed rather
 #: than omitted: a refusal that says "wave N builds this" is a fact, while an
@@ -28,12 +29,11 @@ from . import verbs
 #:
 #: `item ratio` LEFT THIS LIST IN THE SCHEMA WAVE. §3.8c placed it — "every
 #: verb has a wave" (law 24) — and a verb with a wave is a verb that gets
-#: built. The wave-2 entries below are placed the same way and are named here
-#: rather than omitted so a caller can tell "this build does not have it"
-#: from "you typed it wrong".
-NOT_YET_BUILT = {
-    "workflow bind": "wave 2 (§3.8c) — a template binding with its slots",
-}
+#: built. `init`, `lane list --json`, `lane new` and now `workflow bind`
+#: left it the same way, each named here until it was built rather than
+#: omitted, so a caller could tell "this build does not have it" from "you
+#: typed it wrong". EMPTY NOW: every verb wave 2 named has one.
+NOT_YET_BUILT = {}
 
 #: Which wave this build carries, for the refusal messages above. A build
 #: that claimed its own coverage from a hardcoded sentence would say
@@ -42,10 +42,10 @@ NOT_YET_BUILT = {
 #: `init` and `lane list --json` LEFT THIS DICT the day they were built (the
 #: L2a dispatch) — a withdrawn-but-left key would read exactly like a
 #: still-true one (`RETIRED_KEYS`'s own reasoning, one file over). `lane new`
-#: LEFT IT TOO (the L2b dispatch, this item). `workflow bind` stays: a
-#: sibling lane's, serialized behind this one on `cli.py`.
+#: LEFT IT TOO (the L2b dispatch, this item). `workflow bind` LEFT IT TOO
+#: (the L2c dispatch, this item) — `NOT_YET_BUILT` is empty as of this wave.
 STAGES_BUILT = "wave 1 stages 1-9, the schema wave (1d), plus wave 2's " \
-               "init, lane list --json, and lane new"
+               "init, lane list --json, lane new, and workflow bind"
 
 
 def resolve_repo(explicit: str | None) -> tuple[Path | None, str | None]:
@@ -379,6 +379,27 @@ def build_parser() -> argparse.ArgumentParser:
                            "`lane new` REFUSES rather than silently "
                            "overwriting")
 
+    wf = sub.add_parser("workflow", help="wave 2 (§3.8b/§3.11) — the "
+                                         "plugin's template registry and "
+                                         "this repo's bindings into it")
+    wf_sub = wf.add_subparsers(dest="workflow_action")
+    wbind = wf_sub.add_parser(
+        "bind", help="bind a `template-bindings` entry to a plugin "
+                     "registry template, filling every required slot")
+    wbind.add_argument("template_id", help="the template id — the "
+                                           "registry file's stem under "
+                                           "plugin/workflows/")
+    wbind.add_argument("--set", dest="set", action="append", default=[],
+                       metavar="SLOT=VALUE",
+                       help="fill one slot at bind time (repeatable); any "
+                            "declared slot not filled is written UNKNOWN "
+                            "— an explicit unanswered slot, never a "
+                            "default")
+    wbind.add_argument("--force", action="store_true",
+                       help="overwrite an existing binding for this "
+                            "template — without it, `workflow bind` "
+                            "REFUSES rather than silently overwriting")
+
     desk = sub.add_parser("desk", help="the delegation-state verb")
     desk_sub = desk.add_subparsers(dest="desk_action")
     dstate = desk_sub.add_parser(
@@ -507,6 +528,22 @@ def main(argv=None) -> int:
             code = lanes_mod.cmd_lane_new(args, out, repo)
         else:
             code = lanes_mod.cmd_lane_list(args, out)
+    elif args.verb == "workflow":
+        if not args.workflow_action:
+            out("COULD NOT VERIFY: `workflow` needs an action: bind.")
+            return exits.COULD_NOT_VERIFY
+        path = f"workflow {args.workflow_action}"
+        if args.workflow_action == "bind":
+            repo, why = resolve_repo(args.repo)
+            if repo is None:
+                out(f"COULD NOT VERIFY: {why}")
+                return exits.COULD_NOT_VERIFY
+            args.resolved_repo = str(repo)
+            code = workflows_mod.cmd_workflow_bind(args, out, repo)
+        else:
+            out(f"COULD NOT VERIFY: `{path}` is not a recognized workflow "
+                "action.")
+            code = exits.COULD_NOT_VERIFY
     elif args.verb == "migrate":
         path = "migrate"
         code = cmd_migrate(args, out)

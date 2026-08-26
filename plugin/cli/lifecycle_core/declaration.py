@@ -467,9 +467,13 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
             doc = {**doc, "lanes": []}
     world = ref_world(doc)
 
-    if "template-bindings" in doc and not isinstance(doc["template-bindings"], dict):
-        res.add("declaration_malformed",
-                "`template-bindings` must be an object (possibly empty).")
+    if "template-bindings" in doc:
+        if not isinstance(doc["template-bindings"], dict):
+            res.add("declaration_malformed",
+                    "`template-bindings` must be an object (possibly "
+                    "empty).")
+        else:
+            _validate_template_bindings(doc["template-bindings"], res)
 
     kinds = doc.get("kinds")
     if "kinds" in doc:
@@ -554,6 +558,52 @@ def _validate_leak_scan(ls, res: Result) -> None:
                 "Turning a leak class off in a public tree is a decision; a "
                 "decision nobody wrote down cannot be reviewed, and it reads "
                 "afterwards exactly like nobody having considered it.")
+
+
+def _validate_template_bindings(tb: dict, res: Result) -> None:
+    """§3.8b/§3.11: every `template-bindings` entry's slots, and its named
+    template's existence, checked against the PLUGIN REGISTRY itself —
+    `workflows.read_template()`'s own directory-and-parser, imported
+    locally to avoid the module cycle (`workflows.py` imports this module
+    at load time; this import is deferred to call time, the same pattern
+    `validate()` already uses for `judgment` above).
+
+    NOTHING DANGLES, IN EITHER DIRECTION (§3.8b's own line): a lane naming
+    a missing workflow already fails `kind check`, and now so does a
+    binding naming a missing template — checked against the SAME registry
+    `workflow bind` reads, never a second, restated list of what exists.
+    """
+    from . import workflows as workflows_mod
+
+    for template_id, binding in tb.items():
+        if not isinstance(binding, dict):
+            res.add("declaration_malformed",
+                    f"`template-bindings` entry {template_id!r} must be "
+                    f"an object mapping slot name to value, got "
+                    f"{type(binding).__name__}.")
+            continue
+
+        unbound = sorted(slot for slot, value in binding.items()
+                         if isinstance(value, str)
+                         and value.strip().upper() == "UNKNOWN")
+        if unbound:
+            res.add("binding_slot_unbound",
+                    f"`template-bindings` entry {template_id!r} holds "
+                    "UNKNOWN in " + ", ".join(f"`{s}`" for s in unbound)
+                    + ". UNKNOWN is an explicit unanswered slot, never a "
+                      "default — the same transitional marker `items.py` "
+                      "uses for a slot nobody has ever recorded, and the "
+                      "grade workflow fills before READY there; here it is "
+                      "`workflow bind --set` that fills it.")
+
+        template_path = workflows_mod.registry_dir() / f"{template_id}.md"
+        if not template_path.is_file():
+            res.add("binding_template_missing",
+                    f"`template-bindings` names template {template_id!r}, "
+                    f"which has no file at {template_path}. Nothing "
+                    "dangles, in either direction: a lane naming a "
+                    "missing workflow already fails `kind check`, and now "
+                    "so does a binding naming a missing template.")
 
 
 def _validate_kind(name: str, body, res: Result, world) -> None:

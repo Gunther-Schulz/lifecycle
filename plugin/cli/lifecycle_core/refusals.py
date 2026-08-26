@@ -212,6 +212,29 @@ def _decl_run(**kw) -> Fired:
         return Fired(res.code, "\n".join(lines))
 
 
+def _decl_run_with_templates(templates: dict, **kw) -> Fired:
+    """`_decl_run`, over a SCRATCH template registry monkeypatched onto
+    `workflows.registry_dir` — the real registry ships holding only
+    `.gitkeep`, and `binding_template_missing`'s row needs at least one
+    template that genuinely resolves so its CONTROL differs from its
+    plant in the one property under test, not in every named template
+    being absent from the real, empty registry."""
+    from . import workflows as workflows_mod
+
+    reg = Path(tempfile.mkdtemp(prefix="lifecycle-tmplreg-"))
+    try:
+        for tid, body in templates.items():
+            (reg / f"{tid}.md").write_text(body, encoding="utf-8")
+        orig = workflows_mod.registry_dir
+        workflows_mod.registry_dir = lambda: reg
+        try:
+            return _decl_run(**kw)
+        finally:
+            workflows_mod.registry_dir = orig
+    finally:
+        shutil.rmtree(reg, ignore_errors=True)
+
+
 def _items_run(items_text: str, prefix: str = "xx") -> Fired:
     with _Scratch(items_text=items_text) as s:
         buf = []
@@ -266,6 +289,12 @@ def _laws_audit_run(laws_text: str) -> Fired:
 def _kind_missing_exit() -> dict:
     d = json.loads(json.dumps(GOOD_DECLARATION))
     del d["kinds"]["items"]["exit"]
+    return d
+
+
+def _decl_with_binding(binding: dict) -> dict:
+    d = json.loads(json.dumps(GOOD_DECLARATION))
+    d["template-bindings"] = binding
     return d
 
 
@@ -366,6 +395,47 @@ ROWS = [
         control=lambda: _decl_run(**_GOOD_KW),
     ),
     Row(
+        ident="binding_slot_unbound",
+        refusal="a `template-bindings` entry with any slot whose value is "
+                "UNKNOWN — an explicit unanswered slot, never a default",
+        firing_input="a binding for `t1` holding `{\"a\": \"UNKNOWN\"}`",
+        expect=exits.FINDING,
+        fire=lambda: _decl_run_with_templates(
+            {"t1": "Slots: a\n\nprocedure text\n"},
+            declaration=_decl_with_binding({"t1": {"a": "UNKNOWN"}}),
+            gitignore="", laws_lines=10),
+        # The SAME binding, filled: the arms differ in the slot's value
+        # alone, and both name a template that genuinely resolves so
+        # `binding_template_missing` cannot fire in either arm.
+        control=lambda: _decl_run_with_templates(
+            {"t1": "Slots: a\n\nprocedure text\n"},
+            declaration=_decl_with_binding({"t1": {"a": "filled-value"}}),
+            gitignore="", laws_lines=10),
+        stage="wave 2",
+    ),
+    Row(
+        ident="binding_template_missing",
+        refusal="a `template-bindings` entry naming a template with no "
+                "file under `plugin/workflows/` — nothing dangles, in "
+                "either direction: a lane naming a missing workflow "
+                "already fails, and now so does a binding naming a "
+                "missing template",
+        firing_input="a binding for `nope`, no `nope.md` in the registry",
+        expect=exits.FINDING,
+        fire=lambda: _decl_run_with_templates(
+            {},
+            declaration=_decl_with_binding({"nope": {}}),
+            gitignore="", laws_lines=10),
+        # The SAME binding, naming a template that DOES exist (with zero
+        # required slots, matching the empty binding body): the arms
+        # differ in the template's presence alone.
+        control=lambda: _decl_run_with_templates(
+            {"nope": "no Slots line — zero required slots\n"},
+            declaration=_decl_with_binding({"nope": {}}),
+            gitignore="", laws_lines=10),
+        stage="wave 2",
+    ),
+    Row(
         # `laws_over_cap` IS GONE, not renamed. R22 withdrew the 60-line cap
         # outright: a laws file may need 200 lines and the only question is
         # whether every line is a law. This row is its REPLACEMENT and it
@@ -455,11 +525,15 @@ PROSE_REST = [
     # "roster absent / repo unresolved" -> `roster_absent` and
     # `repo_unresolved`, which are two firing inputs the design's single
     # table cell names together and this roster fires apart.
+    # RETIRED FROM THIS LIST IN WAVE 2 (the L2c dispatch), now an
+    # executable row below: "unbound required slot" -> `binding_slot_
+    # unbound`, plus `binding_template_missing` for the dangling-in-the-
+    # OTHER-direction case (a binding naming a template with no file) that
+    # this list never named at all.
     ("lane body over one screen", "lanes' BODIES are wave 2 — this build "
                                   "parses `Trigger:` and reports the other "
                                   "three parts by presence, so it has no "
                                   "one-screen cap to fire"),
-    ("unbound required slot", "template bindings are wave 2"),
     ("exact template duplication in a repo", "templates are wave 2"),
     ("detector without disposition", "the detector registry is wave 3"),
     # RETIRED FROM THIS LIST IN THE SCHEMA WAVE, now an executable row:
@@ -1683,6 +1757,68 @@ DESK_ROWS = [
 ]
 
 
+# --- wave 2, item C: `workflow bind`'s own refusal -----------------------
+#
+# `binding_slot_unbound` and `binding_template_missing` (the brief's two
+# `kind check` findings) live in the main `ROWS` list above, beside
+# `dangling_reference` — they are DECLARATION checks, proven the same way
+# every other `_decl_run` row is. This one is different in kind: it is the
+# BIND VERB's own refusal (an existing binding, no `--force`), found the
+# way `lane_new_exists` was found — a verb that writes a file and refuses
+# to overwrite it silently.
+
+def _workflow_cli(argv, *, templates=None, **repo_kw) -> Fired:
+    """Run a `workflow` verb with a scratch template registry monkeypatched
+    onto `workflows.registry_dir` — isolated from the real one the same
+    way `_decl_run_with_templates` isolates it above."""
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+    from . import workflows as workflows_mod
+
+    reg = Path(tempfile.mkdtemp(prefix="lifecycle-wfcli-"))
+    try:
+        for tid, body in (templates or {}).items():
+            (reg / f"{tid}.md").write_text(body, encoding="utf-8")
+        orig = workflows_mod.registry_dir
+        workflows_mod.registry_dir = lambda: reg
+        try:
+            with _Repo(**repo_kw) as r:
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    code = cli_mod.main(["--repo", str(r.dir)] + list(argv))
+                return Fired(code, buf.getvalue())
+        finally:
+            workflows_mod.registry_dir = orig
+    finally:
+        shutil.rmtree(reg, ignore_errors=True)
+
+
+WORKFLOW_ROWS = [
+    Row(
+        ident="workflow_binding_exists",
+        refusal="`workflow bind` refuses to overwrite an existing "
+                "`template-bindings` entry for the same template — no "
+                "silent overwrite, the same rule `init` and `lane new` "
+                "apply to what they write",
+        firing_input="`workflow bind t1` where `template-bindings.t1` "
+                     "already exists",
+        expect=exits.FINDING,
+        fire=lambda: _workflow_cli(
+            ["workflow", "bind", "t1"],
+            templates={"t1": "Slots: a\n\nprocedure\n"},
+            declaration=_decl_with_binding({"t1": {"a": "UNKNOWN"}})),
+        # The SAME existing binding, WITH --force: the arms differ in the
+        # flag alone.
+        control=lambda: _workflow_cli(
+            ["workflow", "bind", "t1", "--force"],
+            templates={"t1": "Slots: a\n\nprocedure\n"},
+            declaration=_decl_with_binding({"t1": {"a": "UNKNOWN"}})),
+        stage="wave 2",
+    ),
+]
+
+
 def _ratio_after_close() -> Fired:
     """`item ratio` over a scratch repo that has actually closed something."""
     import io
@@ -1703,7 +1839,7 @@ def _ratio_after_close() -> Fired:
             os.chdir(here)
 
 
-ROWS = ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS
+ROWS = ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #
