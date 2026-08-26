@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 3
+added: 4
 compacted: 0
 
 ## lc-1
@@ -101,3 +101,12 @@ write-set: plugin/cli/lifecycle_core/verbs.py,decision:lock-lifetime-vs-gitignor
 done-criterion: after item add, either the lock is gone or the repo's .gitignore (written by init) covers it; git status shows no stray lock
 evidence: observed after four item add runs in claude-code-cache-fix: ITEMS.md.lock present, 0 bytes, git check-ignore returns no match
 blocked-by: decision whether the lock is released by deletion or covered by the .gitignore init writes
+
+## lc-12
+grade: READY
+requirement: Nothing checks that a lane carries its decision table — §3.3 names four parsed parts and LANE_PARTS detects three — record: wave2 L2a brief grounding, 2026-08-26
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/lanes.py,test/test_lanes.py
+done-criterion: a lane file missing its decision table is a FINDING with its own refusal row, red-proven on a lane carrying Decides:/Trigger:/Ends: and no table
+evidence: lanes.py:59 LANE_PARTS = ('Decides:', 'Trigger:', 'Ends:'); design §3.3 line 249 'four parsed parts' incl. 'a decision table -> workflows'. The table has no label prefix, so the startswith scan that finds the other three cannot find it.
+blocked-by: NONE
