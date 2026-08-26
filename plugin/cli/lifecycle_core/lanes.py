@@ -71,6 +71,44 @@ def roster_path() -> Path:
     return Path(base) / ROSTER_REL
 
 
+def lane_stub(name: str) -> str:
+    """A lane body carrying all FOUR of §3.3's parsed parts (`LANE_PARTS`
+    above finds three of them by `startswith`; the decision table has no
+    label and is structurally undetectable by that scan — lc-12, dispositioned
+    — but the stub emits it anyway, since a stub that silently dropped a
+    part would read as though its author forgot it).
+
+    ONE STUB BODY, NOT TWO. This used to live in `init.py` as a private
+    `_lane_stub`, written only for `init --lane`'s own use; `lane new`
+    writes the identical file for the identical reason, so this is the one
+    body both callers share rather than two copies that happen to agree
+    today. Moved here (wave 2, item A) because `lanes.py` is where every
+    other lane-shape fact already lives (`LANE_PARTS`, `LANES_DIR`,
+    `_TRIGGER_LINE`) — `init.py` imports this rather than the reverse, since
+    a lane body's shape is this module's concern and `init` is one of two
+    callers of it.
+
+    THE `Trigger:` LINE IS A REAL, SAFE, QUIET PREDICATE (`exit 1`), not a
+    grammar of its own: a lifecycle lane's trigger is EXECUTED AS A SHELL
+    COMMAND (`evaluate_trigger` above; design §3.3), so a placeholder that
+    is not valid shell would make every freshly created lane read as BROKEN
+    in `lane list` — the opposite of quiet-by-default, and exactly the
+    "stub whose own trigger does not parse... ship[ping] at scale" defect
+    this function exists to prevent.
+    """
+    return (
+        f"# Lane: {name}\n\n"
+        "Decides: TODO — the decisions this lane may take alone, each with "
+        "its recording act (anything else returns to the operator)\n\n"
+        "Trigger: exit 1  # TODO — replace with the real predicate: "
+        "0 fire / 1 quiet / >=2 broken\n\n"
+        "| condition | workflow |\n"
+        "|---|---|\n"
+        "| TODO | TODO |\n\n"
+        "Ends: TODO — a closed set of dispositions, each an item transition\n"
+    )
+
+
 # --- the trigger predicate ---------------------------------------------------
 
 @dataclass
@@ -252,6 +290,71 @@ def resolve_repo_row(raw: str) -> RepoRow:
     lanes = res.declaration.get("lanes")
     row.lanes = list(lanes) if isinstance(lanes, list) else []
     return row
+
+
+# --- `lane new` ---------------------------------------------------------------
+
+def cmd_lane_new(args, out, repo: Path) -> int:
+    """`lifecycle lane new <door>` — write `lanes/<door>.md` from
+    `lane_stub()`, as a STUB a human then fills.
+
+    REFUSES IF THE FILE EXISTS; `--force` overwrites. No silent overwrite —
+    the same rule `init` applies to the declaration it writes.
+
+    DOES NOT TOUCH THE DECLARATION. Writing the lane BODY and DECLARING it
+    (adding its name to the repo's `lanes` list) are two separate acts —
+    this verb performs only the first, and says so. CHECKED, NOT ASSUMED:
+    `lane list` walks the declaration's OWN `lanes` list — a file this door
+    is not declared under is not merely flagged, it is INVISIBLE to the
+    router, which has no directory scan of its own. So THIS verb's own
+    output is the one place the author learns "UNREGISTERED" from; `lane
+    list` will say nothing about this door at all until it is declared.
+    (No verb in this build currently adds a lane name to an EXISTING
+    declaration's `lanes` list after `init` time — `lane register` puts a
+    REPO on the router's roster, a different mechanism entirely; that gap
+    is not this verb's to close.)
+
+    VERIFIES ITS OWN WRITE against the real parser before returning CLEAN:
+    a stub `read_lane` cannot read back is not a stub, it is a defect this
+    verb would otherwise ship at scale.
+    """
+    door = args.door
+    lanes_dir = repo / LANES_DIR
+    path = lanes_dir / f"{door}.md"
+    if path.exists() and not getattr(args, "force", False):
+        out(f"FINDING [lane_new_exists] lane {door!r} already exists at "
+            f"{path}. Refusing to overwrite it — pass --force to "
+            "overwrite. A silent overwrite of a lane body is not "
+            "available.")
+        return exits.FINDING
+
+    lanes_dir.mkdir(parents=True, exist_ok=True)
+    path.write_text(lane_stub(door), encoding="utf-8")
+    out(f"wrote lane stub: {path}")
+
+    lane = read_lane(repo, door)
+    if lane.problem:
+        out(f"internal: the stub just written does not read back cleanly "
+            f"via this repo's own reader: {lane.problem} Nothing further "
+            "is claimed about it.")
+        return exits.COULD_NOT_VERIFY
+    out(f"trigger: {lane.trigger!r}")
+    out("parts present: " + (", ".join(lane.parts_present) or "(none)"))
+
+    res = decl.read(repo)
+    declared = list((res.declaration or {}).get("lanes") or []) \
+        if res.declaration else []
+    if door in declared:
+        out(f"declared: {door!r} is already in this repo's `lanes` list.")
+    else:
+        out(f"UNREGISTERED: {door!r} is not yet in this repo's declared "
+            "`lanes` list. Writing the file and declaring it are two acts — "
+            "this verb performs only the first. `lane list` walks the "
+            "declaration's own list, so it will say NOTHING about this "
+            "door — not even a finding — until its name is added there; "
+            "learn this from this tool's own output now, not from the "
+            "router's silence later.")
+    return exits.CLEAN
 
 
 # --- `lane register` ----------------------------------------------------------

@@ -32,7 +32,6 @@ from . import verbs
 #: rather than omitted so a caller can tell "this build does not have it"
 #: from "you typed it wrong".
 NOT_YET_BUILT = {
-    "lane new": "wave 2 (§3.8c) — a lane file from the format",
     "workflow bind": "wave 2 (§3.8c) — a template binding with its slots",
 }
 
@@ -43,10 +42,10 @@ NOT_YET_BUILT = {
 #: `init` and `lane list --json` LEFT THIS DICT the day they were built (the
 #: L2a dispatch) — a withdrawn-but-left key would read exactly like a
 #: still-true one (`RETIRED_KEYS`'s own reasoning, one file over). `lane new`
-#: and `workflow bind` stay: a sibling lane's, serialized behind this one on
-#: `cli.py`.
+#: LEFT IT TOO (the L2b dispatch, this item). `workflow bind` stays: a
+#: sibling lane's, serialized behind this one on `cli.py`.
 STAGES_BUILT = "wave 1 stages 1-9, the schema wave (1d), plus wave 2's " \
-               "init and lane list --json"
+               "init, lane list --json, and lane new"
 
 
 def resolve_repo(explicit: str | None) -> tuple[Path | None, str | None]:
@@ -368,6 +367,17 @@ def build_parser() -> argparse.ArgumentParser:
     lreg.add_argument("repo_path", nargs="?",
                       help="the repo to register (default: the cwd's)")
     lreg.add_argument("--dry-run", dest="dry_run", action="store_true")
+    lnew = lanes_sub.add_parser("new", help="wave 2 (§3.8c) — a lane file "
+                                            "from the format, as a STUB a "
+                                            "human then fills. Does NOT "
+                                            "declare it in this repo's "
+                                            "`lanes` list")
+    lnew.add_argument("door", help="the lane's name — a door the operator "
+                                   "types, never a command")
+    lnew.add_argument("--force", action="store_true",
+                      help="overwrite an existing lane body — without it, "
+                           "`lane new` REFUSES rather than silently "
+                           "overwriting")
 
     desk = sub.add_parser("desk", help="the delegation-state verb")
     desk_sub = desk.add_subparsers(dest="desk_action")
@@ -482,11 +492,19 @@ def main(argv=None) -> int:
         code = cmd_ledger(args, out)
     elif args.verb == "lane":
         if not args.lane_action:
-            out("COULD NOT VERIFY: `lane` needs an action: list, register.")
+            out("COULD NOT VERIFY: `lane` needs an action: list, register, "
+                "new.")
             return exits.COULD_NOT_VERIFY
         path = f"lane {args.lane_action}"
         if args.lane_action == "register":
             code = lanes_mod.cmd_lane_register(args, out)
+        elif args.lane_action == "new":
+            repo, why = resolve_repo(args.repo)
+            if repo is None:
+                out(f"COULD NOT VERIFY: {why}")
+                return exits.COULD_NOT_VERIFY
+            args.resolved_repo = str(repo)
+            code = lanes_mod.cmd_lane_new(args, out, repo)
         else:
             code = lanes_mod.cmd_lane_list(args, out)
     elif args.verb == "migrate":

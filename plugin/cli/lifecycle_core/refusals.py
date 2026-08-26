@@ -1131,6 +1131,21 @@ LANE_ROWS = [
         control=lambda: _migrate_run(ledger_text=ledger_mod.head_text()),
         stage="wave 1, stage 9",
     ),
+    Row(
+        ident="lane_new_exists",
+        refusal="`lane new` refuses to overwrite an existing lane body — "
+                "no silent overwrite, the same rule `init` applies to the "
+                "declaration it writes",
+        firing_input="`lane new x` where `lanes/x.md` already exists",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["lane", "new", "x"],
+                          lane_files={"x": _lane_body("exit 1")}),
+        # The SAME existing file, WITH --force: the arms differ in the flag
+        # alone.
+        control=lambda: _cli(["lane", "new", "x", "--force"],
+                             lane_files={"x": _lane_body("exit 1")}),
+        stage="wave 2",
+    ),
 ]
 
 

@@ -28,6 +28,7 @@ from pathlib import Path
 
 from . import declaration as decl
 from . import exits
+from . import lanes as lanes_mod
 
 
 def derive_id_prefix(repo: Path) -> str:
@@ -277,30 +278,12 @@ def cmd_init(args, out, repo: Path) -> int:
                 "only).")
             continue
         lane_lines_dir.mkdir(parents=True, exist_ok=True)
-        lane_path.write_text(_lane_stub(name), encoding="utf-8")
+        # ONE STUB BODY, NOT TWO (wave 2, item A): `lane_stub` moved to
+        # `lanes.py`, the module that owns every other lane-shape fact
+        # (`LANE_PARTS`, `LANES_DIR`, `_TRIGGER_LINE`) — `lane new` calls
+        # the identical function rather than a copy that could drift from
+        # this one.
+        lane_path.write_text(lanes_mod.lane_stub(name), encoding="utf-8")
         out(f"wrote lane stub: {lane_path}")
 
     return code
-
-
-def _lane_stub(name: str) -> str:
-    """A lane body carrying all FOUR of §3.3's parsed parts (the brief's own
-    divergence note: `LANE_PARTS` finds three of them by `startswith`; the
-    decision table has no label and is structurally undetectable by that
-    scan, but the stub emits it anyway since `lane new` — a sibling item —
-    is the only other place a body like this gets written, and this verb's
-    stub should not read as though it forgot the fourth part). The `Trigger:`
-    line is a real, safe, quiet predicate (`exit 1`) so `lane list` can
-    evaluate it without the operator having written anything yet.
-    """
-    return (
-        f"# Lane: {name}\n\n"
-        "Decides: TODO — the decisions this lane may take alone, each with "
-        "its recording act (anything else returns to the operator)\n\n"
-        "Trigger: exit 1  # TODO — replace with the real predicate: "
-        "0 fire / 1 quiet / >=2 broken\n\n"
-        "| condition | workflow |\n"
-        "|---|---|\n"
-        "| TODO | TODO |\n\n"
-        "Ends: TODO — a closed set of dispositions, each an item transition\n"
-    )
