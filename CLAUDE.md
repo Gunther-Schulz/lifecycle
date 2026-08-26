@@ -88,14 +88,28 @@ journal pointer is where the incident lives.
 12. **Versions climb and never go backwards**; the birth series is `0.1.x`.
     (J10)
 13. **Installed symlinked from the dev checkout** on the machine that builds
-    it; pinned and drift-detected elsewhere; the cache keeps three.
+    it; pinned and drift-detected elsewhere; the cache keeps three. (NO
+    JOURNAL ENTRY SUPPORTS THIS — checked against every J-numbered entry in
+    `JOURNAL.md`, found in none. It restates the design's own deployment
+    convention — §3.8b's homes table row for plugin-cache versions — rather
+    than an incident earned in this repo. A fabricated pointer would be
+    worse than the gap; left uncited until a real incident earns one.)
 14. **`ITEMS.md` carries a schema line**; the tool refuses above its floor.
     (J8)
 15. **Every registered kind declares all its stages**, including the ones a
     later wave implements — declared-but-not-implemented is a state,
-    undeclared is a finding.
+    undeclared is a finding. (NO JOURNAL ENTRY SUPPORTS THIS — checked
+    against every J-numbered entry, found in none. It restates §3.0's own
+    invariant 2 directly rather than an incident earned in this repo; left
+    uncited rather than pinned to a J-entry that does not actually bear it.)
 16. **Templates carry no project identifiers**; a public repo refuses a foreign
-    binding; the default under a missing declaration is refuse.
+    binding; the default under a missing declaration is refuse. (NO JOURNAL
+    ENTRY SUPPORTS THIS — checked against every J-numbered entry, found in
+    none. No template has been extracted yet (§3.3: "No template is
+    extracted until that hook exists"), so no incident about one leaking a
+    project identifier could exist; the missing-declaration default is
+    §3.1's own REFUSE-UNLESS-DECLARED-PRIVATE rule, not an earned lesson.
+    Left uncited until a real incident earns one.)
 17. **Reports are booked from the file, never the summary**; every figure a
     lane reports is re-run at the integrating desk before it is believed — and
     a discrepancy between your count and a lane's is a claim about your

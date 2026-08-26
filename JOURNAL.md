@@ -273,3 +273,13 @@ The migration's first real run turned two entries from a `## Grades` section —
 entries that DESCRIBE the old grade words — into work items. The rule cutting
 that section was in a file the lane had already read. **Reading a rule list and
 applying it are different acts, and only the second is checkable.**
+
+**UNCITED — no law in `CLAUDE.md` cites this entry.** Checked against all 25
+laws: none states "reading a rule and applying it are different acts" or
+this entry's specific migration-shape lesson. Recorded here rather than
+attached to the nearest-sounding law (law 25, the schema-migration law,
+covers a different requirement — that a migration ships with its dry run —
+and would misrepresent this entry's own lesson as that law's basis). Per
+this file's own rule, "a journal entry nothing cites is stale by
+change-coupling": this one is stale until either a new law is earned from
+it or a session finds an existing law it genuinely supports.
