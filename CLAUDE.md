@@ -12,6 +12,108 @@ claude-code-cache-fix (`docs/directives/`), revision 2. Where this
 repo and that document differ, the design wins and the difference is
 a defect here.
 
+**This file is this repo's declared LAWS file. It has no cap — its size is
+reported, never refused (R22).** Laws bind; they do not explain themselves.
+Every law that was earned rather than assumed cites a dated entry in
+`JOURNAL.md`, and **a law without a journal pointer has no basis, while a
+journal entry nothing cites is stale by change-coupling.** Incidents never
+appear inline beside a law: inlining the why is what makes a laws file too
+long to be read, which is the only way a laws file actually fails.
+
+## The INVARIANTS — this plugin's definition of "controlled"
+
+Distinct from LAWS (how a session acts in a repo) and from REFUSALS (checks
+the tool runs): **invariants are properties that must hold of the workspace at
+every moment, whoever worked last, and they do not care who broke them.** They
+open these docs because the refusal registry is DERIVED from them — a row
+exists to defend an invariant, and a row defending none is a row nobody can
+justify. A declaring repo is held to them by the tool, may add its own in its
+declaration, and may never subtract.
+
+1. Every persisted thing resolves to a registered kind.
+2. Every kind has an owner for every stage: writer, reader, staleness, exit,
+   growth control.
+3. One home per kind; a fact lives in exactly one place.
+4. Nothing dangles: every typed reference resolves; every lane has a reader;
+   every producer has a disposition; every detector has a home.
+5. Every exit is recorded — a move, a compaction, a drop, each with its reason
+   and its commit.
+6. Every autonomous decision is recorded with its basis before the act, and is
+   redirectable.
+7. Nothing enters without a reason: an item names its requirement and goal; a
+   kind names why it exists; an unbounded kind names why.
+8. Growth is controlled by flow, never by size.
+9. What the tool cannot enforce is labelled prose-rest, never presented as
+   enforced.
+
+## The LAWS
+
+Every one of these was earned on 2026-08-26, across four dispatches. The
+journal pointer is where the incident lives.
+
+1. **Three answers, always**: clean / finding / could-not-verify. A finding
+   and an unreadable input never share an exit code. (J1)
+2. **Every refusal is a registry row with the input that fires it, proven red
+   first**; a row that cannot be fired is labelled PROSE-REST, never deleted to
+   green the roster. A roster asserting only its plants ships green. (J2, J17)
+3. **The registry is the source**; every table of it elsewhere is a snapshot.
+   Every site that emits a finding maps to a row, or `--test` fails. (J2, J3)
+4. **A red from a module-load or import error is not a discriminating red.**
+   The arrangement is stated: which side was old, where the expectation came
+   from, baseline green first. (J4)
+5. **A check whose verdict is another tool's exit code draws its own pair from
+   that tool**, in the invocation mode the code will use, before the code is
+   written around it. Flags are part of the instrument. (J5)
+6. **No hardcoded machine path, login, repo root or XDG root anywhere**;
+   boundaries are derived at run time. A public tree is the reason. (J6)
+7. **The leak scan is armed before the repo's own first commit** and runs on
+   every push; a clean scan never shown to fire proves nothing. (J7)
+8. **The tool is the only writer of the carriers it owns**; a hand edit that
+   breaks the shape fails at commit; a lock serializes writers. (J8)
+9. **A two-file move is one act**: append, delete, commit. A crash leaves a
+   DUPLICATE, never a loss, and the next check says so. (J8)
+10. **READY is judged, never derived.** Blocker clearance decides
+    schedulability only. (J9)
+11. **A guard that fires on legitimate work stops the lane**; the repair is a
+    declared exemption the guard verifies, never a softened predicate, and
+    `--no-verify` is never taken — it kills every lane in the hook. (J10)
+12. **Versions climb and never go backwards**; the birth series is `0.1.x`.
+    (J10)
+13. **Installed symlinked from the dev checkout** on the machine that builds
+    it; pinned and drift-detected elsewhere; the cache keeps three.
+14. **`ITEMS.md` carries a schema line**; the tool refuses above its floor.
+    (J8)
+15. **Every registered kind declares all its stages**, including the ones a
+    later wave implements — declared-but-not-implemented is a state,
+    undeclared is a finding.
+16. **Templates carry no project identifiers**; a public repo refuses a foreign
+    binding; the default under a missing declaration is refuse.
+17. **Reports are booked from the file, never the summary**; every figure a
+    lane reports is re-run at the integrating desk before it is believed — and
+    a discrepancy between your count and a lane's is a claim about your
+    instrument first. (J11)
+18. **A brief is complete at dispatch**; a correction that matters is a
+    stop-and-redispatch, never an in-place amendment to a file the executor
+    has already read. The report channel names a target the executor can
+    resolve, and the executor re-reads the brief at HEAD before each verifier
+    run. (J12)
+19. **An unverified negative that agrees with a held suspicion is where the
+    free probe is owed** — and where it feels unnecessary. (J13)
+20. **What a push carried is settled at the remote**, never by the local
+    reflog or the hook's printed range. (J14)
+21. **A lane that finds a defect in its own shipped code after its report
+    REPORTS it**; its write grant is over. (J15)
+22. **A check no input can falsify is deleted, not registered**; a partition
+    exact by construction is reported as could-not-verify arithmetic, never as
+    a green row. (J16)
+
+---
+
+The sections below are OPERATIONAL REFERENCE, not laws. Wave 2 sorts them —
+procedures into workflows, measurements into audits — under the design's
+decomposition rule. They are kept here rather than dropped because nothing has
+a home for them yet, and a rule dropped before its home exists is a rule lost.
+
 ## The two exit-code contracts — do not unify them
 
 They are different contracts and a translation layer between them

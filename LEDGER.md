@@ -403,3 +403,23 @@ Boundaries: work items go to `BACKLOG.md`, standing rules to
   costs a permission dialog on every read and write — for the
   operator and for every dispatched agent — and one such prompt
   denied mid-task has already lost a session's work.
+
+- 2026-08-26 — **G10, in the W1c lane's words, landed by the integrating desk
+  because its write grant had ended.** A row whose firing input does not exist
+  cannot be red-proven. Design §3.9's replacement row "a kind grew without an
+  exit event" names `lifecycle retire` as its firing input; that verb is in no
+  D-c list and no D-d stage. Registering it today would put an UNPROVABLE row
+  in the roster — not an unproven one — the same shape the lane removed
+  `migration_reconciliation` for two hours earlier in the same dispatch. Two
+  instances of one class inside one lane, and the strongest single argument
+  for giving the no-caps correction its own brief rather than folding it in.
+  Basis: the lane's addendum; JOURNAL J16.
+
+- 2026-08-26 — **G11, same provenance.** `bound` → the growth-control
+  vocabulary (`bounded-by-exit` / `compacted` / `unbounded-with-reason`) is a
+  SCHEMA change with every declaration as a dependent, landing on a dispatch
+  that had already committed a declaration under the old stage. The migration
+  would have to run over both the schema and the artifact it produced. A wave
+  boundary, not a patch. Cheapest NOW rather than later: exactly one
+  declaration exists today (claude-code-cache-fix's dry-run one), and two exist
+  tomorrow. Basis: the lane's addendum.
