@@ -355,7 +355,7 @@ MUTATIONS = [
      "clean-forever check it exists to prevent"),
 
     ("migrate_would_overwrite", "migrate.py",
-     "    if not args.force:",
+     "    if not args.force and not report_only:",
      "    if False:",
      "the refusal to overwrite an existing successor carrier — a second "
      "migration then replaces real work with a re-derivation of the carrier "

@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 0
+added: 1
 compacted: 0
 
 ## lc-1
@@ -74,3 +74,12 @@ write-set: UNKNOWN
 done-criterion: UNKNOWN
 evidence: BACKLOG.md:77-87
 blocked-by: decision regrade: was READY under the old carrier — READY is judged, never inherited
+
+## lc-9
+grade: NEW
+requirement: The declaration turns the source-scope foreign-path leak class ON, and the shipped scanner has no such scope: its foreign-path class is scoped corpus, so the declaration is honoured by nothing
+goal: enforce-the-invariants
+write-set: tools/absence-scan.mjs, test/absence-scan.test.mjs
+done-criterion: a planted foreign home path in a tracked .md in this repo fires foreign-path and the same file without it is clean, both shown
+evidence: .claude/lifecycle.json leak-scan.reason; tools/absence-scan.mjs CLASSES, the foreign-path entry scoped corpus; JOURNAL J6
+blocked-by: decision the scanner is a byte-identical copy of claude-code-cache-fix's and both copies move together, so the widening lands there first

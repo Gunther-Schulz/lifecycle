@@ -373,6 +373,12 @@ def build_parser() -> argparse.ArgumentParser:
                           "--schema-from run is a dry run that writes nothing")
     mig.add_argument("--force", action="store_true",
                      help="overwrite an existing ITEMS.md/ITEMS-DONE.md")
+    mig.add_argument("--report-only", dest="report_only", action="store_true",
+                     help="re-render the REPORT and touch no carrier. R3 has "
+                          "the report's findings enter the carrier as items "
+                          "and the report then point at their ids, which is "
+                          "circular unless the report can be re-rendered "
+                          "after the intake")
     return p
 
 

@@ -626,7 +626,8 @@ def run(args, out, ctx) -> int:
         out(f"COULD NOT VERIFY: a source carrier could not be read ({exc!r}).")
         return exits.COULD_NOT_VERIFY
 
-    if not args.force:
+    report_only = getattr(args, "report_only", False)
+    if not args.force and not report_only:
         for p in (ctx.items_path, ctx.done_path):
             if p.exists():
                 out(f"FINDING [migrate_would_overwrite] {p.name} already "
@@ -650,8 +651,6 @@ def run(args, out, ctx) -> int:
     baseline = n_items + archive_count
     head = (f"schema: {items_mod.SCHEMA_FLOOR}\n"
             f"baseline: {baseline}\nadded: 0\ncompacted: 0\n")
-    ctx.items_path.write_text(head + "\n" + "\n".join(written),
-                              encoding="utf-8")
     # THE ARCHIVE SECTION IS WRITTEN EVEN WHEN IT IS EMPTY, and it says which
     # of the two it is. A done home with no archive heading and one whose
     # archive is empty look the same from the outside, and only one of them
@@ -669,9 +668,18 @@ def run(args, out, ctx) -> int:
         "# file: the archive below is empty because there was nothing to\n"
         "# archive, which is a different fact from nothing having been read.\n"
         "\n")
-    ctx.done_path.write_text(
-        archive_note + f"schema: {items_mod.SCHEMA_FLOOR}\n\n"
-        + f"{items_mod.ARCHIVE_HEADING}\n\n" + done_text, encoding="utf-8")
+    # `--report-only` RE-RENDERS THE REPORT AND TOUCHES NOTHING ELSE. R3 has
+    # the report's findings enter the carrier as ITEMS via intake and the
+    # report then POINT AT the item ids — which is circular unless the report
+    # can be re-rendered after the intake. Without this flag the pointer would
+    # be a hand edit that the next `migrate` erases, and a pointer with an
+    # expiry date is the kind of arrangement this repo keeps finding.
+    if not report_only:
+        ctx.items_path.write_text(head + "\n" + "\n".join(written),
+                                  encoding="utf-8")
+        ctx.done_path.write_text(
+            archive_note + f"schema: {items_mod.SCHEMA_FLOOR}\n\n"
+            + f"{items_mod.ARCHIVE_HEADING}\n\n" + done_text, encoding="utf-8")
 
     # --- the ledger: NOTHING migrates into it (§3.6, §4 row 1)
     if not ctx.ledger_path.exists():
@@ -687,7 +695,7 @@ def run(args, out, ctx) -> int:
     report_path.write_text(
         render_report(ctx, read, done_read, src_name, done_name, n_items,
                       unclassified, archive_count, baseline, ledger_count,
-                      lwhy),
+                      lwhy, report_rel),
         encoding="utf-8")
 
     # --- the run's own answer
@@ -774,9 +782,27 @@ def blocker_types(entries) -> dict:
     return out
 
 
+def routed_items(ctx, report_rel: str) -> list:
+    """Items whose `evidence` slot CITES this report — read from the carrier.
+
+    THE POINTER IS DERIVED, never written down. A hand-maintained list of
+    "findings routed to items" is a second body for a fact the carrier already
+    holds, and it would go stale the first time an item was closed or
+    renumbered. Anchored on the report's BASENAME inside the evidence slot,
+    which is where an intake naming this report puts it.
+    """
+    basename = Path(report_rel).name
+    try:
+        parsed = items_mod.parse(ctx.items_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError):
+        return []
+    return [it for it in parsed.items
+            if basename in (it.slots.get("evidence") or "")]
+
+
 def render_report(ctx, read, done_read, src_name, done_name, n_items,
                   unclassified, archive_count, baseline, ledger_count,
-                  lwhy) -> str:
+                  lwhy, report_rel="") -> str:
     """The classification report.
 
     IT DESCRIBES ENTRIES; IT DOES NOT QUOTE THEM. Every entry appears as its
@@ -1000,6 +1026,35 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
       f"in `{src_name}`, and git keeps them either way — but a later act "
       "that retires the old carrier drops them to history, and that is worth "
       "deciding rather than discovering.")
+    a("")
+    a("## Where these findings WENT (R3)")
+    a("")
+    a("**A finding in an audit nobody routes is a finding nobody acts on.** "
+      "§3.8c bullet 8 sends this report's findings into the carrier as ITEMS "
+      "via intake, and has the report point at the item ids rather than "
+      "carrying the findings itself. The table below is READ FROM THE "
+      "CARRIER at report time — items whose `evidence` slot cites this file — "
+      "so it cannot go stale against it, and an empty table means the routing "
+      "has not happened rather than that there was nothing to route.")
+    a("")
+    routed = routed_items(ctx, report_rel)
+    if not routed:
+        a("**None yet.** On the FIRST run of a migration this is expected and "
+          "says so: the items are added after the report exists, and "
+          "`lifecycle migrate --report-only` re-renders this section once "
+          "they do. On any later run an empty table is the finding.")
+    else:
+        a("| item | grade | blocked-by | requirement |")
+        a("|---|---|---|---|")
+        for it in routed:
+            a(f"| `{it.ident}` | {it.grade} | "
+              f"`{it.slots.get('blocked-by', '')[:40]}` | "
+              f"{it.slots.get('requirement', '')[:150]} |")
+        a("")
+        a(f"{len(routed)} finding(s) routed. Each is an ITEM with a typed "
+          "blocker, so it sits in a named court and the retire lane can see "
+          "it age — which is the whole difference between a routed finding "
+          "and a paragraph in a file.")
     a("")
     a("## Ledger")
     a("")

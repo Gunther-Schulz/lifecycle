@@ -230,10 +230,22 @@ def cmd_list(out) -> int:
         out(f"    finding row:   {row.expected_finding_row}")
         out(f"    stage:         {row.stage}")
         emitted = sites.get(row.expected_finding_row, [])
-        out(f"    route set:     "
-            + (", ".join(row.route_set) if getattr(row, "route_set", ())
-               else (", ".join(emitted) or "(no emit site — this row's "
-                     "verdict is a code, not a named finding)")))
+        if getattr(row, "route_set", ()):
+            out(f"    route set:     {', '.join(row.route_set)}   (a closed "
+                "VOCABULARY, checked against the source)")
+        elif not emitted:
+            out("    route set:     (no emit site — this row's verdict is a "
+                "code, not a named finding)")
+        else:
+            # THE MODULES AND THE COUNT, never a truncated list of sites. A
+            # list cut off at a column width is a partial view standing in for
+            # its whole body, and the reader cannot tell a short one from a
+            # clipped one. The full sites are in `emit_sites()`, which is what
+            # the coverage check reads.
+            mods = sorted({s.split(":", 1)[0] for s in emitted})
+            out(f"    route set:     {len(emitted)} emit site(s) in "
+                f"{', '.join(mods)}   (derived; this refusal names no closed "
+                "vocabulary for the route check to compare against)")
     out("")
     out("PROSE-REST — named by the design, not fireable here. Labelled with "
         "the reason, never deleted to make a roster green (D-g):")

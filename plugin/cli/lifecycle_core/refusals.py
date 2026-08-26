@@ -462,7 +462,11 @@ PROSE_REST = [
     ("unbound required slot", "template bindings are wave 2"),
     ("exact template duplication in a repo", "templates are wave 2"),
     ("detector without disposition", "the detector registry is wave 3"),
-    ("unregistered persisted thing", "the retire lane's walk is wave 4"),
+    # RETIRED FROM THIS LIST IN THE SCHEMA WAVE, now an executable row:
+    # "unregistered persisted thing" -> `unregistered_persisted_thing`. §3.8c
+    # brought the unregistered-file half of invariant 1 forward from wave 4
+    # (`kind sweep`), so the row has a firing input and a control and is no
+    # longer something this build cannot fire.
     ("version compare (`0.9` vs `0.11`)", "the plugin cache bound is wave 3"),
     ("leak scan on the plugin repo",
      "FIRES, but NOT on the input the design names. The scanner has no "

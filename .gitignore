@@ -1,2 +1,9 @@
 __pycache__/
 *.py[co]
+
+# The carrier lock is a sibling `.lock` file (design §3.1): a writer that
+# locked the file it is about to replace by rename would lose the lock with
+# the inode. It is transient per-process state and never belongs in a tree —
+# and a declaring repo that does not ignore it finds one untracked file per
+# carrier the first time a verb runs.
+*.lock
