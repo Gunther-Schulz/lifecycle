@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 5
+added: 6
 compacted: 0
 
 ## lc-1
@@ -119,3 +119,12 @@ write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/refusals
 done-criterion: a lane file under lanes/ absent from the declaration's lanes list produces a named finding, red-first against a planted undeclared file and green after declaring it; AND test_lane_list_says_nothing_about_an_undeclared_door is INVERTED in the same change — it currently pins the pre-fix behaviour and will go red when this is fixed, which is correct but must not be read as a regression
 evidence: structural: LANES_DIR used only at lanes.py:147 to build a declared name's path, zero glob/iterdir over it anywhere in the package. behavioural: lane list against a repo carrying an undeclared lanes/x.md printed 'declared lanes: 0 — EMPTY, declared rather than absent' and named neither x nor lanes/x.md
 blocked-by: NONE
+
+## lc-14
+grade: READY
+requirement: "lane new" writes lanes/<door>.md but deliberately does not touch the declaration, and no verb adds a lane name to an existing declaration's "lanes" list. Combined with the undeclared-file blindness booked alongside this (lc-13), the default outcome of "lane new" is a lane file that NO verb can see: the tool prints UNREGISTERED as a hint and offers no way to resolve it. Same assumed-delivery shape as init leaving carriers uncreated
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/cli.py,test/test_lane_new.py
+done-criterion: a freshly created lane can reach the declaration's lanes list through a verb, and lane list then shows it; OR the design records that hand-declaring is intended and lane new's message says so with the exact edit to make
+evidence: L2b report (g): no such verb exists today, noted and not built. Note the name collision risk: "lane register" is already taken for the ROSTER of repos, not for a lane within a repo
+blocked-by: decision should registration be a verb, or is hand-editing the declaration the intended flow
