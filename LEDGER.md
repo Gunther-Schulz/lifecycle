@@ -65,9 +65,16 @@ read rather than reporting a clean parse over the part it did.
   §3.9 names "a planted `/home/<user>/…` path in a template"; the
   scanner has no such class (its classes are `b64-run`,
   `nested-payload`, `live-timestamp`, `capture-uuid`, `raw-content`,
-  `capture-key-prefix`). Measured: a planted
-  `/home/g/dev/Gunther-Schulz/private-repo/tools/x.sh` line in a
-  markdown file scans CLEAN, exit 0; a planted `s-`+8-hex token in
+  `capture-key-prefix`). Measured: a planted absolute home path
+  naming a SIBLING repo under the operator's dev tree (the literal is
+  not reproduced here — this repo is built to be published and the
+  path is exactly the class the scan exists to catch; the concrete
+  string is in the desk's internal notes, and `git log -S` over this
+  file's history resolves it for anyone who needs the original
+  measurement) in a markdown file scans CLEAN, exit 0; the same
+  planted line under the SOURCE-scope class shipped 2026-08-26 fires
+  `foreign-path`, exit 2 — which is what closed this gap. A planted
+  `s-`+8-hex token in
   the same file fires `capture-key-prefix`, exit 2. The row was
   red-proven with the second input; the first is reported to the
   judgment desk as a design-vs-instrument gap, since closing it means
