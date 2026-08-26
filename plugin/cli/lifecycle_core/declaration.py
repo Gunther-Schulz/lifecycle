@@ -116,6 +116,25 @@ REQUIRED_KEYS = (
     "goals", "head-rule", "lanes", "template-bindings", "leak-scan", "kinds",
 )
 
+#: `delegation` (wave 2, the stall-detector booking: cache-fix BACKLOG.md's
+#: PARKED "ended on an announcement" entry) is OPTIONAL, deliberately NOT in
+#: `REQUIRED_KEYS`. A new REQUIRED key is a schema bump by definition (§3.8c:
+#: one schema version per repo), and law 25 makes every schema change ship
+#: its migration, dry-run first, over every declared repo — dragging
+#: `migrate --schema-from 2` into a lane whose scope is the verb and the
+#: field, not a migration wave. Absent means "none" — no active delegation —
+#: the same shape `leak-scan` (absent-equivalent: off) and `head-rule`
+#: (bare "none") already use. THE VALUE SHAPE BEYOND "closed two-word
+#: vocabulary" is NOT specified anywhere this build's grounding reaches
+#: (the design document, this repo's CLAUDE.md/JOURNAL.md, the booking
+#: entry) — the wave-3 Stop-hook detector that actually reads this field is
+#: what will need a richer shape (which peer, which lane) if one turns out
+#: to be required, and inventing that shape now would be this lane
+#: deciding wave 3's design. So the vocabulary is the minimum the booking's
+#: own predicate needs ("delegation active AND ..."), flagged in the
+#: dispatch report as a judgment call rather than a brief-specified value.
+DELEGATION_VALUES = ("none", "active")
+
 #: Keys a declaration may NOT carry any more, each with what replaced it.
 #: Named rather than ignored: a withdrawn key left in a file reads exactly
 #: like a live one, and silently dropping it would leave the writer believing
@@ -424,6 +443,19 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
     ls = doc.get("leak-scan")
     if "leak-scan" in doc:
         _validate_leak_scan(ls, res)
+
+    # OPTIONAL, never required (see DELEGATION_VALUES above): `kind check`
+    # accepts a declaration that carries no `delegation` key at all — that
+    # is the absent-means-"none" default, not a finding — and accepts a
+    # present one only from the closed vocabulary. This is the ONLY place
+    # this key is validated; a stray copy elsewhere would be the two-readers
+    # split this design refuses everywhere else.
+    if "delegation" in doc and doc["delegation"] not in DELEGATION_VALUES:
+        res.add("declaration_malformed",
+                f"`delegation` must be one of {', '.join(DELEGATION_VALUES)}"
+                f", got {doc['delegation']!r}. Optional (absent means "
+                "\"none\" — no active delegation); the wave-3 Stop-hook "
+                "detector is what reads it.")
 
     lanes = doc.get("lanes")
     if "lanes" in doc:

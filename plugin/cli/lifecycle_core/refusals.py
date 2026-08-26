@@ -1599,6 +1599,75 @@ SCHEMA_ROWS = [
 ]
 
 
+# --- wave 2, item B: `desk state`'s own closed-vocabulary refusals --------
+#
+# Found the same way the six stage-8 rows above were found: `--test`'s
+# emit-site coverage check ran over the new module and reported both FINDING
+# sites as unregistered. Neither reaches the write step (the vocabulary
+# check runs before the shape check, and both run before `resolve_desk_id`
+# and the write), so — unlike `_lane_cli`'s roster row above — no XDG root
+# needs isolating for the FIRE arm; the CONTROL arm below is a real CLEAN
+# write, though, and that one DOES need its own scratch state root, or a
+# `--test` run leaves `row-desk-*.json` debris under the operator's real
+# `$XDG_STATE_HOME/lifecycle/desk-state/`.
+
+def _desk_cli(argv) -> Fired:
+    """Run one `desk state` invocation under a scratch `XDG_STATE_HOME`,
+    isolated the same way `_lane_cli` isolates `XDG_CONFIG_HOME` above."""
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    with _Repo() as r:
+        state = Path(tempfile.mkdtemp(prefix="lifecycle-state-"))
+        prev = os.environ.get("XDG_STATE_HOME")
+        try:
+            os.environ["XDG_STATE_HOME"] = str(state)
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(r.dir)] + list(argv))
+            return Fired(code, buf.getvalue())
+        finally:
+            if prev is None:
+                os.environ.pop("XDG_STATE_HOME", None)
+            else:
+                os.environ["XDG_STATE_HOME"] = prev
+            shutil.rmtree(state, ignore_errors=True)
+
+
+DESK_ROWS = [
+    Row(
+        ident="desk_state_unknown_value",
+        refusal="a `desk state` value outside the closed vocabulary "
+                "(REPORTED / WAITING-ON / BLOCKED / DONE) is a refusal, not "
+                "a coercion — the vocabulary is closed and an open one "
+                "decays",
+        firing_input="`desk state BOGUS`",
+        expect=exits.FINDING,
+        fire=lambda: _desk_cli(["desk", "state", "BOGUS"]),
+        # The SAME verb, a value the closed vocabulary actually carries: the
+        # arms differ in the value word alone.
+        control=lambda: _desk_cli(["desk", "state", "DONE",
+                                   "--desk", "row-desk-vocab"]),
+        stage="wave 2",
+    ),
+    Row(
+        ident="desk_state_shape",
+        refusal="a closed-vocabulary `desk state` value missing its own "
+                "required argument",
+        firing_input="`desk state REPORTED` with no message id",
+        expect=exits.FINDING,
+        fire=lambda: _desk_cli(["desk", "state", "REPORTED",
+                                "--desk", "row-desk-shape"]),
+        # The SAME value, WITH its required argument: the arms differ in the
+        # argument's presence alone.
+        control=lambda: _desk_cli(["desk", "state", "REPORTED", "msg-1",
+                                   "--desk", "row-desk-shape"]),
+        stage="wave 2",
+    ),
+]
+
+
 def _ratio_after_close() -> Fired:
     """`item ratio` over a scratch repo that has actually closed something."""
     import io
@@ -1619,7 +1688,7 @@ def _ratio_after_close() -> Fired:
             os.chdir(here)
 
 
-ROWS = ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS
+ROWS = ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #

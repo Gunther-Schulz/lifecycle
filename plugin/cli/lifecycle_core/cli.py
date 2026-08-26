@@ -13,6 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from . import desk as desk_mod
 from . import exits, firelog, lanes as lanes_mod, ledger as ledger_mod
 from . import declaration as decl
 from . import init as init_mod
@@ -368,6 +369,24 @@ def build_parser() -> argparse.ArgumentParser:
                       help="the repo to register (default: the cwd's)")
     lreg.add_argument("--dry-run", dest="dry_run", action="store_true")
 
+    desk = sub.add_parser("desk", help="the delegation-state verb")
+    desk_sub = desk.add_subparsers(dest="desk_action")
+    dstate = desk_sub.add_parser(
+        "state", help="record this desk's turn-end state: REPORTED "
+                      "<msg-id> | WAITING-ON <lane|peer> --horizon <t> | "
+                      "BLOCKED <named> | DONE. ALWAYS overwrites — one "
+                      "current state per desk, no history")
+    dstate.add_argument("value", help="REPORTED | WAITING-ON | BLOCKED | "
+                                      "DONE — the closed vocabulary; "
+                                      "anything else is a refusal")
+    dstate.add_argument("argument", nargs="?",
+                        help="the value's own argument: the message id "
+                             "(REPORTED), the lane or peer (WAITING-ON), "
+                             "the named blocker (BLOCKED); DONE takes none")
+    dstate.add_argument("--horizon", help="required with WAITING-ON")
+    dstate.add_argument("--desk", help="explicit desk identity; overrides "
+                                       "CLAUDE_CODE_SESSION_ID (default)")
+
     sub.add_parser("retire", help="the lifecycle walk over every registered "
                                   "kind — homes re-listed, growth read as FLOW")
     sub.add_parser("audit", help="the same walk, READ-ONLY: every check's "
@@ -473,6 +492,23 @@ def main(argv=None) -> int:
     elif args.verb == "migrate":
         path = "migrate"
         code = cmd_migrate(args, out)
+    elif args.verb == "desk":
+        if not args.desk_action:
+            out("COULD NOT VERIFY: `desk` needs an action: state.")
+            return exits.COULD_NOT_VERIFY
+        path = f"desk {args.desk_action}"
+        if args.desk_action == "state":
+            # NOT `resolve_repo`'s own COULD-NOT-VERIFY path: a desk is not
+            # scoped to one repo, so being outside a git work tree with no
+            # `--repo` is not an error here — only the reporting of the
+            # `delegation` field (best-effort) depends on a repo resolving.
+            repo, _why = resolve_repo(args.repo)
+            args.resolved_repo = str(repo) if repo else None
+            code = desk_mod.cmd_desk_state(args, out, repo)
+        else:
+            out(f"COULD NOT VERIFY: `{path}` is not a recognized desk "
+                "action.")
+            code = exits.COULD_NOT_VERIFY
     else:
         stage = NOT_YET_BUILT.get(path, "a later stage")
         out(f"COULD NOT VERIFY: `{path}` is built in {stage} of wave 1; this "
