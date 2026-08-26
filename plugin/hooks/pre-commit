@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+"""The plugin's pre-commit shape check — the seam §3.8c names.
+
+WHAT IT IS FOR. "The tool is the only writer of the carriers it owns" (law 8)
+is a convention until something enforces it at the moment a hand edit would
+land. This is that moment: a commit that stages `ITEMS.md`, `ITEMS-DONE.md`,
+`LEDGER.md` or `.claude/lifecycle.json` is checked against the shape the tool
+writes, and a break stops the commit.
+
+IT READS THE INDEX, NOT THE WORKING TREE. What is committed is what is
+STAGED, and a checker that read the tree would grade a file the commit does
+not contain — passing a broken staged version because the tree beside it is
+fine, and failing a fixed tree because the staged half is not. `git show
+:<path>` is the staged content, materialized into a scratch tree.
+
+IT NEVER INSTALLS A SECOND HOOKS PATH. `core.hooksPath` is the machine's
+global dispatcher and setting a repo-local one REPLACES it, silently killing
+every lane it provides — this repo has that incident recorded. So this script
+is CHAINED: the dispatcher runs the repo-local `.git/hooks/pre-commit` after
+its own lanes, and this file is what that symlink points at.
+
+THREE ANSWERS, and only one of them blocks. A FINDING is a shape break in a
+staged carrier and stops the commit. A COULD NOT VERIFY — no declaration, an
+unreadable file, no python — prints and does NOT block: a hook that blocked
+on its own inability to look would convert a cosmetic failure into an
+outage, and the direction is the dispatcher's own recorded decision (a
+blocked commit is local and repairable; an unchecked PUSH is public and not).
+
+    exit 0  nothing staged for us, or the staged carriers are clean
+    exit 1  a staged carrier breaks the shape the tool writes
+"""
+
+import os
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+CORE = Path(__file__).resolve().parents[1] / "cli"
+
+
+def git(*args, cwd=None):
+    p = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    return p.returncode, p.stdout, p.stderr
+
+
+def repo_root():
+    rc, out, _ = git("rev-parse", "--show-toplevel")
+    return out.strip() if rc == 0 and out.strip() else None
+
+
+def main() -> int:
+    root = repo_root()
+    if root is None:
+        return 0
+    root = Path(root)
+
+    # NOT A DECLARING REPO -> silent exit 0. This hook may be chained in any
+    # repo on the machine; it must never become visible in one that does not
+    # use the tool.
+    if not (root / ".claude" / "lifecycle.json").is_file():
+        return 0
+
+    rc, staged, _ = git("diff", "--cached", "--name-only",
+                        "--diff-filter=ACMR", cwd=str(root))
+    if rc != 0:
+        sys.stderr.write("[lifecycle] COULD NOT VERIFY: the staged file list "
+                         "could not be read. The commit is NOT blocked, and "
+                         "this lane checked nothing.\n")
+        return 0
+    staged_files = [f for f in staged.split("\n") if f.strip()]
+
+    sys.path.insert(0, str(CORE))
+    try:
+        from lifecycle_core import declaration as decl
+        from lifecycle_core import exits
+        from lifecycle_core import items as items_mod
+        from lifecycle_core import ledger as ledger_mod
+    except Exception as exc:                                   # noqa: BLE001
+        sys.stderr.write(f"[lifecycle] COULD NOT VERIFY: the plugin's CLI "
+                         f"could not be imported ({exc!r}). The commit is NOT "
+                         "blocked, and this lane checked nothing.\n")
+        return 0
+
+    res = decl.read(root)
+    if res.declaration is None:
+        sys.stderr.write("[lifecycle] COULD NOT VERIFY: this repo's "
+                         ".claude/lifecycle.json is not readable, so the "
+                         "carriers' homes could not be resolved. The commit "
+                         "is NOT blocked.\n")
+        return 0
+    doc = res.declaration
+    kinds = doc.get("kinds") or {}
+
+    def home(kind):
+        body = kinds.get(kind)
+        h = body.get("home") if isinstance(body, dict) else None
+        return h if isinstance(h, str) and h.strip() and "*" not in h else None
+
+    watched = {}
+    for kind, checker in (("items", "items"), ("done bodies", "done"),
+                          ("ledger lines", "ledger")):
+        h = home(kind)
+        if h:
+            watched[h] = checker
+    decl_rel = str(decl.DECLARATION_REL)
+    watched[decl_rel] = "declaration"
+
+    todo = [f for f in staged_files if f in watched]
+    if not todo:
+        return 0
+
+    findings = []
+    unverified = []
+    with tempfile.TemporaryDirectory(prefix="lifecycle-precommit-") as td:
+        stage = Path(td)
+        for rel in todo:
+            rc, blob, err = git("show", f":{rel}", cwd=str(root))
+            if rc != 0:
+                unverified.append(f"{rel}: `git show :{rel}` failed "
+                                  f"({err.strip()[:120]})")
+                continue
+            target = stage / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(blob, encoding="utf-8")
+
+        prefix = doc.get("id-prefix") or ""
+        for rel in todo:
+            target = stage / rel
+            if not target.is_file():
+                continue
+            buf = []
+            kind = watched[rel]
+            if kind == "items":
+                code = items_mod.check_file(target, buf.append, prefix=prefix)
+            elif kind == "done":
+                code = items_mod.check_done_file(target, buf.append,
+                                                 prefix=prefix)
+            elif kind == "ledger":
+                code = ledger_mod.check_file(target, buf.append)
+            else:
+                # The declaration's own shape is validated against the STAGED
+                # bytes. Its git-visibility and one-schema-per-repo halves need
+                # the real work tree and are `kind check`'s, not this hook's —
+                # said here rather than implied by a green line.
+                import json as _json
+                sub = decl.Result(code=exits.CLEAN)
+                try:
+                    decl.validate(_json.loads(target.read_text("utf-8")), sub)
+                except ValueError as exc:
+                    sub.add("declaration_malformed", f"staged bytes are not "
+                                                     f"valid JSON: {exc}")
+                for f in sub.findings:
+                    buf.append(f"FINDING [{f.row}] {f.message}")
+                for u in sub.unverified:
+                    buf.append(f"COULD NOT VERIFY: {u}")
+                code = sub.code
+            if code == exits.FINDING:
+                findings.append((rel, "\n".join(buf)))
+            elif code == exits.COULD_NOT_VERIFY:
+                unverified.append(f"{rel}: " + "\n".join(buf))
+
+    if unverified:
+        sys.stderr.write("\n[lifecycle] COULD NOT VERIFY, and the commit is "
+                         "NOT blocked by it — these staged carriers were not "
+                         "graded:\n")
+        for u in unverified:
+            sys.stderr.write(f"  - {u}\n")
+
+    if not findings:
+        return 0
+
+    sys.stderr.write("\n[lifecycle] a STAGED carrier breaks the shape the "
+                     "tool writes:\n\n")
+    for rel, body in findings:
+        sys.stderr.write(f"  {rel}\n")
+        for line in body.split("\n"):
+            sys.stderr.write(f"      {line}\n")
+    sys.stderr.write(
+        "\nThe tool is the only writer of the carriers it owns (law 8), and "
+        "this is where that stops being a convention. Repair with the verb "
+        "that owns the file — `lifecycle item add|park|close`, `lifecycle "
+        "ledger add` — rather than by hand, then re-stage.\n"
+        "  -> full report: `lifecycle item check`, `lifecycle ledger check`, "
+        "`lifecycle kind check`\n"
+        "  -> a hand edit that is deliberate and correct is a DECLARED "
+        "exemption in the declaration, never `--no-verify`: the bypass "
+        "disables every lane in the hook rather than the one that fired "
+        "(law 11).\n")
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

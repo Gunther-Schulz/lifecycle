@@ -241,6 +241,82 @@ def resolve_repo_row(raw: str) -> RepoRow:
     return row
 
 
+# --- `lane register` ----------------------------------------------------------
+
+def cmd_lane_register(args, out) -> int:
+    """Put a repo on the roster — the verb that CREATES the router's input.
+
+    NOTHING CREATED THIS FILE BEFORE. `lane list` answered `roster_absent` on
+    this machine for a whole wave, correctly, because the roster's creation
+    sat outside every write boundary and no verb owned it. An absent roster is
+    BROKEN by design (§3.3), so the state was loud — but a loud state nobody
+    can clear is a trigger that trains the override reflex, which is why the
+    verb exists rather than an instruction to write the file by hand.
+
+    IT REFUSES WHAT `lane list` WOULD LATER CALL UNRESOLVED. Registering a
+    path that does not resolve would move the finding from this verb, where
+    the caller is standing right next to the mistake, into every future router
+    run — a listing that is broken from birth.
+
+    IT IS IDEMPOTENT, and it says which of the two happened. "Added" and
+    "already there" are different facts, and a verb that printed one line for
+    both would leave a caller unable to tell a working registration from a
+    no-op.
+    """
+    path = roster_path()
+    target = Path(args.repo_path).expanduser() if args.repo_path else Path.cwd()
+    row = resolve_repo_row(str(target))
+    if row.resolution.startswith("UNRESOLVED"):
+        out(f"FINDING [repo_unresolved] {target} does not resolve: "
+            f"{row.resolution}. Refusing to register it — a roster line that "
+            "cannot be resolved is a finding in every future `lane list`, and "
+            "the moment to catch it is now, next to the caller who typed it.")
+        return exits.FINDING
+    resolved = str(row.path)
+
+    entries, why = read_roster(path)
+    if entries is None and path.exists():
+        out(f"COULD NOT VERIFY: {why}")
+        return exits.COULD_NOT_VERIFY
+    entries = entries or []
+    already = [e for e in entries
+               if str(Path(e).expanduser().resolve()) == resolved
+               or e == resolved]
+    if already:
+        out(f"already registered: {resolved}")
+        out(f"roster: {path}  ({len(entries)} repo(s) listed)")
+        out("lane register: CLEAN — nothing written. The roster already "
+            "carries this repo, and saying so is not the same answer as "
+            "having added it.")
+        return exits.CLEAN
+
+    if args.dry_run:
+        out(f"DRY RUN — would append {resolved} to {path}")
+        out(f"roster: {len(entries)} repo(s) listed today, "
+            f"{len(entries) + 1} after.")
+        out("lane register: CLEAN — nothing was written (--dry-run).")
+        return exits.CLEAN
+
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        existed = path.exists()
+        with open(path, "a", encoding="utf-8") as fh:
+            if not existed:
+                fh.write("# lifecycle roster — one repo path per line.\n"
+                         "# `lane list` is GENERATED over this file; an "
+                         "absent roster is BROKEN, never an empty board.\n")
+            fh.write(resolved + "\n")
+    except OSError as exc:
+        out(f"COULD NOT VERIFY: the roster at {path} could not be written "
+            f"({exc!r}). Nothing was registered and nothing else is claimed.")
+        return exits.COULD_NOT_VERIFY
+
+    out(f"registered: {resolved}")
+    out(f"roster: {path}  ({len(entries) + 1} repo(s) listed)")
+    out("lane register: CLEAN")
+    return exits.CLEAN
+
+
 # --- `lane list` -------------------------------------------------------------
 
 def cmd_lane_list(args, out) -> int:

@@ -37,7 +37,12 @@ from . import exits
 #: The carrier format this build understands. A file stamped ABOVE it is
 #: refused rather than parsed: an old tool reading a new file drops the slots
 #: it does not recognise, and a dropped slot is invisible in the output.
-SCHEMA_FLOOR = 1
+#:
+#: ONE SCHEMA VERSION PER REPO (§3.8c): this floor and the declaration's must
+#: be the same number, and `schema_mismatch` fires where a repo's carrier and
+#: its declaration disagree. The floor answers "can this build read the file";
+#: the mismatch answers "does this repo agree with itself".
+SCHEMA_FLOOR = 2
 
 #: §3.1 — five grades, closed. A repo's declared EXTRA grade words are not
 #: accepted; the migration maps their meanings and its report says so per
@@ -53,6 +58,31 @@ GRADES = GRADES_OPEN + GRADES_CLOSED
 SLOTS = ("grade", "requirement", "goal", "write-set", "done-criterion",
          "evidence", "blocked-by")
 
+#: CLOSED-BODY slots (§3.8c, W1c's G4). `superseded-by:` and `blocker-moot:`
+#: were being WRITTEN onto moved bodies by `item add --join supersede` and
+#: `item close` while being declared nowhere — so the done home carried two
+#: slots no shape check knew about, and a closed body carrying either passed
+#: everything because nothing shape-checked the done home at all.
+#:
+#: They are REAL SLOTS now rather than exempted annotations, and the direction
+#: matters: exempting them by name would have made the done home a place where
+#: an unknown slot is fine, which is the opposite of what a shape check is
+#: for. Optional and closed-only — a LIVE block carrying one is a finding,
+#: because both record something a closure did.
+DONE_ONLY_SLOTS = ("superseded-by", "blocker-moot")
+
+#: The transitional value a migrated slot carries when nobody ever recorded
+#: one (§3.1). DECLARED rather than conventional: the retire lane must not
+#: read it as "advances no goal", the join must never match on it, `item
+#: check` counts it, and `item ready` REFUSES an item holding one — a slot
+#: nobody has written is not a slot the desk has judged.
+UNKNOWN = "UNKNOWN"
+
+#: Which slots may legitimately hold UNKNOWN after a migration. `grade` and
+#: `blocked-by` may not: a grade is always one of the five, and a blocker is
+#: typed or NONE.
+UNKNOWNABLE_SLOTS = ("goal", "write-set", "done-criterion", "evidence")
+
 #: Head lines the carrier understands. `schema` is required and first;
 #: the conservation trio is optional here because the identity that uses it
 #: (`items + done == baseline + added - compacted`) is written by the close
@@ -66,6 +96,14 @@ ARCHIVE_HEADING = "## Archive (pre-migration)"
 _HEAD_LINE = re.compile(r"^([a-z-]+):\s*(.*)$")
 _BLOCK_HEADING = re.compile(r"^##\s+(\S+)\s*$")
 _SLOT_LINE = re.compile(r"^([a-z-]+):\s?(.*)$")
+#: A comment line in the head: a markdown heading or bullet, or an HTML
+#: comment. Matched by SHAPE rather than by a marker the writer must remember,
+#: because the block this licenses is prose a human writes.
+_COMMENT_LINE = re.compile(r"^\s*(#|<!--|-->|-\s|>\s|\*\s)")
+
+
+def _is_comment(raw: str) -> bool:
+    return bool(_COMMENT_LINE.match(raw))
 
 
 @dataclass
@@ -137,11 +175,30 @@ def parse(text: str) -> Parsed:
     lines = text.split("\n")
 
     # --- head
+    #
+    # A COMMENT BLOCK MAY PRECEDE THE SCHEMA LINE (§3.8c). Before this, the
+    # first non-blank line had to BE the schema line, which forced a carrier
+    # in a public repo to be exactly `schema: 1` and nothing else — a file
+    # that could not say what it was for. The permission is deliberately one
+    # way round: comments before the version, never after it. Everything from
+    # the schema line on is tool-written, and a comment there would be a hand
+    # edit in the one region whose shape is the mechanism behind "the tool is
+    # the only writer".
     i = 0
+    seen_schema = False
     while i < len(lines) and not lines[i].startswith("## "):
         raw = lines[i]
         i += 1
         if not raw.strip():
+            continue
+        if _is_comment(raw):
+            if seen_schema:
+                out.problems.append((
+                    "item_shape", i,
+                    f"head line {i} is a comment AFTER the `schema:` line: "
+                    f"{raw[:60]!r}. A comment block may PRECEDE the schema "
+                    "line so a carrier can say what it is for; below it the "
+                    "head is tool-written."))
             continue
         m = _HEAD_LINE.match(raw)
         if not m:
@@ -149,6 +206,8 @@ def parse(text: str) -> Parsed:
                                  f"head line {i} is not `key: value`: {raw!r}"))
             continue
         key, val = m.group(1), m.group(2).strip()
+        if key == "schema":
+            seen_schema = True
         if key not in HEAD_KEYS:
             out.problems.append(("item_shape", i,
                                  f"unknown head key {key!r} on line {i}; the "
@@ -251,7 +310,8 @@ def parse(text: str) -> Parsed:
 
 def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
     missing = [s for s in SLOTS if s not in item.slots]
-    unknown = [s for s in seen_order if s not in SLOTS]
+    unknown = [s for s in seen_order
+               if s not in SLOTS and s not in DONE_ONLY_SLOTS]
     if missing:
         out.problems.append((
             "item_shape", item.line,
@@ -263,13 +323,41 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
         out.problems.append(("item_shape", item.line,
                              f"block {item.ident!r} carries unknown slot(s): "
                              + ", ".join(unknown)))
+
+    # THE CLOSED-BODY SLOTS ARE CLOSED-ONLY, and that is what makes them
+    # slots rather than exemptions. `superseded-by:` records that a closure
+    # replaced this body; `blocker-moot:` records a decision the closure made
+    # moot. Both are things a CLOSE did, so a live block carrying one is a
+    # block claiming an act that has not happened.
+    done_only = [s for s in seen_order if s in DONE_ONLY_SLOTS]
+    if done_only and item.grade not in GRADES_CLOSED:
+        out.problems.append((
+            "done_slot_on_live_item", item.line,
+            f"block {item.ident!r} is {item.grade or '(no grade)'} and carries "
+            + ", ".join(f"`{s}:`" for s in done_only)
+            + " — slot(s) only a CLOSURE writes. `superseded-by:` says a "
+              "closure replaced this body and `blocker-moot:` says a closure "
+              "made a decision moot; on a live item each claims an act that "
+              "has not happened, and the annotation is what a later reader "
+              "would resolve through."))
+
     known_order = [s for s in seen_order if s in SLOTS]
+    tail_out_of_place = [s for s in seen_order[:len(known_order)]
+                         if s in DONE_ONLY_SLOTS]
     if not missing and not unknown and known_order != list(SLOTS):
         out.problems.append((
             "item_shape", item.line,
             f"block {item.ident!r} has its slots out of order: "
             f"{', '.join(known_order)}. The order is fixed so a diff shows "
             "what changed, not where a slot wandered."))
+    elif not missing and not unknown and tail_out_of_place:
+        out.problems.append((
+            "item_shape", item.line,
+            f"block {item.ident!r} carries "
+            + ", ".join(f"`{s}:`" for s in tail_out_of_place)
+            + " among the fixed slots. The closed-body slots follow "
+              "`blocked-by:`, so a diff over a moved body shows the closure's "
+              "annotation as an addition rather than as a reordering."))
     out.items.append(item)
 
 
@@ -607,6 +695,21 @@ def check_file(path: Path, out, prefix: str | None = None) -> int:
     if blockers_unverified:
         out(f"COULD NOT VERIFY: {blockers_unverified}")
 
+    unk_counts, unk_misplaced = unknown_slots(parsed)
+    for ident, line, slot in unk_misplaced:
+        out(f"FINDING [unknown_slot_misplaced] {path.name}:{line}: block "
+            f"{ident!r} holds UNKNOWN in `{slot}`. UNKNOWN is the migration's "
+            "declared marker for a slot nobody ever recorded, and the grade "
+            "workflow fills it — but a grade is one of the five and a blocker "
+            "is typed or NONE, so UNKNOWN there is a value nothing can ever "
+            "fill in.")
+    if unk_counts:
+        out("UNKNOWN slots (the migration's declared transitional value, "
+            "filled by the grade workflow before READY): "
+            + ", ".join(f"{s} {n}" for s, n in sorted(unk_counts.items()))
+            + f" — across {sum(1 for it in parsed.items if unknown_slots_of(it))}"
+              " item(s).")
+
     c = census(parsed)
     out(f"census: open {c['open']}  closed {c['closed']}  "
         f"unknown {sum(c['unknown'].values())}  (total {c['total']})")
@@ -618,14 +721,148 @@ def check_file(path: Path, out, prefix: str | None = None) -> int:
             f"{ARCHIVE_HEADING!r}, held verbatim and not shape-checked.")
 
     code = exits.CLEAN
-    if parsed.problems or bad_ids or untyped:
+    if parsed.problems or bad_ids or untyped or unk_misplaced:
         code = exits.FINDING
     if c["unknown"] or blockers_unverified:
         code = exits.worst([code, exits.COULD_NOT_VERIFY])
 
+    # READY IS REFUSED TO AN ITEM HOLDING AN UNKNOWN SLOT — over the CARRIER,
+    # not only at `item add` (§3.1). The verb is not the only way a block
+    # reaches the file, and a rule enforced only on the write path is a
+    # convention with a mechanism's reputation. This is the one that stops a
+    # migrated entry being graded READY on a slot nobody has ever written.
+    ready_unknown = [(it.ident, it.line, unknown_slots_of(it))
+                     for it in parsed.items
+                     if it.grade == "READY" and unknown_slots_of(it)]
+    for ident, line, slots_ in ready_unknown:
+        out(f"FINDING [ready_with_unknown_slot] {path.name}:{line}: block "
+            f"{ident!r} is READY and still holds UNKNOWN in "
+            + ", ".join(f"`{s}`" for s in slots_)
+            + ". READY is the desk's judgment that a fresh context could "
+              "execute this now, and a slot nobody has ever written is the "
+              "one thing that judgment cannot have been made over.")
+    if ready_unknown:
+        code = exits.worst([code, exits.FINDING])
+
     out(f"item check: {exits.word(code)} — "
-        f"{len(parsed.problems) + len(bad_ids) + len(untyped)} shape "
-        f"finding(s), {len(c['unknown'])} unclassifiable grade word(s).")
+        f"{len(parsed.problems) + len(bad_ids) + len(untyped) + len(unk_misplaced) + len(ready_unknown)}"
+        f" shape finding(s), {len(c['unknown'])} unclassifiable grade word(s).")
+    return code
+
+
+# --- UNKNOWN, the declared transitional value (§3.1) --------------------------
+
+def unknown_slots(parsed: Parsed):
+    """`(count_by_slot, misplaced)` for the migration's UNKNOWN marker.
+
+    UNKNOWN IS DECLARED, NOT CONVENTIONAL. It means "nobody ever recorded
+    one", and every consumer has to know that: the join never matches on it,
+    the retire lane must not read it as "advances no goal", and `item ready`
+    refuses an item holding one. So it is COUNTED here rather than left to be
+    noticed — a migrated carrier where every goal says UNKNOWN and nothing
+    says how many is a carrier whose emptiness is invisible.
+
+    `misplaced` is UNKNOWN in a slot that may never hold it: a grade is one
+    of the five and a blocker is typed or NONE, so UNKNOWN there is a slot
+    value nothing can ever fill in.
+    """
+    counts: dict = {}
+    misplaced = []
+    for it in parsed.items:
+        for slot, value in it.slots.items():
+            if (value or "").strip().upper() != UNKNOWN:
+                continue
+            if slot in UNKNOWNABLE_SLOTS:
+                counts[slot] = counts.get(slot, 0) + 1
+            else:
+                misplaced.append((it.ident, it.line, slot))
+    return counts, misplaced
+
+
+def unknown_slots_of(item: Item) -> list:
+    """Which of one item's slots still hold the migration's marker."""
+    return [s for s in UNKNOWNABLE_SLOTS
+            if (item.slots.get(s) or "").strip().upper() == UNKNOWN]
+
+
+# --- the done home's own shape check (§3.8c; W1c's G4) -----------------------
+
+def check_done_file(path: Path, out, prefix: str | None = None) -> int:
+    """The done home is a KIND with the TOOL as its writer, so shape applies.
+
+    IT DID NOT BEFORE, and that was the gap: `item check` ran `check_file`
+    over the LIVE carrier only, while the done home was parsed for
+    conservation and duplicates by two callers that both ignored
+    `parsed.problems`. A closed body carrying anything at all passed
+    everything.
+
+    THREE THINGS THE LIVE CHECK CANNOT ASK, all of them about closure:
+
+      * every block here is CLOSED — DONE or DROPPED. An open grade in the
+        closure home is a body that arrived by a path that is not a close.
+      * no BLOCKER survives a closure. A closed item waits for nothing, and a
+        blocker left on it is a wait recorded against a body that has stopped
+        waiting — which is exactly what leaves an unanswerable question in the
+        operator's queue after the item that asked it is gone. `item close`
+        clears it and records it as `blocker-moot:`.
+      * the ARCHIVE is skipped, as everywhere else: those bodies predate the
+        tool and were never meant to satisfy a fixed-slot shape.
+    """
+    if not path.exists():
+        out(f"COULD NOT VERIFY: no done home at {path}. An absent closure "
+            "home and an empty one are not the same answer, and neither is "
+            "clean.")
+        return exits.COULD_NOT_VERIFY
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        out(f"COULD NOT VERIFY: {path} could not be read ({exc!r}).")
+        return exits.COULD_NOT_VERIFY
+
+    parsed = parse(text)
+    for row, line, msg in parsed.problems:
+        out(f"FINDING [{row}] {path.name}:{line}: {msg}")
+    if parsed.refused:
+        out(f"done-home check: {exits.word(exits.FINDING)} — the body was not "
+            "parsed.")
+        return exits.FINDING
+
+    bad_ids = check_ids(parsed, prefix)
+    for ident, line in bad_ids:
+        out(f"FINDING [item_shape] {path.name}:{line}: id {ident!r} does not "
+            f"match the declared prefix {prefix!r}.")
+
+    open_here = [it for it in parsed.items if it.grade not in GRADES_CLOSED]
+    for it in open_here:
+        out(f"FINDING [open_grade_in_done_home] {path.name}:{it.line}: block "
+            f"{it.ident!r} is graded {it.grade or '(none)'} in the CLOSURE "
+            "home. Every body here left the carrier by a close, so its grade "
+            "is DONE or DROPPED; an open grade here is a body that arrived by "
+            "some other path — and conservation counts it on the closed side "
+            "whatever its grade says.")
+
+    blocked = []
+    for it in parsed.items:
+        kind, _detail = classify_blocker(it.slots.get("blocked-by", ""), prefix)
+        if kind not in (None, "none"):
+            blocked.append(it)
+            out(f"FINDING [blocked_in_done_home] {path.name}:{it.line}: block "
+                f"{it.ident!r} is closed and still carries "
+                f"`blocked-by: {it.slots.get('blocked-by', '')}`. A closed "
+                "item waits for nothing. `item close` clears the blocker and "
+                "records it as `blocker-moot:` precisely so the operator's "
+                "decision queue does not keep listing a question after the "
+                "item that asked it is gone.")
+
+    n = len(parsed.items)
+    out(f"done home: {n} closed block(s), archive {parsed.archive_lines} "
+        f"line(s) held verbatim and not shape-checked.")
+    code = exits.CLEAN
+    if parsed.problems or bad_ids or open_here or blocked:
+        code = exits.FINDING
+    out(f"done-home check: {exits.word(code)} — "
+        f"{len(parsed.problems) + len(bad_ids) + len(open_here) + len(blocked)}"
+        " finding(s).")
     return code
 
 

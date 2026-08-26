@@ -1,5 +1,12 @@
 {
   "name": "lifecycle",
-  "version": "0.1.6",
-  "description": "Lifecycle management for everything a repo persists. The primitive is the KIND, not the item: every kind of thing a repo keeps is registered in .claude/lifecycle.json with six declared stages — home, writer, reader, staleness, exit, bound — and a kind with an undeclared stage is a checker finding. One entry point, `lifecycle`, with one fire log: `kind` (the registry), `item` (the carrier), `ledger`, `lane list`, `migrate`, `--test`. Two exit-code contracts, deliberately NOT unified: a `lifecycle` verb exits 0 clean / 2 finding / 3 could-not-verify, while a lane's `Trigger:` predicate — a command `lane list` executes — exits 0 fire / 1 quiet / >=2 broken."
+  "version": "0.2.0",
+  "description": "Lifecycle management for everything a repo persists. The primitive is the KIND, not the item: every kind of thing a repo keeps is registered in .claude/lifecycle.json with six declared stages — home, writer, reader, staleness, exit, growth — and a kind with an undeclared stage is a checker finding. Growth is controlled by FLOW, never by size (R22): a kind declares bounded-by-exit, compacted or unbounded-with-reason, and the alarm is a kind that grew without an exit event. One entry point, `lifecycle`, with one fire log: `kind` (the registry, with `sweep`), `item` (the carrier, with `ready --head` and `ratio`), `ledger`, `lane list|register`, `retire`, `audit`, `migrate` (carrier or `--schema-from`), `--test`. Two exit-code contracts, deliberately NOT unified: a `lifecycle` verb exits 0 clean / 2 finding / 3 could-not-verify — an argparse usage error is 3, because unreadable input is not a finding — while a lane's `Trigger:` predicate, a command `lane list` executes, exits 0 fire / 1 quiet / >=2 broken.",
+  "git-hooks": {
+    "pre-commit": {
+      "script": "hooks/pre-commit",
+      "why": "the shape check over STAGED carriers — the seam design §3.8c names. `hooks` is NOT the key: measured on this machine, `hooks` in a plugin.json is Claude Code's HARNESS hook map (PreToolUse and friends, ai-bureau's manifest is the live example), so declaring a git hook there would break the plugin at install time. Git hooks get their own key and the difference is stated rather than discovered.",
+      "registration": "the machine's GLOBAL dispatcher (core.hooksPath -> the operator's dotfiles git/hooks/) chains the repo-local .git/hooks/<name> after its own lanes. A repo-local core.hooksPath would REPLACE that dispatcher and silently kill every lane it provides, so the install symlinks .git/hooks/pre-commit at this script and never touches core.hooksPath."
+    }
+  }
 }

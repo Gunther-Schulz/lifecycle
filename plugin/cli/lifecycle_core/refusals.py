@@ -23,6 +23,7 @@ list does, and `test/test_refusals.py` executes it today.
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -33,36 +34,38 @@ from typing import Callable
 from . import exits
 from . import declaration as decl
 from . import items as items_mod
+from . import ledger as ledger_mod
 
 #: A declaration that is VALID in every respect, used as the control every
 #: row mutates exactly one thing away from. Derived from the design's own
 #: stage list, never read back out of a real repo's file.
 GOOD_DECLARATION = {
-    "schema": 1,
+    "schema": 2,
     "id-prefix": "xx",
     "public": True,
     "laws": "LAWS.md",
     "closure-home": "ITEMS-DONE.md",
     "trigger-policy": "on-demand",
     "goals": ["see", "attribute", "mitigate", "verify", "retire"],
-    "ready-cap": 10,
     "head-rule": {"lead-goal": "mitigate"},
     "lanes": [],
     "template-bindings": {},
+    "leak-scan": {"source-scope-foreign-path": True},
     "kinds": {
         "items": {
             "home": "ITEMS.md",
-            "writer": "tool — lifecycle item add|ready|park|close only",
-            "reader": ["the drain lane", "lifecycle item ratio"],
+            "writer": "verb:item add, verb:item park, verb:item close",
+            "reader": ["verb:item ready", "verb:item ratio"],
             "staleness": "change-coupling — the cited record no longer resolves",
             "exit": {"action": "move",
                      "recording-act": "the item close fire-log line"},
-            "bound": "unbounded, declared why: the ready-cap bounds the head",
+            "growth": "bounded-by-exit — every item leaves by a recorded "
+                      "closure or a recorded drop",
         },
     },
 }
 
-GOOD_ITEMS = """schema: 1
+GOOD_ITEMS = """schema: 2
 baseline: 0
 
 ## xx-1
@@ -97,6 +100,15 @@ class Row:
     fire: Callable[[], Fired]
     control: Callable[[], Fired]
     stage: str = "wave 1, stages 1-3"
+    #: THE ROUTE SET (§3.8c): the closed vocabulary this refusal's own TEXT
+    #: names. Read from the DESIGN's side — a declared tuple in the module the
+    #: refusal defends — never from the resolver it grades. An expectation
+    #: derived from the artifact it grades moves with the mutant.
+    route_set: tuple = ()
+    #: How the routes the CODE actually watches are DERIVED FROM THE SOURCE,
+    #: exactly as the emit-site check derives sites. A row declaring a route
+    #: set without this would be comparing a claim against itself.
+    routes_watched: Callable[[], set] | None = None
     #: Set only where a roster row is NOT one-to-one with a FINDING row —
     #: two roster rows can prove two firing inputs of ONE refusal (the
     #: ignored declaration, tracked and untracked). Declared rather than
@@ -142,8 +154,18 @@ class _Scratch:
             (self.dir / "LAWS.md").write_text(
                 "\n".join(f"law {i}" for i in range(laws_lines)) + "\n",
                 encoding="utf-8")
-        if items_text is not None:
-            (self.dir / "ITEMS.md").write_text(items_text, encoding="utf-8")
+        # THE CARRIERS ARE SEEDED BY DEFAULT, at the declaration's own schema.
+        # One schema version per repo (§3.8c) is checked over the CARRIERS, so
+        # a scratch repo with no carriers answers COULD NOT VERIFY for that
+        # question and every declaration row's control degrades from CLEAN to
+        # code 3 — a control that differs from its plant for the wrong reason,
+        # which is a pair that has stopped discriminating.
+        (self.dir / "ITEMS.md").write_text(
+            items_text if items_text is not None else EMPTY_ITEMS,
+            encoding="utf-8")
+        (self.dir / "ITEMS-DONE.md").write_text(EMPTY_DONE, encoding="utf-8")
+        (self.dir / "LEDGER.md").write_text(ledger_mod.head_text(),
+                                            encoding="utf-8")
         if track:
             # `-f` because the plant's whole point is a path git is ignoring:
             # a plain `git add` there is silently a no-op, and the row would
@@ -194,6 +216,48 @@ def _items_run(items_text: str, prefix: str = "xx") -> Fired:
     with _Scratch(items_text=items_text) as s:
         buf = []
         code = items_mod.check_file(s.dir / "ITEMS.md", buf.append, prefix=prefix)
+        return Fired(code, "\n".join(buf))
+
+
+def _done_run(done_text: str, prefix: str = "xx") -> Fired:
+    """The DONE HOME's own shape check, over a scratch closure home."""
+    with _Scratch() as s:
+        p = s.dir / "ITEMS-DONE.md"
+        p.write_text(done_text, encoding="utf-8")
+        buf = []
+        code = items_mod.check_done_file(p, buf.append, prefix=prefix)
+        return Fired(code, "\n".join(buf))
+
+
+#: A laws file written to the discipline: a numbered law list, each law's
+#: basis a ONE-LINE journal pointer. Deliberately longer than the 60-line cap
+#: R22 withdrew — the replacement checks SCOPE, and a long well-scoped laws
+#: file is correct.
+LAWS_CLEAN = (
+    "# repo — working discipline\n\n"
+    "This file is this repo's declared LAWS file. Laws bind; they do not\n"
+    "explain themselves. Every law cites a dated entry in the JOURNAL.\n\n"
+    "## The LAWS\n\n"
+    + "".join(f"{i}. A law, stated as one binding sentence. (J{i})\n"
+             for i in range(1, 61))
+    + "\n")
+
+#: The same file with ONE mis-homed paragraph appended: an incident with its
+#: date and its measured figure, which belongs in the JOURNAL and in an AUDIT.
+LAWS_WITH_INCIDENT = LAWS_CLEAN + (
+    "\n## Why law 12 exists\n\n"
+    "On 2026-08-11 the declared head reached 12 against a cap of 10 and the\n"
+    "push was refused; the repair regraded two entries, so the cap fought\n"
+    "the grading rather than the growth.\n")
+
+
+def _laws_audit_run(laws_text: str) -> Fired:
+    """The laws scope audit over a scratch repo's declared laws file."""
+    from . import retire as retire_mod
+    with _Scratch() as s:
+        (s.dir / "LAWS.md").write_text(laws_text, encoding="utf-8")
+        buf = []
+        code = retire_mod.laws_scope_audit(s.dir, "LAWS.md", buf.append)
         return Fired(code, "\n".join(buf))
 
 
@@ -302,14 +366,28 @@ ROWS = [
         control=lambda: _decl_run(**_GOOD_KW),
     ),
     Row(
-        ident="laws_over_cap",
-        refusal="laws file over cap",
-        firing_input="line 61 of the declared laws file",
+        # `laws_over_cap` IS GONE, not renamed. R22 withdrew the 60-line cap
+        # outright: a laws file may need 200 lines and the only question is
+        # whether every line is a law. This row is its REPLACEMENT and it
+        # checks a different property — SCOPE, not size — so the size figure
+        # it prints decides nothing and no input can make it fire on length.
+        ident="laws_scope_audit",
+        refusal="a line in the declared laws file carries ANOTHER KIND's "
+                "marker — a numbered step sequence (workflow), a dated "
+                "incident (journal), a measured figure with a unit (audit), a "
+                "file:line citation wrapped in explanation (journal). "
+                "POSSIBLY mis-homed: a finding for review, never a refusal, "
+                "since the same markers appear legitimately inside a law's "
+                "one-line basis pointer",
+        firing_input="a laws file whose law list is followed by a dated "
+                     "incident paragraph",
         expect=exits.FINDING,
-        fire=lambda: _decl_run(declaration=GOOD_DECLARATION, gitignore="",
-                               laws_lines=decl.LAWS_CAP_LINES + 1),
-        control=lambda: _decl_run(declaration=GOOD_DECLARATION, gitignore="",
-                                  laws_lines=decl.LAWS_CAP_LINES),
+        fire=lambda: _laws_audit_run(LAWS_WITH_INCIDENT),
+        # The SAME laws file with the incident paragraph removed: the arms
+        # differ in the mis-homed prose alone, not in whether the file has a
+        # law list — and the control is 40 lines longer than the retired cap,
+        # which is the point of the replacement.
+        control=lambda: _laws_audit_run(LAWS_CLEAN),
     ),
     Row(
         ident="laws_absent_could_not_verify",
@@ -327,7 +405,8 @@ ROWS = [
         firing_input="`schema: <n+1>` in the carrier head",
         expect=exits.FINDING,
         fire=lambda: _items_run(
-            GOOD_ITEMS.replace("schema: 1", f"schema: {items_mod.SCHEMA_FLOOR + 1}", 1)),
+            GOOD_ITEMS.replace(f"schema: {items_mod.SCHEMA_FLOOR}",
+                       f"schema: {items_mod.SCHEMA_FLOOR + 1}", 1)),
         control=lambda: _items_run(GOOD_ITEMS),
     ),
     Row(
@@ -412,43 +491,64 @@ PROSE_REST = [
 #: out of a repo: an expectation derived from the artifact it grades moves
 #: with the mutant.
 GOOD_FULL_DECLARATION = {
-    "schema": 1, "id-prefix": "xx", "public": False, "laws": "LAWS.md",
+    "schema": 2, "id-prefix": "xx", "public": False, "laws": "LAWS.md",
     "closure-home": "ITEMS-DONE.md", "trigger-policy": "on-demand",
     "goals": ["see", "attribute", "mitigate", "verify", "retire"],
-    "ready-cap": 10, "head-rule": {"lead-goal": "mitigate"},
+    "head-rule": {"lead-goal": "mitigate"},
     "lanes": [], "template-bindings": {},
+    "leak-scan": {"source-scope-foreign-path": True},
     "kinds": {
         "items": {
             "home": "ITEMS.md",
-            "writer": "tool — lifecycle item add|ready|park|close only",
-            "reader": ["the drain lane", "lifecycle item ratio"],
+            "writer": "verb:item add, verb:item park, verb:item close",
+            "reader": ["verb:item ready", "verb:item ratio"],
             "staleness": "change-coupling — the cited record no longer resolves",
             "exit": {"action": "move",
                      "recording-act": "the item close fire-log line"},
-            "bound": "unbounded, declared why: the ready-cap bounds the head",
+            "growth": "bounded-by-exit — every item leaves by a recorded "
+                      "closure or a recorded drop",
         },
         "done bodies": {
             "home": "ITEMS-DONE.md",
-            "writer": "tool — lifecycle item close, the atomic move",
-            "reader": ["the retire lane's conservation check"],
+            "writer": "verb:item close",
+            "reader": ["verb:item check", "verb:retire"],
             "staleness": "none, declared why: a closure record is history",
             "exit": {"action": "compact",
                      "recording-act": "a ledger decision line naming the range"},
-            "bound": "unbounded, declared why: this is the archive",
+            "growth": "compacted — done bodies fold on the retire lane's rule",
         },
         "ledger lines": {
             "home": "LEDGER.md",
-            "writer": "tool for the slots, session for the reason prose",
-            "reader": ["the grade workflow's rejected gate"],
+            "writer": "verb:ledger add, session",
+            "reader": ["verb:ledger rejected"],
             "staleness": "none, declared why: append-only decision history",
             "exit": {"action": "never", "recording-act": "compaction only"},
-            "bound": "unbounded, declared why: one line per decision event",
+            "growth": "unbounded-with-reason — one line per decision event and "
+                      "no bodies; the decision rate is the control",
+        },
+        # THE LAWS FILE IS A KIND. Registered here rather than left implicit:
+        # `kind sweep` asks the world whether anything sits outside the
+        # registry, and a fixture whose own laws file is unregistered makes
+        # the sweep's CONTROL fire — a control going red for the fixture's
+        # reason rather than the row's (J18's shape, one axis over).
+        "laws": {
+            "home": "LAWS.md",
+            "writer": "session",
+            "reader": ["session", "verb:audit"],
+            "staleness": "change-coupling — a law whose journal pointer no "
+                         "longer resolves has lost its basis",
+            "exit": {"action": "never",
+                     "recording-act": "a retirement is a ledger decision line "
+                                      "naming the law and the evidence"},
+            "growth": "unbounded-with-reason — no cap (R22); the control is "
+                      "SCOPE, checked by the laws scope audit, and the size "
+                      "is reported as a number",
         },
     },
 }
 
 #: A carrier head whose conservation identity balances against ONE live item.
-SEED_ITEMS = """schema: 1
+SEED_ITEMS = """schema: 2
 baseline: 1
 added: 0
 compacted: 0
@@ -463,8 +563,8 @@ evidence: none yet
 blocked-by: NONE
 """
 
-EMPTY_ITEMS = "schema: 1\nbaseline: 0\nadded: 0\ncompacted: 0\n"
-EMPTY_DONE = "schema: 1\n"
+EMPTY_ITEMS = "schema: 2\nbaseline: 0\nadded: 0\ncompacted: 0\n"
+EMPTY_DONE = "schema: 2\n"
 
 #: A complete, valid `item add` — the argument baseline every row below
 #: mutates exactly one thing away from. A row that built its own argument
@@ -515,7 +615,7 @@ class _Repo:
         (self.dir / "ITEMS-DONE.md").write_text(
             EMPTY_DONE if done is None else done, encoding="utf-8")
         (self.dir / "LEDGER.md").write_text(
-            "schema: 1\n" if ledger_text is None else ledger_text,
+            ledger_mod.head_text() if ledger_text is None else ledger_text,
             encoding="utf-8")
         for name, body in (lane_files or {}).items():
             (self.dir / "lanes").mkdir(exist_ok=True)
@@ -955,8 +1055,8 @@ LANE_ROWS = [
         fire=lambda: _cli(["ledger", "check"],
                           ledger_text="dropped: xx-1 — overtaken\n"),
         control=lambda: _cli(["ledger", "check"],
-                             ledger_text="schema: 1\ndropped: xx-1 — "
-                                         "overtaken\n"),
+                             ledger_text=ledger_mod.head_text()
+                                         + "dropped: xx-1 — overtaken\n"),
         stage="wave 1, stage 8 (found by the emit-site coverage check)",
     ),
     Row(
@@ -1022,8 +1122,9 @@ LANE_ROWS = [
                      "runs",
         expect=exits.FINDING,
         fire=lambda: _migrate_run(
-            ledger_text="schema: 1\ndropped: xx-1 — overtaken\n"),
-        control=lambda: _migrate_run(ledger_text="schema: 1\n"),
+            ledger_text=ledger_mod.head_text()
+                        + "dropped: xx-1 — overtaken\n"),
+        control=lambda: _migrate_run(ledger_text=ledger_mod.head_text()),
         stage="wave 1, stage 9",
     ),
 ]
@@ -1108,4 +1209,426 @@ def _split_closure_home() -> dict:
     return d
 
 
-ROWS = ROWS + VERB_ROWS + LANE_ROWS
+# --- the SCHEMA WAVE (1d): the rows §3.8c's decisions create -----------------
+#
+# Each of these defends a decision round 4 accepted, and each is red-proven
+# the same way every row above is: a plant, a control differing in exactly the
+# thing under test, and a recorded mutation in `tools/prove-rows.py`.
+
+def _decl_without(key: str) -> dict:
+    d = json.loads(json.dumps(GOOD_DECLARATION))
+    d.pop(key, None)
+    return d
+
+
+def _decl_with(**kw) -> dict:
+    d = json.loads(json.dumps(GOOD_DECLARATION))
+    d.update(kw)
+    return d
+
+
+def _kind_field(stage: str, value) -> dict:
+    d = json.loads(json.dumps(GOOD_DECLARATION))
+    d["kinds"]["items"][stage] = value
+    return d
+
+
+def _watched_ref_types() -> set:
+    """Which typed-reference kinds the RESOLVER actually resolves.
+
+    DERIVED FROM THE SOURCE of `_check_typed_refs`, never from a list beside
+    it: a set restated from the code it grades is an expectation with the same
+    parentage as its subject, and it stays green the day a type is added and
+    left unresolved. The resolver's pool table maps each PREFIXED type to what
+    it resolves against, so the types it can resolve are that table's keys; a
+    BARE role resolves by definition, and the branch that returns early on one
+    is what makes that true.
+    """
+    src = Path(decl.__file__).read_text(encoding="utf-8")
+    body = src.split("def _check_typed_refs", 1)[1].split("\ndef ", 1)[0]
+    found = set(re.findall(r'"([a-z]+)": \(world\.', body))
+    if "if typ in REF_BARE" in body:
+        found |= set(decl.REF_BARE)
+    return found
+
+
+def _watched_schema_carriers() -> set:
+    """Which CARRIERS the schema-floor refusal is actually emitted from.
+
+    Derived from the emit sites, exactly as the coverage check derives them.
+    The mapping from module to carrier is the design's: one parser serves both
+    item homes, so a site in `items.py` watches the live carrier and the
+    closure home together.
+    """
+    from . import roster as roster_mod
+    per_module = {
+        "declaration.py": ("declaration",),
+        "items.py": ("items", "done"),
+        "ledger.py": ("ledger",),
+    }
+    out = set()
+    for site in roster_mod.emit_sites().get("schema_above_floor", []):
+        out.update(per_module.get(site.split(":", 1)[0], ()))
+    return out
+
+
+def _route_check_over_copy(*, narrow: bool) -> Fired:
+    """Run the ROUTE-SET check over a COPY of this package.
+
+    `narrow=True` mutates the copy's reference resolver back to the ONE type
+    it watched before this wave — `lane:` — which is the OLD implementation
+    the new expectation has to be run against (law 4). A copy rather than the
+    live tree, for the reason `_coverage_over_copy` gives: the check's red
+    must not depend on editing the module that is running it.
+    """
+    d = Path(tempfile.mkdtemp(prefix="lifecycle-routes-"))
+    try:
+        for f in Path(__file__).resolve().parent.glob("*.py"):
+            shutil.copy2(f, d / f.name)
+        if narrow:
+            # THE POOL TABLE is what the derivation reads, so the pool table is
+            # what the mutation narrows. Disabling the branch beneath it would
+            # leave the derived set unchanged and the check green — a mutation
+            # that misses its target and reads as a check that does not
+            # discriminate. Measured while building this row.
+            target = d / "declaration.py"
+            text = target.read_text(encoding="utf-8")
+            for gone in ('"verb": (world.verbs, "this build\'s CLI verbs"),',
+                         '"hook": (world.hooks, "the hooks the plugin declares in "',
+                         '"producer": (world.producers, "the producers this declaration\'s "'):
+                assert gone in text, f"the route-narrowing anchor moved: {gone[:30]}"
+            text = text.replace(
+                '''            "verb": (world.verbs, "this build\'s CLI verbs"),
+            "hook": (world.hooks, "the hooks the plugin declares in "
+                                  "plugin.json"),
+            "producer": (world.producers, "the producers this declaration\'s "
+                                          "kinds name as writers"),
+''', "", 1)
+            bare = '''        if typ in REF_BARE:
+            continue
+'''
+            assert bare in text, "the bare-role anchor moved"
+            text = text.replace(bare, "", 1)
+            target.write_text(text, encoding="utf-8")
+        src = (
+            "import json, sys\n"
+            f"sys.path.insert(0, {str(d.parent)!r})\n"
+            f"sys.path.insert(0, {str(Path(__file__).resolve().parents[1])!r})\n"
+            "import importlib.util, types\n"
+            f"pkg = types.ModuleType('lcopy')\n"
+            f"pkg.__path__ = [{str(d)!r}]\n"
+            "sys.modules['lcopy'] = pkg\n"
+            "from lcopy import roster as r\n"
+            "buf = []\n"
+            "code = r.check_routes(buf.append)\n"
+            "print(json.dumps({'code': code, 'out': '\\n'.join(buf)}))\n"
+        )
+        p = subprocess.run([__import__("sys").executable, "-c", src],
+                           capture_output=True, text=True)
+        if p.returncode != 0:
+            return Fired(-1, f"SETUP FAILED: {p.stderr[-800:]}")
+        rec = json.loads(p.stdout.strip().split("\n")[-1])
+        return Fired(rec["code"], rec["out"])
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def _retire_growth(*, closed: bool) -> Fired:
+    """`retire`'s GROWTH question over a scratch repo, with and without a close.
+
+    The control CLOSES an item through the real verb, so the exit event it
+    reads is one the tool actually recorded rather than a line this row wrote
+    into a log. A planted log line would prove the reader parses JSON.
+    """
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+    from . import retire as retire_mod
+
+    with _Repo(items=SEED_ITEMS) as r:
+        here = os.getcwd()
+        try:
+            os.chdir(str(r.dir))
+            if closed:
+                with redirect_stdout(io.StringIO()):
+                    cli_mod.main(["--repo", str(r.dir), "item", "close",
+                                  "xx-1"])
+            buf = []
+            code = retire_mod.growth_verdict(r.dir, GOOD_FULL_DECLARATION,
+                                             buf.append)
+            return Fired(code, "\n".join(buf))
+        finally:
+            os.chdir(here)
+
+
+def _sweep_run(*, stray: bool) -> Fired:
+    """`kind sweep` over a scratch repo, with and without an unregistered file."""
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    with _Repo() as r:
+        if stray:
+            (r.dir / "STRAY-NOTES.md").write_text("a file no kind claims\n",
+                                                  encoding="utf-8")
+            subprocess.run(["git", "-C", str(r.dir), "add", "STRAY-NOTES.md"],
+                           capture_output=True, text=True)
+            subprocess.run(["git", "-C", str(r.dir), "commit", "-qm", "stray",
+                            "--", "STRAY-NOTES.md"],
+                           capture_output=True, text=True)
+        here = os.getcwd()
+        try:
+            os.chdir(str(r.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(r.dir), "kind", "sweep"])
+            return Fired(code, buf.getvalue())
+        finally:
+            os.chdir(here)
+
+
+#: A live carrier whose head declares a capture flow and whose done home is
+#: empty — booking with no drain at all.
+# THREE, not four: the control closes ONE item, so the arms differ in the
+# DRAIN alone and the control lands exactly AT the 3:1 tripwire rather than
+# over it. A pair whose control is still over the wire would separate nothing.
+NO_DRAIN_ITEMS = SEED_ITEMS.replace("added: 0", "added: 3")
+
+#: A closed body, as `item close` writes one.
+DONE_BLOCK = """## xx-1
+grade: DONE
+requirement: a closed body — record: LEDGER.md
+goal: mitigate
+write-set: tools/thing.py
+done-criterion: the check goes red on the real defect and green after
+evidence: none yet
+blocked-by: NONE
+"""
+
+SCHEMA_ROWS = [
+    Row(
+        ident="declaration_retired_key",
+        refusal="a declaration carrying a key this schema WITHDREW — "
+                "`ready-cap`, whose whole premise R22 removed",
+        firing_input="a declaration still carrying `ready-cap: 10`",
+        expect=exits.FINDING,
+        fire=lambda: _decl_run(declaration=_decl_with(**{"ready-cap": 10}),
+                               gitignore="", laws_lines=10),
+        # The SAME declaration without the withdrawn key: the arms differ in
+        # that key alone, not in whether the declaration is otherwise valid.
+        control=lambda: _decl_run(**_GOOD_KW),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="leak_scan_undeclared_reason",
+        refusal="the source-scope foreign-path class turned OFF with no "
+                "reason declared (§3.3 — the enabling decision is the repo's "
+                "and it is written down)",
+        firing_input="`leak-scan: {source-scope-foreign-path: false}` with no "
+                     "`reason`",
+        expect=exits.FINDING,
+        fire=lambda: _decl_run(
+            declaration=_decl_with(**{"leak-scan": {
+                "source-scope-foreign-path": False}}),
+            gitignore="", laws_lines=10),
+        # The SAME `false` WITH its reason: the arms differ in the reason
+        # alone, so what fires is the undeclared decision and not the value.
+        control=lambda: _decl_run(
+            declaration=_decl_with(**{"leak-scan": {
+                "source-scope-foreign-path": False,
+                "reason": "this repo's own prose names this machine's home "
+                          "throughout, so the source-scope class fires on "
+                          "ordinary operating text"}}),
+            gitignore="", laws_lines=10),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="reference_untyped",
+        refusal="PROSE in a `reader`/`writer` slot — §3.8c's reference types "
+                "are closed, and prose cannot be resolved",
+        firing_input="a kind whose `reader` says \"the drain lane\"",
+        expect=exits.FINDING,
+        fire=lambda: _decl_run(
+            declaration=_kind_field("reader", ["the drain lane"]),
+            gitignore="", laws_lines=10),
+        # The SAME reader, TYPED: the arms differ in the typing alone.
+        # `verb:item ready` and not `lane:drain`: the control must differ in
+        # the TYPING alone, and a `lane:` reference in a declaration with no
+        # declared lanes fires `dangling_reference` instead — a control going
+        # red for the neighbouring reason, which proves nothing about this row.
+        control=lambda: _decl_run(
+            declaration=_kind_field("reader", ["verb:item ready"]),
+            gitignore="", laws_lines=10),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="schema_mismatch",
+        refusal="ONE schema version per repo — the declaration and a carrier "
+                "disagree (§3.8c). Not a floor question: the floor asks what "
+                "this BUILD can read, this asks whether the REPO agrees with "
+                "itself",
+        firing_input="a declaration stamped 2 over an `ITEMS.md` stamped 1",
+        expect=exits.FINDING,
+        fire=lambda: _decl_run(
+            declaration=GOOD_DECLARATION, gitignore="", laws_lines=10,
+            items_text=EMPTY_ITEMS.replace("schema: 2", "schema: 1", 1)),
+        # The SAME repo with the carrier at the declaration's number.
+        control=lambda: _decl_run(**_GOOD_KW),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="done_slot_on_live_item",
+        refusal="a LIVE block carrying a closed-body slot — `superseded-by:` "
+                "or `blocker-moot:`, each of which records something a "
+                "CLOSURE did",
+        firing_input="a READY block with a `superseded-by:` line",
+        expect=exits.FINDING,
+        fire=lambda: _items_run(
+            GOOD_ITEMS.rstrip("\n") + "\nsuperseded-by: xx-9\n"),
+        control=lambda: _items_run(GOOD_ITEMS),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="open_grade_in_done_home",
+        refusal="an OPEN grade in the closure home — a body that arrived by "
+                "some path that is not a close",
+        firing_input="a `READY` block in `ITEMS-DONE.md`",
+        expect=exits.FINDING,
+        fire=lambda: _done_run(EMPTY_DONE + "\n"
+                               + DONE_BLOCK.replace("grade: DONE",
+                                                    "grade: READY")),
+        # The SAME body, CLOSED: the arms differ in the grade alone.
+        control=lambda: _done_run(EMPTY_DONE + "\n" + DONE_BLOCK),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="blocked_in_done_home",
+        refusal="a closed body still carrying a blocker — a wait recorded "
+                "against something that has stopped waiting, which is what "
+                "leaves an unanswerable question in the operator's queue "
+                "after the item that asked it is gone",
+        firing_input="a DONE block with `blocked-by: decision <question>`",
+        expect=exits.FINDING,
+        fire=lambda: _done_run(
+            EMPTY_DONE + "\n" + DONE_BLOCK.replace(
+                "blocked-by: NONE", "blocked-by: decision which window")),
+        control=lambda: _done_run(EMPTY_DONE + "\n" + DONE_BLOCK),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="unknown_slot_misplaced",
+        refusal="UNKNOWN in a slot that may never hold it — a grade is one of "
+                "the five and a blocker is typed or NONE, so UNKNOWN there is "
+                "a value nothing can ever fill in",
+        firing_input="a block with `blocked-by: UNKNOWN`",
+        expect=exits.FINDING,
+        fire=lambda: _items_run(
+            GOOD_ITEMS.replace("blocked-by: NONE", "blocked-by: UNKNOWN")),
+        control=lambda: _items_run(GOOD_ITEMS),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="ready_with_unknown_slot",
+        refusal="READY over a slot nobody has ever written (§3.1) — UNKNOWN "
+                "is the migration's declared marker and the grade workflow "
+                "fills it BEFORE READY",
+        firing_input="a READY block whose `goal` is UNKNOWN",
+        expect=exits.FINDING,
+        fire=lambda: _items_run(
+            GOOD_ITEMS.replace("goal: mitigate", "goal: UNKNOWN")),
+        # The SAME block with the goal filled: the arms differ in the one slot.
+        control=lambda: _items_run(GOOD_ITEMS),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="capture_dominated",
+        refusal="booking outrunning shipped-plus-dropped — a RATIO, never a "
+                "size (R22). A large carrier draining steadily owes nothing "
+                "and a small one that never drains does",
+        firing_input="a carrier that admitted four items and closed none",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "ratio"], items=NO_DRAIN_ITEMS),
+        # The SAME carrier with a real closure behind it: the arms differ in
+        # the DRAIN and not in the size, which is the whole point of the row.
+        control=lambda: _ratio_after_close(),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="kind_grew_without_exit",
+        refusal="a kind that GREW WITHOUT AN EXIT EVENT (the design's own "
+                "replacement for a cap) — its home holds instances, it "
+                "declares `bounded-by-exit`, and its exit has recorded nothing",
+        firing_input="a repo holding items with no `item close` ever recorded",
+        expect=exits.FINDING,
+        fire=lambda: _retire_growth(closed=False),
+        # The SAME repo after ONE real close: the exit event is one the tool
+        # recorded, not a line this row wrote into a log.
+        control=lambda: _retire_growth(closed=True),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="unregistered_persisted_thing",
+        refusal="invariant 1 — a tracked file that resolves to no registered "
+                "kind",
+        firing_input="a tracked file under a home no kind claims",
+        expect=exits.FINDING,
+        fire=lambda: _sweep_run(stray=True),
+        control=lambda: _sweep_run(stray=False),
+        stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="route_set_unwatched",
+        refusal="a refusal whose TEXT names an effect WIDER than the routes "
+                "the code watches — round 4's cross-row cure. The row fires "
+                "correctly on the routes it does watch, so its green says "
+                "nothing about the rest",
+        firing_input="the reference resolver narrowed to `lane:` alone, which "
+                     "is what it watched before this wave, with "
+                     "`dangling_reference` still claiming every type",
+        expect=exits.FINDING,
+        fire=lambda: _route_check_over_copy(narrow=True),
+        # The SAME copy, unnarrowed: the arms differ in the resolver's reach
+        # alone, not in whether a copy was scanned.
+        control=lambda: _route_check_over_copy(narrow=False),
+        stage="wave 1d, the schema wave",
+    ),
+]
+
+
+def _ratio_after_close() -> Fired:
+    """`item ratio` over a scratch repo that has actually closed something."""
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    with _Repo(items=NO_DRAIN_ITEMS) as r:
+        here = os.getcwd()
+        try:
+            os.chdir(str(r.dir))
+            with redirect_stdout(io.StringIO()):
+                cli_mod.main(["--repo", str(r.dir), "item", "close", "xx-1"])
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(r.dir), "item", "ratio"])
+            return Fired(code, buf.getvalue())
+        finally:
+            os.chdir(here)
+
+
+ROWS = ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS
+
+# --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
+#
+# Attached here rather than inline so the two sides stay visibly independent:
+# the route SET is a tuple the module under test declares from the design, and
+# the WATCHED set is derived from that module's source. A row that computed
+# one from the other would be comparing a claim against itself.
+
+for _row in ROWS:
+    if _row.ident == "dangling_reference":
+        _row.route_set = tuple(decl.REF_TYPES)
+        _row.routes_watched = _watched_ref_types
+    elif _row.ident == "schema_above_floor":
+        _row.route_set = ("declaration", "items", "done", "ledger")
+        _row.routes_watched = _watched_schema_carriers
+del _row

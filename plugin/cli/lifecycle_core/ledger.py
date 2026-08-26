@@ -33,8 +33,9 @@ from pathlib import Path
 
 from . import exits
 
-#: The ledger format this build understands, same floor rule as `ITEMS.md`.
-SCHEMA_FLOOR = 1
+#: The ledger format this build understands, same floor rule as `ITEMS.md`,
+#: and the SAME NUMBER: one schema version per repo (§3.8c).
+SCHEMA_FLOOR = 2
 
 #: Slot separator, and the decision line's question/answer separator. Both
 #: are the design's own spellings and are matched literally.
@@ -53,7 +54,23 @@ KINDS = ("superseded", "rejected", "dropped", "decision")
 #: carefully worded sentence.
 REASON_CAP = 300
 
+#: THE PRE-MIGRATION ARCHIVE, exactly as `ITEMS-DONE.md` has one and for
+#: exactly the same reason. A repo that kept a prose ledger before the tool
+#: owned the file has history that will never satisfy a fixed-slot shape and
+#: was never meant to. Held VERBATIM below this heading, counted apart, never
+#: classified into a known kind.
+#:
+#: NOT a softened predicate: above the heading the shape is unchanged, and the
+#: archive's own line count is printed so a reader can see how much of the
+#: file this run did not grade. Deleting the history to make the parse clean
+#: is the exit that leaves no trace, which is the loss this carrier exists to
+#: prevent (exit: never-delete).
+ARCHIVE_HEADING = "## Archive (pre-migration)"
+
 _HEAD_LINE = re.compile(r"^([a-z-]+):\s*(.*)$")
+#: A comment line in the PREAMBLE — matched by shape, since the block this
+#: licenses is prose a human writes. Same predicate as the carrier's.
+_COMMENT_LINE = re.compile(r"^\s*(#|<!--|-->|-\s|>\s|\*\s)")
 
 
 @dataclass
@@ -73,6 +90,8 @@ class Parsed:
     #: Lines that are neither head nor a known kind, by lineno. THE THIRD
     #: ANSWER: read, counted, never folded into a known kind.
     unreadable: list = field(default_factory=list)
+    #: Lines below the archive heading: held verbatim, counted, not graded.
+    archive_lines: int = 0
     refused: bool = False
 
 
@@ -136,13 +155,26 @@ def append(path: Path, kind: str, slots: dict) -> str:
     APPEND-ONLY, and it creates the head when the file is absent: a ledger
     with no schema line cannot be refused by a future tool, which is the
     whole reason the line exists.
+
+    BEFORE THE ARCHIVE HEADING, never after it — the same rule the carrier's
+    move already follows for the same reason. A line written below the
+    heading sits in the region held verbatim and not graded, so it would be
+    invisible to `ledger check` and to every gate that reads this file: a
+    decision recorded where nothing reads it is a decision not recorded.
     """
     line = render(kind, slots)
-    exists = path.exists()
+    if not path.exists():
+        path.write_text(head_text() + "\n" + line + "\n", encoding="utf-8")
+        return line
+    text = path.read_text(encoding="utf-8")
+    lines = text.split("\n")
+    for i, raw in enumerate(lines):
+        if raw.strip() == ARCHIVE_HEADING:
+            head = "\n".join(lines[:i]).rstrip("\n")
+            tail = "\n".join(lines[i:])
+            path.write_text(f"{head}\n{line}\n\n{tail}", encoding="utf-8")
+            return line
     with open(path, "a", encoding="utf-8") as fh:
-        if not exists:
-            fh.write(head_text())
-            fh.write("\n")
         fh.write(line + "\n")
     return line
 
@@ -160,11 +192,19 @@ def parse(text: str) -> Parsed:
     out = Parsed()
     lines = text.split("\n")
 
+    # A COMMENT BLOCK MAY PRECEDE THE SCHEMA LINE (§3.8c). Before this, the
+    # first non-blank line had to BE `schema: <n>`, so a repo's ledger was
+    # exactly `schema: 1` until its first decision — a carrier in a PUBLIC
+    # repo that could not say what it was for. Only before: everything below
+    # the version is one fixed-slot line per decision event, and a comment
+    # there would be a line the gates read and cannot classify.
     i = 0
     while i < len(lines):
         raw = lines[i]
         i += 1
         if not raw.strip():
+            continue
+        if _COMMENT_LINE.match(raw):
             continue
         m = _HEAD_LINE.match(raw)
         if m and m.group(1) == "schema":
@@ -195,6 +235,9 @@ def parse(text: str) -> Parsed:
         raw = lines[i]
         lineno = i + 1
         i += 1
+        if raw.strip() == ARCHIVE_HEADING:
+            out.archive_lines = len(lines) - i
+            break
         if not raw.strip():
             continue
         parsed = parse_line(raw)
@@ -303,6 +346,11 @@ def check_file(path: Path, out) -> int:
         out(f"  unreadable line {lineno}: {raw[:70]!r} — READ, never folded "
             "into a known kind. It reached this file by a merge or an older "
             "tool.")
+    if parsed.archive_lines:
+        out(f"archive: {parsed.archive_lines} line(s) after "
+            f"{ARCHIVE_HEADING!r}, held verbatim and NOT graded. This run says "
+            "how much of the file it did not read rather than reporting a "
+            "clean parse over the part it did.")
     code = exits.FINDING if parsed.problems else exits.CLEAN
     if parsed.unreadable:
         code = exits.worst([code, exits.COULD_NOT_VERIFY])

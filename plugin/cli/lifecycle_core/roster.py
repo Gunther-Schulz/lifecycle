@@ -128,12 +128,97 @@ def check_coverage(out, root: Path = CORE) -> int:
     return exits.FINDING
 
 
+def check_routes(out) -> int:
+    """THE ROUTE SET PER REFUSAL ROW (design §3.8c) — round 4's cross-row cure.
+
+    THE DEFECT IT CATCHES is not an unproven row; it is a PROVEN row whose
+    NAME promises more than the code watches. `dangling_reference` is the
+    recorded case: its text said "dangling typed reference", the design says
+    the refusal "reaches every type", and the code resolved `lane:` alone —
+    so five of the six typed references in a declaration could point at
+    nothing and the roster stayed green, because the row it belonged to fired
+    correctly on the one route it did watch. A green row is not the same
+    claim as a covered refusal.
+
+    THE TWO SIDES ARE READ INDEPENDENTLY, which is what makes the comparison
+    mean anything. The ROUTE SET is the closed vocabulary the refusal's own
+    text names and is read from the DESIGN's side of the code (a declared
+    tuple such as `declaration.REF_TYPES`); the WATCHED set is derived from
+    the SOURCE, exactly as the emit-site check derives sites. An expectation
+    read off the artifact it grades moves with the mutant and stays green on
+    the corruption it exists to catch — so neither side is computed from the
+    other.
+
+    ROWS WITH NO DECLARED ROUTE SET are not silently passed: their derived
+    emit sites are printed and counted, so the roster says how much of itself
+    this check covered.
+    """
+    out("")
+    out("ROUTE SETS (design §3.8c) — beside its firing input, a row states "
+        "the ROUTE SET it watches. A row whose refusal TEXT names an effect "
+        "WIDER than its routes fails here, even though its plant and control "
+        "both pass: a green row and a covered refusal are different claims.")
+
+    sites = emit_sites()
+    declared = [r for r in refusals.ROWS if getattr(r, "route_set", ())]
+    undeclared = [r for r in refusals.ROWS if not getattr(r, "route_set", ())]
+
+    code = exits.CLEAN
+    for row in declared:
+        try:
+            watched = set(row.routes_watched())
+        except Exception as exc:                              # noqa: BLE001
+            out(f"    COULD NOT VERIFY  {row.ident}: its watched-route "
+                f"derivation raised {type(exc).__name__}: {exc}")
+            code = exits.worst([code, exits.COULD_NOT_VERIFY])
+            continue
+        full = set(row.route_set)
+        missing = sorted(full - watched)
+        stray = sorted(watched - full)
+        out(f"    {row.ident}")
+        out(f"        route set (what the refusal's TEXT names): "
+            f"{', '.join(row.route_set)}")
+        out(f"        watched   (derived from the SOURCE):        "
+            f"{', '.join(sorted(watched)) or '(none)'}")
+        if stray:
+            out(f"        note: the code watches {', '.join(stray)}, which the "
+                "route set does not name — the TEXT is narrower than the "
+                "code, which is not this check's failure but is worth "
+                "knowing.")
+        if missing:
+            out(f"        FINDING [route_set_unwatched] {len(missing)} route(s) "
+                f"named by this refusal and watched by nothing: "
+                f"{', '.join(missing)}. The row fires correctly on the routes "
+                "it does watch, so its green says nothing about these — an "
+                "input arriving by an unwatched route returns exactly what a "
+                "clean repo returns.")
+            code = exits.worst([code, exits.FINDING])
+        else:
+            out("        routes: CLEAN — every route the refusal names is "
+                "watched.")
+
+    out(f"    rows with a declared route set: {len(declared)}")
+    out(f"    rows without one: {len(undeclared)} — their route set is their "
+        "derived EMIT SITES, printed by `--test --list`. Listed rather than "
+        "passed: this check covers a refusal defined over a closed "
+        "VOCABULARY, and a row whose refusal is one site has no vocabulary "
+        "for it to be wider than.")
+    multi = sorted(k for k in sites if len(sites[k]) > 1)
+    out(f"    refusals emitted at MORE THAN ONE site: {len(multi)} — "
+        + (", ".join(f"{k} ({len(sites[k])})" for k in multi) or "none"))
+    out("    A refusal at several sites is not itself a defect (§3.8c splits "
+        "a row only where the sites yield different ANSWER CLASSES); it is "
+        "where the route question is worth asking.")
+    return code
+
+
 def cmd_list(out) -> int:
     """`--test --list` — the roster as DATA, nothing executed.
 
     §3.9's table is a SNAPSHOT of this list; the table updates from here and
     never the reverse (decided at W1b's integration).
     """
+    sites = emit_sites()
     out(f"refusal roster: {len(refusals.ROWS)} executable row(s), "
         f"{len(refusals.PROSE_REST)} prose-rest row(s)")
     out("")
@@ -144,6 +229,11 @@ def cmd_list(out) -> int:
         out(f"    expects:       {exits.word(row.expect)}")
         out(f"    finding row:   {row.expected_finding_row}")
         out(f"    stage:         {row.stage}")
+        emitted = sites.get(row.expected_finding_row, [])
+        out(f"    route set:     "
+            + (", ".join(row.route_set) if getattr(row, "route_set", ())
+               else (", ".join(emitted) or "(no emit site — this row's "
+                     "verdict is a code, not a named finding)")))
     out("")
     out("PROSE-REST — named by the design, not fireable here. Labelled with "
         "the reason, never deleted to make a roster green (D-g):")
@@ -215,6 +305,7 @@ def cmd_test(out, list_only: bool = False) -> int:
         out(f"                {why}")
 
     code = check_coverage(out)
+    code = exits.worst([code, check_routes(out)])
 
     out("")
     out(f"rows: {len(refusals.ROWS)}   {passed} passed, {failed} failed, "

@@ -4,8 +4,16 @@ A Claude Code plugin: lifecycle management for everything a repo
 persists. The primitive is the KIND, not the item — every kind of
 thing a repo keeps is registered in that repo's
 `.claude/lifecycle.json` with six declared stages (home, writer,
-reader, staleness, exit, bound), and a kind with an undeclared stage
+reader, staleness, exit, **growth**), and a kind with an undeclared stage
 is a checker finding.
+
+**Growth is controlled by FLOW, never by size (R22).** The sixth stage takes
+one of `bounded-by-exit` / `compacted` / `unbounded-with-reason`, and the
+alarm is a kind that GREW WITHOUT AN EXIT EVENT — whatever its count. There
+are no caps here: the `bound` stage and `ready-cap` were both withdrawn in
+the schema wave, because a cap bounds a LABEL and a capped label is escaped
+by relabelling (J9). One schema version per repo, stamped in the declaration;
+a carrier whose `schema:` line does not EQUAL it is a finding.
 
 Design of record: `carrier-rework-design-2026-08-26.md` in
 claude-code-cache-fix (`docs/directives/`), revision 2. Where this
@@ -31,8 +39,8 @@ justify. A declaring repo is held to them by the tool, may add its own in its
 declaration, and may never subtract.
 
 1. Every persisted thing resolves to a registered kind.
-2. Every kind has an owner for every stage: writer, reader, staleness, exit,
-   growth control.
+2. Every kind has an owner for every stage: home, writer, reader, staleness,
+   exit, growth control.
 3. One home per kind; a fact lives in exactly one place.
 4. Nothing dangles: every typed reference resolves; every lane has a reader;
    every producer has a disposition; every detector has a home.
@@ -107,6 +115,13 @@ journal pointer is where the incident lives.
 22. **A check no input can falsify is deleted, not registered**; a partition
     exact by construction is reported as could-not-verify arithmetic, never as
     a green row. (J16)
+23. **A design line that names a thing names its home, its writer and its
+    reader**; a home is always explicit, never a default the tool assumes.
+    (J20)
+24. **A verb named is a verb placed in a stage**; a refusal named has its
+    firing input; neither exists in prose alone. (J20)
+25. **Every schema change ships its migration, dry-run first, over every
+    declared repo, before it is applied anywhere.** (J21)
 
 ---
 
@@ -224,8 +239,11 @@ the board shows ordinary waiting.
 
 ```bash
 python3 -m unittest discover -s test -p 'test_*.py' -t .   # the CLI
-python3 plugin/cli/lifecycle --test                        # the roster + coverage
+python3 plugin/cli/lifecycle --test                        # roster + coverage + ROUTE SETS
 python3 tools/prove-rows.py                                # every row, red-first
+python3 plugin/cli/lifecycle audit                         # the walk, read-only: growth,
+                                                           # the laws scope audit, the
+                                                           # judgment register's fire-rate
 node --test test/absence-scan.test.mjs                     # the leak scan's bites
 node tools/absence-scan.mjs --git-range ..HEAD             # the leak scan itself
 ```
@@ -235,6 +253,17 @@ full counts including skips, then runs the EMIT-SITE COVERAGE check: every
 site in the source that emits a FINDING maps to a registered row, or
 `--test` fails. `--test --list` prints the roster as data — design §3.9's
 table is a SNAPSHOT of that list and updates from it, never the reverse.
+
+**Then it runs the ROUTE-SET check, which catches what a green row cannot.**
+Beside its firing input a row states the ROUTE SET its refusal's own TEXT
+names — a closed vocabulary read from the design's side — and the routes the
+CODE watches are derived from the source. A row whose text names an effect
+WIDER than its routes fails, even though its plant and control both pass:
+`dangling_reference` said "typed reference" while the resolver reached
+`lane:` alone, so five of the six types could point at nothing and the roster
+stayed green. A green row and a covered refusal are different claims, and the
+two sides of this comparison are read independently or it compares a claim
+against itself.
 
 **The coverage check's assurance is exactly as wide as its predicate, and
 it says so in its own output.** It reads the SOURCE, so it catches a

@@ -223,17 +223,11 @@ MUTATIONS = [
      "thirty findings sorted"),
 
     ("dangling_reference", "declaration.py",
-     "            if lane and lane not in lane_names:",
-     "            if False:",
-     "referential integrity on a declaration's `lane:` reference — a "
-     "declaration pointing at a lane that does not exist then reads exactly "
-     "like one pointing at a lane that does"),
-
-    ("laws_over_cap", "declaration.py",
-     "    if n > LAWS_CAP_LINES:",
-     "    if n > 999999:",
-     "the 60-line cap comparison — the cap is the MECHANISM behind \"laws, "
-     "never method\", and without it the injected prefix has no bound"),
+     "        if name not in pool:",
+     "        if False:",
+     "referential integrity on a declaration's TYPED reference — a "
+     "declaration pointing at a lane, verb, hook or producer that does not "
+     "exist then reads exactly like one pointing at something that does"),
 
     # NOT `if False:` here. Removing the branch lets `read_text` raise
     # FileNotFoundError, which the next `except (OSError, …)` turns into the
@@ -367,11 +361,121 @@ MUTATIONS = [
      "migration then replaces real work with a re-derivation of the carrier "
      "it replaced"),
 
+    # ANCHORED ON THE MESSAGE, not on `if unclassified:` — the schema wave
+    # added a SECOND `if unclassified:` in `run_schema`, and an anchor that
+    # matches twice is a stale arrangement rather than a mutation: this tool
+    # refuses it, which is how the collision was found rather than silently
+    # mutating whichever came first.
     ("migration_unclassified", "migrate.py",
-     "    if unclassified:",
-     "    if False:",
+     '        out(f"FINDING [migration_unclassified] {len(unclassified)} '
+     'entry/ies "',
+     '        out(f"UNCLASSIFIED (not reported as a finding) '
+     '{len(unclassified)} entry/ies "',
      "D-f's report of entries no rule covers — they are then absent from "
      "both the carrier and the run's verdict, which is a silent loss"),
+
+    # --- THE SCHEMA WAVE (1d). Each folds one VERDICT into another; none
+    # removes machinery, because a mutation that crashes proves the branch is
+    # reached and not that the row discriminates.
+
+    ("declaration_retired_key", "declaration.py",
+     "    for key, why in RETIRED_KEYS.items():\n        if key in doc:",
+     "    for key, why in RETIRED_KEYS.items():\n        if False:",
+     "the withdrawn-key test — `ready-cap` then sits in a declaration reading "
+     "exactly like a live key, and a reader believes a number still bounds "
+     "the head"),
+
+    ("leak_scan_undeclared_reason", "declaration.py",
+     "    if needs_reason and (not isinstance(reason, str) or len(reason.strip()) < 8):",
+     "    if False:",
+     "the demand that turning the source-scope foreign-path class OFF in a "
+     "public tree carries its reason — the decision is then indistinguishable "
+     "from nobody having considered it"),
+
+    ("reference_untyped", "declaration.py",
+     "        if typ is None:\n            res.add(\"reference_untyped\",",
+     "        if typ is None:\n            res.cannot_verify(",
+     "the FINDING answer for PROSE in a reader/writer slot — folded into "
+     "could-not-verify, so an unresolvable reader reads as a limit of the run "
+     "rather than a kind nothing reads"),
+
+    ("schema_mismatch", "declaration.py",
+     "        if n != declared:",
+     "        if False:",
+     "one-schema-per-repo's own comparison — the declaration and its carriers "
+     "then disagree silently, and each reader resolves through whichever file "
+     "it happened to open"),
+
+    ("done_slot_on_live_item", "items.py",
+     "    if done_only and item.grade not in GRADES_CLOSED:",
+     "    if False:",
+     "the closed-only rule on `superseded-by:`/`blocker-moot:` — a live block "
+     "then claims an act no closure performed"),
+
+    ("unknown_slot_misplaced", "items.py",
+     "            if slot in UNKNOWNABLE_SLOTS:",
+     "            if True:",
+     "the separation between a slot UNKNOWN may fill and one it may not — "
+     "`blocked-by: UNKNOWN` is then counted as an ordinary migration marker, "
+     "and it is a value nothing can ever fill in"),
+
+    ("ready_with_unknown_slot", "items.py",
+     "                     if it.grade == \"READY\" and unknown_slots_of(it)]",
+     "                     if False]",
+     "the refusal of READY over a slot nobody has ever written — a migrated "
+     "entry is then schedulable on a judgment that cannot have been made"),
+
+    ("open_grade_in_done_home", "items.py",
+     "    open_here = [it for it in parsed.items if it.grade not in GRADES_CLOSED]",
+     "    open_here = []",
+     "the closed-grade rule over the closure home — a body that arrived by "
+     "some path other than a close then reads as an ordinary closure"),
+
+    ("blocked_in_done_home", "items.py",
+     "        if kind not in (None, \"none\"):",
+     "        if False:",
+     "the no-surviving-blocker rule over the closure home — a wait then stays "
+     "recorded against a body that has stopped waiting, which is what leaves "
+     "an unanswerable question in the operator's queue"),
+
+    ("laws_scope_audit", "retire.py",
+     "    if not hits:",
+     "    if True:",
+     "the scope audit's own verdict — the laws file then reports CLEAN over "
+     "prose belonging to another kind, which is the clean-forever check the "
+     "60-line cap was replaced BY rather than the cap it replaced"),
+
+    ("capture_dominated", "verbs.py",
+     "    if closed == 0:",
+     "    if False:",
+     "the no-drain branch of the flow alarm — a carrier that has admitted "
+     "work and closed none then divides by zero's neighbour and reads as a "
+     "ratio, which is the one case a size-based cap also missed"),
+
+    ("kind_grew_without_exit", "retire.py",
+     "    if count and not events:",
+     "    if False:",
+     "R22's replacement for the cap — a bounded-by-exit kind whose exit has "
+     "recorded nothing then reports clean, and growth is watched by nothing "
+     "at all"),
+
+    ("unregistered_persisted_thing", "retire.py",
+     "    if not unregistered:",
+     "    if True:",
+     "invariant 1's own verdict — a tracked file under no registered home "
+     "then reads exactly like one the registry claims"),
+
+    # NOT `if False:` here. The route check's finding is the DIFFERENCE
+    # between a declared route set and a derived one, so the mutation that
+    # kills it is the one that makes the derived set answer for the declared
+    # one — which is precisely the same-parentage defect this check exists to
+    # avoid, and it produces a wrong VERDICT rather than a crash.
+    ("route_set_unwatched", "roster.py",
+     "        full = set(row.route_set)",
+     "        full = set(watched)",
+     "the independence of the two sides — the route set is then computed FROM "
+     "the code it grades, so it moves with the mutant and stays green on "
+     "every narrowing"),
 
     ("migration_ledger_nonzero", "migrate.py",
      "    elif ledger_count != 0:",

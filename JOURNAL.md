@@ -227,6 +227,46 @@ intake join fired inside controls meant to be quiet and one row's CONTROL went
 red. The red indicted the FIXTURE, not the verdict — and only the pair's
 "control must DIFFER" assertion surfaced it.
 
+### J20 — cited by laws 23 and 24 (a named thing has a home; a named verb has a wave)
+
+Two instances one day apart, and the second was found by the first's own rule.
+
+- **A refusal named in prose with no firing input cannot be red-proven.** The
+  design's replacement row "a kind grew without an exit event" named
+  `lifecycle retire` as the input; that verb existed in no stage list, so the
+  row could only have entered the roster as an UNPROVABLE one — the shape law
+  22 had removed two hours earlier in the same dispatch, twice in one lane.
+- **A rule named in prose with no home is a rule nobody applies.** The brief
+  for this wave said "laws 23–25 are yours to honour and they are new" while
+  the laws file carried 22 and the three existed only in the design document.
+  Law 23 is itself the rule that a named thing has its home — so the brief
+  instructed a session to honour a law that had no home, which is the defect
+  the law describes, in the instruction that describes it.
+
+The pair is one class from two sides: **naming a thing is not placing it.** A
+verb has a wave, a refusal has its firing input, a law has its file, and a
+kind has its home — each explicit, never a default the tool assumes.
+
+### J21 — cited by law 25 (every schema change ships its migration)
+
+The growth-control change (`bound` -> the closed vocabulary, `ready-cap`
+removed) is a SCHEMA change with every declaration as a dependent, and it
+arrived on a dispatch that had already committed a declaration under the old
+stage. Two things followed and only one was obvious. The obvious one: the
+migration has to run over both the schema and the artifact that schema
+produced. The other one is the reason it is a law rather than a note — the
+cheapest moment is NOW and it gets more expensive monotonically, because
+exactly one declaration existed the day the change was designed and two exist
+the day after.
+
+The wave also measured what a migration must refuse to do. Running
+`--schema-from` over both real declarations, every mechanical transform
+applied and every one that needed a JUDGMENT — which reference type a prose
+reader was, whether a public repo runs the source-scope leak class — came
+back UNCLASSIFIED and BLOCKED THE APPLY for that repo. A migration that had
+guessed those would have written a declaration nobody made, and it would read
+afterwards exactly like a declaration somebody did.
+
 ### J19 — running the rule is not reading the rule
 
 The migration's first real run turned two entries from a `## Grades` section —

@@ -17,23 +17,29 @@ from . import exits, firelog, lanes as lanes_mod, ledger as ledger_mod
 from . import declaration as decl
 from . import items as items_mod
 from . import migrate as migrate_mod
+from . import retire as retire_mod
 from . import verbs
 
 #: Verbs the design names that this build does not carry yet. Listed rather
-#: than omitted: a refusal that says "wave 1 stage N builds this" is a fact,
-#: while an "unknown command" is a lie about the design.
+#: than omitted: a refusal that says "wave N builds this" is a fact, while an
+#: "unknown command" is a lie about the design.
+#:
+#: `item ratio` LEFT THIS LIST IN THE SCHEMA WAVE. §3.8c placed it — "every
+#: verb has a wave" (law 24) — and a verb with a wave is a verb that gets
+#: built. The wave-2 entries below are placed the same way and are named here
+#: rather than omitted so a caller can tell "this build does not have it"
+#: from "you typed it wrong".
 NOT_YET_BUILT = {
-    # `item ratio` is NOT in D-d's stage list at all — stage 5 is
-    # `item ready|park|close`. W1a's entry here read "stage 5", which the
-    # stage-5 build then contradicted by shipping without it. Recorded as an
-    # unassigned verb rather than given a stage this desk did not assign.
-    "item ratio": "a stage D-d does not assign — surfaced to the desk",
+    "init": "wave 2 (§3.8c) — the declaration and lane stubs for a fresh repo",
+    "lane new": "wave 2 (§3.8c) — a lane file from the format",
+    "workflow bind": "wave 2 (§3.8c) — a template binding with its slots",
+    "lane list --json": "wave 2 (§3.8c) — the query surface for consumers",
 }
 
-#: Which stages this build carries, for the refusal messages above. A build
+#: Which wave this build carries, for the refusal messages above. A build
 #: that claimed its own coverage from a hardcoded sentence would say
 #: "stages 1-3" forever.
-STAGES_BUILT = "1-9"
+STAGES_BUILT = "wave 1 stages 1-9 plus the schema wave (1d)"
 
 
 def resolve_repo(explicit: str | None) -> tuple[Path | None, str | None]:
@@ -75,6 +81,15 @@ def cmd_kind(args, out) -> int:
 
     res = decl.read(repo)
 
+    if args.kind_action == "sweep":
+        if res.declaration is None:
+            _report(res, out)
+            out("kind sweep: no readable declaration, so nothing could be "
+                "swept. An empty sweep reads exactly like a repo with nothing "
+                "stray in it.")
+            return res.code
+        return retire_mod.cmd_kind_sweep(args, out, repo, res.declaration)
+
     if args.kind_action == "check":
         _report(res, out)
         if res.code == exits.CLEAN:
@@ -114,7 +129,12 @@ def cmd_kind(args, out) -> int:
         f"public: {d.get('public')}")
     out(f"laws: {d.get('laws')}   closure-home: {d.get('closure-home')}")
     out(f"trigger-policy: {d.get('trigger-policy')}   "
-        f"ready-cap: {d.get('ready-cap')}   head-rule: {d.get('head-rule')}")
+        f"head-rule: {d.get('head-rule')}")
+    ls = d.get("leak-scan") or {}
+    out(f"leak-scan: source-scope-foreign-path "
+        f"{(ls or {}).get('source-scope-foreign-path') if isinstance(ls, dict) else ls}"
+        + (f" — {ls['reason']}" if isinstance(ls, dict) and ls.get("reason")
+           else ""))
     out(f"goals: {', '.join(d.get('goals') or []) or '(none declared)'}")
     lanes = d.get("lanes")
     out(f"lanes: {', '.join(lanes) if lanes else '(empty — declared, not absent)'}")
@@ -168,13 +188,55 @@ def cmd_item_check(args, out) -> int:
         return exits.worst([code, exits.COULD_NOT_VERIFY])
     code = exits.worst([code, items_mod.check_move_integrity(
         items_parsed, done_parsed, out, done_why)])
+
+    # THE DONE HOME'S OWN SHAPE CHECK. It is a KIND with the TOOL as its
+    # writer, so shape applies to it exactly as it applies to the live
+    # carrier — and until this wave nothing checked it: the done home was
+    # parsed for conservation and duplicates by two callers that both ignored
+    # `parsed.problems`, so a closed body carrying anything at all passed
+    # everything.
+    code = exits.worst([code, items_mod.check_done_file(
+        ctx.done_path, out, prefix=ctx.prefix)])
+
     code = exits.worst([code, items_mod.report_conservation(
         items_mod.conservation(items_parsed, done_parsed, done_why), out)])
     return code
 
 
+class _Parser(argparse.ArgumentParser):
+    """argparse's own usage errors, remapped to the verb contract (§3.8c).
+
+    ARGPARSE EXITS 2 ON A USAGE ERROR, and 2 is this system's FINDING. So a
+    mistyped flag and a real defect in the repo left the process under the
+    same code, and every caller reading exit codes — a lane predicate, a
+    gate, a hook — could not tell "the tool found something" from "you typed
+    it wrong". Unreadable INPUT is COULD NOT VERIFY (law 1), so it exits 3,
+    and the message keeps argparse's `usage:` prefix because that prefix is
+    what tells a human which of the two happened.
+    """
+
+    def error(self, message):
+        self.print_usage(_sys_stderr())
+        _sys_stderr().write(
+            f"usage: {message}\n"
+            "This is UNREADABLE INPUT, not a finding: exit 3. A usage error "
+            "and a defect in the repo must never share an exit code — a "
+            "caller that reads only the code cannot tell them apart, and one "
+            "of them means 'fix your command line'.\n")
+        raise SystemExit(exits.COULD_NOT_VERIFY)
+
+    def exit(self, status=0, message=None):
+        if message:
+            _sys_stderr().write(message)
+        raise SystemExit(exits.COULD_NOT_VERIFY if status == 2 else status)
+
+
+def _sys_stderr():
+    return sys.stderr
+
+
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
+    p = _Parser(
         prog="lifecycle",
         description="Lifecycle management for everything a repo persists. "
                     "Exit codes: 0 clean, 2 a finding, 3 could not verify.")
@@ -186,6 +248,8 @@ def build_parser() -> argparse.ArgumentParser:
     ks = k.add_subparsers(dest="kind_action")
     ks.add_parser("list", help="every registered kind, every stage, longhand")
     ks.add_parser("check", help="validate the declaration")
+    ks.add_parser("sweep", help="invariant 1: every tracked file resolves to "
+                                "a registered kind")
     show = ks.add_parser("show", help="one kind, every stage")
     show.add_argument("name")
 
@@ -221,7 +285,11 @@ def build_parser() -> argparse.ArgumentParser:
                           "owns the commit)")
 
     ready = its.add_parser("ready", help="READY-and-unblocked; PROMOTES NOTHING")
-    ready.add_argument("ident")
+    ready.add_argument("ident", nargs="?",
+                       help="one item; omit with --head for the whole head")
+    ready.add_argument("--head", action="store_true",
+                       help="the DERIVED head: every READY item, ordered by "
+                            "the declared head-rule. No cap (R22).")
 
     park = its.add_parser("park", help="PARKED, with a typed blocker")
     park.add_argument("ident")
@@ -235,7 +303,8 @@ def build_parser() -> argparse.ArgumentParser:
                                         "--drop (a ledger `dropped:` line)")
     close.add_argument("--no-commit", dest="no_commit", action="store_true")
 
-    its.add_parser("ratio", help="(not built in this build)")
+    its.add_parser("ratio", help="capture against drain — the FLOW alarm "
+                                 "(R22); a ratio, never a size")
 
     led = sub.add_parser("ledger", help="decisions only, parsed, gated")
     leds = led.add_subparsers(dest="ledger_action")
@@ -271,15 +340,37 @@ def build_parser() -> argparse.ArgumentParser:
                     help="parse the lanes but do NOT execute their "
                          "predicates; each state is then COULD NOT VERIFY, "
                          "never quiet")
+    lreg = lanes_sub.add_parser("register", help="put a repo on the roster — "
+                                                 "the router's input")
+    lreg.add_argument("repo_path", nargs="?",
+                      help="the repo to register (default: the cwd's)")
+    lreg.add_argument("--dry-run", dest="dry_run", action="store_true")
+
+    sub.add_parser("retire", help="the lifecycle walk over every registered "
+                                  "kind — homes re-listed, growth read as FLOW")
+    sub.add_parser("audit", help="the same walk, READ-ONLY: every check's "
+                                 "three-answer result, the laws scope audit, "
+                                 "the judgment register's fire-rate")
 
     mig = sub.add_parser("migrate", help="the old carrier → ITEMS.md, "
-                                         "ITEMS-DONE.md and a report. DRY RUN")
+                                         "ITEMS-DONE.md and a report; or a "
+                                         "SCHEMA bump. DRY RUN by default")
     mig.add_argument("--from", dest="from_carrier",
-                     help="the old carrier (default: BACKLOG.md)")
+                     help="the old carrier (default: BACKLOG.md). THE CARRIER "
+                          "SOURCE — never the schema path; the two never "
+                          "share a spelling (§3.8c)")
     mig.add_argument("--from-done", dest="from_done",
                      help="the old closure home (default: BACKLOG-DONE.md)")
+    mig.add_argument("--schema-from", dest="schema_from", type=int,
+                     help="THE SCHEMA PATH: migrate this repo's declaration "
+                          "and carriers FROM schema <n> to this build's. A "
+                          "different question from --from, so a different "
+                          "spelling")
     mig.add_argument("--report", help="where the classification report is "
                                       "written")
+    mig.add_argument("--apply", action="store_true",
+                     help="WRITE the schema migration. Without it every "
+                          "--schema-from run is a dry run that writes nothing")
     mig.add_argument("--force", action="store_true",
                      help="overwrite an existing ITEMS.md/ITEMS-DONE.md")
     return p
@@ -316,15 +407,18 @@ def main(argv=None) -> int:
         path = f"item {args.item_action}"
         if args.item_action == "check":
             code = cmd_item_check(args, out)
-        elif args.item_action in ("add", "ready", "park", "close"):
+        elif args.item_action in ("add", "ready", "park", "close", "ratio"):
             code = _carrier_verb(args, out)
         else:
-            out(f"COULD NOT VERIFY: `{path}` is built in "
-                f"{NOT_YET_BUILT[path]}; this build carries stages "
-                f"{STAGES_BUILT}. It is not an unknown verb — it is an "
-                "unbuilt one, and the difference matters to whoever is "
+            stage = NOT_YET_BUILT.get(path, "a later wave")
+            out(f"COULD NOT VERIFY: `{path}` is built in {stage}; this build "
+                f"carries {STAGES_BUILT}. It is not an unknown verb — it is "
+                "an unbuilt one, and the difference matters to whoever is "
                 "reading this.")
             code = exits.COULD_NOT_VERIFY
+    elif args.verb in ("retire", "audit"):
+        path = args.verb
+        code = _walk_verb(args, out)
     elif args.verb == "ledger":
         if not args.ledger_action:
             out("COULD NOT VERIFY: `ledger` needs an action: check, add, "
@@ -334,10 +428,13 @@ def main(argv=None) -> int:
         code = cmd_ledger(args, out)
     elif args.verb == "lane":
         if not args.lane_action:
-            out("COULD NOT VERIFY: `lane` needs an action: list.")
+            out("COULD NOT VERIFY: `lane` needs an action: list, register.")
             return exits.COULD_NOT_VERIFY
-        path = "lane list"
-        code = lanes_mod.cmd_lane_list(args, out)
+        path = f"lane {args.lane_action}"
+        if args.lane_action == "register":
+            code = lanes_mod.cmd_lane_register(args, out)
+        else:
+            code = lanes_mod.cmd_lane_list(args, out)
     elif args.verb == "migrate":
         path = "migrate"
         code = cmd_migrate(args, out)
@@ -364,10 +461,39 @@ def _carrier_verb(args, out) -> int:
     if args.item_action == "add":
         return verbs.cmd_item_add(args, out, ctx)
     if args.item_action == "ready":
+        if getattr(args, "head", False):
+            return verbs.cmd_item_head(args, out, ctx)
+        if not args.ident:
+            out("COULD NOT VERIFY: `item ready` needs an item id, or `--head` "
+                "for the whole derived head. Refusing rather than picking one "
+                "for you: an id-less run that printed the head anyway would "
+                "answer a question nobody asked.")
+            return exits.COULD_NOT_VERIFY
         return verbs.cmd_item_ready(args, out, ctx)
+    if args.item_action == "ratio":
+        return verbs.cmd_item_ratio(args, out, ctx)
     if args.item_action == "park":
         return verbs.cmd_item_park(args, out, ctx)
     return verbs.cmd_item_close(args, out, ctx)
+
+
+def _walk_verb(args, out) -> int:
+    """`retire` and `audit` — one walk, two verbs over it."""
+    repo, why = resolve_repo(args.repo)
+    if repo is None:
+        out(f"COULD NOT VERIFY: {why}")
+        return exits.COULD_NOT_VERIFY
+    args.resolved_repo = str(repo)
+    res = decl.read(repo)
+    if res.declaration is None:
+        _report(res, out)
+        out(f"{args.verb}: no readable declaration, so the walk had no "
+            "registry to walk. An empty walk reads exactly like a repo whose "
+            "every kind is in order.")
+        return res.code
+    if args.verb == "retire":
+        return retire_mod.cmd_retire(args, out, repo, res.declaration)
+    return retire_mod.cmd_audit(args, out, repo, res.declaration)
 
 
 def cmd_migrate(args, out) -> int:

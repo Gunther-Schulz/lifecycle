@@ -33,7 +33,8 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import exits, lanes, ledger
+from . import exits, judgment, lanes, ledger
+from . import declaration as decl
 from . import items as items_mod
 
 #: A candidate needs this many shared requirement tokens. ONE would match
@@ -312,6 +313,21 @@ def move_to_done(ctx: Ctx, ident: str, closing_grade: str, note: str,
     next `item check` reports as DUPLICATE and recoverable. Deleting first
     would put the same window on the loss side, where a crash leaves nothing
     to recover and no record that there was anything to recover.
+
+    THE MOVE ALSO CLOSES THE WAIT. A closed item waits for nothing, so
+    `blocked-by:` is cleared to NONE — and the done home's own shape check
+    then reads any SURVIVING blocker as a body that arrived by a path that is
+    not a close, which is the property §3.1's write-rules state about the
+    closure home.
+
+    CLEARED IS NOT THE SAME AS ANNOTATED, and only one type earns the
+    annotation. An `<item-id>` blocker resolves mechanically on its target's
+    DONE and an `evidence` one is re-evaluated each pass, so neither is left
+    hanging by a close and annotating them would be noise on every archived
+    body. A `decision` blocker sits in the OPERATOR's queue and nothing else
+    takes it out of there — that one the caller records as `blocker-moot:`,
+    which is a real closed-body slot since this wave rather than an annotation
+    nothing checks.
     """
     items_text = ctx.items_path.read_text(encoding="utf-8")
     kept, body = items_mod.replace_body(items_text, ident)
@@ -321,6 +337,7 @@ def move_to_done(ctx: Ctx, ident: str, closing_grade: str, note: str,
         return exits.FINDING
 
     body = _regrade(body, closing_grade)
+    body, _cleared = _clear_blocker(body)
     if note:
         body = body.rstrip("\n") + f"\n{note}\n"
 
@@ -349,6 +366,25 @@ def _regrade(body: str, grade: str) -> str:
             lines[i] = f"grade: {grade}"
             break
     return "\n".join(lines)
+
+
+def _clear_blocker(body: str):
+    """`(body-with-blocker-NONE, the-old-value-or-empty)`.
+
+    Only a value that was actually a wait is returned: `NONE` and a blank are
+    not blockers and there is nothing to record about them.
+    """
+    lines = body.split("\n")
+    old = ""
+    for i, ln in enumerate(lines):
+        if not ln.startswith("blocked-by:"):
+            continue
+        value = ln.split(":", 1)[1].strip()
+        if value and value != items_mod.BLOCKER_NONE:
+            old = value
+            lines[i] = f"blocked-by: {items_mod.BLOCKER_NONE}"
+        break
+    return "\n".join(lines), old
 
 
 def _insert_before_archive(done_text: str, body: str) -> str:
@@ -630,12 +666,26 @@ def _do_new(args, ctx: Ctx, parsed, done_parsed, done_why, slots, source, out) -
         return exits.FINDING
 
     verdict, message = cost_test(slots["write-set"], args.hunks, source)
+    # USE-EVIDENCE AT THE EFFECT SITE (§3.11). The judgment register prices a
+    # rule's retirement on its fire rate, and a rate reconstructed later from
+    # git or from memory is the shape this design replaced everywhere else —
+    # so the record is written where the rule is evaluated, by the code that
+    # evaluates it.
     if verdict == "unverified":
         out(f"COULD NOT VERIFY: {message}")
         return exits.COULD_NOT_VERIFY
     if verdict == "veto":
+        judgment.record_use("intake-cost-test", "fired", repo=str(ctx.repo),
+                            detail="veto")
         out(f"FINDING [cost_test_veto] {message}")
         return exits.FINDING
+    if source == SOURCE_OPERATOR and "skips the veto" in message:
+        # The operator's own override, which is exactly the evidence the
+        # fire-rate review needs: a rule overridden often is one whose
+        # predicate is wrong, and it is invisible unless the override is what
+        # gets recorded rather than only the fire.
+        judgment.record_use("intake-cost-test", "overridden",
+                            repo=str(ctx.repo), detail="source=operator")
     out(message)
 
     if done_parsed is None:
@@ -726,6 +776,23 @@ def cmd_item_ready(args, out, ctx: Ctx) -> int:
     done_parsed, done_why = _load(ctx.done_path)
     state, code, note = _blocker_state(it, ctx, parsed, done_parsed, done_why)
 
+    # READY IS REFUSED TO AN ITEM HOLDING AN UNKNOWN SLOT (§3.1), and the
+    # refusal is HERE as well as over the carrier: this is the verb a lane
+    # calls before scheduling, so the answer it gives is the one that decides
+    # whether a migrated entry gets picked up. A slot nobody has ever written
+    # is the one thing "a fresh context could execute this now" cannot have
+    # been judged over.
+    unknown = items_mod.unknown_slots_of(it)
+    if it.grade == "READY" and unknown:
+        out(f"FINDING [ready_with_unknown_slot] {it.ident} is graded READY "
+            "and still holds UNKNOWN in "
+            + ", ".join(f"`{s}`" for s in unknown)
+            + ". UNKNOWN is the migration's declared marker for a slot nobody "
+              "recorded, and the grade workflow fills it BEFORE READY. Not "
+              "schedulable, and the grade is the finding rather than the "
+              "blocker.")
+        code = exits.worst([code, exits.FINDING])
+
     out(f"{it.ident} [{it.grade}]  {it.slots.get('requirement', '')}")
     out(f"    blocked-by: {it.slots.get('blocked-by', '')}")
     out(f"    {state}")
@@ -750,6 +817,164 @@ def cmd_item_ready(args, out, ctx: Ctx) -> int:
             "READY is a judgment the desk makes — a fresh context could "
             "execute this now — and clearing a blocker is not that judgment.")
     return code
+
+
+def cmd_item_head(args, out, ctx: Ctx) -> int:
+    """`item ready --head` — the head, DERIVED. No cap, ever (R22).
+
+    THE CAP IS GONE AND ITS ABSENCE IS THE POINT. `ready-cap` bounded a LABEL,
+    and a capped label is escaped by relabelling: this repo's own 2026-08-11
+    incident is two entries booked READY, the head reaching 12 against a cap
+    of 10, and the repair being to regrade both to a word the cap did not
+    count. The cap fought the grading rather than the growth. So the head is
+    every READY-and-unblocked item, ORDERED by the declared `head-rule`, and
+    what watches growth is flow — `item ratio` and the retire lane's
+    grew-without-an-exit finding.
+
+    THE ORDER IS THE WHOLE OUTPUT, so it is printed longhand with the reason
+    each item sits where it does. A head that printed a truncated list would
+    be the cap again, wearing a listing's clothes.
+    """
+    parsed, why = _load(ctx.items_path)
+    if parsed is None:
+        out(f"COULD NOT VERIFY: {why}")
+        return exits.COULD_NOT_VERIFY
+    done_parsed, done_why = _load(ctx.done_path)
+
+    lead = decl.head_lead_goal(ctx.declaration.get("head-rule"))
+    ready = [it for it in parsed.items if it.grade == "READY"]
+
+    out(f"head-rule: lead-goal {lead!r}"
+        + ("" if lead and lead != "none" else
+           " — no lead goal declared, so the head is source order"))
+    out("NO CAP (R22): every READY item is listed. Growth is watched by FLOW "
+        "(`item ratio`, and the retire lane's kind-grew-without-an-exit "
+        "finding), never by a size — a cap here bounds the LABEL and is "
+        "escaped by relabelling.")
+    out("")
+
+    code = exits.CLEAN
+    rows = []
+    for it in ready:
+        unknown = items_mod.unknown_slots_of(it)
+        state, st_code, _note = _blocker_state(it, ctx, parsed, done_parsed,
+                                               done_why)
+        schedulable = state.startswith("UNBLOCKED") and not unknown
+        rows.append((it, state, unknown, schedulable))
+        code = exits.worst([code, st_code])
+
+    leads = [r for r in rows if lead and lead != "none"
+             and (r[0].slots.get("goal") or "").strip() == lead]
+    rest = [r for r in rows if r not in leads]
+    n = 0
+    for group, label in ((leads, f"LEAD ({lead})"), (rest, "the rest")):
+        if not group:
+            continue
+        out(f"--- {label}: {len(group)} item(s)")
+        for it, state, unknown, schedulable in group:
+            n += 1
+            out(f"{n:>3}. {it.ident} [{it.grade}] goal={it.slots.get('goal', '')}"
+                f"  {'SCHEDULABLE' if schedulable else 'not schedulable'}")
+            out(f"        {it.slots.get('requirement', '')}")
+            out(f"        {state}")
+            if unknown:
+                out("        UNKNOWN slot(s): " + ", ".join(unknown)
+                    + " — the grade workflow fills these BEFORE READY.")
+                code = exits.worst([code, exits.FINDING])
+        out("")
+
+    schedulable_n = sum(1 for r in rows if r[3])
+    out(f"head: {len(ready)} READY, {schedulable_n} schedulable now. "
+        f"{len(parsed.items)} live item(s) in total.")
+    if not ready:
+        out("No READY item. THIS VERB PROMOTES NOTHING: READY is the desk's "
+            "judgment and an empty head means nothing has been judged "
+            "decision-complete, never that the carrier is empty.")
+    out(f"item ready --head: {exits.word(code)}")
+    return code
+
+
+#: The retirement tripwire the corpus's own doctrine states — booked far
+#: outrunning shipped-plus-dropped, roughly 3:1. A RATIO, never a size: a
+#: large carrier draining steadily owes nothing and a small one never
+#: draining does.
+RATIO_TRIPWIRE = 3.0
+
+
+def cmd_item_ratio(args, out, ctx: Ctx) -> int:
+    """`item ratio` — capture against drain, the only growth alarm R22 allows.
+
+    BOTH SIDES ARE FLOWS SINCE THE SAME INSTANT, which is the half that gets
+    got wrong: `added` is bumped once per admission and the done home's
+    fixed-slot blocks are the closures since the migration, so both count from
+    the moment the carrier was created. The ARCHIVE is excluded deliberately —
+    it is a STOCK of history, and mixing a stock into a flow ratio is the
+    `quota_pressure` defect this repo has already booked against itself.
+
+    THREE ANSWERS. A carrier with no flow at all on either side has no ratio,
+    and reporting `0` there would be a number shaped exactly like a healthy
+    one.
+    """
+    parsed, why = _load(ctx.items_path)
+    if parsed is None:
+        out(f"COULD NOT VERIFY: {why}")
+        return exits.COULD_NOT_VERIFY
+    done_parsed, done_why = _load(ctx.done_path)
+    if done_parsed is None:
+        out(f"COULD NOT VERIFY: the done home could not be read, so the DRAIN "
+            f"side of the ratio is unknown. An unread done home contributes "
+            f"0, and 0 on the drain side is the number that fires the "
+            f"tripwire hardest. {done_why}")
+        return exits.COULD_NOT_VERIFY
+
+    added = parsed.head.get("added")
+    if added is None:
+        out("COULD NOT VERIFY: the carrier head declares no `added: <n>`, so "
+            "the CAPTURE side of the ratio has no flow figure. A count of "
+            "live items is a STOCK and would answer a different question.")
+        return exits.COULD_NOT_VERIFY
+
+    closed = len(done_parsed.items)
+    archive = items_mod.archive_entries(done_parsed.archive_text)
+    census = items_mod.census(parsed)
+
+    out(f"capture (added since the carrier was created): {added}")
+    out(f"drain    (closed bodies, archive excluded):    {closed}")
+    out(f"archive  (pre-migration stock, NOT in the ratio): {archive}")
+    out(f"live: open {census['open']}  closed-in-carrier {census['closed']}  "
+        f"unknown-grade {sum(census['unknown'].values())}")
+    if added == 0 and closed == 0:
+        out("COULD NOT VERIFY: no flow on either side — nothing has been "
+            "admitted and nothing closed since this carrier was created. A "
+            "ratio here would be an arithmetic accident, and printing 0 would "
+            "read exactly like a carrier draining perfectly.")
+        out(f"item ratio: {exits.word(exits.COULD_NOT_VERIFY)}")
+        return exits.COULD_NOT_VERIFY
+    if closed == 0:
+        out(f"ratio: {added}:0 — capture with NO drain at all.")
+        out(f"FINDING [capture_dominated] {added} admitted and nothing closed "
+            "or dropped. This is the kind that GREW WITHOUT AN EXIT EVENT "
+            "(R22): the alarm is flow, so the count does not matter and a "
+            "small carrier that never drains is exactly the case a cap would "
+            "have missed. A recorded DROP clears this as well as a closure "
+            "does — the goal is to lose nothing SILENTLY.")
+        out(f"item ratio: {exits.word(exits.FINDING)}")
+        return exits.FINDING
+    ratio = added / closed
+    out(f"ratio: {added}:{closed} = {ratio:.2f}:1   (tripwire "
+        f"{RATIO_TRIPWIRE:.0f}:1)")
+    if ratio > RATIO_TRIPWIRE:
+        out(f"FINDING [capture_dominated] booking is outrunning "
+            "shipped-plus-dropped past the tripwire. The next session working "
+            "this repo owes a retirement pass before new bookings: re-check "
+            "stale-risk items against the world, drop the overtaken, merge "
+            "duplicates. The trigger reads the RATIO and never the size.")
+        out(f"item ratio: {exits.word(exits.FINDING)}")
+        return exits.FINDING
+    out("ratio: CLEAN — the carrier is draining. A large carrier draining "
+        "steadily owes nothing; this trigger reads flow, never size.")
+    out(f"item ratio: {exits.word(exits.CLEAN)}")
+    return exits.CLEAN
 
 
 def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):

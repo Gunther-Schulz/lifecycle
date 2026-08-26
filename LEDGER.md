@@ -1,16 +1,40 @@
 # lifecycle — ledger
+#
+# On-disk ledger for this repo. From the schema wave on, the TOOL owns the
+# region above the archive heading: one fixed-slot line per decision event
+# (`superseded:` / `rejected:` / `dropped:` / `decision:`), written by
+# `lifecycle ledger add` for the slots and by the SESSION for the reason
+# prose. `lifecycle ledger check` grades it, and the gated readers —
+# `ledger rejected --for <item>`, the intake join's rejected-line print —
+# are what it exists for.
+#
+# The comment block you are reading is licensed by the schema wave (§3.8c):
+# before it, the first non-blank line had to BE the version, so a carrier in
+# a public repo could not say what it was for.
+#
+# **Consumer:** any session working in this repo — read before re-deriving
+# something that may already be settled. Boundaries: work items go to
+# `ITEMS.md` (via `lifecycle item add`), standing rules to `CLAUDE.md`,
+# incidents and their lessons to `JOURNAL.md`, maintenance notes to
+# `dev-notes/`.
 
-On-disk ledger for this repo: one entry per line, append-only,
-chronological. Facts carry their basis, decisions carry their why
-(and the rejected alternative where it is not obvious), open
-questions stay listed until they close. Absence of an entry never
-reads as settled.
+schema: 2
+decision: the sixth kind stage under R22: keep the key spelled `bound` or replace it → replace it with `growth`, closed to bounded-by-exit/compacted/unbounded-with-reason; `bound` IS the cap concept R22 withdrew and a key whose body has moved is a label that misleads (§3.0b invariant 2 already says growth control)
+decision: where the laws SIZE and SCOPE are reported once the 60-line cap is withdrawn → in `lifecycle audit`, not `kind check`: `kind check` validates the DECLARATION, and a prose-content finding inside it left the verb unable to answer CLEAN over a healthy repo
+decision: whether `item close` leaves the blocker on the moved body → no: it CLEARS it, so no blocker survives in the closure home; only a `decision` blocker is recorded as `blocker-moot:`, since item-id and evidence blockers are not left hanging by a close
+decision: how the plugin declares the git hooks it ships, given `hooks` in plugin.json → under `git-hooks`: measured on this machine, `hooks` is Claude Code's harness hook map (ai-bureau's manifest is the live example), so a git hook declared there breaks the plugin at install time
+decision: what a repo with NO legacy closure home passes to `migrate` → `--from-done NONE`, an explicit statement by the caller; an absent file stays COULD NOT VERIFY, because a stated absence and an unread file are different answers
+decision: where the plugin's own pre-tool prose ledger lives now that the tool owns LEDGER.md → below an `## Archive (pre-migration)` heading, the same mechanism the carrier already uses; held verbatim, counted apart, and `ledger add` writes ABOVE it
+decision: whether `producer:plugin-drift-scan` may be named as a reader before wave 3 → no: a `producer:` reference resolves against the producers this declaration's kinds name as writers, and naming one the machine has no home for is law 23's own case
 
-**Consumer:** any session working in this repo — read the tail before
-re-deriving something that may already be settled, and append here
-rather than leaving a rationale only in a commit message.
-Boundaries: work items go to `BACKLOG.md`, standing rules to
-`CLAUDE.md`, maintenance journals to `dev-notes/`.
+## Archive (pre-migration)
+
+Everything below is this repo's ledger as it was written BEFORE the tool
+owned this file: prose entries, one per bullet, in the corpus's on-disk-ledger
+form. Held verbatim and not graded — it will never satisfy a fixed-slot shape
+and was never meant to, and deleting it to make the parse clean would be the
+exit that leaves no trace. `ledger check` prints how many lines it did not
+read rather than reporting a clean parse over the part it did.
 
 ## Entries
 
