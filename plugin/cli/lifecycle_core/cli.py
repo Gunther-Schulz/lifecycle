@@ -15,6 +15,7 @@ from pathlib import Path
 
 from . import exits, firelog, lanes as lanes_mod, ledger as ledger_mod
 from . import declaration as decl
+from . import init as init_mod
 from . import items as items_mod
 from . import migrate as migrate_mod
 from . import retire as retire_mod
@@ -30,7 +31,6 @@ from . import verbs
 #: rather than omitted so a caller can tell "this build does not have it"
 #: from "you typed it wrong".
 NOT_YET_BUILT = {
-    "init": "wave 2 (§3.8c) — the declaration and lane stubs for a fresh repo",
     "lane new": "wave 2 (§3.8c) — a lane file from the format",
     "workflow bind": "wave 2 (§3.8c) — a template binding with its slots",
     "lane list --json": "wave 2 (§3.8c) — the query surface for consumers",
@@ -39,7 +39,13 @@ NOT_YET_BUILT = {
 #: Which wave this build carries, for the refusal messages above. A build
 #: that claimed its own coverage from a hardcoded sentence would say
 #: "stages 1-3" forever.
-STAGES_BUILT = "wave 1 stages 1-9 plus the schema wave (1d)"
+#:
+#: `init` LEFT THIS DICT the day it was built (the L2a dispatch) — a
+#: withdrawn-but-left key would read exactly like a still-true one
+#: (`RETIRED_KEYS`'s own reasoning, one file over). `lane new` and
+#: `workflow bind` stay: a sibling lane's, serialized behind this one on
+#: `cli.py`.
+STAGES_BUILT = "wave 1 stages 1-9, the schema wave (1d), plus wave 2's init"
 
 
 def resolve_repo(explicit: str | None) -> tuple[Path | None, str | None]:
@@ -244,6 +250,17 @@ def build_parser() -> argparse.ArgumentParser:
                                   "tree containing the current directory)")
     sub = p.add_subparsers(dest="verb")
 
+    ini = sub.add_parser("init", help="wave 2 (§3.8c) — write a fresh "
+                                      "repo's declaration and lane stubs")
+    ini.add_argument("--lane", action="append", default=[],
+                     help="a door to stub a lane for (repeatable; omit for "
+                          "an empty declared `lanes` list)")
+    ini.add_argument("--id-prefix", dest="id_prefix",
+                     help="override the derived id-prefix")
+    ini.add_argument("--force", action="store_true",
+                     help="overwrite an existing declaration — without it, "
+                          "init REFUSES rather than silently overwriting")
+
     k = sub.add_parser("kind", help="the kind registry")
     ks = k.add_subparsers(dest="kind_action")
     ks.add_parser("list", help="every registered kind, every stage, longhand")
@@ -400,7 +417,14 @@ def main(argv=None) -> int:
         return exits.COULD_NOT_VERIFY
 
     path = args.verb
-    if args.verb == "kind":
+    if args.verb == "init":
+        repo, why = resolve_repo(args.repo)
+        if repo is None:
+            out(f"COULD NOT VERIFY: {why}")
+            return exits.COULD_NOT_VERIFY
+        args.resolved_repo = str(repo)
+        code = init_mod.cmd_init(args, out, repo)
+    elif args.verb == "kind":
         if not args.kind_action:
             out("COULD NOT VERIFY: `kind` needs an action: list, check, show.")
             return exits.COULD_NOT_VERIFY
