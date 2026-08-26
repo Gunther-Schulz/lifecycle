@@ -263,6 +263,139 @@ Boundaries: work items go to `BACKLOG.md`, standing rules to
   done home contributes 0, and 0 is a number shaped like a pass), but
   it is a behaviour change to a verb stage 3 shipped. Stage 3's own
   unit tests are unaffected: they call `items.check_file` directly.
+- **2026-08-26 — `lane list` reads a roster FILE under XDG config, one
+  repo path per line.** `$XDG_CONFIG_HOME/lifecycle/repos`, default
+  `~/.config/lifecycle/repos`; `#` comments and blanks ignored. §3.3
+  names the path and not the format, so the format is this decision.
+  Rejected alternative: a directory of per-repo files — it makes the
+  roster's ORDER unstated and the "roster count" figure the design asks
+  for becomes a listing rather than a read. Not under `~/.claude/`, for
+  the fire log's reason. **Nothing creates this file in wave 1**: it is
+  outside every write boundary this dispatch was given, so on this
+  machine `lane list` answers `roster_absent` today — correctly, and it
+  is a real gap for the desk rather than a defect.
+- **2026-08-26 — a lane's `Trigger:` is parsed; the other three parts are
+  reported by PRESENCE.** §3.3 gives a lane four parsed parts. The router
+  needs one of them, and `Decides:`/the decision table/`Ends:` are wave
+  2's along with the one-screen cap. The run says so in its own output
+  rather than implying it read the whole lane — an assurance wider than
+  its predicate is what this arc keeps finding.
+- **2026-08-26 — ONE trigger evaluator, and the blocker mapping is not the
+  identity** (W1b's open item, closed). `item ready`'s `evidence` blocker
+  calls `lanes.evaluate_trigger`, the same function `lane list` calls. A
+  trigger FIRES when its condition holds, and for a BLOCKER the condition
+  holding means the evidence ARRIVED — so 0 is UNBLOCKED, 1 is the
+  machine's court, and >=2 is a FINDING rather than a wait. Folding BROKEN
+  into "still blocked" would leave the item waiting forever while the
+  board showed ordinary waiting; the summary line therefore says "its
+  blocker is BROKEN — not schedulable, and NOT waiting either".
+- **2026-08-26 — the emit-site coverage check found SIX refusals the code
+  was already emitting under no registered row** (assigned item B).
+  `unknown_item`, `unknown_source`, `new_without_typed_blocker`,
+  `move_uncommitted`, `ledger_shape`, `unregistered_kind` — each had no
+  plant, no control and no line in §3.9's snapshot, so the roster's green
+  said nothing about them. All six are executable rows now. The check
+  derives its sites from the SOURCE (a literal bracketed row name,
+  `Result.add("…")`, `problems.append(("…"))`) rather than from a list,
+  so a site added tomorrow is found without anyone updating anything, and
+  it names its own limit in its output: it cannot catch a refusal the
+  PROSE requires and the code LACKS.
+- **2026-08-26 — the coverage scan read its OWN documentation as data.**
+  Its first run reported a row called `name`, from the three doc-comment
+  lines describing the patterns it matches. Repaired by rewording the
+  comments, NOT by exempting the file: an exemption would have blinded
+  the scan to `emit_site_unregistered`, the one finding this module
+  really emits.
+- **2026-08-26 — `migration_reconciliation` was REMOVED rather than
+  registered.** Every entry is either written or reported unclassified by
+  construction — the two sets partition the read entries — so no INPUT
+  falsifies the check. A predicate no input can falsify is unprovable
+  rather than unproven, and registering it would have put a row in the
+  roster that can never go red. The arithmetic is still checked; its
+  answer is COULD NOT VERIFY on the run's own counts, which carries no
+  row ident at all.
+- **2026-08-26 — an `item add` missing a slot ENTIRELY never reaches
+  `new_without_typed_blocker`.** `slot_value_problem` refuses the empty
+  slot first and the run exits under `item_shape`, so the only input that
+  reaches the typed-blocker refusal is `--write-set UNKNOWN` — the
+  migration's own marker, present and non-empty and not filled. Found by
+  that row's CONTROL going red, which is what a control is for.
+- **2026-08-26 — prove-rows' "exactly one row changed" widened to "every
+  changed row proves the SAME refusal".** Forced by `declaration_ignored`
+  and `declaration_ignored_tracked`: two roster rows, one refusal, one
+  decision site — so the honest mutation darkens both and the old
+  assertion could not tell it from a careless one. The family is DERIVED
+  from the roster's `finding_row` mapping, never hand-listed; for a row
+  with no sibling the assertion is unchanged. Measured: of 41 mutations,
+  exactly one exercises the widening.
+- **2026-08-26 — CLOSED (backlog entry, was READY): `tools/prove-rows.py`
+  covers 41 of 41 rows.** Was 16 of 28. The 12
+  stage 1-3 rows assigned as item C, plus the 13 rows stages 7-9 added.
+  Each mutation folds one VERDICT into another rather than removing
+  machinery; two needed a non-obvious shape and both are recorded at
+  their entries (`declaration_absent` and `laws_absent_could_not_verify`,
+  where deleting the branch lets an exception produce the SAME
+  could-not-verify and the row would not move).
+- **2026-08-26 — `item close` RECORDS a moot decision blocker and does not
+  refuse** (assigned item E). Closing is the desk's act and a guard there
+  would fire on legitimate work — the ordinary case is exactly this: the
+  question stopped mattering because the item shipped. So the fact is
+  recorded in both places a later reader looks: `blocker-moot: <question>`
+  on the moved body, and a `decision: <question> → moot (closed by <id>)`
+  ledger line. Only a `decision` blocker qualifies; an item-id blocker
+  resolves on its target's DONE and an evidence one is re-evaluated each
+  pass, so neither is left hanging by a close. Where the question carries
+  a ledger separator the body annotation still lands and the ledger half
+  is COULD NOT VERIFY — never an ambiguous line, and never a refused
+  close.
+- **2026-08-26 — KNOWN GAP: the done home's blocks are never
+  shape-checked**, so `blocker-moot:` and the pre-existing
+  `superseded-by:` are UNKNOWN SLOTS that nothing reports. `item check`
+  runs `check_file` over the LIVE carrier only; the done home is parsed
+  for conservation and duplicates, whose callers ignore `parsed.problems`.
+  Surfaced to the desk rather than repaired here: either the annotations
+  become real slots or the done home gets its own shape check with them
+  exempted, and both are design decisions.
+- **2026-08-26 — the migration CUTS the `## Grades` section, and this was
+  found by running it.** §4 row 1 says so ("`## Grades` prose
+  declarations … CUT — the tool owns the vocabulary"), and the first real
+  run over claude-code-cache-fix migrated that section's two bullets —
+  which DESCRIBE the old grade words — as items `cf-1` and `cf-2`. The
+  cut is data (`CUT_SECTIONS`) and the report PRINTS what was cut: a cut
+  nobody prints is indistinguishable from a section that held nothing.
+- **2026-08-26 — the migration's entry rule is "a top-level bullet that is
+  BOLD or led by a grade-shaped word".** Not "starts with `- **`": the
+  real carrier holds two entries written as plain `- DONE …` bullets,
+  which that rule would have dropped in silence. The grade word is
+  matched with a trailing guard against a following lowercase letter, so
+  `OPEN-BOOKED` does not collapse onto `OPEN` and `MITIGATE-goal` is not
+  a grade word at all — a prefix match in an equality's costume would
+  silently give an entry another word's rule. A bullet that is neither is
+  PROSE and is listed as non-entry content; the report carries the
+  identity `bullets = entries + prose + cut`, so a bullet the reader did
+  not see leaves a gap in a sum rather than no trace.
+- **2026-08-26 — §4 row 1's PARKED branch is UNREACHABLE over
+  claude-code-cache-fix's carrier.** "PARKED→PARKED with a typed blocker
+  or NEW" turns on a typed blocker; the old carrier has no blocker slot
+  and the design states no rule for deriving one from a body. So all 58
+  PARKED entries take the NEW branch and the parked-ness — which court
+  the item waits in — does not cross. That is the largest single
+  information loss in the migration. Extracting a blocker from prose
+  would be a classification rule invented at this tier, which D-f
+  forbids; surfaced to the desk with the rule text recorded per entry.
+- **2026-08-26 — `goal`, `done-criterion` and `evidence` have no
+  migration rule.** §4 row 1 names UNKNOWN for the write-set alone, and a
+  slot cannot be empty. `goal` and `done-criterion` are written UNKNOWN
+  at the same width the design gives the write-set; `evidence` carries
+  the source line range, which is the evidence a migrated entry actually
+  has. Reported as a design gap, not closed here.
+- **2026-08-26 — `LEDGER.md` cannot carry a prose header.** The ledger
+  parser requires the FIRST non-blank line to be `schema: <n>`, and any
+  other line is either a shape finding (before the schema line) or an
+  unreadable line (after it). So a repo's ledger is exactly `schema: 1`
+  until its first decision — a carrier in a public repo that cannot
+  explain itself. Surfaced; the fix is a comment-line rule in the parser
+  and that is a design decision.
 - **2026-08-26 — the fire log lives under XDG state, never
   `~/.claude/`.** `$XDG_STATE_HOME/lifecycle/fire.jsonl` (default
   `~/.local/state/lifecycle/fire.jsonl`). Basis: on this machine

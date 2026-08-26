@@ -94,14 +94,51 @@ it saw a `2`.
   to delete the LIVE copy once the done copy is confirmed complete, never to
   pick one at random.
 
+## The router, and the ONE trigger evaluator
+
+`lane list` is generated over `~/.config/lifecycle/repos` — one repo path
+per line — and each listed repo's declaration. It prints the roster count
+and every repo's resolution state LONGHAND, because a sparse table renders
+as silence and silence reads as clean: an absent roster is BROKEN, a listed
+repo that does not resolve is NAMED, and a repo declaring zero lanes says
+so in a line of its own.
+
+**There is ONE trigger evaluator, `lanes.evaluate_trigger`, and both callers
+use it.** `lane list` reads a lane's `Trigger:`; `item ready` reads an
+`evidence <predicate>` blocker, which §3.1 says is "evaluated like a
+trigger". A second body behind that contract would disagree about the `>=2`
+BROKEN case first, and that is the case that decides whether a dead
+predicate reads as a clean board.
+
+The blocker mapping is NOT the identity, and the reason is worth keeping:
+a trigger FIRES when its condition holds, and for a blocker the condition
+holding means the evidence ARRIVED — so `0` is UNBLOCKED, `1` is waiting in
+the machine's court, and `>=2` is a FINDING rather than a wait. A broken
+predicate folded into "still blocked" leaves the item waiting forever while
+the board shows ordinary waiting.
+
 ## Verify
 
 ```bash
 python3 -m unittest discover -s test -p 'test_*.py' -t .   # the CLI
+python3 plugin/cli/lifecycle --test                        # the roster + coverage
 python3 tools/prove-rows.py                                # every row, red-first
 node --test test/absence-scan.test.mjs                     # the leak scan's bites
 node tools/absence-scan.mjs --git-range ..HEAD             # the leak scan itself
 ```
+
+`lifecycle --test` runs every roster row's plant AND control and prints
+full counts including skips, then runs the EMIT-SITE COVERAGE check: every
+site in the source that emits a FINDING maps to a registered row, or
+`--test` fails. `--test --list` prints the roster as data — design §3.9's
+table is a SNAPSHOT of that list and updates from it, never the reverse.
+
+**The coverage check's assurance is exactly as wide as its predicate, and
+it says so in its own output.** It reads the SOURCE, so it catches a
+finding the code emits under no registered row — six of those existed and
+were unproven until it first ran. It CANNOT catch a refusal the PROSE
+requires and the code LACKS: that site does not exist, so no scan finds it,
+and only an end-to-end walk of §3.9 does.
 
 `tools/prove-rows.py` is the RED half of "a check counts only once it has
 gone red", made re-runnable. For each recorded arrangement it disables one
@@ -111,6 +148,15 @@ nothing is passing for a reason nobody wrote down; a mutation that darkens
 four rows proves none of them. It restores by FILE COPY and clears
 `__pycache__` around every arm. Rows with no recorded mutation are LISTED at
 the end, never omitted — the roster says how much of itself is proven.
+
+**A mutation may darken a row's SIBLINGS and that is not a stray.** Two
+roster rows can prove two firing inputs of ONE refusal — the roster declares
+that with `Row.finding_row`, and the ignored declaration (untracked, and
+committed) is the case. The single site where that refusal is decided is one
+branch, so a mutation there darkens both. The assertion is therefore "the
+named row changed, and every row that changed proves the SAME refusal",
+with the family derived from the roster's own mapping rather than listed
+here. For a row with no sibling it is bit-for-bit the old "exactly one".
 
 **The verdict it compares is the exit code AND the row name in the output.**
 Codes alone do not discriminate here: every finding is a `2`, so a guard

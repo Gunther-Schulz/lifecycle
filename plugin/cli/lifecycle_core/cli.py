@@ -13,9 +13,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import exits, firelog, ledger as ledger_mod
+from . import exits, firelog, lanes as lanes_mod, ledger as ledger_mod
 from . import declaration as decl
 from . import items as items_mod
+from . import migrate as migrate_mod
 from . import verbs
 
 #: Verbs the design names that this build does not carry yet. Listed rather
@@ -27,15 +28,12 @@ NOT_YET_BUILT = {
     # stage-5 build then contradicted by shipping without it. Recorded as an
     # unassigned verb rather than given a stage this desk did not assign.
     "item ratio": "a stage D-d does not assign — surfaced to the desk",
-    "lane": "stage 7",
-    "migrate": "stage 9",
-    "--test": "stage 8",
 }
 
 #: Which stages this build carries, for the refusal messages above. A build
 #: that claimed its own coverage from a hardcoded sentence would say
 #: "stages 1-3" forever.
-STAGES_BUILT = "1-6"
+STAGES_BUILT = "1-9"
 
 
 def resolve_repo(explicit: str | None) -> tuple[Path | None, str | None]:
@@ -265,9 +263,25 @@ def build_parser() -> argparse.ArgumentParser:
                                 "item, run before a re-grade")
     lrej.add_argument("--for", dest="for_item", required=True)
 
-    lane = sub.add_parser("lane", help="(not built in this build)")
-    lane.add_subparsers(dest="lane_action").add_parser("list")
-    sub.add_parser("migrate", help="(not built in this build)")
+    lane = sub.add_parser("lane", help="the generated router")
+    lanes_sub = lane.add_subparsers(dest="lane_action")
+    ll = lanes_sub.add_parser("list", help="every repo in the roster, every "
+                                          "lane, every trigger state, LONGHAND")
+    ll.add_argument("--no-run", dest="no_run", action="store_true",
+                    help="parse the lanes but do NOT execute their "
+                         "predicates; each state is then COULD NOT VERIFY, "
+                         "never quiet")
+
+    mig = sub.add_parser("migrate", help="the old carrier → ITEMS.md, "
+                                         "ITEMS-DONE.md and a report. DRY RUN")
+    mig.add_argument("--from", dest="from_carrier",
+                     help="the old carrier (default: BACKLOG.md)")
+    mig.add_argument("--from-done", dest="from_done",
+                     help="the old closure home (default: BACKLOG-DONE.md)")
+    mig.add_argument("--report", help="where the classification report is "
+                                      "written")
+    mig.add_argument("--force", action="store_true",
+                     help="overwrite an existing ITEMS.md/ITEMS-DONE.md")
     return p
 
 
@@ -276,13 +290,10 @@ def main(argv=None) -> int:
     out = lambda s: sys.stdout.write(f"{s}\n")  # noqa: E731
 
     if "--test" in argv:
-        out("COULD NOT VERIFY: `--test` is the refusal-table roster and is "
-            f"built in stage 8 of wave 1; this build carries stages "
-            f"{STAGES_BUILT}. The rows this build implements are executable "
-            "in lifecycle_core/refusals.py and are exercised by "
-            "test/test_refusals.py.")
-        firelog.fire("--test", outcome=exits.COULD_NOT_VERIFY)
-        return exits.COULD_NOT_VERIFY
+        from . import roster as roster_mod
+        code = roster_mod.cmd_test(out, list_only="--list" in argv)
+        firelog.fire("--test", outcome=code)
+        return code
 
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -321,6 +332,15 @@ def main(argv=None) -> int:
             return exits.COULD_NOT_VERIFY
         path = f"ledger {args.ledger_action}"
         code = cmd_ledger(args, out)
+    elif args.verb == "lane":
+        if not args.lane_action:
+            out("COULD NOT VERIFY: `lane` needs an action: list.")
+            return exits.COULD_NOT_VERIFY
+        path = "lane list"
+        code = lanes_mod.cmd_lane_list(args, out)
+    elif args.verb == "migrate":
+        path = "migrate"
+        code = cmd_migrate(args, out)
     else:
         stage = NOT_YET_BUILT.get(path, "a later stage")
         out(f"COULD NOT VERIFY: `{path}` is built in {stage} of wave 1; this "
@@ -348,6 +368,15 @@ def _carrier_verb(args, out) -> int:
     if args.item_action == "park":
         return verbs.cmd_item_park(args, out, ctx)
     return verbs.cmd_item_close(args, out, ctx)
+
+
+def cmd_migrate(args, out) -> int:
+    """Stage 9. A DRY RUN: it WRITES the successor files and READS the old
+    carrier, and it never edits, moves or deletes the old one (D-e)."""
+    ctx, code = _context(args, out)
+    if ctx is None:
+        return code
+    return migrate_mod.run(args, out, ctx)
 
 
 def cmd_ledger(args, out) -> int:

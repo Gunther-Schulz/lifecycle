@@ -33,7 +33,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import exits, ledger
+from . import exits, lanes, ledger
 from . import items as items_mod
 
 #: A candidate needs this many shared requirement tokens. ONE would match
@@ -733,6 +733,15 @@ def cmd_item_ready(args, out, ctx: Ctx) -> int:
         out(f"    {note}")
     if it.grade == "READY" and state.startswith("UNBLOCKED"):
         out("READY and unblocked — schedulable now.")
+    elif it.grade == "READY" and state.startswith("FINDING"):
+        # "Blocked" would be the wrong word and the wrong instruction. A
+        # BROKEN predicate or a dangling reference is not a wait: nothing
+        # will re-evaluate it, so the item sits still while a board that
+        # said "blocked" would have a reader waiting for it to clear.
+        out("READY, and its blocker is BROKEN — not schedulable, and NOT "
+            "waiting either. Nothing will re-evaluate this until the blocker "
+            "itself is repaired; a board that called this 'blocked' would "
+            "leave a reader waiting for a clearance that cannot arrive.")
     elif it.grade == "READY":
         out("READY but blocked — decision-complete, not schedulable. The "
             "grade is the desk's judgment and is unaffected by the blocker.")
@@ -757,15 +766,36 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
                 "blocker never resolves mechanically and is never "
                 "auto-dropped; it is surfaced until answered."), exits.CLEAN, ""
     if kind == "evidence":
-        # The predicate is a TRIGGER, and trigger evaluation plus its policy
-        # is §3.3/§3.4 — `lane list`, stage 7. Building a second evaluator
-        # here would put two bodies behind one contract, and they would
-        # disagree about the >=2 BROKEN case first.
-        return ("COULD NOT VERIFY — the blocker is an evidence predicate "
-                f"({detail!r}), evaluated like a trigger. This build carries "
-                "no trigger evaluator (§3.3/§3.4, `lane list`, stage 7), so "
-                "whether it has cleared is unknown — which is not the same "
-                "as still blocked."), exits.COULD_NOT_VERIFY, ""
+        # §3.1: an evidence predicate is "evaluated like a trigger". It is
+        # evaluated by THE trigger evaluator (§3.3/§3.4, stage 7) — the same
+        # function `lane list` calls, never a second one. Two bodies behind
+        # one contract would disagree about the >=2 BROKEN case first, and
+        # that is the case that decides whether a dead predicate reads as a
+        # cleared blocker.
+        #
+        # THE MAPPING, and it is not the identity. A trigger FIRES (0) when
+        # its condition holds; for a blocker, the condition holding is the
+        # evidence having ARRIVED — so 0 is UNBLOCKED, not "blocked". 1 is
+        # quiet: the evidence is not there yet, and the item waits in the
+        # machine's court. >=2 is BROKEN, and BROKEN is a FINDING rather than
+        # a wait: a predicate that errors keeps the item parked forever while
+        # the board renders it as ordinary waiting.
+        t = lanes.evaluate_trigger(detail, cwd=ctx.repo)
+        if t.state == lanes.FIRE:
+            return (f"UNBLOCKED — the evidence predicate ({detail!r}) FIRED "
+                    f"(exit 0): the evidence it names is here.", exits.CLEAN,
+                    "§3.1 has the item re-graded at the desk once a "
+                    "blocker clears. THIS VERB PROMOTES NOTHING.")
+        if t.state == lanes.QUIET:
+            return (f"BLOCKED — in the MACHINE's court: the evidence "
+                    f"predicate ({detail!r}) is QUIET (exit 1). Re-evaluated "
+                    "each pass."), exits.CLEAN, ""
+        return (f"FINDING [trigger_broken] the evidence predicate "
+                f"({detail!r}) is BROKEN — exit {t.code}, which §3.3 RESERVES "
+                f"for broken. {t.detail} A broken predicate is not a quiet "
+                "one: folded into 'still blocked', this item would wait "
+                "forever while the board showed ordinary waiting."
+                ), exits.FINDING, ""
     if done_parsed is None:
         return (f"COULD NOT VERIFY — blocker names {detail}, and the done "
                 f"home could not be read to see whether it is DONE. "
@@ -870,6 +900,29 @@ def _set_slots(text: str, ident: str, updates: dict):
 
 # --- `item close` (stage 5) ---------------------------------------------------
 
+def _moot_decision(ctx: Ctx, ident: str) -> str | None:
+    """The `decision` question a close is about to make MOOT, or None.
+
+    Read off the LIVE block before the move, because after the move the
+    block is in the done home and this run would be asking a different file
+    the same question. Only `decision` blockers qualify: an `<item-id>`
+    blocker resolves mechanically on its target's DONE and an `evidence` one
+    is re-evaluated each pass, so neither is left hanging by a close. A
+    decision blocker sits in the OPERATOR's queue, and nothing else takes it
+    out of there.
+    """
+    try:
+        parsed = items_mod.parse(ctx.items_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError):
+        return None
+    it = next((i for i in parsed.items if i.ident == ident), None)
+    if it is None:
+        return None
+    kind, detail = items_mod.classify_blocker(
+        it.slots.get("blocked-by", ""), ctx.prefix)
+    return detail if kind == "decision" and detail else None
+
+
 def cmd_item_close(args, out, ctx: Ctx) -> int:
     """The MOVE, then conservation — re-run at EVERY close, not asserted once.
 
@@ -893,18 +946,57 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
         if not ctx.items_path.exists():
             out(f"COULD NOT VERIFY: no carrier at {ctx.items_path}.")
             return exits.COULD_NOT_VERIFY
-        code = move_to_done(ctx, args.ident, grade, "", out)
+
+        moot = _moot_decision(ctx, args.ident)
+        note = f"blocker-moot: {moot}" if moot else ""
+        code = move_to_done(ctx, args.ident, grade, note, out)
         if code != exits.CLEAN:
             return code
         touched = [ctx.items_path, ctx.done_path]
+        if moot:
+            # THE CLOSE STAYS UNGUARDED and this is the whole decision.
+            # Closing is the desk's act, and a guard that refused to close an
+            # item over an unanswered decision would fire on legitimate work
+            # — the ordinary case is exactly this: the question stopped
+            # mattering because the item shipped. So the fact is RECORDED
+            # rather than refused, in both places a later reader looks: on
+            # the moved body, and as a decision line in the ledger. An
+            # operator queue that still lists the question after the item
+            # that asked it is gone is a queue nobody can drain.
+            out(f"blocker-moot: the `decision` blocker {moot!r} was never "
+                "answered and this close makes it moot. NOT REFUSED — "
+                "closing is the desk's act. Recorded on the moved body and "
+                "in the ledger.")
+            problem = ledger.check_prose(moot, "the moot decision question")
+            if problem:
+                # The question is DATA read off the item, not prose this run
+                # composed, so it can carry a separator the ledger's shape
+                # forbids. The body annotation still lands; the ledger half
+                # is COULD NOT VERIFY, never a silently ambiguous line and
+                # never a refused close.
+                out(f"COULD NOT VERIFY: the ledger `decision:` line was NOT "
+                    f"written — {problem}")
+                moot_code = exits.COULD_NOT_VERIFY
+            else:
+                line = ledger.append(ctx.ledger_path, "decision",
+                                     {"question": moot,
+                                      "answer": f"moot (closed by "
+                                                f"{args.ident})"})
+                out(f"ledger: {line}")
+                touched.append(ctx.ledger_path)
+                moot_code = exits.CLEAN
+        else:
+            moot_code = exits.CLEAN
         if args.drop:
             line = ledger.append(ctx.ledger_path, "dropped",
                                  {"id": args.ident, "reason": reason})
             out(f"ledger: {line}")
-            touched.append(ctx.ledger_path)
-        code = commit_paths(ctx, touched,
-                            f"lifecycle: close {args.ident} ({grade})", out,
-                            skip=args.no_commit)
+            if ctx.ledger_path not in touched:
+                touched.append(ctx.ledger_path)
+        code = exits.worst([code, moot_code])
+        code = exits.worst([code, commit_paths(
+            ctx, touched, f"lifecycle: close {args.ident} ({grade})", out,
+            skip=args.no_commit)])
 
         items_parsed, why = _load(ctx.items_path)
         done_parsed, done_why = _load(ctx.done_path)

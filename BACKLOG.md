@@ -37,14 +37,35 @@ tool can migrate itself.
   template extraction, which is what makes the scan a thing the
   plugin must SHIP rather than a thing this repo runs.
 
-- **PARKED 2026-08-26 — `item ready` cannot evaluate an `evidence`
-  blocker.** §3.1 says an evidence predicate is evaluated like a
-  trigger; the trigger evaluator is §3.3/§3.4, built in stage 7
-  (`lane list`), which is W1c's. Today `item ready` reports COULD NOT
-  VERIFY for such a blocker. Missing evidence/decision: stage 7's
-  evaluator, and whether `item ready` calls it directly or through a
-  shared predicate runner. Design, decided in part: it must be ONE
-  evaluator — two would disagree about the `>=2` BROKEN case first.
+- **PARKED 2026-08-26 — nothing creates `~/.config/lifecycle/repos`, so
+  `lane list` answers `roster_absent` on this machine.** The roster is
+  the router's input and its creation is outside every write boundary
+  wave 1 was given (the plugin repo, six new files in
+  claude-code-cache-fix, one `.gitignore` line). Measured: `lane list`
+  today exits 2 with `roster_absent`; with a scratch roster listing three
+  repos it prints the full longhand board, so the verb works and the file
+  does not exist. Missing decision: WHO owns the roster — the plugin's
+  install step, the operator's dotfiles, or a `lane register` verb the
+  CLI does not have. Nothing in wave 1 depends on the answer.
+
+- **PARKED 2026-08-26 — the done home's blocks are never shape-checked,
+  so `blocker-moot:` and `superseded-by:` are unknown slots nothing
+  reports.** `item check` runs `check_file` over the LIVE carrier only;
+  the done home is parsed for conservation and duplicates, and both
+  callers ignore `parsed.problems`. Measured: a closed body carrying
+  `blocker-moot:` passes every check today. Missing decision: either the
+  two annotations become real slots in `SLOTS`, or the done home gets its
+  own shape check with them exempted by name. Both are design decisions
+  and both change what a done body IS.
+
+- **PARKED 2026-08-26 — `LEDGER.md` cannot carry a prose header.** The
+  parser requires the first non-blank line to be `schema: <n>`; anything
+  else is a shape finding before it or an unreadable line after it.
+  Measured while creating claude-code-cache-fix's ledger, which is
+  therefore exactly `schema: 1` — a carrier in a public repo that cannot
+  say what it is for. Missing decision: whether the ledger parser gains a
+  comment-line rule (`#` or `<!-- -->`), and if so whether `ledger check`
+  counts comment lines in its third answer.
 
 - **PARKED 2026-08-26 — a detector's home repo is taken from the cwd,
   not from a registry.** §3.1 says detectors register their home repo;
@@ -52,21 +73,6 @@ tool can migrate itself.
   origin-checked exactly like a session add. Missing evidence: the
   registry's shape. Nothing in wave 1 depends on the answer, and the
   coarse check is not wrong today — it is narrower than the design.
-
-- **READY 2026-08-26 — `tools/prove-rows.py` records a mutation for 16
-  of 28 rows; the other 12 have none.** They are the stage 1-3 rows,
-  proven by their own plant/control pair but never shown to go dark
-  when the condition they name is removed. The tool lists them at the
-  end of every run rather than omitting them, so the gap is visible;
-  closing it is mechanical. Design, decided: one MUTATIONS entry per
-  row, anchored on the single site where that row's finding is decided,
-  and each must darken its row ALONE — where two rows share a decision
-  site, the two entries send each row's own case down the wrong branch
-  (the pattern `conservation_short`/`conservation_surplus` already
-  uses). Write-set: `tools/prove-rows.py`. Verifier:
-  `python3 tools/prove-rows.py` prints "rows with a recorded mutation:
-  28 of 28" and exits 0. Done-criterion: no row is listed under "rows
-  with NO mutation recorded".
 
 - **READY 2026-08-26 — `dev-notes/` needs its OBSERVATIONS carrier.**
   Design, decided: copy dispatch-guards' four-slot form (incident +

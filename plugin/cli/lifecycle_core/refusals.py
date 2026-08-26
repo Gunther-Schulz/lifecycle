@@ -371,11 +371,17 @@ PROSE_REST = [
     # "public repo, foreign-origin item" -> `foreign_origin_item`, which was
     # in NEITHER list before stage 4 — a §3.9 row that was neither fired nor
     # labelled, which is the one state this list exists to make impossible.
-    ("lane body over one screen", "lanes are wave 2"),
+    # RETIRED FROM THIS LIST IN STAGE 7, each now an executable row below:
+    # "trigger BROKEN" -> `trigger_broken`;
+    # "roster absent / repo unresolved" -> `roster_absent` and
+    # `repo_unresolved`, which are two firing inputs the design's single
+    # table cell names together and this roster fires apart.
+    ("lane body over one screen", "lanes' BODIES are wave 2 — this build "
+                                  "parses `Trigger:` and reports the other "
+                                  "three parts by presence, so it has no "
+                                  "one-screen cap to fire"),
     ("unbound required slot", "template bindings are wave 2"),
     ("exact template duplication in a repo", "templates are wave 2"),
-    ("trigger BROKEN", "needs `lane list`, wave 1 stage 7"),
-    ("roster absent / repo unresolved", "needs `lane list`, wave 1 stage 7"),
     ("detector without disposition", "the detector registry is wave 3"),
     ("unregistered persisted thing", "the retire lane's walk is wave 4"),
     ("version compare (`0.9` vs `0.11`)", "the plugin cache bound is wave 3"),
@@ -483,12 +489,16 @@ class _Repo:
     """A real git work tree with a declaration and both carrier homes."""
 
     def __init__(self, *, declaration=None, items=None, done=None,
-                 ledger_text=None, public=None):
+                 ledger_text=None, public=None, lanes=None, lane_files=None,
+                 fail_commit=False):
         self.dir = Path(tempfile.mkdtemp(prefix="lifecycle-verb-"))
         d = declaration if declaration is not None else GOOD_FULL_DECLARATION
-        if public is not None:
+        if public is not None or lanes is not None:
             d = json.loads(json.dumps(d))
-            d["public"] = public
+            if public is not None:
+                d["public"] = public
+            if lanes is not None:
+                d["lanes"] = list(lanes)
         self._run(["git", "init", "-q", "-b", "main"])
         # The machine's global core.hooksPath must not reach into an
         # instrument: an unrelated gate firing here would be read as this
@@ -507,8 +517,25 @@ class _Repo:
         (self.dir / "LEDGER.md").write_text(
             "schema: 1\n" if ledger_text is None else ledger_text,
             encoding="utf-8")
+        for name, body in (lane_files or {}).items():
+            (self.dir / "lanes").mkdir(exist_ok=True)
+            (self.dir / "lanes" / f"{name}.md").write_text(body,
+                                                           encoding="utf-8")
         self._run(["git", "add", "-A"])
         self._run(["git", "commit", "-qm", "seed"])
+        if fail_commit:
+            # Installed AFTER the seed commit, so the plant differs from its
+            # control in the COMMIT step alone and not in whether the repo
+            # has a history. A hook rather than a broken `.git`: removing
+            # `.git` would also blind `check-ignore`, and the declaration
+            # reader would answer COULD NOT VERIFY — a different verdict for
+            # a different reason, which is the plant missing its target.
+            hooks = self.dir / ".hooks"
+            hooks.mkdir(exist_ok=True)
+            hook = hooks / "pre-commit"
+            hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+            hook.chmod(0o755)
+            self._run(["git", "config", "core.hooksPath", str(hooks)])
 
     def _run(self, argv):
         subprocess.run(argv, cwd=str(self.dir), capture_output=True, text=True)
@@ -763,6 +790,308 @@ VERB_ROWS = [
 ]
 
 
+# --- stages 7-9: the router, and the sites stage 8's coverage check found ----
+#
+# The rows below split into two groups, and the second group is the point of
+# assigned item B. The FIRST is stage 7's own: the roster, an unresolved repo,
+# a broken trigger. The SECOND is six refusals the code was already emitting
+# under NO REGISTERED ROW — found by the emit-site coverage check on its first
+# run, which is exactly the class it was built for. They were not new
+# behaviour; they were unproven behaviour.
+
+def _lane_cli(argv, *, roster_lines=None, **repo_kw) -> Fired:
+    """Run `lane list` with a scratch roster under a scratch XDG config root.
+
+    `roster_lines is None` means NO ROSTER FILE — the absent-roster plant.
+    `"@repo"` in a line is substituted with the scratch repo's own path, so
+    the control lists a repo that genuinely resolves rather than a path this
+    row invented.
+    """
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    with _Repo(**repo_kw) as r:
+        cfg = Path(tempfile.mkdtemp(prefix="lifecycle-cfg-"))
+        try:
+            if roster_lines is not None:
+                (cfg / "lifecycle").mkdir(parents=True, exist_ok=True)
+                (cfg / "lifecycle" / "repos").write_text(
+                    "\n".join(l.replace("@repo", str(r.dir))
+                              for l in roster_lines) + "\n",
+                    encoding="utf-8")
+            here = os.getcwd()
+            prev = os.environ.get("XDG_CONFIG_HOME")
+            try:
+                os.environ["XDG_CONFIG_HOME"] = str(cfg)
+                os.chdir(str(r.dir))
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    code = cli_mod.main(list(argv))
+                return Fired(code, buf.getvalue())
+            finally:
+                os.chdir(here)
+                if prev is None:
+                    os.environ.pop("XDG_CONFIG_HOME", None)
+                else:
+                    os.environ["XDG_CONFIG_HOME"] = prev
+        finally:
+            shutil.rmtree(cfg, ignore_errors=True)
+
+
+#: A lane body carrying all four of §3.3's parts. The trigger is the only one
+#: this build parses; the others are present so the row exercises a real lane
+#: file rather than a `Trigger:` line on its own.
+def _lane_body(trigger: str) -> str:
+    return (f"# lane: x\n\nDecides: nothing — this is a row's fixture\n"
+            f"Trigger: {trigger}\n\n| when | workflow |\n|---|---|\n"
+            f"| never | none |\n\nEnds: dropped\n")
+
+
+LANE_ROWS = [
+    Row(
+        ident="roster_absent",
+        refusal="roster absent — the router is GENERATED over the roster, so "
+                "with no roster there is no board, and an empty board renders "
+                "exactly like one on which every lane is quiet",
+        firing_input="rm the roster; run `lane list`",
+        expect=exits.FINDING,
+        fire=lambda: _lane_cli(["lane", "list"], roster_lines=None),
+        # The SAME repo with a roster that lists it: only the roster's
+        # existence differs.
+        control=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"]),
+        stage="wave 1, stage 7",
+    ),
+    Row(
+        ident="repo_unresolved",
+        refusal="a listed repo that does not resolve is NAMED — a router that "
+                "dropped the line would print a shorter board rather than a "
+                "broken one",
+        firing_input="a roster line naming a moved repo",
+        expect=exits.FINDING,
+        fire=lambda: _lane_cli(["lane", "list"],
+                               roster_lines=["/nonexistent/moved-repo"]),
+        control=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"]),
+        stage="wave 1, stage 7",
+    ),
+    Row(
+        ident="trigger_broken",
+        refusal="trigger BROKEN — a predicate exiting >=2 (§3.3's reserved "
+                "code) is a FINDING, never folded into quiet: a dead lane "
+                "that renders quiet is a clean board over a router that does "
+                "not work",
+        firing_input="a lane whose `Trigger:` predicate exits 2",
+        expect=exits.FINDING,
+        fire=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"],
+                               lanes=["x"],
+                               lane_files={"x": _lane_body("exit 2")}),
+        # The SAME lane with a QUIET predicate: the arms differ in the
+        # predicate's exit code alone, which is the reserved value under test.
+        control=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"],
+                                  lanes=["x"],
+                                  lane_files={"x": _lane_body("exit 1")}),
+        stage="wave 1, stage 7",
+    ),
+    Row(
+        ident="unknown_item",
+        refusal="a verb naming an item no live home holds",
+        firing_input="`item ready xx-9999`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "ready", "xx-9999"], items=SEED_ITEMS),
+        control=lambda: _cli(["item", "ready", "xx-1"], items=SEED_ITEMS),
+        stage="wave 1, stage 8 (found by the emit-site coverage check)",
+    ),
+    Row(
+        ident="unknown_source",
+        refusal="a `--source` outside the closed door set — an unrecognised "
+                "source would decide the cost test's veto silently",
+        firing_input="`item add --source somebody`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(GOOD_ADD + ["--source", "somebody"]),
+        control=lambda: _cli(GOOD_ADD + ["--source", "operator"]),
+        stage="wave 1, stage 8 (found by the emit-site coverage check)",
+    ),
+    Row(
+        ident="new_without_typed_blocker",
+        refusal="an item whose slots are incomplete is NEW, and a NEW item "
+                "carries a TYPED blocker saying what it waits for. An "
+                "incomplete item with nothing to wait for ages in nobody's "
+                "court",
+        # `--write-set UNKNOWN` and NOT a removed flag. Measured while
+        # building this row: an add missing a slot ENTIRELY never reaches
+        # this refusal, because `slot_value_problem` refuses the empty slot
+        # first and the run exits under `item_shape`. So the only input that
+        # reaches it is the migration's own marker — a slot that is present,
+        # non-empty and not filled. The first draft used a removed
+        # `--evidence` and its CONTROL went red under `item_shape`, which is
+        # what surfaced this.
+        firing_input="`item add --write-set UNKNOWN` with no `--blocked-by`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(_mutate_add("--write-set", "UNKNOWN")),
+        # The SAME incomplete add WITH a typed blocker: the arms differ in
+        # the blocker alone, not in slot completeness.
+        control=lambda: _cli(_mutate_add("--write-set", "UNKNOWN")
+                             + ["--blocked-by", "decision which window"]),
+        stage="wave 1, stage 8 (found by the emit-site coverage check)",
+    ),
+    Row(
+        ident="move_uncommitted",
+        refusal="the move is on disk but was NOT committed, so its two halves "
+                "are not durable together — the third step of the move "
+                "failing, not the move",
+        firing_input="`item close` in a repo whose commit is refused",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "close", "xx-1"], items=SEED_ITEMS,
+                          fail_commit=True),
+        control=lambda: _cli(["item", "close", "xx-1"], items=SEED_ITEMS),
+        stage="wave 1, stage 8 (found by the emit-site coverage check)",
+    ),
+    Row(
+        ident="ledger_shape",
+        refusal="a ledger with no `schema:` head line — a carrier without a "
+                "version cannot be refused by a future tool",
+        firing_input="a `LEDGER.md` whose first line is a ledger entry",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["ledger", "check"],
+                          ledger_text="dropped: xx-1 — overtaken\n"),
+        control=lambda: _cli(["ledger", "check"],
+                             ledger_text="schema: 1\ndropped: xx-1 — "
+                                         "overtaken\n"),
+        stage="wave 1, stage 8 (found by the emit-site coverage check)",
+    ),
+    Row(
+        ident="unregistered_kind",
+        refusal="`kind show` naming a kind the declaration does not register",
+        firing_input="`kind show nosuchkind`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["kind", "show", "nosuchkind"]),
+        control=lambda: _cli(["kind", "show", "items"]),
+        stage="wave 1, stage 8 (found by the emit-site coverage check)",
+    ),
+    Row(
+        ident="emit_site_unregistered",
+        refusal="ASSIGNED ITEM B — a site in the code emits a FINDING under a "
+                "row the roster does not register: no plant, no control, no "
+                "line in the §3.9 snapshot, so the roster's green says "
+                "nothing about it",
+        firing_input="a planted `FINDING [<unregistered row>]` in a copy of "
+                     "the package, scanned",
+        expect=exits.FINDING,
+        fire=lambda: _coverage_over_copy(plant=True),
+        # The SAME copy without the planted line: the arms differ in one
+        # emitted row name, not in whether a copy was scanned.
+        control=lambda: _coverage_over_copy(plant=False),
+        stage="wave 1, stage 8",
+    ),
+    Row(
+        ident="migrate_would_overwrite",
+        refusal="`migrate` over a repo whose successor carrier already exists "
+                "— a second run would replace real work with a re-derivation "
+                "of the carrier it replaced",
+        firing_input="`migrate` with `ITEMS.md` already present, no `--force`",
+        expect=exits.FINDING,
+        fire=lambda: _migrate_run(items=EMPTY_ITEMS),
+        # `--force` is the ONE difference: the same repo, the same existing
+        # carrier, so what separates the arms is the flag and not the state.
+        control=lambda: _migrate_run(items=EMPTY_ITEMS, force=True),
+        stage="wave 1, stage 9",
+    ),
+    Row(
+        ident="migration_unclassified",
+        refusal="an entry whose grade word no rule in §4 row 1 or §3.1 covers "
+                "(D-f): reported with its grade word and line number, never "
+                "given a plausible mapping",
+        firing_input="a source carrier entry graded with an unknown word",
+        expect=exits.FINDING,
+        fire=lambda: _migrate_run(
+            backlog="# old\n\n## Open\n\n- **FLURB 2026-01-01 — a grade word "
+                    "no rule covers.** body\n"),
+        # The SAME carrier with a grade word the rules DO cover: the arms
+        # differ in the word alone.
+        control=lambda: _migrate_run(
+            backlog="# old\n\n## Open\n\n- **READY 2026-01-01 — a grade word "
+                    "the rules cover.** body\n"),
+        stage="wave 1, stage 9",
+    ),
+    Row(
+        ident="migration_ledger_nonzero",
+        refusal="the acceptance criterion 'zero entries routed to the ledger' "
+                "(§3.6, §4 row 1) is checked at the ARTIFACT and not only in "
+                "the report",
+        firing_input="a `LEDGER.md` already carrying a line when `migrate` "
+                     "runs",
+        expect=exits.FINDING,
+        fire=lambda: _migrate_run(
+            ledger_text="schema: 1\ndropped: xx-1 — overtaken\n"),
+        control=lambda: _migrate_run(ledger_text="schema: 1\n"),
+        stage="wave 1, stage 9",
+    ),
+]
+
+
+def _coverage_over_copy(*, plant: bool) -> Fired:
+    """Run the emit-site coverage check over a COPY of this package.
+
+    A copy rather than the live tree: the check's own red must not depend on
+    editing the module that is running it, and a mutation left behind by a
+    crashed row would poison every later row in the same process.
+    """
+    from . import roster as roster_mod
+
+    d = Path(tempfile.mkdtemp(prefix="lifecycle-cov-"))
+    try:
+        for f in Path(__file__).resolve().parent.glob("*.py"):
+            shutil.copy2(f, d / f.name)
+        if plant:
+            target = d / "exits.py"
+            target.write_text(
+                target.read_text(encoding="utf-8")
+                + '\n\ndef _planted(out):\n'
+                  '    out("FINDING [not_a_registered_row] planted")\n',
+                encoding="utf-8")
+        buf = []
+        code = roster_mod.check_coverage(buf.append, root=d)
+        return Fired(code, "\n".join(buf))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def _migrate_run(*, backlog=None, force=False, **repo_kw) -> Fired:
+    """Run `migrate` in a scratch repo carrying an old carrier."""
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    body = backlog if backlog is not None else (
+        "# old\n\n## Open\n\n- **READY 2026-01-01 — an ordinary entry.** body\n")
+    with _Repo(**repo_kw) as r:
+        if "items" not in repo_kw:
+            # `_Repo` seeds both successor homes, and `migrate` refuses to
+            # overwrite an existing one — so without this every migrate row
+            # would fire `migrate_would_overwrite` and prove that row instead
+            # of its own. Measured: two rows failed exactly this way, each
+            # reporting a finding it had not planted.
+            (r.dir / "ITEMS.md").unlink(missing_ok=True)
+            (r.dir / "ITEMS-DONE.md").unlink(missing_ok=True)
+        (r.dir / "BACKLOG.md").write_text(body, encoding="utf-8")
+        (r.dir / "BACKLOG-DONE.md").write_text(
+            "# old done\n\n## Done\n\n- **DONE 2026-01-01 — closed.** body\n",
+            encoding="utf-8")
+        argv = ["--repo", str(r.dir), "migrate",
+                "--report", "docs/audits/report.md"]
+        if force:
+            argv.append("--force")
+        here = os.getcwd()
+        try:
+            os.chdir(str(r.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(argv)
+            return Fired(code, buf.getvalue())
+        finally:
+            os.chdir(here)
+
+
 def _mutate_add(flag: str, value: str) -> list:
     """`GOOD_ADD` with one flag's value replaced — one thing at a time."""
     out = list(GOOD_ADD)
@@ -779,4 +1108,4 @@ def _split_closure_home() -> dict:
     return d
 
 
-ROWS = ROWS + VERB_ROWS
+ROWS = ROWS + VERB_ROWS + LANE_ROWS
