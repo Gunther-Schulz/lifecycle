@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "id-prefix": "lc",
+  "public": true,
+  "laws": "CLAUDE.md",
+  "closure-home": "ITEMS-DONE.md",
+  "trigger-policy": "on-demand",
+  "ready-cap": null,
+  "head-rule": {
+    "lead-goal": "none"
+  },
+  "ready-cap-note": "`head-rule` is the string \"none\" \u2014 the schema allows that and this repo has no lead goal. `ready-cap` is left NULL and FAILING on purpose: the schema demands a positive integer, R22 withdrew caps entirely, and there is no honest number. Fabricating one to reach a green would be the label-wearing-a-measurement's-clothes defect R22 exists to prevent. The finding is the schema lag, and the growth-control wave removes the key.",
+  "goals": [
+    "enforce-the-invariants",
+    "one-home-per-kind",
+    "lean-machinery-strict-checks",
+    "every-refusal-red-first"
+  ],
+  "lanes": [],
+  "template-bindings": {},
+  "kinds": {
+    "items": {
+      "home": "ITEMS.md",
+      "writer": "tool \u2014 lifecycle item add|ready|park|close only",
+      "reader": [
+        "the drain lane",
+        "lifecycle item check"
+      ],
+      "staleness": "change-coupling \u2014 an item whose evidence or requirement record pointer no longer resolves",
+      "exit": {
+        "action": "move",
+        "recording-act": "the item close fire-log line",
+        "detail": "to ITEMS-DONE.md on DONE or DROPPED"
+      },
+      "bound": "bounded-by-exit \u2014 every item leaves by a recorded closure or a recorded drop; growth is watched by flow (a kind that grew without an exit event), never by a cap (R22)"
+    },
+    "done bodies": {
+      "home": "ITEMS-DONE.md",
+      "writer": "tool \u2014 lifecycle item close, the atomic move; no other writer",
+      "reader": [
+        "the retire lane's conservation check"
+      ],
+      "staleness": "none, declared why: a closure record is history \u2014 it accumulates, it does not go stale",
+      "exit": {
+        "action": "compact",
+        "recording-act": "a ledger decision line naming the compacted range",
+        "detail": "WAVE 4 \u2014 declared now so the kind has no undeclared stage, not implemented"
+      },
+      "bound": "compacted \u2014 the archive's control is compaction rather than a bound; unbounded until the retire lane exists, declared why: this is history and dropping it would lose the basis of laws still in force"
+    },
+    "ledger lines": {
+      "home": "LEDGER.md",
+      "writer": "tool for the slots, session for the reason prose",
+      "reader": [
+        "the grade workflow's ledger rejected --for gate",
+        "the intake join's rejected-line print"
+      ],
+      "staleness": "none, declared why: append-only decision history",
+      "exit": {
+        "action": "never",
+        "recording-act": "compaction only \u2014 a line whose item is DONE and past the horizon folds into that body's compaction line"
+      },
+      "bound": "unbounded-with-reason \u2014 one line per decision event, no bodies; the decision rate is the control"
+    },
+    "journal entries": {
+      "home": "JOURNAL.md",
+      "writer": "session \u2014 an incident and its lesson, written by the session that had it",
+      "reader": [
+        "the law or workflow that cites the entry as its basis"
+      ],
+      "staleness": "change-coupling \u2014 an entry nothing cites is stale, and a law carrying no journal pointer has no basis; read against the citing artifact, never against the entry's age",
+      "exit": {
+        "action": "never",
+        "recording-act": "the citing law's pointer is the record; an entry leaves only through the retire lane's compaction, which names the folded range in a ledger decision line"
+      },
+      "bound": "unbounded-with-reason \u2014 one entry per incident, so growth is bounded by the incident rate; a cap here would drop the lesson justifying a law still in force"
+    },
+    "audits": {
+      "home": "docs/audits/*.md",
+      "writer": "session \u2014 one measurement per file, written once and not revised",
+      "reader": [
+        "the item whose evidence slot cites the audit"
+      ],
+      "staleness": "change-coupling \u2014 an audit whose measured artifact has moved past the citation it carries no longer measures anything current",
+      "exit": {
+        "action": "never",
+        "recording-act": "none is taken: append-only historical; the recording act for a superseded measurement is the newer audit citing the one it overtakes"
+      },
+      "bound": "unbounded-with-reason \u2014 one file per measurement; a measurement is only taken when a question needs it, and that is the control"
+    },
+    "refusal-registry": {
+      "home": "plugin/cli/lifecycle_core/refusals.py",
+      "writer": "session \u2014 a row is added beside the guard it defends, and proven red by tools/prove-rows.py before it counts",
+      "reader": [
+        "lifecycle --test",
+        "the emit-site coverage check",
+        "design \u00a73.9's table, which is a SNAPSHOT of this registry and updates from it, never the reverse"
+      ],
+      "staleness": "emit-site coverage \u2014 a registry that has fallen behind the code is detected by the coverage check, which reads the SOURCE for finding-emitting sites and fails when one maps to no registered row",
+      "exit": {
+        "action": "never",
+        "recording-act": "a row leaves only by deletion with a ledger line naming why \u2014 including the deletion of an UNPROVABLE row, which is law 22's case"
+      },
+      "bound": "bounded-by-exit \u2014 a row enters with its firing input and leaves only by a recorded deletion; the roster's own output states how much of itself is proven, so growth without proof is visible rather than silent"
+    },
+    "workflow-template": {
+      "home": "plugin/workflows/*.md",
+      "writer": "session \u2014 via a reviewed PR, never an in-place edit: a template is extracted from a PRIVATE repo into a PUBLISHED one and the leak scan runs on that boundary",
+      "reader": [
+        "the per-repo template-bindings in each declaring repo's declaration"
+      ],
+      "staleness": "no binder \u2014 a template no repo binds is stale by definition; the plugin's suite runs every template against every binder, so a binding that stops resolving is loud",
+      "exit": {
+        "action": "delete",
+        "recording-act": "a dependents search over every declaring repo's template-bindings FIRST, then a ledger line naming the retired template and the repos that had bound it. Encoded as `delete` because the closed exit vocabulary is move|compact|delete|never and 'retire' is not in it \u2014 the dependents search is the recording act, not a fifth action"
+      },
+      "bound": "unbounded-with-reason \u2014 one per shared procedure, and a procedure is only shared once two or more lanes use it; the sharing threshold is the control, not a count"
+    }
+  }
+}

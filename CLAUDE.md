@@ -92,11 +92,12 @@ journal pointer is where the incident lives.
     lane reports is re-run at the integrating desk before it is believed — and
     a discrepancy between your count and a lane's is a claim about your
     instrument first. (J11)
-18. **A brief is complete at dispatch**; a correction that matters is a
-    stop-and-redispatch, never an in-place amendment to a file the executor
-    has already read. The report channel names a target the executor can
-    resolve, and the executor re-reads the brief at HEAD before each verifier
-    run. (J12)
+18. **A brief is not amended in place after dispatch; the executor re-reads it
+    at HEAD before each verifier run; a correction that matters is a
+    stop-and-redispatch.** Three clauses because three parties: the sender does
+    not edit under a running lane, the receiver does not trust its
+    dispatch-time copy, and a change that invalidates the work stops the work.
+    The report channel names a target the executor can resolve. (J12)
 19. **An unverified negative that agrees with a held suspicion is where the
     free probe is owed** — and where it feels unnecessary. (J13)
 20. **What a push carried is settled at the remote**, never by the local
