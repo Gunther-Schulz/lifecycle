@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 6
+added: 7
 compacted: 0
 
 ## lc-1
@@ -124,7 +124,16 @@ blocked-by: NONE
 grade: READY
 requirement: "lane new" writes lanes/<door>.md but deliberately does not touch the declaration, and no verb adds a lane name to an existing declaration's "lanes" list. Combined with the undeclared-file blindness booked alongside this (lc-13), the default outcome of "lane new" is a lane file that NO verb can see: the tool prints UNREGISTERED as a hint and offers no way to resolve it. Same assumed-delivery shape as init leaving carriers uncreated
 goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/cli.py,test/test_lane_new.py
-done-criterion: a freshly created lane can reach the declaration's lanes list through a verb, and lane list then shows it; OR the design records that hand-declaring is intended and lane new's message says so with the exact edit to make
-evidence: L2b report (g): no such verb exists today, noted and not built. Note the name collision risk: "lane register" is already taken for the ROSTER of repos, not for a lane within a repo
-blocked-by: decision should registration be a verb, or is hand-editing the declaration the intended flow
+write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/declaration.py,test/test_lane_new.py,cache-fix docs/directives/carrier-rework-design-2026-08-26.md
+done-criterion: red-first against the current build, then: a fresh "lane new" reads QUIET in "lane list" with the declaration diff showing EXACTLY ONE added name. No new verb
+evidence: L2b report (g): no such verb exists today, noted and not built. DECISION TAKEN (judgment desk 2026-08-26): NO new verb — "lane new" registers its own output, appending the name to the declaration's "lanes" list in the same run. Derivable from the same assumed-delivery reading the desk applied to init: a verb's normal output must be visible to the tool that owns it, and init already writes the declaration, so a declaration write is not a new class of act. With lc-13 closing the inverse scan, the invariant then holds in both directions with no hand step left. The "lane register" name collision is moot — no verb is minted. Section 3.8b's "written by the repo, by hand" was said of lane FILES' content, which "lane new" still only stubs, so that sentence stays true and is amended to say registration is the verb's
+blocked-by: evidence L2c's declaration.py edits have landed on main (the collision is declaration.py, not cli.py — with no new verb this item adds no subparser)
+
+## lc-15
+grade: READY
+requirement: An item whose `blocked-by` names another item by id is validated against nothing. A blocker of the declared form `<prefix>-<n>` pointing at an id the carrier does not contain passes `item check` CLEAN and `kind check` CLEAN — measured, by accident, with a real mistake: lc-14 was written `blocked-by: lc-15` when no lc-15 existed, and both checkers reported clean. The consequence is a PERMANENT SILENT PARK: the item never surfaces in `item ready` because it reads as blocked, and nothing ever reports that the blocker is fictional, so it can neither drain nor be noticed.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: red-first against a carrier carrying a blocker id that does not resolve: a named finding, green once the id resolves or the blocker is retyped. The three other blocker forms (`decision <q>`, `evidence <predicate>`, NONE) must NOT fire — they resolve against nothing by design, and a check that cannot tell them apart from a dangling id would fire on legitimate work.
+evidence: executed: `item check` -> "CLEAN — 0 shape finding(s)", `kind check` -> "CLEAN — 19 kind(s) registered", both with the dangling id in place. REF_TYPES (declaration.py:103) is ("lane","verb","hook","session","producer","operator") — DECLARATION reference types; an item-carrier id is a different namespace and appears in none of them. DISTINCT from the refusal table's recorded `route_set_unwatched`, which is about the declaration resolver narrowed to `lane:`; this is the ITEM carrier's own blocker slot.
+blocked-by: NONE
