@@ -69,6 +69,44 @@ Boundaries: work items go to `BACKLOG.md`, standing rules to
   (`item add|ready|park|close|ratio`, `ledger`, `lane list`, `kind`,
   `migrate`, `--test`) gives it none. Surfaced to the desk as a gap;
   spelled `item check` here so stage 3 can deliver the check it owes.
+- **2026-08-26 — `git check-ignore -v` does NOT answer "is this
+  ignored".** Measured here after this repo's own pair test went red on
+  its control. `-v` changes the EXIT SEMANTICS, not just the output:
+  without it, 0 = ignored and 1 = not ignored; with it, 0 = "some
+  pattern had an opinion", which a NEGATION also satisfies. One scratch
+  repo, one invocation apart: without `-v`, a negated path → 1, a
+  genuinely ignored sibling → 0, an untouched path → 1; with `-v`, the
+  negated path → 0 and the ignored sibling → 0, indistinguishable. The
+  first draft of `ignored_by_git` used `-v` and would have fired on
+  every repo whose negation was correct. Second property, kept
+  deliberately: `check-ignore` skips TRACKED paths (exit 1) unless
+  `--no-index`, which is the right answer to the question actually
+  asked — a tracked file reaches every clone whatever the ignore rules
+  say. **Consequence for wave 1 stage 9:** the brief's verifier item 6
+  expects `check-ignore -v .claude/lifecycle.json` to exit non-zero
+  with no output after the negation lands. That holds only once the
+  file is TRACKED. Run against the working tree BEFORE the commit it
+  exits 0 and prints the negation line, which reads like a failure and
+  is not one.
+- **2026-08-26 — FINDING, open: cache-fix's declared laws file is 243
+  lines against a cap of 60.** Measured (`wc -l CLAUDE.local.md`). So
+  `kind check` on cache-fix's real declaration will fire
+  `laws_over_cap` at stage 9. That is the checker working, not a
+  defect: the decomposition that brings the file under cap is wave 2's
+  (design §3.3, laws to the declared file under a 60-line cap).
+  Recorded so the stage-9 desk does not read the red as a stage-9 bug.
+- **2026-08-26 — DEVIATION: the plugin version moves during
+  construction, against the brief's "no version bump anywhere".** The
+  machine's global pre-commit blocks a plugin payload change without a
+  version bump. Its premise is an installed copy that could go stale;
+  for a plugin never released, with no remote, installed nowhere, that
+  premise is false and the guard over-fires. Its repair (a declared
+  exemption in the guard's own data) lives in the dotfiles repo, which
+  this dispatch may not write. Rejected alternative: `--no-verify` —
+  it disables EVERY lane in that hook rather than the one that fired,
+  and trains the override habit that kills a guard. So: 0.1.0 birth,
+  0.1.1 stage 2, 0.1.2 stage 3. Open for the desk: reset to 0.1.0 at
+  release, or get the never-released case declared in the guard.
 - **2026-08-26 — the fire log lives under XDG state, never
   `~/.claude/`.** `$XDG_STATE_HOME/lifecycle/fire.jsonl` (default
   `~/.local/state/lifecycle/fire.jsonl`). Basis: on this machine

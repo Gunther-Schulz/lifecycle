@@ -31,6 +31,7 @@ from typing import Callable
 
 from . import exits
 from . import declaration as decl
+from . import items as items_mod
 
 #: A declaration that is VALID in every respect, used as the control every
 #: row mutates exactly one thing away from. Derived from the design's own
@@ -59,6 +60,19 @@ GOOD_DECLARATION = {
         },
     },
 }
+
+GOOD_ITEMS = """schema: 1
+baseline: 0
+
+## xx-1
+grade: READY
+requirement: the control block, valid in every slot — record: LEDGER.md
+goal: mitigate
+write-set: tools/thing.py
+done-criterion: the check goes red on the real defect and green after
+evidence: none yet
+blocked-by: NONE
+"""
 
 
 @dataclass
@@ -138,6 +152,13 @@ def _decl_run(**kw) -> Fired:
         lines += [f"COULD NOT VERIFY: {u}" for u in res.unverified]
         lines.append(f"kind check: {exits.word(res.code)}")
         return Fired(res.code, "\n".join(lines))
+
+
+def _items_run(items_text: str, prefix: str = "xx") -> Fired:
+    with _Scratch(items_text=items_text) as s:
+        buf = []
+        code = items_mod.check_file(s.dir / "ITEMS.md", buf.append, prefix=prefix)
+        return Fired(code, "\n".join(buf))
 
 
 # --- the rows ----------------------------------------------------------------
@@ -238,14 +259,48 @@ ROWS = [
         fire=lambda: _decl_run(declaration=GOOD_DECLARATION, gitignore=""),
         control=lambda: _decl_run(**_GOOD_KW),
     ),
+    Row(
+        ident="schema_above_floor",
+        refusal="schema above floor",
+        firing_input="`schema: <n+1>` in the carrier head",
+        expect=exits.FINDING,
+        fire=lambda: _items_run(
+            GOOD_ITEMS.replace("schema: 1", f"schema: {items_mod.SCHEMA_FLOOR + 1}", 1)),
+        control=lambda: _items_run(GOOD_ITEMS),
+    ),
+    Row(
+        ident="item_shape",
+        refusal="item written outside the tool",
+        firing_input="a hand-edited block missing a slot",
+        expect=exits.FINDING,
+        fire=lambda: _items_run(
+            "\n".join(l for l in GOOD_ITEMS.split("\n")
+                      if not l.startswith("evidence:"))),
+        control=lambda: _items_run(GOOD_ITEMS),
+    ),
+    Row(
+        ident="duplicate_id",
+        refusal="duplicate on move (a crash between the append and the commit)",
+        firing_input="two copies of one id in the carrier",
+        expect=exits.FINDING,
+        fire=lambda: _items_run(GOOD_ITEMS + "\n" + GOOD_ITEMS.split("\n\n", 1)[1]),
+        control=lambda: _items_run(GOOD_ITEMS),
+    ),
+    Row(
+        ident="unknown_grade_read",
+        refusal="unknown grade word READ (merge / old tool) — the census's "
+                "third answer, not a crash and not folded into open or closed",
+        firing_input="a file line with `grade: FOO`",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _items_run(GOOD_ITEMS.replace("grade: READY", "grade: FOO")),
+        control=lambda: _items_run(GOOD_ITEMS),
+    ),
 ]
 
 #: Rows the design names that THIS build cannot fire, each with why. Labelled,
 #: never deleted — a roster that dropped them would report a completeness it
 #: does not have.
 PROSE_REST = [
-    ("the whole ITEMS.md carrier family — schema floor, hand-edited\n     block, duplicate id, unknown grade word READ",
-     "the carrier and its shape check are stage 3; this commit is stage 2"),
     ("unknown grade word on write", "needs `item add`, wave 1 stage 4"),
     ("PARKED without a typed blocker", "needs `item park`, wave 1 stage 5"),
     ("conservation short", "needs the close verb's baseline deltas, stage 5"),

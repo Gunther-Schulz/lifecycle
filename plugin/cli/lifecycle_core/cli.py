@@ -15,6 +15,7 @@ from pathlib import Path
 
 from . import exits, firelog
 from . import declaration as decl
+from . import items as items_mod
 
 #: Verbs the design names that this build does not carry yet. Listed rather
 #: than omitted: a refusal that says "wave 1 stage N builds this" is a fact,
@@ -25,7 +26,6 @@ NOT_YET_BUILT = {
     "item park": "stage 5",
     "item close": "stage 5",
     "item ratio": "stage 5",
-    "item check": "stage 3",
     "ledger": "stage 6",
     "lane": "stage 7",
     "migrate": "stage 9",
@@ -126,6 +126,27 @@ def cmd_kind(args, out) -> int:
     return res.code
 
 
+def cmd_item_check(args, out) -> int:
+    repo, why = resolve_repo(args.repo)
+    if repo is None:
+        out(f"COULD NOT VERIFY: {why}")
+        return exits.COULD_NOT_VERIFY
+    res = decl.read(repo)
+    if res.declaration is None:
+        _report(res, out)
+        out("item check: the carrier's home is named by the declaration, and "
+            "there is no readable declaration to name it.")
+        return res.code
+    home = res.declaration.get("kinds", {}).get("items", {})
+    home = home.get("home") if isinstance(home, dict) else None
+    if not isinstance(home, str) or not home.strip():
+        out("FINDING [kind_stage_undeclared] the `items` kind declares no "
+            "`home`, so there is no file to check.")
+        return exits.FINDING
+    return items_mod.check_file(repo / home, out,
+                                prefix=res.declaration.get("id-prefix"))
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="lifecycle",
@@ -142,9 +163,10 @@ def build_parser() -> argparse.ArgumentParser:
     show = ks.add_parser("show", help="one kind, every stage")
     show.add_argument("name")
 
-    it = sub.add_parser("item", help="(not built in this build)")
+    it = sub.add_parser("item", help="the item carrier")
     its = it.add_subparsers(dest="item_action")
-    for verb in ("check", "add", "ready", "park", "close", "ratio"):
+    its.add_parser("check", help="the shape check over the carrier file")
+    for verb in ("add", "ready", "park", "close", "ratio"):
         its.add_parser(verb, help="(not built in this build)")
 
     sub.add_parser("ledger", help="(not built in this build)")
@@ -160,7 +182,7 @@ def main(argv=None) -> int:
 
     if "--test" in argv:
         out("COULD NOT VERIFY: `--test` is the refusal-table roster and is "
-            "built in stage 8 of wave 1; this build carries stages 1-2. The "
+            "built in stage 8 of wave 1; this build carries stages 1-3. The "
             "rows this build implements are executable in "
             "lifecycle_core/refusals.py and are exercised by "
             "test/test_refusals.py.")
@@ -186,15 +208,18 @@ def main(argv=None) -> int:
             out("COULD NOT VERIFY: `item` needs an action.")
             return exits.COULD_NOT_VERIFY
         path = f"item {args.item_action}"
-        out(f"COULD NOT VERIFY: `{path}` is built in "
-            f"{NOT_YET_BUILT.get(path, 'a later stage')} of wave 1; this "
-            "build carries stages 1-2. It is not an unknown verb — it is an "
-            "unbuilt one, and the difference matters to whoever reads this.")
-        code = exits.COULD_NOT_VERIFY
+        if args.item_action == "check":
+            code = cmd_item_check(args, out)
+        else:
+            out(f"COULD NOT VERIFY: `{path}` is built in "
+                f"{NOT_YET_BUILT[path]} of wave 1; this build carries "
+                "stages 1-3. It is not an unknown verb — it is an unbuilt "
+                "one, and the difference matters to whoever is reading this.")
+            code = exits.COULD_NOT_VERIFY
     else:
         stage = NOT_YET_BUILT.get(path, "a later stage")
         out(f"COULD NOT VERIFY: `{path}` is built in {stage} of wave 1; this "
-            "build carries stages 1-2.")
+            "build carries stages 1-3.")
         code = exits.COULD_NOT_VERIFY
 
     firelog.fire(path, repo=args.repo, outcome=code)
