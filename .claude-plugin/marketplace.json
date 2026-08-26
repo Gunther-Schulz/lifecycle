@@ -1,0 +1,15 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "lifecycle-marketplace",
+  "description": "Lifecycle management for everything a repo persists",
+  "owner": {
+    "name": "Gunther Schulz"
+  },
+  "plugins": [
+    {
+      "name": "lifecycle",
+      "description": "The kind registry and the carrier tooling built on it — one entry point, one fire log.",
+      "source": "./plugin"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""pre-push — the leak scan, in front of this repo's irreversible boundary.
+
+WHY IT EXISTS BEFORE ANYTHING ELSE. The `lifecycle` plugin's registry will
+hold WORKFLOW TEMPLATES extracted out of PRIVATE repos into a repo that is
+meant to be published. That is the leak direction, and the design
+(carrier-rework-design-2026-08-26 §3.3) gives it a real guard rather than a
+convention: this repo carries the leak scan as a pre-push hook FROM ITS FIRST
+COMMIT, red-proven on a planted identifier before any template lands. No
+template is extracted until this hook exists — which is why this file, and
+`tools/absence-scan.mjs` beside it, precede the repo's own first commit.
+
+WHAT IT RUNS. `tools/absence-scan.mjs`, a byte-identical copy of
+claude-code-cache-fix's scanner (that repo keeps its own copy and its own
+wiring; the de-duplication is a later wave's act, with the hook rewiring in
+the same change). The classes, the allowlist and the finding format are that
+tool's, unchanged. This file is plumbing only: resolve the ranges, run the
+scan, translate its exit code.
+
+THE THIRD ANSWER. A missing `node`, a missing scanner, or a scanner that dies
+is COULD NOT VERIFY — and it BLOCKS. An unverifiable push over a public
+boundary is not a clean one, and a hook that failed open would report exactly
+what a clean run reports. (cache-fix docs/dev-loop.md, "A checker has THREE
+answers, not two".)
+
+FINDINGS ARE NOT ECHOED beyond what the scanner itself prints: it reports
+class, file, path, length and a hashed identity, never the matched bytes.
+
+HOW IT IS REACHED. The machine's global `core.hooksPath` dispatcher runs
+first and CHAINS this file (dotfiles `git/hooks/pre-push`,
+`chain_local_hook`); `.git/hooks/pre-push` is a symlink to this tracked
+source, so the wiring is visible in the tree rather than only in `.git/`.
+When the dispatcher chains with an empty stdin (this repo has no remote in
+its guarded set), the fallback below scans everything reachable from HEAD
+rather than nothing — a scan of no range is the vacuous pass this hook
+exists to prevent.
+"""
+
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+SCANNER_REL = Path("tools") / "absence-scan.mjs"
+SCANNER_TIMEOUT_S = 300
+ZERO = "0" * 40
+
+
+def repo_root() -> Path | None:
+    p = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                       capture_output=True, text=True)
+    if p.returncode != 0 or not p.stdout.strip():
+        return None
+    return Path(p.stdout.strip())
+
+
+def ranges_from_stdin(text: str) -> list[str]:
+    """`<local ref> <local sha> <remote ref> <remote sha>` per line.
+
+    A deletion (local sha all zeros) pushes no content and is skipped. A new
+    ref (remote sha all zeros) has no old side: the scanner's own contract
+    accepts an EMPTY old, which is what makes a first push scan its whole
+    content instead of nothing.
+    """
+    out = []
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) < 4:
+            continue
+        _lref, lsha, _rref, rsha = parts[:4]
+        if lsha == ZERO:
+            continue
+        old = "" if rsha == ZERO else rsha
+        out.append(f"{old}..{lsha}")
+    return out
+
+
+def block(msg: str) -> int:
+    sys.stderr.write(f"\nPush BLOCKED — {msg}\n")
+    return 1
+
+
+def main() -> int:
+    root = repo_root()
+    if root is None:
+        return block("could not resolve the repo root; the leak scan did not "
+                     "run, so nothing here is verified.")
+    scanner = root / SCANNER_REL
+    if not scanner.is_file():
+        return block(f"the leak scan is missing ({scanner}). COULD NOT "
+                     "VERIFY is not a pass — restore it, or the tree is "
+                     "unscanned.")
+    node = shutil.which("node")
+    if node is None:
+        return block("no `node` on PATH, so the leak scan could not run. "
+                     "COULD NOT VERIFY is not a pass.")
+
+    try:
+        stdin_text = sys.stdin.read()
+    except (OSError, ValueError, UnicodeDecodeError):
+        stdin_text = ""
+    ranges = ranges_from_stdin(stdin_text)
+    if not ranges:
+        # No ranges reached us (an empty chain, or a push with nothing
+        # parseable on stdin). Scan everything reachable from HEAD rather
+        # than declaring a clean run over zero bytes.
+        ranges = ["..HEAD"]
+
+    worst = 0
+    for rng in ranges:
+        try:
+            p = subprocess.run([node, str(scanner), "--git-range", rng],
+                               cwd=str(root), text=True,
+                               timeout=SCANNER_TIMEOUT_S)
+        except subprocess.TimeoutExpired:
+            return block(f"the leak scan timed out on {rng} after "
+                         f"{SCANNER_TIMEOUT_S}s. COULD NOT VERIFY.")
+        except OSError as exc:
+            return block(f"the leak scan would not start ({exc!r}). "
+                         "COULD NOT VERIFY.")
+        if p.returncode == 2:
+            worst = max(worst, 2)
+        elif p.returncode != 0:
+            return block(f"the leak scan exited {p.returncode} on {rng} — "
+                         "an internal error, not a verdict. COULD NOT VERIFY.")
+    if worst == 2:
+        return block("the leak scan reports findings above. Public git "
+                     "history cannot be scrubbed afterwards; fix the bytes, "
+                     "never the scan.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
