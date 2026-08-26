@@ -1,5 +1,5 @@
 {
   "name": "lifecycle",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Lifecycle management for everything a repo persists. The primitive is the KIND, not the item: every kind of thing a repo keeps is registered in .claude/lifecycle.json with six declared stages — home, writer, reader, staleness, exit, bound — and a kind with an undeclared stage is a checker finding. One entry point, `lifecycle`, with one fire log: `kind` (the registry), `item` (the carrier), `ledger`, `lane list`, `migrate`, `--test`. Two exit-code contracts, deliberately NOT unified: a `lifecycle` verb exits 0 clean / 2 finding / 3 could-not-verify, while a lane's `Trigger:` predicate — a command `lane list` executes — exits 0 fire / 1 quiet / >=2 broken."
 }

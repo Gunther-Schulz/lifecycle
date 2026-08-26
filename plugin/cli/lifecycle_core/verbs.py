@@ -777,9 +777,13 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
                 "is in neither home."), exits.FINDING, ""
     if target.grade == "DONE":
         return (f"UNBLOCKED — {detail} is DONE.", exits.CLEAN,
-                "The item returns to NEW for re-grade: a cleared blocker "
-                "changes what is knowable about the item, and the grade is "
-                "re-judged rather than inherited.")
+                "\u00a73.1 has the item return to NEW for re-grade here — a "
+                "cleared blocker changes what is knowable about it, so the "
+                "grade is re-judged rather than inherited. THAT TRANSITION "
+                "IS THE DRAIN LANE'S GRADE WORKFLOW (wave 2), not this "
+                "verb: this one promotes and demotes nothing, and a message "
+                "that did not say so would leave a reader waiting for a "
+                "write that never comes.")
     if target.grade == "DROPPED":
         return (f"FINDING [dangling_reference] blocker names {detail}, which "
                 "is DROPPED. An item-id blocker resolves on DONE; a dropped "
