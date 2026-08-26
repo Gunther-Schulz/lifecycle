@@ -414,6 +414,38 @@ ROWS = [
         stage="wave 2",
     ),
     Row(
+        # CORRECTED 2026-08-26 (the judgment desk's own defect): the first
+        # cut of `binding_slot_unbound` fired only on a PRESENT value equal
+        # to UNKNOWN. This row is the discriminating arm that proves the
+        # fix does something — a required key ABSENT from the binding
+        # entirely (a template gaining a slot after the binding was
+        # written) — and it is the arm that matters: under the pre-
+        # correction code this plant read CLEAN, indistinguishable from a
+        # complete binding.
+        ident="binding_slot_unbound_absent_key",
+        finding_row="binding_slot_unbound",
+        refusal="the SAME finding as `binding_slot_unbound` above, on its "
+                "second firing input: a required slot ABSENT from the "
+                "binding entirely, with no UNKNOWN value to see — the "
+                "restated-comparison-basis drift this lane's own no-index "
+                "decision exists to prevent, one level down",
+        firing_input="a binding for `t1` holding only `{\"a\": \"filled\"}` "
+                     "where the template declares `Slots: a, b`",
+        expect=exits.FINDING,
+        fire=lambda: _decl_run_with_templates(
+            {"t1": "Slots: a, b\n\nprocedure text\n"},
+            declaration=_decl_with_binding({"t1": {"a": "filled"}}),
+            gitignore="", laws_lines=10),
+        # The SAME template, WITH `b` present and filled: the arms differ
+        # in the missing key alone.
+        control=lambda: _decl_run_with_templates(
+            {"t1": "Slots: a, b\n\nprocedure text\n"},
+            declaration=_decl_with_binding({"t1": {"a": "filled",
+                                                    "b": "also-filled"}}),
+            gitignore="", laws_lines=10),
+        stage="wave 2",
+    ),
+    Row(
         ident="binding_template_missing",
         refusal="a `template-bindings` entry naming a template with no "
                 "file under `plugin/workflows/` — nothing dangles, in "
@@ -432,6 +464,28 @@ ROWS = [
         control=lambda: _decl_run_with_templates(
             {"nope": "no Slots line — zero required slots\n"},
             declaration=_decl_with_binding({"nope": {}}),
+            gitignore="", laws_lines=10),
+        stage="wave 2",
+    ),
+    Row(
+        ident="binding_template_unparsable",
+        refusal="a `template-bindings` entry naming a template whose FILE "
+                "exists but whose `Slots:` header does not parse — a "
+                "template that cannot be read has no required-slot set to "
+                "bind against, exactly as `workflow bind` itself refuses "
+                "to proceed against it",
+        firing_input="a binding for `bad`, `bad.md` present with "
+                     "`Slots: a, Bad-Name!`",
+        expect=exits.FINDING,
+        fire=lambda: _decl_run_with_templates(
+            {"bad": "Slots: a, Bad-Name!\n\nprocedure\n"},
+            declaration=_decl_with_binding({"bad": {"a": "filled"}}),
+            gitignore="", laws_lines=10),
+        # The SAME template id, with a `Slots:` line that DOES parse: the
+        # arms differ in the header's own well-formedness alone.
+        control=lambda: _decl_run_with_templates(
+            {"bad": "Slots: a\n\nprocedure\n"},
+            declaration=_decl_with_binding({"bad": {"a": "filled"}}),
             gitignore="", laws_lines=10),
         stage="wave 2",
     ),

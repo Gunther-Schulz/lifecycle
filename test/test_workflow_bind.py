@@ -1,9 +1,11 @@
 """Wave 2, item C: the plugin's template registry, and `lifecycle workflow
 bind` (design §3.8b/§3.11 — carrier-rework-design-2026-08-26.md).
 
-The refusal roster proves three FINDING sites with their own plant/control
-pair: `binding_slot_unbound` and `binding_template_missing` (both `kind
-check` findings, in `refusals.ROWS` beside `dangling_reference`) and
+The refusal roster proves six FINDING sites with their own plant/control
+pair: `binding_slot_unbound` (two firing inputs — a present UNKNOWN value,
+and the CORRECTED shape, a required key absent entirely),
+`binding_template_missing`, and `binding_template_unparsable` (all three
+`kind check` findings, in `refusals.ROWS` beside `dangling_reference`) and
 `workflow_binding_exists` (the bind verb's own refuse-without-`--force`,
 in `refusals.WORKFLOW_ROWS`). What is here is the rest: the parser's four
 shapes (an absent `Slots:` line, a present-but-empty one, a malformed slot
@@ -11,6 +13,16 @@ name, a well-formed list), the round trip against a real bind (every
 required slot present as a key, `--set` filling some and `UNKNOWN` filling
 the rest), the two exit-3 "unreadable input" cases (a missing template, an
 undeclared `--set` slot), and the `--force` overwrite.
+
+CORRECTED 2026-08-26 (the judgment desk's own defect): the first cut of
+`binding_slot_unbound` compared only VALUES against `UNKNOWN`, never
+whether the binding's KEYS match the template's declared slots — so a
+template gaining a slot left every binding written before it reading
+CLEAN, with no UNKNOWN value to find. `_validate_template_bindings` now
+parses the template via `read_template()` (one parser, one caller) and
+treats an absent required key as the same finding; a template that
+exists but fails to parse gets its own finding,
+`binding_template_unparsable`.
 
 `workflows.registry_dir` is a MODULE-LEVEL FUNCTION precisely so tests can
 redirect it: the real `plugin/workflows/` ships holding only `.gitkeep`,
@@ -275,6 +287,46 @@ class KindCheckFindings(unittest.TestCase):
         self.reg.write("ghost", "no Slots: line — zero required slots\n")
         res2 = decl.read(self.repo.dir)
         self.assertNotIn("binding_template_missing",
+                         [f.row for f in res2.findings])
+
+    def test_absent_required_key_is_the_same_finding_as_unknown_value(self):
+        """CORRECTED 2026-08-26: the first cut of `binding_slot_unbound`
+        fired only on a PRESENT value equal to UNKNOWN. A required slot
+        ABSENT from the binding entirely (a template gaining a slot after
+        the binding was written) is the same defect with no value to
+        see, and read CLEAN before this correction — the discriminating
+        arm that matters."""
+        self.reg.write("t1", "Slots: a, b\n\nprocedure\n")
+        fixed = json.loads((self.repo.dir / ".claude" / "lifecycle.json")
+                           .read_text(encoding="utf-8"))
+        # `b` is not a key at all — not even UNKNOWN.
+        fixed["template-bindings"] = {"t1": {"a": "filled"}}
+        (self.repo.dir / ".claude" / "lifecycle.json").write_text(
+            json.dumps(fixed), encoding="utf-8")
+        res = decl.read(self.repo.dir)
+        self.assertIn("binding_slot_unbound", [f.row for f in res.findings])
+
+        fixed["template-bindings"]["t1"]["b"] = "also-filled"
+        (self.repo.dir / ".claude" / "lifecycle.json").write_text(
+            json.dumps(fixed), encoding="utf-8")
+        res2 = decl.read(self.repo.dir)
+        self.assertNotIn("binding_slot_unbound",
+                         [f.row for f in res2.findings])
+
+    def test_unparsable_template_is_red_then_green_after_repair(self):
+        self.reg.write("bad", "Slots: a, Bad-Name!\n\nprocedure\n")
+        fixed = json.loads((self.repo.dir / ".claude" / "lifecycle.json")
+                           .read_text(encoding="utf-8"))
+        fixed["template-bindings"] = {"bad": {"a": "filled"}}
+        (self.repo.dir / ".claude" / "lifecycle.json").write_text(
+            json.dumps(fixed), encoding="utf-8")
+        res = decl.read(self.repo.dir)
+        self.assertIn("binding_template_unparsable",
+                      [f.row for f in res.findings])
+
+        self.reg.write("bad", "Slots: a\n\nprocedure\n")
+        res2 = decl.read(self.repo.dir)
+        self.assertNotIn("binding_template_unparsable",
                          [f.row for f in res2.findings])
 
 

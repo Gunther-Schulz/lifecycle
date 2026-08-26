@@ -562,16 +562,40 @@ def _validate_leak_scan(ls, res: Result) -> None:
 
 def _validate_template_bindings(tb: dict, res: Result) -> None:
     """§3.8b/§3.11: every `template-bindings` entry's slots, and its named
-    template's existence, checked against the PLUGIN REGISTRY itself —
-    `workflows.read_template()`'s own directory-and-parser, imported
-    locally to avoid the module cycle (`workflows.py` imports this module
-    at load time; this import is deferred to call time, the same pattern
-    `validate()` already uses for `judgment` above).
+    template's existence AND PARSEABILITY, checked against the PLUGIN
+    REGISTRY itself — `workflows.read_template()`'s own directory-and-
+    parser, imported locally to avoid the module cycle (`workflows.py`
+    imports this module at load time; this import is deferred to call
+    time, the same pattern `validate()` already uses for `judgment`
+    above). ONE PARSER, ONE CALLER OF ITS SLOT LOGIC — this function never
+    re-derives a template's required-slot set by any means other than
+    `read_template()`, the same function `workflow bind` calls.
+
+    CORRECTED 2026-08-26 (the judgment desk's own defect, not the
+    executor's): the first cut compared each binding's VALUES against
+    "UNKNOWN" and separately asked only whether the template FILE exists
+    — never whether the binding's KEYS match the template's declared
+    slots. That is the restated-comparison-basis drift this lane's central
+    decision (no index; derive the slot set from the file on every read)
+    exists to prevent, one level down: a template gains a slot, and every
+    binding written before it does not carry that key at all — no UNKNOWN
+    value to find, so the old check read clean over an incomplete binding.
+    So an ABSENT required key is now the SAME finding as a PRESENT-UNKNOWN
+    one: both are "a required slot nobody has answered", one with no value
+    to see and one with an explicit marker. And a template that EXISTS but
+    whose `Slots:` header does not parse gets its own finding
+    (`binding_template_unparsable`) rather than silently passing the
+    file-exists check the way it did before.
 
     NOTHING DANGLES, IN EITHER DIRECTION (§3.8b's own line): a lane naming
     a missing workflow already fails `kind check`, and now so does a
     binding naming a missing template — checked against the SAME registry
     `workflow bind` reads, never a second, restated list of what exists.
+
+    OUT OF SCOPE, DELIBERATELY: a binding carrying a key the template does
+    NOT declare. The design requires only that every required slot is
+    filled; the stale-key direction is a real, unspecced question left
+    for its own decision rather than folded in here.
     """
     from . import workflows as workflows_mod
 
@@ -583,27 +607,49 @@ def _validate_template_bindings(tb: dict, res: Result) -> None:
                     f"{type(binding).__name__}.")
             continue
 
-        unbound = sorted(slot for slot, value in binding.items()
-                         if isinstance(value, str)
-                         and value.strip().upper() == "UNKNOWN")
-        if unbound:
-            res.add("binding_slot_unbound",
-                    f"`template-bindings` entry {template_id!r} holds "
-                    "UNKNOWN in " + ", ".join(f"`{s}`" for s in unbound)
-                    + ". UNKNOWN is an explicit unanswered slot, never a "
-                      "default — the same transitional marker `items.py` "
-                      "uses for a slot nobody has ever recorded, and the "
-                      "grade workflow fills before READY there; here it is "
-                      "`workflow bind --set` that fills it.")
+        present_unknown = sorted(
+            slot for slot, value in binding.items()
+            if isinstance(value, str) and value.strip().upper() == "UNKNOWN")
 
-        template_path = workflows_mod.registry_dir() / f"{template_id}.md"
-        if not template_path.is_file():
+        tmpl = workflows_mod.read_template(template_id)
+        missing_keys: list = []
+
+        if tmpl.path is None:
+            template_path = workflows_mod.registry_dir() / f"{template_id}.md"
             res.add("binding_template_missing",
                     f"`template-bindings` names template {template_id!r}, "
                     f"which has no file at {template_path}. Nothing "
                     "dangles, in either direction: a lane naming a "
                     "missing workflow already fails `kind check`, and now "
                     "so does a binding naming a missing template.")
+        elif tmpl.problem:
+            res.add("binding_template_unparsable",
+                    f"`template-bindings` names template {template_id!r}, "
+                    f"whose file exists but does not parse: {tmpl.problem} "
+                    "A template that cannot be read has no required-slot "
+                    "set to bind against, exactly as `workflow bind` "
+                    "itself refuses to proceed against it.")
+        else:
+            missing_keys = sorted(s for s in tmpl.slots if s not in binding)
+
+        if present_unknown or missing_keys:
+            parts = []
+            if present_unknown:
+                parts.append("holds UNKNOWN in "
+                             + ", ".join(f"`{s}`" for s in present_unknown))
+            if missing_keys:
+                parts.append("is missing required slot(s) "
+                             + ", ".join(f"`{s}`" for s in missing_keys))
+            res.add("binding_slot_unbound",
+                    f"`template-bindings` entry {template_id!r} "
+                    + " and ".join(parts)
+                    + ". An unanswered required slot is the same defect "
+                      "whether it carries UNKNOWN (the same transitional "
+                      "marker `items.py` uses for a slot nobody has ever "
+                      "recorded) or is absent from the binding entirely — "
+                      "a template gaining a slot after a binding was "
+                      "written leaves exactly this second shape, with no "
+                      "value to see. `workflow bind --set` fills either.")
 
 
 def _validate_kind(name: str, body, res: Result, world) -> None:
