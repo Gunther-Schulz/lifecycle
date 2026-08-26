@@ -53,8 +53,7 @@ class RefusalRows(unittest.TestCase):
                 continue
             with self.subTest(row=row.ident):
                 fired = row.fire()
-                base = row.ident.split("_missing_")[0]
-                self.assertIn(f"[{base}", fired.output,
+                self.assertIn(f"[{row.expected_finding_row}]", fired.output,
                               f"[{row.ident}] fired, but nothing in its "
                               f"output names that row:\n{fired.output}")
 

@@ -107,6 +107,45 @@ Boundaries: work items go to `BACKLOG.md`, standing rules to
   and trains the override habit that kills a guard. So: 0.1.0 birth,
   0.1.1 stage 2, 0.1.2 stage 3. Open for the desk: reset to 0.1.0 at
   release, or get the never-released case declared in the guard.
+- **2026-08-26 — FIXED, shipped defect: `ignored_by_git` omitted
+  `--no-index`, so `kind check` reported CLEAN over a TRACKED ignored
+  declaration** — which is every declaration a real repo has once it
+  is committed. Found by W1a in its own shipped code, confirmed at the
+  source by the execution desk, fixed here. Measured before the fix,
+  one repo, one path: PLANT (tracked, negation absent) exit 0 CLEAN,
+  no findings; CONTROL (tracked, negation present) exit 0 CLEAN — the
+  two INDISTINGUISHABLE, which is what makes it a defect rather than a
+  gap. After: plant exit 2 `declaration_ignored`, control exit 0. The
+  four `git check-ignore` arms: tracked+absent `--no-index`→0 / bare→1;
+  untracked+absent `--no-index`→0; untracked+present `--no-index`→1 —
+  so the flag closes the tracked case and leaves the existing row's
+  pair intact. The docstring paragraph justifying the omission ("a
+  tracked file reaches every clone whatever the ignore rules say") is
+  DELETED rather than amended: it is true and answers a different
+  question than the hazard, which is a declaration one `git rm
+  --cached` away from vanishing silently. Correct-sounding prose left
+  beside a corrected line is how the next reader restores the bug.
+- **2026-08-26 — FINDING on the neighbouring line, fixed in the same
+  commit: `ignore_pattern` needed `--no-index` too.** Probed rather
+  than reasoned about, per the brief. Measured on a tracked, genuinely
+  ignored path: `check-ignore -v` without the flag prints NOTHING and
+  exits 1, while with it it prints `.gitignore:1:.claude/*`. So the
+  moment the verdict call gained `--no-index`, the two calls were
+  asking about different universes of paths and the newly-covered
+  tracked finding would have carried "(pattern could not be resolved)"
+  in place of the line that caused it. The `-v` exit-semantics hazard
+  does not reach this call: it reads STDOUT only, never the exit code,
+  and runs only after the verdict is already True.
+- **2026-08-26 — the roster's row→finding-row mapping is DECLARED, not
+  derived.** `Row.finding_row` (default None = same as `ident`) replaces
+  `row.ident.split("_missing_")[0]` in `test_refusals.py`. Two roster
+  rows now prove two firing inputs of ONE refusal
+  (`declaration_ignored`, tracked and untracked), which the string
+  surgery could not express. The derivation was also unsound in the
+  general case: a split on a magic substring silently returns the whole
+  ident for every ident that does not contain it, which reads as "no
+  mapping needed" whether or not one is. The assertion also tightened
+  from a prefix match (`[name`) to the full token (`[name]`).
 - **2026-08-26 — the fire log lives under XDG state, never
   `~/.claude/`.** `$XDG_STATE_HOME/lifecycle/fire.jsonl` (default
   `~/.local/state/lifecycle/fire.jsonl`). Basis: on this machine

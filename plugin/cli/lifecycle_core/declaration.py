@@ -138,13 +138,27 @@ def ignored_by_git(repo: Path, rel: Path) -> bool | None:
     that kills it, so the flag is asked separately, AFTER the verdict, and
     only to name the pattern in the message.
 
-    Second property, deliberate rather than incidental: `check-ignore` skips
-    TRACKED paths (exit 1) unless `--no-index`. That is the right answer to
-    the question actually being asked — a tracked file reaches every clone
-    whatever the ignore rules say — so `--no-index` is not passed.
+    `--no-index` IS REQUIRED, and its absence was a shipped defect. Without
+    it `check-ignore` skips TRACKED paths and exits 1 — "not ignored" — for
+    every declaration that has been committed, which is every declaration
+    this checker will ever meet in a real repo. Measured 2026-08-26, one
+    repo, one path, negation absent:
+
+        tracked, negation absent:  --no-index -> 0 (sees it)   bare -> 1
+        untracked, negation absent:  --no-index -> 0    (the plant still fires)
+        untracked, negation present: --no-index -> 1    (the control still clean)
+
+    So the flag closes the tracked case and leaves the existing row's pair
+    intact. The hazard is NOT "a tracked file reaches every clone whatever
+    the ignore rules say" — that sentence is true and answers a different
+    question. The hazard is a declaration one `git rm --cached` away from
+    vanishing silently: tracked today, ignored tomorrow, and a checker that
+    could not see it would report a clean board over the exact
+    misconfiguration it exists to catch.
     """
     try:
-        p = subprocess.run(["git", "-C", str(repo), "check-ignore", str(rel)],
+        p = subprocess.run(["git", "-C", str(repo), "check-ignore",
+                            "--no-index", str(rel)],
                            capture_output=True, text=True)
     except (OSError, subprocess.SubprocessError):
         return None
@@ -160,9 +174,19 @@ def ignore_pattern(repo: Path, rel: Path) -> str:
 
     Asked only once `ignored_by_git` has already said True, because on its
     own this call cannot tell a match from a negation (see above).
+
+    `--no-index` here too, and it must MATCH the verdict call's universe of
+    paths. Measured 2026-08-26 on a tracked, genuinely ignored path: without
+    the flag this call prints NOTHING and exits 1, so the message on the
+    newly-covered tracked case would degrade to "(pattern could not be
+    resolved)" — a finding that cannot name what caused it. The `-v`
+    exit-semantics hazard above does not reach here: this function reads
+    STDOUT only and never the exit code, and it runs only after the verdict
+    is already True.
     """
     try:
-        p = subprocess.run(["git", "-C", str(repo), "check-ignore", "-v", str(rel)],
+        p = subprocess.run(["git", "-C", str(repo), "check-ignore", "-v",
+                            "--no-index", str(rel)],
                            capture_output=True, text=True)
     except (OSError, subprocess.SubprocessError):
         return "(pattern could not be resolved)"

@@ -96,6 +96,18 @@ class Row:
     fire: Callable[[], Fired]
     control: Callable[[], Fired]
     stage: str = "wave 1, stages 1-3"
+    #: Set only where a roster row is NOT one-to-one with a FINDING row —
+    #: two roster rows can prove two firing inputs of ONE refusal (the
+    #: ignored declaration, tracked and untracked). Declared rather than
+    #: derived from the ident by string surgery: a `split()` over a label is
+    #: a prefix match in an equality's costume, and it silently returns the
+    #: whole ident for every ident lacking the magic substring — which reads
+    #: as "no mapping needed" whether or not one is.
+    finding_row: str | None = None
+
+    @property
+    def expected_finding_row(self) -> str:
+        return self.finding_row or self.ident
 
 
 # --- scratch scaffolding -----------------------------------------------------
@@ -109,13 +121,15 @@ class _Scratch:
     """
 
     def __init__(self, *, declaration=None, gitignore=None, laws_lines=None,
-                 items_text=None, declaration_raw=None):
+                 items_text=None, declaration_raw=None, track=False):
         self.dir = Path(tempfile.mkdtemp(prefix="lifecycle-row-"))
         self._run(["git", "init", "-q", "-b", "main"])
         # No hooks from the machine's global core.hooksPath: this scratch repo
         # is an instrument, and an unrelated gate firing inside it would be
         # read as the row's own verdict.
         self._run(["git", "config", "core.hooksPath", str(self.dir / ".nohooks")])
+        self._run(["git", "config", "user.email", "row@lifecycle.invalid"])
+        self._run(["git", "config", "user.name", "refusal row"])
         if gitignore is not None:
             (self.dir / ".gitignore").write_text(gitignore, encoding="utf-8")
         if declaration is not None or declaration_raw is not None:
@@ -129,6 +143,14 @@ class _Scratch:
                 encoding="utf-8")
         if items_text is not None:
             (self.dir / "ITEMS.md").write_text(items_text, encoding="utf-8")
+        if track:
+            # `-f` because the plant's whole point is a path git is ignoring:
+            # a plain `git add` there is silently a no-op, and the row would
+            # then be measuring an UNTRACKED repo while claiming a tracked
+            # one — the plant missing its target and reading as a pass.
+            self._run(["git", "add", "-f", ".claude/lifecycle.json",
+                       ".gitignore"])
+            self._run(["git", "commit", "-qm", "declaration tracked"])
 
     def _run(self, argv):
         subprocess.run(argv, cwd=str(self.dir), capture_output=True, text=True)
@@ -147,6 +169,19 @@ class _Scratch:
 def _decl_run(**kw) -> Fired:
     """Read a scratch repo's declaration and render the verdict as a CLI would."""
     with _Scratch(**kw) as s:
+        if kw.get("track"):
+            # ANTI-VACUITY. A `git commit` that silently failed would leave an
+            # UNTRACKED repo, where the tracked-case rows below degrade into
+            # the untracked row that already passes — the plant missing its
+            # target while the roster stays green. So the premise is pinned
+            # INSIDE the row rather than assumed from the setup code.
+            ls = subprocess.run(
+                ["git", "-C", str(s.dir), "ls-files", "--error-unmatch",
+                 ".claude/lifecycle.json"], capture_output=True, text=True)
+            if ls.returncode != 0:
+                return Fired(-1, "SETUP FAILED: the declaration is not "
+                                 "tracked, so this row measured an untracked "
+                                 f"repo. git said: {ls.stderr.strip()!r}")
         res = decl.read(s.dir)
         lines = [f"FINDING [{f.row}] {f.message}" for f in res.findings]
         lines += [f"COULD NOT VERIFY: {u}" for u in res.unverified]
@@ -197,6 +232,7 @@ ROWS = [
     ),
     Row(
         ident="declaration_malformed_missing_key",
+        finding_row="declaration_malformed",
         refusal="public undeclared — `public` absent, so the repo is neither "
                 "declared public nor declared private",
         firing_input="a declaration with the `public` key removed",
@@ -220,6 +256,31 @@ ROWS = [
         control=lambda: _decl_run(
             declaration=GOOD_DECLARATION,
             gitignore=".claude/*\n!.claude/lifecycle.json\n", laws_lines=10),
+    ),
+    Row(
+        ident="declaration_ignored_tracked",
+        finding_row="declaration_ignored",
+        refusal="ignored declaration — the TRACKED case, which is every "
+                "declaration a real repo has once it is committed",
+        firing_input="`.gitignore` swallowing `lifecycle.json` with the "
+                     "declaration COMMITTED (`.claude/*`, no negation)",
+        expect=exits.FINDING,
+        # WHY THIS ROW EXISTS. The shipped `ignored_by_git` omitted
+        # `--no-index`, so `check-ignore` skipped the tracked path, exited 1,
+        # and `kind check` reported CLEAN over exactly the misconfiguration it
+        # exists to catch. Measured before the fix: plant CLEAN/0, control
+        # CLEAN/0 — the two indistinguishable. Today's roster covered only the
+        # untracked case, which is why a real defect had no row.
+        fire=lambda: _decl_run(declaration=GOOD_DECLARATION,
+                               gitignore=".claude/*\n", laws_lines=10,
+                               track=True),
+        # The control differs in the ONE line under test — the negation — and
+        # is tracked exactly as the plant is, so trackedness cannot be what
+        # separates them.
+        control=lambda: _decl_run(
+            declaration=GOOD_DECLARATION,
+            gitignore=".claude/*\n!.claude/lifecycle.json\n", laws_lines=10,
+            track=True),
     ),
     Row(
         ident="kind_stage_undeclared",
