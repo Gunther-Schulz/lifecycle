@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 20
+added: 21
 compacted: 0
 
 ## lc-1
@@ -245,3 +245,12 @@ write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals
 done-criterion: red-first against a carrier carrying a blocker id that does not resolve: a named finding, green once the id resolves or the blocker is retyped. The three other blocker forms (`decision <q>`, `evidence <predicate>`, NONE) must NOT fire — they resolve against nothing by design, and a check that cannot tell them apart from a dangling id would fire on legitimate work. cli.py carries EXACTLY ONE added verdict in cmd_item_check, beside the existing calls and never folded into check_move_integrity, whose ok line it would shadow.
 evidence: executed: `item check` -> "CLEAN — 0 shape finding(s)", `kind check` -> "CLEAN — 19 kind(s) registered", both with the dangling id in place. REF_TYPES (declaration.py:103) is ("lane","verb","hook","session","producer","operator") — DECLARATION reference types; an item-carrier id is a different namespace. Write-set corrected: no function inside the old set has BOTH item homes AND the declared prefix — check_file has live+prefix, check_move_integrity both homes no prefix, check_done_file done+prefix — so the check body fits items.py but its call site does not.
 blocked-by: NONE
+
+## lc-29
+grade: READY
+requirement: The carrier-side blocker check is NARROWER than the write side under ONE refusal name: items.check_blocker_targets asks only whether the blocker id EXISTS in either home, while verbs._check_blocker also refuses a blocker naming a DROPPED target — an id-blocker resolves on its target DONE, which a dropped item never reaches. So an item blocked on a dropped id passes item check and can never drain — record: lane C closing report (c) gap 3, 2026-08-27
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: the read side and the write side agree on what an item-id blocker resolves against, or the asymmetry is declared with its reason in both sites; red-first on a carrier whose blocker names a DROPPED id — today the write side refuses it and the carrier check passes it
+evidence: lane C built the carrier-side check to lc-28 done-criterion exactly (id EXISTS in either home) and declined to widen it, stating the narrower reach in the row text and the check docstring rather than leaving it implied — so the assurance is no wider than its predicate. The asymmetry is real and under one refusal name (dangling_reference), which is what makes it worth a booking rather than a comment.
+blocked-by: decision widen the carrier check to match the write side, narrow the write side, or declare the asymmetry intentional with its reason at both sites
