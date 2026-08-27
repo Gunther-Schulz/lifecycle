@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 26
+added: 27
 compacted: 0
 
 ## lc-1
@@ -299,3 +299,12 @@ write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: a --merge run whose --report path carries no prior report for the EXISTING carrier says so — could-not-verify or an explicit note that earlier sources pins are not carried — rather than writing a report that silently documents one source; red-first on the measured pair below
 evidence: measured 2026-08-27 on the wave-2 blobs with tool 9e33c81. DIFFERENT report paths (root -> reports/root.md, merge -> reports/merged.md): merged.md carries ONE source-blob line, (claude/BACKLOG.md) only; the root line is absent and nothing says so. SAME report path (both -> reports/M.md): BOTH lines present, (claude/BACKLOG.md) and (BACKLOG.md). So the carry-forward lane B3 built works exactly as reported; what is missing is any signal when the precondition is not met
 blocked-by: NONE
+
+## lc-35
+grade: NEW
+requirement: The leak scan finds a foreign home path inside an item BODY (ITEMS.md:300) and the repo declares public:true, so the finding is live even with no remote today — record: wave-4 desk 2026-08-27, re-run at c915bc2 and again at 22adf7e, unchanged
+goal: enforce-the-invariants
+write-set: UNKNOWN
+done-criterion: node tools/absence-scan.mjs --git-range ..HEAD returns 0 findings over ITEMS.md, with the instrument first shown live on a planted positive so a zero is not an unread instrument
+evidence: executed twice by the wave-4 desk: "FINDING foreign-path  ITEMS.md  line 300  (481 chars, #ee54ac7003b3)", exit 2, identical at c915bc2 and 22adf7e. .claude/lifecycle.json declares public:true and leak-scan.source-scope-foreign-path:true, whose own reason note records that the SHIPPED foreign-path class is scoped corpus — so the declaration and the shipped scanner disagree, which is the residue this item names
+blocked-by: decision does the item BODY change (rewrite the path out of it) or does the foreign-path class scope change (corpus -> source) to honour the declaration
