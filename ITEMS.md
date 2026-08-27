@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 30
+added: 31
 compacted: 0
 
 ## lc-1
@@ -335,3 +335,12 @@ write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: a pointer survives an edit ABOVE its target, or says it cannot: anchor on something immutable (source blob sha plus range, or the entrys own headline text) and red-first by inserting lines above a pointed entry and asserting the pointer still resolves to the same body
 evidence: measured by the wave-4 desk 2026-08-27 over dotfiles: 84 of 85 BACKLOG.md pointers land exactly 2 lines early; the one that does not is the single entry above the edit. Mechanism verified at the commit: 4959d2d added 3 lines and removed 1 (+2 net) INSIDE the first entry, shifting every entry below it. Consequence measured, bounded: the enumeration lanes read windows 2 lines short at the tail, and 2 of 84 entries (df-14, df-47) lost their Done-criterion/Verifier line to it
 blocked-by: decision anchor on the source blob sha plus range, or on the entry headline text, or declare the pointer approximate and have readers search near it
+
+## lc-39
+grade: READY
+requirement: There is NO path from NEW to READY: grade is written once at admission (verbs.py:526), item amend REFUSES --grade, and item ready PROMOTES NOTHING — an item admitted NEW can never be graded READY however complete its slots later become, so the carriers head is empty by construction
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,test/test_lanes.py,tools/prove-rows.py
+done-criterion: an item whose slots were completed by amendment can be graded READY by an explicit desk act recording who judged it and why, and item ready --head then lists it; red-first on the dotfiles state — 133 items with full slots, grade NEW, head reporting 0 schedulable
+evidence: wave-4 desk 2026-08-27, after the dotfiles grade pass: 329 slots filled across 131 items, then item ready --head over 135 live items printed "head: 2 READY, 0 schedulable now"; the only READY items are ones BORN complete (df-134, df-135). df-1 after amendment: "grade is NEW, not READY. THIS VERB PROMOTES NOTHING". Source: verbs.py:526 sits in the add path, no other verb writes a grade
+blocked-by: decision an explicit promotion act (law 10: READY is judged, never inherited) versus re-deriving grade from the amendment-resolved slots at read time — the latter makes READY automatic, which law 10 forbids, so the promotion act is the recommended shape
