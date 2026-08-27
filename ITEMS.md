@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 29
+added: 30
 compacted: 0
 
 ## lc-1
@@ -326,3 +326,12 @@ write-set: UNKNOWN
 done-criterion: every live item whose decision blocker resolved against a moot line before 9800163 is listed with its new board reading, and each is either genuinely blocked or genuinely unblocked by a named answer
 evidence: G4 closing report slot (g), lifecycle 9800163: "Whether any OTHER live item in the real ITEMS.md is currently mis-unblocked by an existing moot line: NOT swept." The fix landed in ledger.py/verbs.py; the carrier was deliberately untouched by that lane
 blocked-by: evidence the sweep has not been run over any real carrier; which carriers are in scope (lifecycle ITEMS.md, dotfiles ITEMS.md, cache-fix ITEMS.md) is the first thing it must decide
+
+## lc-38
+grade: READY
+requirement: migrate writes each item an `evidence:` LINE-RANGE pointer into a LIVING file, so every pointer below any later edit silently goes stale — the anchor rule (a check anchored to mutating state) applied to the migrations own output
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a pointer survives an edit ABOVE its target, or says it cannot: anchor on something immutable (source blob sha plus range, or the entrys own headline text) and red-first by inserting lines above a pointed entry and asserting the pointer still resolves to the same body
+evidence: measured by the wave-4 desk 2026-08-27 over dotfiles: 84 of 85 BACKLOG.md pointers land exactly 2 lines early; the one that does not is the single entry above the edit. Mechanism verified at the commit: 4959d2d added 3 lines and removed 1 (+2 net) INSIDE the first entry, shifting every entry below it. Consequence measured, bounded: the enumeration lanes read windows 2 lines short at the tail, and 2 of 84 entries (df-14, df-47) lost their Done-criterion/Verifier line to it
+blocked-by: decision anchor on the source blob sha plus range, or on the entry headline text, or declare the pointer approximate and have readers search near it
