@@ -923,6 +923,47 @@ VERB_ROWS = [
         stage="wave 1, stage 4",
     ),
     Row(
+        ident="closed_ref_unresolvable",
+        refusal="`item close --ref` naming something that is not a commit in "
+                "this repo — a closure record is written once onto a body "
+                "that then stops being edited, so an unresolvable ref there "
+                "is permanent and reads exactly like a good one (lc-44)",
+        firing_input="`item close xx-1 --ref <a 40-hex sha no object has>`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "close", "xx-1", "--ref",
+                           "0123456789abcdef0123456789abcdef01234567"],
+                          items=SEED_ITEMS),
+        # THE SAME CLOSE with a ref that DOES resolve — the arms differ in
+        # the ref alone, so neither the close nor the flag is what separates
+        # them. `HEAD` rather than a literal sha because the scratch repo's
+        # own commit is not knowable from here.
+        control=lambda: _cli(["item", "close", "xx-1", "--ref", "HEAD"],
+                             items=SEED_ITEMS),
+        stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="blocker_unstorable",
+        refusal="a `decision` blocker the LEDGER cannot store — the question "
+                "would be written into the carrier and nothing could ever "
+                "answer it, because `ledger add decision` refuses the line "
+                "and `item ready` resolves the blocker by question-slot "
+                "equality (lc-40, lc-49)",
+        firing_input="`item add --blocked-by 'decision <q> — <q>'`, the "
+                     "ledger's own slot separator inside the question",
+        expect=exits.FINDING,
+        fire=lambda: _cli(GOOD_ADD + [
+            "--blocked-by",
+            "decision does the desk accept X — or does it not"]),
+        # THE SAME QUESTION, REPHRASED — the arms differ in the separator
+        # alone. A control differing in the TYPE or in the whole sentence
+        # would be red for a neighbouring reason and would prove nothing
+        # about storability.
+        control=lambda: _cli(GOOD_ADD + [
+            "--blocked-by",
+            "decision does the desk accept X or does it not"]),
+        stage="wave 1, stage 4",
+    ),
+    Row(
         ident="dangling_reference_item",
         finding_row="dangling_reference",
         refusal="dangling typed reference — `blocked-by <item-id>` naming an "
@@ -1832,6 +1873,22 @@ evidence: none yet
 blocked-by: NONE
 """
 
+def _named_list(names) -> str:
+    """`a`, `b`, `c` or `d` — for a row whose text ENUMERATES a source set.
+
+    ITS ONE PURPOSE IS THAT THE ENUMERATION IS DERIVED. A row's `refusal` text
+    restating a set beside the module that defines it cannot age loudly: the
+    source gains a member, the sentence stays byte-identical, and the row
+    keeps passing while its own text under-describes what it refuses. That is
+    exactly what happened here — `done_slot_on_live_item` named two
+    closed-body slots after lc-44 made the set four.
+    """
+    quoted = [f"`{n}:`" for n in names]
+    if len(quoted) < 2:
+        return "".join(quoted)
+    return ", ".join(quoted[:-1]) + " or " + quoted[-1]
+
+
 SCHEMA_ROWS = [
     Row(
         ident="declaration_retired_key",
@@ -1905,9 +1962,14 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="done_slot_on_live_item",
-        refusal="a LIVE block carrying a closed-body slot — `superseded-by:` "
-                "or `blocker-moot:`, each of which records something a "
-                "CLOSURE did",
+        # THE ENUMERATION IS DERIVED from the module that owns the set, never
+        # restated. It read "`superseded-by:` or `blocker-moot:`" while
+        # `items.DONE_ONLY_SLOTS` held four — lc-44 added `closed-reason:`
+        # and `closed-ref:` and nothing here moved, because nothing could:
+        # the row's plant and control both pass whatever the sentence says.
+        refusal="a LIVE block carrying a closed-body slot — "
+                + _named_list(items_mod.DONE_ONLY_SLOTS)
+                + ", each of which records something a CLOSURE did",
         firing_input="a READY block with a `superseded-by:` line",
         expect=exits.FINDING,
         fire=lambda: _items_run(

@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
 from lifecycle_core import exits, items  # noqa: E402
 from lifecycle_core.refusals import (  # noqa: E402
-    EMPTY_DONE, FOUR_BLOCKER_ITEMS, GOOD_ITEMS)
+    DONE_BLOCK, EMPTY_DONE, FOUR_BLOCKER_ITEMS, GOOD_ITEMS)
 
 
 def run_check(text=None, prefix="xx"):
@@ -25,6 +25,19 @@ def run_check(text=None, prefix="xx"):
             p.write_text(text, encoding="utf-8")
         buf = []
         code = items.check_file(p, buf.append, prefix=prefix)
+        return code, "\n".join(buf)
+
+
+def run_done_check(text=None, prefix="xx"):
+    """`check_done_file` over a throwaway done home. Its own runner because
+    the done home asks three questions the live check cannot (§3.8c), and a
+    caller that reached for `run_check` would be grading the wrong file."""
+    with tempfile.TemporaryDirectory(prefix="lifecycle-done-") as td:
+        p = Path(td) / "ITEMS-DONE.md"
+        if text is not None:
+            p.write_text(text, encoding="utf-8")
+        buf = []
+        code = items.check_done_file(p, buf.append, prefix=prefix)
         return code, "\n".join(buf)
 
 
@@ -281,6 +294,140 @@ class ClosureRecord(unittest.TestCase):
         `--reason` behaves as it did, and a shape check that demanded the
         lines would fire on every body closed before this existed."""
         code, out = run_check(self._closed())
+        self.assertEqual(code, exits.CLEAN, out)
+
+
+class ClosedBodySlotVocabulary(unittest.TestCase):
+    """`DONE_ONLY_SLOTS` has consumers that ENUMERATE it, and a restated
+    enumeration cannot age loudly.
+
+    The row text is the case that motivated this: `done_slot_on_live_item`
+    named two of the four slots after lc-44 added the other two, and neither
+    its plant, its control, nor the roster's coverage check could see it — a
+    row's text is not an input any of them grades. So the enumeration is
+    derived at construction and this asserts that it was.
+
+    HERE RATHER THAN IN `test_refusals.py` because the SOURCE of the
+    enumeration is this module's tuple: what fails when a fifth slot is added
+    is this vocabulary's consumers, and this is the file that owns it.
+    """
+
+    def test_the_live_slot_row_names_EVERY_closed_body_slot(self):
+        from lifecycle_core import refusals
+        row = next(r for r in refusals.ROWS
+                   if r.ident == "done_slot_on_live_item")
+        missing = [s for s in items.DONE_ONLY_SLOTS
+                   if f"`{s}:`" not in row.refusal]
+        self.assertEqual(
+            missing, [],
+            f"the row's own text names {row.refusal!r} while "
+            f"DONE_ONLY_SLOTS holds {items.DONE_ONLY_SLOTS}. A restated "
+            "enumeration beside its source stays byte-identical to health "
+            "when the source grows.")
+
+    def test_the_assertion_can_FAIL(self):
+        """The instrument's positive control. Without it the assertion above
+        passes against a `missing` list that could never be non-empty — a
+        membership test over a text is exactly the shape that returns a
+        clean zero when it is looking at the wrong string."""
+        restated = ("a LIVE block carrying a closed-body slot — "
+                    "`superseded-by:` or `blocker-moot:`, each of which "
+                    "records something a CLOSURE did")
+        missing = [s for s in items.DONE_ONLY_SLOTS
+                   if f"`{s}:`" not in restated]
+        self.assertEqual(missing, ["closed-reason", "closed-ref"],
+                         "the pre-lc-44 text must still be caught")
+
+
+class MootBlockerInDoneHome(unittest.TestCase):
+    """lc-48 — `blocked_in_done_home` against the body a close annotated.
+
+    THE MECHANISM, because the fixtures are unreadable without it: `item
+    close` clears the `blocked-by:` SLOT LINE, and an `amended-blocked-by:`
+    line resolves last-wins OVER that line. So a body whose blocker was
+    amended and then closed reads `blocked-by: NONE` while its EFFECTIVE
+    blocker is still the decision — and the check fired on the exact body the
+    close had recorded correctly (dotfiles' done home, df-141, 2026-08-27).
+    Clearing the amendment instead is the in-place rewrite the append-only
+    model forbids, so the CHECK is what moved.
+
+    Every fixture below is the SAME body differing in one thing, because the
+    question is which outcome happened and not whether something did.
+    """
+
+    #: The df-141 shape: amended into a decision blocker, then closed with the
+    #: moot record naming that same question.
+    QUESTION = "does the desk accept the amendment in place"
+
+    def _body(self, *extra, blocker="NONE"):
+        block = DONE_BLOCK.replace("blocked-by: NONE",
+                                   f"blocked-by: {blocker}")
+        return (EMPTY_DONE + "\n" + block.rstrip("\n") + "\n"
+                + "".join(l + "\n" for l in extra))
+
+    def _amended(self, question, moot=None):
+        extra = [f"amend-reason: 2026-08-27 the desk retyped the blocker",
+                 f"amended-blocked-by: 2026-08-27 decision {question}"]
+        if moot is not None:
+            extra.append(f"blocker-moot: {moot}")
+        return self._body(*extra)
+
+    def test_the_df_141_shape_is_CLEAN(self):
+        """The red: before lc-48 this fired on a correctly closed body."""
+        code, out = run_done_check(self._amended(self.QUESTION,
+                                                 moot=self.QUESTION))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("blocked_in_done_home", out)
+
+    def test_the_SAME_body_with_NO_moot_record_still_fires(self):
+        """THE ARM THE REPAIR MUST NOT TAKE WITH IT. A live blocker with no
+        moot record is a body that arrived by a path that is not a close —
+        the real defect, and the one this row exists for."""
+        code, out = run_done_check(self._amended(self.QUESTION))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("blocked_in_done_home", out)
+
+    def test_a_moot_record_of_a_DIFFERENT_question_does_not_discharge(self):
+        """MUST-NOT-MOVE. A discharge keyed on the presence of any
+        `blocker-moot:` line would clear a blocker on a record about
+        something else — and its green would be identical to the green
+        above."""
+        code, out = run_done_check(
+            self._amended(self.QUESTION, moot="an entirely other question"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("blocked_in_done_home", out)
+
+    def test_a_moot_record_that_is_a_PREFIX_does_not_discharge(self):
+        """The equality is exact. A containment test would read a shorter
+        question as discharging every longer one that begins with it."""
+        code, out = run_done_check(
+            self._amended(self.QUESTION, moot=self.QUESTION.split(" in ")[0]))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("blocked_in_done_home", out)
+
+    def test_an_EVIDENCE_blocker_is_not_dischargeable_by_a_moot_record(self):
+        """Only the `decision` type is annotated by a close, so only that
+        type has a moot record to be discharged by. A discharge that ignored
+        the type would clear a surviving evidence blocker on a line no close
+        ever wrote for it."""
+        code, out = run_done_check(self._body(
+            "blocker-moot: the CI lane reports green",
+            blocker="evidence the CI lane reports green"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("blocked_in_done_home", out)
+
+    def test_the_five_NONE_bodies_stay_clean_by_the_UNCHANGED_branch(self):
+        """The other five real blocks carrying `blocker-moot:` (df-1, df-39,
+        df-64, df-73, df-75) had `blocked-by` amended to NONE before close.
+        They leave by the type test, exactly as they did before lc-48 — so
+        their green says nothing about the new branch and this asserts the
+        branch they actually take."""
+        it = items.parse(self._body("blocker-moot: a regrade note")).items[0]
+        kind, detail = items.classify_blocker(it.slots["blocked-by"], "xx")
+        self.assertEqual(kind, "none")
+        self.assertFalse(items._moot_discharges(it, detail),
+                         "a NONE blocker must not reach the discharge at all")
+        code, out = run_done_check(self._body("blocker-moot: a regrade note"))
         self.assertEqual(code, exits.CLEAN, out)
 
 

@@ -406,6 +406,13 @@ def move_to_done(ctx: Ctx, ident: str, closing_grade: str, note: str,
     takes it out of there — that one the caller records as `blocker-moot:`,
     which is a real closed-body slot since this wave rather than an annotation
     nothing checks.
+
+    `note` MAY CARRY SEVERAL LINES, newline-separated (lc-44): a DONE close
+    appends `closed-reason:` and `closed-ref:` beside the moot record, and
+    they land in the SAME buffer write as the move because a second write
+    would leave a body moved without its closure record. The caller composes
+    them in `DONE_ONLY_SLOTS` order; this function only appends what it is
+    handed.
     """
     items_text = ctx.items_path.read_text(encoding="utf-8")
     kept, body = items_mod.replace_body(items_text, ident)
@@ -628,7 +635,18 @@ def _collect_slots(args, ctx: Ctx, out):
 
 
 def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out) -> int:
-    """Typed, and — for an item-id blocker — pointing at an item that IS."""
+    """Typed, LEDGER-STORABLE if it is a decision, and — for an item-id
+    blocker — pointing at an item that IS.
+
+    THE STORABILITY HALF IS lc-49, and the three doors are why it lives here:
+    `item add`, `item park` and `item amend` all reach this one function, so a
+    per-verb check would have covered exactly the verbs somebody remembered.
+    lc-40 closed the MINT (`migrate._ledger_storable`) against the same defect
+    and left these three hand-write doors open — measured live, not inferred:
+    dotfiles' df-135 reached the carrier carrying the ledger's own slot
+    separator, written by `item amend --blocked-by`, which retyped an evidence
+    blocker into a decision one (repaired in dotfiles `ec47c3c`).
+    """
     kind, detail = items_mod.classify_blocker(value, ctx.prefix)
     if kind is None:
         out(f"FINDING [blocker_untyped] `--blocked-by {value!r}` is not a "
@@ -637,6 +655,28 @@ def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out) -> 
             "<predicate>`, or NONE. Prose is not an edge — an aging item is "
             "routed by whose court it sits in, and prose sits in nobody's.")
         return exits.FINDING
+    if kind == "decision":
+        # THE PREDICATE IS THE LEDGER'S OWN, imported rather than restated —
+        # the same shape and the same reason as `migrate._ledger_storable`: a
+        # second spelling of "what the ledger refuses" would age apart from
+        # the writer it must agree with, and it would fail in the QUIET
+        # direction, this gate passing a question the real writer then
+        # refuses.
+        why = ledger.check_prose(detail, "the decision question")
+        if why:
+            out(f"FINDING [blocker_unstorable] {why} The question would go "
+                f"into the carrier as `blocked-by: {value}` and nothing could "
+                "ever answer it: `ledger add decision` refuses to store it, "
+                "and `item ready` resolves a decision blocker by "
+                "QUESTION-SLOT EQUALITY — so rephrasing at ANSWER time no "
+                "longer matches the blocker it was written to clear. Each "
+                "mechanism is right alone; jointly they made 69 of 99 "
+                "decision-blocked items permanently unanswerable (lc-40, "
+                "measured over dotfiles' carrier 2026-08-27). Rephrase the "
+                "QUESTION here, at the mint — this is not escaped or "
+                "normalised on your behalf, because an escaped spelling puts "
+                "two forms of every value in the file.")
+            return exits.FINDING
     if kind != "item":
         return exits.CLEAN
     if done_parsed is None:
@@ -1541,6 +1581,50 @@ def _moot_decision(ctx: Ctx, ident: str) -> str | None:
     return detail if kind == "decision" and detail else None
 
 
+def _resolve_refs(ctx: Ctx, raw: str, out) -> tuple[str | None, int]:
+    """`(the `closed-ref:` value, code)` — every ref VERIFIED in this repo.
+
+    REFUSED, never written unverified (lc-44). The closure record's whole
+    point is that `items leave BY COMMIT REF` survives the verb that closes
+    the item; a ref nobody checked is a label, and a label that resolves to
+    nothing reads exactly like one that resolves to the commit. The predicate
+    is git's own — `rev-parse --verify <ref>^{commit}` — because "is this a
+    commit in this repo" is a question the repo answers and nothing here
+    should be modelling.
+
+    WRITTEN AS GIVEN, not resolved to a full sha: the operator's own spelling
+    is what the record should carry, and rewriting it would put a value in the
+    file nobody typed.
+    """
+    refs = [r.strip() for r in raw.split(",") if r.strip()]
+    if not refs:
+        out(f"FINDING [closed_ref_unresolvable] `--ref {raw!r}` names no ref. "
+            "The flag is OPTIONAL — omitting it writes no `closed-ref:` line "
+            "and says so — so an empty one is a ref that went missing between "
+            "the caller and here, not a caller who meant nothing.")
+        return None, exits.FINDING
+    for ref in refs:
+        # `probe.returncode == 0`, NOT the file's usual `if r.returncode != 0`
+        # — that spelling at this indent CONTAINS the anchor
+        # `tools/prove-rows.py` records for `move_uncommitted`, and a second
+        # occurrence puts that row's arrangement at COULD NOT VERIFY. The
+        # anchor is a substring match, so an unrelated verb can retire
+        # another row's proof simply by spelling a git check the same way.
+        probe = subprocess.run(
+            ["git", "-C", str(ctx.repo), "rev-parse", "--verify",
+             f"{ref}^{{commit}}"], capture_output=True, text=True)
+        if probe.returncode == 0:
+            continue
+        out(f"FINDING [closed_ref_unresolvable] `--ref` names {ref!r}, "
+            f"which is not a commit in {ctx.repo}: "
+            f"{(probe.stderr or probe.stdout).strip()[:200]!r}. A closure "
+            "record is written ONCE onto a body that then stops being "
+            "edited, so an unresolvable ref there is permanent — and it "
+            "reads exactly like a good one.")
+        return None, exits.FINDING
+    return ", ".join(refs), exits.CLEAN
+
+
 def cmd_item_close(args, out, ctx: Ctx) -> int:
     """The MOVE, then conservation — re-run at EVERY close, not asserted once.
 
@@ -1548,9 +1632,37 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
     computed only at migration time is a claim about a day that has passed.
     Running it here means every close either confirms the carrier is whole
     or names the moment it stopped being.
+
+    THE CLOSURE RECORD (lc-44). A DONE close writes what it was given onto the
+    MOVED BODY — `closed-reason:` and `closed-ref:` — and the home is the body
+    rather than the ledger because two homes for one fact is the
+    paraphrase-drift the carrier doctrine forbids (judgment desk, 2026-08-27).
+    A DROP keeps its ledger `dropped:` line instead, because a dropped body
+    may be pruned and its record cannot live only there.
+
+    BOTH LINES ARE OPTIONAL AND THE ABSENCE IS SPOKEN. Real closures have no
+    ref — already done, closed by decision — so a missing line is legitimate;
+    but a silent absence is indistinguishable from the defect this item
+    repaired, where `--reason` was accepted and written NOWHERE while the verb
+    printed a move and a commit that read as a complete closure record.
     """
     grade = "DROPPED" if args.drop else "DONE"
     reason = (args.reason or "").strip()
+    ref_raw = (args.ref or "").strip()
+    ref_value = None
+    if ref_raw:
+        if args.drop:
+            # SAID, never silently dropped. A drop's record is the ledger
+            # line, and a `--ref` swallowed without a word would look exactly
+            # like one that landed.
+            out(f"--ref {ref_raw!r}: NOT WRITTEN. A --drop close records "
+                "itself as the ledger `dropped:` line and carries no "
+                "closed-body slots — a dropped body may be pruned, so its "
+                "record cannot live only on it.")
+        else:
+            ref_value, ref_code = _resolve_refs(ctx, ref_raw, out)
+            if ref_code != exits.CLEAN:
+                return ref_code
     if args.drop:
         problem = ledger.check_prose(args.reason, "the drop reason")
         if problem:
@@ -1576,10 +1688,39 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
             return exits.COULD_NOT_VERIFY
 
         moot = _moot_decision(ctx, args.ident)
-        note = f"blocker-moot: {moot}" if moot else ""
-        code = move_to_done(ctx, args.ident, grade, note, out)
+        # THE APPENDED LINES, IN `DONE_ONLY_SLOTS` ORDER, in ONE buffer write
+        # with the move. Two writes would leave a body moved without its
+        # record, or a record about a move that did not happen — and the
+        # order is the tuple's so the shape check reads them as the tail it
+        # expects rather than as slots that wandered.
+        date = _today()
+        note_lines = []
+        if moot:
+            note_lines.append(f"blocker-moot: {moot}")
+        if not args.drop:
+            if reason:
+                note_lines.append(
+                    f"{items_mod.CLOSED_REASON}: {date} {reason}")
+            if ref_value:
+                note_lines.append(f"{items_mod.CLOSED_REF}: {ref_value}")
+        code = move_to_done(ctx, args.ident, grade, "\n".join(note_lines), out)
         if code != exits.CLEAN:
             return code
+        if not args.drop:
+            # BOTH ANSWERS ARE SPOKEN, present or absent. The whole defect
+            # lc-44 repaired was a `--reason` that reached nothing while the
+            # output read as a complete closure record, and an unspoken
+            # absence is byte-identical to that.
+            if reason:
+                out(f"{items_mod.CLOSED_REASON}: {date} {reason}")
+            else:
+                out(f"{items_mod.CLOSED_REASON}: not given, no line written.")
+            if ref_value:
+                out(f"{items_mod.CLOSED_REF}: {ref_value}")
+            else:
+                out(f"{items_mod.CLOSED_REF}: not given, no line written. A "
+                    "closure legitimately has none — already done, or closed "
+                    "by a decision rather than a commit.")
         touched = [ctx.items_path, ctx.done_path]
         if moot:
             # THE CLOSE STAYS UNGUARDED and this is the whole decision.

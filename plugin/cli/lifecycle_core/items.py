@@ -1232,6 +1232,27 @@ def unknown_slots_of(item: Item) -> list:
 
 # --- the done home's own shape check (§3.8c; W1c's G4) -----------------------
 
+def _moot_discharges(item: Item, detail: str) -> bool:
+    """Did this body's closure record the very decision `detail` names (lc-48)?
+
+    EQUALITY, never containment or a normalised compare. The moot record is
+    written by `item close` from the blocker's own DETAIL, so the two strings
+    have one producer and an exact match is available — and a looser predicate
+    would discharge a blocker on a moot record about something else, which is
+    the one case this check exists to keep firing. A substring test here would
+    be the prefix match in an equality's costume: any longer question that
+    happens to begin with a shorter one would read as discharged.
+
+    Only the `decision` type reaches this. An `<item-id>` blocker resolves
+    mechanically on its target's DONE and an `evidence` one is re-evaluated
+    each pass, so neither is annotated by a close and neither has a moot
+    record to be discharged by — the caller's own type test is what keeps a
+    surviving blocker of those two kinds a finding.
+    """
+    moot = (item.slots.get("blocker-moot") or "").strip()
+    return bool(moot) and moot == (detail or "").strip()
+
+
 def check_done_file(path: Path, out, prefix: str | None = None) -> int:
     """The done home is a KIND with the TOOL as its writer, so shape applies.
 
@@ -1248,10 +1269,22 @@ def check_done_file(path: Path, out, prefix: str | None = None) -> int:
       * no BLOCKER survives a closure. A closed item waits for nothing, and a
         blocker left on it is a wait recorded against a body that has stopped
         waiting — which is exactly what leaves an unanswerable question in the
-        operator's queue after the item that asked it is gone. `item close`
-        clears it and records it as `blocker-moot:`.
+        operator's queue after the item that asked it is gone.
       * the ARCHIVE is skipped, as everywhere else: those bodies predate the
         tool and were never meant to satisfy a fixed-slot shape.
+
+    WHAT `item close` ACTUALLY DOES, and the earlier sentence here said
+    otherwise (lc-48): it clears the `blocked-by:` SLOT LINE and records the
+    question as `blocker-moot:`. It does NOT clear the EFFECTIVE value, and it
+    must not — an `amended-blocked-by:` line resolves last-wins OVER the slot
+    line, and removing that amendment is precisely the in-place rewrite the
+    append-only model forbids. So an amended-then-closed body carries
+    `blocked-by: NONE` with a live decision blocker resolving above it, and
+    this check read that as a defect on the exact body the close had annotated
+    correctly (measured on dotfiles' done home, df-141, 2026-08-27). The
+    docstring and the code disagreed and the CODE was right; the check is what
+    changed. The DISCHARGE below is that repair, and it is deliberately narrow:
+    the moot record must name the very question the effective blocker names.
     """
     if not path.exists():
         out(f"COULD NOT VERIFY: no done home at {path}. An absent closure "
@@ -1288,16 +1321,26 @@ def check_done_file(path: Path, out, prefix: str | None = None) -> int:
 
     blocked = []
     for it in parsed.items:
-        kind, _detail = classify_blocker(it.slots.get("blocked-by", ""), prefix)
+        kind, detail = classify_blocker(it.slots.get("blocked-by", ""), prefix)
+        # THE PREDICATE LINE BELOW IS AN ANCHOR `tools/prove-rows.py` records
+        # for this row, so the discharge is a branch INSIDE it rather than a
+        # `continue` above it: an equivalent rewrite would leave that
+        # arrangement resolving nothing, and a mutation whose anchor has
+        # moved reports COULD NOT VERIFY — which is honest and is still a
+        # row this repo can no longer prove.
         if kind not in (None, "none"):
+            if kind == "decision" and _moot_discharges(it, detail):
+                continue
             blocked.append(it)
-            out(f"FINDING [blocked_in_done_home] {path.name}:{it.line}: block "
-                f"{it.ident!r} is closed and still carries "
+            out(f"FINDING [blocked_in_done_home] {path.name}:{it.line}: "
+                f"block {it.ident!r} is closed and still carries "
                 f"`blocked-by: {it.slots.get('blocked-by', '')}`. A closed "
-                "item waits for nothing. `item close` clears the blocker and "
-                "records it as `blocker-moot:` precisely so the operator's "
-                "decision queue does not keep listing a question after the "
-                "item that asked it is gone.")
+                "item waits for nothing, and this body carries no "
+                "`blocker-moot:` naming that question — so it did not "
+                "arrive here by a close, which is the path that records the "
+                "question as moot precisely so the operator's decision "
+                "queue does not keep listing it after the item that asked "
+                "it is gone.")
 
     n = len(parsed.items)
     out(f"done home: {n} closed block(s), archive {parsed.archive_lines} "

@@ -356,8 +356,18 @@ def build_parser() -> argparse.ArgumentParser:
     close.add_argument("ident")
     close.add_argument("--drop", action="store_true",
                        help="close as DROPPED rather than DONE")
-    close.add_argument("--reason", help="the SESSION's prose; required for "
-                                        "--drop (a ledger `dropped:` line)")
+    close.add_argument("--reason", help="the SESSION's prose. On a DONE close "
+                                        "it lands on the MOVED BODY as "
+                                        "`closed-reason: <date> <text>`; on "
+                                        "--drop it is the ledger `dropped:` "
+                                        "line and is REQUIRED there")
+    close.add_argument("--ref", help="the commit(s) this item closed at, "
+                                     "comma-separated. Each is verified "
+                                     "against this repo; on a DONE close they "
+                                     "land on the moved body as `closed-ref:`. "
+                                     "OPTIONAL — a closure legitimately has "
+                                     "no ref, and the verb says so when none "
+                                     "was given")
     close.add_argument("--no-commit", dest="no_commit", action="store_true")
 
     its.add_parser("ratio", help="capture against drain — the FLOW alarm "
