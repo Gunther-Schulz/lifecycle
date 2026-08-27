@@ -314,5 +314,127 @@ class EvidenceBlockerAndMootClose(unittest.TestCase):
             r.close()
 
 
+class DecisionBlockerResolvesAgainstTheLedger(unittest.TestCase):
+    """lc-26 — `item ready` re-derives a decision blocker FROM THE LEDGER.
+
+    No verb ever took a decision blocker off an item: `item park` only SETS
+    one, and `item --help` listed no verb that cleared one. So an ANSWERED
+    question left the item reading blocked forever, and — the half that
+    decides whether this ships — it read byte-identically to a question
+    nobody had answered. Every test below therefore comes in a PAIR over the
+    same item: answered against unanswered, differing in the ledger alone.
+
+    These are CLEAN outcomes, not refusals, so they have no roster row — the
+    same reason the class above gives.
+    """
+
+    QUESTION = "which window is canonical"
+
+    def _repo(self, ledger_lines=()):
+        from lifecycle_core import refusals
+        items = refusals.SEED_ITEMS.replace(
+            "blocked-by: NONE", f"blocked-by: decision {self.QUESTION}")
+        return refusals._Repo(
+            items=items,
+            ledger_text="schema: 2\n"
+                        + "".join(ln + "\n" for ln in ledger_lines))
+
+    def _run(self, repo, argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + argv)
+            return code, buf.getvalue()
+        finally:
+            os.chdir(here)
+
+    def test_an_ANSWERED_decision_reads_unblocked(self):
+        r = self._repo([f"decision: {self.QUESTION} → the rotated one"])
+        try:
+            code, out = self._run(r, ["item", "ready", "xx-1"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("UNBLOCKED", out)
+            self.assertIn("the rotated one", out)
+            self.assertIn("READY and unblocked", out)
+        finally:
+            r.close()
+
+    def test_the_SAME_item_with_no_answering_line_stays_blocked(self):
+        """THE PAIR. Without it "unblocked" is indistinguishable from a
+        branch that unblocks every decision blocker it sees."""
+        r = self._repo()
+        try:
+            code, out = self._run(r, ["item", "ready", "xx-1"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("BLOCKED — in the OPERATOR's court", out)
+            self.assertNotIn("UNBLOCKED", out)
+        finally:
+            r.close()
+
+    def test_a_decision_line_naming_ANOTHER_question_does_not_clear_it(self):
+        """The over-fire arm. A ledger accumulates decisions, and a reader
+        that matched loosely would clear a blocker the operator never
+        answered — an item scheduled on a question still open."""
+        r = self._repo(["decision: which capture is canonical → the rotated one"])
+        try:
+            _code, out = self._run(r, ["item", "ready", "xx-1"])
+            self.assertIn("BLOCKED — in the OPERATOR's court", out)
+        finally:
+            r.close()
+
+    def test_a_PREFIX_of_the_question_does_not_clear_it(self):
+        """A containment match would let a shorter question answer a longer
+        one. The comparison is exact after a strip, and this is the case that
+        tells the two apart."""
+        r = self._repo(["decision: which window → the rotated one"])
+        try:
+            _code, out = self._run(r, ["item", "ready", "xx-1"])
+            self.assertIn("BLOCKED — in the OPERATOR's court", out)
+        finally:
+            r.close()
+
+    def test_the_answer_PROSE_quoting_a_question_does_not_clear_it(self):
+        """Anchored on the SLOT, never on the word appearing anywhere in the
+        line — the reason `rejected_for` states one function up."""
+        r = self._repo([f"decision: which capture is canonical → deferred "
+                        f"until {self.QUESTION} is settled"])
+        try:
+            _code, out = self._run(r, ["item", "ready", "xx-1"])
+            self.assertIn("BLOCKED — in the OPERATOR's court", out)
+        finally:
+            r.close()
+
+    def test_an_UNREADABLE_ledger_is_could_not_verify_not_blocked(self):
+        """Three answers. Reporting BLOCKED over a ledger nobody could read
+        is a wait nobody checked, which is the number shaped like a pass."""
+        r = self._repo()
+        try:
+            (r.dir / "LEDGER.md").unlink()
+            code, out = self._run(r, ["item", "ready", "xx-1"])
+            self.assertEqual(code, 3, out)
+            self.assertIn("COULD NOT VERIFY", out)
+        finally:
+            r.close()
+
+    def test_the_head_reads_the_ledger_too(self):
+        """`item ready --head` derives schedulability from the same state, so
+        an answered decision has to reach the board as well as the single-item
+        verb — a head that still called it blocked would leave the item
+        invisible to the one reader that schedules."""
+        r = self._repo([f"decision: {self.QUESTION} → the rotated one"])
+        try:
+            code, out = self._run(r, ["item", "ready", "--head"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("1 schedulable now", out)
+        finally:
+            r.close()
+
+
 if __name__ == "__main__":
     unittest.main()

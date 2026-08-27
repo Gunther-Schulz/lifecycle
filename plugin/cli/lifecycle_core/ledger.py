@@ -323,6 +323,29 @@ def rejected_for(parsed: Parsed, item: str) -> list:
             if ln.kind == "rejected" and ln.slots.get("item") == item]
 
 
+def decision_for(parsed: Parsed, question: str) -> list:
+    """Every `decision:` line whose QUESTION slot is `question`.
+
+    The reader behind `item ready`'s decision blocker (lc-26): a `decision
+    <q>` blocker sits in the OPERATOR's court, and until this existed nothing
+    ever took it out of there — an answered question left the item reading
+    blocked forever, indistinguishable from one nobody had answered.
+
+    ANCHORED ON THE SLOT, never on the word appearing anywhere in the line,
+    for exactly the reason `rejected_for` states one function up: a decision
+    whose ANSWER prose quotes another question would otherwise clear that
+    other question's blocker. Compared EXACT after a strip rather than by
+    containment — a prefix match here would let "which window" clear "which
+    window is canonical", which is a different question with a different
+    answer.
+    """
+    q = (question or "").strip()
+    if not q:
+        return []
+    return [ln for ln in parsed.lines
+            if ln.kind == "decision" and (ln.slots.get("question") or "").strip() == q]
+
+
 def counts(parsed: Parsed) -> dict:
     """Per-kind counts plus the unreadable tally — the third answer, always
     rendered even when zero, so a reader can tell "none" from "not asked"."""

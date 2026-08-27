@@ -994,9 +994,40 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
         return ("FINDING [blocker_untyped] the blocker is prose, not a typed "
                 "edge, so nothing can re-evaluate it."), exits.FINDING, ""
     if kind == "decision":
-        return (f"BLOCKED — in the OPERATOR's court: {detail!r}. A decision "
-                "blocker never resolves mechanically and is never "
-                "auto-dropped; it is surfaced until answered."), exits.CLEAN, ""
+        # RE-DERIVED FROM THE LEDGER, never read off the stored slot (lc-26).
+        # No verb ever took a decision blocker off an item — `item park` only
+        # SETS one — so an ANSWERED question left the item reading blocked
+        # forever, byte-identical to one nobody had answered. The two states
+        # have to differ somewhere, and the ledger is where the answer is
+        # already recorded: `item close` writes a `decision:` line for a
+        # question it makes moot, and `ledger add decision` for one an
+        # operator answers.
+        #
+        # THE SLOT IS NOT REWRITTEN. Deriving here rather than clearing the
+        # blocker keeps ONE home for the fact (invariant 3): the ledger says
+        # whether the question is answered, the item says which question it
+        # waits on, and a stored "cleared" flag would be a second spelling
+        # that goes stale the moment a decision is revisited.
+        led, led_why = ledger.read(ctx.ledger_path)
+        if led is None:
+            return (f"COULD NOT VERIFY — the blocker names a decision "
+                    f"({detail!r}) and the ledger could not be read, so "
+                    f"whether it has been answered is unknown. Reporting it "
+                    f"BLOCKED would be a wait nobody checked. {led_why}"
+                    ), exits.COULD_NOT_VERIFY, ""
+        answers = ledger.decision_for(led, detail)
+        if answers:
+            last = answers[-1]
+            return (f"UNBLOCKED — the ledger ANSWERS this decision: "
+                    f"{detail!r} → {last.slots.get('answer', '')!r} "
+                    f"({ctx.ledger_path.name}:{last.lineno}).", exits.CLEAN,
+                    "§3.1 has the item re-graded at the desk once a blocker "
+                    "clears. THIS VERB PROMOTES NOTHING.")
+        return (f"BLOCKED — in the OPERATOR's court: {detail!r}. No "
+                f"`decision:` line in {ctx.ledger_path.name} names this "
+                "question, so it has not been answered. A decision blocker "
+                "never resolves mechanically and is never auto-dropped; it "
+                "is surfaced until answered."), exits.CLEAN, ""
     if kind == "evidence":
         # §3.1: an evidence predicate is "evaluated like a trigger". It is
         # evaluated by THE trigger evaluator (§3.3/§3.4, stage 7) — the same
