@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 39
+added: 41
 compacted: 0
 
 ## lc-1
@@ -420,3 +420,21 @@ write-set: whichever change introduces the compaction verb in retire.py, plus th
 done-criterion: the compaction verb ships only WITH an answer to where a compacted item closure record lives. THE QUESTION, so it is not re-derived: compaction turns the moved body into a ledger line, so either the closure lines are LIFTED into that ledger line (one fact still one home, the home changing at compaction time) or DONE bodies carrying closure lines are EXEMPT from compaction (the record outlives the body, at the cost of the carrier not shrinking where it most would). Whichever is chosen, the verb REFUSES to compact a body it would silently strip: red-first is compacting a body carrying closed-reason and closed-ref and showing the record survives in whatever home the answer names. Must-not-move: a DROP still keeps exactly one ledger line and no second copy.
 evidence: lc-44 lane interim 3, 2026-08-27, citing cache-fix carrier-rework-design 3.1 and retire.py stating that never, compact and delete have no verb yet; the lc-44 ruling itself (judgment desk, 2026-08-27) for the pruning ground it rests on.
 blocked-by: evidence the compaction verb does not exist yet — this fires when it is written, and its trigger is that change, not a date
+
+## lc-48
+grade: READY
+requirement: done_home_check fires blocked_in_done_home on a body whose blocker item close ALREADY recorded as moot, so the check reports a defect on the exact case the close verb handles: measured on dotfiles ITEMS-DONE.md df-141, record: wave-4 desk 2026-08-27
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: done_home_check treats a decision blocker as discharged when the block carries a blocker-moot: line whose text equals the effective blocker DETAIL, and still fires when a closed body carries a live blocker with NO matching moot record. Red-first on df-141 real body: the finding fires today and must not after. Must-not-move: a blocker-moot recording a DIFFERENT question does not discharge, and the 5 blocks whose effective blocker is NONE stay clean
+evidence: wave-4 desk, executed 2026-08-27 over dotfiles ITEMS-DONE.md: 6 blocks carry blocker-moot:, exactly 1 (df-141) fires. The other 5 (df-1, df-39, df-64, df-73, df-75) had blocked-by amended to NONE before close, the workaround rather than the design. items.py:1289 classifies the effective blocked-by and never reads blocker-moot; verbs.py:1579 writes the note without clearing the slot, which the append-only model forbids anyway. The docstring at items.py:1251 says close clears it, the code only annotates: spec and verifier disagree
+blocked-by: NONE
+
+## lc-49
+grade: READY
+requirement: _check_blocker validates blocker TYPING and dangling refs but never ledger-storability, so item add, item park and item amend all still write decision questions the ledger cannot store. lc-40 closed the MINT and left the three hand-write doors open, record: wave-4 desk 2026-08-27
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: _check_blocker refuses a decision-typed blocker the ledger cannot store, using the ledger OWN predicate imported rather than restated (the shape migrate._ledger_storable already uses), with a FINDING naming the rephrase. Red-first on the real text that got in: df-135 pre-repair value. Must-not-move: evidence-typed, item-id and NONE blockers unaffected, and the 67 repaired texts all still pass
+evidence: wave-4 desk 2026-08-27. verbs.py:630-663 read in full: the function checks blocker_untyped and dangling_reference only. NOT inferred from the read, measured live in the carrier: dotfiles df-135 reached ITEMS.md carrying a decision question containing the ledger slot separator, written by item amend --blocked-by, which retyped an evidence blocker to a decision one. Repaired in dotfiles ec47c3c; the door it came through is still open
+blocked-by: NONE
