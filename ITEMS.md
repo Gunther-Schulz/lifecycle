@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 32
+added: 33
 compacted: 0
 
 ## lc-1
@@ -353,3 +353,12 @@ write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/ledger
 done-criterion: a blocker question minted by migrate is storable as a ledger question verbatim — red-first on the real text "regrade: was READY under the old carrier — READY is judged, never inherited", which today is refused by ledger add and therefore unanswerable
 evidence: measured by the wave-4 desk 2026-08-27 over dotfiles ITEMS.md: 99 decision-blocked items, 69 of them carry " — " in the question. The dominant text (66 items) is the regrade question the judgment desk GO-ed a single clearing line for; ledger add decision refused it: "FINDING [ledger_body] the decision question contains the slot separator". The remaining 30 (chiefly "regrade: fill goal, write-set, done-criterion and evidence, or drop") are separator-free and answerable today
 blocked-by: decision does migrate sanitise the question at mint time, does the ledger gain a storable escaping the reader can still round-trip, or does lc-26 match on a normalised form — and separately whether the 69 already-written blockers are repaired in place by item amend
+
+## lc-41
+grade: READY
+requirement: Not every carrier-writing verb commits its own write or says NOT COMMITTED. lc-25 fixed item add joins; the invariant it rests on is wider and unenforced: a carrier write left uncommitted rides out under a co-writer pathspec commit, which is the absorption one-writer-per-copy exists to prevent
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/workflows.py,plugin/cli/lifecycle_core/desk.py,plugin/cli/lifecycle_core/init.py,plugin/cli/lifecycle_core/ledger.py,test/test_lanes.py
+done-criterion: every verb that writes a declared carrier either commits by pathspec or prints NOT COMMITTED with its reason; red-first per verb against the old binary, and the enumeration derived from the RUNNING parser rather than restated, so a verb added later is covered by construction
+evidence: observed 2026-08-27 by the wave-4 desk: ledger add decision left M LEDGER.md in the dotfiles tree and printed nothing, while item add and item amend commit theirs. SWEEP, derived by reading the parser (every cmd_* whose body or whose called helper writes a carrier): commits today = item promote, item amend, item close; silent today = desk state, init, lane new, item park, workflow bind, ledger add, migrate. THE SWEEP OWN LIMITS, measured not assumed: it marks item add as NOT committing, which is a FALSE NEGATIVE (observed committing lc-35) because the commit sits in the helper, and its helper match collides with ordinary list append in cmd_test and item head. So the list above is a starting set, not the verdict; the item first step is the precise per-verb enumeration from the running parser
+blocked-by: decision does every carrier verb COMMIT, or do the read-only-ish ones (desk state, item head) fall outside the invariant, and is migrate exempt because its whole output is a dry-run artifact
