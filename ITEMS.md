@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 31
+added: 32
 compacted: 0
 
 ## lc-1
@@ -344,3 +344,12 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,t
 done-criterion: an item whose slots were completed by amendment can be graded READY by an explicit desk act recording who judged it and why, and item ready --head then lists it; red-first on the dotfiles state — 133 items with full slots, grade NEW, head reporting 0 schedulable
 evidence: wave-4 desk 2026-08-27, after the dotfiles grade pass: 329 slots filled across 131 items, then item ready --head over 135 live items printed "head: 2 READY, 0 schedulable now"; the only READY items are ones BORN complete (df-134, df-135). df-1 after amendment: "grade is NEW, not READY. THIS VERB PROMOTES NOTHING". Source: verbs.py:526 sits in the add path, no other verb writes a grade
 blocked-by: decision an explicit promotion act (law 10: READY is judged, never inherited) versus re-deriving grade from the amendment-resolved slots at read time — the latter makes READY automatic, which law 10 forbids, so the promotion act is the recommended shape
+
+## lc-40
+grade: READY
+requirement: migrate writes decision-blocker QUESTIONS containing the ledgers own slot separator, so the blocker can never be answered: ledger add decision REFUSES the question (FINDING ledger_body, correctly — an escaped spelling would put two forms of every value in the file), while lc-26 resolves a decision blocker by QUESTION-SLOT EQUALITY. The two mechanisms are individually right and jointly make the item permanently blocked
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/ledger.py,test/test_migrate.py
+done-criterion: a blocker question minted by migrate is storable as a ledger question verbatim — red-first on the real text "regrade: was READY under the old carrier — READY is judged, never inherited", which today is refused by ledger add and therefore unanswerable
+evidence: measured by the wave-4 desk 2026-08-27 over dotfiles ITEMS.md: 99 decision-blocked items, 69 of them carry " — " in the question. The dominant text (66 items) is the regrade question the judgment desk GO-ed a single clearing line for; ledger add decision refused it: "FINDING [ledger_body] the decision question contains the slot separator". The remaining 30 (chiefly "regrade: fill goal, write-set, done-criterion and evidence, or drop") are separator-free and answerable today
+blocked-by: decision does migrate sanitise the question at mint time, does the ledger gain a storable escaping the reader can still round-trip, or does lc-26 match on a normalised form — and separately whether the 69 already-written blockers are repaired in place by item amend
