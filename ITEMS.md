@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 25
+added: 26
 compacted: 0
 
 ## lc-1
@@ -289,4 +289,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: a --merge source carrying two entries with the same headline REFUSES, red-first on a fixture built that way; and the existing arms stay green — a body already in the live home, a body already in the CLOSED home, and a non-duplicate merge
 evidence: lane B3 built merge_duplicate_body scoped to bodies already in the homes and declined to widen it unasked, stating the reach in the row text. Its plant/control differ in ONE WORD of an existing headline and the whole run refuses, nothing written — because a merge is not idempotent and a partial append would leave the carrier half-merged
+blocked-by: NONE
+
+## lc-34
+grade: READY
+requirement: A two-run merge has an UNENFORCED precondition: both runs must write to the SAME --report path, or the provenance chain silently keeps only the last source. The pin keys on the report path, so a merge writing to a fresh path finds no prior report to carry forward and the earlier sources blob lines are simply absent — no warning, no could-not-verify — record: measured at step 4, 2026-08-27
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a --merge run whose --report path carries no prior report for the EXISTING carrier says so — could-not-verify or an explicit note that earlier sources pins are not carried — rather than writing a report that silently documents one source; red-first on the measured pair below
+evidence: measured 2026-08-27 on the wave-2 blobs with tool 9e33c81. DIFFERENT report paths (root -> reports/root.md, merge -> reports/merged.md): merged.md carries ONE source-blob line, (claude/BACKLOG.md) only; the root line is absent and nothing says so. SAME report path (both -> reports/M.md): BOTH lines present, (claude/BACKLOG.md) and (BACKLOG.md). So the carry-forward lane B3 built works exactly as reported; what is missing is any signal when the precondition is not met
 blocked-by: NONE
