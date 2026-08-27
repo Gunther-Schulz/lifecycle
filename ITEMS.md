@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 22
+added: 23
 compacted: 0
 
 ## lc-1
@@ -263,3 +263,12 @@ write-set: plugin/cli/lifecycle_core/roster.py,test/test_refusals.py,tools/prove
 done-criterion: a refusal whose text is narrower than what the code routes through it FAILS the ROUTE SETS check rather than noting it; red-first on exactly the lane-A state (two ambiguous-closure shapes routed through migration_unclassified, whose text names only the no-rule case), green once the text covers what it catches or the shapes get their own row
 evidence: roster.py:177 computes stray = watched - full and :183-187 prints it as a note with no exits.worst call, while :188-195 makes the mirror case (missing) a FINDING. Live instance: lane A routed two NEW ambiguous-closure shapes through migration_unclassified because refusals.py was outside its write set (my brief defect), and that row text reads "an entry whose grade word no rule covers" — false for those entries, which HAVE a grade word, mid-title
 blocked-by: evidence the migration_ambiguous_closure roster row exists — lane B builds it; making stray FAIL before that row lands would fire on the legitimate interim state lane A was forced into
+
+## lc-31
+grade: READY
+requirement: A repeated --from silently discards the first source: build_parser().parse_args(["migrate","--from","A.md","--from","B.md"]) yields from_carrier="B.md" with no warning. argparse overwriting is a silent wrong answer at the migration entry point — the caller believes two sources were read and one was — record: lane B gap 1, judgment desk ruling 2026-08-27
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/cli.py,test/test_migrate.py
+done-criterion: a second --from in ONE invocation REFUSES with "one --from per invocation; use --merge for a second source" rather than overwriting; red-first on the executed two---from parse, and the single---from invocation unchanged
+evidence: executed by lane B: build_parser().parse_args(["migrate","--from","A.md","--from","B.md"]) returns from_carrier="B.md" — the first source is discarded with no output. Distinct from lc-17 merge mode, which is a second INVOCATION; this is one invocation naming two sources
+blocked-by: NONE
