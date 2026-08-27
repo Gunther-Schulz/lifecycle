@@ -426,7 +426,11 @@ class LedgerStorableBlocker(unittest.TestCase):
         """
         import subprocess
         from lifecycle_core import ledger
-        repo = Path("/home/g/dev/Gunther-Schulz/dotfiles")
+        # DERIVED, never hardcoded. An absolute home path here is a
+        # publication-bar finding (absence-scan `foreign-path`) and breaks on
+        # every other checkout; the sibling layout is the only assumption, and
+        # the skip below already covers its absence.
+        repo = Path(__file__).resolve().parents[2] / "dotfiles"
         if not (repo / "ITEMS.md").exists():
             self.skipTest(f"no carrier at {repo}: this arm grades the REAL "
                           "texts and has no input here")
