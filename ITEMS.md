@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 21
+added: 22
 compacted: 0
 
 ## lc-1
@@ -254,3 +254,12 @@ write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py
 done-criterion: the read side and the write side agree on what an item-id blocker resolves against, or the asymmetry is declared with its reason in both sites; red-first on a carrier whose blocker names a DROPPED id — today the write side refuses it and the carrier check passes it
 evidence: lane C built the carrier-side check to lc-28 done-criterion exactly (id EXISTS in either home) and declined to widen it, stating the narrower reach in the row text and the check docstring rather than leaving it implied — so the assurance is no wider than its predicate. The asymmetry is real and under one refusal name (dangling_reference), which is what makes it worth a booking rather than a comment.
 blocked-by: decision widen the carrier check to match the write side, narrow the write side, or declare the asymmetry intentional with its reason at both sites
+
+## lc-30
+grade: READY
+requirement: The ROUTE SETS check is asymmetric: a route the refusal TEXT names but nothing watches is a FINDING (route_set_unwatched), while the reverse — the code routing a shape through a refusal whose text does NOT name it — prints a note and sets no code (roster.py:183-187, "not this check failure but is worth knowing"). So a refusal can catch more than it says, and the operator reading the finding gets a WRONG cause for their entry — record: lane A gap 1, judgment desk ruling 2026-08-27
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/roster.py,test/test_refusals.py,tools/prove-rows.py
+done-criterion: a refusal whose text is narrower than what the code routes through it FAILS the ROUTE SETS check rather than noting it; red-first on exactly the lane-A state (two ambiguous-closure shapes routed through migration_unclassified, whose text names only the no-rule case), green once the text covers what it catches or the shapes get their own row
+evidence: roster.py:177 computes stray = watched - full and :183-187 prints it as a note with no exits.worst call, while :188-195 makes the mirror case (missing) a FINDING. Live instance: lane A routed two NEW ambiguous-closure shapes through migration_unclassified because refusals.py was outside its write set (my brief defect), and that row text reads "an entry whose grade word no rule covers" — false for those entries, which HAVE a grade word, mid-title
+blocked-by: evidence the migration_ambiguous_closure roster row exists — lane B builds it; making stray FAIL before that row lands would fire on the legitimate interim state lane A was forced into
