@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 37
+added: 38
 compacted: 0
 
 ## lc-1
@@ -401,4 +401,13 @@ goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/verbs.py (a compact one-line render), and the CLI's verb table
 done-criterion: one verb emits a single short line fit for a statusline — counts plus the schedulable head, no multi-line report — and it is CHEAP: it runs on every statusline render, so a full carrier parse per call is the wrong shape and the criterion states which. It exits per the CLI's own convention (0 clean, 2 finding, 3 could not verify) and NEVER emits a pass-shaped number it could not compute: a carrier it cannot parse yields the could-not-verify exit and a visibly non-numeric line. Red-first: the old renderer against ITEMS.md, showing the silent zero this verb exists to prevent. Consumers, which must NOT parse rendered prose to get this: dotfiles claude-worktime/config.sh and claude/hooks/session-scan.py.
 evidence: dotfiles claude-worktime/config.sh:301; the freeze dispositions record claude/records/carrier-freeze-dispositions-2026-08-27.md names this reader the sharpest degrading-check in its set; the C lane surfaced the missing verb as a gap rather than bridging it (2026-08-27).
+blocked-by: NONE
+
+## lc-46
+grade: READY
+requirement: the intake join fires on nearly every item over a MIGRATED carrier, so the escape hatch becomes the default path and the guard trains the override reflex. Reported from cache-fix: an add returned FINDING join_undisposed matching 325 of 331 live items. MEASURED at the desk over dotfiles 139 items, and the number is exact rather than approximate: EXACTLY TWO tokens appear in more than 90 percent of requirement lines, "backlog" and "record" at 127/139 each, both contributed by the migration own tail "record: BACKLOG.md:N" that every migrated body carries. MATCH_MIN_TOKENS is 2. So the migration supplies precisely the threshold, against nearly every item, by construction.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py (STOPWORDS, MATCH_MIN_TOKENS and the token match), test/test_verbs.py
+done-criterion: the join discriminates over a migrated carrier. THE DESIGN OWN DEFENCE IS WHAT FAILED and the fix must not restate it: the comment at STOPWORDS says the list is kept short on purpose because "the two-token threshold is what actually does the work" — that premise is false wherever a systematic tail contributes two universal tokens, which is every migrated carrier. So do NOT lengthen the stopword list by hand: that is the second vocabulary the comment rightly refuses, and it would need a new entry for every future migration tail. WEIGHT BY RARITY ACROSS THE CARRIER instead — a token present in nearly every item has no discriminating power BY DEFINITION and needs no list to say so, which makes the fix self-maintaining and kills the next tail before it is written. Red-first on the real case: cache-fix 331 items, the exact add that returned 325, expected to fall to a handful. MUST-NOT-MOVE: two items that genuinely share a rare token still match; an item sharing ONLY migration-tail tokens does not; and the finding still fires on a real duplicate, shown on a planted pair.
+evidence: judgment desk report from cache-fix 2026-08-27 (325 of 331); desk measurement over dotfiles ITEMS.md the same day, token document-frequency computed with the shipped STOPWORDS and _TOKEN regex; verbs.py STOPWORDS comment and MATCH_MIN_TOKENS = 2.
 blocked-by: NONE
