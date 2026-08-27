@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 33
+added: 34
 compacted: 0
 
 ## lc-1
@@ -362,3 +362,12 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/lanes.py
 done-criterion: every verb that writes a declared carrier either commits by pathspec or prints NOT COMMITTED with its reason; red-first per verb against the old binary, and the enumeration derived from the RUNNING parser rather than restated, so a verb added later is covered by construction
 evidence: observed 2026-08-27 by the wave-4 desk: ledger add decision left M LEDGER.md in the dotfiles tree and printed nothing, while item add and item amend commit theirs. SWEEP, derived by reading the parser (every cmd_* whose body or whose called helper writes a carrier): commits today = item promote, item amend, item close; silent today = desk state, init, lane new, item park, workflow bind, ledger add, migrate. THE SWEEP OWN LIMITS, measured not assumed: it marks item add as NOT committing, which is a FALSE NEGATIVE (observed committing lc-35) because the commit sits in the helper, and its helper match collides with ordinary list append in cmd_test and item head. So the list above is a starting set, not the verdict; the item first step is the precise per-verb enumeration from the running parser
 blocked-by: decision does every carrier verb COMMIT, or do the read-only-ish ones (desk state, item head) fall outside the invariant, and is migrate exempt because its whole output is a dry-run artifact
+
+## lc-42
+grade: READY
+requirement: Closing an item that carries APPENDED lines (amendments, and now promotions) produces a done-home shape finding: item close writes blocker-moot: onto the moved body AFTER those lines, and the ordering check counts the closed-body slots as part of its FIXED run, so an ordinary close reads as an appended line among the fixed slots
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: closing an amended or promoted item leaves the done home CLEAN, while a genuinely misplaced appended line still fires; red-first on the two real bodies already in ITEMS-DONE.md (df-75, df-64) and a two-arm proof that the narrower predicate still catches the real defect
+evidence: DESIGN, from the B1 lane measurement rather than a guess: the fixed run is SLOTS, never SLOTS + DONE_ONLY_SLOTS. The closed-body slots are themselves APPENDED (item close writes blocker-moot: onto a body it has already moved), so counting them as fixed is what turns an ordinary close into a finding; and _resolve_amendments own docstring rationale is about a superseding line sitting above the value it supersedes, which blocker-moot: does not do. MEASURED BOTH ARMS by the B1 lane on its own promotion line kind: with the narrower predicate the same close is CLEAN and the real defect still fires, proven by moving a promotion line above blocked-by: and watching it fire. Observed by the desk n=2 in the live carrier: ITEMS-DONE.md df-75 and df-64, both after the wave-4 grade pass amended them
+blocked-by: NONE
