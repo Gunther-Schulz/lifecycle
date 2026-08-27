@@ -27,6 +27,7 @@ decision: what a repo with NO legacy closure home passes to `migrate` → `--fro
 decision: where the plugin's own pre-tool prose ledger lives now that the tool owns LEDGER.md → below an `## Archive (pre-migration)` heading, the same mechanism the carrier already uses; held verbatim, counted apart, and `ledger add` writes ABOVE it
 decision: whether `producer:plugin-drift-scan` may be named as a reader before wave 3 → no: a `producer:` reference resolves against the producers this declaration's kinds name as writers, and naming one the machine has no home for is law 23's own case
 decision: does init seed the declared carriers on a bare repo → Yes: init creates every carrier the declaration names, empty and schema-stamped, so no later verb assumes a file init never made. Ruled by the judgment desk at wave 2 under the operator's standing delegation; design text saying otherwise is amended (3.8b). Recorded wave 3 step 0, 2026-08-27.
+superseded: lc-15 by lc-28 — write-set omitted the call site; lane C found it (2f interim, 2026-08-27)
 
 ## Archive (pre-migration)
 
