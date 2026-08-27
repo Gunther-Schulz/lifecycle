@@ -334,6 +334,20 @@ def build_parser() -> argparse.ArgumentParser:
                        help="write the carrier without committing it — a "
                             "caller batching amendments owns that commit")
 
+    # `item promote` (lc-39) — the desk's re-grade, and the ONLY path from
+    # NEW to READY. Both flags are verb-checked rather than argparse-required:
+    # `--reason ""` is a missing judgment too, and argparse would call that a
+    # usage error (exit 3) where it is a refusal (exit 2).
+    promote = its.add_parser("promote", help="the desk's re-grade to READY — "
+                                             "an ACT, never a derivation")
+    promote.add_argument("ident")
+    promote.add_argument("--by", help="WHICH DESK judged it. REQUIRED")
+    promote.add_argument("--reason", help="the SESSION's prose: why it is "
+                                          "decision-complete. REQUIRED")
+    promote.add_argument("--no-commit", dest="no_commit", action="store_true",
+                         help="write the carrier without committing it — a "
+                              "caller batching promotions owns that commit")
+
     park = its.add_parser("park", help="PARKED, with a typed blocker")
     park.add_argument("ident")
     park.add_argument("--blocked-by", dest="blocked_by", help="TYPED; required")
@@ -528,8 +542,8 @@ def main(argv=None) -> int:
         path = f"item {args.item_action}"
         if args.item_action == "check":
             code = cmd_item_check(args, out)
-        elif args.item_action in ("add", "amend", "ready", "park", "close",
-                                  "ratio"):
+        elif args.item_action in ("add", "amend", "promote", "ready", "park",
+                                  "close", "ratio"):
             code = _carrier_verb(args, out)
         else:
             stage = NOT_YET_BUILT.get(path, "a later wave")
@@ -625,6 +639,8 @@ def _carrier_verb(args, out) -> int:
         return verbs.cmd_item_add(args, out, ctx)
     if args.item_action == "amend":
         return verbs.cmd_item_amend(args, out, ctx)
+    if args.item_action == "promote":
+        return verbs.cmd_item_promote(args, out, ctx)
     if args.item_action == "ready":
         if getattr(args, "head", False):
             return verbs.cmd_item_head(args, out, ctx)

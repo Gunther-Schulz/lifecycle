@@ -630,5 +630,243 @@ class TheMootAnswerShapeIsAnchored(unittest.TestCase):
         self.assertIsNone(ledger.moot_closer(p.lines[0]))
 
 
+class PromotionIsAnActNotADerivation(unittest.TestCase):
+    """lc-39 — there was NO PATH from NEW to READY.
+
+    `grade` is written once, by `item add`; `item amend` refuses it by
+    design; `item ready` reads it and promotes nothing. So an item admitted
+    NEW could never be graded however complete its slots later became, and a
+    carrier's head was empty by construction — measured over dotfiles: 133
+    items whose slots a desk had filled by amendment, and `item ready --head`
+    reporting 2 READY, both of them born complete.
+
+    THE REJECTED ALTERNATIVE IS ON THE RECORD: deriving the grade from slot
+    completeness at read time. That makes READY automatic, which law 10
+    forbids — the label would assert something nobody judged. So these assert
+    an ACT, and the class below the refusals asserts that nothing else in the
+    tool started deriving one.
+
+    THE REFUSALS HAVE ROSTER ROWS (`promote_without_judgment`,
+    `promote_while_blocked`, `ready_with_unknown_slot_promote`); what is here
+    is the half a row cannot prove — the CLEAN outcomes, and the must-not-move
+    pairs. A row's control only has to DIFFER from its plant.
+    """
+
+    #: Slot-complete, nothing blocking, grade NEW — the shape the desk
+    #: measured, and the shape that was unreachable.
+    COMPLETE_NEW = """schema: 2
+baseline: 1
+added: 0
+compacted: 0
+
+## xx-1
+grade: NEW
+requirement: the migrated entry whose slots a desk later filled — BACKLOG.md:5
+goal: mitigate
+write-set: tools/thing.py
+done-criterion: it goes red then green
+evidence: measured 2026-08-27
+blocked-by: NONE
+"""
+
+    def _repo(self, items=None, ledger_lines=()):
+        from lifecycle_core import refusals
+        return refusals._Repo(
+            items=self.COMPLETE_NEW if items is None else items,
+            ledger_text="schema: 2\n"
+                        + "".join(ln + "\n" for ln in ledger_lines))
+
+    def _run(self, repo, argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + argv)
+            return code, buf.getvalue()
+        finally:
+            os.chdir(here)
+
+    PROMOTE = ["item", "promote", "xx-1", "--by", "the wave-4 desk",
+               "--reason", "the slots are filled and a fresh context could "
+                           "execute this now"]
+
+    def test_the_head_is_empty_before_and_lists_the_item_after(self):
+        """THE DONE-CRITERION, as a pair over one carrier. "The head lists
+        it" means nothing without the before arm: an item that was always
+        listed would satisfy the after arm on its own."""
+        r = self._repo()
+        try:
+            code, before = self._run(r, ["item", "ready", "--head"])
+            self.assertEqual(code, 0, before)
+            self.assertIn("head: 0 READY, 0 schedulable now", before)
+            self.assertIn("No READY item.", before)
+
+            code, out = self._run(r, self.PROMOTE)
+            self.assertEqual(code, 0, out)
+
+            code, after = self._run(r, ["item", "ready", "--head"])
+            self.assertEqual(code, 0, after)
+            self.assertIn("head: 1 READY, 1 schedulable now", after)
+            self.assertIn("xx-1 [READY]", after)
+            self.assertIn("SCHEDULABLE", after)
+        finally:
+            r.close()
+
+    def test_the_carrier_records_who_judged_and_why(self):
+        """The record is the point of the act. A grade that moved with no
+        record is a grade that appeared, and the next reader cannot ask the
+        desk that made it."""
+        from lifecycle_core import items as items_mod
+        r = self._repo()
+        try:
+            self.assertEqual(self._run(r, self.PROMOTE)[0], 0)
+            text = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+            self.assertIn("grade: READY", text)
+            self.assertRegex(text, r"promote-reason: \d{4}-\d{2}-\d{2} "
+                                   r"the slots are filled")
+            self.assertRegex(text, r"promoted-by: \d{4}-\d{2}-\d{2} "
+                                   r"the wave-4 desk")
+            # The record parses as its own kind, not as an amendment and not
+            # as an unknown slot: the shape check is the reader that decides.
+            parsed = items_mod.parse(text)
+            it = parsed.items[0]
+            self.assertEqual(len(it.promotions), 2)
+            self.assertEqual(it.amendments, [])
+            self.assertEqual(parsed.problems, [])
+        finally:
+            r.close()
+
+    def test_the_shape_check_accepts_the_written_block(self):
+        """The tool must not write a file its own check rejects — the failure
+        a reader cannot tell from a hand edit."""
+        r = self._repo()
+        try:
+            self.assertEqual(self._run(r, self.PROMOTE)[0], 0)
+            code, out = self._run(r, ["item", "check"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("item check: CLEAN", out)
+            self.assertNotIn("FINDING", out)
+        finally:
+            r.close()
+
+    def test_a_blocked_item_promotes_once_the_ledger_ANSWERS_it(self):
+        """THE PAIR for `promote_while_blocked`. The roster proves the
+        refusal fires; this proves it is the BLOCKER that fires it and not
+        the promote path — the two carriers differ in the ledger alone."""
+        blocked = self.COMPLETE_NEW.replace(
+            "blocked-by: NONE", "blocked-by: decision which window is canonical")
+        r = self._repo(items=blocked)
+        try:
+            code, out = self._run(r, self.PROMOTE)
+            self.assertEqual(code, 2, out)
+            self.assertIn("promote_while_blocked", out)
+        finally:
+            r.close()
+        r = self._repo(items=blocked,
+                       ledger_lines=["decision: which window is canonical → "
+                                     "the rotated one"])
+        try:
+            code, out = self._run(r, self.PROMOTE)
+            self.assertEqual(code, 0, out)
+            self.assertIn("→ READY", out)
+        finally:
+            r.close()
+
+    def test_a_second_judgment_is_recorded_beside_the_first(self):
+        """DELIBERATELY NOT REFUSED. A desk re-affirming its own judgment is
+        legitimate work, and a guard that fired on it would be a guard firing
+        on a non-defect (R11). The second record is appended, never
+        substituted, so the carrier can say the desk judged twice."""
+        r = self._repo()
+        try:
+            self.assertEqual(self._run(r, self.PROMOTE)[0], 0)
+            second = list(self.PROMOTE)
+            second[second.index("--reason") + 1] = "re-affirmed after review"
+            self.assertEqual(self._run(r, second)[0], 0)
+            text = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+            self.assertEqual(text.count("promoted-by: "), 2)
+            self.assertIn("the slots are filled", text)
+            self.assertIn("re-affirmed after review", text)
+            self.assertEqual(self._run(r, ["item", "check"])[0], 0)
+        finally:
+            r.close()
+
+    def test_an_undated_promotion_line_is_a_shape_finding(self):
+        """The date is what places a judgment in time; undated, the line is a
+        claim about a judgment nobody can locate."""
+        r = self._repo(items=self.COMPLETE_NEW
+                       + "promoted-by: the wave-4 desk\n")
+        try:
+            code, out = self._run(r, ["item", "check"])
+            self.assertEqual(code, 2, out)
+            self.assertIn("does not open with its ISO date", out)
+        finally:
+            r.close()
+
+    def test_a_promotion_line_among_the_fixed_slots_fires_and_a_closure_does_not(self):
+        """THE PAIR THAT DECIDES THIS CHECK SHIPS, measured 2026-08-27.
+
+        The ordering check's fixed run is `SLOTS`, never `SLOTS +
+        DONE_ONLY_SLOTS`: `item close` APPENDS `blocker-moot:` onto a body it
+        has already moved, so counting the closed-body slots as fixed made
+        the ordinary close of a promoted item report a finding about a file
+        the tool had just written correctly — a guard firing on legitimate
+        work, which stops the lane (R11).
+
+        Both arms are needed. Without the quiet one the check over-fires;
+        without the loud one a check that never fires scores identically.
+        """
+        good = self.COMPLETE_NEW + (
+            "promote-reason: 2026-08-27 judged\n"
+            "promoted-by: 2026-08-27 the wave-4 desk\n"
+            "blocker-moot: which window is canonical\n")
+        # The quiet arm: the closure's own annotation follows the record.
+        # `blocker-moot:` is closed-only, so the block must be closed for the
+        # arm to isolate the ORDER question rather than that one.
+        r = self._repo(items=good.replace("grade: NEW", "grade: DONE"))
+        try:
+            _code, out = self._run(r, ["item", "check"])
+            self.assertNotIn("among the fixed slots", out)
+        finally:
+            r.close()
+        # The loud arm: the SAME lines with `promoted-by:` moved above
+        # `blocked-by:`, one of the block's own seven.
+        bad = good.replace("promoted-by: 2026-08-27 the wave-4 desk\n", "")
+        bad = bad.replace("blocked-by: NONE\n",
+                          "promoted-by: 2026-08-27 the wave-4 desk\n"
+                          "blocked-by: NONE\n")
+        r = self._repo(items=bad.replace("grade: NEW", "grade: DONE"))
+        try:
+            code, out = self._run(r, ["item", "check"])
+            self.assertEqual(code, 2, out)
+            self.assertIn("carries a promotion line among the fixed slots",
+                          out)
+        finally:
+            r.close()
+
+    def test_nothing_else_started_deriving_the_grade(self):
+        """MUST NOT MOVE, and it is the rejected alternative: `item ready`
+        still PROMOTES NOTHING and `item amend` still refuses `--grade`. If
+        either had changed, READY would be derivable again by a second
+        door."""
+        from lifecycle_core import items as items_mod
+        self.assertNotIn("grade", items_mod.AMENDABLE_SLOTS)
+        r = self._repo()
+        try:
+            before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+            code, out = self._run(r, ["item", "ready", "xx-1"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("THIS VERB PROMOTES NOTHING", out)
+            self.assertEqual((r.dir / "ITEMS.md").read_text(encoding="utf-8"),
+                             before)
+        finally:
+            r.close()
+
+
 if __name__ == "__main__":
     unittest.main()

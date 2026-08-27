@@ -128,6 +128,25 @@ MUTATIONS = [
      "    if False:",
      "`item park`'s own typed-blocker requirement"),
 
+    ("promote_without_judgment", "verbs.py",
+     "    if not by or not reason:",
+     "    if False:",
+     "`item promote`'s requirement that the judgment be signed and reasoned"),
+
+    ("promote_while_blocked", "verbs.py",
+     '    if not state.startswith("UNBLOCKED"):',
+     "    if False:",
+     "`item promote`'s test that nothing is still blocking the item"),
+
+    ("ready_with_unknown_slot_promote", "verbs.py",
+     "    unknown = items_mod.unknown_slots_of(it)\n"
+     "    if unknown:",
+     "    unknown = items_mod.unknown_slots_of(it)\n"
+     "    if False:",
+     "the UNKNOWN-slot test at the WRITE path — the read-path site in "
+     "`cmd_item_ready` is a DIFFERENT anchor proving the same refusal, "
+     "which is why this one names two lines and not the assignment alone"),
+
     ("amend_without_reason", "verbs.py",
      "    reason = (args.reason or \"\").strip()\n"
      "    if not reason:",

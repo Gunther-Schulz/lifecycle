@@ -1164,6 +1164,120 @@ def cmd_item_park(args, out, ctx: Ctx) -> int:
     return exits.CLEAN
 
 
+# --- `item promote` (lc-39) ---------------------------------------------------
+
+def cmd_item_promote(args, out, ctx: Ctx) -> int:
+    """The desk's re-grade — THE ONLY path to READY after admission.
+
+    THERE WAS NO PATH AT ALL, which is the defect this closes. `grade` is
+    written once, by `item add`; `item amend` refuses it by design; `item
+    ready` reads it and PROMOTES NOTHING. So an item admitted NEW could never
+    become READY however complete its slots later grew, and a carrier's head
+    was empty by construction — measured over dotfiles: 133 items whose slots
+    a desk had filled by amendment, `item ready --head` reporting 2 READY, and
+    both of those born complete.
+
+    READY IS JUDGED, NEVER DERIVED (§3.1, law 10), so this is an ACT and not a
+    re-derivation. The rejected alternative is on the record: computing the
+    grade from slot completeness at read time, which would make READY
+    automatic — the label asserting something nobody judged, which is the
+    95-entry queue this repo already has the incident for. What the refusals
+    below check is that the judgment is POSSIBLE, never that it is correct:
+    the desk supplies the judgment and the tool refuses to record one over a
+    slot nobody wrote or a wait nobody cleared.
+
+    IT DOES NOT REFUSE AN ALREADY-READY ITEM. A desk re-affirming its own
+    judgment is legitimate work, and a guard that fired on it would be a
+    guard firing on a non-defect (R11) — the second record is appended beside
+    the first, which is what the carrier is for.
+    """
+    by = (args.by or "").strip()
+    reason = (args.reason or "").strip()
+    if not by or not reason:
+        out("FINDING [promote_without_judgment] `item promote` needs BOTH "
+            "`--by` (which desk judged) and `--reason` (why it is "
+            f"decision-complete). Got --by {by!r} and --reason {reason!r}. "
+            "READY is a judgment, and a judgment nobody signed is a grade "
+            "that appeared: the next reader cannot ask the desk that made it, "
+            "because the carrier does not say there was one.")
+        return exits.FINDING
+    for name, value in ((items_mod.PROMOTED_BY, by),
+                        (items_mod.PROMOTE_REASON, reason)):
+        problem = items_mod.slot_value_problem(name, value)
+        if problem:
+            out(f"FINDING [item_shape] {problem}")
+            return exits.FINDING
+
+    parsed, why = _load(ctx.items_path)
+    if parsed is None:
+        out(f"COULD NOT VERIFY: {why}")
+        return exits.COULD_NOT_VERIFY
+    it = next((i for i in parsed.items if i.ident == args.ident), None)
+    if it is None:
+        out(f"FINDING [unknown_item] no live block {args.ident!r} in "
+            f"{ctx.items_path.name}. A CLOSED body is not promotable: the "
+            "done home records what was true at closure, and a grade written "
+            "there would re-open an item the counts have already drained.")
+        return exits.FINDING
+
+    # THE SAME UNKNOWN-SLOT REFUSAL `item ready` applies, at the WRITE path.
+    # One refusal, two sites (§3.8c): there it reports a grade already
+    # written, here it stops the grade being written. UNKNOWN is the
+    # migration's marker for a slot nobody ever recorded, and "a fresh context
+    # could execute this now" is the one thing it cannot have been judged over.
+    unknown = items_mod.unknown_slots_of(it)
+    if unknown:
+        out(f"FINDING [ready_with_unknown_slot] {it.ident} still holds UNKNOWN "
+            "in " + ", ".join(f"`{s}`" for s in unknown)
+            + ". The grade workflow fills every slot BEFORE READY; promoting "
+              "over one would record a judgment about a slot nobody has "
+              "written.")
+        return exits.FINDING
+
+    done_parsed, done_why = _load(ctx.done_path)
+    state, st_code, _note = _blocker_state(it, ctx, parsed, done_parsed,
+                                           done_why)
+    if st_code == exits.COULD_NOT_VERIFY:
+        # THE THIRD ANSWER, never folded into the refusal (law 1): "could not
+        # read the ledger" and "the item is blocked" are different facts, and
+        # a caller reading only the code must be able to tell them apart.
+        out(f"COULD NOT VERIFY: {state}")
+        return exits.COULD_NOT_VERIFY
+    if not state.startswith("UNBLOCKED"):
+        out(f"FINDING [promote_while_blocked] {it.ident} is not unblocked, so "
+            f"the desk's judgment cannot be recorded yet: {state} A promotion "
+            "over a standing blocker records READY against a wait nobody "
+            "cleared, and the blocker is the thing that would then be read "
+            "through.")
+        return exits.FINDING
+
+    date = _today()
+    with items_mod.carrier_lock(ctx.items_path):
+        text = ctx.items_path.read_text(encoding="utf-8")
+        # THE RECORD IS COMPOSED BEFORE THE GRADE (invariant 6: a decision is
+        # recorded with its basis BEFORE the act), and both land in ONE write:
+        # a crash between two writes leaves either a grade nobody judged or a
+        # judgment of a grade that never moved.
+        new, ok = items_mod.append_promotion(text, args.ident, date, by, reason)
+        if ok:
+            new, ok = _set_slots(new, args.ident, {"grade": "READY"})
+        if not ok:
+            out(f"FINDING [unknown_item] no live block {args.ident!r} in "
+                f"{ctx.items_path.name}.")
+            return exits.FINDING
+        ctx.items_path.write_text(new, encoding="utf-8")
+    out(f"{args.ident} → READY, judged by {by} on {date}.")
+    for line in items_mod.render_promotion(date, by, reason):
+        out(f"    {line}")
+    out("The grade is the DESK's, not this verb's: nothing here derived it "
+        "from the slots. `item ready --head` now lists this item.")
+    code = commit_paths(ctx, (ctx.items_path,),
+                        f"lifecycle: promote {args.ident} to READY", out,
+                        skip=args.no_commit, what="the promotion")
+    args.fire_detail = f"promote {args.ident}"
+    return code
+
+
 # --- `item amend` (stage 5) ---------------------------------------------------
 
 #: The `item amend` flag for each amendable slot. Spelled once, here, and

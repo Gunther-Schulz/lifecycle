@@ -117,6 +117,34 @@ AMEND_REASON = "amend-reason"
 #: fired on the ordinary value would stop the lane (R11).
 _AMEND_VALUE = re.compile(r"^(\d{4}-\d{2}-\d{2})\s+(\S.*)$")
 
+#: THE PROMOTION LINES (lc-39). There was NO PATH FROM NEW TO READY: `grade`
+#: is written once at admission, the note above says why `item amend` refuses
+#: it, and `item ready` promotes nothing — so an item whose slots a desk later
+#: filled could never be graded, and the head was empty by construction. The
+#: repair is the third grade-moving path that note already names: the desk's
+#: own re-grade, `item promote`. It moves `grade` IN PLACE — the shape `item
+#: park` uses for a transition the tool owns end to end — and APPENDS this
+#: dated pair, which is the RECORD of who judged and why.
+#:
+#: THE RECORD IS A HOME, not a flag on the act (R23): a design line that names
+#: a thing names its home, and "recording who judged and why" with no home is
+#: a record nobody can read. Here the home is the block itself, beside the
+#: grade the judgment produced.
+#:
+#: TWO LINES RATHER THAN ONE, for exactly the reason `_AMEND_VALUE` states
+#: above: WHO and WHY are two free-text facts, and joining them onto one line
+#: needs a separator INSIDE a value — which this carrier's values already
+#: carry constantly, so the parse would break on ordinary prose. The date is a
+#: fixed shape instead, spelled as the amendment lines spell it.
+#:
+#: THEY REPEAT BY DESIGN, like the amendment lines: an item parked after its
+#: promotion and judged again later carries both judgments, and a second
+#: judgment that erased the first would leave the carrier unable to say the
+#: desk had ever changed its mind.
+PROMOTE_REASON = "promote-reason"
+PROMOTED_BY = "promoted-by"
+PROMOTION_LINES = (PROMOTE_REASON, PROMOTED_BY)
+
 #: Head lines the carrier understands. `schema` is required and first;
 #: the conservation trio is optional here because the identity that uses it
 #: (`items + done == baseline + added - compacted`) is written by the close
@@ -151,6 +179,12 @@ class Item:
     #: reader that wanted only the current value would otherwise have to know
     #: the resolution rule to get it right.
     amendments: list = field(default_factory=list)
+    #: `(name, raw-value, lineno)` for every promotion line, IN FILE ORDER.
+    #: Its OWN list rather than a share of `amendments`: these resolve NO
+    #: slot — the grade they record moved in place — so folding them in would
+    #: put lines with no slot to supersede through the resolver, and every
+    #: reader of `amendments` would then be reading two kinds of act.
+    promotions: list = field(default_factory=list)
 
     @property
     def grade(self) -> str:
@@ -330,6 +364,13 @@ def parse(text: str) -> Parsed:
             current.amendments.append((slot, val, lineno))
             seen_order.append(slot)
             continue
+        # PROMOTION LINES REPEAT TOO, and for the same reason: a desk that
+        # judges an item twice writes two records, and the second one erasing
+        # the first is the edit path law 8 exists to keep out of this file.
+        if slot in PROMOTION_LINES:
+            current.promotions.append((slot, val, lineno))
+            seen_order.append(slot)
+            continue
         if slot in current.slots:
             out.problems.append(("item_shape", lineno,
                                  f"block {current.ident!r} repeats slot "
@@ -359,7 +400,7 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
     missing = [s for s in SLOTS if s not in item.slots]
     unknown = [s for s in seen_order
                if s not in SLOTS and s not in DONE_ONLY_SLOTS
-               and not _is_amend_line(s)]
+               and not _is_amend_line(s) and s not in PROMOTION_LINES]
     if missing:
         out.problems.append((
             "item_shape", item.line,
@@ -408,11 +449,60 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
               "annotation as an addition rather than as a reordering."))
 
     _resolve_amendments(out, item, seen_order)
+    _check_promotions(out, item, seen_order)
     out.items.append(item)
 
 
 def _is_amend_line(name: str) -> bool:
     return name == AMEND_REASON or name.startswith(AMEND_PREFIX)
+
+
+def _check_promotions(out: Parsed, item: Item, seen_order: list) -> None:
+    """Validate the block's promotion lines. They resolve NOTHING.
+
+    NOTHING TO RESOLVE IS THE POINT, and it is what separates this from
+    `_resolve_amendments`: a promotion moved `grade` IN PLACE, so the slot
+    already says what the judgment decided. These lines record WHO decided it
+    and WHY — facts the fixed slots have no room for, and which no reader
+    should have to reconstruct from a diff.
+
+    Checked, though, on both halves the amendment lines are checked on: the
+    ISO date every appended line opens with, and the ORDER that keeps an
+    appended line out of the fixed slots.
+
+    THE FIXED RUN IS `SLOTS`, AND NOT `SLOTS + DONE_ONLY_SLOTS`. The
+    closed-body slots are themselves APPENDED — `item close` writes
+    `blocker-moot:` onto a body it has already moved, after whatever the
+    block accumulated while it was live. Counting them as fixed makes the
+    ordinary close of a promoted item a finding: measured here 2026-08-27, a
+    promoted item closed over a moot decision reported "carries a promotion
+    line among the fixed slots" about a file the tool itself had just
+    written correctly. A guard that fires on legitimate work stops the lane
+    (R11), so the predicate names the run it actually means — the block's
+    own seven slots, which are the values an appended line could be read as
+    superseding. A promotion line among THOSE still fires.
+    """
+    if not item.promotions:
+        return
+
+    fixed_at = [i for i, s in enumerate(seen_order) if s in SLOTS]
+    promo_at = [i for i, s in enumerate(seen_order) if s in PROMOTION_LINES]
+    if fixed_at and promo_at and min(promo_at) < max(fixed_at):
+        out.problems.append((
+            "item_shape", item.line,
+            f"block {item.ident!r} carries a promotion line among the fixed "
+            "slots. The record of a judgment is APPENDED after the block's "
+            "own slots, so the block reads as what it says, then who judged "
+            "it so."))
+
+    for name, raw, lineno in item.promotions:
+        if not _AMEND_VALUE.match(raw):
+            out.problems.append((
+                "item_shape", lineno,
+                f"block {item.ident!r}: the promotion line {name!r} on line "
+                f"{lineno} does not open with its ISO date: {raw[:60]!r}. A "
+                "promotion records WHEN the desk judged; undated it is a "
+                "claim about a judgment nobody can place in time."))
 
 
 def _resolve_amendments(out: Parsed, item: Item, seen_order: list) -> None:
@@ -558,6 +648,17 @@ def render_amendment(date: str, reason: str, updates: dict) -> list:
     return lines
 
 
+def render_promotion(date: str, by: str, reason: str) -> list:
+    """The lines ONE promotion act appends. The only place the shape is spelled.
+
+    The reason opens the group, exactly as it does for an amendment, so the
+    two appended kinds read the same way down the block: what was decided,
+    then by whom.
+    """
+    return [f"{PROMOTE_REASON}: {date} {reason}",
+            f"{PROMOTED_BY}: {date} {by}"]
+
+
 def append_amendment(text: str, ident: str, date: str, reason: str,
                      updates: dict):
     """Append one dated amendment group to a LIVE block. `(text, found)`.
@@ -568,9 +669,34 @@ def append_amendment(text: str, ident: str, date: str, reason: str,
     different act — the earlier line is evidence of what was believed, and
     an edit path that deleted it would leave the carrier unable to say it
     had ever been wrong.
+    """
+    return _append_to_block(text, ident,
+                            render_amendment(date, reason, updates))
+
+
+def append_promotion(text: str, ident: str, date: str, by: str, reason: str):
+    """Append one dated promotion record to a LIVE block. `(text, found)`.
+
+    The GRADE is not written here — `item promote` moves it in place. This
+    writes only the record the grade cannot hold, which is why the two acts
+    are one write of one buffer at the call site rather than two writes of
+    the file: a crash between them would leave a grade nobody judged, or a
+    judgment of a grade that never moved.
+    """
+    return _append_to_block(text, ident, render_promotion(date, by, reason))
+
+
+def _append_to_block(text: str, ident: str, body: list):
+    """Append `body` inside one LIVE block, after everything it already has.
+
+    ONE WALK FOR BOTH APPENDED KINDS. The end-of-block search below has a
+    subtlety — backing over the blank lines that separate this block from the
+    next — and a second copy of it would drift from this one silently: the
+    copy that stopped backing up would land its lines in the GAP, where they
+    parse as belonging to the following block.
 
     The LIVE section only: everything from the archive heading on is held
-    verbatim, and a pre-migration body has no slots to supersede.
+    verbatim, and a pre-migration body has nothing to append to.
     """
     lines = text.split("\n")
     cut = len(lines)
@@ -595,8 +721,7 @@ def append_amendment(text: str, ident: str, date: str, reason: str,
     # the group lands INSIDE the block rather than in the gap after it.
     while end > start + 1 and not lines[end - 1].strip():
         end -= 1
-    body = render_amendment(date, reason, updates)
-    return "\n".join(lines[:end] + body + lines[end:]), True
+    return "\n".join(lines[:end] + list(body) + lines[end:]), True
 
 
 def slot_value_problem(slot: str, value: str) -> str | None:

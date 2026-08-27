@@ -997,6 +997,74 @@ VERB_ROWS = [
         stage="wave 4 (lc-27)",
     ),
     Row(
+        ident="promote_without_judgment",
+        refusal="a promotion to READY with no record of WHO judged it and "
+                "WHY — a grade that appeared. READY is a judgment (law 10) "
+                "and the next reader cannot ask the desk that made it if the "
+                "carrier does not say there was one",
+        firing_input="`item promote <id>` with neither `--by` nor `--reason`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "promote", "xx-1"], items=SEED_ITEMS),
+        # The SAME promotion WITH both halves of the record: the arms differ
+        # in the flags alone, so the refusal is the missing judgment and not
+        # the promote path — which is a real risk here, because this verb is
+        # new and a control that also refused would prove nothing.
+        control=lambda: _cli(["item", "promote", "xx-1",
+                              "--by", "the wave-4 desk",
+                              "--reason", "the slots are filled and a fresh "
+                                          "context could execute this now"],
+                             items=SEED_ITEMS),
+        stage="wave 4 (lc-39)",
+    ),
+    Row(
+        ident="promote_while_blocked",
+        refusal="a promotion over a STANDING blocker — READY recorded "
+                "against a wait nobody cleared, which is then the thing a "
+                "reader resolves through",
+        firing_input="`item promote <id>` on an item whose `decision` blocker "
+                     "no ledger line answers",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "promote", "xx-1",
+                           "--by", "the wave-4 desk",
+                           "--reason", "the slots are filled"],
+                          items=_mutate(SEED_ITEMS, "blocked-by: NONE",
+                                        "blocked-by: decision which window "
+                                        "is canonical")),
+        # The SAME promotion on the SAME item with nothing blocking it: the
+        # arms differ in the blocker alone.
+        control=lambda: _cli(["item", "promote", "xx-1",
+                              "--by", "the wave-4 desk",
+                              "--reason", "the slots are filled"],
+                             items=SEED_ITEMS),
+        stage="wave 4 (lc-39)",
+    ),
+    Row(
+        ident="ready_with_unknown_slot_promote",
+        finding_row="ready_with_unknown_slot",
+        # THE SECOND FIRING INPUT of ONE refusal, not a second refusal. The
+        # row below it reads a grade already written; this stops the grade
+        # being written. One refusal — READY over a slot nobody recorded —
+        # decided at two sites, so `finding_row` declares the family and a
+        # mutation at either site darkens only its own row.
+        refusal="READY over a slot nobody has ever written, at the WRITE "
+                "path — the promotion is refused rather than reported after "
+                "the fact",
+        firing_input="`item promote <id>` on an item whose `goal` is UNKNOWN",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "promote", "xx-1",
+                           "--by", "the wave-4 desk",
+                           "--reason", "the slots are filled"],
+                          items=_mutate(SEED_ITEMS, "goal: mitigate",
+                                        "goal: UNKNOWN")),
+        # The SAME promotion with the goal filled: the arms differ in the one
+        # slot, exactly as the read-path row's pair does.
+        control=lambda: _cli(["item", "promote", "xx-1",
+                              "--by", "the wave-4 desk",
+                              "--reason", "the slots are filled"],
+                             items=SEED_ITEMS),
+        stage="wave 4 (lc-39)",
+    ),
+    Row(
         ident="amend_nothing_to_amend",
         refusal="an amendment naming no slot — a reason line in the carrier "
                 "and no value changed, which reads in every later diff as a "
