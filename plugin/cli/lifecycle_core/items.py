@@ -77,7 +77,29 @@ SLOTS = ("grade", "requirement", "goal", "write-set", "done-criterion",
 #: an unknown slot is fine, which is the opposite of what a shape check is
 #: for. Optional and closed-only — a LIVE block carrying one is a finding,
 #: because both record something a closure did.
-DONE_ONLY_SLOTS = ("superseded-by", "blocker-moot")
+#: THE CLOSURE RECORD (lc-44). `item close --reason` accepted the session's
+#: prose on a DONE close and wrote it NOWHERE — not the moved body, not the
+#: ledger, not the commit message — while printing "moved <id> → ITEMS-DONE.md
+#: (grade DONE)" plus a commit, which reads as a complete closure record.
+#: Measured 2026-08-27 in dotfiles: df-143 closed with a 900-char reason naming
+#: its commit ref; grep for that ref returned 0 in all three carriers
+#: afterwards, and the closure basis had to be written into the ledger BY HAND.
+#:
+#: THE HOME IS THE MOVED BODY, never the ledger (judgment desk, 2026-08-27).
+#: A dropped body may be pruned, so a DROP's record cannot live only there and
+#: keeps its ledger `dropped:` line; the ledger stays decisions, supersessions
+#: and drops. Two homes for one fact is the paraphrase-drift the carrier
+#: doctrine forbids, so the DONE reason lives in exactly one of them.
+#:
+#: TWO LINES, on the promote precedent's reasoning: WHY it closed and WHICH
+#: commit it closed at are two facts, and joining them needs a separator
+#: INSIDE a value — which this carrier's prose carries constantly. The date is
+#: a fixed shape instead, spelled as the amendment and promotion lines spell
+#: it.
+CLOSED_REASON = "closed-reason"
+CLOSED_REF = "closed-ref"
+
+DONE_ONLY_SLOTS = ("superseded-by", "blocker-moot", CLOSED_REASON, CLOSED_REF)
 
 #: The transitional value a migrated slot carries when nobody ever recorded
 #: one (§3.1). DECLARED rather than conventional: the retire lane must not
@@ -430,6 +452,20 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
               "has not happened, and the annotation is what a later reader "
               "would resolve through."))
 
+    # THE CLOSURE REASON CARRIES ITS DATE, checked on the same half the
+    # amendment and promotion lines are checked on and for the same reason: a
+    # closure record nobody can place in time is a claim about a closure
+    # rather than a record of one. Its own verdict rather than a branch inside
+    # another (lc-44): the closed-body slots are optional, so a check folded
+    # into one of them would only run when that one was present.
+    closed_reason = item.slots.get(CLOSED_REASON)
+    if closed_reason is not None and not _AMEND_VALUE.match(closed_reason):
+        out.problems.append((
+            "item_shape", item.line,
+            f"block {item.ident!r}: `{CLOSED_REASON}:` does not open with its "
+            f"ISO date: {closed_reason[:60]!r}. A closure records WHEN the "
+            "item left; undated it is prose beside a grade."))
+
     known_order = [s for s in seen_order if s in SLOTS]
     tail_out_of_place = [s for s in seen_order[:len(known_order)]
                          if s in DONE_ONLY_SLOTS]
@@ -520,6 +556,23 @@ def _resolve_amendments(out: Parsed, item: Item, seen_order: list) -> None:
     Order is read off the FILE rather than off the dates: two amendments made
     on one day carry one date, and a sort by that date would put them in an
     order nobody wrote.
+
+    THE FIXED RUN IS `SLOTS`, AND NOT `SLOTS + DONE_ONLY_SLOTS` — the same
+    predicate `_check_promotions` uses, for the same reason (lc-42). The
+    closed-body slots are themselves APPENDED: `item close` writes
+    `blocker-moot:` onto a body it has already MOVED, after whatever that body
+    accumulated while it was live. Counting them as fixed makes the ordinary
+    close of an AMENDED item a finding — the close puts `blocker-moot:` below
+    the amendment group, so `max(fixed_at)` lands past every amendment and the
+    check reports a reordering about a file the tool itself just wrote
+    correctly. Observed n=2 in a live carrier (dotfiles' done home, df-75 and
+    df-64, both amended by the wave-4 grade pass and then closed). A guard that
+    fires on legitimate work stops the lane (R11), so the predicate names the
+    run it actually means — the block's own seven slots, which are the values
+    an appended line could be read as SUPERSEDING. That is also this check's
+    own stated rationale: a `blocker-moot:` line supersedes nothing, so an
+    amendment sitting above it reads as nothing. An amendment among the seven
+    still fires.
     """
     if not item.amendments:
         return
@@ -527,8 +580,7 @@ def _resolve_amendments(out: Parsed, item: Item, seen_order: list) -> None:
     # ORDER: the group follows the fixed slots. A superseding line ABOVE the
     # value it supersedes reads, to a human, as the value being superseded —
     # the diff would show the correction where the original belongs.
-    fixed_at = [i for i, s in enumerate(seen_order)
-                if s in SLOTS or s in DONE_ONLY_SLOTS]
+    fixed_at = [i for i, s in enumerate(seen_order) if s in SLOTS]
     amend_at = [i for i, s in enumerate(seen_order) if _is_amend_line(s)]
     if fixed_at and amend_at and min(amend_at) < max(fixed_at):
         out.problems.append((

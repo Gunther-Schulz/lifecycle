@@ -193,12 +193,95 @@ class Amendments(unittest.TestCase):
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("nothing to supersede", out)
 
+    #: A CLOSED body of the shape `item close` actually writes: the block's
+    #: seven slots, then whatever it accumulated while it was live (here an
+    #: amendment group), then the closure's own `blocker-moot:` line APPENDED
+    #: last. The two tests below feed the same bytes and differ in ONE thing
+    #: — where the amendment line sits.
+    _CLOSED = (GOOD_ITEMS.rstrip("\n").replace("grade: READY", "grade: DROPPED")
+               + "\namend-reason: 2026-08-27 the wave-4 grade pass"
+                 "\namended-done-criterion: 2026-08-27 the value now in force"
+                 "\nblocker-moot: regrade: fill goal, write-set,"
+                 " done-criterion and evidence, or drop\n")
+
+    def test_a_CLOSED_amended_body_is_NOT_a_finding(self):
+        """lc-42 — the ordinary close of an amended item, and it must be clean.
+
+        `item close` appends `blocker-moot:` to a body it has already moved,
+        so that line sits BELOW the amendment group. With the closed-body
+        slots counted as part of the fixed run, `max(fixed_at)` landed past
+        every amendment and an ordinary close read as a reordering. Measured
+        n=2 in a live carrier (dotfiles' done home, df-75 and df-64). A guard
+        that fires on legitimate work stops the lane (R11).
+        """
+        code, out = run_check(self._CLOSED)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("among the fixed slots", out)
+
+    def test_the_SAME_closed_body_with_the_line_misplaced_still_fires(self):
+        """THE CONTROL for the narrower predicate: it must still catch the
+        real defect. Without this arm, 'the close is clean' is
+        indistinguishable from 'the order check no longer works' — both are
+        green."""
+        misplaced = self._CLOSED.replace(
+            "goal: mitigate\n",
+            "amended-goal: 2026-08-27 verify\ngoal: mitigate\n")
+        code, out = run_check(misplaced)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("among the fixed slots", out)
+
     def test_an_unamended_block_is_untouched_by_any_of_this(self):
         """The control for the whole class: the same check over a block with
         no amendment line must read exactly as it did before."""
         code, out = run_check(GOOD_ITEMS)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertEqual(items.parse(GOOD_ITEMS).items[0].amendments, [])
+
+
+class ClosureRecord(unittest.TestCase):
+    """lc-44 — the two closed-body slots a DONE close writes.
+
+    The VERB's half (that a `--reason` reaches the body at all) is exercised
+    in `test_moves.py` against a real repo. These cover the PARSER's half:
+    that the two lines are slots the shape check knows, that a LIVE block
+    carrying one is diagnosed as the closure slot it is rather than as an
+    unknown word, and that the reason carries its date.
+    """
+
+    def _closed(self, *extra):
+        return (GOOD_ITEMS.rstrip("\n").replace("grade: READY", "grade: DONE")
+                + "\n" + "".join(l + "\n" for l in extra))
+
+    def test_a_closed_body_carrying_the_closure_record_is_CLEAN(self):
+        code, out = run_check(self._closed(
+            "closed-reason: 2026-08-27 shipped in the wave-4 batch",
+            "closed-ref: 0123456789abcdef0123456789abcdef01234567"))
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_the_SAME_lines_on_a_LIVE_block_are_the_closure_slot_finding(self):
+        """The control, and it names the ROW: before these were slots the
+        same input was reported as an unknown word, which sends its reader
+        looking for a typo rather than for a body claiming a closure that
+        has not happened."""
+        code, out = run_check(
+            GOOD_ITEMS.rstrip("\n")
+            + "\nclosed-reason: 2026-08-27 shipped in the wave-4 batch\n")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("done_slot_on_live_item", out)
+        self.assertIn("`closed-reason:`", out)
+
+    def test_an_undated_closed_reason_is_a_finding(self):
+        code, out = run_check(self._closed(
+            "closed-reason: shipped in the wave-4 batch"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("ISO date", out)
+
+    def test_a_closed_body_WITHOUT_the_record_stays_clean(self):
+        """The must-not arm: the record is optional — a close with no
+        `--reason` behaves as it did, and a shape check that demanded the
+        lines would fire on every body closed before this existed."""
+        code, out = run_check(self._closed())
+        self.assertEqual(code, exits.CLEAN, out)
 
 
 class BlockerTargets(unittest.TestCase):

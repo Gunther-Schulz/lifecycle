@@ -45,9 +45,40 @@ from . import items as items_mod
 #: matching is exact and needs no threshold; this is only for prose.
 MATCH_MIN_TOKENS = 2
 
+#: The share of the REST of the carrier above which a token is carried by so
+#: many items that it cannot say which item you are looking at (lc-46).
+#:
+#: THE SHORT STOPWORD LIST'S OWN DEFENCE IS WHAT FAILED, and the repair must
+#: not restate it. "The two-token threshold is what actually does the work"
+#: holds only while no systematic tail contributes two universal tokens —
+#: which is exactly what a migration does: every migrated body ends in
+#: `— record: <old carrier>:<line>`, so `record` and `backlog` land in nearly
+#: every requirement line at once. Measured over dotfiles' migrated carrier
+#: (2026-08-27): of 138 live items, EXACTLY TWO tokens appear in more than 90%
+#: of the requirement lines — `record` and `backlog`, 126 each — and
+#: `MATCH_MIN_TOKENS` is 2. The migration supplies precisely the threshold,
+#: against nearly every item, by construction: an ordinary `item add` returned
+#: `join_undisposed` over 126 of 138 live items, and a guard that fires on
+#: nearly all legitimate work trains the reflex that kills it (R11).
+#:
+#: A LONGER STOPWORD LIST IS THE WRONG REPAIR, and the comment above is right
+#: about why: it is a second vocabulary, and it would need a new entry for
+#: every future migration tail — written after that tail had already flooded
+#: somebody's join. Rarity needs no list. A token carried by most of the
+#: carrier has no discriminating power BY DEFINITION, whatever it says, so the
+#: carrier itself is asked rather than a maintained set of words.
+#:
+#: MORE THAN HALF, and the number is a MEANING rather than a fit: past half
+#: the carrier a token describes the carrier's subject, not this item's. Any
+#: cut between a few percent and 90% kills the measured tail, so fitting one
+#: to 0.91 would tune the constant to one migration; the majority line is the
+#: one that can be stated without the measurement in front of you.
+MATCH_MAX_DOC_FRACTION = 0.5
+
 #: Words that carry no discriminating power in a requirement line. Kept
 #: short on purpose: a long stopword list is a second vocabulary to maintain,
-#: and the two-token threshold above is what actually does the work.
+#: and `MATCH_MAX_DOC_FRACTION` above — not this list and not the token
+#: threshold alone — is what carries a systematic tail.
 STOPWORDS = frozenset("""
 that this with from have been were will would should could when what which
 they them then than there their these those into over under after before
@@ -209,26 +240,72 @@ def requirement_tokens(value: str) -> set:
             if t not in STOPWORDS}
 
 
+def document_frequency(live: list) -> dict:
+    """`{token: how many of these items' requirement lines carry it}`.
+
+    Read off the CARRIER every call, never a stored or restated list: a
+    frequency table cached beside the carrier would age apart from it
+    silently, and the whole point of asking rarity instead of a stopword list
+    is that the answer maintains itself.
+    """
+    freq: dict = {}
+    for it in live:
+        for t in requirement_tokens(it.slots.get("requirement", "")):
+            freq[t] = freq.get(t, 0) + 1
+    return freq
+
+
+def informative_tokens(tokens: set, freq: dict, live_count: int,
+                       carried_by_this_one: set) -> set:
+    """`tokens` minus the ones most of the REST of the carrier also carries.
+
+    THE REST, not the whole carrier, and the exclusion is what keeps a small
+    carrier working. Document frequency counts the candidate itself, so in a
+    two-item carrier every shared token sits at 100% and a naive fraction
+    would drop it — killing exactly the planted-duplicate case the join
+    exists for. The question is whether the OTHER items carry the token too;
+    with no other items there is nothing to compare against and no token can
+    be shown uninformative, so every one is kept. Keeping is the join's
+    conservative direction: it lists a candidate for a human to read.
+    """
+    others = live_count - 1
+    if others <= 0:
+        return set(tokens)
+    keep = set()
+    for t in tokens:
+        elsewhere = freq.get(t, 0) - (1 if t in carried_by_this_one else 0)
+        if elsewhere / others <= MATCH_MAX_DOC_FRACTION:
+            keep.add(t)
+    return keep
+
+
 def candidates(parsed, requirement: str, write_set: str) -> list:
     """`[(item, [why…])]` — LIVE items this intake may already be.
 
     Live means an OPEN grade. A closed item is not a merge target: merging
     into it would resurrect a body from the done home, which is a move the
     carrier has no verb for and conservation would not survive.
+
+    TOKENS ARE WEIGHTED BY RARITY ACROSS THE CARRIER (lc-46). A shared token
+    that most of the rest of the carrier also carries is dropped before the
+    threshold is applied — see `MATCH_MAX_DOC_FRACTION`. The write-set half
+    is untouched: path matching is exact, so it has no vocabulary that can
+    flood.
     """
     want_paths = set(write_set_entries(write_set))
     want_tokens = requirement_tokens(requirement)
+    live = [it for it in parsed.items if it.grade in items_mod.GRADES_OPEN]
+    freq = document_frequency(live)
     found = []
-    for it in parsed.items:
-        if it.grade not in items_mod.GRADES_OPEN:
-            continue
+    for it in live:
         why = []
         shared_paths = want_paths & set(write_set_entries(
             it.slots.get("write-set", "")))
         if shared_paths:
             why.append("shares write-set " + ", ".join(sorted(shared_paths)))
-        shared_tokens = want_tokens & requirement_tokens(
-            it.slots.get("requirement", ""))
+        its_tokens = requirement_tokens(it.slots.get("requirement", ""))
+        shared_tokens = informative_tokens(
+            want_tokens & its_tokens, freq, len(live), its_tokens)
         if len(shared_tokens) >= MATCH_MIN_TOKENS:
             why.append(f"shares {len(shared_tokens)} requirement token(s): "
                        + ", ".join(sorted(shared_tokens)))
@@ -1481,6 +1558,16 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
                 "standing to a completion — the carrier's goal is to lose "
                 "nothing SILENTLY, which a recorded drop satisfies and an "
                 "unrecorded one does not.")
+            return exits.FINDING
+    elif reason:
+        # A DONE REASON GOES ON THE MOVED BODY, so it is a SLOT VALUE and the
+        # slot writer's own predicate is what grades it — not the ledger's.
+        # The two refuse different things: the ledger forbids its slot
+        # separator, a carrier slot forbids a wrapped value. Asking the wrong
+        # one would let the tool write a file its own shape check rejects.
+        problem = items_mod.slot_value_problem(items_mod.CLOSED_REASON, reason)
+        if problem:
+            out(f"FINDING [item_shape] {problem}")
             return exits.FINDING
 
     with items_mod.carrier_lock(ctx.items_path):
