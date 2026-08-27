@@ -54,5 +54,17 @@ blocked-by: NONE
 closed-reason: 2026-08-27 _check_blocker refuses a decision blocker the ledger cannot store, using the ledger's own imported predicate, closing add/park/amend at once. Verified by the desk in three arms: unstorable REFUSED, storable accepted, evidence-typed carrying the separator still accepted
 closed-ref: 8a5d664b5c00283eab67e8983c8fc29b93d7ed1b
 
+## lc-35
+grade: DONE
+requirement: The leak scan finds a foreign home path inside an item BODY (ITEMS.md:300) and the repo declares public:true, so the finding is live even with no remote today — record: wave-4 desk 2026-08-27, re-run at c915bc2 and again at 22adf7e, unchanged
+goal: enforce-the-invariants
+write-set: UNKNOWN
+done-criterion: node tools/absence-scan.mjs --git-range ..HEAD returns 0 findings over ITEMS.md, with the instrument first shown live on a planted positive so a zero is not an unread instrument
+evidence: executed twice by the wave-4 desk: "FINDING foreign-path  ITEMS.md  line 300  (481 chars, #ee54ac7003b3)", exit 2, identical at c915bc2 and 22adf7e. .claude/lifecycle.json declares public:true and leak-scan.source-scope-foreign-path:true, whose own reason note records that the SHIPPED foreign-path class is scoped corpus — so the declaration and the shipped scanner disagree, which is the residue this item names
+blocked-by: NONE
+blocker-moot: does the item BODY change (rewrite the path out of it) or does the foreign-path class scope change (corpus -> source) to honour the declaration
+closed-reason: 2026-08-27 NOT a leak: the guard over-fired. ITEMS.md:300 matched /root.md inside the filename reports/root.md, because /root(?![0-9A-Za-z_-]) permits a following dot. Repaired at the guard with a leading boundary lookbehind, counter-armed in both directions over ten arms. The item's two offered options (rewrite the body, rescope the class) were both wrong; the third was that a check firing on a non-defect is failing
+closed-ref: 70bc93c30130807c25cc96626cfb9b9d217a1591
+
 ## Archive (pre-migration)
 

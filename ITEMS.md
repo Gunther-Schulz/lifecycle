@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 44
+added: 46
 compacted: 0
 
 ## lc-1
@@ -300,15 +300,6 @@ done-criterion: a --merge run whose --report path carries no prior report for th
 evidence: measured 2026-08-27 on the wave-2 blobs with tool 9e33c81. DIFFERENT report paths (root -> reports/root.md, merge -> reports/merged.md): merged.md carries ONE source-blob line, (claude/BACKLOG.md) only; the root line is absent and nothing says so. SAME report path (both -> reports/M.md): BOTH lines present, (claude/BACKLOG.md) and (BACKLOG.md). So the carry-forward lane B3 built works exactly as reported; what is missing is any signal when the precondition is not met
 blocked-by: NONE
 
-## lc-35
-grade: NEW
-requirement: The leak scan finds a foreign home path inside an item BODY (ITEMS.md:300) and the repo declares public:true, so the finding is live even with no remote today — record: wave-4 desk 2026-08-27, re-run at c915bc2 and again at 22adf7e, unchanged
-goal: enforce-the-invariants
-write-set: UNKNOWN
-done-criterion: node tools/absence-scan.mjs --git-range ..HEAD returns 0 findings over ITEMS.md, with the instrument first shown live on a planted positive so a zero is not an unread instrument
-evidence: executed twice by the wave-4 desk: "FINDING foreign-path  ITEMS.md  line 300  (481 chars, #ee54ac7003b3)", exit 2, identical at c915bc2 and 22adf7e. .claude/lifecycle.json declares public:true and leak-scan.source-scope-foreign-path:true, whose own reason note records that the SHIPPED foreign-path class is scoped corpus — so the declaration and the shipped scanner disagree, which is the residue this item names
-blocked-by: decision does the item BODY change (rewrite the path out of it) or does the foreign-path class scope change (corpus -> source) to honour the declaration
-
 ## lc-36
 grade: READY
 requirement: migrate TRUNCATES the requirement slot at a fixed ~277 chars with an ellipsis, then appends " — record: <carrier>:<line>" — measured 23 of 133 items in the dotfiles migration; the full body survives only in the source carrier, so the truncation is a silent information loss the conservation identity does not see
@@ -435,4 +426,22 @@ goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
 done-criterion: commit_paths appends a Co-Authored-By trailer naming the running model, and a Claude-Session trailer where the environment supplies one. Red-first: 89951f4 (the lane's own item amend commit) carries neither and is factually the lane's. Must-not-move: a human-run commit through the same path is not given a false agent trailer, so the model name comes from the environment and its ABSENCE means no trailer rather than a placeholder
 evidence: the lane reported 89951f4 as 'present in the tree, not mine by trailer' while stating it is factually its own; desk confirmed at the artifact — git log -1 --format='%(trailers)' 89951f4 is empty. The pre-push gate's own WARN on unmarked commits is the same fact from the other side
+blocked-by: NONE
+
+## lc-53
+grade: READY
+requirement: absence-scan --git-range old..new scans the files CHANGED in the range at their NEW content, so EMPTY..main is a TIP scan wearing a history scan's costume. The publication bar's own verdict line is about a public HISTORY, and no mode of the tool answers that question, record: measured at the public flip 2026-08-27
+goal: enforce-the-invariants
+write-set: tools/absence-scan.mjs,test/absence-scan.test.mjs
+done-criterion: A mode exists that scans every blob reachable from a ref (git rev-list --objects, or per-commit content) and answers 'is my HISTORY clean'. Red-first is already in hand and must be reproduced as a test: EMPTY..main returns exit 0 while EMPTY..8a5d664 returns exit 2 on the same repo, for a leak that IS in main's history. Must-not-move: the existing range mode keeps its current semantics for the pre-push hook, which wants changed-files-at-new-content
+evidence: executed at the flip: `--git-range EMPTY..main` exit 0 'clean'; `--git-range EMPTY..8a5d664` exit 2, FINDING foreign-path test/test_verbs.py line 429. Both ran seconds apart on the same repo. 8a5d664 is an ancestor of main, so a true history scan could not return clean. The scope line (46 source files, same as the tracked-file count) is the tell
+blocked-by: NONE
+
+## lc-54
+grade: READY
+requirement: test/absence-scan.test.mjs has a test asserting the walk collects files under proxy/, a directory this repo does not have, so the suite has been RED on an environment premise it does not pin, record: baselined 2026-08-27 before the foreign-path repair
+goal: lean-machinery-strict-checks
+write-set: test/absence-scan.test.mjs
+done-criterion: The test either pins its fixture inside the repo or skips with a named reason; the suite exits 0. Red-first: it fails today with 'the walk collected no file under proxy/'. Must-not-move: the assertion still fires where a proxy-like tree DOES exist, so the repair is a pinned fixture and not a deleted test
+evidence: node --test test/absence-scan.test.mjs, run before and after the foreign-path repair: EXIT=1 both times, the SAME single failing test 'source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic allowlist' at :743, message 'the walk collected no file under proxy/'. Stated as the baseline in 70bc93c so the repair's own proof could not borrow a pre-existing red
 blocked-by: NONE
