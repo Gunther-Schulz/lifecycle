@@ -1300,6 +1300,53 @@ LANE_ROWS = [
         stage="wave 1, stage 9",
     ),
     Row(
+        ident="migration_ambiguous_closure",
+        finding_row="migration_unclassified",
+        # THE SECOND FIRING INPUT OF ONE REFUSAL, not a second refusal. Both
+        # shapes below reach `migrate._refuse` and surface under
+        # `migration_unclassified`, so `finding_row` declares the family and a
+        # mutation at the ambiguity branch darkens this row alone.
+        #
+        # WHY IT IS ITS OWN ROW. `migration_unclassified`'s text names the
+        # NO-RULE case — "an entry whose grade word no rule covers" — and that
+        # sentence is FALSE of both shapes here: each entry's grade situation
+        # is legible, and what the tool refuses is the CONFLICT between two
+        # legible statements. A row whose text is narrower than what the code
+        # routes through it hands the operator a wrong cause for their entry,
+        # and it leaves the ambiguity branch with no mutation that darkens
+        # anything — the row's plant being the no-rule case, disabling the
+        # ambiguity branch changed no verdict at all (measured on a copy of
+        # HEAD: `rows changed: NONE`, prove-rows FAILED).
+        refusal="AMBIGUOUS about whether a source entry is CLOSED, in either "
+                "of the two shapes the reader produces — a closure word "
+                "(`DONE`, `DROPPED`) standing alone LATER in the title of a "
+                "bullet carrying no grade word at its start, and an OPEN "
+                "grade word sitting under the carrier's own closure heading. "
+                "Neither is an uncovered grade word: the entry is refused "
+                "because two legible statements about it disagree, and §4 row "
+                "1 ranks neither over the other. Reported with its line and "
+                "quoted in the run's output, written to neither successor "
+                "home — a guess here would be a classification rule invented "
+                "at this tier and afterwards indistinguishable from a rule",
+        firing_input="a source carrier bullet with NO grade word at its start "
+                     "whose title carries a closure word standing alone "
+                     "later — `- **a bullet whose title says DONE mid-way.**`",
+        expect=exits.FINDING,
+        fire=lambda: _migrate_run(
+            backlog="# old\n\n## Open\n\n- **a bullet whose title says DONE "
+                    "mid-way.** body\n"),
+        # The SAME bullet with a NON-closure word in the same position: the
+        # arms differ in that one word, never in the entry's shape, its
+        # section or whether it carries a grade word. A control that simply
+        # dropped the mid-title word would pass against a reader that scans
+        # nothing.
+        control=lambda: _migrate_run(
+            backlog="# old\n\n## Open\n\n- **a bullet whose title says TODO "
+                    "mid-way.** body\n"),
+        stage="wave 3 (lc-17 lane B — the row lane A's write set could not "
+              "reach; unblocks lc-30)",
+    ),
+    Row(
         ident="migration_ledger_nonzero",
         refusal="the acceptance criterion 'zero entries routed to the ledger' "
                 "(§3.6, §4 row 1) is checked at the ARTIFACT and not only in "

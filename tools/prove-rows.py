@@ -378,6 +378,23 @@ MUTATIONS = [
     # matches twice is a stale arrangement rather than a mutation: this tool
     # refuses it, which is how the collision was found rather than silently
     # mutating whichever came first.
+    # THE AMBIGUITY BRANCH, which the message anchor below cannot reach. Both
+    # rows prove ONE refusal (`migration_unclassified`), so each needs the
+    # anchor where ITS OWN case is decided: `migration_unclassified`'s plant is
+    # the no-rule word, and disabling the closure-word scan leaves that verdict
+    # untouched — measured on a copy of HEAD before this row existed, `verdict
+    # 2/named -> 2/named`, `rows changed: NONE`, prove-rows FAILED. The
+    # replacement folds the SEARCH's result, never the branch around it: a
+    # mutation that removed the call would crash and prove the branch is
+    # reached rather than that the row discriminates.
+    ("migration_ambiguous_closure", "migrate.py",
+     "    m = _CLOSURE_WORD.search(headline_of(entry))",
+     "    m = None",
+     "the closure-word scan over an ungraded entry's title — the ambiguous "
+     "shape is then written into the open carrier as ordinary NEW work, which "
+     "is the silent half of the defect: a finished entry lands in the "
+     "successor looking exactly like work nobody has started"),
+
     ("migration_unclassified", "migrate.py",
      '        out(f"FINDING [migration_unclassified] {len(unclassified)} '
      'entry/ies "',

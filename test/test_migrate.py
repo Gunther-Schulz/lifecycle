@@ -297,6 +297,62 @@ class AmbiguousEntries(unittest.TestCase):
                              migrate.REQUIREMENT_CAP)
         self.assertIn("AMBIGUOUS", e.unclassified_why)
 
+    def test_the_ambiguity_branch_has_its_own_roster_row(self):
+        """lc-17 lane B — the row lane A could not add, and what unblocks
+        lc-30.
+
+        WITHOUT IT the ambiguity branch is proven by nothing. Both shapes
+        above surface under `migration_unclassified`, whose own plant is the
+        NO-RULE word — so disabling the closure-word scan changed no verdict
+        at all, and `prove-rows` reported FAILED rather than a proof
+        (measured on a copy of HEAD: `rows changed: NONE`).
+
+        ASSERTED OVER THE ROSTER'S OWN DECLARATION, never over a list here: a
+        restated family would stay green the day the row was deleted, which
+        is the deletion this test exists to make loud.
+        """
+        from lifecycle_core import refusals
+
+        rows = {r.ident: r for r in refusals.ROWS}
+        self.assertIn("migration_ambiguous_closure", rows)
+        row = rows["migration_ambiguous_closure"]
+        # ONE REFUSAL, TWO FIRING INPUTS — the family is what lets a mutation
+        # at the ambiguity branch darken this row without reading as a stray.
+        self.assertEqual(row.expected_finding_row, "migration_unclassified")
+        self.assertIn("migration_unclassified", rows)
+
+    def test_the_ambiguous_row_text_covers_BOTH_shapes_the_code_routes(self):
+        """The row's TEXT is what the operator is handed as the cause, and a
+        text narrower than what the code routes through it names the wrong
+        one — lc-30's asymmetry, in this row's own words.
+
+        THE TWO SHAPES ARE READ FROM THE CODE, by exercising the reader, not
+        from a list restated here: an expectation derived from the row it
+        grades moves with the row and stays green on the corruption it exists
+        to catch.
+        """
+        from lifecycle_core import refusals
+
+        row = {r.ident: r for r in refusals.ROWS}["migration_ambiguous_closure"]
+        mid_title = entry("- **A thing — DONE 2026-08-01 (abc1234).** body")
+        open_under_done = entry(
+            "- **READY 2026-08-01 — an open grade under Done.** b",
+            section="Done")
+        for e in (mid_title, open_under_done):
+            self.assertIn("AMBIGUOUS", e.unclassified_why)
+        # Both shapes are routed, so the row's text names both: the closure
+        # word standing alone later in an ungraded title, and an OPEN grade
+        # word under the closure heading.
+        # LOWERCASED before matching: the row's prose emphasises words in
+        # caps, and a case-sensitive phrase test would go red on an edit that
+        # changed nothing about what the text covers.
+        text = row.refusal
+        low = text.lower()
+        self.assertIn("later in the title", low)
+        self.assertIn("closure heading", low)
+        for word in items.GRADES_CLOSED:
+            self.assertIn(word, text, f"{word} is a routed closure word")
+
     def test_the_run_quotes_the_refused_entry_and_the_report_does_not(self):
         """The desk needs to see WHICH entry it is being asked about. The
         report is generated into a tree that may be public and says of
