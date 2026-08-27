@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 23
+added: 24
 compacted: 0
 
 ## lc-1
@@ -272,3 +272,12 @@ write-set: plugin/cli/lifecycle_core/cli.py,test/test_migrate.py
 done-criterion: a second --from in ONE invocation REFUSES with "one --from per invocation; use --merge for a second source" rather than overwriting; red-first on the executed two---from parse, and the single---from invocation unchanged
 evidence: executed by lane B: build_parser().parse_args(["migrate","--from","A.md","--from","B.md"]) returns from_carrier="B.md" — the first source is discarded with no output. Distinct from lc-17 merge mode, which is a second INVOCATION; this is one invocation naming two sources
 blocked-by: NONE
+
+## lc-32
+grade: READY
+requirement: A repo copy placed under a Claude Code scratchpad fails two absence-scan tests for a reason belonging to the ARRANGEMENT, not the code: every scratchpad path contains the session UUID, and the scan asserts over the checkout own root path, so capture-uuid fires on the copy location. A lane that does not check its old-side self-check first sees two extra reds and may FIX them, silencing a correct instrument — record: lane B2, 2026-08-27
+goal: enforce-the-invariants
+write-set: CLAUDE.md,decision:procedural-note-or-scan-scope-fix
+done-criterion: the Verify section states that an old-side or scratch copy of this repo goes at a UUID-free path, with the measured control quoted; OR the scan stops asserting over the checkout own root path. Red-first is already in hand: the same commit copied to two paths must give 62/59/3 under a UUID path and 62/61/1 without
+evidence: lane B2 single-variable control, executed 2026-08-27: same commit, same cp -a, ONLY the path differing. Under a scratchpad path (contains session UUID) node --test gives tests 62 / pass 59 / fail 3 — :743 (lc-24) plus :973 "foreign-path: a path under THIS REPO own root does not fire" and :1002 (actual [capture-uuid,foreign-path] vs expected [foreign-path]). At /tmp/lcb2plain/old, no UUID in the path: 62 / 61 / 1, :743 only. Found because devbook step 2 requires the old-side self-check GREEN before any red from it is trusted
+blocked-by: decision a procedural note in the Verify section, or narrowing the scan so it does not assert over its own checkout root
