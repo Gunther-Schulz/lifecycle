@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 34
+added: 35
 compacted: 0
 
 ## lc-1
@@ -371,3 +371,12 @@ write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
 done-criterion: closing an amended or promoted item leaves the done home CLEAN, while a genuinely misplaced appended line still fires; red-first on the two real bodies already in ITEMS-DONE.md (df-75, df-64) and a two-arm proof that the narrower predicate still catches the real defect
 evidence: DESIGN, from the B1 lane measurement rather than a guess: the fixed run is SLOTS, never SLOTS + DONE_ONLY_SLOTS. The closed-body slots are themselves APPENDED (item close writes blocker-moot: onto a body it has already moved), so counting them as fixed is what turns an ordinary close into a finding; and _resolve_amendments own docstring rationale is about a superseding line sitting above the value it supersedes, which blocker-moot: does not do. MEASURED BOTH ARMS by the B1 lane on its own promotion line kind: with the narrower predicate the same close is CLEAN and the real defect still fires, proven by moving a promotion line above blocked-by: and watching it fire. Observed by the desk n=2 in the live carrier: ITEMS-DONE.md df-75 and df-64, both after the wave-4 grade pass amended them
 blocked-by: NONE
+
+## lc-43
+grade: READY
+requirement: WAVE 5 HEAD, the TRANSITION PASS (operator GO 2026-08-27): the design specified states and refusals thoroughly and transitions not at all, so each step an item takes across its life surfaced as a missing verb. Walk ONE item lifecycle end to end (admit, slots filled, blocker answered, promoted, scheduled, closed, drained, compacted) and for every arrow name the verb, the record it writes and the check that proves it, in a table committed to the design; an arrow with no verb is an item booked from the table. Then one shared grammar module for every value that crosses verbs (slot lines, blocker questions, ledger lines, ids), each writer and reader importing it. Then the same walk for a LANE and a KIND, briefer. Full paragraph, quoted and authoritative: dotfiles claude/records/lifecycle-wave4-handoff-2026-08-27.md, the WAVE 5 HEAD paragraph
+goal: enforce-the-invariants
+write-set: cache-fix docs/directives/carrier-rework-design-2026-08-26.md (new 3.x section, the arrow table), then lifecycle plugin/cli/lifecycle_core/ per the items the table books
+done-criterion: the arrow table exists in the design with a verb, a record and a check named for every arrow; every arrow lacking one is booked as its own item; the shared grammar module exists and is imported by each writer and reader of a crossing value, red-first on lc-40 own case
+evidence: lc-13 to lc-40, 27 items (lc-15 superseded by lc-28), sorted by the wave-4 desk into transition 16 / nick 11 and ruled by the judgment desk. THE EVIDENCE SENTENCE, verbatim: the five named arrows each surfaced independently as its own item, found by different lanes, none looking for a pattern. Named arrows and their items: amend lc-27, unblock lc-26, promote lc-39, close lc-18/19/21, merge lc-17, register lc-13+lc-14 as one arrow, seed lc-23; cross-verb grammar lc-40, lc-38, lc-36. lc-16 flagged as a missing verb but a QUERY, not an arrow. Not a redesign: the refusal-heavy stance stays
+blocked-by: evidence false  # wave 4 must close first; this is the wave-5 head and the operator GO is on the wave, not on starting it early
