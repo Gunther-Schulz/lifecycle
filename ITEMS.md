@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 24
+added: 25
 compacted: 0
 
 ## lc-1
@@ -281,3 +281,12 @@ write-set: CLAUDE.md,decision:procedural-note-or-scan-scope-fix
 done-criterion: the Verify section states that an old-side or scratch copy of this repo goes at a UUID-free path, with the measured control quoted; OR the scan stops asserting over the checkout own root path. Red-first is already in hand: the same commit copied to two paths must give 62/59/3 under a UUID path and 62/61/1 without
 evidence: lane B2 single-variable control, executed 2026-08-27: same commit, same cp -a, ONLY the path differing. Under a scratchpad path (contains session UUID) node --test gives tests 62 / pass 59 / fail 3 — :743 (lc-24) plus :973 "foreign-path: a path under THIS REPO own root does not fire" and :1002 (actual [capture-uuid,foreign-path] vs expected [foreign-path]). At /tmp/lcb2plain/old, no UUID in the path: 62 / 61 / 1, :743 only. Found because devbook step 2 requires the old-side self-check GREEN before any red from it is trusted
 blocked-by: decision a procedural note in the Verify section, or narrowing the scan so it does not assert over its own checkout root
+
+## lc-33
+grade: READY
+requirement: merge_duplicate_body catches a body already present in the HOMES, but not a source that repeats ITSELF — two entries sharing one headline inside a single incoming carrier pass the refusal and both land. The row states its own narrower reach, so the assurance is not wider than the predicate, but the gap is real — record: lane B3 closing report (c) gap 1, 2026-08-27
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a --merge source carrying two entries with the same headline REFUSES, red-first on a fixture built that way; and the existing arms stay green — a body already in the live home, a body already in the CLOSED home, and a non-duplicate merge
+evidence: lane B3 built merge_duplicate_body scoped to bodies already in the homes and declined to widen it unasked, stating the reach in the row text. Its plant/control differ in ONE WORD of an existing headline and the whole run refuses, nothing written — because a merge is not idempotent and a partial append would leave the carrier half-merged
+blocked-by: NONE
