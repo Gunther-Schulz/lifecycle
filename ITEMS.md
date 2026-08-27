@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 35
+added: 36
 compacted: 0
 
 ## lc-1
@@ -380,3 +380,12 @@ write-set: cache-fix docs/directives/carrier-rework-design-2026-08-26.md (new 3.
 done-criterion: the arrow table exists in the design with a verb, a record and a check named for every arrow; every arrow lacking one is booked as its own item; the shared grammar module exists and is imported by each writer and reader of a crossing value, red-first on lc-40 own case
 evidence: lc-13 to lc-40, 27 items (lc-15 superseded by lc-28), sorted by the wave-4 desk into transition 16 / nick 11 and ruled by the judgment desk. THE EVIDENCE SENTENCE, verbatim: the five named arrows each surfaced independently as its own item, found by different lanes, none looking for a pattern. Named arrows and their items: amend lc-27, unblock lc-26, promote lc-39, close lc-18/19/21, merge lc-17, register lc-13+lc-14 as one arrow, seed lc-23; cross-verb grammar lc-40, lc-38, lc-36. lc-16 flagged as a missing verb but a QUERY, not an arrow. Not a redesign: the refusal-heavy stance stays
 blocked-by: evidence false  # wave 4 must close first; this is the wave-5 head and the operator GO is on the wave, not on starting it early
+
+## lc-44
+grade: READY
+requirement: item close accepts --reason on a DONE close and writes it NOWHERE — not into the moved body, not into the ledger, not into the commit message body. Measured 2026-08-27 in dotfiles: df-143 closed with a 900-char reason naming its commit ref and verification basis; grep for that ref afterwards returns 0 in ITEMS.md, 0 in ITEMS-DONE.md, 0 in LEDGER.md. Reading confirms it: in cmd_item_close, reason is bound once and consumed only inside the 'if args.drop:' branch (ledger dropped: line). The silent direction is the whole defect — the caller sees 'moved df-N to ITEMS-DONE.md (grade DONE)' plus a commit and reads that as a complete closure record.
+goal: one-home-per-kind
+write-set: plugin/cli/lifecycle_core/verbs.py (cmd_item_close), and the close verb's --help text
+done-criterion: a DONE close persists its reason where the doctrine says closures live — items leave BY COMMIT REF, and today the ref cannot survive the verb that closes the item. Red-first: close an item with a reason naming a ref, grep all three carriers for that ref, expect 0 on the old arm and non-zero on the new. Must-not-move: a --drop close still writes exactly one ledger dropped: line and no second copy; an omitted --reason on a DONE close behaves as today. Decide and state which home a DONE reason takes — the moved body or a ledger closed: line — and refuse the OTHER, because two homes for one fact is the paraphrase-drift the carrier doctrine forbids.
+evidence: dotfiles LEDGER.md 2026-08-27 carries df-143's closure record written BY HAND with a note saying why; dotfiles df-1 lost its entire closure basis the same way, and the desk reported that basis to the judgment desk as persisted when it was not.
+blocked-by: NONE
