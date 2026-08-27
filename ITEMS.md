@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 36
+added: 37
 compacted: 0
 
 ## lc-1
@@ -391,3 +391,12 @@ evidence: dotfiles LEDGER.md 2026-08-27 carries df-143's closure record written 
 blocked-by: NONE
 amend-reason: 2026-08-27 judgment desk ruling 2026-08-27; the two hand-written LEDGER lines for df-1 and df-143 STAY as the record after this lands — no migration of them, one fact one home going forward
 amended-done-criterion: 2026-08-27 RULED 2026-08-27 (judgment desk): a DONE reason lives in the MOVED BODY, never the ledger — two lines, 'closed-reason: <date> <text>' and 'closed-ref: <sha>', following the promote precedent (no slot separator inside a value), written in the SAME buffer write as the move. A DROP keeps its ledger line, because a dropped body may be pruned and its record cannot live only there; the ledger stays decisions, supersessions and drops. Red-first: close an item with a reason naming a ref, grep all three carriers for that ref — 0 on the old arm, non-zero in ITEMS-DONE.md on the new. Must-not-move: a --drop close still writes exactly one ledger dropped: line and no second copy; an omitted --reason on a DONE close behaves as today; no closed-reason/closed-ref line appears on a DROP. DISCHARGE IT ALSO CARRIES: the first DONE closure landing a closed-ref after this is the real-repo proof of the ITEMS-carrier accept half of df-143's guard fix, which C1 could only exercise in scratch fixtures.
+
+## lc-45
+grade: READY
+requirement: dotfiles' statusline renders backlog pressure on EVERY render in EVERY repo, today via 'backlog-census.py --statusline BACKLOG.md'. After the carrier freeze that reader must come here, and no statusline verb exists (grep -rn statusline over the plugin: 0 hits). The two available fallbacks are both defects: pointing the old renderer at ITEMS.md parses 0 bullets and renders a silent 0R.0P, and leaving it on the frozen file renders a number frozen at its last value forever, indistinguishable from a live one.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py (a compact one-line render), and the CLI's verb table
+done-criterion: one verb emits a single short line fit for a statusline — counts plus the schedulable head, no multi-line report — and it is CHEAP: it runs on every statusline render, so a full carrier parse per call is the wrong shape and the criterion states which. It exits per the CLI's own convention (0 clean, 2 finding, 3 could not verify) and NEVER emits a pass-shaped number it could not compute: a carrier it cannot parse yields the could-not-verify exit and a visibly non-numeric line. Red-first: the old renderer against ITEMS.md, showing the silent zero this verb exists to prevent. Consumers, which must NOT parse rendered prose to get this: dotfiles claude-worktime/config.sh and claude/hooks/session-scan.py.
+evidence: dotfiles claude-worktime/config.sh:301; the freeze dispositions record claude/records/carrier-freeze-dispositions-2026-08-27.md names this reader the sharpest degrading-check in its set; the C lane surfaced the missing verb as a gap rather than bridging it (2026-08-27).
+blocked-by: NONE
