@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 15
+added: 17
 compacted: 0
 
 ## lc-1
@@ -209,3 +209,21 @@ write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py,decision:who-seed
 done-criterion: a greenfield repo after init has the three carriers resolvable, kind check answering CLEAN rather than COULD NOT VERIFY on them; red-first on a bare repo showing the three could-not-verifies before and their absence after
 evidence: init.py:6-13 states it verbatim: "It does NOT create carrier files (ITEMS.md, ITEMS-DONE.md, LEDGER.md) — those are migrate job for a repo with an old carrier to convert FROM, or a human for a truly greenfield one ... That is a real gap in the wave-2 design this verb inherited". grep -i seed over ITEMS.md at f2c37fe returns 0 hits (positive control: carrier returns 19), so no item carried this
 blocked-by: decision whether init seeds the three carriers on a greenfield repo, or the design assigns that act elsewhere — init.py argues the settled design never asked for it
+
+## lc-24
+grade: READY
+requirement: test/absence-scan.test.mjs asserts the walk collects a file under a LITERAL directory list including proxy/ and that the tree holds >500 files — both are claude-code-cache-fix tree facts, so the shared test is red in lifecycle by construction — record: wave-3 step-0 Verify baseline, judgment-desk ruling carve-out 5
+goal: enforce-the-invariants
+write-set: test/absence-scan.test.mjs,cache-fix test/absence-scan.test.mjs
+done-criterion: the expected directory set and file floor derive from the scanned repo own tree or declaration rather than a literal list, so the shared test passes in BOTH copies; red-first against a tree missing a directory the repo does declare, green on lifecycle and on the cache-fix twin
+evidence: executed at f2c37fe: node --test test/absence-scan.test.mjs exits 1, 62 tests 61 pass 1 fail — "source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic allowlist" (:743) AssertionError "the walk collected no file under proxy/". Source :756-761 loops ["test","tools","proxy","docs"] and asserts files.length > 500. lifecycle has no proxy/ (git ls-files top level: 13 entries) and 51 tracked files total
+blocked-by: lc-9
+
+## lc-25
+grade: READY
+requirement: item add writes the carrier and never commits it on --join new or --join merge-into: commit_paths is called only from _do_supersede, while --no-commit is advertised on the verb as though a commit were the default for every join, and neither a "committed:" nor a "NOT COMMITTED" line is printed — record: wave-3 step-0, judgment-desk GO
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_items.py
+done-criterion: every join of item add either commits its own write by pathspec or says NOT COMMITTED, never silence; red-first by running item add --join new against a clean tree and asserting git status is clean afterwards, which fails on the current build
+evidence: observed at f2c37fe: `item add --join new` for lc-23 printed "added lc-23 [READY] -> ITEMS.md" with no commit line and left " M ITEMS.md"; committed by hand by pathspec as 2e9f20c. Source: commit_paths defined verbs.py:406, called at :646 (_do_supersede) and :1222; _do_new at :656 and _do_merge at :582 have no call site. The consequence is the one commit_paths own docstring names — in a shared work tree the dirty carrier rides out under a co-writer pathspec commit
+blocked-by: NONE
