@@ -493,8 +493,20 @@ def classify(entry: Entry) -> None:
 #: The third is the one that is easy to lose: a parked entry whose evidence is
 #: named is ALREADY in the machine's court, and converting it to a decision
 #: would move a waiting item into the operator's queue for no reason.
+#:
+#: A MINTED DECISION QUESTION IS LEDGER-STORABLE, and that is a joint property
+#: of three mechanisms rather than a wording preference (lc-40). `ledger add
+#: decision` REFUSES a question carrying the ledger's own slot separator — and
+#: it is right to, because an escaped spelling would put two forms of every
+#: value in that file. `item ready` resolves a `decision` blocker by
+#: QUESTION-SLOT EQUALITY, so an answer rephrased to get past that refusal no
+#: longer matches the blocker it was written to clear. Each mechanism is
+#: correct alone; jointly they made 69 of 99 decision-blocked items
+#: permanently unanswerable (measured over dotfiles' carrier, 2026-08-27).
+#: The repair is at the MINT — the separator never enters the question — and
+#: `_ledger_storable` below is what holds it there against a later edit.
 REGRADE_BLOCKER = ('decision regrade: was READY under the old carrier'
-                   ' — READY is judged, never inherited')
+                   ': READY is judged, never inherited')
 
 #: An entry's own body names its missing evidence when it says so in the old
 #: carrier's own vocabulary. Matched on the carrier's phrase rather than
@@ -510,6 +522,40 @@ _NAMED_EVIDENCE = re.compile(
     r"\b(missing evidence|named missing (?:evidence|piece)|trigger:)",
     re.IGNORECASE)
 _NAMED_DECISION = re.compile(r"\bmissing decision\b", re.IGNORECASE)
+
+
+def _ledger_storable(blocked: str) -> str:
+    """`blocked` back, once the LEDGER can store the question inside it (lc-40).
+
+    THE PREDICATE IS THE LEDGER'S OWN, imported rather than restated: a second
+    spelling of "what the ledger refuses" here would age apart from the writer
+    it is supposed to agree with, and the disagreement would be silent in the
+    quiet direction — the mint passing a check the real writer then fails.
+
+    THE ONE CALL SITE IS `build_items`, not each branch of `migration_blocker`.
+    A branch added later inherits this by construction; a per-branch wrapper
+    would cover exactly the branches somebody remembered to wrap, which is the
+    coverage a reader cannot tell from the real thing.
+
+    RAISES rather than reporting a finding. No migrated ENTRY can reach this —
+    the questions are literals in this module and no body text flows into
+    them — so there is no input a registry row could be fired with, and R22
+    says such a check is not registered. What CAN falsify it is an edit to one
+    of those literals, which is exactly the defect it exists to catch and is
+    how it is proven red. Same class as `ledger.render`'s unknown-kind raise.
+    """
+    kind, detail = items_mod.classify_blocker(blocked, None)
+    if kind != "decision":
+        return blocked
+    why = ledger_mod.check_prose(detail, "the minted decision question")
+    if why:
+        raise ValueError(
+            f"migrate would mint a decision blocker the ledger cannot store, "
+            f"so nothing could ever answer it: {why} The question is "
+            f"{detail!r}. `item ready` resolves a decision blocker by "
+            f"question-slot equality, so rephrasing at answer time does not "
+            f"repair this — the question is fixed at the mint (lc-40).")
+    return blocked
 
 
 def migration_blocker(entry: Entry, slots_incomplete: bool):
@@ -561,7 +607,9 @@ PARKED_EVIDENCE_PREDICATE = "false  # the named missing evidence in the source b
 #: SOURCE body rather than restating it: the entry already says what decision
 #: is missing, and a second wording of it here would be a paraphrase that
 #: drifts from the body it summarizes.
-PARKED_DECISION_QUESTION = ("the missing decision named in the source body — "
+#: LEDGER-STORABLE by the same rule as `REGRADE_BLOCKER` above: the clause
+#: break is a colon, never the ledger's slot separator.
+PARKED_DECISION_QUESTION = ("the missing decision named in the source body: "
                             "answer it, then re-grade")
 
 #: What the desk must supply, for a slot-incomplete entry. One sentence, and
@@ -627,6 +675,10 @@ def build_items(entries, prefix: str, source_name: str,
         # rule holds by construction here and is CHECKED by the done home's
         # own shape check rather than assumed.
         blocked, why = migration_blocker(e, slots_incomplete=True)
+        # THE MINT IS THE LAST PLACE A DECISION QUESTION CAN STILL BE FIXED
+        # (lc-40) — after this it is a slot in a file, and the item waits on a
+        # question the ledger will refuse to record an answer to.
+        blocked = _ledger_storable(blocked)
         e.blocker = blocked
         e.blocker_rule = why
         blocks.append(items_mod.render_block(e.ident, {

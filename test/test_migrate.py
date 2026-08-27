@@ -37,7 +37,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
-from lifecycle_core import cli, exits, items, migrate  # noqa: E402
+from lifecycle_core import cli, exits, items, ledger, migrate  # noqa: E402
 from lifecycle_core.refusals import GOOD_FULL_DECLARATION  # noqa: E402
 
 
@@ -864,6 +864,161 @@ class RequirementTitle(unittest.TestCase):
         self.assertEqual(
             migrate.requirement_title("mentions — record: but not a path"),
             "mentions — record: but not a path")
+
+
+class MintedDecisionQuestionsAreAnswerable(unittest.TestCase):
+    """lc-40 — the mint wrote questions the ledger REFUSES to record an
+    answer to, so the items carrying them were blocked forever.
+
+    Three mechanisms, each right on its own: `ledger add decision` refuses a
+    question carrying the ledger's slot separator (an escaped spelling would
+    put two forms of every value in that file); `item ready` resolves a
+    decision blocker by question-slot EQUALITY (lc-26), so a question
+    rephrased at answer time no longer matches; and `migrate` minted the
+    separator into two of its three questions. 69 of 99 decision-blocked
+    items in dotfiles' carrier were unanswerable by construction.
+
+    WHAT THE FIX MOVES is the MINT and nothing else — so half of what is
+    here asserts that the ledger's own predicate did NOT move: a hand-written
+    question carrying the separator is refused exactly as before, and an
+    em-dash that is not the separator stores exactly as before. Without
+    those, a fix that simply stopped refusing would score identically.
+    """
+
+    #: The real text, byte-for-byte as `migrate` minted it before the fix and
+    #: as 66 of dotfiles' items still carry it. Quoted here as the RED's
+    #: input, never as the expectation — the expectation is derived from the
+    #: running minter below.
+    OLD_REGRADE_QUESTION = ("regrade: was READY under the old carrier — "
+                            "READY is judged, never inherited")
+
+    def _every_branch(self):
+        """`[(label, blocked-by)]` from the running `migration_blocker`.
+
+        DERIVED BY EXECUTION, never restated: the values are whatever the
+        five branches return today. REACH, stated rather than implied — this
+        walks the branches that exist now; a branch added later is caught at
+        the WRITE by `_ledger_storable`, which `build_items` calls on every
+        entry it renders, and the end-to-end case below is what proves that
+        call is live.
+        """
+        parked_dec = entry("- **PARKED 2026-01-01 — p.** The missing "
+                           "decision here is which shape to take.")
+        parked_ev = entry("- **PARKED 2026-01-01 — p.** Its named missing "
+                          "evidence is a measurement nobody has taken.")
+        ready = entry("- **READY 2026-01-01 — r.** body")
+        record = entry("- **RECORD 2026-01-01 — r.** body")
+        plain = entry("- **An entry with no grade word.** body")
+        return [
+            ("PARKED naming a decision",
+             migrate.migration_blocker(parked_dec, slots_incomplete=True)[0]),
+            ("PARKED naming evidence",
+             migrate.migration_blocker(parked_ev, slots_incomplete=True)[0]),
+            ("old READY",
+             migrate.migration_blocker(ready, slots_incomplete=True)[0]),
+            ("old RECORD",
+             migrate.migration_blocker(record, slots_incomplete=True)[0]),
+            ("slot-incomplete",
+             migrate.migration_blocker(plain, slots_incomplete=True)[0]),
+            ("the fall-through",
+             migrate.migration_blocker(plain, slots_incomplete=False)[0]),
+        ]
+
+    def test_every_branch_of_the_minter_produces_a_storable_question(self):
+        branches = self._every_branch()
+        # The walk reached something, so a green here is not an empty loop.
+        self.assertEqual(len(branches), 6)
+        decisions = 0
+        for label, blocked in branches:
+            kind, detail = items.classify_blocker(blocked, None)
+            self.assertIn(kind, ("decision", "evidence"), label)
+            if kind != "decision":
+                continue
+            decisions += 1
+            self.assertIsNone(
+                ledger.check_prose(detail, "the minted decision question"),
+                f"{label} mints a question `ledger add decision` refuses: "
+                f"{detail!r}")
+        # …and decision questions were actually among them: an evidence-only
+        # walk would satisfy the loop above having checked nothing.
+        self.assertGreaterEqual(decisions, 4)
+
+    def test_the_minted_question_round_trips_and_unblocks_the_item(self):
+        """END TO END, because storable is only half the criterion: lc-26
+        matches the ledger's question slot against the blocker EXACTLY, so a
+        question that stores but does not match still leaves the item
+        blocked."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-01-01 — r.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        blocked = [ln for ln in
+                   (d / "ITEMS.md").read_text(encoding="utf-8").splitlines()
+                   if ln.startswith("blocked-by:")][0]
+        kind, question = items.classify_blocker(
+            blocked[len("blocked-by: "):], None)
+        self.assertEqual(kind, "decision")
+
+        # Before the answer the item reads BLOCKED — the baseline this pair
+        # needs, since "UNBLOCKED" below means nothing over an item that was
+        # never blocked.
+        self.assertIn("BLOCKED — in the OPERATOR's court",
+                      run_cli(d, "item", "ready", "xx-1")[1])
+
+        code, outp = run_cli(d, "ledger", "add", "decision",
+                             "--question", question,
+                             "--answer", "stays NEW; the desk regrades")
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("UNBLOCKED — the ledger ANSWERS this decision",
+                      run_cli(d, "item", "ready", "xx-1")[1])
+
+    def test_the_guard_refuses_a_question_carrying_the_separator(self):
+        """The mechanism's OWN red — `_ledger_storable` is what holds the
+        mint against a later edit to one of the literals, and a guard shipped
+        in the same commit as its subject is otherwise unexercised."""
+        with self.assertRaises(ValueError) as raised:
+            migrate._ledger_storable(
+                "decision " + self.OLD_REGRADE_QUESTION)
+        self.assertIn("cannot store", str(raised.exception))
+        # MUST NOT MOVE: the same guard passes the text the minter produces
+        # today, so the red above belongs to the separator and not to the
+        # guard rejecting everything.
+        for _label, blocked in self._every_branch():
+            self.assertEqual(migrate._ledger_storable(blocked), blocked)
+
+    def test_the_ledger_still_refuses_a_hand_written_separator(self):
+        """MUST NOT MOVE: the fix is at the mint, so the ledger's predicate
+        is unchanged — a session hand-writing such a question is refused
+        exactly as it was."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-01-01 — r.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        code, outp = run_cli(d, "ledger", "add", "decision",
+                             "--question", self.OLD_REGRADE_QUESTION,
+                             "--answer", "an answer")
+        self.assertEqual(code, exits.FINDING)
+        self.assertIn("contains the slot separator", outp)
+
+    def test_an_em_dash_that_is_not_the_separator_still_stores(self):
+        """MUST NOT MOVE: what the ledger refuses is the SEPARATOR ` — `,
+        never the character. A question whose em-dash sits inside a word-run
+        stored before this change and stores after it."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-01-01 — r.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        code, outp = run_cli(d, "ledger", "add", "decision",
+                             "--question", "does the A—B split hold",
+                             "--answer", "it does")
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("does the A—B split hold", outp)
+
+    def test_the_already_storable_branch_is_byte_for_byte_unchanged(self):
+        """MUST NOT MOVE: 30 of the 99 blocked items carry the
+        slot-incomplete question, which never had the separator. Repairing
+        it too would have re-broken every one of them, since lc-26 matches
+        the stored blocker EXACTLY."""
+        self.assertEqual(migrate.INCOMPLETE_DECISION,
+                         "regrade: fill goal, write-set, done-criterion and "
+                         "evidence, or drop")
 
 
 if __name__ == "__main__":
