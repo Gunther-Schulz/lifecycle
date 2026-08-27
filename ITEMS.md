@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 28
+added: 29
 compacted: 0
 
 ## lc-1
@@ -317,3 +317,12 @@ write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: either the full requirement body travels into the item, or the slot says TRUNCATED and carries its source range explicitly; red-first on a source entry longer than the cut width, asserting the item is not silently shortened
 evidence: wave-4 desk, executed 2026-08-27 over dotfiles/ITEMS.md: 23 of 133 requirement lines carry the mid-sentence ellipsis at len 277-278 (df-2, df-3, df-8 sampled and read in full). All 133 evidence slots are line-range pointers into the old carriers (85 BACKLOG.md, 48 claude/BACKLOG.md), which is what makes the loss recoverable TODAY and unrecoverable once those ranges stop resolving
 blocked-by: decision does the full body travel into the slot, or does the slot declare itself TRUNCATED with its range
+
+## lc-37
+grade: NEW
+requirement: No sweep has been run for items currently MIS-UNBLOCKED by an existing moot ledger line — the G4 fix corrects the reader, but any item whose board reading changes at HEAD is unaudited; residue of the G4 lane, which fixed the mechanism and correctly declined the carrier audit as the desk-s
+goal: enforce-the-invariants
+write-set: UNKNOWN
+done-criterion: every live item whose decision blocker resolved against a moot line before 9800163 is listed with its new board reading, and each is either genuinely blocked or genuinely unblocked by a named answer
+evidence: G4 closing report slot (g), lifecycle 9800163: "Whether any OTHER live item in the real ITEMS.md is currently mis-unblocked by an existing moot line: NOT swept." The fix landed in ledger.py/verbs.py; the carrier was deliberately untouched by that lane
+blocked-by: evidence the sweep has not been run over any real carrier; which carriers are in scope (lifecycle ITEMS.md, dotfiles ITEMS.md, cache-fix ITEMS.md) is the first thing it must decide
