@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 38
+added: 39
 compacted: 0
 
 ## lc-1
@@ -411,3 +411,12 @@ write-set: plugin/cli/lifecycle_core/verbs.py (STOPWORDS, MATCH_MIN_TOKENS and t
 done-criterion: the join discriminates over a migrated carrier. THE DESIGN OWN DEFENCE IS WHAT FAILED and the fix must not restate it: the comment at STOPWORDS says the list is kept short on purpose because "the two-token threshold is what actually does the work" — that premise is false wherever a systematic tail contributes two universal tokens, which is every migrated carrier. So do NOT lengthen the stopword list by hand: that is the second vocabulary the comment rightly refuses, and it would need a new entry for every future migration tail. WEIGHT BY RARITY ACROSS THE CARRIER instead — a token present in nearly every item has no discriminating power BY DEFINITION and needs no list to say so, which makes the fix self-maintaining and kills the next tail before it is written. Red-first on the real case: cache-fix 331 items, the exact add that returned 325, expected to fall to a handful. MUST-NOT-MOVE: two items that genuinely share a rare token still match; an item sharing ONLY migration-tail tokens does not; and the finding still fires on a real duplicate, shown on a planted pair.
 evidence: judgment desk report from cache-fix 2026-08-27 (325 of 331); desk measurement over dotfiles ITEMS.md the same day, token document-frequency computed with the shipped STOPWORDS and _TOKEN regex; verbs.py STOPWORDS comment and MATCH_MIN_TOKENS = 2.
 blocked-by: NONE
+
+## lc-47
+grade: READY
+requirement: the lc-44 ruling keeps a DROP reason in the LEDGER while a DONE reason goes in the MOVED BODY, and its stated ground is that a dropped body MAY BE PRUNED so its record cannot live only there. The retire lane design of record (cache-fix carrier-rework-design 3.1) specifies a COMPACTION step collapsing done bodies older than N days to one ledger line each, git keeping the body. Once that exists the pruning argument reaches DONE bodies identically: a compacted body takes its closed-reason and closed-ref with it, and the closure record the doctrine calls load-bearing is gone from every carrier a reader loads. Found by the lc-44 lane while building to the ruling; the ruling is correct TODAY because retire.py has no verb for compaction yet.
+goal: one-home-per-kind
+write-set: whichever change introduces the compaction verb in retire.py, plus the lc-44 slots in items.py if the answer moves them
+done-criterion: the compaction verb ships only WITH an answer to where a compacted item closure record lives. THE QUESTION, so it is not re-derived: compaction turns the moved body into a ledger line, so either the closure lines are LIFTED into that ledger line (one fact still one home, the home changing at compaction time) or DONE bodies carrying closure lines are EXEMPT from compaction (the record outlives the body, at the cost of the carrier not shrinking where it most would). Whichever is chosen, the verb REFUSES to compact a body it would silently strip: red-first is compacting a body carrying closed-reason and closed-ref and showing the record survives in whatever home the answer names. Must-not-move: a DROP still keeps exactly one ledger line and no second copy.
+evidence: lc-44 lane interim 3, 2026-08-27, citing cache-fix carrier-rework-design 3.1 and retire.py stating that never, compact and delete have no verb yet; the lc-44 ruling itself (judgment desk, 2026-08-27) for the pruning ground it rests on.
+blocked-by: evidence the compaction verb does not exist yet — this fires when it is written, and its trigger is that change, not a date
