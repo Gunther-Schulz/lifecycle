@@ -195,6 +195,15 @@ def cmd_item_check(args, out) -> int:
     code = exits.worst([code, items_mod.check_move_integrity(
         items_parsed, done_parsed, out, done_why)])
 
+    # AN ITEM-ID BLOCKER'S TARGET, over the CARRIER. Its own verdict beside
+    # the others, never a branch inside `check_move_integrity` — that one ends
+    # in a bare ok line, and a failure folded into it would take the line with
+    # it. Here rather than in `check_file` because the answer needs BOTH homes
+    # (a blocker resolves on its target's DONE) and the declared prefix, and
+    # no single-home call has both.
+    code = exits.worst([code, items_mod.check_blocker_targets(
+        items_parsed, done_parsed, out, done_why, prefix=ctx.prefix)])
+
     # THE DONE HOME'S OWN SHAPE CHECK. It is a KIND with the TOOL as its
     # writer, so shape applies to it exactly as it applies to the live
     # carrier — and until this wave nothing checked it: the done home was

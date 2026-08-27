@@ -458,12 +458,20 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
                 "detector is what reads it.")
 
     lanes = doc.get("lanes")
+    #: Whether `lanes` is a list this build may READ — not whether the key is
+    #: present. A malformed `lanes` is normalised to `[]` below so the rest of
+    #: validation has something to walk, and an undeclared-lane scan run
+    #: against that substitute would report every body in the tree as
+    #: undeclared: one defect reported twice, the second time as a pile of
+    #: findings the repo cannot act on.
+    lanes_readable = "lanes" in doc
     if "lanes" in doc:
         if not isinstance(lanes, list) or not all(
                 isinstance(x, str) and x.strip() for x in lanes):
             res.add("declaration_malformed",
                     "`lanes` must be a list of lane names (possibly empty).")
             lanes = []
+            lanes_readable = False
             doc = {**doc, "lanes": []}
     world = ref_world(doc)
 
@@ -490,6 +498,8 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
         check_laws_present(repo, doc["laws"], res)
     if repo is not None:
         check_schema_agreement(repo, doc, res)
+    if repo is not None and lanes_readable:
+        check_lanes_registered(repo, lanes, res)
 
 
 def head_lead_goal(hr):
@@ -1053,6 +1063,117 @@ def check_schema_agreement(repo: Path, doc: dict, res: Result) -> None:
                     "they disagree, and each reader resolves through "
                     "whichever it opened. Run `lifecycle migrate "
                     f"--schema-from {min(n, declared)}`.")
+
+
+def check_lanes_registered(repo: Path, declared, res: Result) -> None:
+    """§3.8b's registration invariant, in the direction nothing watched.
+
+    A lane BODY the declaration does not list is UNREGISTERED, and until this
+    existed nothing said so: `read_lane` catches a declared lane with no file,
+    while a file with no declaration was invisible to every verb — `lane list`
+    walks the declaration's own list and has no directory scan, so it rendered
+    `declared lanes: 0 — EMPTY` over a tree carrying `lanes/x.md` and exited
+    CLEAN. A router that cannot see a door cannot route to it, and the board
+    that omits it reads exactly like a board with nothing to say.
+
+    NOT `unregistered_persisted_thing`, and the difference is measurable
+    rather than a matter of taste. That row (invariant 1, `kind sweep`) asks
+    whether a TRACKED file resolves to a registered KIND — measured over a
+    scratch repo, an untracked `lanes/x.md` is absent from its sweep entirely
+    (4 tracked files, 3 findings), and a repo registering a lanes kind would
+    clear it while the door stayed undeclared. This asks whether the
+    DECLARATION names the door, which is what decides whether any verb can
+    reach it — and the freshly written stub, untracked by construction, is
+    exactly the case the other row cannot see.
+
+    THE DIRECTORY IS ASKED THROUGH `lanes.py`, which owns every other
+    lane-shape fact (`LANES_DIR`, `LANE_PARTS`, `read_lane`). Imported inside
+    the function because `lanes` imports THIS module at its top: the shape
+    question belongs there and the finding belongs here, and a copy of either
+    on the other side would be a second body for one fact.
+    """
+    from . import lanes as lanes_mod
+
+    try:
+        on_disk = lanes_mod.lane_files_on_disk(repo)
+    except OSError as exc:
+        res.cannot_verify(
+            f"the {lanes_mod.LANES_DIR}/ directory could not be listed "
+            f"({exc!r}), so a lane body the declaration does not name would "
+            "not have been seen. An unlistable directory is not an empty one.")
+        return
+    known = set(declared)
+    for name in on_disk:
+        if name in known:
+            continue
+        res.add("lane_undeclared",
+                f"{lanes_mod.LANES_DIR}/{name}.md is a lane body and {name!r} "
+                "is not in this repo's declared `lanes` list. §3.8b: a lane "
+                "file the declaration does not list is UNREGISTERED. It is "
+                "not merely unrouted — `lane list` walks the declaration's own "
+                "list, so the door has no state, no trigger evaluation and no "
+                "line on the board, and the board renders CLEAN over it. "
+                f"Declare it (`lifecycle lane new {name}` registers what it "
+                "writes) or remove the body.")
+
+
+def add_lane(repo: Path, name: str) -> tuple[bool, str | None]:
+    """Append `name` to a repo's declared `lanes` list. `(added, why-not)`.
+
+    THE WRITE HALF OF THE INVARIANT `check_lanes_registered` READS. `lane new`
+    writes `lanes/<door>.md`; a verb whose normal output is invisible to the
+    tool that owns it has not finished, and the hand step it left behind was
+    delivered by nobody — `lane list` said nothing about the door and the only
+    place the author learned that was a hint in the verb's own output.
+
+    IDEMPOTENT, AND IT SAYS WHICH HAPPENED. `(False, None)` is "already
+    declared" — a fact, not a failure; `(False, <why>)` is "could not", and
+    the caller must not report CLEAN over it. A single boolean would have
+    collapsed the two, which is the shape that lets a no-op read as a write.
+
+    IT NEVER INVENTS THE LIST. An absent, unreadable or non-list `lanes` is
+    returned as a reason, never normalised to `[]` and appended to: writing a
+    `lanes` key onto a declaration this function could not parse would silently
+    discard whatever was there.
+
+    BYTE FIDELITY IS PART OF THE CONTRACT: `ensure_ascii=False`, two-space
+    indent, one trailing newline — measured against this repo's own
+    declaration, that pair round-trips byte-identically, so the diff a caller
+    sees is EXACTLY ONE added name. With the default `ensure_ascii=True` the
+    same round trip rewrites 217 lines' worth of `—` and `§` into `\\uXXXX`
+    escapes, and a one-name registration would arrive buried in it.
+    """
+    path = repo / DECLARATION_REL
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return False, (f"{DECLARATION_REL} could not be read ({exc!r}), so "
+                       f"{name!r} was not declared.")
+    try:
+        doc = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        return False, (f"{DECLARATION_REL} is not valid JSON ({exc.msg}, line "
+                       f"{exc.lineno}), so {name!r} was not declared.")
+    if not isinstance(doc, dict):
+        return False, (f"{DECLARATION_REL} parses to {type(doc).__name__}, not "
+                       f"an object, so {name!r} was not declared.")
+    lanes = doc.get("lanes")
+    if not isinstance(lanes, list) or not all(
+            isinstance(x, str) for x in lanes):
+        return False, (f"the declaration's `lanes` is {lanes!r}, not a list of "
+                       f"names, so {name!r} was not appended to it. Repairing "
+                       "the key is a separate act from declaring a door, and "
+                       "guessing what the value meant would discard it.")
+    if name in lanes:
+        return False, None
+    doc["lanes"] = list(lanes) + [name]
+    try:
+        path.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n",
+                        encoding="utf-8")
+    except OSError as exc:
+        return False, (f"{DECLARATION_REL} could not be written ({exc!r}), so "
+                       f"{name!r} was not declared.")
+    return True, None
 
 
 # --- rendering ---------------------------------------------------------------

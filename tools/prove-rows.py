@@ -273,21 +273,33 @@ MUTATIONS = [
     # --- stages 7-9's own rows, and the six the emit-site coverage check
     # found already emitting under no registered row.
 
+    # RE-ANCHORED (lane C, lc-13/14 wave). Both anchors below were the
+    # pre-split source lines, where `cmd_lane_list` printed as it walked. The
+    # `--json` work divided that into `gather_lane_list` (which DECIDES every
+    # finding and the code) and two renderers (which only FORMAT), so the old
+    # anchors matched zero times and this tool refused them as stale — which
+    # is the refusal working. The decision moved; it did not leave `lanes.py`,
+    # so both rows re-anchor here on the gather pass. Anchoring on a RENDERER
+    # would have been the mistake available: a renderer computes no verdict,
+    # so mutating one changes the printed prose while the exit code holds.
     ("roster_absent", "lanes.py",
      "    if entries is None:\n"
-     '        out(f"FINDING [roster_absent] {why}")',
+     "        return RosterRunResult(roster_path=path, roster_absent=True,\n"
+     "                               roster_error=why, code=exits.FINDING)",
      "    if entries is None:\n"
-     '        out(f"COULD NOT VERIFY: {why}")\n'
-     "        return exits.COULD_NOT_VERIFY",
+     "        return RosterRunResult(roster_path=path, roster_absent=True,\n"
+     "                               roster_error=why, "
+     "code=exits.COULD_NOT_VERIFY)",
      "the FINDING answer for an absent roster — folded into could-not-verify, "
      "so a missing board reads as a limit of the run rather than a state of "
      "the system"),
 
     ("repo_unresolved", "lanes.py",
-     '        if row.resolution.startswith("UNRESOLVED"):',
-     "        if False:",
-     "the unresolved-repo report — the router then prints a SHORTER board "
-     "rather than a broken one"),
+     '                           repo_unresolved=row.resolution.startswith("UNRESOLVED"))',
+     "                           repo_unresolved=False)",
+     "the unresolved-repo test itself — the walk then carries the line as an "
+     "ordinary repo, the router prints it with no finding beside it, and the "
+     "board is SHORTER rather than broken"),
 
     ("trigger_broken", "lanes.py",
      "            if t.state == BROKEN:",
@@ -482,6 +494,37 @@ MUTATIONS = [
      "    elif False:",
      "the acceptance criterion 'zero entries routed to the ledger', checked "
      "at the artifact"),
+
+    # NOT `if False:` on the loop's own test. Folding the ANSWER is the
+    # mutation that discriminates here: an undeclared body is then reported as
+    # a limit of the run rather than a state of the repo, which is precisely
+    # the distinction `exits.py` exists to keep and the one a caller reading
+    # only the code cannot recover.
+    # NOT the `detail not in known` test, and the difference decides whether
+    # this proves anything. Removing that test makes EVERY item-id blocker
+    # dangle, so the row goes red for the opposite reason — an over-fire, not
+    # a missing finding — and a mutation that produces the wrong defect proves
+    # the branch is reached, never that the row discriminates. Folding the
+    # ANSWER is the one that names the real failure: the ids are still
+    # resolved, the dangling one is still found, and the run reports CLEAN
+    # over it, which is exactly the permanent silent park this row exists for.
+    ("dangling_reference_carrier", "items.py",
+     "    if dangling:\n        return exits.FINDING",
+     "    if dangling:\n        return exits.CLEAN",
+     "the exit code behind the carrier-side dangling-blocker message — the "
+     "finding is still PRINTED and the run exits CLEAN, which is the shape a "
+     "caller reading only the code cannot see"),
+
+    ("lane_undeclared", "declaration.py",
+     '        res.add("lane_undeclared",\n'
+     '                f"{lanes_mod.LANES_DIR}/{name}.md is a lane body and '
+     '{name!r} "',
+     "        res.cannot_verify(\n"
+     '                f"{lanes_mod.LANES_DIR}/{name}.md is a lane body and '
+     '{name!r} "',
+     "the FINDING answer for a lane body the declaration does not list — "
+     "folded into could-not-verify, so the direction of the registration "
+     "invariant that nothing watched reads as a shrug instead of a state"),
 ]
 
 

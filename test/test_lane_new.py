@@ -127,10 +127,33 @@ class RoundTrip(unittest.TestCase):
         for part in lanes_mod.LANE_PARTS:
             self.assertIn(part, lane.parts_present)
 
-    def test_own_output_names_it_unregistered_when_undeclared(self):
+    def test_lane_new_registers_its_own_output(self):
+        """INVERTED for lc-14 (was `..._names_it_unregistered_when_undeclared`,
+        which asserted the verb PRINTS "UNREGISTERED" and walks away).
+
+        The verb now declares the door in the same run, so the old assertion
+        pinned the defect rather than the contract. What is checked here is
+        the ARTIFACT, not the message: the declaration's `lanes` list gains
+        EXACTLY the one name and nothing else moves in it — a test reading
+        only the verb's own prose would pass over a verb that printed
+        "declared" and wrote nothing.
+        """
+        before = json.loads(
+            (self.repo.dir / ".claude" / "lifecycle.json").read_text(
+                encoding="utf-8"))
         code, out = _run(["--repo", str(self.repo.dir), "lane", "new", "pr"])
         self.assertEqual(code, exits.CLEAN, out)
-        self.assertIn("UNREGISTERED", out)
+        after = json.loads(
+            (self.repo.dir / ".claude" / "lifecycle.json").read_text(
+                encoding="utf-8"))
+        self.assertEqual(before["lanes"], [])
+        self.assertEqual(after["lanes"], ["pr"])
+        # Everything OTHER than `lanes` is byte-for-byte the same object: a
+        # registration that also rewrote a neighbouring key would satisfy the
+        # list assertion above and still be a defect.
+        self.assertEqual({k: v for k, v in before.items() if k != "lanes"},
+                         {k: v for k, v in after.items() if k != "lanes"})
+        self.assertNotIn("UNREGISTERED", out)
 
     def test_own_output_names_it_declared_when_it_is(self):
         repo = ScratchGitRepo(lanes=["pr"])
@@ -142,19 +165,70 @@ class RoundTrip(unittest.TestCase):
         finally:
             repo.cleanup()
 
-    def test_lane_list_says_nothing_about_an_undeclared_door(self):
-        """CHECKED, not assumed: `lane list` walks the declaration's OWN
-        `lanes` list and has no directory scan, so an undeclared door is
-        invisible to it — never a finding, never a mention. `lane new`'s
-        own output (above) is the only place this is learned from."""
+    def test_lane_list_reports_a_fresh_lane_new_door(self):
+        """INVERTED for lc-13/lc-14 (was
+        `test_lane_list_says_nothing_about_an_undeclared_door`).
+
+        The old test pinned the PRE-FIX behaviour as the contract: `lane new`
+        left the door undeclared, `lane list` walked the declaration's own
+        list and said nothing, and the test asserted that silence. With the
+        verb registering its own output the door is on the board, so the
+        assertion flips — this is the fix landing, not a regression.
+
+        ITS ASSERTION SHAPE CHANGED TOO, and that half is a defect repair of
+        its own. The old body asserted `assertNotIn("pr", lout)` — a bare
+        substring over output that EMBEDS the random `mkdtemp` path, so it
+        failed whenever the suffix happened to contain "pr". Observed at
+        1afea34 before any edit here: `'pr' unexpectedly found in "... repo:
+        /tmp/lifecycle-lanenew-3shgtpr3 ..."`. A two-character needle against
+        a rendered whole is a prefix match in an equality's costume; the
+        assertions below name the RENDERED LINES the router actually emits.
+        """
         code, out = _run(["--repo", str(self.repo.dir), "lane", "new", "pr"])
         self.assertEqual(code, exits.CLEAN, out)
         roster = ScratchRoster([self.repo.dir])
         try:
             lcode, lout = _run_env(["lane", "list"], roster.env())
-            self.assertNotIn("pr", lout)
+            self.assertEqual(lcode, exits.CLEAN, lout)
+            self.assertIn("declared lanes: 1 — pr", lout, lout)
+            self.assertIn("lane pr: parts present", lout, lout)
+            self.assertIn("state: QUIET", lout, lout)
+            # MUST NOT appear: the pre-fix board. A door that silently fell
+            # back off the declaration would still satisfy an exit-code
+            # assertion, and this is what separates the two.
+            self.assertNotIn("declared lanes: 0", lout, lout)
+            self.assertNotIn("FINDING [lane_undeclared]", lout, lout)
         finally:
             roster.cleanup()
+
+    def test_an_undeclared_lane_body_is_a_kind_check_finding(self):
+        """lc-13, the other direction of the registration invariant: a body
+        the declaration does not list. Written by hand rather than by `lane
+        new`, which now declares what it writes — this is the case a merge, a
+        hand copy or an older tool leaves behind."""
+        (self.repo.dir / "lanes").mkdir()
+        (self.repo.dir / "lanes" / "x.md").write_text(
+            lanes_mod.lane_stub("x"), encoding="utf-8")
+        code, out = _run(["--repo", str(self.repo.dir), "kind", "check"])
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [lane_undeclared]", out)
+        self.assertIn("lanes/x.md", out)
+
+    def test_a_declared_lane_body_is_not_a_finding(self):
+        """The control for the pair above: the SAME body on disk, declared.
+        Without it the assertion above would pass against a check that fires
+        on any `lanes/` directory at all — a guard firing on legitimate work
+        (R11), which is the repair that stops the lane."""
+        repo = ScratchGitRepo(lanes=["x"])
+        try:
+            (repo.dir / "lanes").mkdir()
+            (repo.dir / "lanes" / "x.md").write_text(
+                lanes_mod.lane_stub("x"), encoding="utf-8")
+            code, out = _run(["--repo", str(repo.dir), "kind", "check"])
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertNotIn("lane_undeclared", out)
+        finally:
+            repo.cleanup()
 
 
 def _run_env(argv, env):

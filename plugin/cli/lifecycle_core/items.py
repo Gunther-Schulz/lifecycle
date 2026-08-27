@@ -638,6 +638,95 @@ def check_move_integrity(items_parsed: Parsed, done_parsed: Parsed | None,
     return exits.CLEAN
 
 
+def check_blocker_targets(items_parsed: Parsed, done_parsed: Parsed | None,
+                          out, done_unreadable: str | None = None,
+                          prefix: str | None = None) -> int:
+    """An item-id blocker over the CARRIER: does the id it names exist?
+
+    ITS OWN VERDICT, never a branch inside `check_move_integrity` above.
+    That function ends `if both: return FINDING` / else print the ok line, so
+    a failure branch folded into it would delete "move integrity: CLEAN" from
+    every report in which this fired — two questions collapsed into one
+    answer, and the quieter one disappears.
+
+    THE WRITE PATH IS NOT THE ONLY PATH, which is the whole reason this
+    exists beside `verbs._check_blocker`. That one runs at `item add` and
+    `item park`; a merge, a hand edit, or a blocker whose target was renamed
+    after the fact all reach the file without passing it. Measured, by
+    accident and with a real mistake: lc-14 was written `blocked-by: lc-15`
+    before lc-15 existed and BOTH `item check` and `kind check` reported
+    CLEAN. The consequence is a permanent silent park — the item never
+    surfaces in `item ready` because it reads as blocked, and nothing ever
+    says the blocker is fictional, so it can neither drain nor be noticed.
+
+    THE OTHER THREE FORMS RESOLVE AGAINST NOTHING BY DESIGN and must not
+    fire. `decision <question>` sits in the operator's court, `evidence
+    <predicate>` in the machine's, and NONE waits for nothing; none of them
+    names an id, so none of them has a target to dangle. A check that could
+    not tell them apart from a dangling id would fire on legitimate work,
+    which is the repair that stops the lane (R11). `classify_blocker` is what
+    tells them apart, and it is the SAME function the write path uses — a
+    second reading of the closed edge vocabulary would disagree with the
+    first exactly where it matters.
+
+    BOTH HOMES, because an item-id blocker RESOLVES on its target's DONE: a
+    blocker naming a closed item is a wait that has been answered, not a
+    dangling one. Without the done home the answer is COULD NOT VERIFY —
+    reading the live home alone would report every such blocker as dangling,
+    which is the same over-fire one homeless step away.
+
+    NARROWER THAN THE WRITE PATH, stated rather than implied: `_check_blocker`
+    also refuses a blocker naming a DROPPED target (an id-blocker resolves on
+    DONE, and a dropped target never reaches it). This asks only whether the
+    id EXISTS. The reach is what lc-28's done-criterion names, and a message
+    claiming more than the predicate establishes is what stops anyone looking.
+    """
+    typed = []
+    untypeable = []
+    for it in items_parsed.items:
+        raw = (it.slots.get("blocked-by") or "").strip()
+        if not raw or raw == BLOCKER_NONE:
+            continue
+        kind, detail = classify_blocker(raw, prefix)
+        if kind == "item":
+            typed.append((it, detail))
+        elif not prefix:
+            untypeable.append(it)
+
+    if untypeable:
+        out("COULD NOT VERIFY: no `id-prefix` in the declaration, so an "
+            f"item-id blocker on {len(untypeable)} block(s) cannot be told "
+            "from prose that resembles one, and none was resolved.")
+        return exits.COULD_NOT_VERIFY
+    if not typed:
+        return exits.CLEAN
+    if done_parsed is None:
+        out(f"COULD NOT VERIFY: {len(typed)} item-id blocker(s) name an id, "
+            "and the done home could not be read to confirm it exists. "
+            f"{done_unreadable or ''}")
+        return exits.COULD_NOT_VERIFY
+
+    known = {it.ident for it in items_parsed.items} | {
+        it.ident for it in done_parsed.items}
+    dangling = [(it, detail) for it, detail in typed if detail not in known]
+    for it, detail in dangling:
+        out(f"FINDING [dangling_reference] line {it.line}: block "
+            f"{it.ident!r} is blocked by {detail!r}, an id NEITHER home "
+            "holds. A blocker pointing at nothing reads exactly like one "
+            "pointing at live work and it never resolves: the block never "
+            "surfaces in `item ready` because it reads as blocked, and "
+            "nothing else ever says the wait is fictional — a permanent "
+            "silent park. Point it at a real id, or retype the blocker to "
+            "the court it actually sits in.")
+    if dangling:
+        return exits.FINDING
+    out(f"blocker targets: CLEAN — {len(typed)} item-id blocker(s), every id "
+        f"resolved in one of the two homes. Checked for EXISTENCE only; a "
+        "blocker naming a DROPPED target is refused at the write path, not "
+        "here.")
+    return exits.CLEAN
+
+
 # --- the census: three answers -----------------------------------------------
 
 def census(parsed: Parsed) -> dict:

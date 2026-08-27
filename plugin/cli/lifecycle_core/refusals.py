@@ -698,6 +698,29 @@ blocked-by: NONE
 EMPTY_ITEMS = "schema: 2\nbaseline: 0\nadded: 0\ncompacted: 0\n"
 EMPTY_DONE = "schema: 2\n"
 
+
+def _blocked_block(ident: str, grade: str, blocker: str) -> str:
+    return (f"\n## {ident}\ngrade: {grade}\n"
+            f"requirement: a blocker-form fixture block — LEDGER.md\n"
+            "goal: mitigate\nwrite-set: tools/thing.py\n"
+            "done-criterion: it goes red then green\nevidence: none yet\n"
+            f"blocked-by: {blocker}\n")
+
+
+#: A carrier carrying ALL FOUR of §3.1's blocker forms at once, so the row's
+#: control is also the OVER-FIRE probe: `decision <q>`, `evidence <predicate>`
+#: and NONE resolve against nothing BY DESIGN, and a check that could not tell
+#: them from a dangling id would fire on legitimate work (R11). A fixture
+#: carrying only the item form would score identically whether or not the
+#: check got that distinction right.
+FOUR_BLOCKER_ITEMS = (
+    "schema: 2\nbaseline: 4\nadded: 0\ncompacted: 0\n"
+    + _blocked_block("xx-1", "PARKED", "xx-9999")
+    + _blocked_block("xx-2", "PARKED", "decision which window")
+    + _blocked_block("xx-3", "PARKED", "evidence test -f /nonexistent")
+    + _blocked_block("xx-4", "READY", "NONE")
+)
+
 #: A complete, valid `item add` — the argument baseline every row below
 #: mutates exactly one thing away from. A row that built its own argument
 #: list would drift from this one, and the drift would look like the row.
@@ -912,6 +935,37 @@ VERB_ROWS = [
         control=lambda: _cli(GOOD_ADD + ["--blocked-by", "xx-1"],
                              items=SEED_ITEMS),
         stage="wave 1, stage 4",
+    ),
+    Row(
+        ident="dangling_reference_carrier",
+        finding_row="dangling_reference",
+        # THE THIRD firing input of ONE refusal, not a third refusal. The
+        # declaration half resolves a typed reference; `dangling_reference_item`
+        # resolves an id at the WRITE path; this resolves one already sitting
+        # in the carrier. `finding_row` declares the family, so a mutation at
+        # this site darkens this row alone and prove-rows reads that as the
+        # honest case rather than a stray.
+        refusal="dangling typed reference over the CARRIER — a `blocked-by "
+                "<item-id>` already in the file naming an id no home holds. "
+                "The write path is not the only path in: a merge or a hand "
+                "edit reaches the file without passing it, and the result is "
+                "a PERMANENT SILENT PARK — the block never surfaces in `item "
+                "ready` because it reads as blocked, and nothing says the "
+                "wait is fictional",
+        firing_input="`item check` over a carrier whose PARKED block waits on "
+                     "`xx-9999`, beside blocks carrying the three other "
+                     "blocker forms",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "check"], items=FOUR_BLOCKER_ITEMS),
+        # The SAME carrier with the SAME four forms, the item blocker
+        # retargeted to the live `xx-4`: the arms differ in the ID ALONE. The
+        # control is doing double duty — it also proves the other three forms
+        # stay quiet, which is the half that decides whether this ships.
+        control=lambda: _cli(["item", "check"],
+                             items=_mutate(FOUR_BLOCKER_ITEMS,
+                                           "blocked-by: xx-9999",
+                                           "blocked-by: xx-4")),
+        stage="wave 3 (lc-28, superseding lc-15)",
     ),
     Row(
         ident="parked_without_typed_blocker",
@@ -1273,6 +1327,25 @@ LANE_ROWS = [
         control=lambda: _cli(["lane", "new", "x", "--force"],
                              lane_files={"x": _lane_body("exit 1")}),
         stage="wave 2",
+    ),
+    Row(
+        ident="lane_undeclared",
+        refusal="§3.8b — a lane BODY the declaration does not list is "
+                "UNREGISTERED. The registration invariant held one way only: "
+                "a declared lane with no file was caught, a file with no "
+                "declaration was invisible to every verb, so the router "
+                "printed `declared lanes: 0 — EMPTY` over a tree carrying one",
+        firing_input="`kind check` in a repo carrying `lanes/x.md` whose "
+                     "declared `lanes` list is empty",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["kind", "check"],
+                          lane_files={"x": _lane_body("exit 1")}),
+        # The SAME body on disk, DECLARED: the arms differ in the declaration's
+        # `lanes` list alone, not in whether a lane file exists. A control that
+        # simply omitted the file would pass whether or not the scan works.
+        control=lambda: _cli(["kind", "check"], lanes=["x"],
+                             lane_files={"x": _lane_body("exit 1")}),
+        stage="wave 2 (lc-13)",
     ),
 ]
 

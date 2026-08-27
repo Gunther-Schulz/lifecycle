@@ -12,8 +12,10 @@ being BROKEN rather than quiet. A mapping that silently folded 2 into quiet
 would leave every board in the system clean forever.
 """
 
+import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -87,6 +89,47 @@ class TriggerContract(unittest.TestCase):
         finally:
             for d in (with_marker, without):
                 subprocess.run(["rm", "-rf", str(d)])
+
+
+class LaneFilesOnDisk(unittest.TestCase):
+    """lc-13's scan, at the unit the roster row cannot reach.
+
+    The row proves the FINDING. What it cannot prove is the CLEAN side's
+    shape — which names the scan returns and which it must not — and those
+    are what decide whether the finding over-fires. A scan collecting the
+    wrong shape would report doors the declaration could never have named
+    (R11: a guard firing on legitimate work stops the lane).
+    """
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(prefix="lifecycle-lanescan-"))
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def test_no_lanes_directory_is_an_empty_answer_not_an_error(self):
+        self.assertEqual(lanes.lane_files_on_disk(self.dir), [])
+
+    def test_it_returns_stems_sorted(self):
+        (self.dir / lanes.LANES_DIR).mkdir()
+        for name in ("zeta", "alpha"):
+            (self.dir / lanes.LANES_DIR / f"{name}.md").write_text(
+                lanes.lane_stub(name), encoding="utf-8")
+        self.assertEqual(lanes.lane_files_on_disk(self.dir),
+                         ["alpha", "zeta"])
+
+    def test_it_collects_only_what_read_lane_could_resolve(self):
+        """THE MUST-NOT ROW. `read_lane` resolves a declared name to
+        `lanes/<name>.md` and nothing else, so anything the scan collects
+        beyond that shape is a door no declaration could ever have named —
+        the scan would demand the repo declare a README or a directory."""
+        d = self.dir / lanes.LANES_DIR
+        d.mkdir()
+        (d / "real.md").write_text(lanes.lane_stub("real"), encoding="utf-8")
+        (d / "notes.txt").write_text("not a lane\n", encoding="utf-8")
+        (d / "README").write_text("not a lane\n", encoding="utf-8")
+        (d / "nested.md").mkdir()          # a DIRECTORY whose name ends .md
+        self.assertEqual(lanes.lane_files_on_disk(self.dir), ["real"])
 
 
 class MigrationClassification(unittest.TestCase):

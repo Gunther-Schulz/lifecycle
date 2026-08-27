@@ -209,6 +209,33 @@ def read_lane(repo: Path, name: str) -> Lane:
     return lane
 
 
+def lane_files_on_disk(repo: Path) -> list:
+    """Every lane BODY the tree carries, by door name, sorted.
+
+    THE OTHER DIRECTION OF THE REGISTRATION INVARIANT. `read_lane` above
+    answers "the declaration names this door — is there a body?"; this
+    answers "there is a body — does the declaration name this door?". Until
+    this existed the invariant held one way only: `LANES_DIR` was used solely
+    to build a path from an ALREADY-DECLARED name, so a file the declaration
+    did not list was invisible to every verb, and `lane list` rendered the
+    repo as a clean board with zero lanes over a tree carrying one.
+
+    NO DIRECTORY, NO OPINION. A repo with no `lanes/` is not a repo hiding an
+    undeclared lane, and it must not be reported as one — the empty list here
+    is a real answer, not a shrug (the caller in `declaration.py` is where an
+    unreadable directory becomes COULD NOT VERIFY).
+
+    `*.md` AND THE STEM, because that is the exact shape `read_lane` resolves
+    a declared name to (`lanes/<name>.md`). A scan that collected some other
+    shape would report doors the declaration could never have named, which is
+    a guard firing on legitimate work.
+    """
+    d = repo / LANES_DIR
+    if not d.is_dir():
+        return []
+    return sorted(p.stem for p in d.glob("*.md") if p.is_file())
+
+
 # --- the roster --------------------------------------------------------------
 
 @dataclass
@@ -301,18 +328,27 @@ def cmd_lane_new(args, out, repo: Path) -> int:
     REFUSES IF THE FILE EXISTS; `--force` overwrites. No silent overwrite —
     the same rule `init` applies to the declaration it writes.
 
-    DOES NOT TOUCH THE DECLARATION. Writing the lane BODY and DECLARING it
-    (adding its name to the repo's `lanes` list) are two separate acts —
-    this verb performs only the first, and says so. CHECKED, NOT ASSUMED:
-    `lane list` walks the declaration's OWN `lanes` list — a file this door
-    is not declared under is not merely flagged, it is INVISIBLE to the
-    router, which has no directory scan of its own. So THIS verb's own
-    output is the one place the author learns "UNREGISTERED" from; `lane
-    list` will say nothing about this door at all until it is declared.
-    (No verb in this build currently adds a lane name to an EXISTING
-    declaration's `lanes` list after `init` time — `lane register` puts a
-    REPO on the router's roster, a different mechanism entirely; that gap
-    is not this verb's to close.)
+    IT REGISTERS ITS OWN OUTPUT (lc-14, judgment desk 2026-08-26). Writing
+    the body and declaring the door were two acts and only the first had a
+    verb, so this verb's DEFAULT outcome was a lane file no verb could see:
+    `lane list` walks the declaration's OWN `lanes` list and has no directory
+    scan, so the door had no state, no trigger evaluation and no line on the
+    board. The hand step that closed it was delivered by nobody — the same
+    assumed-delivery shape as `init` leaving carriers uncreated — and a hint
+    in this verb's output is not a delivery. So the name goes into the
+    declaration's `lanes` list in the SAME run, and the door reads QUIET in
+    `lane list` immediately.
+
+    NO NEW VERB, deliberately. `init` already writes the declaration, so a
+    declaration write is not a new class of act for this tool, and a `lane
+    register` verb would have collided with the existing one — which puts a
+    REPO on the router's roster, a different mechanism entirely.
+
+    A REGISTRATION THAT DID NOT HAPPEN IS NOT CLEAN. Where the declaration
+    cannot be read or its `lanes` key is not a list, the body is on disk and
+    undeclared; this verb says so and exits COULD NOT VERIFY rather than
+    reporting a door it did not open. The residue is loud either way —
+    `check_lanes_registered` makes an undeclared body a `kind check` finding.
 
     VERIFIES ITS OWN WRITE against the real parser before returning CLEAN:
     a stub `read_lane` cannot read back is not a stub, it is a defect this
@@ -341,19 +377,21 @@ def cmd_lane_new(args, out, repo: Path) -> int:
     out(f"trigger: {lane.trigger!r}")
     out("parts present: " + (", ".join(lane.parts_present) or "(none)"))
 
-    res = decl.read(repo)
-    declared = list((res.declaration or {}).get("lanes") or []) \
-        if res.declaration else []
-    if door in declared:
-        out(f"declared: {door!r} is already in this repo's `lanes` list.")
+    added, why = decl.add_lane(repo, door)
+    if why is not None:
+        out(f"COULD NOT VERIFY: {why} The body is on disk and the door is "
+            "NOT declared, which `kind check` now reports as a finding "
+            "([lane_undeclared]) rather than leaving it invisible.")
+        return exits.COULD_NOT_VERIFY
+    if added:
+        out(f"declared: {door!r} appended to this repo's `lanes` list in "
+            f"{decl.DECLARATION_REL}.")
     else:
-        out(f"UNREGISTERED: {door!r} is not yet in this repo's declared "
-            "`lanes` list. Writing the file and declaring it are two acts — "
-            "this verb performs only the first. `lane list` walks the "
-            "declaration's own list, so it will say NOTHING about this "
-            "door — not even a finding — until its name is added there; "
-            "learn this from this tool's own output now, not from the "
-            "router's silence later.")
+        # "Already there" and "added" are different facts, and a verb that
+        # printed one line for both would leave a caller unable to tell a
+        # working registration from a no-op (`lane register`'s own rule).
+        out(f"declared: {door!r} was already in this repo's `lanes` list — "
+            "nothing written to the declaration.")
     return exits.CLEAN
 
 
