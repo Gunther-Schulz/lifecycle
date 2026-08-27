@@ -980,6 +980,41 @@ VERB_ROWS = [
         stage="wave 1, stage 5",
     ),
     Row(
+        ident="amend_without_reason",
+        refusal="an amendment with no recorded WHY — which is an in-place "
+                "rewrite with a date on it, and the thing law 8 and the "
+                "append-only ethic exist to keep out of the carrier",
+        firing_input="`item amend <id> --goal <g>` with no `--reason`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "amend", "xx-1", "--goal", "verify"],
+                          items=SEED_ITEMS),
+        # The SAME amendment WITH its reason: the arms differ in the reason
+        # alone, so the refusal is the missing prose and not the amend path.
+        control=lambda: _cli(["item", "amend", "xx-1", "--goal", "verify",
+                              "--reason", "the goal was mis-recorded at "
+                                          "intake"],
+                             items=SEED_ITEMS),
+        stage="wave 4 (lc-27)",
+    ),
+    Row(
+        ident="amend_nothing_to_amend",
+        refusal="an amendment naming no slot — a reason line in the carrier "
+                "and no value changed, which reads in every later diff as a "
+                "correction that was made",
+        firing_input="`item amend <id> --reason <why>` with no slot flag",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "amend", "xx-1", "--reason",
+                           "the goal was mis-recorded at intake"],
+                          items=SEED_ITEMS),
+        # The SAME call with ONE slot named: the arms differ in whether a
+        # value was given, never in the reason.
+        control=lambda: _cli(["item", "amend", "xx-1", "--reason",
+                              "the goal was mis-recorded at intake",
+                              "--goal", "verify"],
+                             items=SEED_ITEMS),
+        stage="wave 4 (lc-27)",
+    ),
+    Row(
         ident="duplicate_id_cross_home",
         finding_row="duplicate_id",
         refusal="duplicate on move, ACROSS THE TWO HOMES — the within-file "

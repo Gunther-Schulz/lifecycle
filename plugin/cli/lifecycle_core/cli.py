@@ -317,6 +317,23 @@ def build_parser() -> argparse.ArgumentParser:
                        help="the DERIVED head: every READY item, ordered by "
                             "the declared head-rule. No cap (R22).")
 
+    # `item amend` (lc-27) — the edit path that LEAVES A RECORD. The slot
+    # flags are read from `verbs.AMEND_FLAGS` rather than listed again here:
+    # a flag this parser accepted and the verb did not read would be silent
+    # by construction, which is the shape this whole carrier is built against.
+    amend = its.add_parser("amend", help="correct a booked item's slot — an "
+                                         "APPENDED dated line supersedes, the "
+                                         "earlier one is retained")
+    amend.add_argument("ident")
+    for _slot, _attr in verbs.AMEND_FLAGS.items():
+        amend.add_argument(f"--{_slot}", dest=_attr,
+                           help=f"the value that supersedes `{_slot}:`")
+    amend.add_argument("--reason", help="the SESSION's prose: why the earlier "
+                                        "value was wrong. REQUIRED")
+    amend.add_argument("--no-commit", dest="no_commit", action="store_true",
+                       help="write the carrier without committing it — a "
+                            "caller batching amendments owns that commit")
+
     park = its.add_parser("park", help="PARKED, with a typed blocker")
     park.add_argument("ident")
     park.add_argument("--blocked-by", dest="blocked_by", help="TYPED; required")
@@ -511,7 +528,8 @@ def main(argv=None) -> int:
         path = f"item {args.item_action}"
         if args.item_action == "check":
             code = cmd_item_check(args, out)
-        elif args.item_action in ("add", "ready", "park", "close", "ratio"):
+        elif args.item_action in ("add", "amend", "ready", "park", "close",
+                                  "ratio"):
             code = _carrier_verb(args, out)
         else:
             stage = NOT_YET_BUILT.get(path, "a later wave")
@@ -605,6 +623,8 @@ def _carrier_verb(args, out) -> int:
         return code
     if args.item_action == "add":
         return verbs.cmd_item_add(args, out, ctx)
+    if args.item_action == "amend":
+        return verbs.cmd_item_amend(args, out, ctx)
     if args.item_action == "ready":
         if getattr(args, "head", False):
             return verbs.cmd_item_head(args, out, ctx)

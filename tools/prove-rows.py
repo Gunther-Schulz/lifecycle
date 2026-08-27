@@ -128,6 +128,18 @@ MUTATIONS = [
      "    if False:",
      "`item park`'s own typed-blocker requirement"),
 
+    ("amend_without_reason", "verbs.py",
+     "    reason = (args.reason or \"\").strip()\n"
+     "    if not reason:",
+     "    reason = (args.reason or \"\").strip()\n"
+     "    if False:",
+     "`item amend`'s requirement that the amendment record its own WHY"),
+
+    ("amend_nothing_to_amend", "verbs.py",
+     "    if not updates:",
+     "    if False:",
+     "`item amend`'s requirement that some slot actually be named"),
+
     ("duplicate_id_cross_home", "items.py",
      "    both = [(d.ident, live[d.ident], d.line)\n"
      "            for d in done_parsed.items if d.ident in live]",

@@ -112,6 +112,95 @@ class Shape(unittest.TestCase):
         self.assertEqual(code, exits.FINDING, out)
 
 
+class Amendments(unittest.TestCase):
+    """lc-27 — the append-only edit path, read from the carrier's side.
+
+    The VERB's own refusals are roster rows (`amend_without_reason`,
+    `amend_nothing_to_amend`). These cover what the PARSER owes, which is the
+    half whose failure is silent: a resolution rule that resolved to the
+    wrong value would leave every reader confidently wrong, and a shape check
+    that fired on a legitimate second amendment would stop the lane (R11).
+    """
+
+    def _amended(self, *lines):
+        return GOOD_ITEMS.rstrip("\n") + "\n" + "".join(l + "\n" for l in lines)
+
+    def test_an_amendment_supersedes_the_value_in_force(self):
+        p = items.parse(self._amended(
+            "amend-reason: 2026-08-27 the goal was mis-recorded at intake",
+            "amended-goal: 2026-08-27 verify"))
+        self.assertEqual(p.problems, [])
+        self.assertEqual(p.items[0].slots["goal"], "verify")
+
+    def test_the_earlier_line_is_RETAINED_not_rewritten(self):
+        """The whole point of the form: the block still says what it said.
+
+        Without this the amendment is an in-place rewrite with a date on it,
+        and the carrier loses its record of having been wrong."""
+        text = self._amended(
+            "amend-reason: 2026-08-27 the goal was mis-recorded at intake",
+            "amended-goal: 2026-08-27 verify")
+        self.assertIn("goal: mitigate", text)
+        p = items.parse(text)
+        self.assertEqual(
+            [(n, v) for n, v, _ln in p.items[0].amendments],
+            [("amend-reason",
+              "2026-08-27 the goal was mis-recorded at intake"),
+             ("amended-goal", "2026-08-27 verify")])
+
+    def test_a_SECOND_amendment_of_one_slot_is_not_a_repeat_finding(self):
+        """THE MUST-NOT ARM. Amendment lines repeat by design; routed through
+        the repeat check they would make the second correction a shape
+        finding, which is an edit path that works once."""
+        p = items.parse(self._amended(
+            "amend-reason: 2026-08-27 the goal was mis-recorded at intake",
+            "amended-goal: 2026-08-27 verify",
+            "amend-reason: 2026-08-27 verify was wrong too",
+            "amended-goal: 2026-08-27 retire"))
+        self.assertEqual(p.problems, [])
+        self.assertEqual(p.items[0].slots["goal"], "retire",
+                         "LAST wins — the file is append-only, so it is "
+                         "chronological")
+
+    def test_an_undated_amendment_line_is_a_finding(self):
+        code, out = run_check(self._amended("amended-goal: verify"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("ISO date", out)
+
+    def test_amending_the_GRADE_is_a_finding(self):
+        """READY is judged (law 10). A quiet second writer of the grade slot
+        would be exactly the derivation the design refuses."""
+        code, out = run_check(self._amended("amended-grade: 2026-08-27 PARKED"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("amendable slots", out)
+        self.assertEqual(items.parse(
+            self._amended("amended-grade: 2026-08-27 PARKED")
+        ).items[0].slots["grade"], "READY", "the refused amendment must not "
+                                            "have been applied anyway")
+
+    def test_an_amendment_ABOVE_the_fixed_slots_is_a_finding(self):
+        lines = GOOD_ITEMS.rstrip("\n").split("\n")
+        i = lines.index("goal: mitigate")
+        lines.insert(i, "amended-goal: 2026-08-27 verify")
+        code, out = run_check("\n".join(lines) + "\n")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("among the fixed slots", out)
+
+    def test_amending_a_slot_the_block_does_not_carry_is_a_finding(self):
+        text = self._amended("amended-goal: 2026-08-27 verify").replace(
+            "goal: mitigate\n", "", 1)
+        code, out = run_check(text)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("nothing to supersede", out)
+
+    def test_an_unamended_block_is_untouched_by_any_of_this(self):
+        """The control for the whole class: the same check over a block with
+        no amendment line must read exactly as it did before."""
+        code, out = run_check(GOOD_ITEMS)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(items.parse(GOOD_ITEMS).items[0].amendments, [])
+
+
 class BlockerTargets(unittest.TestCase):
     """lc-28 — an item-id blocker already sitting in the carrier.
 

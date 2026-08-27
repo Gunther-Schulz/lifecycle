@@ -31,6 +31,7 @@ window visible afterwards.
 import re
 import subprocess
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 from . import exits, judgment, lanes, ledger
@@ -403,27 +404,33 @@ def _insert_before_archive(done_text: str, body: str) -> str:
     return done_text.rstrip("\n") + "\n\n" + body.rstrip("\n") + "\n"
 
 
-def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False) -> int:
+def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False,
+                 what: str = "the move") -> int:
     """Commit exactly the files this act wrote, BY PATHSPEC, never the index.
 
     The index is shared with whatever else is running in this work tree, so
     `git add` then commit would carry a co-writer's staged paths out under
     this message. The pathspec form ignores the index for everything else.
+
+    `what` NAMES THE ACT in the failure message. Every carrier write reaches
+    this function now (lc-25), and "the move is on disk but was not
+    committed" said over an `item add` sends its reader looking for a move
+    that never happened. The ROW is unchanged — the refusal is "written and
+    not committed", which is one refusal whichever verb wrote.
     """
     if skip:
-        out("NOT COMMITTED (--no-commit): the files are consistent on disk, "
+        out(f"NOT COMMITTED (--no-commit): {what} is consistent on disk, "
             "but the set is durable together only once committed. A caller "
-            "batching moves owns that commit.")
+            "batching writes owns that commit.")
         return exits.CLEAN
     rel = [str(p.relative_to(ctx.repo)) for p in paths]
     r = subprocess.run(["git", "-C", str(ctx.repo), "commit", "-m", msg,
                         "--"] + rel, capture_output=True, text=True)
     if r.returncode != 0:
-        out(f"FINDING [move_uncommitted] the move is on disk but was NOT "
-            f"committed, so the two halves are not durable together: "
+        out(f"FINDING [move_uncommitted] {what} is on disk but was NOT "
+            f"committed, so its halves are not durable together: "
             f"{(r.stderr or r.stdout).strip()[:300]!r}. The files are "
-            "consistent — this is the third step of the move failing, not "
-            "the move.")
+            "consistent — this is the recording step failing, not the write.")
         return exits.FINDING
     out(f"committed: {msg}")
     return exits.CLEAN
@@ -1089,6 +1096,135 @@ def cmd_item_park(args, out, ctx: Ctx) -> int:
     out(f"{args.ident} → PARKED, blocked-by: {value}")
     args.fire_detail = f"park {args.ident}"
     return exits.CLEAN
+
+
+# --- `item amend` (stage 5) ---------------------------------------------------
+
+#: The `item amend` flag for each amendable slot. Spelled once, here, and
+#: read by BOTH the argparse wiring and the verb: a second list in `cli.py`
+#: would be a slot the parser accepts and the verb never reads, which is
+#: silent by construction.
+AMEND_FLAGS = {
+    "requirement": "requirement",
+    "goal": "goal",
+    "write-set": "write_set",
+    "done-criterion": "done_criterion",
+    "evidence": "evidence",
+    "blocked-by": "blocked_by",
+}
+
+
+def cmd_item_amend(args, out, ctx: Ctx) -> int:
+    """Correct a booked item's slot WITHOUT rewriting what it used to say.
+
+    THE CARRIER WAS APPEND-ONLY BY ACCIDENT (lc-27): `item add` was the only
+    writer of a block, so every correction to a booked item was either a
+    second item — which is the carrier growing because one problem entered
+    three times, the exact failure intake's merge exists to stop — or a hand
+    edit, which law 8 forbids and the shape check catches only if it happens
+    to break the shape.
+
+    THE AMENDMENT IS A DATED GROUP APPENDED TO THE BLOCK. The earlier
+    slot-line is RETAINED verbatim and the new one supersedes it; the parser
+    resolves the value in force, so every reader sees the correction and the
+    file still records that there was one. One slot amended is the slot-line
+    form, several under one reason the dated-block form — the same act, and
+    the reason a three-slot correction is one group rather than three.
+
+    `grade` IS NOT AMENDABLE and that is not an omission: READY is judged
+    (§3.1, law 10), and an amendment path to the grade would be a second
+    writer of the one slot the judgment lives in.
+    """
+    reason = (args.reason or "").strip()
+    if not reason:
+        out("FINDING [amend_without_reason] `item amend` needs a `--reason`. "
+            "An amendment is a correction to something a desk decided, and "
+            "the record of WHY is what separates it from an in-place rewrite "
+            "with a date on it. The tool writes the slots; the SESSION writes "
+            "the prose, and there is no default here on purpose.")
+        return exits.FINDING
+    problem = items_mod.slot_value_problem(items_mod.AMEND_REASON, reason)
+    if problem:
+        out(f"FINDING [item_shape] {problem}")
+        return exits.FINDING
+
+    updates = {}
+    for slot, attr in AMEND_FLAGS.items():
+        value = getattr(args, attr, None)
+        if value is not None:
+            updates[slot] = value.strip()
+    if not updates:
+        out("FINDING [amend_nothing_to_amend] `item amend` names no slot to "
+            "amend. The amendable slots are "
+            + ", ".join(f"`--{s}`" for s in items_mod.AMENDABLE_SLOTS)
+            + ". An amend that wrote a reason and no value would put a "
+              "decision line in the carrier and change nothing, which reads "
+              "in every later diff as a correction that was made.")
+        return exits.FINDING
+
+    for slot, value in updates.items():
+        problem = items_mod.slot_value_problem(slot, value)
+        if problem:
+            out(f"FINDING [item_shape] {problem}")
+            return exits.FINDING
+
+    # The SAME declared-goal check `item add` applies. A goal that was
+    # refused at intake and accepted at amendment would make the amendment
+    # the way around the check rather than the way to fix a value.
+    goals = ctx.declaration.get("goals") or []
+    if "goal" in updates and updates["goal"] not in goals:
+        out(f"FINDING [dangling_reference] `--goal {updates['goal']}` is not "
+            f"one of the declared goals ({', '.join(goals) or 'none'}).")
+        return exits.FINDING
+
+    parsed, why = _load(ctx.items_path)
+    if parsed is None:
+        out(f"COULD NOT VERIFY: {why}")
+        return exits.COULD_NOT_VERIFY
+    it = next((i for i in parsed.items if i.ident == args.ident), None)
+    if it is None:
+        out(f"FINDING [unknown_item] no live block {args.ident!r} in "
+            f"{ctx.items_path.name}. A CLOSED body is not amendable: the done "
+            "home holds what was true when the item closed, and correcting it "
+            "there would edit a record other counts already read.")
+        return exits.FINDING
+
+    # The SAME typed-blocker gate `item park` and `item add` apply. Without
+    # it `item amend --blocked-by` is the quiet way past
+    # `parked_without_typed_blocker`, and a prose blocker put an item in
+    # nobody's court by a third door.
+    if "blocked-by" in updates:
+        done_parsed, done_why = _load(ctx.done_path)
+        code = _check_blocker(updates["blocked-by"], ctx, parsed, done_parsed,
+                              done_why, out)
+        if code != exits.CLEAN:
+            return code
+
+    date = _today()
+    with items_mod.carrier_lock(ctx.items_path):
+        text = ctx.items_path.read_text(encoding="utf-8")
+        new, ok = items_mod.append_amendment(text, args.ident, date, reason,
+                                             updates)
+        if not ok:
+            out(f"FINDING [unknown_item] no live block {args.ident!r} in "
+                f"{ctx.items_path.name}.")
+            return exits.FINDING
+        ctx.items_path.write_text(new, encoding="utf-8")
+        out(f"amended {args.ident} — {len(updates)} slot(s), dated {date}. The "
+            "earlier line(s) are RETAINED; the new one supersedes.")
+        for line in items_mod.render_amendment(date, reason, updates):
+            out(f"    {line}")
+        code = commit_paths(ctx, (ctx.items_path,),
+                            f"lifecycle: amend {args.ident}", out,
+                            skip=args.no_commit, what="the amendment")
+    args.fire_detail = f"amend {args.ident} {','.join(sorted(updates))}"
+    return code
+
+
+def _today() -> str:
+    """Today, ISO. Its own function so a test can hold the date still without
+    reaching into `datetime`, and so the one call site is visible."""
+    return date.today().isoformat()
 
 
 def _set_slots(text: str, ident: str, updates: dict):

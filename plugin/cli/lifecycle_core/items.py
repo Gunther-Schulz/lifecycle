@@ -91,6 +91,32 @@ UNKNOWN = "UNKNOWN"
 #: typed or NONE.
 UNKNOWNABLE_SLOTS = ("goal", "write-set", "done-criterion", "evidence")
 
+#: THE AMENDMENT LINES (lc-27). Until this wave no verb edited a block, so
+#: every correction to a booked item was either a second item or a hand edit
+#: — a law-8 violation with no other way out. An amendment is APPEND-ONLY:
+#: the act writes a DATED GROUP at the end of the block, and the earlier
+#: slot-line is RETAINED exactly as it was written. Nothing is rewritten in
+#: place, so the block carries what it used to say beside what it says now.
+#:
+#: TWO FORMS, ONE MECHANISM. One `amended-<slot>:` line is the slot-line
+#: form; several under one `amend-reason:` header is the dated-block form —
+#: which is what makes a three-slot correction ONE act and one group rather
+#: than three, the difference between annotating a carrier and doubling it.
+#:
+#: `grade` IS NOT AMENDABLE. A grade moves by judgment through `item park`,
+#: `item close` and the desk's own re-grade; an amendment path to it would be
+#: a second, quieter writer of the one slot READY-is-judged depends on.
+AMENDABLE_SLOTS = tuple(s for s in SLOTS if s != "grade")
+AMEND_PREFIX = "amended-"
+AMEND_REASON = "amend-reason"
+
+#: Every amendment line's value opens with its ISO date. The date is a fixed
+#: shape rather than a separator, deliberately: a ` — ` separator would be
+#: refused inside any value that already carries one, and this carrier's
+#: values carry them constantly (`requirement: … — record: …`). A guard that
+#: fired on the ordinary value would stop the lane (R11).
+_AMEND_VALUE = re.compile(r"^(\d{4}-\d{2}-\d{2})\s+(\S.*)$")
+
 #: Head lines the carrier understands. `schema` is required and first;
 #: the conservation trio is optional here because the identity that uses it
 #: (`items + done == baseline + added - compacted`) is written by the close
@@ -119,6 +145,12 @@ class Item:
     ident: str
     slots: dict
     line: int
+    #: `(name, raw-value, lineno)` for every amendment line, IN FILE ORDER.
+    #: Held beside `slots` rather than folded into it: `slots` carries the
+    #: value in force and this carries the record of how it got there, and a
+    #: reader that wanted only the current value would otherwise have to know
+    #: the resolution rule to get it right.
+    amendments: list = field(default_factory=list)
 
     @property
     def grade(self) -> str:
@@ -291,6 +323,13 @@ def parse(text: str) -> Parsed:
                 "— a wrapped value is a shape break, not a long value."))
             continue
         slot, val = sm.group(1), sm.group(2)
+        # AMENDMENT LINES REPEAT BY DESIGN and are therefore routed before
+        # the repeat check, never through it: an append-only edit path whose
+        # second use is a shape finding is not an edit path.
+        if slot == AMEND_REASON or slot.startswith(AMEND_PREFIX):
+            current.amendments.append((slot, val, lineno))
+            seen_order.append(slot)
+            continue
         if slot in current.slots:
             out.problems.append(("item_shape", lineno,
                                  f"block {current.ident!r} repeats slot "
@@ -319,7 +358,8 @@ def parse(text: str) -> Parsed:
 def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
     missing = [s for s in SLOTS if s not in item.slots]
     unknown = [s for s in seen_order
-               if s not in SLOTS and s not in DONE_ONLY_SLOTS]
+               if s not in SLOTS and s not in DONE_ONLY_SLOTS
+               and not _is_amend_line(s)]
     if missing:
         out.problems.append((
             "item_shape", item.line,
@@ -366,7 +406,83 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
             + " among the fixed slots. The closed-body slots follow "
               "`blocked-by:`, so a diff over a moved body shows the closure's "
               "annotation as an addition rather than as a reordering."))
+
+    _resolve_amendments(out, item, seen_order)
     out.items.append(item)
+
+
+def _is_amend_line(name: str) -> bool:
+    return name == AMEND_REASON or name.startswith(AMEND_PREFIX)
+
+
+def _resolve_amendments(out: Parsed, item: Item, seen_order: list) -> None:
+    """Validate the block's amendment lines and put the value IN FORCE into
+    `item.slots`.
+
+    RESOLVED HERE RATHER THAN AT EVERY READER, and that is the whole reason
+    the amendment is a slot-line and not a second block: `item ready`, the
+    head, the retire walk and the shape check all read `slots`, and a reader
+    that had to know the resolution rule would be a reader that could get it
+    wrong. The RAW lines stay on `item.amendments`, so what the block used to
+    say is never lost — which is the property the append-only ethic is about.
+
+    LAST WINS, because the file is append-only and therefore chronological.
+    Order is read off the FILE rather than off the dates: two amendments made
+    on one day carry one date, and a sort by that date would put them in an
+    order nobody wrote.
+    """
+    if not item.amendments:
+        return
+
+    # ORDER: the group follows the fixed slots. A superseding line ABOVE the
+    # value it supersedes reads, to a human, as the value being superseded —
+    # the diff would show the correction where the original belongs.
+    fixed_at = [i for i, s in enumerate(seen_order)
+                if s in SLOTS or s in DONE_ONLY_SLOTS]
+    amend_at = [i for i, s in enumerate(seen_order) if _is_amend_line(s)]
+    if fixed_at and amend_at and min(amend_at) < max(fixed_at):
+        out.problems.append((
+            "item_shape", item.line,
+            f"block {item.ident!r} carries an amendment line among the fixed "
+            "slots. Amendments are APPENDED after the block's own slots, so "
+            "the block reads as what it said, then what it now says."))
+
+    for name, raw, lineno in item.amendments:
+        m = _AMEND_VALUE.match(raw)
+        if not m:
+            out.problems.append((
+                "item_shape", lineno,
+                f"block {item.ident!r}: the amendment line {name!r} on line "
+                f"{lineno} does not open with its ISO date: {raw[:60]!r}. An "
+                "amendment records WHEN the value changed; undated it is an "
+                "in-place rewrite with a longer file."))
+            continue
+        value = m.group(2)
+        if name == AMEND_REASON:
+            continue
+        slot = name[len(AMEND_PREFIX):]
+        if slot not in AMENDABLE_SLOTS:
+            out.problems.append((
+                "item_shape", lineno,
+                f"block {item.ident!r}: {name!r} on line {lineno} amends "
+                f"{slot!r}, which is not one of the amendable slots "
+                f"({', '.join(AMENDABLE_SLOTS)}). `grade` moves by judgment "
+                "through `item park`, `item close` and the desk's re-grade, "
+                "never by amendment."))
+            continue
+        if slot not in item.slots:
+            out.problems.append((
+                "item_shape", lineno,
+                f"block {item.ident!r}: {name!r} on line {lineno} amends a "
+                f"slot the block does not carry. An amendment SUPERSEDES a "
+                "value; with nothing to supersede it is an addition wearing a "
+                "correction's clothes."))
+            continue
+        problem = slot_value_problem(slot, value)
+        if problem:
+            out.problems.append(("item_shape", lineno, problem))
+            continue
+        item.slots[slot] = value
 
 
 def check_ids(parsed: Parsed, prefix: str | None) -> list:
@@ -426,6 +542,61 @@ def render_block(ident: str, slots: dict) -> str:
     for slot in SLOTS:
         out.append(f"{slot}: {slots[slot]}")
     return "\n".join(out) + "\n"
+
+
+def render_amendment(date: str, reason: str, updates: dict) -> list:
+    """The lines ONE amendment act appends. The only place the shape is spelled.
+
+    The reason opens the group and the superseding slot-lines follow in
+    `SLOTS` order, so a group is readable as one act rather than as loose
+    lines that happen to share a date.
+    """
+    lines = [f"{AMEND_REASON}: {date} {reason}"]
+    for slot in AMENDABLE_SLOTS:
+        if slot in updates:
+            lines.append(f"{AMEND_PREFIX}{slot}: {date} {updates[slot]}")
+    return lines
+
+
+def append_amendment(text: str, ident: str, date: str, reason: str,
+                     updates: dict):
+    """Append one dated amendment group to a LIVE block. `(text, found)`.
+
+    APPENDED, never substituted: `_set_slots` rewrites a slot line in place
+    and is the right shape for a state transition the tool owns end to end
+    (`item park`'s grade). A correction to a value a desk wrote is a
+    different act — the earlier line is evidence of what was believed, and
+    an edit path that deleted it would leave the carrier unable to say it
+    had ever been wrong.
+
+    The LIVE section only: everything from the archive heading on is held
+    verbatim, and a pre-migration body has no slots to supersede.
+    """
+    lines = text.split("\n")
+    cut = len(lines)
+    for i, ln in enumerate(lines):
+        if ln.strip() == ARCHIVE_HEADING:
+            cut = i
+            break
+    start = None
+    for i in range(cut):
+        m = _BLOCK_HEADING.match(lines[i])
+        if m and m.group(1) == ident:
+            start = i
+            break
+    if start is None:
+        return text, False
+    end = cut
+    for i in range(start + 1, cut):
+        if _BLOCK_HEADING.match(lines[i]):
+            end = i
+            break
+    # Back over the blank lines that separate this block from the next, so
+    # the group lands INSIDE the block rather than in the gap after it.
+    while end > start + 1 and not lines[end - 1].strip():
+        end -= 1
+    body = render_amendment(date, reason, updates)
+    return "\n".join(lines[:end] + body + lines[end:]), True
 
 
 def slot_value_problem(slot: str, value: str) -> str | None:
