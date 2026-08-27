@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 27
+added: 28
 compacted: 0
 
 ## lc-1
@@ -308,3 +308,12 @@ write-set: UNKNOWN
 done-criterion: node tools/absence-scan.mjs --git-range ..HEAD returns 0 findings over ITEMS.md, with the instrument first shown live on a planted positive so a zero is not an unread instrument
 evidence: executed twice by the wave-4 desk: "FINDING foreign-path  ITEMS.md  line 300  (481 chars, #ee54ac7003b3)", exit 2, identical at c915bc2 and 22adf7e. .claude/lifecycle.json declares public:true and leak-scan.source-scope-foreign-path:true, whose own reason note records that the SHIPPED foreign-path class is scoped corpus — so the declaration and the shipped scanner disagree, which is the residue this item names
 blocked-by: decision does the item BODY change (rewrite the path out of it) or does the foreign-path class scope change (corpus -> source) to honour the declaration
+
+## lc-36
+grade: READY
+requirement: migrate TRUNCATES the requirement slot at a fixed ~277 chars with an ellipsis, then appends " — record: <carrier>:<line>" — measured 23 of 133 items in the dotfiles migration; the full body survives only in the source carrier, so the truncation is a silent information loss the conservation identity does not see
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: either the full requirement body travels into the item, or the slot says TRUNCATED and carries its source range explicitly; red-first on a source entry longer than the cut width, asserting the item is not silently shortened
+evidence: wave-4 desk, executed 2026-08-27 over dotfiles/ITEMS.md: 23 of 133 requirement lines carry the mid-sentence ellipsis at len 277-278 (df-2, df-3, df-8 sampled and read in full). All 133 evidence slots are line-range pointers into the old carriers (85 BACKLOG.md, 48 claude/BACKLOG.md), which is what makes the loss recoverable TODAY and unrecoverable once those ranges stop resolving
+blocked-by: decision does the full body travel into the slot, or does the slot declare itself TRUNCATED with its range
