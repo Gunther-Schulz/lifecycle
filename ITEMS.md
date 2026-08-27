@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 14
+added: 15
 compacted: 0
 
 ## lc-1
@@ -200,3 +200,12 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals
 done-criterion: red-first against the L10 entry's body at dotfiles bb8edd4: `item close` refuses and quotes the carrier clause. Green once the clause is gone or the residue has its own entry. AND the over-fire arm, which decides whether this is shippable at all: an ordinary entry that merely DISCUSSES carriers or pointers in its prose must NOT be refused — a phrase-matching predicate over free prose is exactly the shape that fires on legitimate work, so the match anchors on a declared clause form rather than on words occurring anywhere in the body.
 evidence: the L10 case at the dotfiles desk, 2026-08-26: the corpus-consolidation entry named itself the carrier for this desk's accretion-module residue and then closed. The peer halted the move by hand, took it to the judgment desk, and the residue was split into its own entry (dotfiles e3b3ebf) — a hand catch where a mechanism should have refused. Clause text is the peer's quotation, not read here; the entry body at dotfiles bb8edd4 is the red-first input. Booked on the judgment desk's instruction.
 blocked-by: NONE
+
+## lc-23
+grade: READY
+requirement: init creates the declaration and lane stubs but no carrier files, so a greenfield repo (no old carrier to migrate FROM) gets a declaration whose three carriers do not exist and kind check answers COULD NOT VERIFY forever — record: wave-3 handoff step 6, claude/records/lifecycle-wave3-handoff-2026-08-27.md
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py,decision:who-seeds-greenfield-carriers
+done-criterion: a greenfield repo after init has the three carriers resolvable, kind check answering CLEAN rather than COULD NOT VERIFY on them; red-first on a bare repo showing the three could-not-verifies before and their absence after
+evidence: init.py:6-13 states it verbatim: "It does NOT create carrier files (ITEMS.md, ITEMS-DONE.md, LEDGER.md) — those are migrate job for a repo with an old carrier to convert FROM, or a human for a truly greenfield one ... That is a real gap in the wave-2 design this verb inherited". grep -i seed over ITEMS.md at f2c37fe returns 0 hits (positive control: carrier returns 19), so no item carried this
+blocked-by: decision whether init seeds the three carriers on a greenfield repo, or the design assigns that act elsewhere — init.py argues the settled design never asked for it
