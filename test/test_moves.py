@@ -45,6 +45,12 @@ def build(items_text=SEED_ITEMS, done_text=EMPTY_DONE) -> Path:
     (d / ".claude" / "lifecycle.json").write_text(
         json.dumps(GOOD_FULL_DECLARATION), encoding="utf-8")
     (d / "LAWS.md").write_text("law\n", encoding="utf-8")
+    # The carrier lock is transient per-process state and the plugin's own
+    # `.gitignore` ignores it (this repo's `.gitignore:9`). A fixture without
+    # it reports an untracked `ITEMS.md.lock` that no declaring repo would
+    # ever see — a fixture artefact that reads exactly like a finding.
+    (d / ".gitignore").write_text("__pycache__/\n*.py[co]\n*.lock\n",
+                                  encoding="utf-8")
     (d / "ITEMS.md").write_text(items_text, encoding="utf-8")
     (d / "ITEMS-DONE.md").write_text(done_text, encoding="utf-8")
     (d / "LEDGER.md").write_text("schema: 1\n", encoding="utf-8")
@@ -238,6 +244,110 @@ class LedgerGate(unittest.TestCase):
         self.assertIn("candidate xx-1", out)
         self.assertIn("widen the harvest window", out)
         self.assertIn("hides the double fire", out)
+
+
+class EveryJoinAnswersTheCommitQuestion(unittest.TestCase):
+    """lc-25 — no join of `item add` writes the carrier silently.
+
+    `commit_paths` was called from the supersede join alone, while
+    `--no-commit` was advertised on the verb as though a commit were the
+    default for every join: `new` wrote `ITEMS.md` and said nothing, and
+    `merge-into` wrote nothing and said nothing about that either. The two
+    are indistinguishable to a reader of the output, and the first one leaves
+    a dirty carrier in a SHARED work tree — where it rides out under the next
+    co-writer's pathspec commit, under their message.
+    """
+
+    def _status(self, d):
+        subprocess.run(["git", "-C", str(d), "update-index", "--refresh"],
+                       capture_output=True, text=True)
+        return subprocess.run(["git", "-C", str(d), "status", "--porcelain"],
+                              capture_output=True, text=True).stdout
+
+    ADD = ("item", "add",
+           "--requirement", "the serving config is read from defaults — x.md",
+           "--goal", "verify", "--write-set", "tools/replay.mjs",
+           "--done-criterion", "the gate reads what is serving",
+           "--evidence", "none yet", "--hunks", "4",
+           "--absence", "the decision belongs to a desk this session is not")
+
+    def test_join_new_commits_its_own_write_and_leaves_the_tree_clean(self):
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(self._status(d), "", "the fixture did not start clean")
+        code, out = run_cli(d, *self.ADD, "--join", "new")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("committed: lifecycle: add xx-2", out)
+        self.assertEqual(self._status(d), "", out)
+
+    def test_no_commit_is_the_PAIR_that_shows_the_commit_did_it(self):
+        """The same add with `--no-commit`: the carrier IS written and the
+        tree IS dirty, and the run says so. Without this arm "clean tree"
+        could equally mean the add wrote nothing."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = run_cli(d, *self.ADD, "--join", "new", "--no-commit")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("NOT COMMITTED (--no-commit)", out)
+        self.assertIn("M ITEMS.md", self._status(d))
+
+    def test_the_commit_is_BY_PATHSPEC_and_leaves_a_co_writer_alone(self):
+        """The half that "it commits" does not assert. The index is shared,
+        so an add that staged before committing would carry a co-writer's
+        work tree out under its own message — the failure `commit_paths`
+        docstring names, planted here as a real second dirty file."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "LAWS.md").write_text("law\na co-writer's uncommitted line\n",
+                                   encoding="utf-8")
+        code, out = run_cli(d, *self.ADD, "--join", "new")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn(" M LAWS.md", self._status(d),
+                      "the co-writer's file was swept into this commit")
+        head = subprocess.run(
+            ["git", "-C", str(d), "show", "--name-only", "--format=", "HEAD"],
+            capture_output=True, text=True).stdout.split()
+        self.assertEqual(head, ["ITEMS.md"], out)
+
+    def test_the_merge_join_says_NOT_COMMITTED_rather_than_nothing(self):
+        """A merge writes no file, so there is nothing to commit — but
+        "printed no commit line" was true of the unrecorded write too, and a
+        reader could not tell them apart."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = run_cli(
+            d, "item", "add",
+            "--requirement", "the harvest timer double-fires on a rotated "
+                             "capture again — LEDGER.md",
+            "--goal", "mitigate", "--write-set", "tools/harvest.mjs",
+            "--done-criterion", "one fire per window", "--evidence", "none yet",
+            "--hunks", "4", "--join", "merge-into xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("NOT COMMITTED", out)
+        self.assertEqual(self._status(d), "", out)
+
+    def test_EVERY_join_answers_in_the_same_closed_vocabulary(self):
+        """The enumeration, so a join added later cannot be silent by
+        omission: each of the three prints `committed:` or `NOT COMMITTED`."""
+        for argv in (
+                list(self.ADD) + ["--join", "new"],
+                ["item", "add",
+                 "--requirement", "the harvest timer double-fires on a "
+                                  "rotated capture again — LEDGER.md",
+                 "--goal", "mitigate", "--write-set", "tools/harvest.mjs",
+                 "--done-criterion", "one fire per window",
+                 "--evidence", "none yet", "--hunks", "4",
+                 "--join", "merge-into xx-1"],
+                list(self.ADD) + ["--join", "supersede xx-1",
+                                  "--reason", "the rotated capture is the "
+                                              "real subject"]):
+            with self.subTest(join=argv[-1]):
+                d = build()
+                self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+                code, out = run_cli(d, *argv)
+                self.assertEqual(code, exits.CLEAN, out)
+                self.assertTrue("committed: " in out or "NOT COMMITTED" in out,
+                                out)
 
 
 if __name__ == "__main__":

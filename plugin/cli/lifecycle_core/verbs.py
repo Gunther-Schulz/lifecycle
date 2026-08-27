@@ -600,6 +600,12 @@ def _do_merge(args, ctx: Ctx, parsed, out) -> int:
         "safe to run twice: the second sighting of one problem is the same "
         "problem, and a second row would make it two.")
     out(f"    {it.ident} [{it.grade}]  {it.slots.get('requirement', '')}")
+    # SAID, never left silent (lc-25). Every join answers the commit question
+    # in the same closed vocabulary, and this one answers it with nothing to
+    # commit — which a reader can only tell from an unrecorded write if the
+    # verb says so. "It printed no commit line" was true of BOTH before.
+    out("NOT COMMITTED: there is nothing to commit — a merge writes no file. "
+        "The carrier is unchanged and the tree is as this run found it.")
     args.fire_detail = f"merge-into {it.ident}"
     return exits.CLEAN
 
@@ -712,9 +718,20 @@ def _do_new(args, ctx: Ctx, parsed, done_parsed, done_why, slots, source, out) -
             out(f"COULD NOT VERIFY: {id_why}")
             return exits.COULD_NOT_VERIFY
         code = _append_item(ctx, ident, slots, out)
-    if code != exits.CLEAN:
-        return code
-    out(f"absence named: {absence}")
+        if code != exits.CLEAN:
+            return code
+        out(f"absence named: {absence}")
+        # COMMITTED HERE, INSIDE THE LOCK, exactly as the supersede join
+        # already did (lc-25). `new` wrote the carrier and said nothing about
+        # it, so an add left ` M ITEMS.md` in a SHARED work tree — and the
+        # consequence is the one `commit_paths` own docstring names: the
+        # dirty carrier rides out under the next co-writer's pathspec commit,
+        # under their message. `--no-commit` was advertised on the verb as
+        # though a commit were the default for every join; for two of the
+        # three joins there was no commit to skip.
+        code = commit_paths(ctx, (ctx.items_path,),
+                            f"lifecycle: add {ident}", out,
+                            skip=args.no_commit, what="the add")
     args.fire_detail = f"new {ident} source={source}"
     return code
 
