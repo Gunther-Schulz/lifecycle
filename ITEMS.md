@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 41
+added: 44
 compacted: 0
 
 ## lc-1
@@ -383,19 +383,6 @@ done-criterion: the arrow table exists in the design with a verb, a record and a
 evidence: lc-13 to lc-40, 27 items (lc-15 superseded by lc-28), sorted by the wave-4 desk into transition 16 / nick 11 and ruled by the judgment desk. THE EVIDENCE SENTENCE, verbatim: the five named arrows each surfaced independently as its own item, found by different lanes, none looking for a pattern. Named arrows and their items: amend lc-27, unblock lc-26, promote lc-39, close lc-18/19/21, merge lc-17, register lc-13+lc-14 as one arrow, seed lc-23; cross-verb grammar lc-40, lc-38, lc-36. lc-16 flagged as a missing verb but a QUERY, not an arrow. Not a redesign: the refusal-heavy stance stays
 blocked-by: evidence false  # wave 4 must close first; this is the wave-5 head and the operator GO is on the wave, not on starting it early
 
-## lc-44
-grade: READY
-requirement: item close accepts --reason on a DONE close and writes it NOWHERE — not into the moved body, not into the ledger, not into the commit message body. Measured 2026-08-27 in dotfiles: df-143 closed with a 900-char reason naming its commit ref and verification basis; grep for that ref afterwards returns 0 in ITEMS.md, 0 in ITEMS-DONE.md, 0 in LEDGER.md. Reading confirms it: in cmd_item_close, reason is bound once and consumed only inside the 'if args.drop:' branch (ledger dropped: line). The silent direction is the whole defect — the caller sees 'moved df-N to ITEMS-DONE.md (grade DONE)' plus a commit and reads that as a complete closure record.
-goal: one-home-per-kind
-write-set: plugin/cli/lifecycle_core/verbs.py (cmd_item_close), and the close verb's --help text
-done-criterion: a DONE close persists its reason where the doctrine says closures live — items leave BY COMMIT REF, and today the ref cannot survive the verb that closes the item. Red-first: close an item with a reason naming a ref, grep all three carriers for that ref, expect 0 on the old arm and non-zero on the new. Must-not-move: a --drop close still writes exactly one ledger dropped: line and no second copy; an omitted --reason on a DONE close behaves as today. Decide and state which home a DONE reason takes — the moved body or a ledger closed: line — and refuse the OTHER, because two homes for one fact is the paraphrase-drift the carrier doctrine forbids.
-evidence: dotfiles LEDGER.md 2026-08-27 carries df-143's closure record written BY HAND with a note saying why; dotfiles df-1 lost its entire closure basis the same way, and the desk reported that basis to the judgment desk as persisted when it was not.
-blocked-by: NONE
-amend-reason: 2026-08-27 judgment desk ruling 2026-08-27; the two hand-written LEDGER lines for df-1 and df-143 STAY as the record after this lands — no migration of them, one fact one home going forward
-amended-done-criterion: 2026-08-27 RULED 2026-08-27 (judgment desk): a DONE reason lives in the MOVED BODY, never the ledger — two lines, 'closed-reason: <date> <text>' and 'closed-ref: <sha>', following the promote precedent (no slot separator inside a value), written in the SAME buffer write as the move. A DROP keeps its ledger line, because a dropped body may be pruned and its record cannot live only there; the ledger stays decisions, supersessions and drops. Red-first: close an item with a reason naming a ref, grep all three carriers for that ref — 0 on the old arm, non-zero in ITEMS-DONE.md on the new. Must-not-move: a --drop close still writes exactly one ledger dropped: line and no second copy; an omitted --reason on a DONE close behaves as today; no closed-reason/closed-ref line appears on a DROP. DISCHARGE IT ALSO CARRIES: the first DONE closure landing a closed-ref after this is the real-repo proof of the ITEMS-carrier accept half of df-143's guard fix, which C1 could only exercise in scratch fixtures.
-amend-reason: 2026-08-27 the booked write-set named verbs.py and the --help text only; the slot REGISTRATION in items.py was required and landed in cbfaee6, and the ref refusal needs a registry row in refusals.py or the emit-site coverage check fails
-amended-write-set: 2026-08-27 plugin/cli/lifecycle_core/verbs.py (cmd_item_close, _resolve_refs, move_to_done), plugin/cli/lifecycle_core/cli.py (the --ref flag and the close verb's --help), plugin/cli/lifecycle_core/items.py (CLOSED_REASON/CLOSED_REF and their DONE_ONLY_SLOTS registration, landed cbfaee6), plugin/cli/lifecycle_core/refusals.py (row closed_ref_unresolvable), test/test_verbs.py
-
 ## lc-45
 grade: READY
 requirement: dotfiles' statusline renders backlog pressure on EVERY render in EVERY repo, today via 'backlog-census.py --statusline BACKLOG.md'. After the carrier freeze that reader must come here, and no statusline verb exists (grep -rn statusline over the plugin: 0 hits). The two available fallbacks are both defects: pointing the old renderer at ITEMS.md parses 0 bullets and renders a silent 0R.0P, and leaving it on the frozen file renders a number frozen at its last value forever, indistinguishable from a live one.
@@ -423,20 +410,29 @@ done-criterion: the compaction verb ships only WITH an answer to where a compact
 evidence: lc-44 lane interim 3, 2026-08-27, citing cache-fix carrier-rework-design 3.1 and retire.py stating that never, compact and delete have no verb yet; the lc-44 ruling itself (judgment desk, 2026-08-27) for the pruning ground it rests on.
 blocked-by: evidence the compaction verb does not exist yet — this fires when it is written, and its trigger is that change, not a date
 
-## lc-48
+## lc-50
 grade: READY
-requirement: done_home_check fires blocked_in_done_home on a body whose blocker item close ALREADY recorded as moot, so the check reports a defect on the exact case the close verb handles: measured on dotfiles ITEMS-DONE.md df-141, record: wave-4 desk 2026-08-27
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
-done-criterion: done_home_check treats a decision blocker as discharged when the block carries a blocker-moot: line whose text equals the effective blocker DETAIL, and still fires when a closed body carries a live blocker with NO matching moot record. Red-first on df-141 real body: the finding fires today and must not after. Must-not-move: a blocker-moot recording a DIFFERENT question does not discharge, and the 5 blocks whose effective blocker is NONE stay clean
-evidence: wave-4 desk, executed 2026-08-27 over dotfiles ITEMS-DONE.md: 6 blocks carry blocker-moot:, exactly 1 (df-141) fires. The other 5 (df-1, df-39, df-64, df-73, df-75) had blocked-by amended to NONE before close, the workaround rather than the design. items.py:1289 classifies the effective blocked-by and never reads blocker-moot; verbs.py:1579 writes the note without clearing the slot, which the append-only model forbids anyway. The docstring at items.py:1251 says close clears it, the code only annotates: spec and verifier disagree
-blocked-by: NONE
-
-## lc-49
-grade: READY
-requirement: _check_blocker validates blocker TYPING and dangling refs but never ledger-storability, so item add, item park and item amend all still write decision questions the ledger cannot store. lc-40 closed the MINT and left the three hand-write doors open, record: wave-4 desk 2026-08-27
+requirement: closed-ref: stores the caller's spelling verbatim, so `--ref HEAD` writes the literal string HEAD into a permanent closure record that then stops being edited: a moving label where the record's whole point is content. Surfaced by the lane that built it, from its own must-not-move arm, record: opus-lc44-48-49 report gap 2, 2026-08-27
 goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
-done-criterion: _check_blocker refuses a decision-typed blocker the ledger cannot store, using the ledger OWN predicate imported rather than restated (the shape migrate._ledger_storable already uses), with a FINDING naming the rephrase. Red-first on the real text that got in: df-135 pre-repair value. Must-not-move: evidence-typed, item-id and NONE blockers unaffected, and the 67 repaired texts all still pass
-evidence: wave-4 desk 2026-08-27. verbs.py:630-663 read in full: the function checks blocker_untyped and dangling_reference only. NOT inferred from the read, measured live in the carrier: dotfiles df-135 reached ITEMS.md carrying a decision question containing the ledger slot separator, written by item amend --blocked-by, which retyped an evidence blocker to a decision one. Repaired in dotfiles ec47c3c; the door it came through is still open
+done-criterion: _resolve_refs resolves every accepted ref to its full 40-hex sha before writing, keeping the --ref HEAD convenience and storing content. DECIDED by the desk 2026-08-27, option (A) of the three the lane named: (B) refusing a non-sha drops the convenience for nothing, (C) leaving it stores a label the dotfiles devbook's own label-versus-content rule forbids, and lc-44's criterion already said closed-ref: <sha>. The docstring's counter-argument (rewriting puts a value in the file nobody typed) is answered: the full sha IS what the caller meant by HEAD at that instant, and the record must survive the ref moving. Red-first on --ref HEAD writing the literal string. Must-not-move: an unresolvable ref is still refused before the move; a full sha passed in is written unchanged; a comma list still resolves elementwise
+evidence: verbs.py:1584-1598 read at the artifact by the desk: the docstring states WRITTEN AS GIVEN, not resolved to a full sha, so this is the built design and not a slip. The predicate git rev-parse --verify <ref>^{commit} accepts HEAD, which is what makes the label writable
+blocked-by: NONE
+
+## lc-51
+grade: READY
+requirement: tools/prove-rows.py anchors its mutation arrangements by SUBSTRING, so an unrelated verb spelling the same line at a deeper indent silently retires another row's proof; and the two rows added for lc-44/lc-49 have no mutation arrangement at all, record: opus-lc44-48-49 report gaps 3 and 4, 2026-08-27
+goal: every-refusal-red-first
+write-set: tools/prove-rows.py,test/test_refusals.py
+done-criterion: Anchors match LINE-EXACT rather than by substring, and blocker_unstorable plus closed_ref_unresolvable each gain a recorded mutation arrangement. Red-first for the anchor half is already in hand and must be reproduced: a copy of move_uncommitted's anchor line indented one level deeper elsewhere in the file makes prove-rows report that row's source as moved. Must-not-move: prove-rows stays exit 0 over the existing arrangements, and the honest COULD NOT VERIFY answer is preserved, since that is what made this catchable
+evidence: measured live by the lane during its build: prove-rows went exit 0 to EXIT 3 with move_uncommitted and blocked_in_done_home both reporting 'the source moved under this arrangement'. move_uncommitted's anchor is `    if r.returncode != 0:` at 4-space indent, a substring of the same line at any deeper indent. The lane avoided both rather than repairing prove-rows (outside its write set) and spelled its own git check `if probe.returncode == 0: continue` with a comment saying why. Desk re-ran prove-rows at 8a5d664: exit 0
+blocked-by: NONE
+
+## lc-52
+grade: READY
+requirement: every carrier verb that commits composes its own message and writes NO Co-Authored-By trailer, so an agent-authored carrier commit is unclaimable by trailer and the operator corpus's AI-attribution rule is unmet on this path, record: opus-lc44-48-49 report gap 5, 2026-08-27
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: commit_paths appends a Co-Authored-By trailer naming the running model, and a Claude-Session trailer where the environment supplies one. Red-first: 89951f4 (the lane's own item amend commit) carries neither and is factually the lane's. Must-not-move: a human-run commit through the same path is not given a false agent trailer, so the model name comes from the environment and its ABSENCE means no trailer rather than a placeholder
+evidence: the lane reported 89951f4 as 'present in the tree, not mine by trailer' while stating it is factually its own; desk confirmed at the artifact — git log -1 --format='%(trailers)' 89951f4 is empty. The pre-push gate's own WARN on unmarked commits is the same fact from the other side
 blocked-by: NONE
