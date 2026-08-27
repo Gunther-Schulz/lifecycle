@@ -1,6 +1,6 @@
 {
   "name": "lifecycle",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "description": "Lifecycle management for everything a repo persists. The primitive is the KIND, not the item: every kind of thing a repo keeps is registered in .claude/lifecycle.json with six declared stages — home, writer, reader, staleness, exit, growth — and a kind with an undeclared stage is a checker finding. Growth is controlled by FLOW, never by size (R22): a kind declares bounded-by-exit, compacted or unbounded-with-reason, and the alarm is a kind that grew without an exit event. One entry point, `lifecycle`, with one fire log: `init` (a fresh repo's declaration and lane stubs), `kind` (the registry, with `sweep`), `item` (the carrier, with `ready --head` and `ratio`), `ledger`, `lane list|register|new` (`list` also `--json`), `workflow bind` (a template-bindings entry against the plugin's own template registry — a directory and a parser, no index), `desk state` (the delegation record a stall detector reads), `retire`, `audit`, `migrate` (carrier or `--schema-from`), `--test`. Two exit-code contracts, deliberately NOT unified: a `lifecycle` verb exits 0 clean / 2 finding / 3 could-not-verify — an argparse usage error is 3, because unreadable input is not a finding — while a lane's `Trigger:` predicate, a command `lane list` executes, exits 0 fire / 1 quiet / >=2 broken.",
   "git-hooks": {
     "pre-commit": {

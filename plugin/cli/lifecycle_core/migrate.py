@@ -571,15 +571,55 @@ INCOMPLETE_DECISION = ("regrade: fill goal, write-set, done-criterion and "
                        "evidence, or drop")
 
 
-def build_items(entries, prefix: str, source_name: str) -> str:
-    """The successor carrier. Ids are allocated in SOURCE ORDER, from 1."""
+class IdentAllocator:
+    """`items.next_ident` called PER ENTRY — never once, then incremented.
+
+    THE HOLE IS THE DESIGNED FUTURE STATE, not a hypothetical. `next_ident`
+    returns the LOWEST unused n, which may sit BELOW the maximum: `compacted`
+    is a head field (`items.py`) and the conservation identity SUBTRACTS it,
+    so a compacted id leaves BOTH homes and nothing can see it any more. An
+    allocator that asked once and counted up from the answer walks straight
+    over the hole's successor — used {1,2,4} yields 3, and a three-entry merge
+    writes 3, 4, 5, re-issuing the live 4. The collision surfaces as a
+    DUPLICATE finding months later, in a file nobody was editing.
+
+    So every allocation re-asks, against both real homes AND the ids this run
+    has already issued. The issued set is a `Parsed` rather than a bare set of
+    integers because that is what `next_ident` reads: a second notion of "an
+    id in use" here would be a second body for the fact the parser already
+    holds.
+    """
+
+    def __init__(self, prefix: str, *parsed):
+        self.prefix = prefix
+        self._homes = [p for p in parsed if p is not None]
+        self._issued = items_mod.Parsed()
+
+    def __call__(self) -> str | None:
+        ident, _why = items_mod.next_ident(self.prefix, *self._homes,
+                                           self._issued)
+        if ident is None:
+            return None
+        self._issued.items.append(
+            items_mod.Item(ident=ident, slots={}, line=0))
+        return ident
+
+
+def build_items(entries, prefix: str, source_name: str,
+                allocate=None) -> str:
+    """The successor carrier. Ids are allocated in SOURCE ORDER, from 1.
+
+    `allocate` overrides that for a MERGE (lc-17), where 1 is already taken
+    and the carrier's own id space decides. It is None on every first
+    migration, so the fresh-carrier path is bit-for-bit what it was.
+    """
     blocks = []
     n = 0
     for e in entries:
         if e.grade is None:
             continue
         n += 1
-        e.ident = f"{prefix}-{n}"
+        e.ident = f"{prefix}-{n}" if allocate is None else allocate()
         # EVERY MIGRATED ENTRY IS OPEN, and the write-rules are about OPEN
         # items only: the done home holds closed bodies, where a blocker is a
         # shape finding rather than a migration output. This build's migration
@@ -611,6 +651,134 @@ def build_items(entries, prefix: str, source_name: str) -> str:
             "blocked-by": blocked,
         }))
     return blocks, n
+
+
+# --- MERGE: a second carrier into a populated one (lc-17) --------------------
+#
+# A merge is a SECOND INVOCATION, one `--from` and one `--from-done` per run,
+# so every source carries its own closure file by construction and no shared
+# form is needed. What the mode changes is the WRITE: the successor homes are
+# appended to rather than produced, existing entries are neither touched nor
+# renumbered, and the ids come from the carrier's own id space.
+
+#: The tail `build_items` appends to every migrated requirement. Anchored on
+#: the LINE END, never matched as a substring: the title is `.*` and greedy, so
+#: an entry whose own headline contains the phrase still resolves against the
+#: LAST tail rather than the first, and a requirement written by something
+#: other than this migration simply does not match and is its own title.
+_REQUIREMENT_RECORD_TAIL = re.compile(r"^(?P<title>.*) — record: \S+:\d+$")
+
+
+def requirement_title(value: str) -> str:
+    """The entry HEADLINE inside a requirement slot.
+
+    A PARSE, not a strip. The comparison a duplicate check makes is between
+    two titles, and reaching one of them by chopping a rendered string at the
+    first delimiter it happens to contain is a prefix match wearing an
+    equality's costume. A requirement with no record tail — one an `item add`
+    wrote — is a title in whole, which is the honest reading rather than a
+    fallback.
+    """
+    m = _REQUIREMENT_RECORD_TAIL.match((value or "").strip())
+    return m.group("title").strip() if m else (value or "").strip()
+
+
+def existing_titles(*parsed) -> dict:
+    """`{title: ident}` over every live and closed body already in the homes.
+
+    BOTH HOMES, and the closed one is not the afterthought: a body that
+    already CLOSED being merged back in as open work is this repo's recurring
+    silent defect — the entry lands looking exactly like work nobody has
+    started, and the closure that answered it is one file away.
+    """
+    out = {}
+    for p in parsed:
+        if p is None:
+            continue
+        for it in p.items:
+            title = requirement_title(it.slots.get("requirement", ""))
+            if title:
+                out.setdefault(title, it.ident)
+    return out
+
+
+def duplicate_bodies(entries, known: dict) -> list:
+    """`[(entry, colliding-ident)]` — incoming entries already in the homes.
+
+    Compared on the entry's own UNCAPPED headline against the titles read back
+    out of the carrier, by equality over parsed slot values rather than by a
+    substring test over the rendered file.
+    """
+    out = []
+    for e in entries:
+        if e.grade is None:
+            continue
+        ident = known.get(headline_of(e))
+        if ident is not None:
+            out.append((e, ident))
+    return out
+
+
+def bump_head(text: str, key: str, delta: int):
+    """`(text, ok)` — add `delta` to one head integer, head region only.
+
+    The same shape `verbs._append_item` uses for `added:`, and for the same
+    reason: a write that put bodies in a home without moving the identity's
+    right-hand side would leave conservation reporting a short carrier
+    forever, and the number it reported would be correct.
+    """
+    lines = text.split("\n")
+    for i, ln in enumerate(lines):
+        if ln.startswith("## "):
+            break
+        if ln.startswith(f"{key}:"):
+            try:
+                n = int(ln.split(":", 1)[1].strip())
+            except ValueError:
+                return text, False
+            lines[i] = f"{key}: {n + delta}"
+            return "\n".join(lines), True
+    return text, False
+
+
+def append_blocks(text: str, blocks: list) -> str:
+    """Append rendered blocks to a carrier's LIVE region.
+
+    Before the archive heading where there is one: everything from that line
+    on is held verbatim, and a block appended past it would be a live body
+    inside a region whose whole contract is that nothing edits it.
+    """
+    body = "\n".join(blocks)
+    lines = text.split("\n")
+    for i, ln in enumerate(lines):
+        if ln.strip() == items_mod.ARCHIVE_HEADING:
+            head = "\n".join(lines[:i]).rstrip("\n")
+            return head + "\n\n" + body + "\n" + "\n".join(lines[i:])
+    return text.rstrip("\n") + "\n\n" + body
+
+
+def per_source_counts(items_text: str, done_text: str, src_name: str) -> tuple:
+    """`(items, closures)` for one source, RE-READ from what is on disk.
+
+    DERIVED INDEPENDENTLY OF THE WRITING LOOP, which is law 22's second half:
+    a figure the emitting loop hands the checker is exact by construction and
+    proves nothing about the write. These two are read back out of the
+    artifacts — the live carrier's `evidence` slots and the archive's own
+    per-closure comment markers — exactly as `items.conservation` re-parses
+    the files rather than trusting the verb that wrote them.
+
+    TWO NOTIONS, NAMED. The closure figure counts MARKERS, one per routed
+    closure body; `items.archive_entries` counts `- ` lines and is the notion
+    the conservation identity uses. They answer different questions over the
+    same bytes and are never added together.
+    """
+    ev = re.compile(rf"^{re.escape(src_name)}:\d+-\d+$")
+    marker = re.compile(rf"^<!-- {re.escape(src_name)}:\d+-\d+ — ",
+                        re.MULTILINE)
+    parsed = items_mod.parse(items_text)
+    n_items = sum(1 for it in parsed.items
+                  if ev.match((it.slots.get("evidence") or "").strip()))
+    return n_items, len(marker.findall(done_text))
 
 
 #: What separates the two archive regions in the done home. A COMMENT rather
@@ -666,28 +834,59 @@ def blob_sha(data: bytes) -> str:
 #: The blob lines this build writes into a report header, and reads back out
 #: of one on a re-run. At column zero and machine-readable on purpose: a
 #: pointer a later run must RESOLVE cannot live inside a sentence.
-_RECORDED_SOURCE_BLOB = re.compile(r"^source-blob:\s*([0-9a-f]{40})\b",
-                                   re.MULTILINE)
-_RECORDED_DONE_BLOB = re.compile(r"^done-blob:\s*([0-9a-f]{40}|NONE)\b",
-                                 re.MULTILINE)
+#:
+#: THE PATH IS INSIDE THE PATTERN (lc-17 §F), and before this it was not. The
+#: writer has appended `  (<path>)` since the line existed — one commit ever
+#: wrote it and it wrote both halves together (`git log -S 'source-blob: '` →
+#: f3f7517 alone) — but the pattern stopped at the sha, so the association was
+#: on the page and nowhere in the code. `source_moved` then took the FIRST
+#: recorded line and measured EVERY source against it: a merge's second source
+#: compared its own bytes to the first source's recorded sha, which is a hash
+#: of one file held against the hash of another. The path is group 2 and the
+#: sha stays group 1, so a reader resolving the sha is unaffected.
+_RECORDED_SOURCE_BLOB = re.compile(
+    r"^source-blob:\s*([0-9a-f]{40})\s*\(([^)\n]*)\)\s*$", re.MULTILINE)
+_RECORDED_DONE_BLOB = re.compile(
+    r"^done-blob:\s*([0-9a-f]{40}|NONE)\s*\(([^)\n]*)\)\s*$", re.MULTILINE)
 
 
-def source_moved(prior_report: str, src_blob: str, done_blob: str):
-    """`(what, recorded, now)` for the first source whose blob has MOVED, or
-    None — cf-324.
+def recorded_blobs(prior_report: str) -> tuple:
+    """`({path: sha}, {path: sha})` — source blobs and done blobs a prior
+    report records, KEYED ON THE PATH each was read from.
 
-    A report with NO recorded blob is not a mismatch: it predates this build,
-    and treating an absent record as a moved source would refuse every repo
-    whose report was written by the last version. That is a real limit and it
-    is stated in the run's own output rather than left to be discovered.
+    The dicts are how a merge stays pinned per source: run 2 reads run 1's
+    record for the OTHER carrier, refuses only for the carrier that moved, and
+    carries the untouched records forward into the report it rewrites. Without
+    the carry-forward the pin would survive exactly one run — the regenerated
+    report would drop every source but the current one, and the next run over
+    the first source would read its own absence as a first migration.
     """
-    for label, pat, now in (("the source carrier", _RECORDED_SOURCE_BLOB,
-                             src_blob),
-                            ("the source closure home", _RECORDED_DONE_BLOB,
-                             done_blob)):
-        m = pat.search(prior_report)
-        if m is not None and m.group(1) != now:
-            return label, m.group(1), now
+    src = {m.group(2).strip(): m.group(1)
+           for m in _RECORDED_SOURCE_BLOB.finditer(prior_report)}
+    done = {m.group(2).strip(): m.group(1)
+            for m in _RECORDED_DONE_BLOB.finditer(prior_report)}
+    return src, done
+
+
+def source_moved(prior_report: str, src_blob: str, done_blob: str,
+                 src_name: str, done_name: str):
+    """`(what, recorded, now)` for the source whose blob has MOVED, or None —
+    cf-324, PER SOURCE since lc-17 §F.
+
+    A report with NO recorded blob FOR THIS SOURCE is not a mismatch, and the
+    two reasons it can be absent are both first migrations rather than
+    failures: the report predates this check entirely, or it records other
+    carriers and has never seen this one. Treating either as a moved source
+    would refuse every repo whose report was written by the last version, and
+    would make a second carrier's merge impossible by construction.
+    """
+    src_rec, done_rec = recorded_blobs(prior_report)
+    for label, rec, name, now in (
+            ("the source carrier", src_rec, src_name, src_blob),
+            ("the source closure home", done_rec, done_name, done_blob)):
+        was = rec.get(name)
+        if was is not None and was != now:
+            return label, was, now
     return None
 
 
@@ -950,7 +1149,13 @@ def run(args, out, ctx) -> int:
     done_blob = "NONE" if src_done is None else blob_sha(done_bytes)
 
     report_only = getattr(args, "report_only", False)
-    if not args.force and not report_only:
+    merge = getattr(args, "merge", False)
+    # `--merge` is the ANSWER to the refusal below rather than an override of
+    # it: `--force` REPLACES the carrier with a re-derivation, which is what
+    # the refusal's own text warns about, and merging appends beside what is
+    # already there. Every invocation carrying neither flag reaches the same
+    # refusal it always did.
+    if not args.force and not report_only and not merge:
         for p in (ctx.items_path, ctx.done_path):
             if p.exists():
                 out(f"FINDING [migrate_would_overwrite] {p.name} already "
@@ -975,8 +1180,8 @@ def run(args, out, ctx) -> int:
             prior_report = report_path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             prior_report = ""
-    moved = source_moved(prior_report, src_blob, done_blob) if prior_report \
-        else None
+    moved = source_moved(prior_report, src_blob, done_blob, src_name,
+                         done_name) if prior_report else None
     if moved is not None:
         what, recorded, now = moved
         out(f"COULD NOT VERIFY: {what} has MOVED since {report_rel} was "
@@ -994,7 +1199,72 @@ def run(args, out, ctx) -> int:
         classify(e)
     done_read = read_carrier(done_text)
 
-    written, n_items = build_items(read.entries, ctx.prefix, src_name)
+    # --- MERGE (lc-17): the homes already in place decide the id space and
+    # the duplicate question, so they are READ before anything is built.
+    # An ABSENT or EMPTY `ITEMS.md` is an ordinary first migration under
+    # `--merge` and not an error; what it is not is a licence to overwrite a
+    # populated one, which is why the flag appends rather than replacing.
+    existing_items = existing_done_home = None
+    merge_target = False
+    if merge:
+        if not ctx.prefix:
+            out("COULD NOT VERIFY: `--merge` allocates ids from the carrier's "
+                "own id space and the declaration carries no `id-prefix`. Ids "
+                "are `<prefix>-<n>` and the prefix is declared, never "
+                "inferred from the ids already there — inferring it would "
+                "make any consistent corruption look correct.")
+            return exits.COULD_NOT_VERIFY
+        for path, label in ((ctx.items_path, "live carrier"),
+                            (ctx.done_path, "done home")):
+            if not path.exists():
+                continue
+            try:
+                parsed = items_mod.parse(path.read_text(encoding="utf-8"))
+            except (OSError, UnicodeDecodeError) as exc:
+                out(f"COULD NOT VERIFY: the {label} {path.name} could not be "
+                    f"read ({exc!r}), so neither the ids already in use nor "
+                    "the bodies already present could be established. A merge "
+                    "over an unread home is an append into the dark.")
+                return exits.COULD_NOT_VERIFY
+            if parsed.refused:
+                out(f"COULD NOT VERIFY: the {label} {path.name} is stamped "
+                    "above this build's schema floor, so its body was not "
+                    "parsed. No count from it means anything, and an id "
+                    "allocator blind to it re-issues ids that are in use.")
+                return exits.COULD_NOT_VERIFY
+            if path == ctx.items_path:
+                existing_items = parsed
+                merge_target = True
+            else:
+                existing_done_home = parsed
+
+        # A DUPLICATE BODY REFUSES, and the whole run refuses rather than the
+        # entry alone. A merge is not idempotent — a partial append would put
+        # the other entries in the carrier and leave a re-run to write them a
+        # second time, so "write the rest, report this one" is the shape that
+        # corrupts. Nothing is written and the desk decides, one entry at a
+        # time, exactly as an AMBIGUOUS entry is decided.
+        dupes = duplicate_bodies(
+            read.entries, existing_titles(existing_items, existing_done_home))
+        if dupes and not report_only:
+            out(f"FINDING [merge_duplicate_body] {len(dupes)} entry/ies in "
+                f"{src_name} carry a headline a body already in the successor "
+                "homes carries. NOTHING was written: a merge appends, so a "
+                "run that wrote the rest and reported these would leave the "
+                "carrier half-merged and a re-run would write those bodies "
+                "twice. Whether each is the same work booked twice or two "
+                "items that happen to share a headline is the desk's call, "
+                "and a merge that guessed would be a classification rule "
+                "invented here.")
+            for e, ident in dupes:
+                out(f"    {src_name}:{e.line}  already present as {ident}")
+                out(f"        entry: {title_of(e)}")
+            return exits.FINDING
+
+    allocate = (IdentAllocator(ctx.prefix, existing_items, existing_done_home)
+                if merge else None)
+    written, n_items = build_items(read.entries, ctx.prefix, src_name,
+                                   allocate=allocate)
     unclassified = [e for e in read.entries
                     if e.grade is None and not e.closure]
     closures = [e for e in read.entries if e.closure]
@@ -1034,7 +1304,56 @@ def run(args, out, ctx) -> int:
     # can be re-rendered after the intake. Without this flag the pointer would
     # be a hand edit that the next `migrate` erases, and a pointer with an
     # expiry date is the kind of arrangement this repo keeps finding.
-    if not report_only:
+    merge_head_problem = ""
+    if not report_only and merge and merge_target:
+        # THE MERGE APPENDS. Existing entries are not touched, not renumbered
+        # and not re-derived — the file's own head and every block already in
+        # it survive byte-for-byte, and the new blocks land after them.
+        #
+        # THE INCREMENT GOES ON `baseline`, and the reading is the artifacts'
+        # own: `baseline` is what a MIGRATION admits (the first migration
+        # writes exactly `items + archive` into it, above), while `added` is
+        # what the `item add` verb admits (`verbs._append_item` bumps it per
+        # add). A merge is a second migration, so the bodies it brings in are
+        # baseline bodies; booking them as `added` would claim a verb ran that
+        # never did. Either spelling keeps the identity true — the reading is
+        # what decides between them, not the arithmetic.
+        live_old = ctx.items_path.read_text(encoding="utf-8")
+        live_new, ok = bump_head(live_old, "baseline", n_items + archive_count)
+        if not ok:
+            merge_head_problem = (
+                "the carrier head carries no readable `baseline: <n>` line, "
+                "so this merge could not record its bodies in the "
+                "conservation identity")
+        else:
+            if written:
+                live_new = append_blocks(live_new, written)
+            ctx.items_path.write_text(live_new, encoding="utf-8")
+            if ctx.done_path.exists():
+                # THE ARCHIVE HEADING IS WHERE THE APPEND HAS TO LAND, and a
+                # done home that has never been migrated into does not carry
+                # one. Without this the source's verbatim bodies go into the
+                # done home's LIVE region, where `## Done` parses as a block
+                # heading and the old carrier's prose becomes a malformed
+                # item — measured on this row's own control, where the
+                # conservation identity then held by COINCIDENCE: the bogus
+                # block counted one where the archive should have counted
+                # one. Matched as a whole LINE, never as a substring: a body
+                # that merely names the heading is not one.
+                done_old = ctx.done_path.read_text(encoding="utf-8")
+                if items_mod.ARCHIVE_HEADING not in [
+                        ln.strip() for ln in done_old.split("\n")]:
+                    done_old = (done_old.rstrip("\n") + "\n\n"
+                                + items_mod.ARCHIVE_HEADING + "\n")
+                ctx.done_path.write_text(
+                    done_old.rstrip("\n") + "\n" + done_text + closure_text,
+                    encoding="utf-8")
+            else:
+                ctx.done_path.write_text(
+                    archive_note + f"schema: {items_mod.SCHEMA_FLOOR}\n\n"
+                    + f"{items_mod.ARCHIVE_HEADING}\n\n" + done_text
+                    + closure_text, encoding="utf-8")
+    elif not report_only:
         ctx.items_path.write_text(head + "\n" + "\n".join(written),
                                   encoding="utf-8")
         ctx.done_path.write_text(
@@ -1049,16 +1368,31 @@ def run(args, out, ctx) -> int:
     ledger_count = None if lparsed is None else len(lparsed.lines)
 
     # --- the report
+    #
+    # THE OTHER SOURCES' PINS RIDE ACROSS (lc-17 §F), under `--merge` only.
+    # The report is REGENERATED every run, so a merge that wrote only its own
+    # `source-blob:` line would drop the record of every carrier merged before
+    # it — and the next run over one of those would read its own absence as a
+    # first migration, which is the un-pinning this record exists to prevent.
+    carried_src, carried_done = ({}, {})
+    if merge and prior_report:
+        carried_src, carried_done = recorded_blobs(prior_report)
+        carried_src.pop(src_name, None)
+        carried_done.pop(done_name, None)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
         render_report(ctx, read, done_read, src_name, done_name, n_items,
                       unclassified, archive_count, baseline, ledger_count,
-                      lwhy, report_rel, closures, src_blob, done_blob),
+                      lwhy, report_rel, closures, src_blob, done_blob,
+                      carried_src, carried_done),
         encoding="utf-8")
 
     # --- the run's own answer
     out(f"migrate: DRY RUN — {src_name} and {done_name} are READ and are not "
         "edited, moved or deleted (D-e).")
+    if merge:
+        out(f"    MODE: MERGE — {ctx.items_path.name} is APPENDED to; every "
+            "entry already there keeps its id, its slots and its position.")
     out(f"    source blob:              {src_blob}  ({src_name})")
     out(f"    source done-home blob:    {done_blob}  ({done_name})")
     out(f"    source entries read:      {len(read.entries)}")
@@ -1086,6 +1420,10 @@ def run(args, out, ctx) -> int:
     out(f"    report:                   {report_rel}")
 
     code = exits.CLEAN
+    if merge and not report_only:
+        code = exits.worst([code, merge_conservation(
+            ctx, src_name, read, n_items, closures, unclassified,
+            merge_head_problem, out)])
     if len(read.entries) != n_items + len(closures) + len(unclassified):
         # NOT A REGISTERED ROW, deliberately. Every entry is written, closed
         # or unclassified BY CONSTRUCTION — the three sets partition the read
@@ -1129,6 +1467,76 @@ def run(args, out, ctx) -> int:
         code = exits.worst([code, exits.FINDING])
     out(f"migrate: {exits.word(code)}")
     return code
+
+
+def merge_conservation(ctx, src_name, read, n_items, closures, unclassified,
+                       head_problem: str, out) -> int:
+    """Conservation after a merge — PER SOURCE and IN TOTAL, RE-PARSED.
+
+    LAW 22'S SECOND HALF IS THE WHOLE DESIGN HERE: "a partition exact by
+    construction is reported as could-not-verify arithmetic, never as a green
+    row". The writing loop knows how many blocks it emitted; a checker handed
+    that number cannot fail, so it would be a green row asserting nothing. So
+    both figures below are read back OUT OF THE FILES, exactly as
+    `items.conservation` re-parses the artifacts rather than trusting the verb
+    that wrote them.
+
+    THE TOTAL is `items.conservation` itself — the identity `items + done ==
+    baseline + added − compacted` over the re-parsed homes, answering through
+    the registered `conservation_short` / `conservation_surplus` rows.
+
+    THE PER-SOURCE figure meets two independent derivations: the count read
+    back out of the artifacts (live blocks whose `evidence` names this source,
+    plus the archive's per-closure markers) against the count the READER
+    produced from the source carrier (entries read, minus the ones refused).
+    Neither side is the writing loop. A disagreement is answered COULD NOT
+    VERIFY rather than as a finding: it says this run cannot promise what it
+    put where, which is what code 3 means, and no INPUT falsifies it — only a
+    defect in the writer does, so it is not a registered row.
+    """
+    if head_problem:
+        out(f"COULD NOT VERIFY: conservation after the merge — {head_problem}. "
+            "The bodies are on disk and the identity's right-hand side is "
+            "not, so every later conservation run would report a SHORT "
+            "carrier and the number it reported would be correct.")
+        return exits.COULD_NOT_VERIFY
+    try:
+        items_text = ctx.items_path.read_text(encoding="utf-8")
+        done_text_now = (ctx.done_path.read_text(encoding="utf-8")
+                         if ctx.done_path.exists() else "")
+    except (OSError, UnicodeDecodeError) as exc:
+        out(f"COULD NOT VERIFY: conservation after the merge — the successor "
+            f"homes could not be re-read ({exc!r}), so the identity was "
+            "checked against nothing.")
+        return exits.COULD_NOT_VERIFY
+
+    back_items, back_closures = per_source_counts(items_text, done_text_now,
+                                                  src_name)
+    expected = len(read.entries) - len(unclassified)
+    out(f"    conservation, THIS SOURCE ({src_name}), re-read from the "
+        "successor homes rather than from the writing loop:")
+    out(f"        blocks whose `evidence` names it: {back_items}")
+    out(f"        archive markers naming it:        {back_closures}")
+    out(f"        entries read − unclassified:      {expected} "
+        f"({len(read.entries)} − {len(unclassified)})")
+    code = exits.CLEAN
+    if back_items + back_closures != expected:
+        out("COULD NOT VERIFY: the per-source arithmetic disagrees — "
+            f"{back_items} + {back_closures} read back out of the homes "
+            f"against {expected} from the source. This run cannot promise "
+            "which bodies it put where.")
+        code = exits.COULD_NOT_VERIFY
+
+    items_parsed = items_mod.parse(items_text)
+    done_parsed = items_mod.parse(done_text_now) if done_text_now else None
+    c = items_mod.conservation(
+        items_parsed, done_parsed,
+        done_unreadable=None if done_parsed is not None else
+        "the done home does not exist after the merge, so the identity's "
+        "closed side could not be counted")
+    out("    conservation, IN TOTAL:")
+    return exits.worst([code, items_mod.report_conservation(
+        c, lambda s: out(f"        {s}"))])
 
 
 def blocker_types(entries) -> dict:
@@ -1178,7 +1586,7 @@ def routed_items(ctx, report_rel: str) -> list:
 def render_report(ctx, read, done_read, src_name, done_name, n_items,
                   unclassified, archive_count, baseline, ledger_count,
                   lwhy, report_rel="", closures=(), src_blob="",
-                  done_blob="") -> str:
+                  done_blob="", carried_src=None, carried_done=None) -> str:
     """The classification report.
 
     IT DESCRIBES ENTRIES; IT DOES NOT QUOTE THEM. Every entry appears as its
@@ -1213,9 +1621,23 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     a("")
     a(f"done-blob: {done_blob}  ({done_name})")
     a("")
+    # ONE LINE PER SOURCE, and the PATH is what the next run keys on (lc-17
+    # §F). The lines below belong to carriers merged into these homes by
+    # EARLIER runs: this report replaces its predecessor, so a pin it did not
+    # carry across would simply cease to exist and the source it pinned would
+    # read as never migrated.
+    for path, sha in sorted((carried_src or {}).items()):
+        a(f"source-blob: {sha}  ({path})")
+        a("")
+    for path, sha in sorted((carried_done or {}).items()):
+        a(f"done-blob: {sha}  ({path})")
+        a("")
     a("A report carrying NO blob line predates this check, and an absent "
       "record is not a mismatch — it is an unpinned run, which this build "
-      "says rather than treating as agreement.")
+      "says rather than treating as agreement. An absent line FOR ONE PATH is "
+      "the same answer at source granularity: that carrier has not been "
+      "migrated into these homes, which is a first migration for it and not a "
+      "moved source.")
     a("")
     a("## Reconciliation")
     a("")

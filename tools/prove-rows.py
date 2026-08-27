@@ -366,8 +366,12 @@ MUTATIONS = [
      "over a finding emitted under no registered row, which is the "
      "clean-forever check it exists to prevent"),
 
+    # THE ANCHOR MOVED WHEN `--merge` LANDED (lc-17), and this tool is what
+    # said so: it answers COULD NOT VERIFY on an anchor that no longer matches
+    # rather than mutating whichever line looks closest, so a guard silently
+    # left unproven is not a state this file can reach.
     ("migrate_would_overwrite", "migrate.py",
-     "    if not args.force and not report_only:",
+     "    if not args.force and not report_only and not merge:",
      "    if False:",
      "the refusal to overwrite an existing successor carrier — a second "
      "migration then replaces real work with a re-derivation of the carrier "
@@ -505,6 +509,19 @@ MUTATIONS = [
      "the independence of the two sides — the route set is then computed FROM "
      "the code it grades, so it moves with the mutant and stays green on "
      "every narrowing"),
+
+    # ANCHORED ON THE COMPARISON, not on the branch around it — the same
+    # choice `migration_ambiguous_closure` makes above and for the same
+    # reason: folding the LOOKUP's result leaves the branch reached and the
+    # machinery intact, so what the arm measures is whether the row reads that
+    # comparison. Disabling it, the merge APPENDS the duplicate body: one
+    # piece of work booked twice under two ids, which on the closed side means
+    # a finished body coming back as open work.
+    ("merge_duplicate_body", "migrate.py",
+     "        ident = known.get(headline_of(e))",
+     "        ident = None",
+     "the headline comparison between an incoming source entry and the bodies "
+     "already in the successor homes"),
 
     ("migration_ledger_nonzero", "migrate.py",
      "    elif ledger_count != 0:",

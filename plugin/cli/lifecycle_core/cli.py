@@ -454,6 +454,16 @@ def build_parser() -> argparse.ArgumentParser:
                           "--schema-from run is a dry run that writes nothing")
     mig.add_argument("--force", action="store_true",
                      help="overwrite an existing ITEMS.md/ITEMS-DONE.md")
+    mig.add_argument("--merge", action="store_true",
+                     help="APPEND this source to the successor homes instead "
+                          "of producing them: existing entries keep their ids "
+                          "and their slots, new ids come from the carrier's "
+                          "own id space, and conservation is re-checked "
+                          "against what is on disk. An absent or empty "
+                          "ITEMS.md is an ordinary first migration here, not "
+                          "an error. Merge N carriers with N invocations, one "
+                          "--from and one --from-done each. NOT --force, "
+                          "which REPLACES the carrier with a re-derivation")
     mig.add_argument("--report-only", dest="report_only", action="store_true",
                      help="re-render the REPORT and touch no carrier. R3 has "
                           "the report's findings enter the carrier as items "

@@ -500,5 +500,371 @@ class ReconciliationWithThreeColumns(unittest.TestCase):
         self.assertIn("`## Done`", report)
 
 
+MERGE_SOURCE_B = ("# second\n\n## Open\n\n"
+                  "- **READY 2026-09-01 — the second carrier's work.** body\n")
+
+
+def items_with(*idents) -> str:
+    """A live carrier carrying exactly these ids, in this order.
+
+    The HOLE the merge test needs is constructed here rather than waited for:
+    `compacted` is 0 in every carrier this build has produced, so the id space
+    is contiguous today. It will not stay that way — a compacted id leaves
+    BOTH homes and the conservation identity subtracts it, so the hole is the
+    state compaction creates and this fixture is what guards against it.
+    """
+    head = (f"schema: {items.SCHEMA_FLOOR}\nbaseline: {len(idents)}\n"
+            "added: 0\ncompacted: 0\n")
+    blocks = [items.render_block(i, {
+        "grade": "NEW",
+        "requirement": f"a body already in the carrier as {i}",
+        "goal": "UNKNOWN", "write-set": "UNKNOWN",
+        "done-criterion": "UNKNOWN", "evidence": "none yet",
+        "blocked-by": "decision regrade: what this needs",
+    }) for i in idents]
+    return head + "\n" + "\n".join(blocks)
+
+
+class MergeMode(unittest.TestCase):
+    """lc-17 — 'N old carriers into one item carrier' had no execution path
+    at all: with `ITEMS.md` present, migrate answered
+    `FINDING [migrate_would_overwrite]` and the refusal's own text offered
+    `--force`, which REPLACES real work with a re-derivation."""
+
+    def prefix(self) -> str:
+        return GOOD_FULL_DECLARATION["id-prefix"]
+
+    def test_without_merge_the_overwrite_refusal_is_byte_for_byte_what_it_was(self):
+        """THE POINT OF THE FLAG, and the arm that would catch it changing.
+
+        `--from-done NONE` is present deliberately: without a closure home on
+        disk the run dies EARLIER at COULD NOT VERIFY, and a test that never
+        reaches `migrate_would_overwrite` pins nothing while looking green.
+        """
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        before = (d / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn(
+            "FINDING [migrate_would_overwrite] ITEMS.md already exists. "
+            "Refusing to overwrite a carrier: this is a DRY RUN that PRODUCES "
+            "the successor files, and a second run over a carrier already in "
+            "use would replace real work with a re-derivation of the old one. "
+            "Pass `--force` if that is what is wanted.", out)
+        self.assertEqual((d / "ITEMS.md").read_text(encoding="utf-8"), before)
+
+    def test_two_sources_migrate_into_one_carrier(self):
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        before = (d / "ITEMS.md").read_text(encoding="utf-8")
+        (d / "SECOND.md").write_text(MERGE_SOURCE_B, encoding="utf-8")
+        code, out = migrate_run(d, "--from", "SECOND.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        after = (d / "ITEMS.md").read_text(encoding="utf-8")
+        # THE EXISTING ENTRY IS UNTOUCHED — not renumbered, not re-derived.
+        # Asserted as a PREFIX of the new file rather than by hunting for its
+        # id: a merge that rewrote a slot would still leave the id there.
+        first_block = before.split("\n", 5)[5]
+        self.assertIn(first_block.rstrip("\n"), after)
+        self.assertIn("the second carrier's work", after)
+        self.assertIn("first", after)
+        parsed = items.parse(after)
+        self.assertEqual([it.ident for it in parsed.items],
+                         [f"{self.prefix()}-1", f"{self.prefix()}-2"])
+        self.assertEqual(parsed.problems, [])
+
+    def test_a_merge_into_a_carrier_with_an_id_HOLE_skips_the_hole_only(self):
+        """THE ALLOCATION SHAPE, which is what `next_ident` PER ENTRY buys.
+
+        `next_ident` returns the LOWEST unused n. Called once and incremented
+        from, a merge into {1,2,4} writes 3, 4, 5 — re-issuing the live 4, and
+        the collision surfaces as a DUPLICATE finding months later in a file
+        nobody was editing. Called per entry it writes 3, 5, 6.
+
+        THE HOLE IS THE STATE COMPACTION CREATES: `compacted` is a head field
+        and the conservation identity SUBTRACTS it, so a compacted id is gone
+        from BOTH homes and `next_ident` cannot see it. Today every carrier
+        has `compacted: 0`, which is why the fixture constructs the hole.
+        """
+        p = self.prefix()
+        d = build("# old\n\n## Open\n\n"
+                  "- **READY 2026-09-01 — merged one.** body\n"
+                  "- **READY 2026-09-02 — merged two.** body\n"
+                  "- **READY 2026-09-03 — merged three.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS.md").write_text(
+            items_with(f"{p}-1", f"{p}-2", f"{p}-4"), encoding="utf-8")
+        (d / "ITEMS-DONE.md").write_text(f"schema: {items.SCHEMA_FLOOR}\n",
+                                         encoding="utf-8")
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual([it.ident for it in parsed.items],
+                         [f"{p}-1", f"{p}-2", f"{p}-4",
+                          f"{p}-3", f"{p}-5", f"{p}-6"])
+        # The id that would have collided under once-then-increment.
+        self.assertEqual(parsed.problems, [])
+
+    def test_a_duplicate_entry_body_refuses_and_writes_nothing(self):
+        """RED-FIRST is the roster's job (`merge_duplicate_body` has a plant
+        and a control); what is asserted here is the half a row cannot reach —
+        that NOTHING was written, which is what makes the refusal safe on a
+        mode that appends."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        before = (d / "ITEMS.md").read_text(encoding="utf-8")
+        (d / "SECOND.md").write_text(
+            "# second\n\n## Open\n\n"
+            "- **READY 2026-08-03 — first.** a different body, same "
+            "headline\n"
+            "- **READY 2026-09-09 — genuinely new work.** body\n",
+            encoding="utf-8")
+        code, out = migrate_run(d, "--from", "SECOND.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[merge_duplicate_body]", out)
+        self.assertIn("already present as", out)
+        # THE WHOLE RUN REFUSED: the second, genuinely new entry is absent
+        # too. A merge is not idempotent, so a partial append is the shape
+        # that corrupts.
+        after = (d / "ITEMS.md").read_text(encoding="utf-8")
+        self.assertEqual(after, before)
+        self.assertNotIn("genuinely new work", after)
+
+    def test_a_headline_that_merely_resembles_one_present_still_merges(self):
+        """MUST NOT MOVE. Without this arm a duplicate check loosened until
+        the collisions stop scores identically to one that got the
+        distinction right — and a guard firing on legitimate work stops the
+        lane (R11)."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        (d / "SECOND.md").write_text(
+            "# second\n\n## Open\n\n"
+            "- **READY 2026-08-03 — first thing, longer.** body\n",
+            encoding="utf-8")
+        code, out = migrate_run(d, "--from", "SECOND.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("first thing, longer",
+                      (d / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_a_body_already_CLOSED_is_a_duplicate_too(self):
+        """The silent half: a closure merged back in as open work lands
+        looking exactly like work nobody has started, with the closure that
+        answered it one file away."""
+        p = self.prefix()
+        d = build("# old\n\n## Open\n\n- **READY 2026-09-09 — a closed "
+                  "thing.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS.md").write_text(items_with(f"{p}-1"), encoding="utf-8")
+        (d / "ITEMS-DONE.md").write_text(
+            f"schema: {items.SCHEMA_FLOOR}\n\n"
+            + items.render_block(f"{p}-2", {
+                "grade": "DONE",
+                "requirement": "READY 2026-09-09 — a closed thing",
+                "goal": "UNKNOWN", "write-set": "UNKNOWN",
+                "done-criterion": "UNKNOWN", "evidence": "none",
+                "blocked-by": "NONE"}), encoding="utf-8")
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[merge_duplicate_body]", out)
+        self.assertIn(f"{p}-2", out)
+
+    def test_an_absent_items_md_under_merge_is_an_ordinary_first_migration(self):
+        """NOT an error — stated in the flag's own help text. A merge into
+        nothing is the first migration, and refusing it would make the flag
+        unusable as the standing way to bring carriers in."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertFalse((d / "ITEMS.md").exists())
+        code, out = migrate_run(d, "--from", "BACKLOG.md", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("first", (d / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_an_empty_items_md_under_merge_is_not_an_error_either(self):
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS.md").write_text(
+            f"schema: {items.SCHEMA_FLOOR}\nbaseline: 0\nadded: 0\n"
+            "compacted: 0\n", encoding="utf-8")
+        (d / "ITEMS-DONE.md").write_text(f"schema: {items.SCHEMA_FLOOR}\n",
+                                         encoding="utf-8")
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual([it.ident for it in parsed.items],
+                         [f"{self.prefix()}-1"])
+
+    def test_conservation_holds_per_source_and_in_total_after_a_merge(self):
+        d = build("# old\n\n## Open\n\n"
+                  "- **READY 2026-08-03 — first.** body\n"
+                  "- **DONE 2026-08-04 — already closed.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        (d / "SECOND.md").write_text(
+            "# second\n\n## Open\n\n"
+            "- **READY 2026-09-01 — second open.** body\n"
+            "- **DROPPED 2026-09-02 — second closed.** body\n",
+            encoding="utf-8")
+        code, out = migrate_run(d, "--from", "SECOND.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("conservation, THIS SOURCE (SECOND.md)", out)
+        self.assertIn("blocks whose `evidence` names it: 1", out)
+        self.assertIn("archive markers naming it:        1", out)
+        self.assertIn("conservation: CLEAN", out)
+        self.assertNotIn("conservation_short", out)
+        self.assertNotIn("conservation_surplus", out)
+
+    def test_the_per_source_figures_are_re_read_not_handed_over(self):
+        """LAW 22's second half. A count the writing loop hands the checker is
+        exact by construction and cannot fail, so the figures are derived from
+        the artifacts: `per_source_counts` reads the files and knows nothing
+        about the run that produced them."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        n_items, n_closures = migrate.per_source_counts(
+            (d / "ITEMS.md").read_text(encoding="utf-8"),
+            (d / "ITEMS-DONE.md").read_text(encoding="utf-8"),
+            "BACKLOG.md")
+        self.assertEqual((n_items, n_closures), (1, 0))
+        # A source that contributed nothing reads as zero rather than as the
+        # whole file: the count is KEYED on the path.
+        self.assertEqual(migrate.per_source_counts(
+            (d / "ITEMS.md").read_text(encoding="utf-8"),
+            (d / "ITEMS-DONE.md").read_text(encoding="utf-8"),
+            "NOTHING.md"), (0, 0))
+
+    def test_the_evidence_key_anchors_its_terminator(self):
+        """MUST NOT MOVE. `BACKLOG.md` must not count `BACKLOG.md.bak`'s
+        blocks — a prefix test over a rendered slot is an equality's
+        costume."""
+        text = (f"schema: {items.SCHEMA_FLOOR}\nbaseline: 1\nadded: 0\n"
+                "compacted: 0\n\n"
+                + items.render_block("xx-1", {
+                    "grade": "NEW", "requirement": "r", "goal": "UNKNOWN",
+                    "write-set": "UNKNOWN", "done-criterion": "UNKNOWN",
+                    "evidence": "BACKLOG.md.bak:5-6",
+                    "blocked-by": "NONE"}))
+        self.assertEqual(migrate.per_source_counts(text, "", "BACKLOG.md"),
+                         (0, 0))
+        self.assertEqual(migrate.per_source_counts(text, "",
+                                                   "BACKLOG.md.bak"), (1, 0))
+
+
+class PerSourceBlobPin(unittest.TestCase):
+    """lc-17 §F — the pin was single-source by SHAPE: `source_moved` took the
+    FIRST recorded line and measured every source against it, so a merge's
+    second carrier compared its own bytes to the first carrier's sha."""
+
+    def test_a_second_source_is_a_first_migration_for_itself(self):
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        (d / "SECOND.md").write_text(MERGE_SOURCE_B, encoding="utf-8")
+        code, out = migrate_run(d, "--from", "SECOND.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("has MOVED", out)
+
+    def test_both_sources_stay_recorded_in_the_regenerated_report(self):
+        """The report is REGENERATED every run. A merge that wrote only its
+        own line would drop the first carrier's pin, and the next run over it
+        would read that absence as a first migration — un-pinning by
+        omission."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        (d / "SECOND.md").write_text(MERGE_SOURCE_B, encoding="utf-8")
+        self.assertEqual(migrate_run(d, "--from", "SECOND.md", "--from-done",
+                                      "NONE", "--merge")[0], exits.CLEAN)
+        src_rec, done_rec = migrate.recorded_blobs(
+            (d / REPORT).read_text(encoding="utf-8"))
+        self.assertEqual(
+            src_rec.get("BACKLOG.md"),
+            migrate.blob_sha((d / "BACKLOG.md").read_bytes()))
+        self.assertEqual(
+            src_rec.get("SECOND.md"),
+            migrate.blob_sha((d / "SECOND.md").read_bytes()))
+        self.assertIn("BACKLOG-DONE.md", done_rec)
+
+    def test_a_moved_source_refuses_for_THAT_source(self):
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        (d / "SECOND.md").write_text(MERGE_SOURCE_B, encoding="utf-8")
+        self.assertEqual(migrate_run(d, "--from", "SECOND.md", "--from-done",
+                                      "NONE", "--merge")[0], exits.CLEAN)
+        (d / "SECOND.md").write_text(
+            "# second\n\n## Open\n\n- **READY 2026-09-01 — MOVED.** body\n",
+            encoding="utf-8")
+        code, out = migrate_run(d, "--from", "SECOND.md", "--from-done",
+                                "NONE", "--merge")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("has MOVED", out)
+        self.assertNotIn("MOVED.",
+                         (d / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_a_source_with_no_recorded_line_is_not_a_mismatch(self):
+        """An absent record at SOURCE granularity is the same answer as an
+        absent record at report granularity: that carrier has not been
+        migrated into these homes."""
+        report = ("source-blob: " + "a" * 40 + "  (OTHER.md)\n"
+                  "done-blob: NONE  (NONE)\n")
+        self.assertIsNone(migrate.source_moved(
+            report, "b" * 40, "NONE", "BACKLOG.md", "NONE"))
+        # …and the SAME path with a different sha still refuses.
+        self.assertIsNotNone(migrate.source_moved(
+            report, "b" * 40, "NONE", "OTHER.md", "NONE"))
+
+    def test_the_recorded_line_keeps_its_sha_in_group_one(self):
+        """MUST NOT MOVE: a reader resolving the sha — the operator running
+        `git hash-object` — is unaffected by the path becoming group 2."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        m = migrate._RECORDED_SOURCE_BLOB.search(
+            (d / REPORT).read_text(encoding="utf-8"))
+        self.assertIsNotNone(m)
+        self.assertEqual(m.group(1),
+                         migrate.blob_sha((d / "BACKLOG.md").read_bytes()))
+        self.assertEqual(m.group(2).strip(), "BACKLOG.md")
+
+
+class RequirementTitle(unittest.TestCase):
+    """The duplicate check compares TITLES, and reaching one by chopping a
+    rendered string at the first delimiter it happens to contain is a prefix
+    match in an equality's costume."""
+
+    def test_the_record_tail_is_parsed_off_at_the_line_end(self):
+        self.assertEqual(
+            migrate.requirement_title("a thing — record: BACKLOG.md:12"),
+            "a thing")
+
+    def test_a_title_carrying_the_phrase_resolves_against_the_LAST_tail(self):
+        self.assertEqual(
+            migrate.requirement_title(
+                "a thing — record: not/a/tail — record: BACKLOG.md:12"),
+            "a thing — record: not/a/tail")
+
+    def test_a_requirement_with_no_tail_is_a_title_in_whole(self):
+        self.assertEqual(migrate.requirement_title("just a headline"),
+                         "just a headline")
+        self.assertEqual(
+            migrate.requirement_title("mentions — record: but not a path"),
+            "mentions — record: but not a path")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1347,6 +1347,33 @@ LANE_ROWS = [
               "reach; unblocks lc-30)",
     ),
     Row(
+        ident="merge_duplicate_body",
+        refusal="`migrate --merge` where a source entry's HEADLINE is already "
+                "carried by a body in the successor homes — the live carrier "
+                "or the closed one. The merge appends, so writing it would "
+                "book one piece of work twice under two ids, and the closed "
+                "side is the silent half: a body that already closed comes "
+                "back as open work with the closure that answered it one file "
+                "away. Whether it is the same work booked twice or two items "
+                "sharing a headline is the desk's call. The WHOLE RUN "
+                "refuses and nothing is written: a merge is not idempotent, "
+                "so writing the rest and reporting this one would leave the "
+                "carrier half-merged and a re-run would write those bodies a "
+                "second time. Scoped to the bodies already in the homes — an "
+                "incoming source repeating itself is not what this row asks",
+        firing_input="`migrate --from BACKLOG.md --merge` where `ITEMS.md` "
+                     "already carries a block whose `requirement` headline "
+                     "equals the source entry's",
+        expect=exits.FINDING,
+        fire=lambda: _migrate_run(merge=True, items=MERGE_TARGET_ITEMS),
+        # The SAME populated carrier, the SAME flag, one WORD of the existing
+        # headline changed. A control that merged into an EMPTY carrier would
+        # pass against a checker that never reads the homes at all.
+        control=lambda: _migrate_run(merge=True,
+                                     items=MERGE_TARGET_ITEMS_OTHER),
+        stage="wave 3 (lc-17 lane B3 — merge mode)",
+    ),
+    Row(
         ident="migration_ledger_nonzero",
         refusal="the acceptance criterion 'zero entries routed to the ledger' "
                 "(§3.6, §4 row 1) is checked at the ARTIFACT and not only in "
@@ -1424,7 +1451,35 @@ def _coverage_over_copy(*, plant: bool) -> Fired:
         shutil.rmtree(d, ignore_errors=True)
 
 
-def _migrate_run(*, backlog=None, force=False, **repo_kw) -> Fired:
+#: A populated `ITEMS.md` whose one body carries the SAME headline the
+#: default `_migrate_run` source entry carries — the state a merge must
+#: refuse. The requirement keeps the `— record: <path>:<line>` tail a
+#: migration writes, so the row exercises the title PARSE and not a bare
+#: string equality that a tail would defeat.
+MERGE_TARGET_ITEMS = """schema: 2
+baseline: 1
+added: 0
+compacted: 0
+
+## xx-1
+grade: NEW
+requirement: READY 2026-01-01 — an ordinary entry — record: OTHER.md:5
+goal: UNKNOWN
+write-set: UNKNOWN
+done-criterion: UNKNOWN
+evidence: OTHER.md:5-6
+blocked-by: decision regrade: fill goal, write-set, done-criterion and evidence, or drop
+"""
+
+#: The SAME carrier with one word of that headline changed. The arms differ in
+#: whether the body is already there and in nothing else — not in whether
+#: `ITEMS.md` is populated, not in the entry count, not in the flag.
+MERGE_TARGET_ITEMS_OTHER = MERGE_TARGET_ITEMS.replace(
+    "an ordinary entry", "a different entry")
+
+
+def _migrate_run(*, backlog=None, force=False, merge=False,
+                 **repo_kw) -> Fired:
     """Run `migrate` in a scratch repo carrying an old carrier."""
     import io
     from contextlib import redirect_stdout
@@ -1449,6 +1504,8 @@ def _migrate_run(*, backlog=None, force=False, **repo_kw) -> Fired:
                 "--report", "docs/audits/report.md"]
         if force:
             argv.append("--force")
+        if merge:
+            argv.append("--merge")
         here = os.getcwd()
         try:
             os.chdir(str(r.dir))
