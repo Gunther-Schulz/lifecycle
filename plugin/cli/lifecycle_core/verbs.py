@@ -1032,7 +1032,11 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
                     f"whether it has been answered is unknown. Reporting it "
                     f"BLOCKED would be a wait nobody checked. {led_why}"
                     ), exits.COULD_NOT_VERIFY, ""
-        answers = ledger.decision_for(led, detail)
+        # SCOPED TO THIS ITEM, because a MOOT line is not an answer (G4). A
+        # close over an unanswered decision writes `→ moot (closed by <id>)`,
+        # which records that the question died with THAT item. Read as an
+        # answer it unblocked every other live item on the same question.
+        answers = ledger.decision_for(led, detail, for_item=it.ident)
         if answers:
             last = answers[-1]
             return (f"UNBLOCKED — the ledger ANSWERS this decision: "
@@ -1040,6 +1044,20 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
                     f"({ctx.ledger_path.name}:{last.lineno}).", exits.CLEAN,
                     "§3.1 has the item re-graded at the desk once a blocker "
                     "clears. THIS VERB PROMOTES NOTHING.")
+        moots = ledger.moot_decisions_for(led, detail)
+        if moots:
+            # NAMED, never folded into the flat "no line names this
+            # question" below — that sentence would be FALSE here, and a
+            # reader who checked the ledger would find the line it denies.
+            where = "; ".join(f"{m.slots.get('answer', '')!r} "
+                              f"({ctx.ledger_path.name}:{m.lineno})"
+                              for m in moots)
+            return (f"BLOCKED — in the OPERATOR's court: {detail!r}. The "
+                    f"ledger records this question MOOT — {where} — and a "
+                    "moot line is NOT an answer: it says the question died "
+                    "with the item whose closure wrote it. This is a "
+                    "different item and still needs the answer."
+                    ), exits.CLEAN, ""
         return (f"BLOCKED — in the OPERATOR's court: {detail!r}. No "
                 f"`decision:` line in {ctx.ledger_path.name} names this "
                 "question, so it has not been answered. A decision blocker "
@@ -1387,10 +1405,13 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
                     f"written — {problem}")
                 moot_code = exits.COULD_NOT_VERIFY
             else:
+                # THE ANSWER TEXT COMES FROM THE LEDGER MODULE, never a
+                # literal here: `decision_for` recognises this exact shape to
+                # keep a moot line from unblocking another item, and a second
+                # spelling on the writing side would drift silently.
                 line = ledger.append(ctx.ledger_path, "decision",
                                      {"question": moot,
-                                      "answer": f"moot (closed by "
-                                                f"{args.ident})"})
+                                      "answer": ledger.moot_answer(args.ident)})
                 out(f"ledger: {line}")
                 touched.append(ctx.ledger_path)
                 moot_code = exits.CLEAN

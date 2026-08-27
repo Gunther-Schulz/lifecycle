@@ -323,8 +323,55 @@ def rejected_for(parsed: Parsed, item: str) -> list:
             if ln.kind == "rejected" and ln.slots.get("item") == item]
 
 
-def decision_for(parsed: Parsed, question: str) -> list:
-    """Every `decision:` line whose QUESTION slot is `question`.
+#: THE MOOT ANSWER, written by one file and read by another — so it has ONE
+#: spelling here rather than a literal at each end. `item close` composes the
+#: text (`verbs.py`) and `decision_for` recognises it (below); two literals
+#: for one fact is a paraphrase whose divergence is a matter of time, and the
+#: divergence would be SILENT — the writer would keep writing a shape the
+#: reader had stopped recognising, and every moot line would read as an
+#: ANSWER again, which is the exact defect this pair exists to close.
+_MOOT_ANSWER = "moot (closed by {ident})"
+#: Matched with `fullmatch` against the PARSED ANSWER SLOT rather than the
+#: rendered line: a containment test is a prefix match in an equality's
+#: costume, satisfied by any answer that merely begins with — or merely
+#: mentions — this wording. `[^()]` keeps the closer from swallowing a second
+#: parenthesised clause, and the leading non-space class keeps a blank closer
+#: from parsing as a real one.
+#:
+#: ONE CONDITION HOLDS BOTH ENDS, deliberately, and it was written the other
+#: way first: `re.match` against a `^…$` pattern anchors the START twice, so
+#: neither bite against it could go red — the redundancy made the check
+#: unfalsifiable while reading as extra care. `fullmatch` is one named
+#: condition a single mutation can disable, which is what makes the two
+#: anchor tests below mean anything.
+_MOOT_ANSWER_RE = re.compile(r"moot \(closed by (?P<ident>[^()\s][^()]*)\)")
+
+
+def moot_answer(ident: str) -> str:
+    """The ANSWER text a close writes for the `decision` blocker it moots.
+
+    The single writer of this shape. `verbs.py` calls it rather than
+    composing the string, so the recogniser below cannot drift away from it.
+    """
+    return _MOOT_ANSWER.format(ident=ident)
+
+
+def moot_closer(line) -> str | None:
+    """The item whose closure made this `decision:` line moot, or None.
+
+    None means the line is an ANSWER — somebody decided the question. A
+    non-None result means nobody did: the question stopped mattering for ONE
+    item, and the ident says which.
+    """
+    if line.kind != "decision":
+        return None
+    m = _MOOT_ANSWER_RE.fullmatch((line.slots.get("answer") or "").strip())
+    return m.group("ident").strip() if m else None
+
+
+def decision_for(parsed: Parsed, question: str, *,
+                 for_item: str | None = None) -> list:
+    """Every `decision:` line that ANSWERS `question` for `for_item`.
 
     The reader behind `item ready`'s decision blocker (lc-26): a `decision
     <q>` blocker sits in the OPERATOR's court, and until this existed nothing
@@ -338,12 +385,55 @@ def decision_for(parsed: Parsed, question: str) -> list:
     containment — a prefix match here would let "which window" clear "which
     window is canonical", which is a different question with a different
     answer.
+
+    A MOOT LINE IS NOT AN ANSWER, and this is the second gate (wave-4 G4).
+    `item close` writes `decision: <q> → moot (closed by xx-1)` when it
+    closes an item over an unanswered decision — a record that the question
+    died WITH THAT ITEM, not that anybody settled it. Read as an answer it
+    unblocked every OTHER live item waiting on the same question, printing
+    "READY and unblocked — schedulable now" over a question nobody had
+    answered: silent wrongness at the exact altitude lc-26 exists to remove.
+    So a moot line answers for its own closer and for nobody else, and
+    `for_item` is the item asking. The scoping is deliberate over a blanket
+    exclusion: the ruling is about WHO the line speaks for, and a rule that
+    dropped moot lines outright would be a wider claim than the ruling makes
+    — true only by the accident that a closed item never asks again, and
+    therefore unfalsifiable. The DEFAULT is the safe direction: an unnamed
+    asker is nobody's closer, so no moot line answers it.
+    """
+    q = (question or "").strip()
+    if not q:
+        return []
+    asker = (for_item or "").strip()
+    out = []
+    for ln in parsed.lines:
+        if ln.kind != "decision":
+            continue
+        if (ln.slots.get("question") or "").strip() != q:
+            continue
+        closer = moot_closer(ln)
+        if closer is not None and (not asker or closer != asker):
+            continue
+        out.append(ln)
+    return out
+
+
+def moot_decisions_for(parsed: Parsed, question: str) -> list:
+    """Every MOOT `decision:` line whose QUESTION slot is `question`.
+
+    What `decision_for` refuses to hand back as an answer, handed back as
+    itself — so a caller reporting BLOCKED can say the ledger DOES name this
+    question and what it says, instead of the flat "no line names it" that
+    `decision_for`'s silence would otherwise be read as. A true sentence the
+    reader cannot check is the failure one level down from the one above.
     """
     q = (question or "").strip()
     if not q:
         return []
     return [ln for ln in parsed.lines
-            if ln.kind == "decision" and (ln.slots.get("question") or "").strip() == q]
+            if ln.kind == "decision"
+            and (ln.slots.get("question") or "").strip() == q
+            and moot_closer(ln) is not None]
 
 
 def counts(parsed: Parsed) -> dict:

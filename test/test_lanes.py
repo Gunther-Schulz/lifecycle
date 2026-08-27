@@ -436,5 +436,199 @@ class DecisionBlockerResolvesAgainstTheLedger(unittest.TestCase):
             r.close()
 
 
+class AMootDecisionUnblocksOnlyItsOwnCloser(unittest.TestCase):
+    """G4 — the second gate on lc-26's reader.
+
+    lc-26 made a `decision` blocker resolve against a ledger `decision:` line
+    naming the same question. `item close` writes one of those when it closes
+    an item over an unanswered decision: `→ moot (closed by xx-2)`. Nobody
+    specified what that line does to the OTHER live items on the same
+    question, and the answer was: it unblocked all of them, printing "READY
+    and unblocked — schedulable now" over a question nobody had answered.
+
+    Every test here comes in a PAIR over the same two-item carrier, because
+    a change that simply stopped unblocking decision blockers would score
+    identically to the right one against the red case alone.
+    """
+
+    QUESTION = "which window is canonical"
+
+    def _repo(self, ledger_lines=()):
+        """xx-1 and xx-2, both blocked on the SAME decision question."""
+        from lifecycle_core import refusals
+        items = refusals.SEED_ITEMS.replace(
+            "blocked-by: NONE", f"blocked-by: decision {self.QUESTION}")
+        items = items.replace("baseline: 1", "baseline: 2")
+        items += refusals._blocked_block("xx-2", "READY",
+                                         f"decision {self.QUESTION}")
+        return refusals._Repo(
+            items=items,
+            ledger_text="schema: 2\n"
+                        + "".join(ln + "\n" for ln in ledger_lines))
+
+    def _run(self, repo, argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + argv)
+            return code, buf.getvalue()
+        finally:
+            os.chdir(here)
+
+    def test_closing_xx2_moot_does_not_unblock_xx1(self):
+        """THE RED. The moot line is produced by a REAL close, not planted —
+        a planted line would prove the reader parses a shape, not that the
+        writer and the reader still agree on it."""
+        r = self._repo()
+        try:
+            code, out = self._run(r, ["item", "close", "xx-2"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("decision: which window is canonical → moot "
+                          "(closed by xx-2)",
+                          (r.dir / "LEDGER.md").read_text(encoding="utf-8"))
+            code, out = self._run(r, ["item", "ready", "xx-1"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("BLOCKED — in the OPERATOR's court", out)
+            self.assertNotIn("UNBLOCKED", out)
+            self.assertNotIn("schedulable now", out)
+        finally:
+            r.close()
+
+    def test_an_ANSWERED_question_still_unblocks_the_other_item(self):
+        """THE MUST-NOT-MOVE ARM, in the same fixture as the red so the two
+        share a coordinate. A real answer clears a real blocker; without this
+        the test above passes against a reader that unblocks nothing."""
+        r = self._repo([f"decision: {self.QUESTION} → the rotated one"])
+        try:
+            code, out = self._run(r, ["item", "ready", "xx-1"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("UNBLOCKED", out)
+            self.assertIn("READY and unblocked", out)
+        finally:
+            r.close()
+
+    def test_the_BLOCKED_message_names_the_moot_line_it_found(self):
+        """The flat "no `decision:` line names this question" is FALSE once a
+        moot line exists, and a reader who checked the ledger would find the
+        line it denies. Reporting BLOCKED is right; saying nothing names the
+        question is a true-sounding sentence the ledger refutes."""
+        r = self._repo()
+        try:
+            self._run(r, ["item", "close", "xx-2"])
+            _code, out = self._run(r, ["item", "ready", "xx-1"])
+            self.assertIn("records this question MOOT", out)
+            self.assertIn("moot (closed by xx-2)", out)
+            self.assertNotIn("No `decision:` line", out)
+        finally:
+            r.close()
+
+    def test_the_head_board_does_not_call_it_schedulable(self):
+        """The second reader. `item ready --head` is what actually schedules,
+        so a fix that reached the single-item verb alone would leave the
+        board printing the wrong number."""
+        r = self._repo()
+        try:
+            self._run(r, ["item", "close", "xx-2"])
+            code, out = self._run(r, ["item", "ready", "--head"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("0 schedulable now", out)
+        finally:
+            r.close()
+
+    def test_the_head_board_DOES_count_an_answered_one(self):
+        """The head's must-not-move arm — the paired half of the test above."""
+        r = self._repo([f"decision: {self.QUESTION} → the rotated one"])
+        try:
+            code, out = self._run(r, ["item", "ready", "--head"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("2 schedulable now", out)
+        finally:
+            r.close()
+
+
+class TheMootAnswerShapeIsAnchored(unittest.TestCase):
+    """The reader's own pair, below the CLI.
+
+    `decision_for` decides WHO a line speaks for; these assert both
+    directions of that scoping and the anchoring underneath it, which the
+    end-to-end tests exercise only in one configuration each.
+    """
+
+    QUESTION = "which window is canonical"
+
+    def _parsed(self, answer):
+        from lifecycle_core import ledger
+        return ledger.parse(f"schema: 2\ndecision: {self.QUESTION} → {answer}\n")
+
+    def test_a_moot_line_answers_for_its_own_closer(self):
+        """The direction that must still WORK. A blanket exclusion would pass
+        the red case and fail here, and the two readings are only
+        distinguishable at this altitude — a closed item never asks again."""
+        from lifecycle_core import ledger
+        p = self._parsed("moot (closed by xx-2)")
+        self.assertEqual(len(ledger.decision_for(p, self.QUESTION,
+                                                 for_item="xx-2")), 1)
+
+    def test_a_moot_line_answers_for_nobody_else(self):
+        from lifecycle_core import ledger
+        p = self._parsed("moot (closed by xx-2)")
+        self.assertEqual(ledger.decision_for(p, self.QUESTION,
+                                             for_item="xx-1"), [])
+        self.assertEqual(ledger.decision_for(p, self.QUESTION), [])
+
+    def test_the_shape_is_matched_from_the_START(self):
+        """An answer that merely CONTAINS the moot wording is an operator's
+        answer and clears the blocker. A containment test would read it as
+        moot and block an item on a question that was decided — the
+        over-fire direction, which is the one that trains an override.
+
+        The bite that moves this is `fullmatch` → `search`. It did NOT move
+        while `re.match` and a `^` in the pattern both anchored the start:
+        either bite left the other holding, so the check was unfalsifiable
+        while reading as extra care. Recorded because a green bite over a
+        redundant anchor is indistinguishable from one that discriminates."""
+        from lifecycle_core import ledger
+        p = self._parsed("superseded, see moot (closed by xx-2)")
+        self.assertIsNone(ledger.moot_closer(p.lines[0]))
+        self.assertEqual(len(ledger.decision_for(p, self.QUESTION,
+                                                 for_item="xx-1")), 1)
+
+    def test_the_shape_is_matched_to_the_END(self):
+        """The other end of the same one condition. An answer that STARTS
+        with the tool's wording and then says more is an operator's sentence,
+        not the tool's line, so it answers the question for everybody. Read
+        as moot it would block an item on a question that was decided.
+
+        `fullmatch` → `match` moves this one and leaves the START test green,
+        which is what tells the two ends apart."""
+        from lifecycle_core import ledger
+        p = self._parsed("moot (closed by xx-2) and since settled at the desk")
+        self.assertIsNone(ledger.moot_closer(p.lines[0]))
+        self.assertEqual(len(ledger.decision_for(p, self.QUESTION,
+                                                 for_item="xx-1")), 1)
+
+    def test_the_writer_and_the_reader_share_one_spelling(self):
+        """The drift probe. `verbs.py` writes what `moot_answer` returns and
+        `moot_closer` reads it; if either end grew its own literal this is
+        where it shows, rather than in a board that quietly unblocks again."""
+        from lifecycle_core import ledger
+        p = self._parsed(ledger.moot_answer("xx-2"))
+        self.assertEqual(ledger.moot_closer(p.lines[0]), "xx-2")
+
+    def test_a_blank_closer_is_not_a_closer(self):
+        """`moot (closed by )` names nobody, so it answers for nobody — the
+        safe direction. Read as a real closer it would answer for any item
+        whose id stripped to empty."""
+        from lifecycle_core import ledger
+        p = self._parsed("moot (closed by  )")
+        self.assertIsNone(ledger.moot_closer(p.lines[0]))
+
+
 if __name__ == "__main__":
     unittest.main()
