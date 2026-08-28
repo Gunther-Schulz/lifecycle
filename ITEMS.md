@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 57
+added: 58
 compacted: 0
 
 ## lc-1
@@ -535,3 +535,12 @@ evidence: cache-fix design 3.1b (seeding), 4 row 1 (the migration report)
 blocked-by: lc-64
 amend-reason: 2026-08-28 scope lc-65 to migrate's generically-detectable residue; method-file decomposition rides the file sweep, not migrate (design 3.1b refinement, operator GO 2026-08-28)
 amended-done-criterion: 2026-08-28 migrate --apply emits tend items for the residue it can detect generically — old-carrier readers still live, and an over-tripwire frozen archive — each PARKED with a typed blocker, in the migration report; the method file is the file-sweep's job (design 3.1b + 4), NOT migrate's; red-first: a source with live BACKLOG readers plus an oversized archive produces exactly those two parked tend items and no method-file item
+
+## lc-66
+grade: READY
+requirement: CROSS-ROW CLASS (begehung r5): the kind/vocabulary system is single-repo AND domain-scoped, so any cross-repo/cross-domain necessity — a dependency, a coordination condition, a detector spanning repos — has no first-class slot and falls to prose nothing surfaces; the tend gap one axis over; record: cache-fix begehung-findings-2026-08-28-r5.tsv, design 3.1/3.5
+goal: one-home-per-kind
+write-set: docs/directives/carrier-rework-design-2026-08-26.md@cache-fix,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/verbs.py
+done-criterion: a coordination layer: typed cross-repo edge (blocked-by <repo>:<id>, resolves on that item's DONE across carriers) + a cross-repo detector home + a cross-repo roll-up view; red-first on the cf-337->lc-64 case (it auto-returns to NEW when lc-64 closes)
+evidence: begehung r5 close-class over five vocabulary-slot rows; the live cf-337/lc-64 instance
+blocked-by: decision the coordination mechanism SHAPE: typed cross-repo edge (recommended) vs a declared coordination kind vs both
