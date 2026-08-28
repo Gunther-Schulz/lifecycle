@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 60
+added: 61
 compacted: 0
 
 ## lc-1
@@ -562,3 +562,12 @@ write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: migrate verifies a per-body content hash across the boundary, not only N-in=N-out; red-first: a body mutated between read and write is caught
 evidence: begehung r5 content-conservation row
 blocked-by: NONE
+
+## lc-69
+grade: READY
+requirement: The dropped reference tier (design 3.3: no reference tier survives; what fits no kind is dropped) leaves cross-cutting REASONING that justifies a SET of laws with no home; worth re-confirming now a concrete instance exists; record: begehung r5, design 3.3 :288-291
+goal: one-home-per-kind
+write-set: docs/directives/carrier-rework-design-2026-08-26.md@cache-fix
+done-criterion: operator re-confirms drop-or-home for cross-cutting reasoning; if home, the kind is declared; if drop, the decision is recorded with the instance that tested it
+evidence: begehung r5 reference-tier row
+blocked-by: decision re-confirm: drop cross-cutting reasoning, or give it a declared home
