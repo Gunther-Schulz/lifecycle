@@ -32,6 +32,7 @@ decision: who builds lc-17 merge mode, after two lanes were briefed for it → B
 decision: does the stated reason in lifecycle cbfaee6 hold: that lane opus-lifecycle-bundle's mailbox had failed → NO, refuted 2026-08-27 by the lane's own transcript: all four messages delivered in ONE batch at a turn boundary after its report. The commit and the stop stand on other grounds (uncommitted work in a shared tree); only the reason is withdrawn. Class: dispatch-guards 6822924.
 decision: does the item BODY change (rewrite the path out of it) or does the foreign-path class scope change (corpus -> source) to honour the declaration → moot (closed by lc-35)
 decision: does the 2026-08-26 line no remote, and none is to be created still bind → SUPERSEDED. The operator created the public remote 2026-08-27 (bar commit 70bc93c, .git/config 22:04:54, gh repo view PUBLIC), the very act that line reserved. Push authority is separate and open at the judgment desk; lifecycle commits stay unpushed until it lands (wave 5, C4)
+decision: lc-64 close omitted --ref; where is its payload ref recorded → lc-64 payload 9e2debc, close 6f7660e; the close-ref was not given at close time and closed bodies are immutable, so it is recorded here (the close commit itself also names lc-64)
 
 ## Archive (pre-migration)
 
