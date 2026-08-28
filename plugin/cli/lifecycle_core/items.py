@@ -672,7 +672,7 @@ def classify_blocker(value: str, prefix: str | None):
     if v.startswith("evidence "):
         rest = v[len("evidence "):].strip()
         return ("evidence", rest) if rest else (None, "")
-    if prefix and re.fullmatch(rf"{re.escape(prefix)}-\d+", v):
+    if prefix and grammar.id_re(prefix).match(v):
         return "item", v
     return None, ""
 
