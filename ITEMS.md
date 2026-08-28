@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 58
+added: 59
 compacted: 0
 
 ## lc-1
@@ -544,3 +544,12 @@ write-set: docs/directives/carrier-rework-design-2026-08-26.md@cache-fix,plugin/
 done-criterion: a coordination layer: typed cross-repo edge (blocked-by <repo>:<id>, resolves on that item's DONE across carriers) + a cross-repo detector home + a cross-repo roll-up view; red-first on the cf-337->lc-64 case (it auto-returns to NEW when lc-64 closes)
 evidence: begehung r5 close-class over five vocabulary-slot rows; the live cf-337/lc-64 instance
 blocked-by: decision the coordination mechanism SHAPE: typed cross-repo edge (recommended) vs a declared coordination kind vs both
+
+## lc-67
+grade: READY
+requirement: The operator decision-queue has no aging/ranking/cross-repo roll-up: decision blockers route to the operator's queue but it is not a declared kind with growth control (R22), and nothing aggregates pending decisions across 14 repos — against cheap oversight; record: begehung r5, design 3.1 :155-156, R3, R22
+goal: one-home-per-kind
+write-set: docs/directives/carrier-rework-design-2026-08-26.md@cache-fix,plugin/cli/lifecycle_core/verbs.py
+done-criterion: the decision queue is a declared kind with a flow alarm (pending-decision count trend) and a cross-repo roll-up (lane list surfaces pending decisions per repo); red-first: a decision blocker aged past a threshold surfaces as a finding
+evidence: begehung r5 F3/F4
+blocked-by: lc-66
