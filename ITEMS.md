@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 59
+added: 60
 compacted: 0
 
 ## lc-1
@@ -553,3 +553,12 @@ write-set: docs/directives/carrier-rework-design-2026-08-26.md@cache-fix,plugin/
 done-criterion: the decision queue is a declared kind with a flow alarm (pending-decision count trend) and a cross-repo roll-up (lane list surfaces pending decisions per repo); red-first: a decision blocker aged past a threshold surfaces as a finding
 evidence: begehung r5 F3/F4
 blocked-by: lc-66
+
+## lc-68
+grade: READY
+requirement: Conservation checks COUNT and source blob-sha, not body content: a migrated body garbled while the count holds passes clean (paraphrase-drift in a conservation costume); record: begehung r5, R8, cf-324
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: migrate verifies a per-body content hash across the boundary, not only N-in=N-out; red-first: a body mutated between read and write is caught
+evidence: begehung r5 content-conservation row
+blocked-by: NONE
