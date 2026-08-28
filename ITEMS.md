@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 61
+added: 62
 compacted: 0
 
 ## lc-1
@@ -551,3 +551,12 @@ write-set: docs/directives/carrier-rework-design-2026-08-26.md@cache-fix
 done-criterion: operator re-confirms drop-or-home for cross-cutting reasoning; if home, the kind is declared; if drop, the decision is recorded with the instance that tested it
 evidence: begehung r5 reference-tier row
 blocked-by: decision re-confirm: drop cross-cutting reasoning, or give it a declared home
+
+## lc-70
+grade: READY
+requirement: tend feature completeness (lc-64 escalations, not in its done-criterion): (a) a declaration LISTING tend in goals is silently absorbed by the union, but 3.1b says 'not declarable per repo'; (b) orientation (cli.py:144) prints DECLARED goals, so tend is invisible there — assurance narrower than reality; record: lc-64 build report
+goal: one-home-per-kind
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py
+done-criterion: kind check reports a declaration listing the reserved tend as a redundant-declaration finding (red-first); orientation shows the EFFECTIVE goal set (or marks tend reserved)
+evidence: lc-64 build report, escalations (a) and (b)
+blocked-by: NONE
