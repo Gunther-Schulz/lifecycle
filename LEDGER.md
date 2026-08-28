@@ -33,6 +33,9 @@ decision: does the stated reason in lifecycle cbfaee6 hold: that lane opus-lifec
 decision: does the item BODY change (rewrite the path out of it) or does the foreign-path class scope change (corpus -> source) to honour the declaration → moot (closed by lc-35)
 decision: does the 2026-08-26 line no remote, and none is to be created still bind → SUPERSEDED. The operator created the public remote 2026-08-27 (bar commit 70bc93c, .git/config 22:04:54, gh repo view PUBLIC), the very act that line reserved. Push authority is separate and open at the judgment desk; lifecycle commits stay unpushed until it lands (wave 5, C4)
 decision: lc-64 close omitted --ref; where is its payload ref recorded → lc-64 payload 9e2debc, close 6f7660e; the close-ref was not given at close time and closed bodies are immutable, so it is recorded here (the close commit itself also names lc-64)
+decision: re-confirm: drop cross-cutting reasoning, or give it a declared home → drop stands; cross-cutting reasoning that must persist is a JOURNAL incident cited by each law it justifies, no reference tier re-introduced (operator as-you-recommend 2026-08-28; design 3.3 amended)
+decision: is merge-of-N-carriers a real path worth the dedup, or is --merge-twice out of scope → real path: --merge re-runs legitimately as new source entries appear (cf-328 intake-additions), so a second run must not double-book residue; build the dedup on residue identity (operator as-you-recommend 2026-08-28)
+decision: the coordination mechanism SHAPE: typed cross-repo edge (recommended) vs a declared coordination kind vs both → typed cross-repo edge (blocked-by <repo>:<id>) plus the cross-repo detector home and roll-up as one coordination layer, not a separate kind: the dependency is an edge between existing items (operator as-you-recommend 2026-08-28, design 3.1 amended)
 
 ## Archive (pre-migration)
 
