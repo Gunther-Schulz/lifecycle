@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 52
+added: 53
 compacted: 0
 
 ## lc-1
@@ -498,4 +498,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/firelog.py,test/test_lanes.py
 done-criterion: entering a lane leaves a record the audit reads, and audit's use-evidence column is populated from it, red-first: today the column has no writer at all
 evidence: wave-5 L walk 2026-08-28: lane verb surface {list,register,new} has no enter verb; design section on audit promises use-evidence per lane
+blocked-by: NONE
+
+## lc-61
+grade: READY
+requirement: kind sweep reports plugin/workflows/.gitkeep as an unregistered persisted thing. The workflow-templates kind declares growth unbounded-with-reason and says the directory placeholder is what marks the set EMPTY rather than the directory's absence, so the placeholder is deliberate and the declaration simply does not claim it
+goal: one-home-per-kind
+write-set: .claude/lifecycle.json,test/test_declaration.py
+done-criterion: kind sweep returns CLEAN on this repo, with the placeholder claimed by a registered kind rather than exempted, red-first on the current FINDING
+evidence: wave-5 K walk 2026-08-28, executed: kind sweep returns FINDING unregistered_persisted_thing naming exactly one file, plugin/workflows/.gitkeep; kind check is CLEAN at 19 kinds, so the declaration is well-formed and merely incomplete
 blocked-by: NONE
