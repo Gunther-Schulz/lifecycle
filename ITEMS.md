@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 47
+added: 48
 compacted: 0
 
 ## lc-1
@@ -453,4 +453,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
 done-criterion: item ready and item close reach the SAME verdict on one blocker from one ledger state, red-first on the recorded walk: today ready says UNBLOCKED and close says never answered on the identical item
 evidence: wave-5 T walk, scratch clone of lifecycle at 66bd2af, probe item lc-55: ready output UNBLOCKED with LEDGER.md:35 cited, close output blocker-moot never answered, ledger lines 35 and 36 contradictory. Mechanism NOT established at the desk, only the divergence
+blocked-by: NONE
+
+## lc-56
+grade: READY
+requirement: ledger add decision writes its line and does not commit it, and prints no NOT COMMITTED notice. lc-25 fixed exactly this contract for item add, which now commits on every join or says it did not; the sibling ledger verb never got it. The write with no committing actor is the assumed-delivery class: it does not fail, it accumulates
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/ledger.py,plugin/cli/lifecycle_core/verbs.py,test/test_ledger.py
+done-criterion: ledger add commits on every write, or prints NOT COMMITTED, matching lc-25 contract for item add. Red-first on the recorded pair: item add printed committed and moved HEAD while ledger add left M LEDGER.md with no notice, same clone same run
+evidence: wave-5 T walk 2026-08-28, two arms in one run on a scratch clone at 66bd2af: item add lc-55 printed committed: lifecycle: add lc-55 and HEAD moved to 86b9009; ledger add decision then wrote LEDGER.md:35 and git status showed M LEDGER.md with HEAD unchanged. Also observed at the desk earlier the same day writing the C4 line, which the desk had to commit by hand. Consequence measured: item ready resolved a blocker from that UNCOMMITTED ledger line, so an item reads as unblocked in a tree where the answer was never committed
 blocked-by: NONE
