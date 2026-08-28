@@ -205,6 +205,17 @@ def cmd_init(args, out, repo: Path) -> int:
     goals = ["general-maintenance"]
     out(f"goals: {goals} (placeholder — declare this repo's real goals "
         "before relying on the head or the retire lane)")
+    # §3.1b: the reserved goal is NOT written into the declaration — it is
+    # not declarable, and a repo that listed it would be declaring a value
+    # the plugin owns. It is therefore invisible in the file this verb just
+    # wrote, which makes `init`'s own output the one moment a repo's author
+    # is told the value exists at all.
+    out(f"goals (effective): {decl.effective_goals({'goals': goals})} — the "
+        f"declared list plus the plugin-reserved `{decl.RESERVED_GOAL}`, "
+        "accepted in every repo and declared in none: work on this repo's "
+        "own carrier, method, hooks, machinery or migration residue "
+        "(§3.1b). Book self-work under it from day one rather than leaving "
+        "it in prose nobody re-reads.")
 
     doc = {
         "schema": decl.SCHEMA_FLOOR,

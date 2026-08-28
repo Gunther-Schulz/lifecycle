@@ -581,10 +581,17 @@ def _collect_slots(args, ctx: Ctx, out):
         "blocked-by": (args.blocked_by or items_mod.BLOCKER_NONE).strip(),
     }
 
-    goals = ctx.declaration.get("goals") or []
+    # THE EFFECTIVE SET, not the declared one (§3.1b): declared ∪ {`tend`}.
+    # The reserved value is what a repo files its work on ITSELF under, and
+    # nothing declares it — so reading `goals` here would refuse, in every
+    # repo, the one goal every repo is supposed to accept.
+    goals = decl.effective_goals(ctx.declaration)
     if slots["goal"] and slots["goal"] not in goals:
         out(f"FINDING [dangling_reference] `--goal {slots['goal']}` is not "
-            f"one of the declared goals ({', '.join(goals) or 'none'}). An "
+            f"one of the goals this repo accepts ({', '.join(goals)}) — "
+            f"the declared goals plus the plugin-reserved "
+            f"`{decl.RESERVED_GOAL}` (work on the repo's own carrier, "
+            "method, hooks, machinery or migration residue). An "
             "item advancing none of the repo's goals is a retire-lane drop "
             "candidate, which is a judgment the carrier can only make "
             "against a declared list.")
@@ -1469,10 +1476,11 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
     # The SAME declared-goal check `item add` applies. A goal that was
     # refused at intake and accepted at amendment would make the amendment
     # the way around the check rather than the way to fix a value.
-    goals = ctx.declaration.get("goals") or []
+    goals = decl.effective_goals(ctx.declaration)
     if "goal" in updates and updates["goal"] not in goals:
         out(f"FINDING [dangling_reference] `--goal {updates['goal']}` is not "
-            f"one of the declared goals ({', '.join(goals) or 'none'}).")
+            f"one of the goals this repo accepts ({', '.join(goals)}) — the "
+            f"declared goals plus the plugin-reserved `{decl.RESERVED_GOAL}`.")
         return exits.FINDING
 
     parsed, why = _load(ctx.items_path)

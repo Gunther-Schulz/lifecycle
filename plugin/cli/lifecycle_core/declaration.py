@@ -102,6 +102,15 @@ REF_BARE = ("session", "operator")
 #: why it lives here as data rather than in a sentence.
 REF_TYPES = ("lane", "verb", "hook", "session", "producer", "operator")
 
+#: THE ONE PLUGIN-RESERVED GOAL (§3.1b, operator 2026-08-28): "work on this
+#: repo's own carrier, method, hooks, machinery, or migration residue". It is
+#: in no declaration's `goals` list and is not declarable per repo — the
+#: plugin adds it to every repo's EFFECTIVE goal set (`effective_goals`
+#: below), so self-work is bookable in a fresh repo from its first `item add`
+#: and in a migrated one with nothing declared. A rename is this constant and
+#: nothing else; no per-repo edit follows it.
+RESERVED_GOAL = "tend"
+
 #: Top-level keys every declaration carries. An EMPTY declared list is not the
 #: same as an ABSENT key — absent is a finding, empty is a stated fact — so
 #: `lanes` and `template-bindings` are required even where a repo has none.
@@ -515,6 +524,40 @@ def head_lead_goal(hr):
     if isinstance(hr, dict) and isinstance(hr.get("lead-goal"), str):
         return hr["lead-goal"].strip() or None
     return None
+
+
+def effective_goals(doc) -> list:
+    """The goal vocabulary an ITEM may carry: the declared set ∪ {`tend`}.
+
+    §3.1b, the plugin-reserved meta-goal. `goals` is a per-repo DOMAIN
+    vocabulary — every declared goal names a stage of the work the repo
+    EXISTS to do — which leaves a repo's work on ITSELF (its carrier, its
+    method file, its hooks, the migration's own residue) advancing no goal
+    and therefore unbookable. It fell out of the carrier into design prose,
+    where nothing surfaces it: THIS design's own dev-loop decomposition sat
+    fully specified and never booked until an operator asked, weeks late.
+    The gap is structural — the carrier had no slot for the work, so care
+    could not put it there.
+
+    RESERVED, NOT DECLARABLE: `tend` is added here, by the plugin, for every
+    repo — new, migrated, or one whose declaration predates the value. So a
+    repo never declares it (`init` writes it into no `goals` list) and a repo
+    can never fail to have it.
+
+    THE HEAD RULE DOES NOT READ THIS. `head-rule.lead-goal` validates against
+    the DECLARED set, because §3.1b puts `tend` outside the head's ordering:
+    meta-work is visible and schedulable but never takes the scheduled head
+    from domain work. Widening this one call site to the validator above
+    would be invisible in every acceptance test and would quietly let a repo
+    key its head to a goal the design says never leads.
+    """
+    goals = doc.get("goals") if isinstance(doc, dict) else None
+    goals = [g for g in goals if isinstance(g, str)] if isinstance(
+        goals, list) else []
+    # A union, not an append: `tend` is undeclarable but a hand edit or a
+    # merge can still put it in the list, and a doubled entry would render
+    # twice in every message that prints the vocabulary.
+    return goals + ([RESERVED_GOAL] if RESERVED_GOAL not in goals else [])
 
 
 def _validate_leak_scan(ls, res: Result) -> None:
