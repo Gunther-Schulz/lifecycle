@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 56
+added: 57
 compacted: 0
 
 ## lc-1
@@ -524,3 +524,12 @@ write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/in
 done-criterion: item add --goal tend and item check accept tend in every repo with nothing declared; a non-tend undeclared goal still refuses (red-first); init's effective goal set = declared union {tend}
 evidence: cache-fix design 3.1b, the plugin-reserved meta-goal
 blocked-by: NONE
+
+## lc-65
+grade: READY
+requirement: migrate converts the carrier and leaves its residue — un-decomposed method file, live old-carrier readers, oversized frozen archive — for a human to notice, and humans don't (the assumed-delivery class); record: cache-fix design 3.1b, 4 row 1
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py
+done-criterion: migrate --apply emits a fixed set of tend items for its residue, each PARKED with a typed blocker, in the migration report; red-first: a source with a method file plus live BACKLOG readers produces exactly those parked tend items
+evidence: cache-fix design 3.1b (seeding), 4 row 1 (the migration report)
+blocked-by: lc-64
