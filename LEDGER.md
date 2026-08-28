@@ -460,3 +460,49 @@ read rather than reporting a clean parse over the part it did.
   boundary, not a patch. Cheapest NOW rather than later: exactly one
   declaration exists today (claude-code-cache-fix's dry-run one), and two exist
   tomorrow. Basis: the lane's addendum.
+- **2026-08-28 — wave 5, item G: the shared grammar module, and the
+  silent-corruption defect it uncovered.** Lane `opus-lc40-grammar`
+  (opus; peer desk `dotfiles-a7` dispatching, grading and integrating;
+  judgment desk `claude-code-cache-fix-14`). Four commits, booked here
+  because the pre-push gate rightly blocks a marked subagent commit
+  whose sha sits in no record carrier: `0c11b7f` bump 0.3.20 -> 0.3.21
+  alone and FIRST (the bump-first plan, measured this wave in a scratch
+  clone: payload without bump REFUSED, payload+bump in one commit
+  ACCEPTED, and with the bump committed-but-unpushed a second payload
+  commit ACCEPTED, because the guard compares against origin and not
+  against the parent) · `a146b62` `grammar.py` NEW plus six modules,
+  +301/-65 · `ec1ab60` `test_verbs.py` +134 · `c03399e` the third id
+  spelling the lane's own first sweep missed. THE MODULE owns the
+  `## <id>` heading, the slot line, ARCHIVE_HEADING, the id forms, the
+  ledger separators and `check_prose`, and REGRADE_BLOCKER — the
+  minting form now beside the predicate that judges it; old names
+  re-exported so every existing reader keeps one source.
+  THE SECOND RED, not in the brief and worth more than the refactor:
+  `verbs._set_slots` FOUND a block with `^##\s+(\S+)\s*$` and ENDED it
+  with `startswith("## ")`. Those disagree on a tab-separated heading,
+  and where they disagreed the write loop ran past its block into the
+  next item — `item park` and `item promote` the two callers, exit 0,
+  no finding, both blocks still well-formed. Red against a whole-repo
+  `git archive` of 66bd2af whose own self-check was green first:
+  `AssertionError: 'PARKED' != 'READY' : xx-2 was parked by a call that
+  named xx-1`. Both ends now come from `grammar`.
+  EXISTING DATA IS CLEAN, measured before the fix was trusted rather
+  than assumed: 551 `##` headings across all six live carriers
+  (dotfiles, lifecycle, cache-fix ITEMS.md + ITEMS-DONE.md), every one
+  `'## '` with exactly one space, zero anomalies — with a planted-file
+  control that flagged tab, double-space and no-space while ignoring
+  the good headings and a real `###` body line, so the zero is an
+  absence and not a dead pattern. Blast radius future-only; no repair
+  owed.
+  VERIFIED AT THE ARTIFACT by the peer desk, bytecode caches deleted
+  first: `Ran 281 tests … OK` (275 baseline + 6), 0 failed 0 SKIPPED;
+  `--test` `rows: 73  73 passed, 0 failed, 0 raised, 0 skipped`,
+  identical to baseline; `prove-rows` `63 of 73`, same ten named rows,
+  none newly dark. Booked from the lane's honest residue: lc-63
+  (`item promote` inherits the fix through the shared helper and has no
+  executed arm of its own). One basis correction fed back: `ends_block`'s
+  docstring says a block's body lines never begin with `##`, which is
+  false — `cache-fix/ITEMS-DONE.md:2509` is a `###` line inside a body
+  — while the predicate is anchored at exactly two hashes and is
+  therefore correct. The code holds; the sentence justifying it was
+  wider than what it establishes.
