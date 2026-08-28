@@ -30,6 +30,7 @@ decision: does init seed the declared carriers on a bare repo → Yes: init crea
 superseded: lc-15 by lc-28 — write-set omitted the call site; lane C found it (2f interim, 2026-08-27)
 decision: who builds lc-17 merge mode, after two lanes were briefed for it → B2 builds. Lane B was STOPPED (TaskStop) and is absent from the agent listing; its uncommitted work was saved to scratch and reverted; nothing of it is reused. B2 is the only writer in this copy. Dispatcher error, contained, no commit entered history. 2026-08-27.
 decision: does the stated reason in lifecycle cbfaee6 hold: that lane opus-lifecycle-bundle's mailbox had failed → NO, refuted 2026-08-27 by the lane's own transcript: all four messages delivered in ONE batch at a turn boundary after its report. The commit and the stop stand on other grounds (uncommitted work in a shared tree); only the reason is withdrawn. Class: dispatch-guards 6822924.
+decision: does the item BODY change (rewrite the path out of it) or does the foreign-path class scope change (corpus -> source) to honour the declaration → moot (closed by lc-35)
 
 ## Archive (pre-migration)
 
