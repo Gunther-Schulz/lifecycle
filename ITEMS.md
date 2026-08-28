@@ -516,15 +516,6 @@ done-criterion: item promote carries its own red against the OLD boundary code, 
 evidence: lane opus-lc40-grammar report gap 3, 2026-08-28, its own words: the fix is inherited through the shared helper, inference not an executed arm. The park arm's red is real and pasted (AssertionError: 'PARKED' != 'READY' : xx-2 was parked by a call that named xx-1) against a whole-repo git archive of 66bd2af whose own self-check was green first; promote has no equivalent
 blocked-by: NONE
 
-## lc-64
-grade: READY
-requirement: goal is per-repo DOMAIN vocabulary (design 3.1), so repo-self-work — method decomposition, hook retirement, migration residue — advances no goal and cannot be booked; record: cache-fix design 3.1b (operator 2026-08-28)
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/init.py
-done-criterion: item add --goal tend and item check accept tend in every repo with nothing declared; a non-tend undeclared goal still refuses (red-first); init's effective goal set = declared union {tend}
-evidence: cache-fix design 3.1b, the plugin-reserved meta-goal
-blocked-by: NONE
-
 ## lc-65
 grade: READY
 requirement: migrate converts the carrier and leaves its residue — un-decomposed method file, live old-carrier readers, oversized frozen archive — for a human to notice, and humans don't (the assumed-delivery class); record: cache-fix design 3.1b, 4 row 1

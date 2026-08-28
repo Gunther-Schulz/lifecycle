@@ -79,5 +79,14 @@ amended-blocked-by: 2026-08-27 NONE
 closed-reason: 2026-08-28 the defect is fixed and the criterion that outlived it is superseded here. lc-40 asked that a minted blocker question be storable VERBATIM; that is unsatisfiable by design, since the ledger refuses separator-bearing text and the same design refuses both escaping and normalisation. The satisfiable property is STORABLE: the minter never produces a question the ledger would refuse. Option ONE landed at c5164f7 (migrate sanitises at mint time) and a146b62 put the minting form beside the predicate that judges it, in the shared grammar module. Verified at this desk 2026-08-28: c5164f7 is an ancestor of HEAD, and the ledger refusal still fires at HEAD on a separator-bearing question with the tree untouched by the refused call
 closed-ref: c5164f7, a146b62
 
+## lc-64
+grade: DONE
+requirement: goal is per-repo DOMAIN vocabulary (design 3.1), so repo-self-work — method decomposition, hook retirement, migration residue — advances no goal and cannot be booked; record: cache-fix design 3.1b (operator 2026-08-28)
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/init.py
+done-criterion: item add --goal tend and item check accept tend in every repo with nothing declared; a non-tend undeclared goal still refuses (red-first); init's effective goal set = declared union {tend}
+evidence: cache-fix design 3.1b, the plugin-reserved meta-goal
+blocked-by: NONE
+
 ## Archive (pre-migration)
 
