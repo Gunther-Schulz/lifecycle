@@ -36,6 +36,7 @@ decision: lc-64 close omitted --ref; where is its payload ref recorded → lc-64
 decision: re-confirm: drop cross-cutting reasoning, or give it a declared home → drop stands; cross-cutting reasoning that must persist is a JOURNAL incident cited by each law it justifies, no reference tier re-introduced (operator as-you-recommend 2026-08-28; design 3.3 amended)
 decision: is merge-of-N-carriers a real path worth the dedup, or is --merge-twice out of scope → real path: --merge re-runs legitimately as new source entries appear (cf-328 intake-additions), so a second run must not double-book residue; build the dedup on residue identity (operator as-you-recommend 2026-08-28)
 decision: the coordination mechanism SHAPE: typed cross-repo edge (recommended) vs a declared coordination kind vs both → typed cross-repo edge (blocked-by <repo>:<id>) plus the cross-repo detector home and roll-up as one coordination layer, not a separate kind: the dependency is an edge between existing items (operator as-you-recommend 2026-08-28, design 3.1 amended)
+decision: re-confirm: drop cross-cutting reasoning, or give it a declared home → moot (closed by lc-69)
 
 ## Archive (pre-migration)
 

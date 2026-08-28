@@ -102,5 +102,16 @@ amend-reason: 2026-08-28 scope lc-65 to the readers class only; drop the archive
 amended-done-criterion: 2026-08-28 migrate's carrier-writing run (not --report-only) emits ONE parked tend item for the old-carrier readers still live: grep tracked files (git ls-files) for the source basenames excluding sources/successors/report, book only when hits>0, hit paths in evidence, blocker decision 'every consumer migrated or declared exempt'; counted SEPARATELY from source entries (baseline = n_items + n_residue + archive_count; reconciliation identity over source entries only), ids after the migrated block, slots real text (not UNKNOWN); red-first: a source with live readers produces exactly that one item. The method file (file sweep) and the frozen archive (retire-lane compaction, R22 — no size cap) are NOT booked here.
 closed-ref: 18ca4e5
 
+## lc-69
+grade: DONE
+requirement: The dropped reference tier (design 3.3: no reference tier survives; what fits no kind is dropped) leaves cross-cutting REASONING that justifies a SET of laws with no home; worth re-confirming now a concrete instance exists; record: begehung r5, design 3.3 :288-291
+goal: one-home-per-kind
+write-set: docs/directives/carrier-rework-design-2026-08-26.md@cache-fix
+done-criterion: operator re-confirms drop-or-home for cross-cutting reasoning; if home, the kind is declared; if drop, the decision is recorded with the instance that tested it
+evidence: begehung r5 reference-tier row
+blocked-by: NONE
+blocker-moot: re-confirm: drop cross-cutting reasoning, or give it a declared home
+closed-ref: f0aae22
+
 ## Archive (pre-migration)
 

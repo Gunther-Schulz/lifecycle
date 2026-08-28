@@ -543,15 +543,6 @@ done-criterion: migrate verifies a per-body content hash across the boundary, no
 evidence: begehung r5 content-conservation row
 blocked-by: NONE
 
-## lc-69
-grade: READY
-requirement: The dropped reference tier (design 3.3: no reference tier survives; what fits no kind is dropped) leaves cross-cutting REASONING that justifies a SET of laws with no home; worth re-confirming now a concrete instance exists; record: begehung r5, design 3.3 :288-291
-goal: one-home-per-kind
-write-set: docs/directives/carrier-rework-design-2026-08-26.md@cache-fix
-done-criterion: operator re-confirms drop-or-home for cross-cutting reasoning; if home, the kind is declared; if drop, the decision is recorded with the instance that tested it
-evidence: begehung r5 reference-tier row
-blocked-by: decision re-confirm: drop cross-cutting reasoning, or give it a declared home
-
 ## lc-70
 grade: READY
 requirement: tend feature completeness (lc-64 escalations, not in its done-criterion): (a) a declaration LISTING tend in goals is silently absorbed by the union, but 3.1b says 'not declarable per repo'; (b) orientation (cli.py:144) prints DECLARED goals, so tend is invisible there — assurance narrower than reality; record: lc-64 build report
