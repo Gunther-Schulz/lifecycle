@@ -58,6 +58,7 @@ pointers were stale before the commit landed.
 import hashlib
 import json
 import re
+import subprocess
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -710,6 +711,125 @@ def build_items(entries, prefix: str, source_name: str,
     return blocks, n
 
 
+# --- THE MIGRATION'S OWN RESIDUE (lc-65, §3.1b) ------------------------------
+#
+# A migration converts the carrier and leaves consumers of the OLD one still
+# pointing at it. Nobody is scheduled to notice — that is the assumed-delivery
+# class: a write with no committing actor ACCUMULATES, and the only detector
+# is a count of what piled up. The migration is the ONE party that knows its
+# residue exists at the moment it creates it, so it is the party that books
+# it, as a `tend` item PARKED on a named decision. A repo's cleanup then sits
+# in its carrier with a visible blocker on every session's banner instead of
+# in a design document nobody re-reads.
+#
+# ONE CLASS, and the two it does NOT book are as load-bearing as the one it
+# does (§3.1b, amended 2026-08-28):
+#   * the FROZEN ARCHIVE is the `done bodies` kind's declared COMPACTION exit
+#     (the retire lane, R20/R22). R22 withdrew every size cap, so there is no
+#     line-count tripwire in this system and none is to be invented here:
+#     booking it would re-add a banned cap AND double the retire lane.
+#   * the un-decomposed METHOD FILE has no universal marker a tool can key
+#     on, so it rides the FILE SWEEP (§4).
+# No class is claimed twice, which is why each absence is asserted in the
+# tests rather than left to the reader.
+
+#: The decision the residue item waits on. "Exempt" carries judgment, which is
+#: why this is a `decision` and not an `evidence` predicate: a grep-shaped
+#: predicate would stay red on any document that merely MENTIONS the old name,
+#: and would resolve itself the day somebody renamed a file.
+RESIDUE_DECISION = "every consumer migrated or declared exempt"
+
+
+def _rel(repo: Path, path: Path) -> str:
+    """`path` as git would name it from `repo`'s root — the spelling the
+    exclusion set is compared against. A path outside the repo cannot be a
+    tracked file, so its own string is returned and matches nothing."""
+    try:
+        return path.resolve().relative_to(repo.resolve()).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def live_carrier_readers(repo: Path, names, excluded) -> tuple:
+    """`(paths, why-unverified)` — TRACKED files that still name the old
+    carriers.
+
+    TRACKED IS THE POPULATION (§3.1b): `git grep` searches exactly the files
+    git tracks, and a reader nobody tracks is not a consumer the migration
+    broke. `-F` is not a detail — the basenames carry a `.`, and under a
+    regex `BACKLOG.md` would also match `BACKLOGxmd`, which is a prefix match
+    in an equality's costume. `-I` drops binary files, whose byte-level match
+    is not a reader in any sense a human could act on.
+
+    THE EXCLUSIONS ARE WHAT KEEP THIS FROM FIRING IN EVERY REPO IT RUNS IN.
+    The source carrier names itself in its own record tails, every migrated
+    item's `evidence` names it, and the report names it throughout — so a
+    detector without them would book a residue item for the migration's own
+    output, forever, in a repo with no real consumer at all.
+
+    THE THIRD ANSWER IS KEPT. `git grep` exits 1 for "no match" and ≥2 for a
+    real failure, and folding those together would turn an unrunnable git
+    into a clean repo — a zero shaped exactly like an absence.
+    """
+    patterns = []
+    for name in names:
+        patterns += ["-e", Path(name).name]
+    if not patterns:
+        return [], "no source carrier name to search for"
+    try:
+        p = subprocess.run(
+            ["git", "-C", str(repo), "grep", "-l", "-I", "-F", *patterns],
+            capture_output=True, text=True)
+    except OSError as exc:
+        return [], f"`git grep` could not be run ({exc!r})"
+    if p.returncode not in (0, 1):
+        return [], (f"`git grep` exited {p.returncode}: "
+                    f"{p.stderr.strip()[:200]!r}")
+    hits = [ln.strip() for ln in p.stdout.split("\n") if ln.strip()]
+    return [h for h in hits if h not in excluded], ""
+
+
+def residue_blocks(readers, src_label: str, ident: str) -> list:
+    """The residue item, or NOTHING when there are no readers.
+
+    A repo with no live readers has no residue, and an item saying "none"
+    would be a permanent parked lie sitting on every banner. So the zero is
+    stated in the REPORT, where a reader can see it was checked, and not in
+    the carrier, where it would be work that does not exist.
+
+    EVERY SLOT IS REAL TEXT. `UNKNOWN` is the migration's transitional marker
+    for slots nobody ever wrote, and this item is tool-generated rather than
+    migrated: `item ready` refuses an UNKNOWN slot, so an UNKNOWN here would
+    park the item behind a re-grade nobody can perform.
+    """
+    if not readers:
+        return []
+    shown = ", ".join(readers)
+    blocked = _ledger_storable(f"decision {RESIDUE_DECISION}")
+    return [items_mod.render_block(ident, {
+        "grade": "PARKED",
+        "requirement": (
+            f"{len(readers)} tracked file(s) still name the migrated "
+            f"carrier(s) {src_label}. A consumer left pointing at a carrier "
+            "nobody writes any more reads as current until someone notices, "
+            "and nobody is scheduled to — record: the migration report"),
+        # §3.1b: the plugin-reserved meta-goal. Self-work advances no DOMAIN
+        # goal, so without it this item could not be booked in any repo.
+        "goal": decl.RESERVED_GOAL,
+        # The slot's own definition is "the paths the realizing change lands
+        # in", and here that is exactly the reader set — one variable, so the
+        # two slots cannot drift apart.
+        "write-set": shown,
+        "done-criterion": (
+            f"no tracked file outside the migration's own outputs names "
+            f"{src_label}, or each remaining one is recorded as a declared "
+            "exemption"),
+        "evidence": f"tracked files naming {src_label} at migration time: "
+                    f"{shown}",
+        "blocked-by": blocked,
+    })]
+
+
 # --- MERGE: a second carrier into a populated one (lc-17) --------------------
 #
 # A merge is a SECOND INVOCATION, one `--from` and one `--from-done` per run,
@@ -1322,6 +1442,30 @@ def run(args, out, ctx) -> int:
                 if merge else None)
     written, n_items = build_items(read.entries, ctx.prefix, src_name,
                                    allocate=allocate)
+
+    # --- the migration's own residue (lc-65, §3.1b). Detected in EVERY mode
+    # so `--report-only` can re-render its description; WRITTEN only by a run
+    # that writes the carriers.
+    src_names = [src_name] + ([] if src_done is None else [done_name])
+    residue_excluded = {src_name, done_name} | {
+        _rel(ctx.repo, ctx.items_path), _rel(ctx.repo, ctx.done_path),
+        report_rel}
+    readers, readers_why = live_carrier_readers(ctx.repo, src_names,
+                                                residue_excluded)
+    src_label = " and ".join(f"`{n}`" for n in src_names)
+    # THE ID IS ALLOCATED ONLY WHERE THERE IS SOMETHING TO NUMBER — an
+    # allocator called for an item that is never written burns an id, and the
+    # gap it leaves is indistinguishable from a body somebody deleted.
+    # `--report-only` DESCRIBES and books nothing, so it builds no block and
+    # its residue count is a true zero: a report claiming a booked item over
+    # a carrier this run never touched would be a number nobody could find
+    # the body for.
+    residue = []
+    if readers and not report_only:
+        residue = residue_blocks(
+            readers, src_label,
+            allocate() if allocate is not None else f"{ctx.prefix}-{n_items + 1}")
+    n_residue = len(residue)
     unclassified = [e for e in read.entries
                     if e.grade is None and not e.closure]
     closures = [e for e in read.entries if e.closure]
@@ -1335,7 +1479,13 @@ def run(args, out, ctx) -> int:
     # identity hold by a coincidence rather than by construction.
     archive_count = (items_mod.archive_entries(done_text)
                      + items_mod.archive_entries(closure_text))
-    baseline = n_items + archive_count
+    # THE RESIDUE IS COUNTED SEPARATELY FROM SOURCE ENTRIES (§3.1b). It comes
+    # from no entry in the source, so folding it into `n_items` would break
+    # the reconciliation identity below — `entries read == written + closed +
+    # unclassified` — and answer COULD NOT VERIFY on every migration after
+    # this one. It IS a body in the carrier, so conservation must see it: the
+    # baseline carries it, the identity does not.
+    baseline = n_items + n_residue + archive_count
     head = (f"schema: {items_mod.SCHEMA_FLOOR}\n"
             f"baseline: {baseline}\nadded: 0\ncompacted: 0\n")
     # THE ARCHIVE SECTION IS WRITTEN EVEN WHEN IT IS EMPTY, and it says which
@@ -1376,15 +1526,16 @@ def run(args, out, ctx) -> int:
         # never did. Either spelling keeps the identity true — the reading is
         # what decides between them, not the arithmetic.
         live_old = ctx.items_path.read_text(encoding="utf-8")
-        live_new, ok = bump_head(live_old, "baseline", n_items + archive_count)
+        live_new, ok = bump_head(live_old, "baseline",
+                                 n_items + n_residue + archive_count)
         if not ok:
             merge_head_problem = (
                 "the carrier head carries no readable `baseline: <n>` line, "
                 "so this merge could not record its bodies in the "
                 "conservation identity")
         else:
-            if written:
-                live_new = append_blocks(live_new, written)
+            if written or residue:
+                live_new = append_blocks(live_new, written + residue)
             ctx.items_path.write_text(live_new, encoding="utf-8")
             if ctx.done_path.exists():
                 # THE ARCHIVE HEADING IS WHERE THE APPEND HAS TO LAND, and a
@@ -1411,7 +1562,7 @@ def run(args, out, ctx) -> int:
                     + f"{items_mod.ARCHIVE_HEADING}\n\n" + done_text
                     + closure_text, encoding="utf-8")
     elif not report_only:
-        ctx.items_path.write_text(head + "\n" + "\n".join(written),
+        ctx.items_path.write_text(head + "\n" + "\n".join(written + residue),
                                   encoding="utf-8")
         ctx.done_path.write_text(
             archive_note + f"schema: {items_mod.SCHEMA_FLOOR}\n\n"
@@ -1441,7 +1592,8 @@ def run(args, out, ctx) -> int:
         render_report(ctx, read, done_read, src_name, done_name, n_items,
                       unclassified, archive_count, baseline, ledger_count,
                       lwhy, report_rel, closures, src_blob, done_blob,
-                      carried_src, carried_done),
+                      carried_src, carried_done, readers, readers_why,
+                      src_label, n_residue),
         encoding="utf-8")
 
     # --- the run's own answer
@@ -1470,6 +1622,22 @@ def run(args, out, ctx) -> int:
         "hides the untyped one):")
     for typ in ("decision", "evidence", "item-id", "NONE", "untyped"):
         out(f"        {typ:<10} {bt.get(typ, 0)}")
+    if readers_why:
+        out(f"    RESIDUE (§3.1b):          COULD NOT VERIFY — {readers_why}; "
+            "the tracked files were not searched, which is not the same "
+            "answer as 'no consumer is left'")
+    elif not readers:
+        out(f"    RESIDUE (§3.1b):          none — no tracked file outside "
+            f"this migration's own outputs names {src_label}; nothing booked "
+            "(an item saying 'none' would be a permanent parked lie)")
+    elif report_only:
+        out(f"    RESIDUE (§3.1b):          {len(readers)} live reader(s) of "
+            f"{src_label} — DESCRIBED in the report; --report-only writes no "
+            "carrier, so no item was booked")
+    else:
+        out(f"    RESIDUE (§3.1b):          1 `tend` item PARKED on "
+            f"\"{RESIDUE_DECISION}\", naming {len(readers)} live reader(s) of "
+            f"{src_label}; counted separately from source entries")
     out(f"    archive bodies:           {archive_count} → "
         f"{ctx.done_path.name}, verbatim")
     out(f"    ledger lines:             {ledger_count} (nothing migrates into "
@@ -1643,7 +1811,8 @@ def routed_items(ctx, report_rel: str) -> list:
 def render_report(ctx, read, done_read, src_name, done_name, n_items,
                   unclassified, archive_count, baseline, ledger_count,
                   lwhy, report_rel="", closures=(), src_blob="",
-                  done_blob="", carried_src=None, carried_done=None) -> str:
+                  done_blob="", carried_src=None, carried_done=None,
+                  readers=(), readers_why="", src_label="", n_residue=0) -> str:
     """The classification report.
 
     IT DESCRIBES ENTRIES; IT DOES NOT QUOTE THEM. Every entry appears as its
@@ -1716,6 +1885,7 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
       f"{archive_count} |")
     a(f"| entries routed to the ledger | "
       f"{'COULD NOT VERIFY' if ledger_count is None else ledger_count} |")
+    a(f"| RESIDUE items booked (`tend`, from no source entry) | {n_residue} |")
     a("")
     ident_ok = (len(read.entries)
                 == n_items + len(closures) + len(unclassified))
@@ -1737,9 +1907,15 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
       "than as nothing at all.")
     a("")
     a(f"**Conservation (§3.1), computed on the produced files:** "
-      f"items {n_items} + done {archive_count} = {n_items + archive_count}; "
+      f"items {n_items + n_residue} (of which {n_residue} residue) + done "
+      f"{archive_count} = {n_items + n_residue + archive_count}; "
       f"baseline {baseline} + added 0 − compacted 0 = {baseline}. "
-      f"{'HOLDS' if n_items + archive_count == baseline else 'FAILS'}.")
+      f"{'HOLDS' if n_items + n_residue + archive_count == baseline else 'FAILS'}"
+      ". THE RESIDUE IS IN THIS IDENTITY AND NOT IN THE ONE ABOVE, and the "
+      "split is the point: a residue item is a BODY in the carrier, so "
+      "conservation must see it, and it comes from no SOURCE ENTRY, so the "
+      "reconciliation identity must not — folding it in there would answer "
+      "COULD NOT VERIFY on every migration after this one.")
     a("")
     a("The bullet count and the archive count use DIFFERENT notions of an "
       "entry, deliberately and not accidentally: the archive count is "
@@ -1981,6 +2157,53 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
       f"in `{src_name}`, and git keeps them either way — but a later act "
       "that retires the old carrier drops them to history, and that is worth "
       "deciding rather than discovering.")
+    a("")
+    a("## The migration's own RESIDUE, booked as `tend` items (§3.1b)")
+    a("")
+    a("A migration leaves consumers of the OLD carrier still pointing at it, "
+      "and nobody is scheduled to notice — the assumed-delivery class, where "
+      "a write with no committing actor ACCUMULATES and the only detector is "
+      "a count of what piled up. The migration is the one party that knows "
+      "its residue exists at the moment it creates it, so it books it: a "
+      "`tend` item (the plugin-reserved meta-goal — self-work advances no "
+      "DOMAIN goal and could not otherwise be booked at all), PARKED on the "
+      f"decision \"{RESIDUE_DECISION}\".")
+    a("")
+    if readers_why:
+        a(f"**COULD NOT VERIFY — {readers_why}.** The tracked files were not "
+          "searched, so nothing was booked. This is not the same answer as "
+          "\"no consumer is left\", and the two would print the same zero.")
+    elif not readers:
+        a(f"**None — zero.** No tracked file outside the migration's own "
+          f"outputs names {src_label or 'the source carrier(s)'}. The zero is "
+          "stated HERE rather than booked as an item: an item saying \"none\" "
+          "would be a permanent parked lie on every session's banner, and an "
+          "omitted line reads as \"checked and clean\" whichever of the two "
+          "it was.")
+    else:
+        a(f"**{len(readers)} tracked file(s)** still name "
+          f"{src_label or 'the source carrier(s)'} — one item, its "
+          "`write-set` and `evidence` naming every one of them:")
+        a("")
+        for path in readers:
+            a(f"- `{path}`")
+        a("")
+        a("SEARCHED: the files git TRACKS (`git grep -l -I -F` over the work "
+          "tree), fixed-string so a `.` in a basename cannot match any "
+          "character. EXCLUDED: the source carriers, the successor homes and "
+          "this report — each of which names the old carrier by "
+          "construction, so a search without those exclusions would book a "
+          "residue item for the migration's own output in every repo it ever "
+          "ran in. An UNTRACKED file naming the carrier is out of scope: it "
+          "is not a consumer the migration broke.")
+    a("")
+    a("**What is NOT booked here, each for a stated reason.** The frozen "
+      "ARCHIVE rides the `done bodies` kind's declared COMPACTION exit (the "
+      "retire lane, R20/R22) — R22 withdrew every size cap, so there is no "
+      "line-count tripwire in this system and none is invented here; booking "
+      "it would re-add a banned cap and double the retire lane. The "
+      "un-decomposed METHOD FILE rides the FILE SWEEP (§4): no universal "
+      "marker exists for a tool to key on. No class is claimed twice.")
     a("")
     a("## Where these findings WENT (R3)")
     a("")
