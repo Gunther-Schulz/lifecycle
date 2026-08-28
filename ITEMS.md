@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 62
+added: 63
 compacted: 0
 
 ## lc-1
@@ -560,3 +560,12 @@ write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cl
 done-criterion: kind check reports a declaration listing the reserved tend as a redundant-declaration finding (red-first); orientation shows the EFFECTIVE goal set (or marks tend reserved)
 evidence: lc-64 build report, escalations (a) and (b)
 blocked-by: NONE
+
+## lc-71
+grade: READY
+requirement: migrate --merge run twice in one repo appends a SECOND residue item: the generated block is not source-derived so duplicate_bodies (reads source headlines) does not see it; --force rebuilds wholesale and is unaffected; record: lc-65 build report, surfaced item 2
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a second --merge run books no duplicate residue item (dedup on the residue's own identity, not source headlines); red-first: two --merge runs produce exactly one residue item
+evidence: lc-65 build report, merge dedup
+blocked-by: decision is merge-of-N-carriers a real path worth the dedup, or is --merge-twice out of scope
