@@ -36,6 +36,7 @@ from pathlib import Path
 
 from . import exits, judgment, lanes, ledger
 from . import declaration as decl
+from . import grammar
 from . import items as items_mod
 
 #: A candidate needs this many shared requirement tokens. ONE would match
@@ -880,14 +881,14 @@ def _append_item(ctx: Ctx, ident: str, slots: dict, out) -> int:
 def _bump_added(text: str):
     lines = text.split("\n")
     for i, ln in enumerate(lines):
-        if ln.startswith("## "):
+        if grammar.starts_section(ln):
             break
-        if ln.startswith("added:"):
+        if grammar.is_slot(ln, "added"):
             try:
                 n = int(ln.split(":", 1)[1].strip())
             except ValueError:
                 return text, False
-            lines[i] = f"added: {n + 1}"
+            lines[i] = grammar.render_slot("added", n + 1)
             return "\n".join(lines), True
     return text, False
 
@@ -1531,16 +1532,27 @@ def _set_slots(text: str, ident: str, updates: dict):
     parsed dict would rewrite every slot the tool did not mean to touch, and
     a slot rewritten identically is still a slot this act claimed authorship
     of in the diff.
+
+    THE BLOCK IS FOUND AND ENDED BY THE SAME GRAMMAR (lc-40), which it was
+    not: the search used the `## <id>` regex and the write loop ended on
+    `startswith("## ")`. Those disagree on exactly one input — a heading whose
+    separator is not a single space, which the reader's regex has always
+    accepted — and where they disagreed this function wrote straight through
+    the next block. Measured 2026-08-28 against the old code: a carrier whose
+    second block heading is `##\txx-2`, and `item park xx-1` set `grade:
+    PARKED` and the blocker on xx-2 as well, exit 0 and no finding. Both ends
+    now come from `grammar`, and `ends_block` is the WIDE reading on purpose —
+    a block's own body lines never begin with `##`.
     """
     lines = text.split("\n")
     start = None
     for i, ln in enumerate(lines):
-        if ln.strip() == items_mod.ARCHIVE_HEADING:
+        if ln.strip() == grammar.ARCHIVE_HEADING:
             break
-        m = items_mod._BLOCK_HEADING.match(ln)
-        if not m:
+        found = grammar.heading_ident(ln)
+        if found is None:
             continue
-        if m.group(1) == ident:
+        if found == ident:
             start = i
             continue
         if start is not None:
@@ -1548,10 +1560,10 @@ def _set_slots(text: str, ident: str, updates: dict):
     if start is None:
         return text, False
     i = start + 1
-    while i < len(lines) and not lines[i].startswith("## "):
+    while i < len(lines) and not grammar.ends_block(lines[i]):
         for slot, value in updates.items():
-            if lines[i].startswith(f"{slot}:"):
-                lines[i] = f"{slot}: {value}"
+            if grammar.is_slot(lines[i], slot):
+                lines[i] = grammar.render_slot(slot, value)
         i += 1
     return "\n".join(lines), True
 

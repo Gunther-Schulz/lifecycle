@@ -30,6 +30,7 @@ from pathlib import Path
 
 from . import exits, firelog, judgment
 from . import declaration as decl
+from . import grammar
 from . import items as items_mod
 
 #: The staleness placeholder §3.11 rule 1 states, with its own status. THREE
@@ -122,7 +123,7 @@ def list_home(repo: Path, home: str) -> tuple:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         return None, f"{home!r} could not be read ({exc!r})"
-    if "\n## " in text or text.startswith("## "):
+    if f"\n{grammar.HEADING_PREFIX}" in text or grammar.starts_section(text):
         parsed = items_mod.parse(text)
         return [it.ident for it in parsed.items], \
             f"carrier {home!r}: one instance per fixed-slot block"

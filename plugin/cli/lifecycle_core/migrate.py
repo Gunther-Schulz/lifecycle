@@ -64,6 +64,7 @@ from pathlib import Path
 
 from . import exits
 from . import declaration as decl
+from . import grammar
 from . import items as items_mod
 from . import ledger as ledger_mod
 
@@ -505,8 +506,12 @@ def classify(entry: Entry) -> None:
 #: permanently unanswerable (measured over dotfiles' carrier, 2026-08-27).
 #: The repair is at the MINT — the separator never enters the question — and
 #: `_ledger_storable` below is what holds it there against a later edit.
-REGRADE_BLOCKER = ('decision regrade: was READY under the old carrier'
-                   ': READY is judged, never inherited')
+#:
+#: THE TEXT ITSELF NOW LIVES IN `grammar` (lc-40), beside `check_prose` — the
+#: predicate that judges it. The minting form and the rule it must satisfy
+#: were in two files, so an edit to either could pass its own file's tests
+#: while breaking the pair; one home makes that edit visible in one place.
+REGRADE_BLOCKER = grammar.REGRADE_BLOCKER
 
 #: An entry's own body names its missing evidence when it says so in the old
 #: carrier's own vocabulary. Matched on the carrier's phrase rather than
@@ -781,14 +786,14 @@ def bump_head(text: str, key: str, delta: int):
     """
     lines = text.split("\n")
     for i, ln in enumerate(lines):
-        if ln.startswith("## "):
+        if grammar.starts_section(ln):
             break
-        if ln.startswith(f"{key}:"):
+        if grammar.is_slot(ln, key):
             try:
                 n = int(ln.split(":", 1)[1].strip())
             except ValueError:
                 return text, False
-            lines[i] = f"{key}: {n + delta}"
+            lines[i] = grammar.render_slot(key, n + delta)
             return "\n".join(lines), True
     return text, False
 

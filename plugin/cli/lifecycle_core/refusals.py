@@ -33,6 +33,7 @@ from typing import Callable
 
 from . import exits
 from . import declaration as decl
+from . import grammar
 from . import items as items_mod
 from . import ledger as ledger_mod
 
@@ -700,7 +701,7 @@ EMPTY_DONE = "schema: 2\n"
 
 
 def _blocked_block(ident: str, grade: str, blocker: str) -> str:
-    return (f"\n## {ident}\ngrade: {grade}\n"
+    return (f"\n{grammar.render_heading(ident)}\ngrade: {grade}\n"
             f"requirement: a blocker-form fixture block — LEDGER.md\n"
             "goal: mitigate\nwrite-set: tools/thing.py\n"
             "done-criterion: it goes red then green\nevidence: none yet\n"

@@ -34,6 +34,7 @@ from pathlib import Path
 
 from . import exits
 from . import declaration as decl
+from . import grammar
 
 #: The carrier format this build understands. A file stamped ABOVE it is
 #: refused rather than parsed: an old tool reading a new file drops the slots
@@ -175,11 +176,16 @@ PROMOTION_LINES = (PROMOTE_REASON, PROMOTED_BY)
 HEAD_KEYS = ("schema", "baseline", "added", "compacted")
 HEAD_INT_KEYS = ("schema", "baseline", "added", "compacted")
 
-ARCHIVE_HEADING = "## Archive (pre-migration)"
+#: SINGLE-SOURCED IN `grammar` (lc-40), together with the three line shapes
+#: below: `ledger.py` carried its own literal of this heading and its own copy
+#: of `_HEAD_LINE`, and every writer that scans for a block boundary spelled
+#: the heading again by hand. Re-exported under the original private names so
+#: the readers in this file and in `verbs.py` keep working unchanged.
+ARCHIVE_HEADING = grammar.ARCHIVE_HEADING
 
-_HEAD_LINE = re.compile(r"^([a-z-]+):\s*(.*)$")
-_BLOCK_HEADING = re.compile(r"^##\s+(\S+)\s*$")
-_SLOT_LINE = re.compile(r"^([a-z-]+):\s?(.*)$")
+_HEAD_LINE = grammar.HEAD_LINE
+_BLOCK_HEADING = grammar.BLOCK_HEADING
+_SLOT_LINE = grammar.SLOT_LINE
 #: A comment line in the head: a markdown heading or bullet, or an HTML
 #: comment. Matched by SHAPE rather than by a marker the writer must remember,
 #: because the block this licenses is prose a human writes.
@@ -282,7 +288,7 @@ def parse(text: str) -> Parsed:
     # the only writer".
     i = 0
     seen_schema = False
-    while i < len(lines) and not lines[i].startswith("## "):
+    while i < len(lines) and not grammar.starts_section(lines[i]):
         raw = lines[i]
         i += 1
         if not raw.strip():
@@ -636,7 +642,7 @@ def check_ids(parsed: Parsed, prefix: str | None) -> list:
     """
     if not prefix:
         return []
-    pat = re.compile(rf"^{re.escape(prefix)}-\d+$")
+    pat = grammar.id_re(prefix)
     return [(it.ident, it.line) for it in parsed.items if not pat.match(it.ident)]
 
 
@@ -680,9 +686,9 @@ def render_block(ident: str, slots: dict) -> str:
     that builds its mapping in another order cannot write a file the shape
     check then reports as out of order.
     """
-    out = [f"## {ident}"]
+    out = [grammar.render_heading(ident)]
     for slot in SLOTS:
-        out.append(f"{slot}: {slots[slot]}")
+        out.append(grammar.render_slot(slot, slots[slot]))
     return "\n".join(out) + "\n"
 
 
@@ -808,14 +814,13 @@ def next_ident(prefix: str, *parsed) -> tuple[str | None, str | None]:
                       "allocated. Ids are `<prefix>-<n>` and the prefix is "
                       "declared, never inferred from the ids already there.")
     used = set()
-    pat = re.compile(rf"^{re.escape(prefix)}-(\d+)$")
     for p in parsed:
         if p is None:
             continue
         for it in p.items:
-            m = pat.match(it.ident)
-            if m:
-                used.add(int(m.group(1)))
+            n = grammar.id_number(prefix, it.ident)
+            if n is not None:
+                used.add(n)
     n = 1
     while n in used:
         n += 1

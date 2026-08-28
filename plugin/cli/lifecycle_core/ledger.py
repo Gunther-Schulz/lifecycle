@@ -33,6 +33,7 @@ from pathlib import Path
 
 from . import exits
 from . import declaration as decl
+from . import grammar
 
 #: The ledger format this build understands, same floor rule as `ITEMS.md`,
 #: and the SAME NUMBER: one schema version per repo (§3.8c).
@@ -44,8 +45,14 @@ SCHEMA_FLOOR = decl.SCHEMA_FLOOR
 
 #: Slot separator, and the decision line's question/answer separator. Both
 #: are the design's own spellings and are matched literally.
-SEP = " — "
-ARROW = " → "
+#:
+#: SINGLE-SOURCED IN `grammar` (lc-40), same rule and same reason as
+#: `SCHEMA_FLOOR` above: these are values that CROSS VERBS, and the migrate
+#: mint plus the three hand-write blocker doors must judge a question by the
+#: same separator this file parses by. Re-exported under the old names so
+#: every existing reader of `ledger.SEP` keeps its one source.
+SEP = grammar.SEP
+ARROW = grammar.ARROW
 
 #: The four line kinds, closed. A fifth spelling reaching the file is READ
 #: and reported in the third answer — never crashed on, never folded into a
@@ -56,8 +63,9 @@ KINDS = ("superseded", "rejected", "dropped", "decision")
 #: ledger's whole contract is one line per decision event; a cap is the only
 #: mechanical expression of that, since "is this prose a body?" has no
 #: predicate. Generous on purpose — it catches a pasted paragraph, not a
-#: carefully worded sentence.
-REASON_CAP = 300
+#: carefully worded sentence. SINGLE-SOURCED IN `grammar` (lc-40) — the cap
+#: is part of what `ledger_body` refuses, and the refusal has one home.
+REASON_CAP = grammar.REASON_CAP
 
 #: THE PRE-MIGRATION ARCHIVE, exactly as `ITEMS-DONE.md` has one and for
 #: exactly the same reason. A repo that kept a prose ledger before the tool
@@ -70,9 +78,13 @@ REASON_CAP = 300
 #: file this run did not grade. Deleting the history to make the parse clean
 #: is the exit that leaves no trace, which is the loss this carrier exists to
 #: prevent (exit: never-delete).
-ARCHIVE_HEADING = "## Archive (pre-migration)"
+#:
+#: SINGLE-SOURCED IN `grammar` (lc-40): `items.py` carried its own literal of
+#: this same heading, and the two files must agree about where the ungraded
+#: region begins or one of them grades lines the other holds verbatim.
+ARCHIVE_HEADING = grammar.ARCHIVE_HEADING
 
-_HEAD_LINE = re.compile(r"^([a-z-]+):\s*(.*)$")
+_HEAD_LINE = grammar.HEAD_LINE
 #: A comment line in the PREAMBLE — matched by shape, since the block this
 #: licenses is prose a human writes. Same predicate as the carrier's.
 _COMMENT_LINE = re.compile(r"^\s*(#|<!--|-->|-\s|>\s|\*\s)")
@@ -102,36 +114,12 @@ class Parsed:
 
 # --- writing -----------------------------------------------------------------
 
-def check_prose(value: str, what: str) -> str | None:
-    """Why `value` may not be written as ledger prose, or None.
-
-    Checked at the WRITER rather than at the reader: a file that never
-    receives an ambiguous line never needs a reader that can resolve one.
-    """
-    if value is None or not str(value).strip():
-        return (f"{what} is empty. The tool writes the slots; the SESSION "
-                "writes the reason prose, and a generated rationale would be "
-                "a paraphrase with nobody's judgment behind it. There is no "
-                "default here on purpose.")
-    v = str(value)
-    if "\n" in v or "\r" in v:
-        return (f"{what} spans more than one line. The ledger carries NO "
-                "BODIES — one fixed-slot line per decision event. A body "
-                "belongs in the done home, which counts it.")
-    if len(v) > REASON_CAP:
-        return (f"{what} is {len(v)} characters, over the {REASON_CAP}-cap. "
-                "That length is a body wearing a reason's clothes; the body "
-                "belongs in the done home.")
-    if SEP in v:
-        return (f"{what} contains the slot separator {SEP!r}, which would "
-                "make the line parse into different slots than it was "
-                "written with. Rephrase rather than escaping: an escaped "
-                "spelling puts two forms of every value in the file and the "
-                "reader cannot tell which it is looking at.")
-    if ARROW in v:
-        return (f"{what} contains the decision separator {ARROW!r}, same "
-                "ambiguity as the slot separator.")
-    return None
+#: THE `ledger_body` REFUSAL, single-sourced in `grammar` (lc-40) and
+#: re-exported here under its original name. It is the ledger's rule but not
+#: only the ledger's caller: `migrate`'s mint and the three hand-write blocker
+#: doors judge a question by it too, and a predicate with several callers and
+#: one home is what keeps the gate and the writer from disagreeing.
+check_prose = grammar.check_prose
 
 
 def render(kind: str, slots: dict) -> str:
