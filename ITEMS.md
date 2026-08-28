@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 49
+added: 50
 compacted: 0
 
 ## lc-1
@@ -471,4 +471,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,test/test_items.py
 done-criterion: a goal-scoped read exists and returns only items carrying that goal, red-first: today item ready --goal is rejected at argparse, which is a usage error and not the defect, so the red is the missing OUTPUT on a form the CLI accepts
 evidence: wave-5 T walk 2026-08-28: item ready --help lists only [--head] [ident]; the full verb surface item {check,add,ready,amend,promote,park,close,ratio} carries no query verb. Source item lc-16 from the 27-item transition sort
+blocked-by: NONE
+
+## lc-58
+grade: READY
+requirement: the compacted arrow has no verb. retire WALKS and REPORTS and says so in its own output: the acts its findings call for are their own verbs, but no compaction verb exists in the CLI surface, so the last arrow of an item life is unreachable and the conservation line can only ever read compacted 0
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/items.py,test/test_retire.py
+done-criterion: a compaction verb exists, records what it compacted, and the conservation identity still balances after it runs, red-first: today the conservation line reads compacted 0 by construction because nothing can ever increment it
+evidence: wave-5 T walk 2026-08-28 on a scratch clone at 66bd2af: retire output states EXITS TAKEN THIS PASS none and that compaction is its own verb; the top-level surface is {init,kind,item,ledger,lane,workflow,desk,retire,audit,migrate} with no compact; item check conservation printed baseline 8 + added 47 minus compacted 0
 blocked-by: NONE
