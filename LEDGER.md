@@ -31,6 +31,7 @@ superseded: lc-15 by lc-28 — write-set omitted the call site; lane C found it 
 decision: who builds lc-17 merge mode, after two lanes were briefed for it → B2 builds. Lane B was STOPPED (TaskStop) and is absent from the agent listing; its uncommitted work was saved to scratch and reverted; nothing of it is reused. B2 is the only writer in this copy. Dispatcher error, contained, no commit entered history. 2026-08-27.
 decision: does the stated reason in lifecycle cbfaee6 hold: that lane opus-lifecycle-bundle's mailbox had failed → NO, refuted 2026-08-27 by the lane's own transcript: all four messages delivered in ONE batch at a turn boundary after its report. The commit and the stop stand on other grounds (uncommitted work in a shared tree); only the reason is withdrawn. Class: dispatch-guards 6822924.
 decision: does the item BODY change (rewrite the path out of it) or does the foreign-path class scope change (corpus -> source) to honour the declaration → moot (closed by lc-35)
+decision: does the 2026-08-26 line no remote, and none is to be created still bind → SUPERSEDED. The operator created the public remote 2026-08-27 (bar commit 70bc93c, .git/config 22:04:54, gh repo view PUBLIC), the very act that line reserved. Push authority is separate and open at the judgment desk; lifecycle commits stay unpushed until it lands (wave 5, C4)
 
 ## Archive (pre-migration)
 
