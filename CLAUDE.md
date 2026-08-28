@@ -322,3 +322,34 @@ statement about the scanner: the other 50 pass, and the scanner is
 separately red-proven on this repo's own files by the pre-push hook.
 Making it portable means parameterising the anchors in cache-fix
 first, so both copies move together.
+
+## Carve-outs
+
+**Pushing this repo is standing-authorized (operator, 2026-08-28).**
+Their words, first-hand, in answer to a held wave-5 push: *"push, an
+doyu can always push"*. So `main` here is commit-and-push like
+dotfiles: claim the log as its own command, push as its own command,
+no round trip to ask.
+
+Why this heading exists at all: the corpus floor treats a push to a
+PUBLIC repo as an outward act needing authorization, and "no
+`## Carve-outs` heading" means the floor applies unchanged. This repo
+went public on 2026-08-27 (`70bc93c` "Publication bar green: one real
+leak fixed, one guard over-fire repaired", remote added minutes
+later), and until this line was written every session had to stop and
+ask. Wave 5 held 16 commits for exactly that reason. Recording the
+answer is what stops the next session paying that toll.
+
+Scope, stated so it is not over-read later: this authorizes the PUSH
+to `origin/main`. It is not a licence for the other outward acts —
+publishing a marketplace entry, a release, or anything under the
+operator's accounts stays theirs. The mechanical guards still bind
+and are not softened by this heading: the pre-push leak scan runs,
+the full suite runs, and a marked subagent commit whose sha sits in
+no record carrier is BOOKED before the push, never waved through with
+`PUSH_UNBOOKED_SUBAGENT_OK`.
+
+Superseded by this section: the ledger's 2026-08-26 line "**No
+remote, and none is to be created** — publishing a new public repo is
+the operator's act". The operator performed that act; the decision it
+reserved has been made. See the ledger's 2026-08-28 superseding entry.
