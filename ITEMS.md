@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 48
+added: 49
 compacted: 0
 
 ## lc-1
@@ -462,4 +462,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/ledger.py,plugin/cli/lifecycle_core/verbs.py,test/test_ledger.py
 done-criterion: ledger add commits on every write, or prints NOT COMMITTED, matching lc-25 contract for item add. Red-first on the recorded pair: item add printed committed and moved HEAD while ledger add left M LEDGER.md with no notice, same clone same run
 evidence: wave-5 T walk 2026-08-28, two arms in one run on a scratch clone at 66bd2af: item add lc-55 printed committed: lifecycle: add lc-55 and HEAD moved to 86b9009; ledger add decision then wrote LEDGER.md:35 and git status showed M LEDGER.md with HEAD unchanged. Also observed at the desk earlier the same day writing the C4 line, which the desk had to commit by hand. Consequence measured: item ready resolved a blocker from that UNCOMMITTED ledger line, so an item reads as unblocked in a tree where the answer was never committed
+blocked-by: NONE
+
+## lc-57
+grade: READY
+requirement: there is no read-by-goal query: item ready takes only an ident or --head, and no verb answers which items carry a given goal. lc-16 named this arrow as a query and it is still unbuilt, so the goal slot is written on every item and read by nothing
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,test/test_items.py
+done-criterion: a goal-scoped read exists and returns only items carrying that goal, red-first: today item ready --goal is rejected at argparse, which is a usage error and not the defect, so the red is the missing OUTPUT on a form the CLI accepts
+evidence: wave-5 T walk 2026-08-28: item ready --help lists only [--head] [ident]; the full verb surface item {check,add,ready,amend,promote,park,close,ratio} carries no query verb. Source item lc-16 from the 27-item transition sort
 blocked-by: NONE
