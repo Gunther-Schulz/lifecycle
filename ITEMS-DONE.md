@@ -88,5 +88,19 @@ done-criterion: item add --goal tend and item check accept tend in every repo wi
 evidence: cache-fix design 3.1b, the plugin-reserved meta-goal
 blocked-by: NONE
 
+## lc-65
+grade: DONE
+requirement: migrate converts the carrier and leaves its residue — un-decomposed method file, live old-carrier readers, oversized frozen archive — for a human to notice, and humans don't (the assumed-delivery class); record: cache-fix design 3.1b, 4 row 1
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py
+done-criterion: migrate --apply emits a fixed set of tend items for its residue, each PARKED with a typed blocker, in the migration report; red-first: a source with a method file plus live BACKLOG readers produces exactly those parked tend items
+evidence: cache-fix design 3.1b (seeding), 4 row 1 (the migration report)
+blocked-by: NONE
+amend-reason: 2026-08-28 scope lc-65 to migrate's generically-detectable residue; method-file decomposition rides the file sweep, not migrate (design 3.1b refinement, operator GO 2026-08-28)
+amended-done-criterion: 2026-08-28 migrate --apply emits tend items for the residue it can detect generically — old-carrier readers still live, and an over-tripwire frozen archive — each PARKED with a typed blocker, in the migration report; the method file is the file-sweep's job (design 3.1b + 4), NOT migrate's; red-first: a source with live BACKLOG readers plus an oversized archive produces exactly those two parked tend items and no method-file item
+amend-reason: 2026-08-28 scope lc-65 to the readers class only; drop the archive class — R22 forbids the size cap my 3.1b clause invented, and the archive is the retire lane's compaction exit (build session halt, operator round; design 3.1b amended)
+amended-done-criterion: 2026-08-28 migrate's carrier-writing run (not --report-only) emits ONE parked tend item for the old-carrier readers still live: grep tracked files (git ls-files) for the source basenames excluding sources/successors/report, book only when hits>0, hit paths in evidence, blocker decision 'every consumer migrated or declared exempt'; counted SEPARATELY from source entries (baseline = n_items + n_residue + archive_count; reconciliation identity over source entries only), ids after the migrated block, slots real text (not UNKNOWN); red-first: a source with live readers produces exactly that one item. The method file (file sweep) and the frozen archive (retire-lane compaction, R22 — no size cap) are NOT booked here.
+closed-ref: 18ca4e5
+
 ## Archive (pre-migration)
 
