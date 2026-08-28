@@ -459,5 +459,139 @@ class LedgerStorableBlocker(unittest.TestCase):
                          "the pre-repair carrier must still be refused")
 
 
+class OneGrammarFindsAndEndsABlock(unittest.TestCase):
+    """lc-40 — `_set_slots` found a block by one grammar and ended it by another.
+
+    THE TWO SPELLINGS. The search used the `## <id>` regex, which accepts any
+    whitespace between the marker and the id and always has; the write loop
+    ended the block on `startswith("## ")`, which accepts exactly one space.
+    They agree on every heading a human types and disagree on a tab — and
+    where they disagreed the loop ran past the block it was given and wrote
+    the caller's slots into the NEXT item.
+
+    MEASURED, not reasoned: against the pre-fix binary this fixture's `item
+    park xx-1` set `grade: PARKED` and the blocker on xx-2 as well, exit 0 and
+    no finding. Silent, because both blocks stay well-formed afterwards and
+    the carrier still parses.
+
+    THE ARMS DIFFER IN ONE CHARACTER — the second heading's separator — so a
+    build that had simply stopped writing anything would fail the control, and
+    one that wrote everywhere would fail the plant.
+    """
+
+    #: The tab is the whole plant. Named rather than inlined so the two
+    #: carriers below cannot drift apart in anything else.
+    PLANT_SEP = "\t"
+    CONTROL_SEP = " "
+
+    @staticmethod
+    def _carrier(sep):
+        return (
+            "schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+            "\n## xx-1\ngrade: READY\n"
+            "requirement: first block requirement\n"
+            "goal: mitigate\nwrite-set: tools/a.py\n"
+            "done-criterion: it goes red then green\nevidence: none yet\n"
+            "blocked-by: NONE\n"
+            f"\n##{sep}xx-2\ngrade: READY\n"
+            "requirement: second block requirement\n"
+            "goal: mitigate\nwrite-set: tools/b.py\n"
+            "done-criterion: it goes red then green\nevidence: none yet\n"
+            "blocked-by: NONE\n")
+
+    def _xx2_slots(self, sep, text):
+        block = text.split(f"##{sep}xx-2", 1)[1]
+        return {ln.split(":", 1)[0]: ln.split(":", 1)[1].strip()
+                for ln in block.split("\n") if ":" in ln and not ln.startswith("#")}
+
+    def test_a_tab_headed_NEIGHBOUR_is_not_written_through(self):
+        """THE DEFECT. Red against the pre-fix binary: xx-2 came back PARKED."""
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        with refusals._Repo(items=self._carrier(self.PLANT_SEP)) as r:
+            here = os.getcwd()
+            try:
+                os.chdir(str(r.dir))
+                with redirect_stdout(io.StringIO()):
+                    code = cli_mod.main([
+                        "--repo", str(r.dir), "item", "park", "xx-1",
+                        "--blocked-by", "decision which window is canonical"])
+            finally:
+                os.chdir(here)
+            self.assertEqual(code, exits.CLEAN)
+            slots = self._xx2_slots(
+                self.PLANT_SEP,
+                (r.dir / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual(slots["grade"], "READY",
+                         "xx-2 was parked by a call that named xx-1")
+        self.assertEqual(slots["blocked-by"], "NONE",
+                         "xx-2 took xx-1's blocker")
+
+    def test_the_named_block_IS_still_written(self):
+        """The must-move half. Without it a build that refused to write
+        anything would pass the test above and prove nothing."""
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        with refusals._Repo(items=self._carrier(self.PLANT_SEP)) as r:
+            here = os.getcwd()
+            try:
+                os.chdir(str(r.dir))
+                with redirect_stdout(io.StringIO()):
+                    cli_mod.main([
+                        "--repo", str(r.dir), "item", "park", "xx-1",
+                        "--blocked-by", "decision which window is canonical"])
+            finally:
+                os.chdir(here)
+            text = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        first = text.split("## xx-1", 1)[1].split("\n##", 1)[0]
+        self.assertIn("grade: PARKED", first)
+        self.assertIn("blocked-by: decision which window is canonical", first)
+
+
+class HeadingPredicatesAreDeliberatelyDifferent(unittest.TestCase):
+    """The two heading questions `grammar` keeps apart, and the input that
+    separates them — so a later edit collapsing them fails here rather than
+    in a carrier."""
+
+    def test_ends_block_is_WIDER_than_starts_section(self):
+        from lifecycle_core import grammar
+        tab = "##\txx-2"
+        self.assertTrue(grammar.ends_block(tab))
+        self.assertFalse(grammar.starts_section(tab),
+                         "the head-region boundary is the narrow reading")
+        # And they agree on everything an ordinary carrier holds.
+        for ln in ("## xx-1", grammar.ARCHIVE_HEADING):
+            self.assertTrue(grammar.ends_block(ln))
+            self.assertTrue(grammar.starts_section(ln))
+        for ln in ("grade: READY", "", "requirement: x", "# a comment"):
+            self.assertFalse(grammar.ends_block(ln))
+            self.assertFalse(grammar.starts_section(ln))
+
+    def test_the_archive_heading_is_NOT_a_block_heading(self):
+        """Why `starts_section` cannot simply be `heading_ident is not None`:
+        the head region ends at the archive too, and the block regex misses
+        it."""
+        from lifecycle_core import grammar
+        self.assertIsNone(grammar.heading_ident(grammar.ARCHIVE_HEADING))
+        self.assertTrue(grammar.starts_section(grammar.ARCHIVE_HEADING))
+
+    def test_is_slot_anchors_the_terminator(self):
+        from lifecycle_core import grammar
+        self.assertTrue(grammar.is_slot("blocked-by: NONE", "blocked-by"))
+        self.assertFalse(grammar.is_slot("blocked-by-note: x", "blocked-by"))
+
+    def test_the_minted_blocker_is_ledger_storable(self):
+        """The minting form and the predicate that judges it now share a file;
+        this is the pair, asserted rather than assumed."""
+        from lifecycle_core import grammar
+        self.assertIsNone(grammar.check_prose(
+            grammar.REGRADE_BLOCKER.split(" ", 1)[1],
+            "the minted decision question"))
+
+
 if __name__ == "__main__":
     unittest.main()
