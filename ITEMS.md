@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 53
+added: 54
 compacted: 0
 
 ## lc-1
@@ -507,4 +507,13 @@ goal: one-home-per-kind
 write-set: .claude/lifecycle.json,test/test_declaration.py
 done-criterion: kind sweep returns CLEAN on this repo, with the placeholder claimed by a registered kind rather than exempted, red-first on the current FINDING
 evidence: wave-5 K walk 2026-08-28, executed: kind sweep returns FINDING unregistered_persisted_thing naming exactly one file, plugin/workflows/.gitkeep; kind check is CLEAN at 19 kinds, so the declaration is well-formed and merely incomplete
+blocked-by: NONE
+
+## lc-62
+grade: READY
+requirement: lc-40's repair covers the MINT side only; the ANSWER side is still verbatim-equality and nothing says so at answer time. A desk that answers a decision blocker's substance in its own words leaves the item blocked forever: item ready resolves by question-slot equality, reports 'No decision: line names this question', and the answer sits in the ledger unmatched. The blocker's own refusal text coaches the minter and says nothing to the answerer
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/ledger.py,test/test_items.py
+done-criterion: answering a decision blocker is possible without reproducing its text by hand: either the ledger answer is keyed to the item and question at write time, or a near-miss between a ledger question and a standing blocker is reported rather than silently unmatched. Red-first on the measured pair below, where the substance was answered and the item stayed blocked
+evidence: measured at the wave-5 peer desk 2026-08-28 on df-130, both arms in one run: a ledger decision was written answering the blocker's substance, item ready still reported BLOCKED with 'No decision: line names this question, so it has not been answered'; the blocker was then re-minted as the bare question matching the ledger text and item ready immediately reported UNBLOCKED citing LEDGER.md:299. Second half of the same finding: df-130's original blocker was a SENTENCE ABOUT the question ('the item own body says decision OPEN: whether ...'), which no answer could ever equal
 blocked-by: NONE
