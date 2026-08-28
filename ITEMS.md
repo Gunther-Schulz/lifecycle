@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 54
+added: 55
 compacted: 0
 
 ## lc-1
@@ -505,4 +505,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/ledger.py,test/test_items.py
 done-criterion: answering a decision blocker is possible without reproducing its text by hand: either the ledger answer is keyed to the item and question at write time, or a near-miss between a ledger question and a standing blocker is reported rather than silently unmatched. Red-first on the measured pair below, where the substance was answered and the item stayed blocked
 evidence: measured at the wave-5 peer desk 2026-08-28 on df-130, both arms in one run: a ledger decision was written answering the blocker's substance, item ready still reported BLOCKED with 'No decision: line names this question, so it has not been answered'; the blocker was then re-minted as the bare question matching the ledger text and item ready immediately reported UNBLOCKED citing LEDGER.md:299. Second half of the same finding: df-130's original blocker was a SENTENCE ABOUT the question ('the item own body says decision OPEN: whether ...'), which no answer could ever equal
+blocked-by: NONE
+
+## lc-63
+grade: READY
+requirement: item promote has no red of its own for the block-boundary defect. It is the second caller of _set_slots and inherits the fix through the shared helper, which is inference rather than an executed arm. The corpus rule is that a red certifies the CLASS that fired, never the instrument's reach: a variant of the defect needs its own positive, and park and promote are two variants because they write different slots
+goal: every-refusal-red-first
+write-set: test/test_verbs.py
+done-criterion: item promote carries its own red against the OLD boundary code, in the same shape as the park arm: a carrier whose second block heading is tab-separated, a promote naming the FIRST block, and an assertion that the second block was NOT re-graded. Plus the must-move companion showing the named block IS still written, so the pair separates the defect from a build that stopped writing
+evidence: lane opus-lc40-grammar report gap 3, 2026-08-28, its own words: the fix is inherited through the shared helper, inference not an executed arm. The park arm's red is real and pasted (AssertionError: 'PARKED' != 'READY' : xx-2 was parked by a call that named xx-1) against a whole-repo git archive of 66bd2af whose own self-check was green first; promote has no equivalent
 blocked-by: NONE
