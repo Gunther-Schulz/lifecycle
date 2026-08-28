@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 46
+added: 47
 compacted: 0
 
 ## lc-1
@@ -444,4 +444,13 @@ goal: lean-machinery-strict-checks
 write-set: test/absence-scan.test.mjs
 done-criterion: The test either pins its fixture inside the repo or skips with a named reason; the suite exits 0. Red-first: it fails today with 'the walk collected no file under proxy/'. Must-not-move: the assertion still fires where a proxy-like tree DOES exist, so the repair is a pinned fixture and not a deleted test
 evidence: node --test test/absence-scan.test.mjs, run before and after the foreign-path repair: EXIT=1 both times, the SAME single failing test 'source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic allowlist' at :743, message 'the walk collected no file under proxy/'. Stated as the baseline in 70bc93c so the repair's own proof could not borrow a pre-existing red
+blocked-by: NONE
+
+## lc-55
+grade: READY
+requirement: item ready and item close disagree about whether one blocker was answered, and the disagreement is written into the ledger as a second contradictory line. Measured on a scratch clone 2026-08-28, wave-5 T walk: ledger add decision wrote the answer at LEDGER.md:35, item ready reported UNBLOCKED citing that line, and item close then reported the same blocker was never answered, wrote blocker-moot: on the moved body and appended LEDGER.md:36 recording the question as moot. One question, two answers, both live in the carrier
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
+done-criterion: item ready and item close reach the SAME verdict on one blocker from one ledger state, red-first on the recorded walk: today ready says UNBLOCKED and close says never answered on the identical item
+evidence: wave-5 T walk, scratch clone of lifecycle at 66bd2af, probe item lc-55: ready output UNBLOCKED with LEDGER.md:35 cited, close output blocker-moot never answered, ledger lines 35 and 36 contradictory. Mechanism NOT established at the desk, only the divergence
 blocked-by: NONE
