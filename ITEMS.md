@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 51
+added: 52
 compacted: 0
 
 ## lc-1
@@ -489,4 +489,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/declaration.py,test/test_lanes.py
 done-criterion: a lane created by lane new is declarable by a verb, and a lane FILE present but undeclared is a finding rather than silence, red-first on this repo whose declaration reads lanes: (empty, declared not absent) while lane files can be created
 evidence: wave-5 L walk 2026-08-28: lane new --help states the non-declaration outright; the lane verb surface is {list,register,new} with no declare; kind list shows lanes: (empty)
+blocked-by: NONE
+
+## lc-60
+grade: READY
+requirement: nothing records that a lane was ENTERED, so the audit's promised per-lane use-evidence has no writer. lifecycle audit is specified to report use-evidence per lane and per judgment rule, but no verb writes an entry event, so that column can only ever be empty or inferred
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/firelog.py,test/test_lanes.py
+done-criterion: entering a lane leaves a record the audit reads, and audit's use-evidence column is populated from it, red-first: today the column has no writer at all
+evidence: wave-5 L walk 2026-08-28: lane verb surface {list,register,new} has no enter verb; design section on audit promises use-evidence per lane
 blocked-by: NONE
