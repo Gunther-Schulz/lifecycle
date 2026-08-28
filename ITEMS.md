@@ -533,3 +533,5 @@ write-set: plugin/cli/lifecycle_core/migrate.py
 done-criterion: migrate --apply emits a fixed set of tend items for its residue, each PARKED with a typed blocker, in the migration report; red-first: a source with a method file plus live BACKLOG readers produces exactly those parked tend items
 evidence: cache-fix design 3.1b (seeding), 4 row 1 (the migration report)
 blocked-by: lc-64
+amend-reason: 2026-08-28 scope lc-65 to migrate's generically-detectable residue; method-file decomposition rides the file sweep, not migrate (design 3.1b refinement, operator GO 2026-08-28)
+amended-done-criterion: 2026-08-28 migrate --apply emits tend items for the residue it can detect generically — old-carrier readers still live, and an over-tripwire frozen archive — each PARKED with a typed blocker, in the migration report; the method file is the file-sweep's job (design 3.1b + 4), NOT migrate's; red-first: a source with live BACKLOG readers plus an oversized archive produces exactly those two parked tend items and no method-file item
