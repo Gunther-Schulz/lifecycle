@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 50
+added: 51
 compacted: 0
 
 ## lc-1
@@ -480,4 +480,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/items.py,test/test_retire.py
 done-criterion: a compaction verb exists, records what it compacted, and the conservation identity still balances after it runs, red-first: today the conservation line reads compacted 0 by construction because nothing can ever increment it
 evidence: wave-5 T walk 2026-08-28 on a scratch clone at 66bd2af: retire output states EXITS TAKEN THIS PASS none and that compaction is its own verb; the top-level surface is {init,kind,item,ledger,lane,workflow,desk,retire,audit,migrate} with no compact; item check conservation printed baseline 8 + added 47 minus compacted 0
+blocked-by: NONE
+
+## lc-59
+grade: READY
+requirement: no verb declares a lane in a repo's lanes list. lane new says so in its own help: it writes the lane file as a stub and does NOT declare it in this repo's lanes list. So a lane can exist as a file and be invisible to the board, which is the router's input, and nothing closes the gap between the two
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/declaration.py,test/test_lanes.py
+done-criterion: a lane created by lane new is declarable by a verb, and a lane FILE present but undeclared is a finding rather than silence, red-first on this repo whose declaration reads lanes: (empty, declared not absent) while lane files can be created
+evidence: wave-5 L walk 2026-08-28: lane new --help states the non-declaration outright; the lane verb surface is {list,register,new} with no declare; kind list shows lanes: (empty)
 blocked-by: NONE
