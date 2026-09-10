@@ -223,6 +223,66 @@ class ClosureSection(unittest.TestCase):
         self.assertTrue(read.closure_sections_why)
 
 
+class DateLedClosureBullets(unittest.TestCase):
+    """lc-72 — the entry test at `read_carrier` was `bold OR grade-word-led`,
+    so a DATE-LED closure line ("- 2026-08-23 — **title**: body", the
+    operator corpus's own closure idiom) is neither and fell to
+    `non_entry_bullets` UNCONDITIONALLY — the `in_closure_section`
+    disposition below it, which would have closed it verbatim, was never
+    reached. Measured on statiker's real migration: 25 of 25 `## Done`
+    bodies, all this shape, excluded from the archive."""
+
+    def test_a_date_led_closure_bullet_routes_to_the_done_home(self):
+        d = build("# old\n\n## Open\n\n"
+                  "- **READY 2026-08-03 — real open work.** body\n\n"
+                  "## Done\n\n"
+                  "- 2026-08-23 — **next-run staging (STOP after the "
+                  "record gate) DROPPED, overtaken:** its premise was "
+                  "resuming the canonical-market-identity tracker.\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        live = (d / "ITEMS.md").read_text(encoding="utf-8")
+        archive = (d / "ITEMS-DONE.md").read_text(encoding="utf-8")
+        self.assertIn("real open work", live)
+        self.assertNotIn("next-run staging", live)
+        self.assertIn(
+            "- 2026-08-23 — **next-run staging (STOP after the record "
+            "gate) DROPPED, overtaken:** its premise was resuming the "
+            "canonical-market-identity tracker.",
+            archive)
+        report = (d / REPORT).read_text(encoding="utf-8")
+        self.assertIn("Bullet identity:", report)
+        self.assertIn("Identity:", report)
+        self.assertNotIn("FAILS", report)
+
+    def test_a_date_led_bullet_outside_a_closure_section_stays_prose(self):
+        """The discriminating pair for the test above: admission depends on
+        the SECTION already having said "closed", not on the text's shape
+        alone — the same section-before-title precedence `classify` already
+        applies, moved to where admission itself is decided."""
+        read = migrate.read_carrier(
+            "# c\n\n## Open\n\n"
+            "- 2026-08-23 — a build note, not an entry.\n")
+        self.assertEqual(read.entries, [])
+        self.assertEqual(len(read.non_entry_bullets), 1)
+        self.assertEqual(read.non_entry_bullets[0][1], "Open")
+
+    def test_an_open_grade_word_under_the_closure_heading_still_refuses(self):
+        """Pin against regression: this lane's widening touches only the
+        NOT-bold-and-NOT-grade-word branch of `read_carrier`. A bullet that
+        already carries a grade word — open or closed — never reaches the
+        new date-led check at all, and `classify`'s existing AMBIGUOUS
+        branch for an open grade word under a closure heading is
+        untouched."""
+        e = entry("- **PARKED 2026-08-23 — waiting on evidence.** b",
+                  section="Done")
+        self.assertEqual(e.grade_word, "PARKED")
+        self.assertIsNone(e.grade)
+        self.assertFalse(e.closure)
+        self.assertIn("AMBIGUOUS", e.unclassified_why)
+
+
 class AmbiguousEntries(unittest.TestCase):
     """lc-21 and the open-graded-under-Done case. Both REFUSE: never a
     silent NEW, never a silent DONE."""

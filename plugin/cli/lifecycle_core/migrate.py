@@ -205,6 +205,13 @@ _GRADE_WORD = re.compile(r"^([A-Z][A-Z0-9-]*[A-Z0-9])(?![a-z])")
 _CLOSURE_WORD = re.compile(
     r"(?<![A-Za-z0-9-])(" + "|".join(items_mod.GRADES_CLOSED)
     + r")(?![A-Za-z0-9-])")
+#: A DATE-LED closure line's head — "2026-08-23 — title" — the operator
+#: corpus's own closure idiom (a dated line at the chronological home). Such
+#: a bullet is neither bold at the start nor grade-word-led, so on its own it
+#: is indistinguishable from prose; this pattern never decides admission by
+#: itself — `read_carrier` applies it ONLY inside a closure section, where
+#: the heading has already said "closed" (lc-72).
+_DATE_LED = re.compile(r"^\d{4}-\d{2}-\d{2}\s*[—–-]\s*")
 
 
 @dataclass
@@ -336,13 +343,20 @@ def read_carrier(text: str, closure_sections: tuple | None = None) -> Read:
             bold = content.startswith("**")
             stripped = content[2:] if bold else content
             gw = _GRADE_WORD.match(stripped.strip())
+            in_closure = first_word in out.closure_sections
             if not bold and not gw:
-                out.non_entry_bullets.append((lineno, section))
-                continue
+                # A DATE-LED closure line carries no grade word BECAUSE the
+                # closure heading already said it (lc-18's own rule) — the
+                # same precedence `classify` applies below, moved earlier so
+                # the bullet is admitted as an entry at all. Outside a
+                # closure section nothing has said "closed" yet, so the same
+                # text stays prose there (lc-72).
+                if not (in_closure and _DATE_LED.match(content)):
+                    out.non_entry_bullets.append((lineno, section))
+                    continue
             pending = Entry(line=lineno, end_line=lineno, section=section,
                             raw_first=content, text=stripped, bold=bold,
-                            in_closure_section=first_word
-                            in out.closure_sections)
+                            in_closure_section=in_closure)
             out.sections[section] = out.sections.get(section, 0) + 1
             continue
         if pending is not None:
@@ -2002,6 +2016,12 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
       "ambiguous — a guard firing on legitimate work, which is the repair "
       "that trains a reader to discount the warning that will one day be "
       "real.")
+    a("")
+    a("**A date-led bullet with no grade word — `2026-08-23 — title` — is "
+      "the same precedence, admitted under this same rule.** It is neither "
+      "bold at the start nor grade-word-led, so outside a closure heading it "
+      "reads as prose; under one it is the heading's own idiom for a closed "
+      "entry and archives verbatim like any other (lc-72).")
     a("")
     a("**Closure bodies are archived VERBATIM, at a named line range, and "
       "are never re-rendered as items.** A closure's body is the author's "
