@@ -560,14 +560,3 @@ write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: a second --merge run books no duplicate residue item (dedup on the residue's own identity, not source headlines); red-first: two --merge runs produce exactly one residue item
 evidence: lc-65 build report, merge dedup
 blocked-by: decision is merge-of-N-carriers a real path worth the dedup, or is --merge-twice out of scope
-
-## lc-72
-grade: READY
-requirement: migrate's entry test (bold-led or grade-word-led bullets) misses DATE-LED closure bullets ('- 2026-08-23 — **title**…', the accretion doctrine's own closure-line shape) under the carrier's closure heading: all 25 of statiker's ## Done bodies classed 'non-entry prose' and excluded from the done-home archive, so retiring the source after a clean-reading report silently loses the closure record — record: statiker docs/audits/migration-report-2026-09-10.md
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/migrate.py, plugin/cli/lifecycle_core/tests (red-first fixture, exact file the fixing desk's to name)
-done-criterion: red-first: a fixture with a date-led ungraded bullet under the closure heading routes to the done home verbatim (red under the current recognizer); statiker re-run with --merge routes its 25 archive bodies and both identities still hold
-evidence: statiker docs/audits/migration-report-2026-09-10.md — 25 'non-entry prose', every one under ## Done and date-led; source blob a115998c; the report's own closure-shape table says an entry under the closure heading archives verbatim, so the recognizer contradicts the rule table
-blocked-by: NONE
-amend-reason: 2026-09-10 write-set pointer corrected: the suite is top-level test/, the booked path plugin/cli/lifecycle_core/tests never existed (the fixing lane's report, slot e)
-amended-write-set: 2026-09-10 plugin/cli/lifecycle_core/migrate.py, test/test_migrate.py
