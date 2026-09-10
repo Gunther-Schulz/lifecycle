@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 64
+added: 65
 compacted: 0
 
 ## lc-1
@@ -560,3 +560,12 @@ write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: a second --merge run books no duplicate residue item (dedup on the residue's own identity, not source headlines); red-first: two --merge runs produce exactly one residue item
 evidence: lc-65 build report, merge dedup
 blocked-by: decision is merge-of-N-carriers a real path worth the dedup, or is --merge-twice out of scope
+
+## lc-73
+grade: READY
+requirement: merge refuses WHOLE on duplicate bodies (migrate.py:1432-1453) and no mechanism exists for the desk to STATE the per-entry call the refusal text promises it, so the RE-MIGRATION case (open entries already migrated, only closure sections newly recognizable, exactly lc-72's cross-repo criterion) is structurally uncompletable: 20 already-present-as-st-N duplicates block the 25 closures every run. Carries the unmet cross-repo remainder of lc-72's done-criterion. Record: statiker merge run 2026-09-10, FINDING merge_duplicate_body 20
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py, test/test_migrate.py
+done-criterion: a desk-stated duplicate disposition exists (form the fixing desk's design under this repo's laws); with all 20 statiker duplicates declared same-work, the merge routes the 25 closure bodies to ITEMS-DONE.md verbatim and conservation holds; red-first on the current whole-run refusal
+evidence: executed 2026-09-10: lifecycle migrate --merge --from-done NONE in statiker gives FINDING [merge_duplicate_body] 20, NOTHING written, ITEMS-DONE.md archive still 0 of 25; the refusal text names the desk's call with no flag or verb to express it (migrate --help lists no such option)
+blocked-by: decision which duplicate-disposition form the merge takes: per-entry flag, id-list, or byte-identity auto-skip (this repo's own design call)
