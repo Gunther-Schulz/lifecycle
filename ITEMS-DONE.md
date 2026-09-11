@@ -126,5 +126,16 @@ amended-write-set: 2026-09-10 plugin/cli/lifecycle_core/migrate.py, test/test_mi
 closed-reason: 2026-09-10 recognizer widened for date-led bullets in closure sections only; red-first stash-proof pasted in the lane report; suite 286 with the two known pre-existing import errors; verified at the artifact by the dispatcher
 closed-ref: dd81507
 
+## lc-45
+grade: DONE
+requirement: dotfiles' statusline renders backlog pressure on EVERY render in EVERY repo, today via 'backlog-census.py --statusline BACKLOG.md'. After the carrier freeze that reader must come here, and no statusline verb exists (grep -rn statusline over the plugin: 0 hits). The two available fallbacks are both defects: pointing the old renderer at ITEMS.md parses 0 bullets and renders a silent 0R.0P, and leaving it on the frozen file renders a number frozen at its last value forever, indistinguishable from a live one.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py (a compact one-line render), and the CLI's verb table
+done-criterion: one verb emits a single short line fit for a statusline — counts plus the schedulable head, no multi-line report — and it is CHEAP: it runs on every statusline render, so a full carrier parse per call is the wrong shape and the criterion states which. It exits per the CLI's own convention (0 clean, 2 finding, 3 could not verify) and NEVER emits a pass-shaped number it could not compute: a carrier it cannot parse yields the could-not-verify exit and a visibly non-numeric line. Red-first: the old renderer against ITEMS.md, showing the silent zero this verb exists to prevent. Consumers, which must NOT parse rendered prose to get this: dotfiles claude-worktime/config.sh and claude/hooks/session-scan.py.
+evidence: dotfiles claude-worktime/config.sh:301; the freeze dispositions record claude/records/carrier-freeze-dispositions-2026-08-27.md names this reader the sharpest degrading-check in its set; the C lane surfaced the missing verb as a gap rather than bridging it (2026-08-27).
+blocked-by: NONE
+closed-reason: 2026-09-11 item statusline landed: single line-pass render, three answers at statusline width; head id a stated syntactic approximation (item ready --head authoritative, divergence case locked as a regression test). Entry's red premise corrected in operation: the old renderer's failure is a VANISHED line (statusline_optin gates on the missing Grades: declaration, empty stdout exit 0), not the entry's claimed silent 0R.0P. Follow-on scanner blind spot booked as lc-74
+closed-ref: e98c3a42e7479a92720381ac7342828210166316
+
 ## Archive (pre-migration)
 
