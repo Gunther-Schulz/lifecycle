@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 65
+added: 66
 compacted: 0
 
 ## lc-1
@@ -569,3 +569,12 @@ write-set: plugin/cli/lifecycle_core/migrate.py, test/test_migrate.py
 done-criterion: a desk-stated duplicate disposition exists (form the fixing desk's design under this repo's laws); with all 20 statiker duplicates declared same-work, the merge routes the 25 closure bodies to ITEMS-DONE.md verbatim and conservation holds; red-first on the current whole-run refusal
 evidence: executed 2026-09-10: lifecycle migrate --merge --from-done NONE in statiker gives FINDING [merge_duplicate_body] 20, NOTHING written, ITEMS-DONE.md archive still 0 of 25; the refusal text names the desk's call with no flag or verb to express it (migrate --help lists no such option)
 blocked-by: decision which duplicate-disposition form the merge takes: per-entry flag, id-list, or byte-identity auto-skip (this repo's own design call)
+
+## lc-74
+grade: READY
+requirement: the emit-site coverage scanner (--test) detects finding emissions by grepping the literal 'FINDING [row]' bracket idiom, so a site that returns exits.FINDING without the bracket — measured: cmd_item_statusline's unknown-grade '!n?' suffix, lc-45 dispatch report 2026-09-11 — is invisible to the scanner rather than red: the coverage check degrades silently exactly where a new one-line-output verb cannot afford the bracket. Two halves: register the statusline unknown-grade FINDING as a refusals.py row, and re-key the scanner on what cannot be omitted (exits.FINDING returns) rather than the bracket literal
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: the statusline unknown-grade FINDING maps to a refusals.py row, and the emit-site scanner goes RED on a planted verb that returns exits.FINDING with no bracket and no row (red-first: plant exactly that, show the current scanner staying green, then the re-keyed one failing); must-not-move: every existing bracket-idiom site still maps, --test still CLEAN on the real tree
+evidence: lc-45 closing report 2026-09-11 (lane finding 2, confirmed at the desk: --test CLEAN over the bracket-less FINDING path); verbs.py cmd_item_statusline FINDING branch at e98c3a4
+blocked-by: NONE
