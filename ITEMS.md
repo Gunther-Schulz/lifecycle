@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 66
+added: 67
 compacted: 0
 
 ## lc-1
@@ -568,4 +568,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
 done-criterion: the statusline unknown-grade FINDING maps to a refusals.py row, and the emit-site scanner goes RED on a planted verb that returns exits.FINDING with no bracket and no row (red-first: plant exactly that, show the current scanner staying green, then the re-keyed one failing); must-not-move: every existing bracket-idiom site still maps, --test still CLEAN on the real tree
 evidence: lc-45 closing report 2026-09-11 (lane finding 2, confirmed at the desk: --test CLEAN over the bracket-less FINDING path); verbs.py cmd_item_statusline FINDING branch at e98c3a4
+blocked-by: NONE
+
+## lc-75
+grade: READY
+requirement: NEXT UP (operator priority, 2026-09-11): item ids (lc-158/df-158) are honest addresses but carry nothing for the operator's eye — a descriptive shorthand beside the id ('df-158 corpus-review-run') would let the operator recognize items in listings, statusline heads, and close rounds without opening bodies. Requested from dotfiles df-158 as the motivating case
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/grammar.py,test/test_verbs.py
+done-criterion: an optional slug slot: settable at admission (--slug, lowercase-hyphen token, uniqueness within the carrier enforced at add) and by amend; rendered beside the id in item ready listings and the item statusline head line where present. SETTLED SCOPE: display only — every verb still addresses by id alone; slug-as-alias is explicitly out (a second address namespace invites the truncated-identifier drift the corpus warns on) and would be its own future item with its own collision rules. Red-first: an add with --slug on a copy, the slug visible in ready and statusline output; must-not-move: slugless items render exactly as today, and a duplicate slug is refused at add with a FINDING
+evidence: operator request 2026-09-11 (dotfiles session, df-158 as the recognition-failure case); dotfiles ITEMS.md head-rendering consumers: item ready, item statusline (e98c3a4)
 blocked-by: NONE
