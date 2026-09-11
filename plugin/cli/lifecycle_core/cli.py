@@ -373,6 +373,10 @@ def build_parser() -> argparse.ArgumentParser:
     its.add_parser("ratio", help="capture against drain — the FLOW alarm "
                                  "(R22); a ratio, never a size")
 
+    its.add_parser("statusline", help="ONE line fit for a per-prompt render "
+                                      "(lc-45) — a cheap single-pass "
+                                      "approximation, never `_load`")
+
     led = sub.add_parser("ledger", help="decisions only, parsed, gated")
     leds = led.add_subparsers(dest="ledger_action")
     leds.add_parser("check", help="the ledger's own shape check")
@@ -553,7 +557,7 @@ def main(argv=None) -> int:
         if args.item_action == "check":
             code = cmd_item_check(args, out)
         elif args.item_action in ("add", "amend", "promote", "ready", "park",
-                                  "close", "ratio"):
+                                  "close", "ratio", "statusline"):
             code = _carrier_verb(args, out)
         else:
             stage = NOT_YET_BUILT.get(path, "a later wave")
@@ -663,6 +667,8 @@ def _carrier_verb(args, out) -> int:
         return verbs.cmd_item_ready(args, out, ctx)
     if args.item_action == "ratio":
         return verbs.cmd_item_ratio(args, out, ctx)
+    if args.item_action == "statusline":
+        return verbs.cmd_item_statusline(args, out, ctx)
     if args.item_action == "park":
         return verbs.cmd_item_park(args, out, ctx)
     return verbs.cmd_item_close(args, out, ctx)

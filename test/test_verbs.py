@@ -593,5 +593,145 @@ class HeadingPredicatesAreDeliberatelyDifferent(unittest.TestCase):
             "the minted decision question"))
 
 
+class ItemStatusline(unittest.TestCase):
+    """`item statusline` (lc-45) — the cheap single-pass approximation.
+
+    RECONCILIATION IS THE POINT, not just the new verb's own output: a
+    fixture asserting only what this verb prints would pass whether or not
+    its counts agree with the real carrier. Each test below checks the new
+    line against an INDEPENDENT read of the same fixture — `items.parse`
+    (the ground truth this verb deliberately does not call) and, for the
+    clean case, `item ready --head`'s own report.
+    """
+
+    def _repo(self, items_text):
+        r = refusals._Repo(items=items_text)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        return code, buf.getvalue()
+
+    def test_clean_reconciles_with_ready_head(self):
+        """One unblocked READY (the head), one item-id-blocked READY, one
+        PARKED, one NEW. NEW must not count toward either letter."""
+        carrier = (
+            "schema: 2\nbaseline: 4\nadded: 0\ncompacted: 0\n"
+            + refusals._blocked_block("xx-1", "READY", "NONE")
+            + refusals._blocked_block("xx-2", "READY", "xx-9999")
+            + refusals._blocked_block("xx-3", "PARKED", "decision which window")
+            + refusals._blocked_block("xx-4", "NEW", "NONE")
+        )
+        r = self._repo(carrier)
+
+        # Independent ground truth — never the code under test.
+        parsed = items.parse(carrier)
+        from collections import Counter
+        counts = Counter(it.grade for it in parsed.items)
+        self.assertEqual(counts, {"READY": 2, "PARKED": 1, "NEW": 1}, counts)
+
+        code, out = self._run(r, "item", "statusline")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(out.strip(), "2R.1P head xx-1")
+
+        # Cross-check against the heavier verb: it must agree on the READY
+        # count and on xx-1 being the schedulable one, xx-2 not.
+        _, head_out = self._run(r, "item", "ready", "--head")
+        self.assertIn("head: 2 READY, 1 schedulable now.", head_out, head_out)
+        self.assertIn("1. xx-1 [READY]", head_out, head_out)
+        self.assertIn("xx-1 [READY] goal=mitigate  SCHEDULABLE", head_out,
+                      head_out)
+        self.assertIn("xx-2 [READY] goal=mitigate  not schedulable", head_out,
+                      head_out)
+
+    def test_no_schedulable_ready_prints_dash_head(self):
+        """Every READY item is blocked (a dangling id, an unanswered
+        decision) — the head is `-`, never a guess at one of them."""
+        carrier = (
+            "schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+            + refusals._blocked_block("xx-1", "READY", "xx-9999")
+            + refusals._blocked_block("xx-2", "READY", "decision which window")
+        )
+        r = self._repo(carrier)
+        code, out = self._run(r, "item", "statusline")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(out.strip(), "2R.0P head -")
+
+    def test_unparseable_item_block_is_could_not_verify(self):
+        """A block heading with no `grade:` line before the next heading (or
+        EOF) — never a count that silently excludes it."""
+        corrupt = ("schema: 2\nbaseline: 0\nadded: 0\ncompacted: 0\n\n"
+                  "## xx-1\nrequirement: no grade line ever arrives\n")
+        r = self._repo(corrupt)
+        code, out = self._run(r, "item", "statusline")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertTrue(out.strip().startswith("n/a ("), out)
+        self.assertIn("xx-1", out)
+        self.assertNotRegex(out, r"\d+R\.\d+P",
+                            "a could-not-verify line must never look numeric")
+
+    def test_no_item_block_at_all_is_could_not_verify(self):
+        """A carrier with no `## <id>` heading at all — the grade-line regex
+        cannot even locate an item, distinct from the malformed-block case
+        above and worth its own message."""
+        headless = "schema: 2\nbaseline: 0\nadded: 0\ncompacted: 0\n"
+        r = self._repo(headless)
+        code, out = self._run(r, "item", "statusline")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertTrue(out.strip().startswith("n/a ("), out)
+        self.assertIn("no item block found", out)
+
+    def test_unknown_grade_word_is_a_finding(self):
+        """A `grade:` word outside `items_mod.GRADES` — the carrier's closed
+        vocabulary — is a FINDING trailing `!N?`, never folded into READY or
+        PARKED and never silently dropped."""
+        carrier = (
+            "schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+            + refusals._blocked_block("xx-1", "READY", "NONE")
+            + refusals._blocked_block("xx-2", "SUPERSEDED", "NONE")
+        )
+        r = self._repo(carrier)
+        self.assertNotIn("SUPERSEDED", items.GRADES, items.GRADES)
+        code, out = self._run(r, "item", "statusline")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertEqual(out.strip(), "1R.0P head xx-1 !1?")
+
+    def test_a_BROKEN_evidence_predicate_is_the_named_divergence_case(self):
+        """THE CONCRETE DIVERGENCE CASE the docstring names (lc-45 dispatch
+        report, sign-off condition): this verb has no evaluator for an
+        `evidence <predicate>` blocker at all, so a READY item whose
+        predicate is BROKEN (an unbalanced quote — `/bin/sh -c` exits >=2,
+        the >=2-is-BROKEN half of the lane trigger contract, never a quiet
+        wait per §3.3) reads as merely "not the head" here, exactly like an
+        ordinary wait. `item ready --head` — the authoritative answer this
+        verb explicitly defers to — evaluates the SAME predicate and raises
+        `FINDING [trigger_broken]` instead, exiting FINDING rather than
+        CLEAN. Both sides run for real over the SAME carrier: an assertion
+        against only one side could not show the two verbs disagree."""
+        carrier = (
+            "schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+            + refusals._blocked_block("xx-1", "READY",
+                                      "evidence echo 'unterminated")
+            + refusals._blocked_block("xx-2", "READY", "NONE")
+        )
+        r = self._repo(carrier)
+
+        code, out = self._run(r, "item", "statusline")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(out.strip(), "2R.0P head xx-2", out)
+
+        head_code, head_out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(head_code, exits.FINDING, head_out)
+        self.assertIn("FINDING [trigger_broken]", head_out, head_out)
+        self.assertIn("xx-1 [READY] goal=mitigate  not schedulable", head_out,
+                      head_out)
+
+
 if __name__ == "__main__":
     unittest.main()

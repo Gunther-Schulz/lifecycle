@@ -1126,6 +1126,136 @@ def cmd_item_ratio(args, out, ctx: Ctx) -> int:
     return exits.CLEAN
 
 
+#: The closed vocabulary a `grade:` line may carry (lc-45). Reused from
+#: `items_mod.GRADES` rather than restated: a second spelling would age
+#: apart from the writer it must agree with, exactly the reason
+#: `grammar.py`'s own module docstring gives for existing as one module.
+_STATUSLINE_KNOWN_GRADES = items_mod.GRADES
+
+
+def cmd_item_statusline(args, out, ctx: Ctx) -> int:
+    """`item statusline` — ONE line fit for a per-prompt render (lc-45).
+
+    THIS RUNS ON EVERY STATUSLINE RENDER IN EVERY REPO that declares this
+    plugin, so the shape is a SINGLE line-pass over the carrier's raw text
+    using the existing block/slot grammar (`grammar.heading_ident`,
+    `grammar.ends_block`, `grammar.is_slot`) — never `_load`
+    (`items_mod.parse`), never a cache, never held state. A full parse plus
+    the ledger and done-home reads `item ready --head` performs (decision
+    blockers, item-id blockers, lead-goal grouping) is too much machinery to
+    pay on every prompt; this verb answers a narrower question at a
+    narrower cost, and the narrower question is stated exactly rather than
+    dressed up as the wider one.
+
+    THE HEAD ID IS A SYNTACTIC APPROXIMATION of `item ready --head`, NOT a
+    replica of its judgment, and `item ready --head` IS THE AUTHORITATIVE
+    ANSWER wherever the two might disagree — this verb trades that authority
+    for a cost a per-prompt render can afford. Schedulable here means
+    `grade: READY` and a LITERAL `blocked-by: NONE` on the same block, first
+    in file order — no ledger read for a decision blocker, no done-home read
+    for an item-id blocker, no lead-goal grouping, NO EVALUATION of an
+    `evidence <predicate>` blocker at all. A READY item blocked on an
+    unanswered decision or a dangling item-id reads as "not the head" here
+    exactly as `item ready --head` would judge it not-schedulable. A READY
+    item whose blocker is a BROKEN evidence predicate ALSO reads as merely
+    "not the head" here — this verb cannot distinguish that from an ordinary
+    wait — where `item ready --head` raises it as its own
+    `FINDING [trigger_broken]` (§3.3: >=2 is RESERVED for BROKEN, never a
+    quiet wait). Measured concretely (lc-45 dispatch report, executed
+    2026-09-11): a two-item carrier — `xx-1` READY blocked by
+    `evidence echo 'unterminated` (an unbalanced quote, broken by
+    construction), `xx-2` READY blocked by NONE, in that file order — gets
+    `2R.0P head xx-2` CLEAN from this verb, while `item ready --head` on the
+    SAME carrier prints `xx-1` first with `FINDING [trigger_broken] the
+    evidence predicate ("echo 'unterminated") is BROKEN — exit 2` and exits
+    FINDING overall. That gap is real and stated here
+    rather than silently closed by calling this parity it is not — a caller
+    that needs to know WHY nothing is ready, rather than merely THAT nothing
+    is, reads `item ready --head`.
+
+    THREE ANSWERS, statusline width, never a pass-shaped number this pass
+    could not compute. A carrier this line-pass cannot make sense of —
+    unreadable, no recognisable item block at all, or an item block whose
+    `grade:` line never arrives before the next heading — answers
+    `n/a (<reason>)`, visibly non-numeric, at COULD_NOT_VERIFY: guessing at
+    counts a malformed block could have thrown off is exactly the silent
+    wrongness this whole file argues against elsewhere. A `grade:` word
+    outside `items_mod.GRADES` (the carrier's own closed vocabulary) is a
+    FINDING carried as a trailing `!<n>?` — the same third-answer shape
+    `backlog-census.py`'s `unknown` bucket applies to one carrier grammar
+    over, never folded silently into either count.
+    """
+    try:
+        text = ctx.items_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        out(f"n/a (cannot read {ctx.items_path.name}: {exc!r})")
+        return exits.COULD_NOT_VERIFY
+
+    ready = parked = unknown = 0
+    head_id = None
+    saw_item = False
+    malformed = []
+    cur_id = cur_grade = cur_blocked = None
+
+    def _flush():
+        nonlocal ready, parked, unknown, head_id
+        if cur_id is None:
+            return
+        if cur_grade is None:
+            malformed.append(cur_id)
+            return
+        if cur_grade == "READY":
+            ready += 1
+            if head_id is None and cur_blocked == items_mod.BLOCKER_NONE:
+                head_id = cur_id
+        elif cur_grade == "PARKED":
+            parked += 1
+        elif cur_grade not in _STATUSLINE_KNOWN_GRADES:
+            unknown += 1
+
+    for raw in text.splitlines():
+        line = raw.rstrip("\n")
+        if grammar.ends_block(line):
+            _flush()
+            ident = grammar.heading_ident(line)
+            if ident is not None:
+                saw_item = True
+                cur_id = ident
+                cur_grade = None
+                cur_blocked = items_mod.BLOCKER_NONE
+            else:
+                # A `##` heading that is NOT a block heading — the archive
+                # marker, or a malformed separator `ends_block` still
+                # catches (grammar.py's own module docstring) — ends
+                # tracking without opening a new block.
+                cur_id = None
+            continue
+        if cur_id is None:
+            continue
+        if grammar.is_slot(line, "grade"):
+            cur_grade = line.split(":", 1)[1].strip()
+        elif grammar.is_slot(line, "blocked-by"):
+            cur_blocked = line.split(":", 1)[1].strip()
+    _flush()
+
+    if not saw_item:
+        out(f"n/a (no item block found in {ctx.items_path.name} — the "
+            "grade-line regex could not match this carrier's format)")
+        return exits.COULD_NOT_VERIFY
+    if malformed:
+        shown = ", ".join(malformed[:3]) + ("…" if len(malformed) > 3 else "")
+        out(f"n/a ({len(malformed)} item block(s) with no `grade:` line "
+            f"before the next heading: {shown})")
+        return exits.COULD_NOT_VERIFY
+
+    line = f"{ready}R.{parked}P head {head_id or '-'}"
+    if unknown:
+        out(f"{line} !{unknown}?")
+        return exits.FINDING
+    out(line)
+    return exits.CLEAN
+
+
 def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
     """`(state, code, note)` for one item's blocker."""
     value = it.slots.get("blocked-by", "")
