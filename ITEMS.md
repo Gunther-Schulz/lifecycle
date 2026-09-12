@@ -470,15 +470,6 @@ done-criterion: live_carrier_readers returns only files referencing the carrier 
 evidence: Mechanism verified at the code by the drain-arc desk 2026-09-12, not taken from a report. live_carrier_readers (migrate.py:767) builds patterns as Path(name).name and runs git grep -l -I -F, matching the basename ANYWHERE in a tracked file's content. Two independent failures follow. (a) NO LEFT BOUNDARY: a fixed-string search for BACKLOG.md matches FEATURE-BACKLOG.md. Proven in a throwaway git repo with a discriminating pair, both tracked: doc.md containing only the text FEATURE-BACKLOG.md was RETURNED, clean.md was not. (b) NO OWNERSHIP CONTEXT: a sentence mentioning another repo's same-named carrier matches identically, which is how the dispatch-guards run named the cache-fix fork's BACKLOG.md and pbs-office's FEATURE-BACKLOG.md among 6 consumers (that 2-of-6 figure is the migration desk's, relayed and unverified here; the mechanism under it is verified). The docstring is what makes this worth fixing rather than noting: it explicitly defends -F as the protection against a regex matching BACKLOGxmd, the RIGHT-side boundary, while the left side has no boundary at all. An assurance wider than its predicate, in the mechanism's own words about itself
 blocked-by: NONE
 
-## lc-84
-grade: READY
-requirement: lifecycle init writes "public": false unconditionally, so a PUBLIC repo gets a declaration claiming it is private, and the leak-scan classes that key on that flag are silently relaxed on exactly the repos where they matter most
-goal: tend
-write-set: plugin/cli/lifecycle_core/init.py,test/
-done-criterion: init never writes a public flag it has not established: it derives visibility, or writes no flag and refuses until one is given. Red-first: init over a repo whose remote is public produces a declaration that does NOT claim private, against today's which does
-evidence: Verified at the code by the drain-arc desk 2026-09-12: init.py:223 carries the literal "public": False in the written declaration, with no visibility read beside it. The motivating case is the migration desk's (relayed, unverified here): dispatch-guards is public and its generated declaration carried the false, corrected by hand with the reason. The direction is what makes this more than a default: a wrong private claim RELAXES a publication guard, while a wrong public claim would only over-fire, so the unsafe value is the one currently hardcoded
-blocked-by: decision which source establishes visibility, since the tool must not guess: a gh remote read at init time, an explicit required flag, or writing no key at all and letting the consumer treat absence as could-not-verify
-
 ## lc-85
 grade: READY
 requirement: migrate's terminal summary prints CLEAN beside a reconciliation that can be 0 read == 0 written, so a run that migrated nothing reports identically to one that migrated correctly. The report BODY is honest; the summary line is a paraphrase over it

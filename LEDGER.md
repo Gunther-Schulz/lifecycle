@@ -57,6 +57,8 @@ decision: where do the 16 line-number citations into BACKLOG.md resolve once the
 decision: wave-2 R1: dispatcher verification before publishing the lane's six commits → Verified at the artifact, cleared: c6a47e1 5c257ec 2c77eee 0d07304 46261f0 f27e15f. item check CLEAN (55+25, conservation 80), ratio 2.88:1 from 6.09:1, --test 73/73, unittest 326 OK, absence-scan clean, pin proven at 5c257ec:32. Push under this repo's standing carve-out.
 decision: anchor on the source blob sha plus range, or on the entry headline text, or declare the pointer approximate and have readers search near it → SOURCE BLOB SHA PLUS RANGE, pinned to the blob the pointers were DERIVED against, not the current file. Drainage desk 2026-09-12, derivable: lc-86 already requires citations to carry the pinned blob inline, so the other options contradict a made decision. Measurement: lc-38 evidence.
 dropped: lc-20 — Never a live defect rather than one since fixed: init.py:185 prints the laws branch with the evidence read, unconditionally, and that print landed in 96bb599 (20:19) BEFORE this item own booking commit 40b9c36 (21:31) the same evening. Dropped not DONE: no fix commit exists.
+decision: which source establishes visibility, since the tool must not guess: a gh remote read at init time, an explicit required flag, or writing no key at all and letting the consumer treat absence as could-not-verify → moot (closed by lc-84)
+dropped: lc-84 — Duplicate of lc-81, same defect at the same construct: init.py:223 hardcoding public false. lc-81 is kept as the earlier id and is decision-complete where this entry left an open blocker. Its motivating case, dispatch-guards public with its declaration corrected by hand, is merged into lc-81.
 
 ## Archive (pre-migration)
 

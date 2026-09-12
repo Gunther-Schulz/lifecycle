@@ -421,5 +421,15 @@ done-criterion: init states the laws branch it took AND the evidence it read (tr
 evidence: peer measurement (dotfiles desk, 2026-08-26), three runs of `lifecycle init` in a scratch mirror of dotfiles giving three different `laws` readings: (1) 'no tracked CLAUDE.md -> overlay branch', the mirror's tree untracked because a `git add -q` had silently failed; (2) 'foreign branch', the mirror's commit authored x@y; (3) the correct 'operator-only branch' once committed as the operator's own address. NOT a test defect: lifecycle's own test_init.py pins the fixture author deliberately, with a persisted user.email/user.name for what determine_laws reads and a per-commit -c override for authoring history as someone else — verified here at cf92ad9. This is the verb in the field.
 blocked-by: NONE
 
+## lc-84
+grade: DROPPED
+requirement: lifecycle init writes "public": false unconditionally, so a PUBLIC repo gets a declaration claiming it is private, and the leak-scan classes that key on that flag are silently relaxed on exactly the repos where they matter most
+goal: tend
+write-set: plugin/cli/lifecycle_core/init.py,test/
+done-criterion: init never writes a public flag it has not established: it derives visibility, or writes no flag and refuses until one is given. Red-first: init over a repo whose remote is public produces a declaration that does NOT claim private, against today's which does
+evidence: Verified at the code by the drain-arc desk 2026-09-12: init.py:223 carries the literal "public": False in the written declaration, with no visibility read beside it. The motivating case is the migration desk's (relayed, unverified here): dispatch-guards is public and its generated declaration carried the false, corrected by hand with the reason. The direction is what makes this more than a default: a wrong private claim RELAXES a publication guard, while a wrong public claim would only over-fire, so the unsafe value is the one currently hardcoded
+blocked-by: NONE
+blocker-moot: which source establishes visibility, since the tool must not guess: a gh remote read at init time, an explicit required flag, or writing no key at all and letting the consumer treat absence as could-not-verify
+
 ## Archive (pre-migration)
 
