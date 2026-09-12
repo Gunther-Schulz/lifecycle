@@ -270,6 +270,8 @@ write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/items.p
 done-criterion: a compaction verb exists, records what it compacted, and the conservation identity still balances after it runs, red-first: today the conservation line reads compacted 0 by construction because nothing can ever increment it
 evidence: wave-5 T walk 2026-08-28 on a scratch clone at 66bd2af: retire output states EXITS TAKEN THIS PASS none and that compaction is its own verb; the top-level surface is {init,kind,item,ledger,lane,workflow,desk,retire,audit,migrate} with no compact; item check conservation printed baseline 8 + added 47 minus compacted 0
 blocked-by: NONE
+amend-reason: 2026-09-12 Retirement pass 2026-09-12, coupling found by the scan lane and confirmed here: lc-58 builds the compaction verb and lc-47 is a design CONSTRAINT on exactly that verb, but lc-58 own criterion never mentions it. Built blind, lc-58 reintroduces lc-47 defect by construction. They are not duplicates, so the repair is to name the coupling in the entry rather than merge them.
+amended-done-criterion: 2026-09-12 a compaction verb exists, records what it compacted, and the conservation identity still balances after it runs, red-first: today the conservation line reads compacted 0 by construction because nothing can ever increment it. BINDING COUPLING (lc-47, retirement pass 2026-09-12): this verb ships only WITH lc-47 answer to where a compacted item closure record lives - either the closed-reason and closed-ref are LIFTED into the ledger line the compaction writes, or bodies carrying closure lines are EXEMPT from compaction. The verb REFUSES to compact a body it would silently strip. lc-58 and lc-47 land in the same change, or lc-58 does not land
 
 ## lc-60
 grade: READY
