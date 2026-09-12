@@ -368,5 +368,16 @@ amended-evidence: 2026-09-12 L2b report (g): no such verb exists today, noted an
 closed-reason: 2026-09-12 FIXED 2026-08-27 AND FALSELY RE-CONFIRMED OPEN 2026-09-12, same method defect as lc-13. cmd_lane_new calls decl.add_lane at lanes.py:380 in the same run. EXECUTED END TO END BY THIS DESK, closing the gap the lane could not: in a scratch repo outside the working copy, lane new probe-door printed declared: probe-door appended, and the declaration went from empty to one name, exactly the criterion diff. RESIDUAL, not part of this closure: lane --help at cli.py:424-428 still says it does NOT declare, a stale doc contradicting shipped behaviour; booked after this pass.
 closed-ref: 120c733
 
+## lc-28
+grade: DONE
+requirement: An item whose `blocked-by` names another item by id is validated against nothing. A blocker of the declared form `<prefix>-<n>` pointing at an id the carrier does not contain passes `item check` CLEAN and `kind check` CLEAN — measured, by accident, with a real mistake: lc-14 was written `blocked-by: lc-15` when no lc-15 existed, and both checkers reported clean. The consequence is a PERMANENT SILENT PARK: the item never surfaces in `item ready` because it reads as blocked, and nothing ever reports that the blocker is fictional, so it can neither drain nor be noticed.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/cli.py,test/test_items.py
+done-criterion: red-first against a carrier carrying a blocker id that does not resolve: a named finding, green once the id resolves or the blocker is retyped. The three other blocker forms (`decision <q>`, `evidence <predicate>`, NONE) must NOT fire — they resolve against nothing by design, and a check that cannot tell them apart from a dangling id would fire on legitimate work. cli.py carries EXACTLY ONE added verdict in cmd_item_check, beside the existing calls and never folded into check_move_integrity, whose ok line it would shadow.
+evidence: executed: `item check` -> "CLEAN — 0 shape finding(s)", `kind check` -> "CLEAN — 19 kind(s) registered", both with the dangling id in place. REF_TYPES (declaration.py:103) is ("lane","verb","hook","session","producer","operator") — DECLARATION reference types; an item-carrier id is a different namespace. Write-set corrected: no function inside the old set has BOTH item homes AND the declared prefix — check_file has live+prefix, check_move_integrity both homes no prefix, check_done_file done+prefix — so the check body fits items.py but its call site does not.
+blocked-by: NONE
+closed-reason: 2026-09-12 FIXED AND NEVER CLOSED (retirement pass 2026-09-12). check_blocker_targets at items.py:994 is wired into item check at cli.py:204 and its docstring cites lc-28 by name. Lane executed the repo own FOUR_BLOCKER_ITEMS fixture: FINDING dangling_reference on an id neither home holds, the exact case that used to pass CLEAN. The three other blocker forms do not fire, so the over-fire arm holds too.
+closed-ref: 120c733
+
 ## Archive (pre-migration)
 
