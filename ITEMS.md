@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 79
+added: 80
 compacted: 0
 
 ## lc-3
@@ -591,3 +591,12 @@ write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
 done-criterion: UNKNOWN
 evidence: READ AT THE SOURCE at e9c8efa, both halves: verbs.py:1408-1410 cmd_item_park calls _set_slots(text, ident, {grade: PARKED, blocked-by: value}), an in-place BASE-slot write with no amendment append and no check for a later amended- line; items.py:1284 states the reader rule in its own words, an amended-blocked-by line resolves last-wins OVER the slot. SCOPE, checked not assumed: grade is NOT amendable (items.py:129, verbs.py:1569), so park's OTHER write and item promote's only write (verbs.py:1518, grade alone) cannot be superseded and are unaffected; blocked-by is amendable, so park is the single affected write path. FIELD INCIDENT: statiker st-33, 2026-09-12, whose base slot read the typed decision written by park while a later amended-blocked-by: 2026-09-12 NONE governed; item check kept reporting the finding and was right, the verb's success line and the checker's finding contradicted each other with nothing explaining it, and item amend --blocked-by is what actually retyped it
 blocked-by: decision does park APPEND an amended-blocked-by line so its write governs, or REFUSE when a later amendment exists and name item amend --blocked-by as the fix; appending collides with amend's own requirement that every amendment carry a --reason, refusing is cheaper but makes park partial
+
+## lc-88
+grade: READY
+requirement: migrate --report-only structurally CANNOT answer 'would this merge refuse?': dupes is computed unconditionally at migrate.py:1438 and then gated away by 'if dupes and not report_only' at :1440, so a dry run over a source that WOULD refuse renders a clean plan and returns no finding — the one question a dry run exists to answer is the one it cannot. Record: statiker-f7 lc-73 evidence 2026-09-12; predicate read verbatim at the named lines by this desk
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: A --report-only run over a source carrying at least one duplicate REPORTS the duplicates it would refuse on — as a plan-level warning, not an exit-2 finding, since report-only writes nothing and must stay non-refusing. Red-first: today's --report-only over the statiker arrangement renders clean while the real merge refuses; the same run after the fix names the collisions. Discrimination pair: a source with NO duplicates must still render clean, so the new output separates would-refuse from would-not rather than merely printing more.
+evidence: migrate.py:1438-1440 read verbatim by the drainage desk 2026-09-12: 'dupes = duplicate_bodies(...)' then 'if dupes and not report_only:'. Found by statiker-f7 while reproducing lc-73's duplicate set read-only; surfaced to this desk and taken here rather than booked there, because the realizing write is in this repo. NOT the same defect as lc-73: that one is the merge's duplicate DISPOSITION, this one is the dry run's blindness to it, and either could be fixed without the other.
+blocked-by: NONE
