@@ -331,5 +331,16 @@ blocked-by: NONE
 closed-reason: 2026-09-12 FIXED AND NEVER CLOSED (retirement pass 2026-09-12). The entry own original probe is now a before/after pair: DONE in RULES and DROPPED in RULES were both False at booking and are both True at this HEAD, because CLOSURE_RULES derives from items.GRADES_CLOSED rather than a hardcoded list. Landed f3f7517. REMAINDER NOT CLOSED BY THIS: the criterion also asked for a declared way for a repo to map its OWN closure words; GRADES_CLOSED is a fixed tuple, so that half is unimplemented and books separately after this pass rather than being silently absorbed here.
 closed-ref: f3f7517
 
+## lc-21
+grade: DONE
+requirement: A closed entry whose grade word is NOT at the bullet start is read as UNGRADED and migrated as OPEN work. classify() gives an entry with no leading grade word UNGRADED_RULE (migrate.py:67, applied at :219), whose grade is NEW — so it does not become unclassified and does not refuse; it silently lands in the new carrier as live work. The idiom that trips it puts a real grade word mid-title, e.g. a bullet opening with a topic and carrying DONE and a date later in the same bold span. THIS IS THE WORSE OF THE TWO MIGRATION DEFECTS: lc-19 is a loud refusal (an unclassified entry announces itself), this one is a silent wrong answer that reopens finished work.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a bullet whose grade word sits mid-title classifies by that word, red-first on a fixture drawn from the real idiom, and a closed entry never lands in the open carrier. AND the over-fire half: a bullet carrying a capitalised NON-grade word mid-title must still read as ungraded — without that arm a matcher loosened until the counts improve scores identically to one that got the distinction right.
+evidence: split out of lc-19 on the reporting peer's own correction, 2026-08-26 — they had conflated two mechanisms and retracted the diagnosis while the measurement held. Verified here at 40b9c36 by executing the module: UNGRADED_RULE at migrate.py:67 is ('NEW', ...) and is assigned at :219, so an ungraded entry migrates OPEN rather than unclassified. Peer measurement, over files this session did not open: 7 root entries and 1 corpus entry, all with grade_word None, all sitting in a '## Done' section, would be written back as open work.
+blocked-by: NONE
+closed-reason: 2026-09-12 FIXED AND NEVER CLOSED (retirement pass 2026-09-12), with an ACCEPTED DEVIATION recorded rather than glossed. closure_word_in_title() at migrate.py:402 catches a closure word mid-title, and the over-fire arm holds: a capitalised NON-closure word mid-title still reads ungraded. DEVIATION: the criterion asked that such an entry classify BY that word; the shipped fix REFUSES it as AMBIGUOUS. Accepted by this desk because the file own doctrine at migrate.py:39-41 makes refusal the answer where the source is ambiguous, which supersedes the criterion wording. The silent-wrong-answer defect the entry named is gone either way.
+closed-ref: f3f7517
+
 ## Archive (pre-migration)
 
