@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 78
+added: 79
 compacted: 0
 
 ## lc-3
@@ -580,3 +580,12 @@ blocked-by: NONE
 amend-reason: 2026-09-12 operator decision 2026-09-12 supersedes freeze-as-end-state: old carrier files of ALL migrated repos are deleted; the banner becomes the interim case, not the goal
 amended-requirement: 2026-09-12 migrate ends with the source carrier DELETED, not frozen (operator decision 2026-09-12: old state lives in git). Citations carry the pinned source blob INLINE so they resolve after deletion, and migrate writes the deletion record (resolution via git cat-file) into the repo's laws file. An interim freeze banner is only for a migration that cannot yet delete (undischarged rescue passes, untriaged inbound references) — record: dispatch-guards CLAUDE.md (deletion-record form), beat-the-books 260d4c85 (interim banner form)
 amended-done-criterion: 2026-09-12 a fresh migration leaves no live-reading superseded carrier: source deleted with a deletion record and inline blob-pinned citations, or — the cannot-delete case only — bannered; red-first unchanged: the current migrate over a fixture leaves the source self-describing as live
+
+## lc-87
+grade: PARKED
+requirement: item park writes the BASE blocked-by slot on a carrier whose reader resolves amended-blocked-by LAST-WINS OVER it, so on any block already carrying an amended-blocked-by line the park write does not govern and the verb reports success anyway. Its line reads <id> to PARKED, blocked-by: <typed value> while the effective blocker is still the amended one, and item check goes on reporting parked_without_typed_blocker. Two mechanisms each right alone: park writes the slot it owns, the resolver honours supersession; jointly the verb asserts a state the carrier does not have - record: statiker st-33 incident 2026-09-12, statiker-f7 release desk
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: UNKNOWN
+evidence: READ AT THE SOURCE at e9c8efa, both halves: verbs.py:1408-1410 cmd_item_park calls _set_slots(text, ident, {grade: PARKED, blocked-by: value}), an in-place BASE-slot write with no amendment append and no check for a later amended- line; items.py:1284 states the reader rule in its own words, an amended-blocked-by line resolves last-wins OVER the slot. SCOPE, checked not assumed: grade is NOT amendable (items.py:129, verbs.py:1569), so park's OTHER write and item promote's only write (verbs.py:1518, grade alone) cannot be superseded and are unaffected; blocked-by is amendable, so park is the single affected write path. FIELD INCIDENT: statiker st-33, 2026-09-12, whose base slot read the typed decision written by park while a later amended-blocked-by: 2026-09-12 NONE governed; item check kept reporting the finding and was right, the verb's success line and the checker's finding contradicted each other with nothing explaining it, and item amend --blocked-by is what actually retyped it
+blocked-by: decision does park APPEND an amended-blocked-by line so its write governs, or REFUSE when a later amendment exists and name item amend --blocked-by as the fix; appending collides with amend's own requirement that every amendment carry a --reason, refusing is cheaper but makes park partial
