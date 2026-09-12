@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 77
+added: 78
 compacted: 0
 
 ## lc-3
@@ -567,4 +567,13 @@ goal: tend
 write-set: plugin/cli/lifecycle_core/migrate.py,test/
 done-criterion: the summary line cannot read CLEAN over a vacuous identity: a run whose reconciliation is 0 == 0 says so in the summary itself, in the three-answer form. Red-first: a migrate run over a repo with no source entries, whose summary today says CLEAN and afterwards does not
 evidence: Relayed from the lifecycle-migration arc's wave-2 digest, UNVERIFIED at this desk: the desk booking this did not reproduce the vacuous run. What IS verified here is that the same class is live in this repo's sibling instruments, which is why it is worth the entry rather than a note: absence-scan prints clean over a class declared off with no degraded line, and lifecycle ledger check answers COULD NOT VERIFY over 252 unreadable lines that nothing reads. The class is the repo's own three-answers rule applied to a SUMMARY rather than to a check
+blocked-by: NONE
+
+## lc-86
+grade: READY
+requirement: migrate writes the freeze banner INTO the source carrier as part of the migration, ordered BEFORE citation anchors are computed — a freeze declared only in the repo's CLAUDE.md failed its first live test: a desk edited the frozen carrier within four hours, and a same-day sweep found two more migrated repos bannerless — record: beat-the-books 260d4c85 (the post-hoc repair form)
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a fresh migration writes the banner mechanically and computes anchors over the bannered file; red-first: the current migrate over a fixture leaves the source head self-describing as live (the beat-the-books 1ccdfc50 shape), the new one shows the banner present and citation resolution green
+evidence: 2026-09-12: beat-the-books BACKLOG.md left bannerless by 1ccdfc50, edited by the judgment desk within four hours (8d4440e8, reverted b3f2f814, repaired 260d4c85); daneel and statiker old carriers found bannerless in the same sweep. Post-hoc banners must be line-count-neutral to keep anchors — banner-then-anchor ordering in the tool removes the constraint entirely
 blocked-by: NONE
