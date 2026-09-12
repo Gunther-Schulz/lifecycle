@@ -324,6 +324,8 @@ write-set: docs/directives/carrier-rework-design-2026-08-26.md@cache-fix,plugin/
 done-criterion: a coordination layer: typed cross-repo edge (blocked-by <repo>:<id>, resolves on that item's DONE across carriers) + a cross-repo detector home + a cross-repo roll-up view; red-first on the cf-337->lc-64 case (it auto-returns to NEW when lc-64 closes)
 evidence: begehung r5 close-class over five vocabulary-slot rows; the live cf-337/lc-64 instance
 blocked-by: decision the coordination mechanism SHAPE: typed cross-repo edge (recommended) vs a declared coordination kind vs both
+amend-reason: 2026-09-12 Retirement pass 2026-09-12: the blocked-by decision is ANSWERED and the entry was still carrying it as open, so the item read as parked on a question the ledger had already settled. Premise drift found by the scan lane and verified at LEDGER.md:38 by this desk.
+amended-blocked-by: 2026-09-12 NONE
 
 ## lc-67
 grade: READY
