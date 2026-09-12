@@ -56,6 +56,7 @@ dropped: lc-6 — OVERTAKEN. The ledger parser gained the comment-preamble rule 
 decision: where do the 16 line-number citations into BACKLOG.md resolve once the legacy-backlog kind takes its declared delete exit → at the deleting commit's parent 5c257ec, pinned in CLAUDE.md's Role files section; the classification of every entry is the fold-in commit 5c257ec, whose message carries the per-entry triage, and the removing commit is this one
 decision: wave-2 R1: dispatcher verification before publishing the lane's six commits → Verified at the artifact, cleared: c6a47e1 5c257ec 2c77eee 0d07304 46261f0 f27e15f. item check CLEAN (55+25, conservation 80), ratio 2.88:1 from 6.09:1, --test 73/73, unittest 326 OK, absence-scan clean, pin proven at 5c257ec:32. Push under this repo's standing carve-out.
 decision: anchor on the source blob sha plus range, or on the entry headline text, or declare the pointer approximate and have readers search near it → SOURCE BLOB SHA PLUS RANGE, pinned to the blob the pointers were DERIVED against, not the current file. Drainage desk 2026-09-12, derivable: lc-86 already requires citations to carry the pinned blob inline, so the other options contradict a made decision. Measurement: lc-38 evidence.
+dropped: lc-20 — Never a live defect rather than one since fixed: init.py:185 prints the laws branch with the evidence read, unconditionally, and that print landed in 96bb599 (20:19) BEFORE this item own booking commit 40b9c36 (21:31) the same evening. Dropped not DONE: no fix commit exists.
 
 ## Archive (pre-migration)
 
