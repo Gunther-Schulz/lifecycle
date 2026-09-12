@@ -99,15 +99,6 @@ blocked-by: NONE
 amend-reason: 2026-09-12 retirement pass 2026-09-12: lc-57 is a duplicate of this entry, found later by the wave-5 T walk. Merged into the existing entry rather than left as a sibling, per the backlog doctrine's merge rule; lc-57 is dropped in the same pass.
 amended-evidence: 2026-09-12 verified here at cf92ad9: grep '"--goal"' cli.py returns one line, :279. Peer measured it at :262 on 6badd58; the line moved, the substance holds. RE-CONFIRMED 2026-09-12 (retirement pass, executed at f09e32d): item ready --help lists only [--head] [ident], and the item verb surface {check,add,ready,amend,promote,park,close,ratio,statusline} carries no goal-scoped query. MERGED IN lc-57 (wave-5 T walk 2026-08-28), the later sibling booking of this same gap, dropped as a duplicate — its own body named lc-16 as its source. Its contribution, kept here: the red-first shape — item ready --goal is rejected at argparse, which is a usage error and not the defect, so the red is the missing OUTPUT on a form the CLI accepts.
 
-## lc-18
-grade: READY
-requirement: A '## Done' SECTION migrates as OPEN work. CUT_SECTIONS = ('Grades',) only (migrate.py:80), so the tool models closures as a separate FILE (--from-done) while both dotfiles carriers keep theirs as a Done section of the same file; build_items then writes every migrated entry with grade NEW (migrate.py:359, comment at :346 'EVERY MIGRATED ENTRY IS OPEN'). Measured by the peer on the real files: 7 already-closed root entries and 1 corpus entry would be written back as open work. '--from-done NONE' is not the escape — both carriers genuinely have archives, so stating zero would be a false zero
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
-done-criterion: a source carrying its closures as a '## Done' section migrates them to the done home, not to ITEMS.md as NEW; red-first on a fixture with both an open and a closed section, asserting the closed entries do NOT appear in the open carrier
-evidence: verified here at cf92ad9: CUT_SECTIONS at :80 is ('Grades',); grade NEW hardcoded at :359. Peer measured :367 on 6badd58; the line moved, the substance holds. Counts are the peer's, not re-measured here
-blocked-by: NONE
-
 ## lc-19
 grade: READY
 requirement: AMENDED 2026-08-26 — the original diagnosis (a _GRADE_WORD anchoring defect) was WRONG and is replaced; the measurement stands. The real cause: UNCLASSIFIED is a MISSING RULE, not a missing match. classify() matches the grade word and then does RULES.get(word); a word with no rule yields grade=None → UNCLASSIFIED. The RULES key set is BUST, CANDIDATE, FINDING, HANDOFF, NEW, OPEN, PARKED, PARTLY, POINTER, READY, RECORD — there is NO DONE and NO DROPPED. So every properly-graded closure in a source carrier is unclassified by construction. DROPPED is the sharp one: it belongs to the plugin's OWN default grade vocabulary (READY/PARKED/DONE/DROPPED) and still has no rule. Same root cause as lc-18 — the tool expects closures to arrive via --from-done, so the in-carrier closure vocabulary was never given rules
