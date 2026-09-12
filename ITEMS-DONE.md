@@ -379,5 +379,16 @@ blocked-by: NONE
 closed-reason: 2026-09-12 FIXED AND NEVER CLOSED (retirement pass 2026-09-12). check_blocker_targets at items.py:994 is wired into item check at cli.py:204 and its docstring cites lc-28 by name. Lane executed the repo own FOUR_BLOCKER_ITEMS fixture: FINDING dangling_reference on an id neither home holds, the exact case that used to pass CLEAN. The three other blocker forms do not fire, so the over-fire arm holds too.
 closed-ref: 120c733
 
+## lc-42
+grade: DONE
+requirement: Closing an item that carries APPENDED lines (amendments, and now promotions) produces a done-home shape finding: item close writes blocker-moot: onto the moved body AFTER those lines, and the ordering check counts the closed-body slots as part of its FIXED run, so an ordinary close reads as an appended line among the fixed slots
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: closing an amended or promoted item leaves the done home CLEAN, while a genuinely misplaced appended line still fires; red-first on the two real bodies already in ITEMS-DONE.md (df-75, df-64) and a two-arm proof that the narrower predicate still catches the real defect
+evidence: DESIGN, from the B1 lane measurement rather than a guess: the fixed run is SLOTS, never SLOTS + DONE_ONLY_SLOTS. The closed-body slots are themselves APPENDED (item close writes blocker-moot: onto a body it has already moved), so counting them as fixed is what turns an ordinary close into a finding; and _resolve_amendments own docstring rationale is about a superseding line sitting above the value it supersedes, which blocker-moot: does not do. MEASURED BOTH ARMS by the B1 lane on its own promotion line kind: with the narrower predicate the same close is CLEAN and the real defect still fires, proven by moving a promotion line above blocked-by: and watching it fire. Observed by the desk n=2 in the live carrier: ITEMS-DONE.md df-75 and df-64, both after the wave-4 grade pass amended them
+blocked-by: NONE
+closed-reason: 2026-09-12 FIXED AND NEVER CLOSED (retirement pass 2026-09-12). The fixed run is now SLOTS rather than SLOTS plus DONE_ONLY_SLOTS, at items.py:530 and :589. Two-arm proof executed by the lane against the repo own closed fixture: an ordinary close carrying an appended blocker-moot line reads CLEAN, while an amendment line injected among the core slots still FIRES. Both arms match the criterion.
+closed-ref: cbfaee6
+
 ## Archive (pre-migration)
 
