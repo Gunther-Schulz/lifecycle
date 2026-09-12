@@ -320,5 +320,16 @@ blocked-by: NONE
 closed-reason: 2026-09-12 FIXED AND NEVER CLOSED (retirement pass 2026-09-12). Closure sections now route before the grade word: closure_sections_for() derives headings from CLOSURE_SECTIONS_DEFAULT and classify() short-circuits to archival, so a Done-section entry no longer lands as NEW. Landed f3f7517. Executed lane fixture plus this desk read of the live module. Drift: CUT_SECTIONS cited :80 now :145 and is a separate narrower mechanism; grade-NEW cited :359 now :708, reached only by entries not routed to closure.
 closed-ref: f3f7517
 
+## lc-19
+grade: DONE
+requirement: AMENDED 2026-08-26 — the original diagnosis (a _GRADE_WORD anchoring defect) was WRONG and is replaced; the measurement stands. The real cause: UNCLASSIFIED is a MISSING RULE, not a missing match. classify() matches the grade word and then does RULES.get(word); a word with no rule yields grade=None → UNCLASSIFIED. The RULES key set is BUST, CANDIDATE, FINDING, HANDOFF, NEW, OPEN, PARKED, PARTLY, POINTER, READY, RECORD — there is NO DONE and NO DROPPED. So every properly-graded closure in a source carrier is unclassified by construction. DROPPED is the sharp one: it belongs to the plugin's OWN default grade vocabulary (READY/PARKED/DONE/DROPPED) and still has no rule. Same root cause as lc-18 — the tool expects closures to arrive via --from-done, so the in-carrier closure vocabulary was never given rules
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: the closure vocabulary classifies rather than falling through — DONE and DROPPED at minimum, plus a declared way for a repo to map its own closure words; red-first on a fixture carrying DONE and DROPPED entries, asserting they do NOT land in the open carrier. A word with no rule must still be reported as unclassified rather than guessed at — the fix is rules, never a looser matcher
+evidence: verified here at 40b9c36 by executing the module: sorted(RULES.keys()) returns the 11 words above, 'DONE' in RULES is False, 'DROPPED' in RULES is False. Counts are the peer's executed measurement over files this session did not open, CORRECTED by them post-booking: root BACKLOG.md UNCLASSIFIED 83 = DONE 76 + DROPPED 5 + ERLEDIGT 1 + RESOLVED 1; claude/BACKLOG.md 18 of 66 = DONE 14 + DROPPED 2 + TRACED 1 + EXECUTED 1 (66/18 post-dates their e3b3ebf, which added one Done entry; use these, not the earlier 65/17)
+blocked-by: NONE
+closed-reason: 2026-09-12 FIXED AND NEVER CLOSED (retirement pass 2026-09-12). The entry own original probe is now a before/after pair: DONE in RULES and DROPPED in RULES were both False at booking and are both True at this HEAD, because CLOSURE_RULES derives from items.GRADES_CLOSED rather than a hardcoded list. Landed f3f7517. REMAINDER NOT CLOSED BY THIS: the criterion also asked for a declared way for a repo to map its OWN closure words; GRADES_CLOSED is a fixed tuple, so that half is unimplemented and books separately after this pass rather than being silently absorbed here.
+closed-ref: f3f7517
+
 ## Archive (pre-migration)
 
