@@ -401,5 +401,16 @@ blocked-by: NONE
 closed-reason: 2026-09-12 FIXED AND NEVER CLOSED (retirement pass 2026-09-12). Rarity weighting shipped: MATCH_MAX_DOC_FRACTION at verbs.py:77 with document_frequency and informative_tokens, the self-maintaining fix the criterion demanded rather than the longer stopword list it forbade. Control computed over THIS carrier live rather than a fixture: record appears in 60.3 percent of open items and is dropped as uninformative while the rarer token is kept; an item still self-matches.
 closed-ref: cbfaee6
 
+## lc-43
+grade: DONE
+requirement: WAVE 5 HEAD, the TRANSITION PASS (operator GO 2026-08-27): the design specified states and refusals thoroughly and transitions not at all, so each step an item takes across its life surfaced as a missing verb. Walk ONE item lifecycle end to end (admit, slots filled, blocker answered, promoted, scheduled, closed, drained, compacted) and for every arrow name the verb, the record it writes and the check that proves it, in a table committed to the design; an arrow with no verb is an item booked from the table. Then one shared grammar module for every value that crosses verbs (slot lines, blocker questions, ledger lines, ids), each writer and reader importing it. Then the same walk for a LANE and a KIND, briefer. Full paragraph, quoted and authoritative: dotfiles claude/records/lifecycle-wave4-handoff-2026-08-27.md, the WAVE 5 HEAD paragraph
+goal: enforce-the-invariants
+write-set: cache-fix docs/directives/carrier-rework-design-2026-08-26.md (new 3.x section, the arrow table), then lifecycle plugin/cli/lifecycle_core/ per the items the table books
+done-criterion: the arrow table exists in the design with a verb, a record and a check named for every arrow; every arrow lacking one is booked as its own item; the shared grammar module exists and is imported by each writer and reader of a crossing value, red-first on lc-40 own case
+evidence: lc-13 to lc-40, 27 items (lc-15 superseded by lc-28), sorted by the wave-4 desk into transition 16 / nick 11 and ruled by the judgment desk. THE EVIDENCE SENTENCE, verbatim: the five named arrows each surfaced independently as its own item, found by different lanes, none looking for a pattern. Named arrows and their items: amend lc-27, unblock lc-26, promote lc-39, close lc-18/19/21, merge lc-17, register lc-13+lc-14 as one arrow, seed lc-23; cross-verb grammar lc-40, lc-38, lc-36. lc-16 flagged as a missing verb but a QUERY, not an arrow. Not a redesign: the refusal-heavy stance stays
+blocked-by: NONE
+closed-reason: 2026-09-12 DONE-CRITERION MET, NEVER CLOSED (retirement pass 2026-09-12). The arrow table exists as section 3.12 Transitions in the cache-fix design of record dated 2026-08-28, with item, lane and kind walks and every verbless arrow booked as its own item in the verb cell. The shared grammar module exists at plugin/cli/lifecycle_core/grammar.py and is imported by six modules. lc-40, the named red-first case, is closed at c5164f7 and a146b62. Ref names the IN-REPO half only: the table itself landed in claude-code-cache-fix, which this desk does not write.
+closed-ref: a146b62
+
 ## Archive (pre-migration)
 
