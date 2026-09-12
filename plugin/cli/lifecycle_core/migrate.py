@@ -237,6 +237,13 @@ class Entry:
     #: closure's body is archived VERBATIM: writing a grade for it would
     #: assert something the source never carried.
     closure: bool = False
+    #: THIS MIGRATION'S OWN OUTPUT COMING BACK (lc-73). The id of the
+    #: successor block whose RAW body already carries this entry's own
+    #: `{source}:{line}-{end}` provenance, or None. A FOURTH disposition
+    #: beside written / closed / unclassified, and a FIELD for the same reason
+    #: `closure` is one: the reconciliation identity partitions the entries
+    #: read, and a disposition it cannot see is a body the arithmetic loses.
+    reimported_as: str | None = None
     #: The TYPED blocker the write-rules gave this entry, and which branch
     #: produced it. Held per entry so the report can print the per-TYPE
     #: counts §3.1 asks for — a total is the number that hides the untyped one.
@@ -686,6 +693,13 @@ def build_items(entries, prefix: str, source_name: str,
     for e in entries:
         if e.grade is None:
             continue
+        # A RE-IMPORT IS NOT A BODY TO WRITE (lc-73). The successor already
+        # holds this entry under its own id; writing it again is the second
+        # copy the merge exists to avoid, and it is skipped HERE — at the one
+        # place that turns an entry into a block — so no caller can route
+        # around it by building blocks another way.
+        if e.reimported_as is not None:
+            continue
         n += 1
         e.ident = f"{prefix}-{n}" if allocate is None else allocate()
         # EVERY MIGRATED ENTRY IS OPEN, and the write-rules are about OPEN
@@ -905,6 +919,91 @@ def duplicate_bodies(entries, known: dict) -> list:
         if e.grade is None:
             continue
         ident = known.get(headline_of(e))
+        if ident is not None:
+            out.append((e, ident))
+    return out
+
+
+#: ONE PROVENANCE TOKEN, the exact shape `build_items` writes into the
+#: `evidence` slot — `{source}:{line}-{end}`. Matched with `fullmatch` against
+#: a WHOLE token rather than searched for inside a line: `BACKLOG.md:23-4` is
+#: a prefix of `BACKLOG.md:23-46`, so a substring test here would be a prefix
+#: match wearing an equality's costume and would claim a re-import of an entry
+#: nobody migrated.
+_PROVENANCE_TOKEN = re.compile(r"(?P<src>\S+):(?P<line>\d+)-(?P<end>\d+)")
+
+#: What a token may be wrapped in where the provenance is quoted inside prose
+#: rather than standing alone as a slot value. Stripped from both ends before
+#: the fullmatch; the pattern itself ends in a digit, so no stripped character
+#: can be part of a real token.
+_TOKEN_WRAPPERS = "\"'`(),;[]<>“”‘’"
+
+
+def provenance_index(*texts) -> dict:
+    """`{(source, line, end): ident}` over the successor homes' RAW BLOCKS.
+
+    THE RAW BLOCK, NEVER THE AMENDMENT-RESOLVED SLOT (lc-73), and that is the
+    whole point of this function rather than a detail of it. `items.parse`
+    puts the value IN FORCE into `slots`, so an `amended-evidence` line written
+    months later REPLACES the provenance a migration recorded — and the anchor
+    would then decay for the one reason that has nothing to do with the work:
+    somebody amended a slot. Amendment lines are APPENDED and the base line
+    survives, so the raw body is the immutable record and the resolved slot is
+    not. Measured at statiker: five of twenty anchors are invisible in the
+    resolved slot and all twenty are intact in the raw block.
+
+    THE HEAD AND THE ARCHIVE ARE OUT OF SCOPE BY CONSTRUCTION. Attribution
+    starts at a block heading and `grammar.heading_ident` returns None for
+    `## Archive (pre-migration)`, so the archive's verbatim source bodies —
+    which quote the very line ranges this index is keyed on — never enter it.
+    An archive body is not an ITEM, and counting one here would skip an entry
+    the successor holds no item for.
+
+    FIRST WRITER WINS on a repeated token: the index answers "is this already
+    present", and a second id carrying the same provenance is a DUPLICATE-ID
+    question that belongs to the carrier's own shape check, not here.
+    """
+    out = {}
+    for text in texts:
+        if not text:
+            continue
+        ident = None
+        for raw in text.split("\n"):
+            if grammar.ends_block(raw):
+                ident = grammar.heading_ident(raw)
+                continue
+            if ident is None:
+                continue
+            for tok in raw.split():
+                m = _PROVENANCE_TOKEN.fullmatch(tok.strip(_TOKEN_WRAPPERS))
+                if m is None:
+                    continue
+                out.setdefault(
+                    (m.group("src"), int(m.group("line")),
+                     int(m.group("end"))), ident)
+    return out
+
+
+def reimported_bodies(entries, src_name: str, index: dict) -> list:
+    """`[(entry, colliding-ident)]` — entries this migration itself produced.
+
+    RE-IMPORT IS A PROVENANCE QUESTION, NOT A HEADLINE ONE (lc-73). The
+    headline detector beside this one asks whether two bodies share a title,
+    which decays the day anybody edits a requirement: at statiker it saw 20
+    re-imports at one commit and 17 at the next, the three that left having
+    gained an `amended-requirement` and nothing else. The provenance a
+    migration WROTE cannot decay that way, so it is what the same-work
+    question is asked against.
+
+    THE POPULATION IS `duplicate_bodies`', to the entry: the grade-None skip
+    is the same skip, because a closure is archived verbatim rather than
+    written as an item and has no item body to collide with.
+    """
+    out = []
+    for e in entries:
+        if e.grade is None:
+            continue
+        ident = index.get((src_name, e.line, e.end_line))
         if ident is not None:
             out.append((e, ident))
     return out
@@ -1396,7 +1495,12 @@ def run(args, out, ctx) -> int:
     # `--merge` and not an error; what it is not is a licence to overwrite a
     # populated one, which is why the flag appends rather than replacing.
     existing_items = existing_done_home = None
+    #: The homes' RAW text, held beside the parsed objects because the
+    #: provenance anchor is a raw-block question (lc-73) and `items.parse`
+    #: resolves amendments away.
+    home_texts = []
     merge_target = False
+    reimported = []
     if merge:
         if not ctx.prefix:
             out("COULD NOT VERIFY: `--merge` allocates ids from the carrier's "
@@ -1410,7 +1514,8 @@ def run(args, out, ctx) -> int:
             if not path.exists():
                 continue
             try:
-                parsed = items_mod.parse(path.read_text(encoding="utf-8"))
+                home_text = path.read_text(encoding="utf-8")
+                parsed = items_mod.parse(home_text)
             except (OSError, UnicodeDecodeError) as exc:
                 out(f"COULD NOT VERIFY: the {label} {path.name} could not be "
                     f"read ({exc!r}), so neither the ids already in use nor "
@@ -1423,11 +1528,25 @@ def run(args, out, ctx) -> int:
                     "parsed. No count from it means anything, and an id "
                     "allocator blind to it re-issues ids that are in use.")
                 return exits.COULD_NOT_VERIFY
+            home_texts.append(home_text)
             if path == ctx.items_path:
                 existing_items = parsed
                 merge_target = True
             else:
                 existing_done_home = parsed
+
+        # A RE-IMPORT IS DETECTED BY SOURCE PROVENANCE, NOT BY HEADLINE
+        # (lc-73), and it is settled BEFORE the duplicate refusal because the
+        # two answer different questions about the same collision. An entry
+        # whose own `{source}:{line}-{end}` already stands in a successor
+        # block is THIS MIGRATION'S OWN OUTPUT coming back: nobody has a call
+        # to make, so it is skipped and counted. Only what is left — a
+        # headline collision at DIFFERENT provenance — is genuinely ambiguous,
+        # and that refusal is unchanged.
+        reimported = reimported_bodies(read.entries, src_name,
+                                       provenance_index(*home_texts))
+        for e, ident in reimported:
+            e.reimported_as = ident
 
         # A DUPLICATE BODY REFUSES, and the whole run refuses rather than the
         # entry alone. A merge is not idempotent — a partial append would put
@@ -1435,12 +1554,14 @@ def run(args, out, ctx) -> int:
         # second time, so "write the rest, report this one" is the shape that
         # corrupts. Nothing is written and the desk decides, one entry at a
         # time, exactly as an AMBIGUOUS entry is decided.
-        dupes = duplicate_bodies(
+        dupes = [(e, ident) for e, ident in duplicate_bodies(
             read.entries, existing_titles(existing_items, existing_done_home))
+            if e.reimported_as is None]
         if dupes and not report_only:
             out(f"FINDING [merge_duplicate_body] {len(dupes)} entry/ies in "
                 f"{src_name} carry a headline a body already in the successor "
-                "homes carries. NOTHING was written: a merge appends, so a "
+                "homes carries AND carry provenance no successor block "
+                "carries. NOTHING was written: a merge appends, so a "
                 "run that wrote the rest and reported these would leave the "
                 "carrier half-merged and a re-run would write those bodies "
                 "twice. Whether each is the same work booked twice or two "
@@ -1607,7 +1728,7 @@ def run(args, out, ctx) -> int:
                       unclassified, archive_count, baseline, ledger_count,
                       lwhy, report_rel, closures, src_blob, done_blob,
                       carried_src, carried_done, readers, readers_why,
-                      src_label, n_residue),
+                      src_label, n_residue, reimported),
         encoding="utf-8")
 
     # --- the run's own answer
@@ -1626,9 +1747,23 @@ def run(args, out, ctx) -> int:
         f"{', '.join('## ' + s for s in read.closure_sections)} — "
         f"{read.closure_sections_why}")
     out(f"    UNCLASSIFIED (reported):  {len(unclassified)}")
+    if merge:
+        # STATED EVEN WHEN IT IS ZERO. An omitted line reads as "checked and
+        # clean" and a true zero reads as nothing at all; those are different
+        # answers and the three-answers rule does not let them share a
+        # rendering. Under `--merge` the check ran, so its count is printed
+        # whatever it is.
+        out(f"    RE-IMPORTS skipped:       {len(reimported)} — entries whose "
+            f"own {src_name}:<line>-<end> provenance already stands in a "
+            "successor block, i.e. this migration's own output coming back. "
+            "Not written, not refused, and no desk call: the successor "
+            "already holds each one under the id named beside it.")
+        for e, ident in reimported:
+            out(f"        {src_name}:{e.line}-{e.end_line}  already migrated "
+                f"as {ident}")
     out(f"    reconciliation:           {len(read.entries)} read == "
         f"{n_items} written + {len(closures)} closed + "
-        f"{len(unclassified)} unclassified")
+        f"{len(unclassified)} unclassified + {len(reimported)} re-imported")
     bt = blocker_types(read.entries)
     out(f"    grades written:           NEW {n_items}, READY 0 — §3.1: a "
         "migrated entry NEVER inherits READY")
@@ -1663,9 +1798,11 @@ def run(args, out, ctx) -> int:
         code = exits.worst([code, merge_conservation(
             ctx, src_name, read, n_items, closures, unclassified,
             merge_head_problem, out)])
-    if len(read.entries) != n_items + len(closures) + len(unclassified):
-        # NOT A REGISTERED ROW, deliberately. Every entry is written, closed
-        # or unclassified BY CONSTRUCTION — the three sets partition the read
+    if (len(read.entries)
+            != n_items + len(closures) + len(unclassified) + len(reimported)):
+        # NOT A REGISTERED ROW, deliberately. Every entry is written, closed,
+        # unclassified or re-imported BY CONSTRUCTION — the four sets
+        # partition the read
         # entries — so no INPUT falsifies this, and a predicate no input can
         # falsify is unprovable rather than unproven. Registering it would
         # put a row in the roster that can never go red, which is the
@@ -1675,7 +1812,8 @@ def run(args, out, ctx) -> int:
         # is what code 3 means.
         out("COULD NOT VERIFY: this run's own arithmetic disagrees — "
             f"{len(read.entries)} entries read, {n_items} written, "
-            f"{len(closures)} closed, {len(unclassified)} unclassified. "
+            f"{len(closures)} closed, {len(unclassified)} unclassified, "
+            f"{len(reimported)} re-imported. "
             "Nothing below is a complete list.")
         code = exits.COULD_NOT_VERIFY
     if ledger_count is None:
@@ -1790,6 +1928,13 @@ def blocker_types(entries) -> dict:
     for e in entries:
         if e.grade is None:
             continue
+        # A RE-IMPORT WAS NEVER WRITTEN, so it has no blocker to count
+        # (lc-73). The write-rules never reached it; counting its empty
+        # blocker as `NONE` would report a body this run did not produce, in
+        # the one table whose whole purpose is that every written item carries
+        # a TYPED blocker.
+        if e.reimported_as is not None:
+            continue
         v = (e.blocker or "").strip()
         if not v or v == items_mod.BLOCKER_NONE:
             out["NONE"] += 1
@@ -1826,7 +1971,8 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
                   unclassified, archive_count, baseline, ledger_count,
                   lwhy, report_rel="", closures=(), src_blob="",
                   done_blob="", carried_src=None, carried_done=None,
-                  readers=(), readers_why="", src_label="", n_residue=0) -> str:
+                  readers=(), readers_why="", src_label="", n_residue=0,
+                  reimported=()) -> str:
     """The classification report.
 
     IT DESCRIBES ENTRIES; IT DOES NOT QUOTE THEM. Every entry appears as its
@@ -1895,21 +2041,36 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
       f"{len(closures)} |")
     a(f"| entries reported UNCLASSIFIED or AMBIGUOUS (not written) | "
       f"{len(unclassified)} |")
+    a(f"| entries SKIPPED as re-imports (own output, already migrated) | "
+      f"{len(reimported)} |")
     a(f"| archive bodies in `{ctx.done_path.name}` (verbatim) | "
       f"{archive_count} |")
     a(f"| entries routed to the ledger | "
       f"{'COULD NOT VERIFY' if ledger_count is None else ledger_count} |")
     a(f"| RESIDUE items booked (`tend`, from no source entry) | {n_residue} |")
     a("")
-    ident_ok = (len(read.entries)
-                == n_items + len(closures) + len(unclassified))
+    ident_ok = (len(read.entries) == n_items + len(closures)
+                + len(unclassified) + len(reimported))
     a(f"**Identity:** {len(read.entries)} entries read = {n_items} written + "
-      f"{len(closures)} closed + {len(unclassified)} unclassified — "
-      f"{'HOLDS' if ident_ok else 'FAILS'}. THREE columns, not two: a closure "
+      f"{len(closures)} closed + {len(unclassified)} unclassified + "
+      f"{len(reimported)} re-imported — "
+      f"{'HOLDS' if ident_ok else 'FAILS'}. FOUR columns, not two: a closure "
       "read out of the source carrier is neither written as an item nor "
       "unclassified, and folding it into either would make one of those "
-      "numbers say something it does not.")
+      "numbers say something it does not. A RE-IMPORT is the fourth (lc-73) "
+      "— an entry the successor already holds under its own id, recognised by "
+      "the provenance this migration itself wrote and skipped rather than "
+      "written a second time. It is a column and not a silence for the same "
+      "reason: an entry that simply vanished from the sum and one that was "
+      "deliberately not written look identical in a three-column identity.")
     a("")
+    if reimported:
+        a("| re-imported entry | source range | already migrated as |")
+        a("|---|---|---|")
+        for e, ident in reimported:
+            a(f"| {title_of(e)} | `{src_name}:{e.line}-{e.end_line}` | "
+              f"{ident} |")
+        a("")
     bullets_ok = (read.total_bullets == len(read.entries)
                   + len(read.non_entry_bullets) + len(read.cut_bullets))
     a(f"**Bullet identity:** {read.total_bullets} top-level bullets = "

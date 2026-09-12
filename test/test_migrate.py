@@ -517,11 +517,14 @@ class SourceBlob(unittest.TestCase):
 
 
 class ReconciliationWithThreeColumns(unittest.TestCase):
-    """The identity that makes 'not migrated' visible now has THREE columns.
+    """The identity that makes 'not migrated' visible now has FOUR columns.
     A closure is neither written nor unclassified, and folding it into
-    either would make one of those numbers say something it does not."""
+    either would make one of those numbers say something it does not; a
+    RE-IMPORT (lc-73) is the fourth, for the same reason — an entry that
+    simply vanished from the sum and one that was deliberately not written
+    look identical in a three-column identity."""
 
-    def test_the_identity_holds_and_is_printed_with_three_terms(self):
+    def test_the_identity_holds_and_is_printed_with_four_terms(self):
         d = build("# old\n\n## Open\n\n"
                   "- **READY 2026-08-03 — open.** body\n"
                   "- **DONE 2026-08-01 — closed.** body\n"
@@ -529,10 +532,11 @@ class ReconciliationWithThreeColumns(unittest.TestCase):
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         code, out = migrate_run(d)
         self.assertEqual(code, exits.FINDING, out)
-        self.assertIn("3 read == 1 written + 1 closed + 1 unclassified", out)
+        self.assertIn("3 read == 1 written + 1 closed + 1 unclassified "
+                      "+ 0 re-imported", out)
         report = (d / REPORT).read_text(encoding="utf-8")
         self.assertIn("3 entries read = 1 written + 1 closed + "
-                      "1 unclassified — HOLDS", report)
+                      "1 unclassified + 0 re-imported — HOLDS", report)
 
     def test_conservation_counts_the_in_carrier_closures(self):
         """Both sides use `archive_entries` over the text actually written,
@@ -900,6 +904,370 @@ class PerSourceBlobPin(unittest.TestCase):
         self.assertEqual(m.group(1),
                          migrate.blob_sha((d / "BACKLOG.md").read_bytes()))
         self.assertEqual(m.group(2).strip(), "BACKLOG.md")
+
+
+class ReImportByProvenance(unittest.TestCase):
+    """lc-73 — RE-IMPORT IS A PROVENANCE QUESTION, NOT A HEADLINE ONE.
+
+    The headline detector beside this one asks whether two bodies share a
+    title, and that answer DECAYS the day anybody edits a requirement: at
+    statiker it saw 20 re-imports at one commit and 17 at the next, the three
+    that left having gained an `amended-requirement` and nothing else. The
+    trigger for that decay is 'somebody edited a slot' — nothing about the
+    work — and it fails in the QUIET direction: an already-migrated entry
+    becomes re-importable as NEW work and nothing says so.
+
+    HALF OF WHAT IS HERE IS MUST-NOT-MOVE, deliberately. A detector loosened
+    until the re-imports stop being refused scores identically to one that got
+    the distinction right, so every skip has a partner asserting what the
+    change did NOT do: the genuine ambiguity still refuses the whole run, a
+    provenance that merely RESEMBLES one present is not a match, and a range
+    quoted in the ARCHIVE — which holds the source's own line ranges verbatim
+    — anchors nothing, because an archive body is not an item.
+    """
+
+    def prefix(self) -> str:
+        return GOOD_FULL_DECLARATION["id-prefix"]
+
+    #: A source whose single entry is the one every case here is about.
+    SOURCE = "# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n"
+
+    def ranges(self, text: str) -> tuple:
+        """`(line, end_line)` of the source's first entry, READ OUT OF THE
+        READER rather than counted by hand.
+
+        The fixtures below must cite the range the migration itself would
+        write, and a hand-counted one is a second notion of where an entry
+        starts: it would pass while the reader disagreed, which is the one
+        state these cases exist to detect.
+        """
+        read = migrate.read_carrier(text)
+        for e in read.entries:
+            migrate.classify(e)
+        return read.entries[0].line, read.entries[0].end_line
+
+    def home(self, *blocks: str, baseline: int | None = None) -> str:
+        """A live carrier holding exactly these blocks.
+
+        `baseline` is overridable because it must count every BODY the homes
+        hold, archive bodies included — a fixture that plants one in the done
+        home and leaves the baseline at the block count fails
+        `conservation_surplus` for a reason that has nothing to do with the
+        case under test.
+        """
+        n = len(blocks) if baseline is None else baseline
+        head = (f"schema: {items.SCHEMA_FLOOR}\nbaseline: {n}\n"
+                "added: 0\ncompacted: 0\n")
+        return head + "\n" + "\n".join(blocks)
+
+    def block(self, ident: str, requirement: str, evidence: str,
+              extra: str = "") -> str:
+        b = items.render_block(ident, {
+            "grade": "NEW", "requirement": requirement, "goal": "UNKNOWN",
+            "write-set": "UNKNOWN", "done-criterion": "UNKNOWN",
+            "evidence": evidence, "blocked-by": "decision regrade: what"})
+        return b if not extra else b.rstrip("\n") + "\n" + extra + "\n"
+
+    # --- the skip -----------------------------------------------------------
+
+    def test_a_second_run_over_the_same_source_writes_nothing_twice(self):
+        """The whole shape, end to end: what a migration wrote once it
+        recognises as its own the second time."""
+        d = build(self.SOURCE)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d, "--from-done", "NONE")[0],
+                         exits.CLEAN)
+        before = (d / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("RE-IMPORTS skipped:       1", out)
+        self.assertIn("already migrated as", out)
+        after = (d / "ITEMS.md").read_text(encoding="utf-8")
+        self.assertEqual(after.count("READY 2026-08-03 — first"), 1)
+        self.assertEqual(after, before)
+
+    def test_the_DECAYED_case_is_the_discriminating_one(self):
+        """THE CASE A HEADLINE DETECTOR LOSES, and the reason this item
+        exists. The successor's requirement has been amended, so the title the
+        headline detector compares no longer matches — measured at statiker on
+        st-8, st-10 and st-14. The provenance the migration wrote is intact,
+        so the entry is still recognised.
+
+        The old detector is RUN here, not described: without that arm this
+        case would pass against a build that simply matched harder on
+        headlines."""
+        p = self.prefix()
+        line, end = self.ranges(self.SOURCE)
+        d = build(self.SOURCE)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS.md").write_text(self.home(self.block(
+            f"{p}-1", "a requirement somebody rewrote after the migration",
+            f"BACKLOG.md:{line}-{end}")), encoding="utf-8")
+
+        read = migrate.read_carrier(self.SOURCE)
+        for e in read.entries:
+            migrate.classify(e)
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual(
+            migrate.duplicate_bodies(read.entries,
+                                     migrate.existing_titles(parsed)), [],
+            "the headline detector must MISS this entry, or the case proves "
+            "nothing about provenance")
+
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("RE-IMPORTS skipped:       1", out)
+        self.assertIn(f"already migrated as {p}-1", out)
+        self.assertNotIn("READY 2026-08-03 — first",
+                         (d / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_the_anchor_reads_the_RAW_block_not_the_resolved_slot(self):
+        """`items.parse` puts the value IN FORCE into `slots`, so an
+        `amended-evidence` line REPLACES the provenance a migration recorded.
+        Measured at statiker: five of twenty anchors are invisible in the
+        resolved slot and all twenty are intact in the raw block.
+
+        READ AT THE INDEX, because that is where the two readings can be put
+        side by side in one case: the same bytes, the resolved slot shown to
+        have LOST the anchor and the index shown to still hold it. A run-level
+        arm could only show the verdict, and a verdict cannot say which of the
+        two readings produced it."""
+        p = self.prefix()
+        text = self.home(self.block(
+            f"{p}-1", "a requirement somebody rewrote after the migration",
+            "BACKLOG.md:23-46",
+            extra="amended-evidence: 2026-09-12 a later run of prose that "
+                  "says nothing about any line range"))
+        parsed = items.parse(text)
+        self.assertEqual(parsed.problems, [])
+        self.assertNotIn("BACKLOG.md:23-46", parsed.items[0].slots["evidence"],
+                         "the resolved slot must have LOST the anchor, or "
+                         "this case does not test the raw-block read")
+        self.assertEqual(migrate.provenance_index(text),
+                         {("BACKLOG.md", 23, 46): f"{p}-1"})
+
+    def test_a_re_import_held_only_in_the_DONE_home_is_recognised(self):
+        """BOTH HOMES. Thirteen of statiker's twenty anchors sit in
+        `ITEMS-DONE.md`; an index over the live carrier alone would re-import
+        every one of them as open work, which is this repo's recurring silent
+        defect."""
+        p = self.prefix()
+        line, end = self.ranges(self.SOURCE)
+        d = build(self.SOURCE)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS.md").write_text(self.home(), encoding="utf-8")
+        (d / "ITEMS-DONE.md").write_text(
+            f"schema: {items.SCHEMA_FLOOR}\n\n" + self.block(
+                f"{p}-9", "a closed body nobody expects back",
+                f"BACKLOG.md:{line}-{end}"), encoding="utf-8")
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertIn(f"already migrated as {p}-9", out)
+        self.assertNotIn("READY 2026-08-03 — first",
+                         (d / "ITEMS.md").read_text(encoding="utf-8"))
+        # THE RUN'S CODE IS 3 AND THAT IS THE OPEN REMAINDER, NOT THIS
+        # CASE'S SUBJECT — see `TheConservationCounterHasNotFollowedTheAnchor`
+        # below, which is where it is asserted and named.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+
+    def test_the_count_is_printed_even_when_it_is_ZERO(self):
+        """An omitted line reads as 'checked and clean' and a true zero reads
+        as nothing at all. Under `--merge` the check ran, so its count is
+        printed whatever it is (law 1's three answers)."""
+        p = self.prefix()
+        d = build(self.SOURCE)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS.md").write_text(self.home(self.block(
+            f"{p}-1", "unrelated work", "none yet")), encoding="utf-8")
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("RE-IMPORTS skipped:       0", out)
+        self.assertIn("+ 0 re-imported", out)
+
+    # --- must not move ------------------------------------------------------
+
+    def test_a_headline_collision_at_DIFFERENT_provenance_still_REFUSES(self):
+        """THE MUST-NOT-MOVE CONTROL the design names. Genuine ambiguity —
+        two items that share a headline and were never the same import — is
+        still the desk's call, and the whole run still refuses."""
+        p = self.prefix()
+        d = build(self.SOURCE)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        read = migrate.read_carrier(self.SOURCE)
+        for e in read.entries:
+            migrate.classify(e)
+        # THE COLLIDING TITLE IS TAKEN FROM THE READER, never retyped: a
+        # hand-copied headline that drifts by one character makes this arm
+        # pass against a build that refuses nothing at all.
+        headline = migrate.headline_of(read.entries[0])
+        (d / "ITEMS.md").write_text(self.home(self.block(
+            f"{p}-1", f"{headline} — record: OTHER.md:99",
+            "OTHER.md:99-120")), encoding="utf-8")
+        before = (d / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[merge_duplicate_body]", out)
+        self.assertIn("already present as", out)
+        # THE REFUSAL RETURNS BEFORE THE RUN'S COUNTS ARE PRINTED, as it did
+        # before this change: a run that refused and then went on to describe
+        # what it would have written would be reporting a merge it did not do.
+        self.assertNotIn("RE-IMPORTS skipped:", out)
+        self.assertEqual((d / "ITEMS.md").read_text(encoding="utf-8"), before)
+
+    def test_a_provenance_that_merely_RESEMBLES_one_present_is_no_match(self):
+        """A prefix match wearing an equality's costume. Both halves of the
+        triple are probed: a range that EXTENDS the stored one by a digit
+        (`:5-6` against a stored `:5-60`) and the same range under a DIFFERENT
+        source name. A substring test passes the first and a name-blind one
+        passes the second, and each would claim a re-import of an entry nobody
+        migrated.
+
+        AT THE INDEX, with the run-level partner below carrying the source
+        name half — a near-miss over the SAME source name is counted by
+        `per_source_counts`, so a run-level arm for it would be measuring that
+        counter rather than this match."""
+        line, end = self.ranges(self.SOURCE)
+        p = self.prefix()
+        near = self.home(self.block(f"{p}-1", "unrelated work",
+                                    f"BACKLOG.md:{line}-{end}0"))
+        self.assertEqual(migrate.provenance_index(near),
+                         {("BACKLOG.md", line, int(f"{end}0")): f"{p}-1"})
+        read = migrate.read_carrier(self.SOURCE)
+        for e in read.entries:
+            migrate.classify(e)
+        self.assertEqual(
+            migrate.reimported_bodies(read.entries, "BACKLOG.md",
+                                      migrate.provenance_index(near)), [],
+            "an extended range is not the range")
+
+        other = self.home(self.block(f"{p}-1", "unrelated work",
+                                     f"OTHER.md:{line}-{end}"))
+        d = build(self.SOURCE)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS.md").write_text(other, encoding="utf-8")
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("RE-IMPORTS skipped:       0", out)
+        self.assertIn("READY 2026-08-03 — first",
+                      (d / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_a_range_quoted_in_the_ARCHIVE_anchors_nothing(self):
+        """The archive holds the source's own bodies VERBATIM, at the line
+        ranges named beside each one — the very tokens this index is keyed on.
+        An archive body is not an ITEM, so counting one would skip an entry
+        the successor holds no item for: a silent loss.
+
+        The quoted range sits in the archived BODY rather than in the region's
+        `<!-- … — ` marker, so what this case measures is the index's
+        attribution and not `per_source_counts`' marker count.
+
+        A REAL BLOCK PRECEDES THE ARCHIVE HEADING, and without it this case is
+        an unread instrument: with no block open before the region, an index
+        that never closed attribution at a non-block heading would carry
+        `None` and score identically to one that closes it properly. Measured
+        — the mutation that drops the close darkened nothing until this block
+        was there."""
+        p = self.prefix()
+        line, end = self.ranges(self.SOURCE)
+        d = build(self.SOURCE)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS.md").write_text(self.home(baseline=2), encoding="utf-8")
+        (d / "ITEMS-DONE.md").write_text(
+            f"schema: {items.SCHEMA_FLOOR}\n\n"
+            + self.block(f"{p}-9", "a closed body of unrelated work",
+                         "none yet")
+            + f"\n{items.ARCHIVE_HEADING}\n\n"
+            f"- **READY 2026-08-03 — first.** body, from "
+            f"BACKLOG.md:{line}-{end}\n", encoding="utf-8")
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("RE-IMPORTS skipped:       0", out)
+        self.assertIn("READY 2026-08-03 — first",
+                      (d / "ITEMS.md").read_text(encoding="utf-8"))
+
+    # --- the index itself ---------------------------------------------------
+
+    def test_the_index_keys_are_parsed_triples_over_block_bodies_only(self):
+        """A unit read of the index, because the run-level cases above can
+        only show its verdict. The head region has no block open, so nothing
+        in it is attributed."""
+        idx = migrate.provenance_index(
+            "schema: 2\nbaseline: 1\n# HEAD.md:1-2 is not in a block\n\n"
+            "## ab-1\nevidence: BACKLOG.md:23-46\n\n"
+            "## ab-2\nevidence: prose\namended-evidence: 2026-09-12 quoted "
+            "as `BACKLOG.md:47-73` inside a sentence\n")
+        self.assertEqual(idx, {("BACKLOG.md", 23, 46): "ab-1",
+                               ("BACKLOG.md", 47, 73): "ab-2"})
+
+    def test_the_first_id_carrying_a_token_wins(self):
+        """The index answers 'is this already present'. A second id carrying
+        the same provenance is a DUPLICATE-ID question and belongs to the
+        carrier's own shape check, not here."""
+        idx = migrate.provenance_index(
+            "## ab-1\nevidence: BACKLOG.md:1-2\n\n"
+            "## ab-2\nevidence: BACKLOG.md:1-2\n")
+        self.assertEqual(idx, {("BACKLOG.md", 1, 2): "ab-1"})
+
+
+class TheConservationCounterHasNotFollowedTheAnchor(unittest.TestCase):
+    """lc-73's OPEN REMAINDER, recorded as an executed case rather than as a
+    sentence in a report nobody re-reads.
+
+    `per_source_counts` answers "how many bodies of this source do the homes
+    hold" from `items.parse`'s AMENDMENT-RESOLVED `evidence` slot, and over
+    the LIVE carrier only. Both readings are the ones lc-73 replaced in the
+    detector: measured at statiker, 20 blocks carry an intact base
+    `evidence: BACKLOG.md:<line>-<end>` line and only 15 of them still show it
+    in the resolved slot, 13 of the 20 sitting in `ITEMS-DONE.md` where this
+    counter does not look at all.
+
+    Before the re-import skip the question never arose — the run refused at
+    the duplicate gate and never reached conservation. With the skip the run
+    proceeds, the counter sees fewer bodies than the source offered, and
+    `merge_conservation` answers COULD NOT VERIFY. The bodies ARE all on disk;
+    what cannot be verified is which run put them there.
+
+    THE FIX IS NOT TAKEN HERE, deliberately: it changes the behaviour of a
+    function the brief did not name, over a figure the whole conservation
+    contract rests on. What is here is the halt with its evidence.
+
+    WHEN THAT REPAIR LANDS THIS CASE GOES RED. That is the signal it exists
+    for, not a regression: someone must then read this docstring and delete
+    the case, rather than the gap closing with nobody noticing it had been
+    open.
+    """
+
+    def test_a_skipped_re_import_leaves_the_per_source_figure_short(self):
+        p = GOOD_FULL_DECLARATION["id-prefix"]
+        source = "# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n"
+        d = build(source)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d, "--from-done", "NONE")[0],
+                         exits.CLEAN)
+        # The amendment that costs the counter its sight: append-only, so the
+        # BASE evidence line — the anchor — survives it untouched.
+        text = (d / "ITEMS.md").read_text(encoding="utf-8")
+        self.assertIn("evidence: BACKLOG.md:", text)
+        (d / "ITEMS.md").write_text(
+            text.rstrip("\n") + "\namended-evidence: 2026-09-12 prose that "
+            "names no line range\n", encoding="utf-8")
+
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        # The DETECTOR still sees it — the anchor is read off the raw block.
+        self.assertIn("RE-IMPORTS skipped:       1", out)
+        self.assertIn(f"already migrated as {p}-1", out)
+        # The COUNTER does not, and says so rather than reporting a number.
+        self.assertIn("blocks whose `evidence` names it: 0", out)
+        self.assertIn("COULD NOT VERIFY: the per-source arithmetic disagrees",
+                      out)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
 
 
 class RequirementTitle(unittest.TestCase):
