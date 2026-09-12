@@ -423,9 +423,11 @@ def build_parser() -> argparse.ArgumentParser:
     lreg.add_argument("--dry-run", dest="dry_run", action="store_true")
     lnew = lanes_sub.add_parser("new", help="wave 2 (§3.8c) — a lane file "
                                             "from the format, as a STUB a "
-                                            "human then fills. Does NOT "
-                                            "declare it in this repo's "
-                                            "`lanes` list")
+                                            "human then fills. REGISTERS "
+                                            "its own output: the name is "
+                                            "appended to this repo's "
+                                            "`lanes` list in the same run "
+                                            "(lc-14)")
     lnew.add_argument("door", help="the lane's name — a door the operator "
                                    "types, never a command")
     lnew.add_argument("--force", action="store_true",
