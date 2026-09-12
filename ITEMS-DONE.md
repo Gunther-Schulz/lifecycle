@@ -298,5 +298,16 @@ amend-reason: 2026-09-12 retirement pass 2026-09-12: BACKLOG.md is deleted in th
 amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12 from BACKLOG.md:61-69: 'PARKED 2026-08-26 — LEDGER.md cannot carry a prose header. The parser requires the first non-blank line to be schema: <n>; anything else is a shape finding before it or an unreadable line after it. Measured while creating claude-code-cache-fix ledger, which is therefore exactly schema: 1, a carrier in a public repo that cannot say what it is for. Missing decision: whether the ledger parser gains a comment-line rule (# or <!-- -->), and if so whether ledger check counts comment lines in its third answer.' DROP BASIS, executed at f09e32d on a scratch copy: the parser gained the rule. ledger.py:88 declares a comment line in the PREAMBLE, matched by shape, and the comment at :189-192 records why. Exercised rather than read: a three-line '#'-prefixed prose header was planted at the top of LEDGER.md and 'ledger check' returned 'ledger check: CLEAN, 0 shape finding(s), 0 unreadable line(s)', exit 0. That answers both halves, since the comment lines counted as neither a finding nor unreadable. Legacy pointer: BACKLOG.md:61-69.
 blocker-moot: the missing decision named in the source body — answer it, then re-grade
 
+## lc-17
+grade: DONE
+requirement: A second carrier migration has no MERGE mode. With ITEMS.md present, migrate returns FINDING [migrate_would_overwrite] (migrate.py:633) and the refusal's own text says --force would REPLACE real work with a re-derivation. So 'N old carriers into one item carrier' has no execution path at all — not a hard case, an absent one
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a second --from against a populated ITEMS.md appends without touching existing entries, with conservation asserted across both sources; red-first on the current refusal
+evidence: verified here at cf92ad9: migrate.py:633 emits migrate_would_overwrite. Peer measured :630-639 on 6badd58
+blocked-by: NONE
+closed-reason: 2026-09-12 FIXED AND NEVER CLOSED, found by the 2026-09-12 retirement pass. --merge mode shipped in 9f8350f: cli.py:502 adds --merge, migrate.py:1349 bypasses the migrate_would_overwrite refusal under it, the merge branch appends via append_blocks leaving existing entries byte-for-byte, and merge_conservation() asserts the identity per source and in total. The entry's premise -- 'no execution path at all' -- is dead. Verified twice on independent axes: a sonnet lane's executed read of the live module, and this desk's own re-run against the commit history. Citation drift recorded: the entry cited migrate.py:633 for the refusal, now at :1352.
+closed-ref: 9f8350f
+
 ## Archive (pre-migration)
 
