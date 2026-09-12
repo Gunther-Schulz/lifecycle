@@ -48,6 +48,11 @@ dropped: lc-39 — OVERTAKEN. item promote ships: executed at f09e32d, it wrote 
 dropped: lc-54 — DUPLICATE of lc-24, merged there. Same failing test and same red, re-measured at f09e32d as 62/61/1. lc-54's baseline note and its must-not-move arm are carried in lc-24's amended evidence slot.
 dropped: lc-57 — DUPLICATE of lc-16, merged there. Both book the missing goal-scoped read, and this body names lc-16 as its own source. Its red-first shape is carried in lc-16's amended evidence slot.
 dropped: lc-59 — DUPLICATE of lc-13 plus lc-14, merged into both. It restates the lane-declaration arrow those two already carry, which lc-43's evidence sorts as ONE arrow. Its executed confirmations are carried in both amended evidence slots.
+dropped: lc-1 — OVERTAKEN. The named decision was answered by the build: the scanner gained a source-scoped foreign-path class (absence-scan.mjs:611-612, widened 2026-08-26), and the exact input this entry measured as clean now fires, shown against its clean twin. Basis inlined in the evidence slot.
+dropped: lc-2 — OVERTAKEN. Both halves of the named decision are answered by the build: 'item check' is the shipped spelling, and plugin.json's git-hooks.pre-commit entry states that the wiring is the plugin install step and why. Basis inlined in the evidence slot.
+dropped: lc-4 — OVERTAKEN. The named decision was answered by the build: 'lane register' ships and owns the roster. Executed with --dry-run, it printed that it would append the repo to ~/.config/lifecycle/repos and that the roster goes from 0 to 1. Basis inlined in the evidence slot.
+dropped: lc-5 — OVERTAKEN. Both branches of the named either/or shipped: items.py:103 makes blocker-moot and superseded-by real DONE_ONLY_SLOTS, and 'item check' prints its own done-home verdict with a stated scope. Basis inlined in the evidence slot.
+dropped: lc-6 — OVERTAKEN. The ledger parser gained the comment-preamble rule (ledger.py:88). Exercised on a scratch copy: a three-line prose header planted above 'schema:' gives 'ledger check: CLEAN, 0 shape finding(s), 0 unreadable line(s)', which answers both halves. Basis inlined in the evidence slot.
 
 ## Archive (pre-migration)
 

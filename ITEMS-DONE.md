@@ -239,5 +239,64 @@ blocked-by: NONE
 amend-reason: 2026-09-12 retirement pass 2026-09-12: the drop basis belongs in the body that moves to the done home, not in the 300-char ledger reason
 amended-evidence: 2026-09-12 RETIREMENT PASS 2026-09-12, DROP BASIS: duplicate of lc-13 plus lc-14, which together book the same lane-declaration arrow and were booked first. lc-43's evidence already sorts them as ONE arrow: 'register lc-13+lc-14 as one arrow'. This body restates both halves, that a lane created by lane new is not declarable by a verb and that a lane FILE present but undeclared is silence rather than a finding. Re-confirmed at f09e32d: the lane surface is {list,register,new}, lane register puts a REPO on the roster rather than a lane in this repo's lanes list, and lane new --help still states the non-declaration outright. Merged into both existing entries per the merge rule, with this body's executed confirmations carried in each. ORIGINAL EVIDENCE, retained: wave-5 L walk 2026-08-28; kind list shows lanes: (empty).
 
+## lc-1
+grade: DROPPED
+requirement: PARKED 2026-08-26 — the "leak scan on the plugin repo" refusal row has no firing input the shipped scanner can detect — record: BACKLOG.md:14
+goal: UNKNOWN
+write-set: UNKNOWN
+done-criterion: UNKNOWN
+evidence: BACKLOG.md:14-24
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: BACKLOG.md is deleted in this pass, so the drop basis and the source body are inlined here rather than left behind a line-range pointer into a deleted file
+amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12 from BACKLOG.md:14-24: 'PARKED 2026-08-26 — the leak scan on the plugin repo refusal row has no firing input the shipped scanner can detect. Design §3.9 names a planted /home/<user>/... path in a template; measured the same day, that input scans CLEAN (exit 0) while a s-+8-hex token in the same file fires capture-key-prefix (exit 2). Missing evidence/decision: whether the scanner gains a foreign-path class (a change to a byte-identical copy, so it lands in claude-code-cache-fix first) or the row firing input is amended to the token form. Both are the judgment desk calls.' DROP BASIS, executed at f09e32d: the first branch was taken and has shipped. The scanner now carries foreign-path at absence-scan.mjs:611-612 with scope 'source', dated by the comment at :128 to 2026-08-26. The exact input the source body measured as CLEAN now fires: a tracked .md carrying /home/<another-user>/projects/thing/config.yaml gave 'FINDING foreign-path' exit 2, while the same file without it gave 'absence-scan: clean' exit 0. One variable, both arms shown. Legacy pointer: BACKLOG.md:14-24.
+
+## lc-2
+grade: DROPPED
+requirement: PARKED 2026-08-26 — the shape check has no assigned verb in the design's CLI surface — record: BACKLOG.md:25
+goal: UNKNOWN
+write-set: UNKNOWN
+done-criterion: UNKNOWN
+evidence: BACKLOG.md:25-31
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: BACKLOG.md is deleted in this pass, so the drop basis and the source body are inlined here rather than left behind a line-range pointer into a deleted file
+amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12 from BACKLOG.md:25-31: 'PARKED 2026-08-26 — the shape check has no assigned verb in the design CLI surface. Built as lifecycle item check; the brief D-c list does not contain it. Missing decision: the desk chosen spelling, and whether the pre-commit wiring (§3.9 calls it a pre-commit shape check) is the plugin install step or the repo own hook. Nothing else depends on the answer today.' DROP BASIS, executed at f09e32d, both halves answered. SPELLING: 'item check' is in the shipped surface, {check,add,ready,amend,promote,park,close,ratio,statusline}, and runs clean here. WIRING: plugin/.claude-plugin/plugin.json declares a git-hooks.pre-commit entry pointing at hooks/pre-commit, whose registration field states the answer outright, that the install symlinks .git/hooks/pre-commit at this script and never touches core.hooksPath because a repo-local core.hooksPath would replace the machine dispatcher. So it is the plugin install step, and the declaration says why. Legacy pointer: BACKLOG.md:25-31.
+blocker-moot: the missing decision named in the source body — answer it, then re-grade
+
+## lc-4
+grade: DROPPED
+requirement: PARKED 2026-08-26 — nothing creates `~/.config/lifecycle/repos`, so `lane list` answers `roster_absent` on this machine — record: BACKLOG.md:40
+goal: UNKNOWN
+write-set: UNKNOWN
+done-criterion: UNKNOWN
+evidence: BACKLOG.md:40-50
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: BACKLOG.md is deleted in this pass, so the drop basis and the source body are inlined here rather than left behind a line-range pointer into a deleted file
+amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12 from BACKLOG.md:40-50: 'PARKED 2026-08-26 — nothing creates ~/.config/lifecycle/repos, so lane list answers roster_absent on this machine. The roster is the router input and its creation is outside every write boundary wave 1 was given. Measured: lane list today exits 2 with roster_absent; with a scratch roster listing three repos it prints the full longhand board, so the verb works and the file does not exist. Missing decision: WHO owns the roster, the plugin install step, the operator dotfiles, or a lane register verb the CLI does not have. Nothing in wave 1 depends on the answer.' DROP BASIS, executed at f09e32d: the third option was taken and has shipped. 'lifecycle lane register' is in the surface {list,register,new} and its own help reads 'put a repo on the roster, the router input'. Run with --dry-run from a scratch checkout it printed 'DRY RUN, would append <repo> to /home/g/.config/lifecycle/repos' and 'roster: 0 repo(s) listed today, 1 after', so the verb both owns the file and creates it. The named decision is answered by the build. Legacy pointer: BACKLOG.md:40-50.
+blocker-moot: the missing decision named in the source body — answer it, then re-grade
+
+## lc-5
+grade: DROPPED
+requirement: PARKED 2026-08-26 — the done home's blocks are never shape-checked, so `blocker-moot:` and `superseded-by:` are unknown slots nothing reports — record: BACKLOG.md:51
+goal: UNKNOWN
+write-set: UNKNOWN
+done-criterion: UNKNOWN
+evidence: BACKLOG.md:51-60
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: BACKLOG.md is deleted in this pass, so the drop basis and the source body are inlined here rather than left behind a line-range pointer into a deleted file
+amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12 from BACKLOG.md:51-60: 'PARKED 2026-08-26 — the done home blocks are never shape-checked, so blocker-moot: and superseded-by: are unknown slots nothing reports. item check runs check_file over the LIVE carrier only; the done home is parsed for conservation and duplicates, and both callers ignore parsed.problems. Measured: a closed body carrying blocker-moot: passes every check today. Missing decision: either the two annotations become real slots in SLOTS, or the done home gets its own shape check with them exempted by name. Both are design decisions and both change what a done body IS.' DROP BASIS, executed at f09e32d: BOTH branches shipped, which over-answers the either/or. items.py:103 declares DONE_ONLY_SLOTS = ('superseded-by', 'blocker-moot', CLOSED_REASON, CLOSED_REF), so the annotations are real named slots rather than unknowns; and 'item check' now prints its own done-home verdict, 'done home: N closed block(s), archive 2 line(s) held verbatim and not shape-checked' followed by 'done-home check: CLEAN, 0 finding(s)', so the done home has its own shape check with a stated scope. Legacy pointer: BACKLOG.md:51-60.
+blocker-moot: the missing decision named in the source body — answer it, then re-grade
+
+## lc-6
+grade: DROPPED
+requirement: PARKED 2026-08-26 — `LEDGER.md` cannot carry a prose header — record: BACKLOG.md:61
+goal: UNKNOWN
+write-set: UNKNOWN
+done-criterion: UNKNOWN
+evidence: BACKLOG.md:61-69
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: BACKLOG.md is deleted in this pass, so the drop basis and the source body are inlined here rather than left behind a line-range pointer into a deleted file
+amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12 from BACKLOG.md:61-69: 'PARKED 2026-08-26 — LEDGER.md cannot carry a prose header. The parser requires the first non-blank line to be schema: <n>; anything else is a shape finding before it or an unreadable line after it. Measured while creating claude-code-cache-fix ledger, which is therefore exactly schema: 1, a carrier in a public repo that cannot say what it is for. Missing decision: whether the ledger parser gains a comment-line rule (# or <!-- -->), and if so whether ledger check counts comment lines in its third answer.' DROP BASIS, executed at f09e32d on a scratch copy: the parser gained the rule. ledger.py:88 declares a comment line in the PREAMBLE, matched by shape, and the comment at :189-192 records why. Exercised rather than read: a three-line '#'-prefixed prose header was planted at the top of LEDGER.md and 'ledger check' returned 'ledger check: CLEAN, 0 shape finding(s), 0 unreadable line(s)', exit 0. That answers both halves, since the comment lines counted as neither a finding nor unreadable. Legacy pointer: BACKLOG.md:61-69.
+blocker-moot: the missing decision named in the source body — answer it, then re-grade
+
 ## Archive (pre-migration)
 

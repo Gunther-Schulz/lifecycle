@@ -3,24 +3,6 @@ baseline: 8
 added: 67
 compacted: 0
 
-## lc-1
-grade: NEW
-requirement: PARKED 2026-08-26 — the "leak scan on the plugin repo" refusal row has no firing input the shipped scanner can detect — record: BACKLOG.md:14
-goal: UNKNOWN
-write-set: UNKNOWN
-done-criterion: UNKNOWN
-evidence: BACKLOG.md:14-24
-blocked-by: evidence false  # the named missing evidence in the source body
-
-## lc-2
-grade: NEW
-requirement: PARKED 2026-08-26 — the shape check has no assigned verb in the design's CLI surface — record: BACKLOG.md:25
-goal: UNKNOWN
-write-set: UNKNOWN
-done-criterion: UNKNOWN
-evidence: BACKLOG.md:25-31
-blocked-by: decision the missing decision named in the source body — answer it, then re-grade
-
 ## lc-3
 grade: NEW
 requirement: PARKED 2026-08-26 — where the leak scan lives once it is a SHARED tool — record: BACKLOG.md:32
@@ -29,33 +11,8 @@ write-set: UNKNOWN
 done-criterion: UNKNOWN
 evidence: BACKLOG.md:32-39
 blocked-by: evidence false  # the named missing evidence in the source body
-
-## lc-4
-grade: NEW
-requirement: PARKED 2026-08-26 — nothing creates `~/.config/lifecycle/repos`, so `lane list` answers `roster_absent` on this machine — record: BACKLOG.md:40
-goal: UNKNOWN
-write-set: UNKNOWN
-done-criterion: UNKNOWN
-evidence: BACKLOG.md:40-50
-blocked-by: decision the missing decision named in the source body — answer it, then re-grade
-
-## lc-5
-grade: NEW
-requirement: PARKED 2026-08-26 — the done home's blocks are never shape-checked, so `blocker-moot:` and `superseded-by:` are unknown slots nothing reports — record: BACKLOG.md:51
-goal: UNKNOWN
-write-set: UNKNOWN
-done-criterion: UNKNOWN
-evidence: BACKLOG.md:51-60
-blocked-by: decision the missing decision named in the source body — answer it, then re-grade
-
-## lc-6
-grade: NEW
-requirement: PARKED 2026-08-26 — `LEDGER.md` cannot carry a prose header — record: BACKLOG.md:61
-goal: UNKNOWN
-write-set: UNKNOWN
-done-criterion: UNKNOWN
-evidence: BACKLOG.md:61-69
-blocked-by: decision the missing decision named in the source body — answer it, then re-grade
+amend-reason: 2026-09-12 BACKLOG.md is deleted in this pass, so this entry's evidence pointer into it would stop resolving. The source body is inlined here and the trigger re-checked against the world; the entry stays PARKED on an unfired trigger.
+amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12, verbatim from BACKLOG.md:32-39 before that file's deletion, because the line-range pointer stops resolving with it: 'PARKED 2026-08-26 — where the leak scan lives once it is a SHARED tool. Design §3.8 lists it among PLUGIN-layer contents (what one install carries); brief D-a puts tools/ at the repo root, outside plugin/. Today only the repo's own pre-push hook consumes it, and root tools/ serves that. Trigger: the first template extraction, which is what makes the scan a thing the plugin must SHIP rather than a thing this repo runs.' TRIGGER RE-CHECKED at f09e32d and NOT fired: plugin/skills and plugin/workflows each hold exactly one file, a 0-byte .gitkeep, so no template has been extracted; the declaration's workflow-templates kind says the same in its own words, 'EMPTY today (wave 2 extracts the first set)'. Legacy pointer, for the record: BACKLOG.md:32-39, resolvable at the sha the reading roster pins.
 
 ## lc-7
 grade: NEW
@@ -65,6 +22,10 @@ write-set: UNKNOWN
 done-criterion: UNKNOWN
 evidence: BACKLOG.md:70-76
 blocked-by: evidence false  # the named missing evidence in the source body
+amend-reason: 2026-09-12 BACKLOG.md is deleted in this pass, so this entry's evidence pointer into it would stop resolving. The source body is inlined here and the named missing evidence re-checked against the source; the entry stays PARKED.
+amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12, verbatim from BACKLOG.md:70-76 before that file's deletion: 'PARKED 2026-08-26 — a detector's home repo is taken from the cwd, not from a registry. §3.1 says detectors register their home repo; the detector registry is wave 3. So --source detector:<name> is origin-checked exactly like a session add. Missing evidence: the registry's shape. Nothing in wave 1 depends on the answer, and the coarse check is not wrong today — it is narrower than the design.' RE-CHECKED at f09e32d and STILL OPEN: a grep for detector over declaration.py and verbs.py filtered to registry/registered/home/cwd returns zero hits, so no detector registry exists in the source; the named missing evidence, the registry's shape, is still missing. Legacy pointer, for the record: BACKLOG.md:70-76.
+amend-reason: 2026-09-12 the previous amendment's basis was a filtered zero-hit grep read as absence, with no positive control. Replaced with the source's own two statements that the detector registry is wave 3, plus the instrument's reach (20 hits for 'detector' in the package). Same verdict, a basis that discriminates.
+amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12, verbatim from BACKLOG.md:70-76 before that file's deletion: 'PARKED 2026-08-26 — a detector's home repo is taken from the cwd, not from a registry. §3.1 says detectors register their home repo; the detector registry is wave 3. So --source detector:<name> is origin-checked exactly like a session add. Missing evidence: the registry's shape. Nothing in wave 1 depends on the answer, and the coarse check is not wrong today — it is narrower than the design.' RE-CHECKED at f09e32d and STILL OPEN, on the source's own words rather than on a zero-hit search: judgment.py:126 carries sited_in='wave 3, the detector registry, which is what carries a ...' and refusals.py:593 carries the pair ('detector without disposition', 'the detector registry is wave 3'). So the build states the registry is unbuilt, and the named missing evidence, its shape, is still missing. Instrument reach shown rather than assumed: 'detector' returns 20 hits across plugin/cli/lifecycle_core/, so the search was not blind. Legacy pointer, for the record: BACKLOG.md:70-76.
 
 ## lc-8
 grade: NEW
@@ -74,6 +35,11 @@ write-set: UNKNOWN
 done-criterion: UNKNOWN
 evidence: BACKLOG.md:77-87
 blocked-by: decision regrade: was READY under the old carrier — READY is judged, never inherited
+amend-reason: 2026-09-12 BACKLOG.md is deleted in this pass, so this entry's evidence pointer into it would stop resolving. The source body is inlined, and the goal, write-set and done-criterion slots are filled FROM the design the source body already decided rather than from any new judgment, so the successor stands alone once the file is gone.
+amended-goal: 2026-09-12 lean-machinery-strict-checks
+amended-write-set: 2026-09-12 dev-notes/lifecycle-OBSERVATIONS.md
+amended-done-criterion: 2026-09-12 the first instrument lesson from wave 2 lands in dev-notes/lifecycle-OBSERVATIONS.md rather than in a commit message; the file exists and its head states the four slots
+amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12, verbatim from BACKLOG.md:77-87 before that file's deletion: 'READY 2026-08-26 — dev-notes/ needs its OBSERVATIONS carrier. Design, decided: copy dispatch-guards four-slot form (incident + basis, class, pre-formulated rule text, consumer + drain seam) into dev-notes/lifecycle-OBSERVATIONS.md, same-class entries merging into the existing entry rather than a sibling; provenance dev-notes/OBSERVATIONS-FORM.md in that repo. Write-set: dev-notes/lifecycle-OBSERVATIONS.md. Verifier: the file exists and its head states the four slots. Done-criterion: the first instrument lesson from wave 2 lands in it rather than in a commit message.' RE-CHECKED at f09e32d and STILL OPEN: dev-notes/ holds exactly one file, README.md, 3 lines, so no OBSERVATIONS carrier exists here. The slots above are filled FROM that decided design rather than newly decided, which is why this amendment adds no judgment of its own. SEE ALSO lc-77, booked in this same pass, which asks whether this carrier class becomes a registered lifecycle kind; if it does, this entry's four-slot form is the shape that gets reconsidered rather than carried over blind. Legacy pointer, for the record: BACKLOG.md:77-87.
 
 ## lc-10
 grade: READY
