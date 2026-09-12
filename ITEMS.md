@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 81
+added: 82
 compacted: 0
 
 ## lc-3
@@ -516,4 +516,13 @@ goal: lean-machinery-strict-checks
 write-set: tools/git-hooks/pre-push,test/
 done-criterion: an ordinary push prints no 'fatal:' line and no empty ref name: the no-ranges fallback states in its own words that it is scanning the whole of HEAD by design, rather than reaching git with an empty base and reporting the failure as degradation. Red-first is in hand and must be reproduced: a push at this HEAD prints both lines. MUST-NOT-MOVE, and it is the whole risk: the fallback still scans EVERYTHING reachable from HEAD, and a genuinely unresolvable base still degrades loudly rather than silently - the repair is to the message and the empty ref, never to the coverage
 evidence: OBSERVED at this desk 2026-09-12 in this session own push output (d87a4af..bf38401), then read at the source: tools/git-hooks/pre-push builds ranges=['..HEAD'] when ranges_from_stdin returns empty, with the comment 'Scan everything reachable from HEAD rather than declaring a clean run over zero bytes'. The scanner side is tools/absence-scan.mjs rangeCommitArgs. Not relayed
+blocked-by: NONE
+
+## lc-90
+grade: READY
+requirement: item close silently mints the state the done-home check forbids. _moot_decision writes a blocker-moot line only for DECISION-typed blockers, so an item whose blocker is an ITEM ID whose target is already closed gets neither a moot line nor a refusal: the body moves to the done home still carrying a live blocked-by, and item check then raises blocked_in_done_home against a record that can no longer be repaired, because item amend correctly refuses on a closed body. The data cannot carry the fix, so the verb must
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_verbs.py
+done-criterion: closing an item whose id-blocker target is already closed leaves the done home CLEAN: either close records the blocker moot at move time, generalizing the decision path to id blockers, or it REFUSES with clear the blocker first. Red-first on the standing dotfiles case: an item carrying blocked-by an already-DONE id, closed today, produces blocked_in_done_home. MUST-NOT-MOVE: a decision-typed blocker still gets exactly the moot line it gets now, and an id blocker whose target is still OPEN must not be silently mooted - that would close an item over a live dependency, which is the worse direction
+evidence: REPORTED by the dotfiles drainage desk (dotfiles-ef) at its own df-151 close 2026-09-12 and relayed here by the judgment desk; the standing finding sits at dotfiles ITEMS-DONE.md:914, where df-151 moved carrying blocked-by df-135 while df-135 had itself closed hours earlier. Cause read at the source by that desk, RELAYED AND NOT YET RE-READ HERE - the mechanism claim about _moot_decision is theirs, unverified at this desk, and is the first thing the build re-reads
 blocked-by: NONE
