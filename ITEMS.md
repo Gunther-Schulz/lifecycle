@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 74
+added: 77
 compacted: 0
 
 ## lc-3
@@ -541,3 +541,30 @@ write-set: docs/seam-checklist.md,ITEMS.md
 done-criterion: A design artifact at docs/seam-checklist.md holds the closed question set, and lc-76, lc-77, lc-78 and lc-79 each cite it as their shared rubric (the ITEMS.md half of the write-set). It LANDS BEFORE those four are designed — a rubric arriving after the designs it grades has no consumer. Doubles as the axis map for a begehung-style review.
 evidence: Question set as RECEIVED (relay, twelve, verbatim): trigger observability, actor, consumer, carrier, exit, growth policy, instrument, write boundary, authority, succession, transitions, reach. Each already has an instance in today's wave: succession from the tool-owned class (.clippy/* outliving clippy — verified here at statiker_stop_guard.py:106), trigger observability from the non-event gap shape, write boundary from this wave's partial halts, instrument from three false-zero instruments in one day.
 blocked-by: evidence the operator reply's CONFIRMED full question set — this desk holds twelve via relay, and the sending desk's own message says the full list is in its operator reply, unseen here. Writing the rubric on a possibly-partial set would crystallise it as the graded standard for four designs and then need redoing.
+
+## lc-83
+grade: READY
+requirement: migrate's residue consumer list is built by a SUBSTRING match on the carrier basename, so it names files that reference a DIFFERENT repo's same-named carrier, and files whose own name merely ends with it. A desk acting on that list without opening each hit edits the wrong repo
+goal: tend
+write-set: plugin/cli/lifecycle_core/migrate.py,test/
+done-criterion: live_carrier_readers returns only files referencing the carrier as a whole path component, and the residue block carries the MATCHED LINE beside each consumer so a reader can judge ownership without opening the file. Red-first with the pair already measured below: the FEATURE-BACKLOG.md fixture is absent from the new output while the genuine consumer is still present
+evidence: Mechanism verified at the code by the drain-arc desk 2026-09-12, not taken from a report. live_carrier_readers (migrate.py:767) builds patterns as Path(name).name and runs git grep -l -I -F, matching the basename ANYWHERE in a tracked file's content. Two independent failures follow. (a) NO LEFT BOUNDARY: a fixed-string search for BACKLOG.md matches FEATURE-BACKLOG.md. Proven in a throwaway git repo with a discriminating pair, both tracked: doc.md containing only the text FEATURE-BACKLOG.md was RETURNED, clean.md was not. (b) NO OWNERSHIP CONTEXT: a sentence mentioning another repo's same-named carrier matches identically, which is how the dispatch-guards run named the cache-fix fork's BACKLOG.md and pbs-office's FEATURE-BACKLOG.md among 6 consumers (that 2-of-6 figure is the migration desk's, relayed and unverified here; the mechanism under it is verified). The docstring is what makes this worth fixing rather than noting: it explicitly defends -F as the protection against a regex matching BACKLOGxmd, the RIGHT-side boundary, while the left side has no boundary at all. An assurance wider than its predicate, in the mechanism's own words about itself
+blocked-by: NONE
+
+## lc-84
+grade: READY
+requirement: lifecycle init writes "public": false unconditionally, so a PUBLIC repo gets a declaration claiming it is private, and the leak-scan classes that key on that flag are silently relaxed on exactly the repos where they matter most
+goal: tend
+write-set: plugin/cli/lifecycle_core/init.py,test/
+done-criterion: init never writes a public flag it has not established: it derives visibility, or writes no flag and refuses until one is given. Red-first: init over a repo whose remote is public produces a declaration that does NOT claim private, against today's which does
+evidence: Verified at the code by the drain-arc desk 2026-09-12: init.py:223 carries the literal "public": False in the written declaration, with no visibility read beside it. The motivating case is the migration desk's (relayed, unverified here): dispatch-guards is public and its generated declaration carried the false, corrected by hand with the reason. The direction is what makes this more than a default: a wrong private claim RELAXES a publication guard, while a wrong public claim would only over-fire, so the unsafe value is the one currently hardcoded
+blocked-by: decision which source establishes visibility, since the tool must not guess: a gh remote read at init time, an explicit required flag, or writing no key at all and letting the consumer treat absence as could-not-verify
+
+## lc-85
+grade: READY
+requirement: migrate's terminal summary prints CLEAN beside a reconciliation that can be 0 read == 0 written, so a run that migrated nothing reports identically to one that migrated correctly. The report BODY is honest; the summary line is a paraphrase over it
+goal: tend
+write-set: plugin/cli/lifecycle_core/migrate.py,test/
+done-criterion: the summary line cannot read CLEAN over a vacuous identity: a run whose reconciliation is 0 == 0 says so in the summary itself, in the three-answer form. Red-first: a migrate run over a repo with no source entries, whose summary today says CLEAN and afterwards does not
+evidence: Relayed from the lifecycle-migration arc's wave-2 digest, UNVERIFIED at this desk: the desk booking this did not reproduce the vacuous run. What IS verified here is that the same class is live in this repo's sibling instruments, which is why it is worth the entry rather than a note: absence-scan prints clean over a class declared off with no degraded line, and lifecycle ledger check answers COULD NOT VERIFY over 252 unreadable lines that nothing reads. The class is the repo's own three-answers rule applied to a SUMMARY rather than to a check
+blocked-by: NONE
