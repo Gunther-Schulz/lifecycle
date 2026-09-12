@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 83
+added: 84
 compacted: 0
 
 ## lc-3
@@ -539,3 +539,12 @@ write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/items.
 done-criterion: a repo can declare a closure-word mapping its migration honours, so a carrier closing entries in its own vocabulary migrates them to the done home rather than unclassified. Red-first on lc-19 own measured words: a fixture whose closures read ERLEDIGT and RESOLVED lands in the done home under a declared mapping and is unclassified without one. MUST-NOT-MOVE, and it is the point lc-19 made explicitly: a word with NO rule is still reported unclassified rather than guessed at - the fix is declared rules, never a looser matcher
 evidence: SPLIT OUT of lc-19 at its closure, 2026-09-12 retirement pass, rather than absorbed silently: the closing lane flagged that the criterion said DONE and DROPPED at minimum PLUS a declared way for a repo to map its own closure words, and only the first half shipped in f3f7517. Verified at this desk: CLOSURE_RULES is built from items.GRADES_CLOSED, a fixed two-word tuple. The four foreign closure words are lc-19 own executed counts over the real carriers - root BACKLOG.md ERLEDIGT 1 and RESOLVED 1, claude/BACKLOG.md TRACED 1 and EXECUTED 1
 blocked-by: decision where a repo declares its closure vocabulary: a closure-words list in .claude/lifecycle.json honoured by migrate, a per-migration flag, or a deliberate refusal under which foreign words are renamed at the source first
+
+## lc-92
+grade: READY
+requirement: The conservation counter has not followed the anchor. lc-73 corrected the re-import DETECTOR to read the raw block across both homes, but per_source_counts (migrate.py:1035) still answers how many bodies of a source the homes hold from the amendment-RESOLVED evidence slot, over the LIVE carrier only - both of the exact readings lc-73 replaced, one function over. Measured at statiker real carriers: 20 intact base anchors, only 15 visible in the resolved slot, and 13 of the 20 sit in ITEMS-DONE.md where that counter never looks. Consequence now visible because the merge REACHES conservation where it used to refuse first: the run answers COULD NOT VERIFY on its per-source arithmetic and exits 3, while TOTAL conservation is CLEAN and every body is on disk. What cannot be verified is which run put them where
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: per_source_counts reads the RAW BLOCK and BOTH homes, so a merge whose bodies are correctly placed exits 0 rather than 3. Red-first is already recorded and executed: the test case TheConservationCounterHasNotFollowedTheAnchor goes RED the moment the repair lands, so this gap cannot close unnoticed. MUST-NOT-MOVE: total conservation keeps its current clean answer, and a genuinely unbalanced merge still answers COULD NOT VERIFY rather than being rounded to clean by a wider read
+evidence: FOUND AND STOPPED ON by the lc-73 build lane 2026-09-12 rather than repaired, correctly: it changes a function the brief did not name, over the figure the whole conservation contract rests on. Measured by that lane at statiker 865e0a2 against a pinned copy: 4 + 25 read back out of the homes against 45 from the source, reproduced with the copy as a real git repo so the residue could-not-verify is not a confound. The lane also generalised it, and the general form is the reason this entry exists rather than a note: when a detector anchor is corrected, every OTHER reader of the same record inherits the old defect - the standing question at any anchor change is who else reads this record, and how
+blocked-by: NONE
