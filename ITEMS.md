@@ -66,17 +66,6 @@ done-criterion: a lane file missing its decision table is a FINDING with its own
 evidence: lanes.py:59 LANE_PARTS = ('Decides:', 'Trigger:', 'Ends:'); design §3.3 line 249 'four parsed parts' incl. 'a decision table -> workflows'. The table has no label prefix, so the startswith scan that finds the other three cannot find it.
 blocked-by: NONE
 
-## lc-13
-grade: READY
-requirement: Design 3.8b requires that a lane or workflow file the declaration does not list is UNREGISTERED, a finding. No verb produces it: LANES_DIR is used only to build a path from an ALREADY-DECLARED name (lanes.py:147) and no glob or iterdir over the lanes directory exists anywhere in the package. The registration invariant therefore holds in ONE direction only — a declared lane with no file is caught by read_lane, an undeclared file on disk is invisible to every verb
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/roster.py,test/test_lane_new.py
-done-criterion: a lane file under lanes/ absent from the declaration's lanes list produces a named finding, red-first against a planted undeclared file and green after declaring it; AND test_lane_list_says_nothing_about_an_undeclared_door is INVERTED in the same change — it currently pins the pre-fix behaviour and will go red when this is fixed, which is correct but must not be read as a regression
-evidence: structural: LANES_DIR used only at lanes.py:147 to build a declared name's path, zero glob/iterdir over it anywhere in the package. behavioural: lane list against a repo carrying an undeclared lanes/x.md printed 'declared lanes: 0 — EMPTY, declared rather than absent' and named neither x nor lanes/x.md
-blocked-by: NONE
-amend-reason: 2026-09-12 retirement pass 2026-09-12: lc-59 restated this entry and lc-14 as one item; merged into the two existing entries rather than left as a sibling, and dropped in the same pass.
-amended-evidence: 2026-09-12 structural: LANES_DIR used only at lanes.py:147 to build a declared name's path, zero glob/iterdir over it anywhere in the package. behavioural: lane list against a repo carrying an undeclared lanes/x.md printed 'declared lanes: 0 — EMPTY, declared rather than absent' and named neither x nor lanes/x.md. RE-CONFIRMED 2026-09-12 (retirement pass, executed at f09e32d): the lane verb surface is {list,register,new}; lane register puts a REPO on the roster, not a lane in this repo's lanes list. MERGED IN lc-59 (wave-5 L walk 2026-08-28), which re-found this gap and lc-14's together as one item and is dropped as a duplicate in this pass; its contribution is the executed confirmation that lane new --help states the non-declaration outright and kind list shows lanes: (empty).
-
 ## lc-14
 grade: READY
 requirement: "lane new" writes lanes/<door>.md but deliberately does not touch the declaration, and no verb adds a lane name to an existing declaration's "lanes" list. Combined with the undeclared-file blindness booked alongside this (lc-13), the default outcome of "lane new" is a lane file that NO verb can see: the tool prints UNREGISTERED as a hint and offers no way to resolve it. Same assumed-delivery shape as init leaving carriers uncreated
