@@ -197,10 +197,20 @@ it saw a `2`.
   chronological. Facts with their basis, decisions with their why,
   open questions. Read its tail before re-deriving anything that may
   be settled.
-- `BACKLOG.md` — parked items (each with its named missing evidence)
-  and ready items (decision-complete, dispatchable).
+- `ITEMS.md` / `ITEMS-DONE.md` — the item carrier and its closure home.
+  `lifecycle item add` is the only admission path; the tool is their
+  only writer (law 8).
+- `BACKLOG.md` — RETIRED 2026-09-12, the legacy-backlog kind taking its
+  declared `delete` exit. Every entry had its ITEMS.md successor
+  (`lc-1`..`lc-8`): five were dropped as overtaken and three had their
+  source body inlined, so nothing needs the file to be read. **Legacy
+  `BACKLOG.md:<line>` citations resolve at `5c257ec`** — the deleting
+  commit's parent. A line number is only meaningful against a fixed
+  blob, so cite that sha and never a live path:
+  `git show 5c257ec:BACKLOG.md`.
 - `dev-notes/` — the maintenance layer, never loaded by operational
-  files.
+  files. Its placement outside every operational load path is
+  load-bearing and does not move.
 - `tools/` — repo-owned checks. `absence-scan.mjs` and `tmpdir.mjs`
   are byte-identical copies of claude-code-cache-fix's; they are not
   edited here. That repo keeps its own copy and its own wiring, and
