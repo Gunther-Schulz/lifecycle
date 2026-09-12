@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 80
+added: 81
 compacted: 0
 
 ## lc-3
@@ -507,4 +507,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: A --report-only run over a source carrying at least one duplicate REPORTS the duplicates it would refuse on — as a plan-level warning, not an exit-2 finding, since report-only writes nothing and must stay non-refusing. Red-first: today's --report-only over the statiker arrangement renders clean while the real merge refuses; the same run after the fix names the collisions. Discrimination pair: a source with NO duplicates must still render clean, so the new output separates would-refuse from would-not rather than merely printing more.
 evidence: migrate.py:1438-1440 read verbatim by the drainage desk 2026-09-12: 'dupes = duplicate_bodies(...)' then 'if dupes and not report_only:'. Found by statiker-f7 while reproducing lc-73's duplicate set read-only; surfaced to this desk and taken here rather than booked there, because the realizing write is in this repo. NOT the same defect as lc-73: that one is the merge's duplicate DISPOSITION, this one is the dry run's blindness to it, and either could be fixed without the other.
+blocked-by: NONE
+
+## lc-89
+grade: READY
+requirement: The pre-push leak scan prints 'fatal: Not a valid object name ^{commit}' on every push, then 'degraded: base ref  is not resolvable here - scanning everything at HEAD' with an empty ref name. Cause read at the source: when stdin yields no parseable ranges the hook falls back to the literal range '..HEAD' (tools/git-hooks/pre-push, the ranges_from_stdin fallback), whose EMPTY base the scanner hands to git rev-parse. The fallback is deliberate and its coverage is correct - scanning everything beats a clean run over zero bytes - so this is NOT an open door. What it costs is the reader: a fatal line on every ordinary push is a check firing on a non-defect, which trains the discount reflex that kills a guard the day its red is real
+goal: lean-machinery-strict-checks
+write-set: tools/git-hooks/pre-push,test/
+done-criterion: an ordinary push prints no 'fatal:' line and no empty ref name: the no-ranges fallback states in its own words that it is scanning the whole of HEAD by design, rather than reaching git with an empty base and reporting the failure as degradation. Red-first is in hand and must be reproduced: a push at this HEAD prints both lines. MUST-NOT-MOVE, and it is the whole risk: the fallback still scans EVERYTHING reachable from HEAD, and a genuinely unresolvable base still degrades loudly rather than silently - the repair is to the message and the empty ref, never to the coverage
+evidence: OBSERVED at this desk 2026-09-12 in this session own push output (d87a4af..bf38401), then read at the source: tools/git-hooks/pre-push builds ranges=['..HEAD'] when ranges_from_stdin returns empty, with the comment 'Scan everything reachable from HEAD rather than declaring a clean run over zero bytes'. The scanner side is tools/absence-scan.mjs rangeCommitArgs. Not relayed
 blocked-by: NONE
