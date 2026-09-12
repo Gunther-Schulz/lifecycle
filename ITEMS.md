@@ -75,15 +75,6 @@ done-criterion: UNKNOWN
 evidence: BACKLOG.md:77-87
 blocked-by: decision regrade: was READY under the old carrier — READY is judged, never inherited
 
-## lc-9
-grade: NEW
-requirement: The declaration turns the source-scope foreign-path leak class ON, and the shipped scanner has no such scope: its foreign-path class is scoped corpus, so the declaration is honoured by nothing
-goal: enforce-the-invariants
-write-set: tools/absence-scan.mjs, test/absence-scan.test.mjs
-done-criterion: a planted foreign home path in a tracked .md in this repo fires foreign-path and the same file without it is clean, both shown
-evidence: .claude/lifecycle.json leak-scan.reason; tools/absence-scan.mjs CLASSES, the foreign-path entry scoped corpus; JOURNAL J6
-blocked-by: decision the scanner is a byte-identical copy of claude-code-cache-fix's and both copies move together, so the widening lands there first
-
 ## lc-10
 grade: READY
 requirement: §3.11's intake cost test has three conjuncts and the third is unimplemented: cost_test() never receives the typed blocker — record: wave2 L1 booking run, 2026-08-26
@@ -92,15 +83,6 @@ write-set: plugin/cli/lifecycle_core/verbs.py,test/test_items.py
 done-criterion: an item with a typed decision blocker and a one-file write-set is graded NEW without the do-it-now ask, red-first against the current implementation
 evidence: verbs.py:268 signature is cost_test(write_set, hunks, source) — no blocker parameter, and its docstring cites §3.2 not §3.11; observed live when a booking carrying a typed decision blocker was held for a hunk count
 blocked-by: NONE
-
-## lc-11
-grade: READY
-requirement: item add leaves a 0-byte ITEMS.md.lock in the repo root and nothing ignores it — record: wave2 L1 booking run, 2026-08-26
-goal: lean-machinery-strict-checks
-write-set: plugin/cli/lifecycle_core/verbs.py,decision:lock-lifetime-vs-gitignore
-done-criterion: after item add, either the lock is gone or the repo's .gitignore (written by init) covers it; git status shows no stray lock
-evidence: observed after four item add runs in claude-code-cache-fix: ITEMS.md.lock present, 0 bytes, git check-ignore returns no match
-blocked-by: decision whether the lock is released by deletion or covered by the .gitignore init writes
 
 ## lc-12
 grade: READY
@@ -119,6 +101,8 @@ write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/refusals
 done-criterion: a lane file under lanes/ absent from the declaration's lanes list produces a named finding, red-first against a planted undeclared file and green after declaring it; AND test_lane_list_says_nothing_about_an_undeclared_door is INVERTED in the same change — it currently pins the pre-fix behaviour and will go red when this is fixed, which is correct but must not be read as a regression
 evidence: structural: LANES_DIR used only at lanes.py:147 to build a declared name's path, zero glob/iterdir over it anywhere in the package. behavioural: lane list against a repo carrying an undeclared lanes/x.md printed 'declared lanes: 0 — EMPTY, declared rather than absent' and named neither x nor lanes/x.md
 blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: lc-59 restated this entry and lc-14 as one item; merged into the two existing entries rather than left as a sibling, and dropped in the same pass.
+amended-evidence: 2026-09-12 structural: LANES_DIR used only at lanes.py:147 to build a declared name's path, zero glob/iterdir over it anywhere in the package. behavioural: lane list against a repo carrying an undeclared lanes/x.md printed 'declared lanes: 0 — EMPTY, declared rather than absent' and named neither x nor lanes/x.md. RE-CONFIRMED 2026-09-12 (retirement pass, executed at f09e32d): the lane verb surface is {list,register,new}; lane register puts a REPO on the roster, not a lane in this repo's lanes list. MERGED IN lc-59 (wave-5 L walk 2026-08-28), which re-found this gap and lc-14's together as one item and is dropped as a duplicate in this pass; its contribution is the executed confirmation that lane new --help states the non-declaration outright and kind list shows lanes: (empty).
 
 ## lc-14
 grade: READY
@@ -128,6 +112,8 @@ write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/declarat
 done-criterion: red-first against the current build, then: a fresh "lane new" reads QUIET in "lane list" with the declaration diff showing EXACTLY ONE added name. No new verb
 evidence: L2b report (g): no such verb exists today, noted and not built. DECISION TAKEN (judgment desk 2026-08-26): NO new verb — "lane new" registers its own output, appending the name to the declaration's "lanes" list in the same run. Derivable from the same assumed-delivery reading the desk applied to init: a verb's normal output must be visible to the tool that owns it, and init already writes the declaration, so a declaration write is not a new class of act. With lc-13 closing the inverse scan, the invariant then holds in both directions with no hand step left. The "lane register" name collision is moot — no verb is minted. Section 3.8b's "written by the repo, by hand" was said of lane FILES' content, which "lane new" still only stubs, so that sentence stays true and is amended to say registration is the verb's
 blocked-by: evidence L2c's declaration.py edits have landed on main (the collision is declaration.py, not cli.py — with no new verb this item adds no subparser)
+amend-reason: 2026-09-12 retirement pass 2026-09-12: lc-59 restated this entry and lc-13 as one item; merged into the two existing entries rather than left as a sibling, and dropped in the same pass.
+amended-evidence: 2026-09-12 L2b report (g): no such verb exists today, noted and not built. DECISION TAKEN (judgment desk 2026-08-26): NO new verb — lane new registers its own output, appending the name to the declaration's lanes list in the same run. RE-CONFIRMED 2026-09-12 (retirement pass, executed at f09e32d): lane new --help still states 'Does NOT declare it in this repo's lanes list', and the lane surface {list,register,new} has no declare verb. MERGED IN lc-59 (wave-5 L walk 2026-08-28), the later sibling covering this arrow together with lc-13's inverse scan, dropped as a duplicate in this pass.
 
 ## lc-16
 grade: READY
@@ -137,6 +123,8 @@ write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/verbs.py,t
 done-criterion: a goal-filtered listing exists and returns only entries carrying that goal, red-first against a carrier holding at least two goals
 evidence: verified here at cf92ad9: grep '"--goal"' cli.py returns one line, :279. Peer measured it at :262 on 6badd58; the line moved, the substance holds
 blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: lc-57 is a duplicate of this entry, found later by the wave-5 T walk. Merged into the existing entry rather than left as a sibling, per the backlog doctrine's merge rule; lc-57 is dropped in the same pass.
+amended-evidence: 2026-09-12 verified here at cf92ad9: grep '"--goal"' cli.py returns one line, :279. Peer measured it at :262 on 6badd58; the line moved, the substance holds. RE-CONFIRMED 2026-09-12 (retirement pass, executed at f09e32d): item ready --help lists only [--head] [ident], and the item verb surface {check,add,ready,amend,promote,park,close,ratio,statusline} carries no goal-scoped query. MERGED IN lc-57 (wave-5 T walk 2026-08-28), the later sibling booking of this same gap, dropped as a duplicate — its own body named lc-16 as its source. Its contribution, kept here: the red-first shape — item ready --goal is rejected at argparse, which is a usage error and not the defect, so the red is the missing OUTPUT on a form the CLI accepts.
 
 ## lc-17
 grade: READY
@@ -209,33 +197,9 @@ write-set: test/absence-scan.test.mjs,cache-fix test/absence-scan.test.mjs
 done-criterion: the expected directory set and file floor derive from the scanned repo own tree or declaration rather than a literal list, so the shared test passes in BOTH copies; red-first against a tree missing a directory the repo does declare, green on lifecycle and on the cache-fix twin
 evidence: executed at f2c37fe: node --test test/absence-scan.test.mjs exits 1, 62 tests 61 pass 1 fail — "source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic allowlist" (:743) AssertionError "the walk collected no file under proxy/". Source :756-761 loops ["test","tools","proxy","docs"] and asserts files.length > 500. lifecycle has no proxy/ (git ls-files top level: 13 entries) and 51 tracked files total
 blocked-by: lc-9
-
-## lc-25
-grade: READY
-requirement: item add writes the carrier and never commits it on --join new or --join merge-into: commit_paths is called only from _do_supersede, while --no-commit is advertised on the verb as though a commit were the default for every join, and neither a "committed:" nor a "NOT COMMITTED" line is printed — record: wave-3 step-0, judgment-desk GO
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,test/test_items.py
-done-criterion: every join of item add either commits its own write by pathspec or says NOT COMMITTED, never silence; red-first by running item add --join new against a clean tree and asserting git status is clean afterwards, which fails on the current build
-evidence: observed at f2c37fe: `item add --join new` for lc-23 printed "added lc-23 [READY] -> ITEMS.md" with no commit line and left " M ITEMS.md"; committed by hand by pathspec as 2e9f20c. Source: commit_paths defined verbs.py:406, called at :646 (_do_supersede) and :1222; _do_new at :656 and _do_merge at :582 have no call site. The consequence is the one commit_paths own docstring names — in a shared work tree the dirty carrier rides out under a co-writer pathspec commit
-blocked-by: NONE
-
-## lc-26
-grade: READY
-requirement: No verb clears a typed blocker once its decision is answered: item has only {check,add,ready,park,close,ratio}, park only SETS a blocker, and an answered decision leaves the item reading blocked forever — record: wave-3 step 0, judgment-desk ruling 2026-08-27
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_items.py
-done-criterion: a decision blocker resolves against a ledger decision line naming the same question, and item ready re-derives blocked-ness from the ledger rather than from the stored slot; red-first on an item whose decision blocker has an answering ledger line, which today still reads blocked
-evidence: probed in a throwaway clone at f2c37fe: `item park lc-23 --blocked-by NONE` is refused with FINDING [parked_without_typed_blocker] ("Prose only — or nothing — was given (NONE)") and lc-23 blocked-by is unchanged; `item --help` lists exactly check, add, ready, park, close, ratio — no verb takes a blocker off. Adjacent to lc-15 permanent-silent-park shape, one slot over
-blocked-by: NONE
-
-## lc-27
-grade: READY
-requirement: The carrier is append-only in practice because no verb edits a block: item add is the only writer, and there is no path to clear a blocker, amend a body, or correct a slot — so every correction to a booked item is either a new item or a law-8 violation — record: wave-3 step 0, three sightings in one step
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_items.py
-done-criterion: an edit path exists that LEAVES A RECORD: an amendment is a new dated block or slot-line that supersedes, never an in-place rewrite, so law 8 and the append-only ethic both hold; red-first on a booked item needing a slot correction, which today has no verb at all
-evidence: three sightings in wave-3 step 0, all executed: (1) clear a blocker — `item park lc-23 --blocked-by NONE` refused, parked_without_typed_blocker (lc-26, this items first instance); (2) amend a body — the lc-10 live-hit sighting could not be appended to lc-10 by any verb; (3) correct a slot — no verb takes a slot value. `item --help` lists exactly check, add, ready, park, close, ratio
-blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: two changes. (1) lc-54 is a duplicate of this entry — same failing test, same red — merged here per the merge rule and dropped in this pass. (2) The blocker named lc-9, which is dropped this pass as overtaken: tools/absence-scan.mjs:611-612 already declares foreign-path with scope 'source', so the widening lc-9 waited for has shipped and this item no longer waits on it.
+amended-evidence: 2026-09-12 executed at f2c37fe: node --test test/absence-scan.test.mjs exits 1, 62 tests 61 pass 1 fail — 'source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic allowlist' (:743) AssertionError 'the walk collected no file under proxy/'. Source :756-761 loops ["test","tools","proxy","docs"] and asserts files.length > 500. lifecycle has no proxy/ and 51 tracked files total. RE-MEASURED 2026-09-12 at f09e32d, unchanged: tests 62 / pass 61 / fail 1 / skipped 0, the same single test. MERGED IN lc-54 (baselined 2026-08-27), the later sibling booking of this same red, dropped as a duplicate in this pass; its contributions, kept here: the baseline was stated in 70bc93c so the foreign-path repair's own proof could not borrow a pre-existing red, and its MUST-NOT-MOVE arm — the assertion still fires where a proxy-like tree DOES exist, so the repair is a pinned or derived anchor and never a deleted test.
+amended-blocked-by: 2026-09-12 NONE
 
 ## lc-28
 grade: READY
@@ -327,15 +291,6 @@ done-criterion: a pointer survives an edit ABOVE its target, or says it cannot: 
 evidence: measured by the wave-4 desk 2026-08-27 over dotfiles: 84 of 85 BACKLOG.md pointers land exactly 2 lines early; the one that does not is the single entry above the edit. Mechanism verified at the commit: 4959d2d added 3 lines and removed 1 (+2 net) INSIDE the first entry, shifting every entry below it. Consequence measured, bounded: the enumeration lanes read windows 2 lines short at the tail, and 2 of 84 entries (df-14, df-47) lost their Done-criterion/Verifier line to it
 blocked-by: decision anchor on the source blob sha plus range, or on the entry headline text, or declare the pointer approximate and have readers search near it
 
-## lc-39
-grade: READY
-requirement: There is NO path from NEW to READY: grade is written once at admission (verbs.py:526), item amend REFUSES --grade, and item ready PROMOTES NOTHING — an item admitted NEW can never be graded READY however complete its slots later become, so the carriers head is empty by construction
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,test/test_lanes.py,tools/prove-rows.py
-done-criterion: an item whose slots were completed by amendment can be graded READY by an explicit desk act recording who judged it and why, and item ready --head then lists it; red-first on the dotfiles state — 133 items with full slots, grade NEW, head reporting 0 schedulable
-evidence: wave-4 desk 2026-08-27, after the dotfiles grade pass: 329 slots filled across 131 items, then item ready --head over 135 live items printed "head: 2 READY, 0 schedulable now"; the only READY items are ones BORN complete (df-134, df-135). df-1 after amendment: "grade is NEW, not READY. THIS VERB PROMOTES NOTHING". Source: verbs.py:526 sits in the add path, no other verb writes a grade
-blocked-by: decision an explicit promotion act (law 10: READY is judged, never inherited) versus re-deriving grade from the amendment-resolved slots at read time — the latter makes READY automatic, which law 10 forbids, so the promotion act is the recommended shape
-
 ## lc-41
 grade: READY
 requirement: Not every carrier-writing verb commits its own write or says NOT COMMITTED. lc-25 fixed item add joins; the invariant it rests on is wider and unenforced: a carrier write left uncommitted rides out under a co-writer pathspec commit, which is the absorption one-writer-per-copy exists to prevent
@@ -417,15 +372,6 @@ done-criterion: A mode exists that scans every blob reachable from a ref (git re
 evidence: executed at the flip: `--git-range EMPTY..main` exit 0 'clean'; `--git-range EMPTY..8a5d664` exit 2, FINDING foreign-path test/test_verbs.py line 429. Both ran seconds apart on the same repo. 8a5d664 is an ancestor of main, so a true history scan could not return clean. The scope line (46 source files, same as the tracked-file count) is the tell
 blocked-by: NONE
 
-## lc-54
-grade: READY
-requirement: test/absence-scan.test.mjs has a test asserting the walk collects files under proxy/, a directory this repo does not have, so the suite has been RED on an environment premise it does not pin, record: baselined 2026-08-27 before the foreign-path repair
-goal: lean-machinery-strict-checks
-write-set: test/absence-scan.test.mjs
-done-criterion: The test either pins its fixture inside the repo or skips with a named reason; the suite exits 0. Red-first: it fails today with 'the walk collected no file under proxy/'. Must-not-move: the assertion still fires where a proxy-like tree DOES exist, so the repair is a pinned fixture and not a deleted test
-evidence: node --test test/absence-scan.test.mjs, run before and after the foreign-path repair: EXIT=1 both times, the SAME single failing test 'source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic allowlist' at :743, message 'the walk collected no file under proxy/'. Stated as the baseline in 70bc93c so the repair's own proof could not borrow a pre-existing red
-blocked-by: NONE
-
 ## lc-55
 grade: READY
 requirement: item ready and item close disagree about whether one blocker was answered, and the disagreement is written into the ledger as a second contradictory line. Measured on a scratch clone 2026-08-28, wave-5 T walk: ledger add decision wrote the answer at LEDGER.md:35, item ready reported UNBLOCKED citing that line, and item close then reported the same blocker was never answered, wrote blocker-moot: on the moved body and appended LEDGER.md:36 recording the question as moot. One question, two answers, both live in the carrier
@@ -444,15 +390,6 @@ done-criterion: ledger add commits on every write, or prints NOT COMMITTED, matc
 evidence: wave-5 T walk 2026-08-28, two arms in one run on a scratch clone at 66bd2af: item add lc-55 printed committed: lifecycle: add lc-55 and HEAD moved to 86b9009; ledger add decision then wrote LEDGER.md:35 and git status showed M LEDGER.md with HEAD unchanged. Also observed at the desk earlier the same day writing the C4 line, which the desk had to commit by hand. Consequence measured: item ready resolved a blocker from that UNCOMMITTED ledger line, so an item reads as unblocked in a tree where the answer was never committed
 blocked-by: NONE
 
-## lc-57
-grade: READY
-requirement: there is no read-by-goal query: item ready takes only an ident or --head, and no verb answers which items carry a given goal. lc-16 named this arrow as a query and it is still unbuilt, so the goal slot is written on every item and read by nothing
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,test/test_items.py
-done-criterion: a goal-scoped read exists and returns only items carrying that goal, red-first: today item ready --goal is rejected at argparse, which is a usage error and not the defect, so the red is the missing OUTPUT on a form the CLI accepts
-evidence: wave-5 T walk 2026-08-28: item ready --help lists only [--head] [ident]; the full verb surface item {check,add,ready,amend,promote,park,close,ratio} carries no query verb. Source item lc-16 from the 27-item transition sort
-blocked-by: NONE
-
 ## lc-58
 grade: READY
 requirement: the compacted arrow has no verb. retire WALKS and REPORTS and says so in its own output: the acts its findings call for are their own verbs, but no compaction verb exists in the CLI surface, so the last arrow of an item life is unreachable and the conservation line can only ever read compacted 0
@@ -460,15 +397,6 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/items.py,test/test_retire.py
 done-criterion: a compaction verb exists, records what it compacted, and the conservation identity still balances after it runs, red-first: today the conservation line reads compacted 0 by construction because nothing can ever increment it
 evidence: wave-5 T walk 2026-08-28 on a scratch clone at 66bd2af: retire output states EXITS TAKEN THIS PASS none and that compaction is its own verb; the top-level surface is {init,kind,item,ledger,lane,workflow,desk,retire,audit,migrate} with no compact; item check conservation printed baseline 8 + added 47 minus compacted 0
-blocked-by: NONE
-
-## lc-59
-grade: READY
-requirement: no verb declares a lane in a repo's lanes list. lane new says so in its own help: it writes the lane file as a stub and does NOT declare it in this repo's lanes list. So a lane can exist as a file and be invisible to the board, which is the router's input, and nothing closes the gap between the two
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/declaration.py,test/test_lanes.py
-done-criterion: a lane created by lane new is declarable by a verb, and a lane FILE present but undeclared is a finding rather than silence, red-first on this repo whose declaration reads lanes: (empty, declared not absent) while lane files can be created
-evidence: wave-5 L walk 2026-08-28: lane new --help states the non-declaration outright; the lane verb surface is {list,register,new} with no declare; kind list shows lanes: (empty)
 blocked-by: NONE
 
 ## lc-60

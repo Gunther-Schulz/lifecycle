@@ -37,6 +37,17 @@ decision: re-confirm: drop cross-cutting reasoning, or give it a declared home �
 decision: is merge-of-N-carriers a real path worth the dedup, or is --merge-twice out of scope → real path: --merge re-runs legitimately as new source entries appear (cf-328 intake-additions), so a second run must not double-book residue; build the dedup on residue identity (operator as-you-recommend 2026-08-28)
 decision: the coordination mechanism SHAPE: typed cross-repo edge (recommended) vs a declared coordination kind vs both → typed cross-repo edge (blocked-by <repo>:<id>) plus the cross-repo detector home and roll-up as one coordination layer, not a separate kind: the dependency is an edge between existing items (operator as-you-recommend 2026-08-28, design 3.1 amended)
 decision: re-confirm: drop cross-cutting reasoning, or give it a declared home → moot (closed by lc-69)
+decision: the scanner is a byte-identical copy of claude-code-cache-fix's and both copies move together, so the widening lands there first → moot (closed by lc-9)
+dropped: lc-9 — OVERTAKEN. The source-scope foreign-path class shipped 2026-08-26: absence-scan.mjs:611-612 declares scope 'source', and this item's own done-criterion ran as a two-arm pair at f09e32d (clean exit 0 / FINDING exit 2). Full basis in the amended evidence slot.
+decision: whether the lock is released by deletion or covered by the .gitignore init writes → moot (closed by lc-11)
+dropped: lc-11 — OVERTAKEN. The lock is covered: .gitignore:9 is '*.lock', git check-ignore -v ITEMS.md.lock returns a match, and init.py:143 writes that line for a declaring repo, so the done-criterion's second branch holds. Full basis in the amended evidence slot.
+dropped: lc-25 — OVERTAKEN. item add commits its own write: executed at f09e32d on a scratch copy, 'item add --join new' printed 'committed: lifecycle: add lc-76', moved HEAD 6f3601b to cf775e4, and left a clean tree. Full basis in the amended evidence slot.
+dropped: lc-26 — OVERTAKEN. item amend clears a typed blocker (executed: 'amended-blocked-by: NONE', committed), and ledger-derived unblocking ships. The residual, matching an answer by substance rather than verbatim text, is carried by lc-62. Full basis in the amended evidence slot.
+dropped: lc-27 — OVERTAKEN. item amend ships and answers all three recorded sightings (clear a blocker, amend a body, correct a slot). It appends a dated superseding line rather than rewriting in place, which is the recorded-edit shape this item specified. Full basis in the amended evidence slot.
+dropped: lc-39 — OVERTAKEN. item promote ships: executed at f09e32d, it wrote 'grade: READY' plus promoted-by and promote-reason on a slot-complete unblocked item and committed, and it refuses over an UNKNOWN slot or a standing blocker. That is law 10's judged act. Full basis in the amended evidence slot.
+dropped: lc-54 — DUPLICATE of lc-24, merged there. Same failing test and same red, re-measured at f09e32d as 62/61/1. lc-54's baseline note and its must-not-move arm are carried in lc-24's amended evidence slot.
+dropped: lc-57 — DUPLICATE of lc-16, merged there. Both book the missing goal-scoped read, and this body names lc-16 as its own source. Its red-first shape is carried in lc-16's amended evidence slot.
+dropped: lc-59 — DUPLICATE of lc-13 plus lc-14, merged into both. It restates the lane-declaration arrow those two already carry, which lc-43's evidence sorts as ONE arrow. Its executed confirmations are carried in both amended evidence slots.
 
 ## Archive (pre-migration)
 

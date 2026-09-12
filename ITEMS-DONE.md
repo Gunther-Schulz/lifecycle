@@ -137,5 +137,107 @@ blocked-by: NONE
 closed-reason: 2026-09-11 item statusline landed: single line-pass render, three answers at statusline width; head id a stated syntactic approximation (item ready --head authoritative, divergence case locked as a regression test). Entry's red premise corrected in operation: the old renderer's failure is a VANISHED line (statusline_optin gates on the missing Grades: declaration, empty stdout exit 0), not the entry's claimed silent 0R.0P. Follow-on scanner blind spot booked as lc-74
 closed-ref: e98c3a42e7479a92720381ac7342828210166316
 
+## lc-9
+grade: DROPPED
+requirement: The declaration turns the source-scope foreign-path leak class ON, and the shipped scanner has no such scope: its foreign-path class is scoped corpus, so the declaration is honoured by nothing
+goal: enforce-the-invariants
+write-set: tools/absence-scan.mjs, test/absence-scan.test.mjs
+done-criterion: a planted foreign home path in a tracked .md in this repo fires foreign-path and the same file without it is clean, both shown
+evidence: .claude/lifecycle.json leak-scan.reason; tools/absence-scan.mjs CLASSES, the foreign-path entry scoped corpus; JOURNAL J6
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: the drop basis belongs in the body that moves to the done home, not in the 300-char ledger reason
+amended-evidence: 2026-09-12 RETIREMENT PASS 2026-09-12, DROP BASIS (executed at f09e32d): the requirement says the shipped scanner's foreign-path class is scoped corpus. FALSE — tools/absence-scan.mjs:611-612 declares name 'foreign-path', scope 'source'; the comment at :128 dates the widening to 2026-08-26. This item's OWN done-criterion executed as a discriminating pair on a scratch copy of f09e32d, one variable (the planted path): a tracked .md with no absolute home path gives 'absence-scan: clean', exit 0; the SAME file carrying /home/<another-user>/projects/thing/config.yaml gives 'FINDING foreign-path probe-lc9.md line 3 (65 chars, #4a44ca6dd7fa)', exit 2. Both arms shown. ORIGINAL EVIDENCE, retained: .claude/lifecycle.json leak-scan.reason; tools/absence-scan.mjs CLASSES, the foreign-path entry scoped corpus; JOURNAL J6.
+blocker-moot: the scanner is a byte-identical copy of claude-code-cache-fix's and both copies move together, so the widening lands there first
+
+## lc-11
+grade: DROPPED
+requirement: item add leaves a 0-byte ITEMS.md.lock in the repo root and nothing ignores it — record: wave2 L1 booking run, 2026-08-26
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py,decision:lock-lifetime-vs-gitignore
+done-criterion: after item add, either the lock is gone or the repo's .gitignore (written by init) covers it; git status shows no stray lock
+evidence: observed after four item add runs in claude-code-cache-fix: ITEMS.md.lock present, 0 bytes, git check-ignore returns no match
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: the drop basis belongs in the body that moves to the done home, not in the 300-char ledger reason
+amended-evidence: 2026-09-12 RETIREMENT PASS 2026-09-12, DROP BASIS (executed at f09e32d): the done-criterion reads 'either the lock is gone or the repo's .gitignore (written by init) covers it'. The second branch is satisfied: .gitignore:9 is '*.lock' under a five-line comment naming the carrier lock by design section, 'git check-ignore -v ITEMS.md.lock' returns '.gitignore:9:*.lock ITEMS.md.lock', and init.py:143 has needed = ['!.claude/lifecycle.json', 'ITEMS.md.lock'] so a declaring repo gets the line from init. The named decision (deletion versus gitignore) is therefore answered by the build. SEPARATE AND STILL TRUE: one stale 0-byte ITEMS.md.lock from 2026-08-26 sits in this root; it is inert (items.py:241-262 uses advisory flock, so a leftover file blocks no writer) and is deleted in this same pass as an untracked leftover. ORIGINAL EVIDENCE, retained: observed after four item add runs in claude-code-cache-fix: ITEMS.md.lock present, 0 bytes, git check-ignore returns no match.
+blocker-moot: whether the lock is released by deletion or covered by the .gitignore init writes
+
+## lc-25
+grade: DROPPED
+requirement: item add writes the carrier and never commits it on --join new or --join merge-into: commit_paths is called only from _do_supersede, while --no-commit is advertised on the verb as though a commit were the default for every join, and neither a "committed:" nor a "NOT COMMITTED" line is printed — record: wave-3 step-0, judgment-desk GO
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_items.py
+done-criterion: every join of item add either commits its own write by pathspec or says NOT COMMITTED, never silence; red-first by running item add --join new against a clean tree and asserting git status is clean afterwards, which fails on the current build
+evidence: observed at f2c37fe: `item add --join new` for lc-23 printed "added lc-23 [READY] -> ITEMS.md" with no commit line and left " M ITEMS.md"; committed by hand by pathspec as 2e9f20c. Source: commit_paths defined verbs.py:406, called at :646 (_do_supersede) and :1222; _do_new at :656 and _do_merge at :582 have no call site. The consequence is the one commit_paths own docstring names — in a shared work tree the dirty carrier rides out under a co-writer pathspec commit
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: the drop basis belongs in the body that moves to the done home, not in the 300-char ledger reason
+amended-evidence: 2026-09-12 RETIREMENT PASS 2026-09-12, DROP BASIS (executed at f09e32d on a scratch copy, never the live tree): the done-criterion is 'every join of item add either commits its own write by pathspec or says NOT COMMITTED, never silence; red-first by running item add --join new against a clean tree and asserting git status is clean afterwards'. Run: item add --join new printed 'committed: lifecycle: add lc-76', HEAD moved 6f3601b to cf775e4, and git status --porcelain returned empty. The silent-write behaviour this item booked is gone. The NOT COMMITTED half is also shipped and was exercised repeatedly in this same pass by --no-commit, which prints it explicitly. ORIGINAL EVIDENCE, retained: observed at f2c37fe, item add --join new for lc-23 printed no commit line and left ' M ITEMS.md'; committed by hand as 2e9f20c.
+
+## lc-26
+grade: DROPPED
+requirement: No verb clears a typed blocker once its decision is answered: item has only {check,add,ready,park,close,ratio}, park only SETS a blocker, and an answered decision leaves the item reading blocked forever — record: wave-3 step 0, judgment-desk ruling 2026-08-27
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: a decision blocker resolves against a ledger decision line naming the same question, and item ready re-derives blocked-ness from the ledger rather than from the stored slot; red-first on an item whose decision blocker has an answering ledger line, which today still reads blocked
+evidence: probed in a throwaway clone at f2c37fe: `item park lc-23 --blocked-by NONE` is refused with FINDING [parked_without_typed_blocker] ("Prose only — or nothing — was given (NONE)") and lc-23 blocked-by is unchanged; `item --help` lists exactly check, add, ready, park, close, ratio — no verb takes a blocker off. Adjacent to lc-15 permanent-silent-park shape, one slot over
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: the drop basis belongs in the body that moves to the done home, not in the 300-char ledger reason
+amended-evidence: 2026-09-12 RETIREMENT PASS 2026-09-12, DROP BASIS (executed at f09e32d on a scratch copy): the requirement's surface claim is that item has only {check,add,ready,park,close,ratio} and no verb takes a blocker off. FALSE at HEAD: the surface is {check,add,ready,amend,promote,park,close,ratio,statusline}, and 'item amend lc-23 --blocked-by NONE' succeeded, writing 'amended-blocked-by: 2026-09-12 NONE' plus its amend-reason and committing. The done-criterion's second half (item ready re-derives blocked-ness from a ledger decision line rather than the stored slot) is also shipped, evidenced inside this carrier by lc-62, whose own measurement is item ready reporting UNBLOCKED citing LEDGER.md:299 once the ledger question matched. THE RESIDUAL IS lc-62, not this item: answering by substance rather than by verbatim question text still leaves an item blocked. ORIGINAL EVIDENCE, retained: probed in a throwaway clone at f2c37fe, item park lc-23 --blocked-by NONE refused with FINDING [parked_without_typed_blocker].
+
+## lc-27
+grade: DROPPED
+requirement: The carrier is append-only in practice because no verb edits a block: item add is the only writer, and there is no path to clear a blocker, amend a body, or correct a slot — so every correction to a booked item is either a new item or a law-8 violation — record: wave-3 step 0, three sightings in one step
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: an edit path exists that LEAVES A RECORD: an amendment is a new dated block or slot-line that supersedes, never an in-place rewrite, so law 8 and the append-only ethic both hold; red-first on a booked item needing a slot correction, which today has no verb at all
+evidence: three sightings in wave-3 step 0, all executed: (1) clear a blocker — `item park lc-23 --blocked-by NONE` refused, parked_without_typed_blocker (lc-26, this items first instance); (2) amend a body — the lc-10 live-hit sighting could not be appended to lc-10 by any verb; (3) correct a slot — no verb takes a slot value. `item --help` lists exactly check, add, ready, park, close, ratio
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: the drop basis belongs in the body that moves to the done home, not in the 300-char ledger reason
+amended-evidence: 2026-09-12 RETIREMENT PASS 2026-09-12, DROP BASIS (executed at f09e32d on a scratch copy): the done-criterion asks for 'an edit path that LEAVES A RECORD: an amendment is a new dated block or slot-line that supersedes, never an in-place rewrite, so law 8 and the append-only ethic both hold'. item amend is exactly that and answers all three recorded sightings: (1) clear a blocker, executed, 'amended-blocked-by: 2026-09-12 NONE'; (2) amend a body and (3) correct a slot, both by the same verb, which prints 'The earlier line(s) are RETAINED; the new one supersedes' and appends a dated amend-reason plus an amended-<slot> line. item promote is the second such recorded act. Superseding lines rather than rewrites is what keeps law 8 intact. ORIGINAL EVIDENCE, retained: three sightings in wave-3 step 0, all executed; item --help then listed exactly check, add, ready, park, close, ratio.
+
+## lc-39
+grade: DROPPED
+requirement: There is NO path from NEW to READY: grade is written once at admission (verbs.py:526), item amend REFUSES --grade, and item ready PROMOTES NOTHING — an item admitted NEW can never be graded READY however complete its slots later become, so the carriers head is empty by construction
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,test/test_lanes.py,tools/prove-rows.py
+done-criterion: an item whose slots were completed by amendment can be graded READY by an explicit desk act recording who judged it and why, and item ready --head then lists it; red-first on the dotfiles state — 133 items with full slots, grade NEW, head reporting 0 schedulable
+evidence: wave-4 desk 2026-08-27, after the dotfiles grade pass: 329 slots filled across 131 items, then item ready --head over 135 live items printed "head: 2 READY, 0 schedulable now"; the only READY items are ones BORN complete (df-134, df-135). df-1 after amendment: "grade is NEW, not READY. THIS VERB PROMOTES NOTHING". Source: verbs.py:526 sits in the add path, no other verb writes a grade
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: the drop basis belongs in the body that moves to the done home, not in the 300-char ledger reason
+amended-evidence: 2026-09-12 RETIREMENT PASS 2026-09-12, DROP BASIS (executed at f09e32d on a scratch copy): the requirement is 'There is NO path from NEW to READY'. FALSE at HEAD. item promote ships and is the explicit desk act law 10 requires. Executed, three arms: (a) promote a NEW item holding an UNKNOWN slot returns FINDING [ready_with_unknown_slot] and writes nothing; (b) promote a slot-complete but BLOCKED item returns FINDING [promote_while_blocked] and writes nothing; (c) after clearing that blocker by amend, promote wrote 'grade: READY' plus promoted-by and promote-reason lines, printed 'The grade is the DESK's, not this verb's: nothing here derived it from the slots' and committed. So the arrow exists and it is judged, never derived. ORIGINAL EVIDENCE, retained: wave-4 desk 2026-08-27, 329 slots filled across 131 items and item ready --head still printing 'head: 2 READY, 0 schedulable now'; verbs.py:526 then the only grade write.
+blocker-moot: an explicit promotion act (law 10: READY is judged, never inherited) versus re-deriving grade from the amendment-resolved slots at read time — the latter makes READY automatic, which law 10 forbids, so the promotion act is the recommended shape
+
+## lc-54
+grade: DROPPED
+requirement: test/absence-scan.test.mjs has a test asserting the walk collects files under proxy/, a directory this repo does not have, so the suite has been RED on an environment premise it does not pin, record: baselined 2026-08-27 before the foreign-path repair
+goal: lean-machinery-strict-checks
+write-set: test/absence-scan.test.mjs
+done-criterion: The test either pins its fixture inside the repo or skips with a named reason; the suite exits 0. Red-first: it fails today with 'the walk collected no file under proxy/'. Must-not-move: the assertion still fires where a proxy-like tree DOES exist, so the repair is a pinned fixture and not a deleted test
+evidence: node --test test/absence-scan.test.mjs, run before and after the foreign-path repair: EXIT=1 both times, the SAME single failing test 'source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic allowlist' at :743, message 'the walk collected no file under proxy/'. Stated as the baseline in 70bc93c so the repair's own proof could not borrow a pre-existing red
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: the drop basis belongs in the body that moves to the done home, not in the 300-char ledger reason
+amended-evidence: 2026-09-12 RETIREMENT PASS 2026-09-12, DROP BASIS: duplicate of lc-24, which books the same red (the proxy/ anchor in the shared absence-scan test) and was booked first, at wave-3 step 0. Re-measured at f09e32d: node --test test/absence-scan.test.mjs gives tests 62 / pass 61 / fail 1 / skipped 0, the single failure being 'source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic allowlist' with 'the walk collected no file under proxy/'. Merged into lc-24 rather than kept as a sibling, per the backlog doctrine's merge rule, and lc-24's evidence now carries this body's two contributions: the baseline stated in 70bc93c so the foreign-path repair's proof could not borrow a pre-existing red, and the must-not-move arm that the assertion still fires where a proxy-like tree does exist, so the repair is a pinned or derived anchor and never a deleted test. ORIGINAL EVIDENCE, retained: node --test run before and after the foreign-path repair, EXIT=1 both times, the same single failing test at :743.
+
+## lc-57
+grade: DROPPED
+requirement: there is no read-by-goal query: item ready takes only an ident or --head, and no verb answers which items carry a given goal. lc-16 named this arrow as a query and it is still unbuilt, so the goal slot is written on every item and read by nothing
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,test/test_items.py
+done-criterion: a goal-scoped read exists and returns only items carrying that goal, red-first: today item ready --goal is rejected at argparse, which is a usage error and not the defect, so the red is the missing OUTPUT on a form the CLI accepts
+evidence: wave-5 T walk 2026-08-28: item ready --help lists only [--head] [ident]; the full verb surface item {check,add,ready,amend,promote,park,close,ratio} carries no query verb. Source item lc-16 from the 27-item transition sort
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: the drop basis belongs in the body that moves to the done home, not in the 300-char ledger reason
+amended-evidence: 2026-09-12 RETIREMENT PASS 2026-09-12, DROP BASIS: duplicate of lc-16, which books the same missing goal-scoped read and was booked first. This body names lc-16 as its own source ('Source item lc-16 from the 27-item transition sort'), so the duplication is stated in the entry itself. Re-confirmed at f09e32d: item ready --help lists only [--head] [ident] and the item surface carries no goal-scoped query. Merged into lc-16 per the merge rule; lc-16's evidence now carries this body's contribution, the red-first shape that item ready --goal is rejected at argparse, which is a usage error and not the defect, so the red is the missing OUTPUT on a form the CLI accepts. ORIGINAL EVIDENCE, retained: wave-5 T walk 2026-08-28.
+
+## lc-59
+grade: DROPPED
+requirement: no verb declares a lane in a repo's lanes list. lane new says so in its own help: it writes the lane file as a stub and does NOT declare it in this repo's lanes list. So a lane can exist as a file and be invisible to the board, which is the router's input, and nothing closes the gap between the two
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/declaration.py,test/test_lanes.py
+done-criterion: a lane created by lane new is declarable by a verb, and a lane FILE present but undeclared is a finding rather than silence, red-first on this repo whose declaration reads lanes: (empty, declared not absent) while lane files can be created
+evidence: wave-5 L walk 2026-08-28: lane new --help states the non-declaration outright; the lane verb surface is {list,register,new} with no declare; kind list shows lanes: (empty)
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: the drop basis belongs in the body that moves to the done home, not in the 300-char ledger reason
+amended-evidence: 2026-09-12 RETIREMENT PASS 2026-09-12, DROP BASIS: duplicate of lc-13 plus lc-14, which together book the same lane-declaration arrow and were booked first. lc-43's evidence already sorts them as ONE arrow: 'register lc-13+lc-14 as one arrow'. This body restates both halves, that a lane created by lane new is not declarable by a verb and that a lane FILE present but undeclared is silence rather than a finding. Re-confirmed at f09e32d: the lane surface is {list,register,new}, lane register puts a REPO on the roster rather than a lane in this repo's lanes list, and lane new --help still states the non-declaration outright. Merged into both existing entries per the merge rule, with this body's executed confirmations carried in each. ORIGINAL EVIDENCE, retained: wave-5 L walk 2026-08-28; kind list shows lanes: (empty).
+
 ## Archive (pre-migration)
 
