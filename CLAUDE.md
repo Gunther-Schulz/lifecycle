@@ -208,6 +208,30 @@ it saw a `2`.
   commit's parent. A line number is only meaningful against a fixed
   blob, so cite that sha and never a live path:
   `git show 5c257ec:BACKLOG.md`.
+  MEASURED, not asserted (2026-09-12, peer desk, discharging the
+  judgment desk's binding precondition that a pin shows citations
+  resolving to the ENTRIES THEY NAME — pinning a drifted file would
+  sanction the drift permanently). Blob `4c13ab1`, 86 lines, hash
+  verified rather than assumed. All 16 citations across `lc-1`..`lc-8`
+  (two per entry) resolve to an entry head at EXACTLY the cited start
+  line — offset zero, no drift, because no commit touched `BACKLOG.md`
+  after the migration. The check is a CONTENT test, not a form test:
+  it grades the cited body's vocabulary against the citing entry's own
+  requirement, which is the distinction that flipped dotfiles' first
+  desk check from a false 2-of-10 failure to a true 122-of-125 pass.
+  Its control discriminates — the same probe against a line nobody
+  cites scores 1 where the real target scores 8, so the zero-drift
+  result is an instrument reading and not an unread instrument.
+  ONE COSMETIC DEFECT, recorded because a silent repair teaches the
+  next reader nothing: `lc-8` cites `BACKLOG.md:77-87` and its entry
+  occupies 77-86, the file's last line. The END bound overruns by one;
+  the head resolves correctly at 77 and the cited body is the whole
+  entry, so no resolution changes. Contrast `claude-code-cache-fix`,
+  whose equivalent pin FAILED this precondition — 313 of 318 pointers
+  landing on the wrong entry, 307 by a constant +80 — and which is on
+  the repair path (`cf-328`) rather than the pin path. A line number
+  always resolves, so nothing fails when it lies; that is why this is
+  measured rather than argued.
 - `dev-notes/` — the maintenance layer, never loaded by operational
   files. Its placement outside every operational load path is
   load-bearing and does not move.
