@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 72
+added: 73
 compacted: 0
 
 ## lc-3
@@ -522,4 +522,13 @@ goal: lean-machinery-strict-checks
 write-set: CLAUDE.md,test/test_migrate_residue.py,test/test_tend_goal.py
 done-criterion: the documented Verify command runs the WHOLE suite green, and the count it reports is the suite's real count. Red-first is already in hand and must be reproduced as the arrangement: at f09e32d with a clean tree, the documented form gives 'Ran 292 tests / FAILED (errors=2)' while the same discover WITHOUT -t . gives 'Ran 326 tests / OK', one variable. MUST-NOT-MOVE: whichever side is repaired, the sibling imports and the package-relative form must not BOTH be supported silently, since two import shapes for one suite is how the count diverged unnoticed; and the fix is not simply deleting -t . from the doc unless that form is shown to run all 326
 evidence: EXECUTED 2026-09-12 at f09e32d, clean tree, single-variable control, both arms in one run. WITH -t . (the documented form): Ran 292 tests, FAILED (errors=2), the two errors being ModuleNotFoundError 'No module named test_migrate' at test/test_migrate_residue.py:34 and 'No module named test_init' at test/test_tend_goal.py:38. WITHOUT -t .: Ran 326 tests, OK. So the documented command both fails AND exercises 34 fewer tests, and the 34 is the quiet half: a reader who fixed only the two errors would still be running a short suite. FOREIGN RED, not this lane's: the tree was clean at f09e32d and this lane touched no test file. The sibling imports date to 18ca4e5 (lc-65), which is when the divergence could first have appeared.
+blocked-by: NONE
+
+## lc-81
+grade: READY
+requirement: lifecycle init writes public:false as a silent hardcoded default, so a repo whose gh visibility is PUBLIC is declared private and its leak scanning relaxes exactly where exposure matters. record: judgment desk booking round 2026-09-12, basis from dotfiles-4c's trio migration
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py
+done-criterion: init either derives the flag from gh repo view --json visibility or emits the same could-not-verify line it already uses for its other unresolved guesses; it never writes a silent default for this field. RED-FIRST: init run today in a repo whose gh visibility is PUBLIC writes public:false with no note. MUST-NOT-MOVE: the seven existing could-not-verify lines keep their text, and a repo with no gh remote still initialises rather than failing.
+evidence: VERIFIED AT THIS DESK before booking, not relayed: init.py:223 holds the literal public:False as a dict default, while the same file emits 7 could-not-verify lines for other unresolved values — the contrast the claim rests on is real and the silence is specific to this field. Unsafe direction: declared-private relaxes the leak scan; the inverse would only over-scan.
 blocked-by: NONE
