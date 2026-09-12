@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 73
+added: 74
 compacted: 0
 
 ## lc-3
@@ -532,3 +532,12 @@ write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py
 done-criterion: init either derives the flag from gh repo view --json visibility or emits the same could-not-verify line it already uses for its other unresolved guesses; it never writes a silent default for this field. RED-FIRST: init run today in a repo whose gh visibility is PUBLIC writes public:false with no note. MUST-NOT-MOVE: the seven existing could-not-verify lines keep their text, and a repo with no gh remote still initialises rather than failing.
 evidence: VERIFIED AT THIS DESK before booking, not relayed: init.py:223 holds the literal public:False as a dict default, while the same file emits 7 could-not-verify lines for other unresolved values — the contrast the claim rests on is real and the silence is specific to this field. Unsafe direction: declared-private relaxes the leak scan; the inverse would only over-scan.
 blocked-by: NONE
+
+## lc-82
+grade: PARKED
+requirement: Every kind design, and lifecycle itself, answers the same closed set of concept questions at every seam, and that set exists in nobody's hands today: each design re-derives which questions apply, so an unasked one surfaces later as its own finding. record: judgment desk booking round 2026-09-12, operator-originated
+goal: enforce-the-invariants
+write-set: docs/seam-checklist.md,ITEMS.md
+done-criterion: A design artifact at docs/seam-checklist.md holds the closed question set, and lc-76, lc-77, lc-78 and lc-79 each cite it as their shared rubric (the ITEMS.md half of the write-set). It LANDS BEFORE those four are designed — a rubric arriving after the designs it grades has no consumer. Doubles as the axis map for a begehung-style review.
+evidence: Question set as RECEIVED (relay, twelve, verbatim): trigger observability, actor, consumer, carrier, exit, growth policy, instrument, write boundary, authority, succession, transitions, reach. Each already has an instance in today's wave: succession from the tool-owned class (.clippy/* outliving clippy — verified here at statiker_stop_guard.py:106), trigger observability from the non-event gap shape, write boundary from this wave's partial halts, instrument from three false-zero instruments in one day.
+blocked-by: evidence the operator reply's CONFIRMED full question set — this desk holds twelve via relay, and the sending desk's own message says the full list is in its operator reply, unseen here. Writing the rubric on a possibly-partial set would crystallise it as the graded standard for four designs and then need redoing.
