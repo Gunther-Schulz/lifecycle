@@ -290,6 +290,8 @@ write-set: .claude/lifecycle.json,test/test_declaration.py
 done-criterion: kind sweep returns CLEAN on this repo, with the placeholder claimed by a registered kind rather than exempted, red-first on the current FINDING
 evidence: wave-5 K walk 2026-08-28, executed: kind sweep returns FINDING unregistered_persisted_thing naming exactly one file, plugin/workflows/.gitkeep; kind check is CLEAN at 19 kinds, so the declaration is well-formed and merely incomplete
 blocked-by: NONE
+amend-reason: 2026-09-12 Retirement pass 2026-09-12: the sweep population grew while this entry stood. The entry criterion is kind sweep returns CLEAN on this repo, and it named one file; the sweep now names two, so a build satisfying the entry as written would leave the sweep red and the criterion unmet. Recorded rather than left for the builder to discover.
+amended-evidence: 2026-09-12 wave-5 K walk 2026-08-28, executed: kind sweep returned FINDING unregistered_persisted_thing naming exactly one file, plugin/workflows/.gitkeep; kind check CLEAN at 19 kinds, so the declaration is well-formed and merely incomplete. RE-MEASURED 2026-09-12 at this desk during the retirement pass: the sweep now names TWO tracked files - plugin/workflows/.gitkeep AND docs/directives/2026-09-12-lifecycle-drain-wave.md, the drain-wave directive committed in d87a4af. Discriminating control from the same run: plugin/skills/.gitkeep does NOT appear, because the workflow-templates kind home resolves to plugin/skills, so the sweep is reading kinds and not merely listing placeholders. The second file is a docs/directives instance, and this repo has NO docs kind covering directives - only docs/audits - which is the same population gap lc-79 names
 
 ## lc-62
 grade: READY
