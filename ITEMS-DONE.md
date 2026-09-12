@@ -309,5 +309,16 @@ blocked-by: NONE
 closed-reason: 2026-09-12 FIXED AND NEVER CLOSED, found by the 2026-09-12 retirement pass. --merge mode shipped in 9f8350f: cli.py:502 adds --merge, migrate.py:1349 bypasses the migrate_would_overwrite refusal under it, the merge branch appends via append_blocks leaving existing entries byte-for-byte, and merge_conservation() asserts the identity per source and in total. The entry's premise -- 'no execution path at all' -- is dead. Verified twice on independent axes: a sonnet lane's executed read of the live module, and this desk's own re-run against the commit history. Citation drift recorded: the entry cited migrate.py:633 for the refusal, now at :1352.
 closed-ref: 9f8350f
 
+## lc-18
+grade: DONE
+requirement: A '## Done' SECTION migrates as OPEN work. CUT_SECTIONS = ('Grades',) only (migrate.py:80), so the tool models closures as a separate FILE (--from-done) while both dotfiles carriers keep theirs as a Done section of the same file; build_items then writes every migrated entry with grade NEW (migrate.py:359, comment at :346 'EVERY MIGRATED ENTRY IS OPEN'). Measured by the peer on the real files: 7 already-closed root entries and 1 corpus entry would be written back as open work. '--from-done NONE' is not the escape — both carriers genuinely have archives, so stating zero would be a false zero
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a source carrying its closures as a '## Done' section migrates them to the done home, not to ITEMS.md as NEW; red-first on a fixture with both an open and a closed section, asserting the closed entries do NOT appear in the open carrier
+evidence: verified here at cf92ad9: CUT_SECTIONS at :80 is ('Grades',); grade NEW hardcoded at :359. Peer measured :367 on 6badd58; the line moved, the substance holds. Counts are the peer's, not re-measured here
+blocked-by: NONE
+closed-reason: 2026-09-12 probe
+closed-ref: f3f7517
+
 ## Archive (pre-migration)
 
