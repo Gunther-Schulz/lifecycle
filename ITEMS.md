@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 82
+added: 83
 compacted: 0
 
 ## lc-3
@@ -530,3 +530,12 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals
 done-criterion: closing an item whose id-blocker target is already closed leaves the done home CLEAN: either close records the blocker moot at move time, generalizing the decision path to id blockers, or it REFUSES with clear the blocker first. Red-first on the standing dotfiles case: an item carrying blocked-by an already-DONE id, closed today, produces blocked_in_done_home. MUST-NOT-MOVE: a decision-typed blocker still gets exactly the moot line it gets now, and an id blocker whose target is still OPEN must not be silently mooted - that would close an item over a live dependency, which is the worse direction
 evidence: REPORTED by the dotfiles drainage desk (dotfiles-ef) at its own df-151 close 2026-09-12 and relayed here by the judgment desk; the standing finding sits at dotfiles ITEMS-DONE.md:914, where df-151 moved carrying blocked-by df-135 while df-135 had itself closed hours earlier. Cause read at the source by that desk, RELAYED AND NOT YET RE-READ HERE - the mechanism claim about _moot_decision is theirs, unverified at this desk, and is the first thing the build re-reads
 blocked-by: NONE
+
+## lc-91
+grade: READY
+requirement: A repo cannot declare its OWN closure vocabulary. lc-19 closed on the core defect - DONE and DROPPED now have classification rules derived from items.GRADES_CLOSED - but the second half of its criterion is unbuilt: GRADES_CLOSED is a fixed tuple in the tool, so a source carrier whose closures read ERLEDIGT, RESOLVED, TRACED or EXECUTED still falls through as unclassified. Those four are not hypothetical: they are the exact words lc-19 own measurement counted in the real dotfiles carriers
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/items.py,test/test_migrate.py
+done-criterion: a repo can declare a closure-word mapping its migration honours, so a carrier closing entries in its own vocabulary migrates them to the done home rather than unclassified. Red-first on lc-19 own measured words: a fixture whose closures read ERLEDIGT and RESOLVED lands in the done home under a declared mapping and is unclassified without one. MUST-NOT-MOVE, and it is the point lc-19 made explicitly: a word with NO rule is still reported unclassified rather than guessed at - the fix is declared rules, never a looser matcher
+evidence: SPLIT OUT of lc-19 at its closure, 2026-09-12 retirement pass, rather than absorbed silently: the closing lane flagged that the criterion said DONE and DROPPED at minimum PLUS a declared way for a repo to map its own closure words, and only the first half shipped in f3f7517. Verified at this desk: CLOSURE_RULES is built from items.GRADES_CLOSED, a fixed two-word tuple. The four foreign closure words are lc-19 own executed counts over the real carriers - root BACKLOG.md ERLEDIGT 1 and RESOLVED 1, claude/BACKLOG.md TRACED 1 and EXECUTED 1
+blocked-by: decision where a repo declares its closure vocabulary: a closure-words list in .claude/lifecycle.json honoured by migrate, a per-migration flag, or a deliberate refusal under which foreign words are renamed at the source first
