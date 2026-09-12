@@ -54,6 +54,7 @@ dropped: lc-4 — OVERTAKEN. The named decision was answered by the build: 'lane
 dropped: lc-5 — OVERTAKEN. Both branches of the named either/or shipped: items.py:103 makes blocker-moot and superseded-by real DONE_ONLY_SLOTS, and 'item check' prints its own done-home verdict with a stated scope. Basis inlined in the evidence slot.
 dropped: lc-6 — OVERTAKEN. The ledger parser gained the comment-preamble rule (ledger.py:88). Exercised on a scratch copy: a three-line prose header planted above 'schema:' gives 'ledger check: CLEAN, 0 shape finding(s), 0 unreadable line(s)', which answers both halves. Basis inlined in the evidence slot.
 decision: where do the 16 line-number citations into BACKLOG.md resolve once the legacy-backlog kind takes its declared delete exit → at the deleting commit's parent 5c257ec, pinned in CLAUDE.md's Role files section; the classification of every entry is the fold-in commit 5c257ec, whose message carries the per-entry triage, and the removing commit is this one
+decision: wave-2 R1: dispatcher verification before publishing the lane's six commits → Verified at the artifact, cleared: c6a47e1 5c257ec 2c77eee 0d07304 46261f0 f27e15f. item check CLEAN (55+25, conservation 80), ratio 2.88:1 from 6.09:1, --test 73/73, unittest 326 OK, absence-scan clean, pin proven at 5c257ec:32. Push under this repo's standing carve-out.
 
 ## Archive (pre-migration)
 
