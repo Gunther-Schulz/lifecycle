@@ -390,5 +390,16 @@ blocked-by: NONE
 closed-reason: 2026-09-12 FIXED AND NEVER CLOSED (retirement pass 2026-09-12). The fixed run is now SLOTS rather than SLOTS plus DONE_ONLY_SLOTS, at items.py:530 and :589. Two-arm proof executed by the lane against the repo own closed fixture: an ordinary close carrying an appended blocker-moot line reads CLEAN, while an amendment line injected among the core slots still FIRES. Both arms match the criterion.
 closed-ref: cbfaee6
 
+## lc-46
+grade: DONE
+requirement: the intake join fires on nearly every item over a MIGRATED carrier, so the escape hatch becomes the default path and the guard trains the override reflex. Reported from cache-fix: an add returned FINDING join_undisposed matching 325 of 331 live items. MEASURED at the desk over dotfiles 139 items, and the number is exact rather than approximate: EXACTLY TWO tokens appear in more than 90 percent of requirement lines, "backlog" and "record" at 127/139 each, both contributed by the migration own tail "record: BACKLOG.md:N" that every migrated body carries. MATCH_MIN_TOKENS is 2. So the migration supplies precisely the threshold, against nearly every item, by construction.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py (STOPWORDS, MATCH_MIN_TOKENS and the token match), test/test_verbs.py
+done-criterion: the join discriminates over a migrated carrier. THE DESIGN OWN DEFENCE IS WHAT FAILED and the fix must not restate it: the comment at STOPWORDS says the list is kept short on purpose because "the two-token threshold is what actually does the work" — that premise is false wherever a systematic tail contributes two universal tokens, which is every migrated carrier. So do NOT lengthen the stopword list by hand: that is the second vocabulary the comment rightly refuses, and it would need a new entry for every future migration tail. WEIGHT BY RARITY ACROSS THE CARRIER instead — a token present in nearly every item has no discriminating power BY DEFINITION and needs no list to say so, which makes the fix self-maintaining and kills the next tail before it is written. Red-first on the real case: cache-fix 331 items, the exact add that returned 325, expected to fall to a handful. MUST-NOT-MOVE: two items that genuinely share a rare token still match; an item sharing ONLY migration-tail tokens does not; and the finding still fires on a real duplicate, shown on a planted pair.
+evidence: judgment desk report from cache-fix 2026-08-27 (325 of 331); desk measurement over dotfiles ITEMS.md the same day, token document-frequency computed with the shipped STOPWORDS and _TOKEN regex; verbs.py STOPWORDS comment and MATCH_MIN_TOKENS = 2.
+blocked-by: NONE
+closed-reason: 2026-09-12 FIXED AND NEVER CLOSED (retirement pass 2026-09-12). Rarity weighting shipped: MATCH_MAX_DOC_FRACTION at verbs.py:77 with document_frequency and informative_tokens, the self-maintaining fix the criterion demanded rather than the longer stopword list it forbade. Control computed over THIS carrier live rather than a fixture: record appears in 60.3 percent of open items and is dropped as uninformative while the rarer token is kept; an item still self-matches.
+closed-ref: cbfaee6
+
 ## Archive (pre-migration)
 
