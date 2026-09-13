@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 115
+added: 116
 compacted: 0
 
 ## lc-3
@@ -743,4 +743,13 @@ goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_waves.py
 done-criterion: New verb 'item waves': over READY items whose blocker gate passes, parse each EFFECTIVE write-set slot as comma-separated paths; overlap graph, file-granular; connected components are LANES (members serialize, shared files named as collision evidence), disjoint lanes parallel. Missing/prose/other-repo write-sets LISTED under own keys with counts and explicit zeros, never clustered (surfaces the lc-111/lc-113 population per drain). NO sizing or tier logic — crossover stays desk judgment. DONE when: run over THIS carrier agrees with the hand-derived six-cluster plan of 2026-09-13 or the divergence is explained at the artifact; tests cover overlap-one-lane (shared file named), disjoint-two-lanes, prose-in-bucket-not-lane, empty-READY as could-not-verify not silence
 evidence: VERIFIED AT THIS DESK before booking: no waves/clusters/join verb in the parser (grep -c waves plugin/cli/lifecycle_core/cli.py = 0 at booking time; item subcommands are add/amend/promote/close/park/ready/check/ratio/slots-family only), and the dispatch-log measurement is this desk's own run of tools/dispatch-economics.py (dotfiles 7b5643f), not a relay: lifecycle 1.05 items/lane all-time, one multi-item lane, today 14/13 flagged IDENTITY-MAPPING. The six-cluster hand plan this must reproduce is in the judgment desk's record of this date
+blocked-by: NONE
+
+## lc-124
+grade: READY
+requirement: item waves' specced join is truthful and unusable as a parallel plan over this carrier: the live run returns ONE lane over 51 path-valued items (c9c9182), and the lane's counterfactual killed the coarse-slot explanation — directory entries ignored still gives 3 components; six hot files (verbs.py in 15 slots, migrate.py 12, cli.py/items.py/test_items.py 9 each) chain the closure into one blob. A usable parallel set needs a PARTITION beside the honest join — record: lc-123 closing report part 2/4, gap (c)1, 2026-09-13
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_waves.py
+done-criterion: A grouped mode (flag on item waves): assign each path-valued item to the group of its slot's most-frequent entry (frequency computed carrier-wide over the same population); print groups as lanes AND print every cross-group shared file as a SERIALIZE warning naming the file and both groups — the join's honesty kept as warnings, never dropped. DONE when: over this carrier the grouped run yields more than one group with every cross-group shared file named; tests: two items sharing only a low-frequency file, distinct dominant files, land in different groups WITH the warning naming that file; a mutation dropping the warning is an assertion FAILURE; the default (ungrouped) output is byte-identical to before the flag
+evidence: VERIFIED AT THIS DESK: the one-lane live run reproduced at this desk before the lane reported it, and the lane's component-count counterfactuals (1 shipped / 3 no-directories / 4 no-test / 5 neither / 1 no-hot-files) are in its part-2 report with the method stated; the desk did not re-run the counterfactuals — marked lane-measured
 blocked-by: NONE
