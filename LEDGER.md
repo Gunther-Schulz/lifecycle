@@ -60,6 +60,8 @@ dropped: lc-20 — Never a live defect rather than one since fixed: init.py:185 
 decision: which source establishes visibility, since the tool must not guess: a gh remote read at init time, an explicit required flag, or writing no key at all and letting the consumer treat absence as could-not-verify → moot (closed by lc-84)
 dropped: lc-84 — Duplicate of lc-81, same defect at the same construct: init.py:223 hardcoding public false. lc-81 is kept as the earlier id and is decision-complete where this entry left an open blocker. Its motivating case, dispatch-guards public with its declaration corrected by hand, is merged into lc-81.
 decision: anchor on the source blob sha plus range, or on the entry headline text, or declare the pointer approximate and have readers search near it → moot (closed by lc-38)
+decision: does park APPEND an amended-blocked-by line so its write governs, or REFUSE when a later amendment exists and name item amend --blocked-by as the fix; appending collides with amend's own requirement that every amendment carry a --reason, refusing is cheaper but makes park partial → moot (closed by lc-87)
+dropped: lc-87 — Duplicate of lc-112, which survives (a lane is building against it). lc-87 is older and better-scoped; its st-33 field incident and scope read are MERGED into lc-112's evidence. Its parked decision is ANSWERED: park REFUSES. The pair exists because lc-112 asserted --join new without searching.
 
 ## Archive (pre-migration)
 
