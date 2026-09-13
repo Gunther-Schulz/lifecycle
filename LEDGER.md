@@ -62,6 +62,7 @@ dropped: lc-84 — Duplicate of lc-81, same defect at the same construct: init.p
 decision: anchor on the source blob sha plus range, or on the entry headline text, or declare the pointer approximate and have readers search near it → moot (closed by lc-38)
 decision: does park APPEND an amended-blocked-by line so its write governs, or REFUSE when a later amendment exists and name item amend --blocked-by as the fix; appending collides with amend's own requirement that every amendment carry a --reason, refusing is cheaper but makes park partial → moot (closed by lc-87)
 dropped: lc-87 — Duplicate of lc-112, which survives (a lane is building against it). lc-87 is older and better-scoped; its st-33 field incident and scope read are MERGED into lc-112's evidence. Its parked decision is ANSWERED: park REFUSES. The pair exists because lc-112 asserted --join new without searching.
+decision: does item park APPEND an amended-blocked-by line so its write governs, or REFUSE when a later amendment exists and name item amend --blocked-by as the fix → REFUSE, realized by lc-112. Grounded in the file, not taste: render_amendment is the only place the amendment shape is spelled and always emits amend-reason, which cmd_item_amend refuses to default. Appending would make park invent that reason. lc-87's close logged this 'moot'; it is ANSWERED.
 
 ## Archive (pre-migration)
 
