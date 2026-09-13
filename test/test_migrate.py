@@ -63,6 +63,19 @@ def build(backlog: str, done: str = "# old done\n\n## Done\n\n"
     return d
 
 
+def commit_all(d: Path, message: str) -> None:
+    """Commit whatever is in a fixture repo's tree.
+
+    A verb that RECORDS a move reports `move_uncommitted` when the homes are
+    untracked, and that finding reads exactly like a finding about the thing
+    under test. Arranging it away is what keeps a red attributable.
+    """
+    run = lambda *a: subprocess.run(a, cwd=str(d), capture_output=True,  # noqa: E731
+                                    text=True)
+    run("git", "add", "-A")
+    run("git", "commit", "-qm", message)
+
+
 REPORT = "docs/audits/report.md"
 
 
@@ -1067,10 +1080,20 @@ class ReImportByProvenance(unittest.TestCase):
         self.assertIn(f"already migrated as {p}-9", out)
         self.assertNotIn("READY 2026-08-03 — first",
                          (d / "ITEMS.md").read_text(encoding="utf-8"))
-        # THE RUN'S CODE IS 3 AND THAT IS THE OPEN REMAINDER, NOT THIS
-        # CASE'S SUBJECT — see `TheConservationCounterHasNotFollowedTheAnchor`
-        # below, which is where it is asserted and named.
-        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        # THE RUN'S CODE WAS 3 UNTIL lc-92 CLOSED THE OPEN REMAINDER this
+        # comment used to point at: the per-source counter read the resolved
+        # `evidence` slot over the live carrier alone, so the body planted in
+        # the DONE home was invisible to it and the arithmetic could not be
+        # promised. It reconciles now (1 + 0 against 1 read), and what is left
+        # is this case's OWN hand-built heads: it writes both homes with a
+        # `baseline` that never admitted the planted block, so the identity is
+        # over by one. NAMED, not swapped for a bare 2 — any finding at all
+        # satisfies a code assertion, which is a could-not-verify wearing a
+        # green.
+        self.assertIn("FINDING [conservation_surplus]", out)
+        self.assertNotIn("COULD NOT VERIFY: the per-source arithmetic "
+                         "disagrees", out)
+        self.assertEqual(code, exits.FINDING, out)
 
     def test_the_count_is_printed_even_when_it_is_ZERO(self):
         """An omitted line reads as 'checked and clean' and a true zero reads
@@ -1215,43 +1238,37 @@ class ReImportByProvenance(unittest.TestCase):
         self.assertEqual(idx, {("BACKLOG.md", 1, 2): "ab-1"})
 
 
-class TheConservationCounterHasNotFollowedTheAnchor(unittest.TestCase):
-    """lc-73's OPEN REMAINDER, recorded as an executed case rather than as a
-    sentence in a report nobody re-reads.
+class TheConservationCounterFollowsTheAnchor(unittest.TestCase):
+    """lc-92 — the counter reads the RAW BLOCK, over BOTH homes.
 
-    `per_source_counts` answers "how many bodies of this source do the homes
-    hold" from `items.parse`'s AMENDMENT-RESOLVED `evidence` slot, and over
-    the LIVE carrier only. Both readings are the ones lc-73 replaced in the
-    detector: measured at statiker, 20 blocks carry an intact base
-    `evidence: BACKLOG.md:<line>-<end>` line and only 15 of them still show it
-    in the resolved slot, 13 of the 20 sitting in `ITEMS-DONE.md` where this
-    counter does not look at all.
+    WHAT THIS PINNED WHILE THE GAP WAS OPEN, kept because the record of a gap
+    having been open is worth more than the tidy file: `per_source_counts`
+    answered "how many bodies of this source do the homes hold" from
+    `items.parse`'s AMENDMENT-RESOLVED `evidence` slot and over the LIVE
+    carrier only — both of the readings lc-73 had already replaced in the
+    DETECTOR, one function over, so a skipped re-import left the figure short
+    and the merge answered COULD NOT VERIFY over bodies that were all on disk.
+    lc-92 closed it: the figure is `provenance_index`'s, so the counter and
+    the detector now read one record.
 
-    Before the re-import skip the question never arose — the run refused at
-    the duplicate gate and never reached conservation. With the skip the run
-    proceeds, the counter sees fewer bodies than the source offered, and
-    `merge_conservation` answers COULD NOT VERIFY. The bodies ARE all on disk;
-    what cannot be verified is which run put them there.
-
-    THE FIX IS NOT TAKEN HERE, deliberately: it changes the behaviour of a
-    function the brief did not name, over a figure the whole conservation
-    contract rests on. What is here is the halt with its evidence.
-
-    WHEN THAT REPAIR LANDS THIS CASE GOES RED. That is the signal it exists
-    for, not a regression: someone must then read this docstring and delete
-    the case, rather than the gap closing with nobody noticing it had been
-    open.
+    THE TWO NOTIONS STAY APART. The items figure is provenance over the
+    successor BLOCKS; the closures figure is the archive's per-closure
+    markers. The archive is out of `provenance_index`'s scope by construction
+    — attribution starts at a block heading and `## Archive (pre-migration)`
+    is not one — which is what keeps a closure from being counted twice, and
+    `test_an_archive_routed_closure_is_counted_once_not_twice` is that
+    property executed rather than read off a docstring.
     """
 
-    def test_a_skipped_re_import_leaves_the_per_source_figure_short(self):
+    def test_a_skipped_re_import_reconciles_against_the_raw_anchor(self):
         p = GOOD_FULL_DECLARATION["id-prefix"]
         source = "# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n"
         d = build(source)
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         self.assertEqual(migrate_run(d, "--from-done", "NONE")[0],
                          exits.CLEAN)
-        # The amendment that costs the counter its sight: append-only, so the
-        # BASE evidence line — the anchor — survives it untouched.
+        # The amendment that used to cost the counter its sight: append-only,
+        # so the BASE evidence line — the anchor — survives it untouched.
         text = (d / "ITEMS.md").read_text(encoding="utf-8")
         self.assertIn("evidence: BACKLOG.md:", text)
         (d / "ITEMS.md").write_text(
@@ -1260,11 +1277,124 @@ class TheConservationCounterHasNotFollowedTheAnchor(unittest.TestCase):
 
         code, out = migrate_run(d, "--from", "BACKLOG.md",
                                 "--from-done", "NONE", "--merge")
-        # The DETECTOR still sees it — the anchor is read off the raw block.
+        # The DETECTOR sees it — the anchor is read off the raw block.
         self.assertIn("RE-IMPORTS skipped:       1", out)
         self.assertIn(f"already migrated as {p}-1", out)
-        # The COUNTER does not, and says so rather than reporting a number.
-        self.assertIn("blocks whose `evidence` names it: 0", out)
+        # And now so does the COUNTER, off the same record.
+        self.assertIn("blocks whose `evidence` names it: 1", out)
+        self.assertNotIn("COULD NOT VERIFY: the per-source arithmetic "
+                         "disagrees", out)
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_a_body_that_moved_to_the_done_home_is_still_counted(self):
+        """THE POINT OF THE REPAIR. A closed item's block lives in
+        `ITEMS-DONE.md`, which the old reading never opened — at statiker 13
+        of 20 anchors sat there."""
+        p = GOOD_FULL_DECLARATION["id-prefix"]
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d, "--from-done", "NONE")[0],
+                         exits.CLEAN)
+        # The homes are committed before the close: `item close` records the
+        # move, and an uncommitted home makes that step report
+        # `move_uncommitted` — an ARRANGEMENT failure that reads exactly like
+        # a finding about the counter.
+        commit_all(d, "the migrated homes")
+        code, out = run_cli(d, "item", "close", f"{p}-1",
+                            "--reason", "done with it")
+        self.assertEqual(code, exits.CLEAN, out)
+        items_text = (d / "ITEMS.md").read_text(encoding="utf-8")
+        done_text = (d / "ITEMS-DONE.md").read_text(encoding="utf-8")
+        # The move happened — without this the case could pass over a body
+        # that never left the live carrier.
+        self.assertNotIn(f"## {p}-1", items_text)
+        self.assertIn(f"## {p}-1", done_text)
+        self.assertEqual(
+            migrate.per_source_counts(items_text, done_text, "BACKLOG.md"),
+            (1, 0))
+
+    def test_an_archive_routed_closure_is_counted_once_not_twice(self):
+        """D3's proof, executed. An archive body is quoted VERBATIM at the
+        line range it came from, so the archive region physically carries the
+        very tokens the items figure is keyed on. It must contribute nothing:
+        items + closures == entries read − unclassified, and the merge is
+        CLEAN."""
+        d = build("# old\n\n## Open\n\n"
+                  "- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        (d / "SECOND.md").write_text(
+            "# second\n\n## Open\n\n"
+            "- **READY 2026-09-01 — second open.** body\n"
+            "- **DROPPED 2026-09-02 — second closed.** body\n",
+            encoding="utf-8")
+        code, out = migrate_run(d, "--from", "SECOND.md",
+                                "--from-done", "NONE", "--merge")
+        done_text = (d / "ITEMS-DONE.md").read_text(encoding="utf-8")
+        # THE INSTRUMENT'S POSITIVE CONTROL: the token IS in the archive
+        # region. Without this the zero contribution below would be
+        # unfalsifiable — an archive carrying no token at all reads the same.
+        self.assertRegex(done_text, r"<!-- SECOND\.md:\d+-\d+ — ")
+        self.assertIn(items.ARCHIVE_HEADING, done_text)
+        self.assertIn("blocks whose `evidence` names it: 1", out)
+        self.assertIn("archive markers naming it:        1", out)
+        self.assertIn("entries read − unclassified:      2", out)
+        self.assertNotIn("COULD NOT VERIFY: the per-source arithmetic "
+                         "disagrees", out)
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_a_genuinely_unbalanced_merge_still_answers_could_not_verify(self):
+        """MUST NOT MOVE, and it is the one way this repair could make the
+        function worse: a read widened until every disagreement rounds to
+        clean. A successor block claiming provenance the source does not
+        offer is a surplus the counter cannot explain, and saying so is what
+        code 3 means."""
+        p = GOOD_FULL_DECLARATION["id-prefix"]
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d, "--from-done", "NONE")[0],
+                         exits.CLEAN)
+        # THE CONTROL, and it is what makes the red below attributable: the
+        # SAME re-merge, before the tamper, reconciles and exits CLEAN. An
+        # arrangement that answers COULD NOT VERIFY whatever is done to it
+        # proves nothing about the tamper.
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertIn("blocks whose `evidence` names it: 1", out)
+        self.assertNotIn("COULD NOT VERIFY: the per-source arithmetic "
+                         "disagrees", out)
+        self.assertEqual(code, exits.CLEAN, out)
+
+        # A second block claiming BACKLOG.md:99-100 — a range no entry in the
+        # source occupies. `added` is bumped with it so the TOTAL identity
+        # stays clean and the per-source figure is the only thing that can
+        # speak.
+        #
+        # THE SURPLUS DIRECTION, AND IT IS THE ONLY ONE AN INPUT CAN REACH.
+        # The shortfall direction — the homes holding FEWER bodies than the
+        # source offered — is not constructible from here, and measuring that
+        # is how this case got its shape: removing a migrated body from the
+        # homes makes its entry stop being a re-import, so the very next merge
+        # writes it fresh and the arithmetic balances again (executed: exit 0,
+        # `1 + 0` against `1`). That is `merge_conservation`'s own docstring
+        # being right — no INPUT falsifies the identity, only a defect in the
+        # writer does. A surplus IS reachable, and it is the same widened-read
+        # failure seen from the other side.
+        text = (d / "ITEMS.md").read_text(encoding="utf-8")
+        text, ok = migrate.bump_head(text, "added", 1)
+        self.assertTrue(ok)
+        (d / "ITEMS.md").write_text(
+            text.rstrip("\n") + "\n\n" + items.render_block(f"{p}-2", {
+                "grade": "NEW", "requirement": "a body claiming provenance "
+                "no entry offers", "goal": "UNKNOWN", "write-set": "UNKNOWN",
+                "done-criterion": "UNKNOWN",
+                "evidence": "BACKLOG.md:99-100",
+                "blocked-by": "NONE"}), encoding="utf-8")
+
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertIn("blocks whose `evidence` names it: 2", out)
+        self.assertIn("entries read − unclassified:      1", out)
         self.assertIn("COULD NOT VERIFY: the per-source arithmetic disagrees",
                       out)
         self.assertEqual(code, exits.COULD_NOT_VERIFY, out)

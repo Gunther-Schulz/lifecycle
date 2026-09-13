@@ -952,12 +952,27 @@ def provenance_index(*texts) -> dict:
     not. Measured at statiker: five of twenty anchors are invisible in the
     resolved slot and all twenty are intact in the raw block.
 
-    THE HEAD AND THE ARCHIVE ARE OUT OF SCOPE BY CONSTRUCTION. Attribution
-    starts at a block heading and `grammar.heading_ident` returns None for
-    `## Archive (pre-migration)`, so the archive's verbatim source bodies —
-    which quote the very line ranges this index is keyed on — never enter it.
-    An archive body is not an ITEM, and counting one here would skip an entry
-    the successor holds no item for.
+    THE HEAD IS OUT OF SCOPE, THE ARCHIVE IS NOT — and this paragraph said it
+    was until lc-92 measured it. Attribution opens at a BLOCK heading and
+    closes at any other `##` line, so `## Archive (pre-migration)` does close
+    it: `grammar.BLOCK_HEADING` is `^##\\s+(\\S+)\\s*$` and a multi-word
+    heading does not match. But ANY ONE-WORD `## ` heading RE-OPENS it, and
+    the archive holds source carriers VERBATIM — a carrier's own `## Done`
+    section is the ordinary shape, and `grammar.heading_ident("## Done")`
+    returns the pseudo-ident `Done`. Everything after it in the archive,
+    including each closure's `<!-- {src}:{line}-{end} — ... -->` marker, is
+    then attributed to that pseudo-ident and enters this index. Measured:
+    an archive written by a real merge yielded `{("SECOND.md", 6, 7):
+    "Done"}`.
+
+    SO A CALLER THAT WANTS ITEM SCOPE CUTS ITS INPUT at
+    `items.ARCHIVE_HEADING` before calling — an archive body is not an ITEM.
+    `per_source_counts` is that caller and does exactly this (`live_region`,
+    below); the RE-IMPORT detector deliberately does not, because "is this
+    body already present in the successor" is a question the archive answers
+    too. The assurance this paragraph used to give was wider than the
+    predicate that backs it, which is what made it worth nobody's second
+    look.
 
     FIRST WRITER WINS on a repeated token: the index answers "is this already
     present", and a second id carrying the same provenance is a DUPLICATE-ID
@@ -1047,27 +1062,63 @@ def append_blocks(text: str, blocks: list) -> str:
     return text.rstrip("\n") + "\n\n" + body
 
 
+def live_region(text: str) -> str:
+    """Everything BEFORE the archive heading — the same cut `append_blocks`
+    makes, and `items._append_to_block` and `items.replace_body` before it.
+
+    A FOURTH CALLER OF AN EXISTING CUT, not a new concept (lc-92). It exists
+    because `provenance_index` does NOT stop at the archive on its own — see
+    the correction in its docstring — so a caller asking an ITEM question
+    scopes its input here rather than asking that function to change what it
+    computes for the re-import detector.
+    """
+    lines = text.split("\n")
+    for i, ln in enumerate(lines):
+        if ln.strip() == items_mod.ARCHIVE_HEADING:
+            return "\n".join(lines[:i])
+    return text
+
+
 def per_source_counts(items_text: str, done_text: str, src_name: str) -> tuple:
     """`(items, closures)` for one source, RE-READ from what is on disk.
 
     DERIVED INDEPENDENTLY OF THE WRITING LOOP, which is law 22's second half:
     a figure the emitting loop hands the checker is exact by construction and
     proves nothing about the write. These two are read back out of the
-    artifacts — the live carrier's `evidence` slots and the archive's own
+    artifacts — the successor blocks' own RAW provenance and the archive's
     per-closure comment markers — exactly as `items.conservation` re-parses
     the files rather than trusting the verb that wrote them.
+
+    THE RAW BLOCK, AND BOTH HOMES (lc-92). The items figure is
+    `provenance_index`'s — the same record the re-import DETECTOR reads — and
+    for the two reasons lc-73 gave there, which this function inherited
+    without following: `items.parse` puts the value IN FORCE into `slots`, so
+    an `amended-evidence` line written months later hides the provenance a
+    migration recorded; and a body that has since been CLOSED lives in the
+    done home, which a live-carrier-only reading never opens. Measured at
+    statiker: 5 of 20 anchors invisible in the resolved slot, and 13 of the 20
+    sitting in `ITEMS-DONE.md`. The general form, which is why this is an
+    item and not a note: when a detector's anchor is corrected, every OTHER
+    reader of the same record inherits the old defect.
 
     TWO NOTIONS, NAMED. The closure figure counts MARKERS, one per routed
     closure body; `items.archive_entries` counts `- ` lines and is the notion
     the conservation identity uses. They answer different questions over the
     same bytes and are never added together.
+
+    AND THE TWO FIGURES STAY DISJOINT BY CONSTRUCTION, which is what keeps a
+    closure from being counted twice now that the items figure opens the done
+    home at all: `provenance_index` attributes only what follows a BLOCK
+    heading, and `## Archive (pre-migration)` is not one, so the verbatim
+    archive bodies — which quote the very line ranges this count is keyed
+    on — never enter it.
     """
-    ev = re.compile(rf"^{re.escape(src_name)}:\d+-\d+$")
     marker = re.compile(rf"^<!-- {re.escape(src_name)}:\d+-\d+ — ",
                         re.MULTILINE)
-    parsed = items_mod.parse(items_text)
-    n_items = sum(1 for it in parsed.items
-                  if ev.match((it.slots.get("evidence") or "").strip()))
+    n_items = sum(1 for src, _line, _end
+                  in provenance_index(live_region(items_text),
+                                      live_region(done_text))
+                  if src == src_name)
     return n_items, len(marker.findall(done_text))
 
 
