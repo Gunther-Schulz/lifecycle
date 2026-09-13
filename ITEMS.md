@@ -235,15 +235,6 @@ done-criterion: item ready and item close reach the SAME verdict on one blocker 
 evidence: wave-5 T walk, scratch clone of lifecycle at 66bd2af, probe item lc-55: ready output UNBLOCKED with LEDGER.md:35 cited, close output blocker-moot never answered, ledger lines 35 and 36 contradictory. Mechanism NOT established at the desk, only the divergence
 blocked-by: NONE
 
-## lc-56
-grade: READY
-requirement: ledger add decision writes its line and does not commit it, and prints no NOT COMMITTED notice. lc-25 fixed exactly this contract for item add, which now commits on every join or says it did not; the sibling ledger verb never got it. The write with no committing actor is the assumed-delivery class: it does not fail, it accumulates
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/ledger.py,plugin/cli/lifecycle_core/verbs.py,test/test_ledger.py
-done-criterion: ledger add commits on every write, or prints NOT COMMITTED, matching lc-25 contract for item add. Red-first on the recorded pair: item add printed committed and moved HEAD while ledger add left M LEDGER.md with no notice, same clone same run
-evidence: wave-5 T walk 2026-08-28, two arms in one run on a scratch clone at 66bd2af: item add lc-55 printed committed: lifecycle: add lc-55 and HEAD moved to 86b9009; ledger add decision then wrote LEDGER.md:35 and git status showed M LEDGER.md with HEAD unchanged. Also observed at the desk earlier the same day writing the C4 line, which the desk had to commit by hand. Consequence measured: item ready resolved a blocker from that UNCOMMITTED ledger line, so an item reads as unblocked in a tree where the answer was never committed
-blocked-by: NONE
-
 ## lc-58
 grade: READY
 requirement: the compacted arrow has no verb. retire WALKS and REPORTS and says so in its own output: the acts its findings call for are their own verbs, but no compaction verb exists in the CLI surface, so the last arrow of an item life is unreachable and the conservation line can only ever read compacted 0
@@ -439,17 +430,6 @@ write-set: CLAUDE.md,test/test_migrate_residue.py,test/test_tend_goal.py
 done-criterion: the documented Verify command runs the WHOLE suite green, and the count it reports is the suite's real count. Red-first is already in hand and must be reproduced as the arrangement: at f09e32d with a clean tree, the documented form gives 'Ran 292 tests / FAILED (errors=2)' while the same discover WITHOUT -t . gives 'Ran 326 tests / OK', one variable. MUST-NOT-MOVE: whichever side is repaired, the sibling imports and the package-relative form must not BOTH be supported silently, since two import shapes for one suite is how the count diverged unnoticed; and the fix is not simply deleting -t . from the doc unless that form is shown to run all 326
 evidence: EXECUTED 2026-09-12 at f09e32d, clean tree, single-variable control, both arms in one run. WITH -t . (the documented form): Ran 292 tests, FAILED (errors=2), the two errors being ModuleNotFoundError 'No module named test_migrate' at test/test_migrate_residue.py:34 and 'No module named test_init' at test/test_tend_goal.py:38. WITHOUT -t .: Ran 326 tests, OK. So the documented command both fails AND exercises 34 fewer tests, and the 34 is the quiet half: a reader who fixed only the two errors would still be running a short suite. FOREIGN RED, not this lane's: the tree was clean at f09e32d and this lane touched no test file. The sibling imports date to 18ca4e5 (lc-65), which is when the divergence could first have appeared.
 blocked-by: NONE
-
-## lc-81
-grade: READY
-requirement: lifecycle init writes public:false as a silent hardcoded default, so a repo whose gh visibility is PUBLIC is declared private and its leak scanning relaxes exactly where exposure matters. record: judgment desk booking round 2026-09-12, basis from dotfiles-4c's trio migration
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py
-done-criterion: init either derives the flag from gh repo view --json visibility or emits the same could-not-verify line it already uses for its other unresolved guesses; it never writes a silent default for this field. RED-FIRST: init run today in a repo whose gh visibility is PUBLIC writes public:false with no note. MUST-NOT-MOVE: the seven existing could-not-verify lines keep their text, and a repo with no gh remote still initialises rather than failing.
-evidence: VERIFIED AT THIS DESK before booking, not relayed: init.py:223 holds the literal public:False as a dict default, while the same file emits 7 could-not-verify lines for other unresolved values — the contrast the claim rests on is real and the silence is specific to this field. Unsafe direction: declared-private relaxes the leak scan; the inverse would only over-scan.
-blocked-by: NONE
-amend-reason: 2026-09-12 Retirement pass 2026-09-12: lc-84 is a duplicate of this entry, booked hours apart by a different desk against the same construct. Merged here per the backlog doctrine merge rule rather than left as a sibling; lc-84 is dropped in the same pass. Its contribution is the motivating field case, which this entry lacked.
-amended-evidence: 2026-09-12 VERIFIED AT THIS DESK before the merge, not relayed: init.py:223 carries the literal public: False as a dict default, while the same file emits 10 could-not-verify lines for other unresolved values, so the contrast this entry rests on is real and the silence is specific to this field. Instrument shown to discriminate: a grep for a string not present in the file returns zero, so the hit is a reading and not an artefact. Unsafe direction, unchanged: a declared-private claim RELAXES the leak scan, while the inverse would only over-scan, so the hardcoded value is the dangerous one. MERGED IN lc-84 (drain-arc desk, 2026-09-12), the later sibling booking of this same defect, dropped as a duplicate in this pass. Its contribution, kept here: the motivating field case is dispatch-guards, which IS public and whose generated declaration carried the false flag and had to be corrected by hand.
 
 ## lc-82
 grade: PARKED
