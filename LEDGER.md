@@ -59,6 +59,7 @@ decision: anchor on the source blob sha plus range, or on the entry headline tex
 dropped: lc-20 — Never a live defect rather than one since fixed: init.py:185 prints the laws branch with the evidence read, unconditionally, and that print landed in 96bb599 (20:19) BEFORE this item own booking commit 40b9c36 (21:31) the same evening. Dropped not DONE: no fix commit exists.
 decision: which source establishes visibility, since the tool must not guess: a gh remote read at init time, an explicit required flag, or writing no key at all and letting the consumer treat absence as could-not-verify → moot (closed by lc-84)
 dropped: lc-84 — Duplicate of lc-81, same defect at the same construct: init.py:223 hardcoding public false. lc-81 is kept as the earlier id and is decision-complete where this entry left an open blocker. Its motivating case, dispatch-guards public with its declaration corrected by hand, is merged into lc-81.
+decision: anchor on the source blob sha plus range, or on the entry headline text, or declare the pointer approximate and have readers search near it → moot (closed by lc-38)
 
 ## Archive (pre-migration)
 
