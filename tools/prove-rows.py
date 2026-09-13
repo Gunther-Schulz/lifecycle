@@ -339,6 +339,13 @@ MUTATIONS = [
      "falls through to the quiet count, which is a clean board over a router "
      "that does not work"),
 
+    ("lane_table_absent", "lanes.py",
+     "                table_present=has_decision_table(text))",
+     "                table_present=True)",
+     "the lane body being ASKED whether it carries §3.3's decision table — "
+     "every lane then reads as carrying one, and a lane that routes nowhere "
+     "is a clean board again"),
+
     ("unknown_item", "verbs.py",
      '        out(f"FINDING [unknown_item] no live block {args.ident!r} in "\n'
      '            f"{ctx.items_path.name}.")\n'
