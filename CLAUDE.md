@@ -286,7 +286,7 @@ the board shows ordinary waiting.
 ## Verify
 
 ```bash
-python3 -m unittest discover -s test -p 'test_*.py' -t .   # the CLI
+python3 -m unittest discover -s test -p 'test_*.py'        # the CLI
 python3 plugin/cli/lifecycle --test                        # roster + coverage + ROUTE SETS
 python3 tools/prove-rows.py                                # every row, red-first
 python3 plugin/cli/lifecycle audit                         # the walk, read-only: growth,
