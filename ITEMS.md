@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 102
+added: 103
 compacted: 0
 
 ## lc-3
@@ -73,16 +73,18 @@ evidence: init.py:6-13 states it verbatim: "It does NOT create carrier files (IT
 blocked-by: decision whether init seeds the three carriers on a greenfield repo, or the design assigns that act elsewhere — init.py argues the settled design never asked for it
 
 ## lc-24
-grade: READY
+grade: PARKED
 requirement: test/absence-scan.test.mjs asserts the walk collects a file under a LITERAL directory list including proxy/ and that the tree holds >500 files — both are claude-code-cache-fix tree facts, so the shared test is red in lifecycle by construction — record: wave-3 step-0 Verify baseline, judgment-desk ruling carve-out 5
 goal: enforce-the-invariants
 write-set: test/absence-scan.test.mjs,cache-fix test/absence-scan.test.mjs
 done-criterion: the expected directory set and file floor derive from the scanned repo own tree or declaration rather than a literal list, so the shared test passes in BOTH copies; red-first against a tree missing a directory the repo does declare, green on lifecycle and on the cache-fix twin
 evidence: executed at f2c37fe: node --test test/absence-scan.test.mjs exits 1, 62 tests 61 pass 1 fail — "source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic allowlist" (:743) AssertionError "the walk collected no file under proxy/". Source :756-761 loops ["test","tools","proxy","docs"] and asserts files.length > 500. lifecycle has no proxy/ (git ls-files top level: 13 entries) and 51 tracked files total
-blocked-by: lc-9
+blocked-by: evidence the realizing write is TWO copies, one of them outside this repo: the write-set names 'cache-fix test/absence-scan.test.mjs' and the done-criterion requires green on lifecycle AND on the cache-fix twin. This desk holds only the lifecycle copy, so the item cannot be completed here however green this side goes. What unblocks it: a desk holding the cache-fix working copy, or an operator decision to land the two halves separately with the shared-copy divergence declared. Re-typed at the drain desk 2026-09-13 — it read SCHEDULABLE with blocked-by NONE, which is the third instance of this class today (lc-53, lc-24, lc-66).
 amend-reason: 2026-09-12 retirement pass 2026-09-12: two changes. (1) lc-54 is a duplicate of this entry — same failing test, same red — merged here per the merge rule and dropped in this pass. (2) The blocker named lc-9, which is dropped this pass as overtaken: tools/absence-scan.mjs:611-612 already declares foreign-path with scope 'source', so the widening lc-9 waited for has shipped and this item no longer waits on it.
 amended-evidence: 2026-09-12 executed at f2c37fe: node --test test/absence-scan.test.mjs exits 1, 62 tests 61 pass 1 fail — 'source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic allowlist' (:743) AssertionError 'the walk collected no file under proxy/'. Source :756-761 loops ["test","tools","proxy","docs"] and asserts files.length > 500. lifecycle has no proxy/ and 51 tracked files total. RE-MEASURED 2026-09-12 at f09e32d, unchanged: tests 62 / pass 61 / fail 1 / skipped 0, the same single test. MERGED IN lc-54 (baselined 2026-08-27), the later sibling booking of this same red, dropped as a duplicate in this pass; its contributions, kept here: the baseline was stated in 70bc93c so the foreign-path repair's own proof could not borrow a pre-existing red, and its MUST-NOT-MOVE arm — the assertion still fires where a proxy-like tree DOES exist, so the repair is a pinned or derived anchor and never a deleted test.
 amended-blocked-by: 2026-09-12 NONE
+amend-reason: 2026-09-13 2026-09-13 The 2026-09-12 retirement pass dropped the lc-9 blocker as overtaken and wrote NONE, which was right about lc-9 and wrong about the item: its write-set has always named a cache-fix path, so NONE made it read SCHEDULABLE to the drain desk. Re-typed to the boundary that actually blocks it. Written through amend rather than park because park writes the BASE slot and this entry's amended line supersedes it — park left grade PARKED over an effective blocker of NONE.
+amended-blocked-by: 2026-09-13 evidence the realizing write is TWO copies, one outside this repo: the write-set names 'cache-fix test/absence-scan.test.mjs' and the done-criterion requires green on lifecycle AND on the cache-fix twin, so this desk cannot complete it however green this side goes. Unblocked by a desk holding the cache-fix copy, or an operator decision to land the halves separately with the divergence declared.
 
 ## lc-29
 grade: READY
@@ -291,15 +293,17 @@ evidence: lane opus-lc40-grammar report gap 3, 2026-08-28, its own words: the fi
 blocked-by: NONE
 
 ## lc-66
-grade: READY
+grade: PARKED
 requirement: CROSS-ROW CLASS (begehung r5): the kind/vocabulary system is single-repo AND domain-scoped, so any cross-repo/cross-domain necessity — a dependency, a coordination condition, a detector spanning repos — has no first-class slot and falls to prose nothing surfaces; the tend gap one axis over; record: cache-fix begehung-findings-2026-08-28-r5.tsv, design 3.1/3.5
 goal: one-home-per-kind
 write-set: docs/directives/carrier-rework-design-2026-08-26.md@cache-fix,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/verbs.py
 done-criterion: a coordination layer: typed cross-repo edge (blocked-by <repo>:<id>, resolves on that item's DONE across carriers) + a cross-repo detector home + a cross-repo roll-up view; red-first on the cf-337->lc-64 case (it auto-returns to NEW when lc-64 closes)
 evidence: begehung r5 close-class over five vocabulary-slot rows; the live cf-337/lc-64 instance
-blocked-by: decision the coordination mechanism SHAPE: typed cross-repo edge (recommended) vs a declared coordination kind vs both
+blocked-by: evidence the write-set's only element is a cache-fix path ('docs/directives/carrier-rework-design-2026-08-26.md@cache-fix'), so the realizing write lands entirely outside this repo. This desk surfaces such items and never executes them. What unblocks it: a desk holding the cache-fix copy, or an operator decision moving the design document's home. Re-typed at the drain desk 2026-09-13 — it read SCHEDULABLE with blocked-by NONE.
 amend-reason: 2026-09-12 Retirement pass 2026-09-12: the blocked-by decision is ANSWERED and the entry was still carrying it as open, so the item read as parked on a question the ledger had already settled. Premise drift found by the scan lane and verified at LEDGER.md:38 by this desk.
 amended-blocked-by: 2026-09-12 NONE
+amend-reason: 2026-09-13 2026-09-13 Same correction as lc-24, same cause: the 2026-09-12 pass wrote NONE when it cleared a settled decision-blocker, and the entry's cross-repo write boundary then had nothing recording it, so the board graded it SCHEDULABLE. Written through amend rather than park for the same reason — park writes the base slot beneath a superseding amended line.
+amended-blocked-by: 2026-09-13 evidence the write-set's only element is a cache-fix path ('docs/directives/carrier-rework-design-2026-08-26.md@cache-fix'), so the realizing write lands entirely outside this repo; this desk surfaces such items and never executes them. Unblocked by a desk holding the cache-fix copy, or an operator decision moving the document's home.
 
 ## lc-67
 grade: READY
@@ -641,4 +645,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/judgment.py,plugin/cli/lifecycle_core/verbs.py,test/test_items.py
 done-criterion: every EVALUATION of a rule reaches the register, not only the ones that fire: the declined-by-exemption path records its own outcome (a third value beside fired/overridden), so fire rate is readable as a fraction of evaluations rather than as a bare count. RULING, made here so the builder does not re-derive it: COUNT IT. The review's question is whether a rule earns its stay, and a rule that is usually exempt is a different animal from one that is rarely reached — only the denominator separates them. Red-first: run the add verb over a typed-blocker one-file item and show the register gains no row today, then show it gains the declined row after. MUST-NOT-MOVE: 'fired' and 'overridden' keep their exact current semantics and call sites, because every existing rate reading depends on them; and the new write must not fire on the FINDING path, which is already 'fired'. NOTE the coupling to lc-109: the override write is currently decided by a substring match over the rendered message, so whichever of the two lands second inherits a cleaner branch to hang the third outcome on
 evidence: VERIFIED AT THIS DESK 2026-09-13: judgment.record_use is called at verbs.py:816 with 'fired' on the veto path and at verbs.py:825 with 'overridden' under the operator-source branch; lc-10's new clear-by-typed-blocker branch (b64bb08) returns before either and records nothing. The lane reported this as gap 4 and explicitly did NOT add a call, correctly — its brief granted verbs.py and test_items.py, and a register semantics change is neither. The consequence is not hypothetical for this particular rule: lc-10's whole point is that a typed blocker is the exemption the spec grants, so the exempt path is expected to be COMMON, which is precisely when an uncounted denominator distorts the rate most
+blocked-by: NONE
+
+## lc-111
+grade: READY
+requirement: The write-set slot is graded for PRESENCE, never for RESOLVABILITY, so an item whose realizing write lands in ANOTHER repo reads SCHEDULABLE on the ready board. Hand-caught three times in one day at the drain desk (lc-53, lc-24, lc-66), each time only because a human read the slot before dispatching — record: drain desk 2026-09-13, derived sweep over ITEMS.md
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: item check gains a verdict over every READY item's write-set, split on comma, with THREE answers per element: (1) resolves to a tracked path or tracked directory here, or is a new file under an existing tracked top-level directory -> pass; (2) names a venue outside this repo (an '@<repo>' suffix, a bare repo name, an absolute path) AND the item carries no blocker -> FINDING, because the board is calling dispatchable an item this desk cannot complete; (3) the declared transitional literal UNKNOWN -> COULD NOT VERIFY, never a finding, and never silence. Red-first against lc-24 and lc-66 AT THE COMMITS WHERE THEY STILL READ blocked-by NONE (before the 2026-09-13 parks) — pin those, never HEAD, or the proof expires. MUST-NOT-FIRE arm, which decides shippability: an item whose write-set names a file that does not exist yet under plugin/cli/lifecycle_core/ must NOT fire, and neither must a foreign-venue item that DOES carry a blocker — the refusal is about a missing blocker, not about naming another repo.
+evidence: Derived sweep executed at the drain desk 2026-09-13 over ITEMS.md (split each write-set on comma; test each element against git ls-files plus its directory set), NOT a prefix grep — the first attempt keyed on the slot's leading token and returned zero, missing lc-24 entirely because its foreign element is SECOND and its first is a local test/ path: the chosen-mark failure inside the instrument built to find it. MOVERS, n=2, both from the data: lc-24 write-set 'test/absence-scan.test.mjs,cache-fix test/absence-scan.test.mjs' blocked-by NONE, and lc-66 write-set 'docs/directives/carrier-rework-design-2026-08-26.md@cache-fix' blocked-by NONE — both graded SCHEDULABLE by item ready --head minutes before this booking. MUST-NOT-MOVE control from the same data: lc-67 names the identical foreign cache-fix path and is correctly NOT schedulable, because it carries blocked-by lc-66 — so the predicate keys on the missing blocker and not on foreignness, and a check that reddened lc-67 would be firing on a correctly-booked item. SECOND CLASS found by the same sweep and folded here: six READY items (lc-47, lc-93, lc-97, lc-98, lc-99, lc-104) hold PROSE in the write-set slot rather than paths — parentheticals like 'plugin/.claude-plugin (manifest wiring)' — which defeats the mechanical join over write-boundaries that the parallel-dispatch rule depends on, turning it back into the judgment pass over prose the slot exists to remove.
 blocked-by: NONE
