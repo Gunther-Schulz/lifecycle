@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 113
+added: 114
 compacted: 0
 
 ## lc-3
@@ -723,4 +723,13 @@ goal: enforce-the-invariants
 write-set: plugin (items parser / next_ident / check duplicate lane) + battery
 done-criterion: a body past the archive heading still blocks its id from reissue AND surfaces in the duplicate lane; red-first on the planted post-archive body; battery green
 evidence: dotfiles df-193 diagnosis (closed body in its ITEMS-DONE.md) and repair 53a692c; the double-allocation commits d96fc32/2c2f4ee
+blocked-by: NONE
+
+## lc-122
+grade: READY
+requirement: two smaller CLI/checker defects, one booking, both measured 2026-09-13 in the dotfiles carrier at the df-193 repair. (a) Slot parsing stops CREDITING slots after wrapped/non-slot lines inside a block: dotfiles df-196 carries a well-formed blocker-moot: as its last line and item check still reports the block carries none — so blocked_in_done_home is unfixable by the checker's own prescribed repair on any block with a wrapped value. (b) item close --ref stores the raw argument: --ref HEAD wrote the literal symbol, which drifts with every commit (repaired by hand, dotfiles 40f7d3a); the verb validates the ref against the repo but should WRITE the resolved sha
+goal: enforce-the-invariants
+write-set: plugin (slot parser continuation handling; close verb ref resolution) + battery
+done-criterion: a slot line after a wrapped value is credited (red case: the df-196 shape, blocker-moot last); close --ref HEAD stores the sha (red case: symbolic arg, stored value compared to rev-parse); battery green
+evidence: dotfiles ITEMS-DONE.md df-196 block (live reproduction), item check output 2026-09-13; the HEAD-symbol close and its hand repair 40f7d3a
 blocked-by: NONE
