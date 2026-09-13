@@ -144,6 +144,38 @@ REQUIRED_KEYS = (
 #: dispatch report as a judgment call rather than a brief-specified value.
 DELEGATION_VALUES = ("none", "active")
 
+#: A REPO'S OWN CLOSURE WORDS (lc-91), mapped onto the closed vocabulary's
+#: two. OPTIONAL for the reason `delegation` is: a new REQUIRED key is a schema
+#: bump by definition (§3.8c), and a repo declaring none must behave exactly as
+#: it does today.
+#:
+#: WHAT IT FIXES. `migrate` reads a source carrier's grade word and looks it up
+#: in `migrate.RULES`; a carrier that closes entries as `ERLEDIGT` or
+#: `RESOLVED` therefore migrated them as UNCLASSIFIED — the closure never
+#: reached the done home. The map TRANSLATES such a word at the migration
+#: boundary: `{"ERLEDIGT": "DONE"}`. It does NOT widen `items.GRADES_CLOSED`,
+#: so everything downstream keeps seeing DONE and DROPPED, and `ERLEDIGT`
+#: never becomes a grade a carrier may itself carry.
+#:
+#: FLAT, word -> grade, because that is the LOOKUP direction — the code always
+#: asks "the carrier says ERLEDIGT, which grade is that?", never "which words
+#: mean DONE?" — and because JSON object keys are unique, so one word mapping
+#: to two grades is a state the file itself cannot express. The inverted shape
+#: would need its own detection, its own refusal and its own roster row.
+#:
+#: MATCHING IS CASE-SENSITIVE. `migrate._GRADE_WORD` yields an UPPERCASE word
+#: and nothing else, so the declared key is compared byte-for-byte against
+#: what the carrier's own shape already isolated; a lower- or mixed-case
+#: declared word could never match anything, and is refused here rather than
+#: sitting in the file reading like a live rule. Same for a word this tool
+#: already rules on, and for a grade outside the closed two: each is a way the
+#: declaration says something the tool will not do, which is worse than saying
+#: nothing.
+#:
+#: AN UNDECLARED WORD STAYS UNCLASSIFIED. The repair for a missing mapping is
+#: a declared rule, never a looser matcher (lc-19's own sentence).
+CLOSURE_WORDS_KEY = "closure-words"
+
 #: Keys a declaration may NOT carry any more, each with what replaced it.
 #: Named rather than ignored: a withdrawn key left in a file reads exactly
 #: like a live one, and silently dropping it would leave the writer believing
@@ -459,6 +491,12 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
     # present one only from the closed vocabulary. This is the ONLY place
     # this key is validated; a stray copy elsewhere would be the two-readers
     # split this design refuses everywhere else.
+    # OPTIONAL, never required (see CLOSURE_WORDS_KEY above): a repo that
+    # declares none migrates exactly as it does today. Validated HERE and
+    # nowhere else, for the reason the `delegation` comment below gives.
+    if CLOSURE_WORDS_KEY in doc:
+        _validate_closure_words(doc[CLOSURE_WORDS_KEY], res)
+
     if "delegation" in doc and doc["delegation"] not in DELEGATION_VALUES:
         res.add("declaration_malformed",
                 f"`delegation` must be one of {', '.join(DELEGATION_VALUES)}"
@@ -526,6 +564,25 @@ def head_lead_goal(hr):
     return None
 
 
+def closure_words(doc) -> dict:
+    """The repo's declared closure word -> grade map, or `{}` where none.
+
+    READ IN ONE PLACE, like `head_lead_goal` above: two readers of one key is
+    the split this design refuses everywhere else.
+
+    A MALFORMED VALUE READS AS EMPTY here rather than half-applied. `validate`
+    has already reported it as a finding — but a finding does NOT stop the
+    verb (`cli._context` proceeds on any declaration it could parse), so this
+    is the last reader before the carrier is written, and migrating under half
+    a vocabulary nobody declared is the one outcome worse than migrating under
+    none.
+    """
+    cw = (doc or {}).get(CLOSURE_WORDS_KEY)
+    if not isinstance(cw, dict):
+        return {}
+    return {w: g for w, g in cw.items() if isinstance(g, str)}
+
+
 def effective_goals(doc) -> list:
     """The goal vocabulary an ITEM may carry: the declared set ∪ {`tend`}.
 
@@ -558,6 +615,64 @@ def effective_goals(doc) -> list:
     # merge can still put it in the list, and a doubled entry would render
     # twice in every message that prints the vocabulary.
     return goals + ([RESERVED_GOAL] if RESERVED_GOAL not in goals else [])
+
+
+def _validate_closure_words(cw, res: Result) -> None:
+    """`closure-words` (lc-91) — see the constant above for the key itself.
+
+    FOUR REFUSALS, and every one of them is the same shape: the declaration
+    states a rule this tool would silently not apply. A key that sits in the
+    file doing nothing is worse than an absent one, because it reads as live
+    to the next person who looks — and the migration it was supposed to fix
+    reports UNCLASSIFIED exactly as it did before, with the file apparently
+    saying otherwise.
+
+    THE TWO FACTS ARE FETCHED, NEVER RESTATED. The closed grades live in
+    `items` and the grade-word SHAPE lives in `migrate`; both import THIS
+    module at their top, so both are imported inside the function — the same
+    cycle break `check_lanes_registered` uses below. A copy of either here
+    would be a second body that goes stale the day its original is tightened,
+    and the stale copy would accept a word nothing can ever match.
+    """
+    from . import items as items_mod
+    from . import migrate as migrate_mod
+
+    if not isinstance(cw, dict):
+        res.add("declaration_malformed",
+                f"`{CLOSURE_WORDS_KEY}` must be an object mapping this repo's "
+                f"own closure word to one of "
+                f"{', '.join(items_mod.GRADES_CLOSED)} — "
+                f'e.g. {{"ERLEDIGT": "DONE"}}. Got {type(cw).__name__}.')
+        return
+    for word, grade in sorted(cw.items()):
+        if not isinstance(grade, str) or grade not in items_mod.GRADES_CLOSED:
+            res.add("declaration_malformed",
+                    f"`{CLOSURE_WORDS_KEY}` maps {word!r} to {grade!r}, which "
+                    f"is not one of the closed grades "
+                    f"({', '.join(items_mod.GRADES_CLOSED)}). The map "
+                    "TRANSLATES a word onto the closed vocabulary; it does "
+                    "not widen it, and a grade outside that pair would be "
+                    "written into the successor carrier as a word no verb "
+                    "understands.")
+            continue
+        if not migrate_mod.grade_word_shaped(word):
+            res.add("declaration_malformed",
+                    f"`{CLOSURE_WORDS_KEY}` declares {word!r}, which a "
+                    "carrier's own shape can never yield: a grade word is "
+                    "UPPERCASE, at least two characters, and made of A-Z, "
+                    "0-9 and `-`. Matching is case-sensitive, so this entry "
+                    "could not fire on any carrier — and a rule that cannot "
+                    "fire reads exactly like one that never had to.")
+            continue
+        if word in migrate_mod.RULES:
+            res.add("declaration_malformed",
+                    f"`{CLOSURE_WORDS_KEY}` declares {word!r}, which this "
+                    "tool already rules on (`migrate.RULES`, from §4 row 1 "
+                    "and §3.1). The declaration may name a word the tool does "
+                    "not know; it may not redefine one it does — a repo and "
+                    "the tool disagreeing about one word is a vocabulary with "
+                    "two bodies, and the run would apply whichever the lookup "
+                    "order happened to reach.")
 
 
 def _validate_leak_scan(ls, res: Result) -> None:

@@ -258,6 +258,76 @@ _CLOSURE_WORD = re.compile(
 _DATE_LED = re.compile(r"^\d{4}-\d{2}-\d{2}\s*[—–-]\s*")
 
 
+def grade_word_shaped(word: str) -> bool:
+    """Is `word` one `_GRADE_WORD` could actually yield from a carrier?
+
+    THE SHAPE QUESTION HAS ONE HOME and this is it. `declaration.py` asks it
+    here rather than restating the pattern, because a copy there would go
+    stale the day this one is tightened — and a declared closure word nothing
+    can ever match would then read as a live rule (lc-91).
+
+    THE WHOLE WORD, not a prefix: `_GRADE_WORD` matches at the START of a
+    carrier line, where the rest is the entry's title, so `match` alone would
+    accept `ERLEDIGT?` by reading the part it likes and dropping the rest —
+    a prefix match in an equality's costume, which is the same defect the
+    pattern's own trailing guard exists to prevent.
+    """
+    m = _GRADE_WORD.match(word)
+    return bool(m) and m.group(1) == word
+
+
+def declared_closure_rules(closure_words) -> dict:
+    """A repo's DECLARED closure words as rule-table entries (lc-91).
+
+    THE FILTER IS NOT A SECOND VALIDATION. `declaration._validate_closure_words`
+    refuses each of these shapes with its own message — but a declaration
+    finding does NOT stop the verb (`cli._context` proceeds on any declaration
+    it could parse, cli.py:171-176), so this is the last reader before entries
+    are written. MEASURED rather than reasoned: with the filter removed and
+    `{"ERLEDIGT": "FERTIG"}` declared, `classify` sets `entry.grade =
+    'FERTIG'` and `closure = False`, the write rules then normalise the block
+    to `grade: NEW`, and the entry stops being reported UNCLASSIFIED — so a
+    closure the desk never approved a mapping for is reopened as ordinary
+    work, silently, which is the one migration defect that produces no
+    finding at all.
+
+    CONSULTED ONLY WHERE `RULES` HAS NO WORD, and the validator refuses a
+    declared word that `RULES` covers — so the two tables cannot disagree
+    about one word, and this is a disjoint union rather than a precedence
+    nobody declared.
+    """
+    return {
+        word: (grade,
+               f"§3.1 + lc-91: the repo declares `{word}` as its own word for "
+               f"`{grade}` (`{decl.CLOSURE_WORDS_KEY}` in "
+               f"{decl.DECLARATION_REL}) — a closure MOVES to the done home; "
+               f"the declaration TRANSLATES the word at this boundary and "
+               f"never widens the closed vocabulary")
+        for word, grade in sorted((closure_words or {}).items())
+        if word not in RULES and grade in items_mod.GRADES_CLOSED
+        and grade_word_shaped(word)
+    }
+
+
+def _declared_closure_re(closure_words):
+    """`_CLOSURE_WORD`'s twin over the DECLARED words, or None where none.
+
+    Built from `declared_closure_rules` rather than from the raw map, so the
+    title scan and the bullet-start lookup answer for exactly the same set: a
+    word live in one and dead in the other would refuse an entry as ambiguous
+    and then have no rule to classify it with.
+
+    Compiled per call and that is deliberate — `re` caches by pattern string,
+    the alternation is a handful of words, and a module-level cache keyed on a
+    per-repo value is state this file would then have to invalidate.
+    """
+    words = sorted(declared_closure_rules(closure_words))
+    if not words:
+        return None
+    return re.compile(
+        r"(?<![A-Za-z0-9-])(" + "|".join(words) + r")(?![A-Za-z0-9-])")
+
+
 @dataclass
 class Entry:
     line: int
@@ -450,7 +520,7 @@ def title_of(entry: Entry) -> str:
     return headline
 
 
-def closure_word_in_title(entry: Entry) -> str | None:
+def closure_word_in_title(entry: Entry, closure_words=None) -> str | None:
     """A closure word standing alone LATER in a bold entry's title (lc-21).
 
     ONLY over a bold entry's title, and that is a property of the shape rather
@@ -458,10 +528,27 @@ def closure_word_in_title(entry: Entry) -> str | None:
     by a grade-shaped word, and a grade-led entry never reaches this — so the
     text scanned here is always the author's own headline, never a paragraph
     of body prose in which "the check is DONE" would fire.
+
+    THE SECOND DERIVATION SITE (lc-91). A repo's DECLARED words are closure
+    words for that repo's carrier, so the ambiguity lc-21 names arises for
+    them identically — without this pass a declared closure sitting later in
+    an ungraded title would be written into the open carrier as ordinary NEW
+    work, which is the silent half of that defect.
+
+    THE NATIVE SCAN RUNS FIRST AND UNTOUCHED, deliberately: `tools/prove-rows`
+    pins its line byte-exact as `migration_ambiguous_closure`'s mutation
+    anchor, and folding the two searches into one built pattern would break
+    that anchor — a registered refusal this repo could no longer prove. As a
+    fallback the declared scan leaves the anchor's own mutation (`m = None`)
+    still disabling the native scan its row plants for.
     """
     if not entry.bold:
         return None
     m = _CLOSURE_WORD.search(headline_of(entry))
+    if m is None:
+        declared = _declared_closure_re(closure_words)
+        if declared is not None:
+            m = declared.search(headline_of(entry))
     return m.group(1) if m else None
 
 
@@ -480,7 +567,10 @@ def _refuse(entry: Entry, why: str) -> None:
     entry.unclassified_why = why
 
 
-def classify(entry: Entry) -> None:
+def classify(entry: Entry, closure_words=None) -> None:
+    """`closure_words` is the repo's declared word -> grade map (lc-91), empty
+    or absent for a repo that declares none — which is every repo until one
+    does, and is why the parameter defaults rather than being required."""
     stripped = entry.text.strip()
     m = _GRADE_WORD.match(stripped)
     entry.grade_word = m.group(1) if m else None
@@ -496,7 +586,7 @@ def classify(entry: Entry) -> None:
             entry.grade = None
             entry.rule = SECTION_CLOSURE_RULE
             return
-        word = closure_word_in_title(entry)
+        word = closure_word_in_title(entry, closure_words)
         if word is not None:
             _refuse(entry, (
                 f"AMBIGUOUS: no grade word at the bullet start, and the "
@@ -509,11 +599,20 @@ def classify(entry: Entry) -> None:
         return
     rule = RULES.get(entry.grade_word)
     if rule is None:
+        # THE REPO'S OWN WORD, second and never first (lc-91): the tool's
+        # table is authoritative, and the declaration is refused where it
+        # names a word that table already covers — so this is a disjoint
+        # union, and reaching it means no rule of ours had anything to say.
+        rule = declared_closure_rules(closure_words).get(entry.grade_word)
+    if rule is None:
         entry.grade = None
         entry.rule = ""
         entry.unclassified_why = (
             f"no rule in §4 row 1 or §3.1 covers the grade word "
-            f"{entry.grade_word!r}")
+            f"{entry.grade_word!r}, and the repo's "
+            f"`{decl.CLOSURE_WORDS_KEY}` declaration does not map it. A word "
+            f"with no declared rule stays UNCLASSIFIED — the repair is a "
+            f"declared rule, never a looser matcher")
         return
     grade, why = rule
     if grade in items_mod.GRADES_CLOSED:
@@ -2114,8 +2213,12 @@ def run(args, out, ctx) -> int:
             return exits.FINDING
 
     read = read_carrier(src_text)
+    #: THE REPO'S OWN CLOSURE WORDS (lc-91), read from the declaration once
+    #: and handed to every entry — a per-entry read would ask the same file
+    #: the same question N times and could answer differently mid-run.
+    declared_words = decl.closure_words(ctx.declaration)
     for e in read.entries:
-        classify(e)
+        classify(e, declared_words)
     done_read = read_carrier(done_text)
 
     # --- MERGE (lc-17): the homes already in place decide the id space and

@@ -38,13 +38,20 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
-from lifecycle_core import cli, exits, items, ledger, migrate  # noqa: E402
+from lifecycle_core import cli, declaration as decl  # noqa: E402
+from lifecycle_core import exits, items, ledger, migrate  # noqa: E402
 from lifecycle_core.refusals import GOOD_FULL_DECLARATION  # noqa: E402
 
 
 def build(backlog: str, done: str = "# old done\n\n## Done\n\n"
-                                    "- **DONE 2026-01-01 — c.** b\n") -> Path:
-    """A repo with an OLD carrier and no successor homes yet."""
+                                    "- **DONE 2026-01-01 — c.** b\n",
+          declaration: dict | None = None) -> Path:
+    """A repo with an OLD carrier and no successor homes yet.
+
+    `declaration` overrides the whole document, so a test can seed a repo
+    whose declaration differs in ONE key and nothing else — the pair that
+    separates "the key is honoured" from "the build changed something else".
+    """
     d = Path(tempfile.mkdtemp(prefix="lifecycle-migrate-"))
     run = lambda *a: subprocess.run(a, cwd=str(d), capture_output=True,  # noqa: E731
                                     text=True)
@@ -54,7 +61,8 @@ def build(backlog: str, done: str = "# old done\n\n## Done\n\n"
     run("git", "config", "user.name", "migrate test")
     (d / ".claude").mkdir()
     (d / ".claude" / "lifecycle.json").write_text(
-        json.dumps(GOOD_FULL_DECLARATION), encoding="utf-8")
+        json.dumps(GOOD_FULL_DECLARATION if declaration is None
+                   else declaration), encoding="utf-8")
     (d / "LAWS.md").write_text("law\n", encoding="utf-8")
     (d / "LEDGER.md").write_text("schema: 2\n", encoding="utf-8")
     (d / "BACKLOG.md").write_text(backlog, encoding="utf-8")
@@ -91,7 +99,8 @@ def migrate_run(repo: Path, *extra):
     return run_cli(repo, "migrate", "--report", REPORT, *extra)
 
 
-def entry(text: str, section: str = "Open") -> migrate.Entry:
+def entry(text: str, section: str = "Open",
+          closure_words: dict | None = None) -> migrate.Entry:
     """One classified entry, read through the real reader.
 
     Through `read_carrier` rather than constructed: the closure-section flag
@@ -100,7 +109,7 @@ def entry(text: str, section: str = "Open") -> migrate.Entry:
     """
     read = migrate.read_carrier(f"# c\n\n## {section}\n\n{text}\n")
     assert len(read.entries) == 1, read.entries
-    migrate.classify(read.entries[0])
+    migrate.classify(read.entries[0], closure_words)
     return read.entries[0]
 
 
@@ -1992,6 +2001,222 @@ class DispositionIsAlwaysStated(unittest.TestCase):
         report = (d / REPORT).read_text(encoding="utf-8")
         self.assertNotIn("**A DRY RUN**", report)
         self.assertIn("**FROZEN**", report)
+
+
+class DeclaredClosureVocabulary(unittest.TestCase):
+    """lc-91 — a repo declares its OWN closure words and `migrate` honours
+    them, instead of reporting every such closure UNCLASSIFIED.
+
+    EVERY BEHAVIOUR CASE HERE IS A PAIR, and the control is always the SAME
+    carrier with the key ABSENT — the state every repo is in until it declares
+    one. Without that partner an assertion that the closure reached the done
+    home scores identically against a build that routes every unknown word
+    there, which is the looser matcher this key exists not to be.
+
+    WHY THE DECLARATION'S OWN REFUSALS ARE TESTED IN THIS FILE. There is no
+    `test_declaration.py`; the precedent for an OPTIONAL declaration key is
+    `delegation`, whose only test sits in its CONSUMER's file
+    (`test_desk.py`). The consumer here is `migrate`.
+    """
+
+    #: THE KEY AS A LITERAL, deliberately, and pinned to the constant by its
+    #: own case below. The behaviour arms have to be RUNNABLE against the OLD
+    #: build, where they must go red on an ASSERTION — reaching through
+    #: `decl.CLOSURE_WORDS_KEY` raises there instead, and a red that is an
+    #: attribute error proves the code is new, never that the check
+    #: discriminates (the same reasoning `ClosureVocabulary` states above).
+    KEY = "closure-words"
+
+    #: One key different from the control, and nothing else.
+    DECLARED = {"ERLEDIGT": "DONE", "TRACED": "DROPPED"}
+
+    CARRIER = ("# old\n\n## Open\n\n"
+               "- **READY 2026-01-01 — ordinary open work.** body\n"
+               "- **ERLEDIGT 2026-01-02 — a closure in the repo's own "
+               "word.** body\n"
+               "- **VERSCHOLLEN 2026-01-03 — a word nobody declared.** body\n")
+
+    def declaring(self, words=None):
+        return {**GOOD_FULL_DECLARATION,
+                self.KEY: self.DECLARED if words is None else words}
+
+    def migrate_with(self, declaration=None, carrier=None):
+        d = build(carrier or self.CARRIER, declaration=declaration)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d)
+        return d, code, out
+
+    @staticmethod
+    def findings_naming_the_key(doc):
+        """Every finding whose message names the key, plant or control."""
+        res = decl.Result(exits.CLEAN)
+        decl.validate(doc, res)
+        return [f for f in res.findings if "closure-words" in f.message]
+
+    # --- the migration ------------------------------------------------------
+
+    def test_a_declared_word_routes_the_closure_to_the_done_home(self):
+        d, code, out = self.migrate_with(self.declaring())
+        archive = (d / "ITEMS-DONE.md").read_text(encoding="utf-8")
+        live = (d / "ITEMS.md").read_text(encoding="utf-8")
+        self.assertIn("- **ERLEDIGT 2026-01-02 — a closure in the repo's own "
+                      "word.** body", archive, out)
+        self.assertNotIn("a closure in the repo's own word", live, out)
+
+    def test_the_same_carrier_without_the_key_leaves_it_unclassified(self):
+        """THE CONTROL for the case above — the declaration is the only
+        difference, so the closure moving is attributable to it."""
+        d, code, out = self.migrate_with()
+        archive = (d / "ITEMS-DONE.md").read_text(encoding="utf-8")
+        self.assertNotIn("a closure in the repo's own word", archive, out)
+        self.assertIn("covers the grade word 'ERLEDIGT'", out)
+        self.assertEqual(code, exits.FINDING, out)
+
+    def test_an_undeclared_word_is_still_unclassified_beside_declared_ones(self):
+        """MUST NOT MOVE (lc-19's rule, carried). A repo declaring SOME words
+        does not thereby declare the rest: the entry the map does not name
+        reports UNCLASSIFIED in the same run whose other closure moved."""
+        d, code, out = self.migrate_with(self.declaring())
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("covers the grade word 'VERSCHOLLEN'", out)
+        self.assertNotIn("VERSCHOLLEN",
+                         (d / "ITEMS-DONE.md").read_text(encoding="utf-8"))
+
+    def test_the_declared_word_never_becomes_a_grade(self):
+        """TRANSLATION AT INTAKE, not a widened vocabulary: downstream still
+        sees only the closed two, so nothing is written carrying the repo's
+        own word as a GRADE. Read off the carriers rather than off
+        `GRADES_CLOSED`, which a build could widen and this assertion would
+        follow."""
+        d, _, out = self.migrate_with(self.declaring())
+        for home in ("ITEMS.md", "ITEMS-DONE.md"):
+            text = (d / home).read_text(encoding="utf-8")
+            for line in text.splitlines():
+                self.assertFalse(line.startswith("grade: ERLEDIGT"),
+                                 f"{home}: {line}")
+
+    def test_classification_marks_it_closed_and_gives_it_no_grade(self):
+        e = entry("- **ERLEDIGT 2026-01-02 — x.** body",
+                  closure_words=self.DECLARED)
+        self.assertTrue(e.closure)
+        self.assertIsNone(e.grade)
+        self.assertIn("the repo declares `ERLEDIGT`", e.rule)
+        bare = entry("- **ERLEDIGT 2026-01-02 — x.** body")
+        self.assertFalse(bare.closure)
+        self.assertIn("no rule", bare.unclassified_why)
+
+    def test_matching_is_case_sensitive(self):
+        """A carrier word differing only in CASE is not the declared word.
+
+        The pair is the point: `_GRADE_WORD` yields uppercase and nothing
+        else, so `Erledigt` is not even read as a grade word — it migrates as
+        ordinary ungraded work, exactly as it does in a repo that declared
+        nothing, while `ERLEDIGT` in the same run is a closure.
+        """
+        mixed = entry("- **Erledigt 2026-01-02 — x.** body",
+                      closure_words=self.DECLARED)
+        self.assertIsNone(mixed.grade_word)
+        self.assertFalse(mixed.closure)
+        self.assertEqual(mixed.grade, "NEW")
+
+    # --- the second derivation site (lc-21's scan) ---------------------------
+
+    def test_a_declared_word_later_in_an_ungraded_title_is_ambiguous(self):
+        """THE SECOND DERIVATION SITE. A declared word IS a closure word for
+        this repo's carrier, so the lc-21 ambiguity arises for it identically
+        — and the silent half is what is at stake: without this the entry is
+        written into the open carrier as ordinary NEW work."""
+        e = entry("- **a title that says ERLEDIGT later.** body",
+                  closure_words=self.DECLARED)
+        self.assertIsNone(e.grade)
+        self.assertIn("AMBIGUOUS", e.unclassified_why)
+
+    def test_the_same_title_with_an_undeclared_word_still_migrates(self):
+        """THE CONTROL. The scan is keyed to the DECLARED words, not to
+        capitalisation: an unmapped capitalised word mid-title stays ordinary
+        ungraded work, which is the must-not-move partner lc-21 already
+        carries for the native words."""
+        e = entry("- **a title that says VERSCHOLLEN later.** body",
+                  closure_words=self.DECLARED)
+        self.assertEqual(e.grade, "NEW")
+        self.assertEqual(e.unclassified_why, "")
+
+    # --- the declaration ----------------------------------------------------
+
+    def test_a_repo_declaring_nothing_is_unchanged(self):
+        """OPTIONAL, and the key is NOT required — a new required key is a
+        schema bump (§3.8c), which would reach every declared repo."""
+        self.assertEqual(self.KEY, decl.CLOSURE_WORDS_KEY,
+                         "the fixtures above spell the key as a literal so "
+                         "they run against the old build; this is the pin "
+                         "that keeps the two spellings one")
+        self.assertNotIn(decl.CLOSURE_WORDS_KEY, decl.REQUIRED_KEYS)
+        self.assertNotIn(decl.CLOSURE_WORDS_KEY, GOOD_FULL_DECLARATION)
+        self.assertEqual(self.findings_naming_the_key(GOOD_FULL_DECLARATION),
+                         [])
+        self.assertEqual(decl.closure_words(GOOD_FULL_DECLARATION), {})
+
+    def test_a_valid_map_is_accepted(self):
+        """THE CONTROL every refusal below is one property away from."""
+        self.assertEqual(self.findings_naming_the_key(self.declaring()), [])
+        self.assertEqual(decl.closure_words(self.declaring()), self.DECLARED)
+
+    def test_a_non_object_is_refused(self):
+        found = self.findings_naming_the_key(
+            self.declaring(["ERLEDIGT"]))
+        self.assertEqual([f.row for f in found], ["declaration_malformed"])
+        self.assertEqual(decl.closure_words(self.declaring(["ERLEDIGT"])), {})
+
+    def test_a_grade_outside_the_closed_pair_is_refused(self):
+        """A grade the tool does not know would be WRITTEN into the successor
+        carrier as a word no verb understands — `classify` routes only closed
+        grades to the done home."""
+        found = self.findings_naming_the_key(
+            self.declaring({"ERLEDIGT": "FERTIG"}))
+        self.assertEqual([f.row for f in found], ["declaration_malformed"])
+        self.assertIn("FERTIG", found[0].message)
+
+    def test_a_word_no_carrier_could_yield_is_refused(self):
+        """Case-sensitivity made loud. A lower- or mixed-case word could
+        never match, and a rule that cannot fire reads exactly like one that
+        never had to."""
+        for dead in ("erledigt", "Erledigt", "E"):
+            found = self.findings_naming_the_key(
+                self.declaring({dead: "DONE"}))
+            self.assertEqual([f.row for f in found],
+                             ["declaration_malformed"], dead)
+            self.assertIn(repr(dead), found[0].message)
+
+    def test_a_word_the_tool_already_rules_on_is_refused(self):
+        """DERIVED from `migrate.RULES`, never from a list here: a restated
+        set would stay green the day the tool's own table grew, and the repo
+        and the tool would then disagree about that word with nothing saying
+        so."""
+        for word in sorted(migrate.RULES):
+            found = self.findings_naming_the_key(
+                self.declaring({word: "DONE"}))
+            self.assertEqual([f.row for f in found],
+                             ["declaration_malformed"], word)
+            self.assertIn("already rules on", found[0].message)
+
+    def test_a_refused_map_migrates_as_if_absent(self):
+        """A finding does NOT stop the verb, so the reader before the carrier
+        is written is what decides. Half a vocabulary nobody declared is the
+        one outcome worse than none."""
+        d, code, out = self.migrate_with(
+            self.declaring({"ERLEDIGT": "FERTIG"}))
+        self.assertIn("covers the grade word 'ERLEDIGT'", out)
+        self.assertNotIn("a closure in the repo's own word",
+                         (d / "ITEMS-DONE.md").read_text(encoding="utf-8"))
+
+    def test_the_shape_question_is_asked_of_the_pattern_itself(self):
+        """`grade_word_shaped` answers for `_GRADE_WORD` rather than for a
+        copy of it: every word the tool's own table carries passes, and a
+        prefix-plus-junk form does not."""
+        for word in sorted(migrate.RULES):
+            self.assertTrue(migrate.grade_word_shaped(word), word)
+        for junk in ("ERLEDIGT?", "ERLEDIGT x", " ERLEDIGT", "ERLEDIGTe"):
+            self.assertFalse(migrate.grade_word_shaped(junk), junk)
 
 
 if __name__ == "__main__":
