@@ -71,6 +71,8 @@ write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py,decision:who-seed
 done-criterion: a greenfield repo after init has the three carriers resolvable, kind check answering CLEAN rather than COULD NOT VERIFY on them; red-first on a bare repo showing the three could-not-verifies before and their absence after
 evidence: init.py:6-13 states it verbatim: "It does NOT create carrier files (ITEMS.md, ITEMS-DONE.md, LEDGER.md) — those are migrate job for a repo with an old carrier to convert FROM, or a human for a truly greenfield one ... That is a real gap in the wave-2 design this verb inherited". grep -i seed over ITEMS.md at f2c37fe returns 0 hits (positive control: carrier returns 19), so no item carried this
 blocked-by: decision whether init seeds the three carriers on a greenfield repo, or the design assigns that act elsewhere — init.py argues the settled design never asked for it
+amend-reason: 2026-09-13 the ledger decision verb refuses the ' — ' slot separator inside a question, so this blocker as originally typed is mechanically unanswerable (the lc-62 class from the minting side); re-typed separator-free, the operator's answer is already in the ledger
+amended-blocked-by: 2026-09-13 decision whether init seeds the three carriers on a greenfield repo, or the design assigns that act elsewhere
 
 ## lc-24
 grade: PARKED
