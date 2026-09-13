@@ -1532,6 +1532,104 @@ LANE_ROWS = [
         control=lambda: _migrate_run(ledger_text=ledger_mod.head_text()),
         stage="wave 1, stage 9",
     ),
+    # --- `--retire-source`'s four preconditions (lc-86) ----------------------
+    #
+    # FOUR ROWS, NOT ONE. The flag asks for an irreversible act and the four
+    # conditions have four different repairs — commit the carrier, declare a
+    # laws file, re-migrate the unpinned blocks, drop the flag. A single
+    # `retire_source_refused` would hand the operator one message for all
+    # four, which is the row whose text is wider than what its sites decide.
+    Row(
+        ident="retire_source_not_writing",
+        refusal="`--retire-source` on a run that writes no successor state — "
+                "`--report-only`, or the `--schema-from` path, which reads no "
+                "old carrier at all. Deleting the source there would leave "
+                "the repo with NEITHER carrier: the old one gone and the new "
+                "one never written",
+        firing_input="`migrate --report-only` with `--retire-source`",
+        expect=exits.FINDING,
+        fire=lambda: _retire_run(report_only=True),
+        # The SAME repo and the SAME flag, WITHOUT `--report-only`: the arms
+        # differ in whether the run writes a successor and in nothing else. A
+        # control that dropped `--retire-source` would pass against a build
+        # that never checks the mode at all.
+        control=lambda: _retire_run(),
+        stage="wave 3 (lc-86)",
+    ),
+    Row(
+        ident="retire_source_uncommitted",
+        refusal="`--retire-source` over a carrier whose content is not in a "
+                "commit. Every citation the migration writes resolves through "
+                "`git cat-file -p <blob>`, and a blob in no commit dies with "
+                "the file — the deletion would take the bodies with it and "
+                "leave pointers to nothing. Both halves are the condition: "
+                "TRACKED is not enough, the CONTENT read here must be the "
+                "content committed",
+        firing_input="`migrate --retire-source` where `BACKLOG.md` is "
+                     "untracked, so `git rev-parse HEAD:BACKLOG.md` resolves "
+                     "to nothing",
+        expect=exits.FINDING,
+        fire=lambda: _retire_run(commit_source=False),
+        # The SAME carrier, the SAME flag, COMMITTED. The arms differ in the
+        # commit and in nothing else — not in the file's content, not in the
+        # mode, not in the declaration.
+        control=lambda: _retire_run(commit_source=True),
+        stage="wave 3 (lc-86)",
+    ),
+    Row(
+        ident="retire_source_laws_absent",
+        refusal="`--retire-source` where the declared `laws` file is not "
+                "there to receive the deletion record. The record's home is "
+                "the DECLARED laws file and never a filename this tool picks, "
+                "so with none readable there is nowhere to write the "
+                "justification — and a deletion with no record is the state "
+                "the whole stage exists to prevent",
+        firing_input="`migrate --retire-source` in a repo whose declaration "
+                     "carries no `laws` value",
+        expect=exits.FINDING,
+        fire=lambda: _retire_run(laws_declared=False),
+        # The SAME repo with the SAME laws FILE present, the declaration
+        # naming it: the arms differ in the declared value alone.
+        control=lambda: _retire_run(laws_declared=True),
+        # THE PLANT IS THE UNDECLARED HALF, NOT THE ABSENT-FILE HALF, and the
+        # roster's own instrument is why. The condition has two halves and the
+        # code enforces both: `laws` must be declared (decided here, in
+        # `migrate.retire_refusal`) and the file it names must be readable
+        # (decided in `declaration.check_laws_present`, REUSED rather than
+        # reimplemented). The second half is decided at the SAME SITE as
+        # `laws_absent_could_not_verify`, so a plant keyed to it made
+        # `prove-rows` disable one `path.is_file()` branch and darken both
+        # rows — which correctly reads as "this mutation removed adjacent
+        # machinery, so it proves nothing about any one row", and took a row
+        # that had been PROVEN down with it (measured: 62 PROVEN before, 61
+        # and one FAILED after). One site, one row: the absent-file half stays
+        # proven by the row that owns that site, and this row proves the half
+        # that is decided here. The other half is exercised end-to-end in
+        # `test_migrate.RetireSource`.
+        stage="wave 3 (lc-86)",
+    ),
+    Row(
+        ident="retire_source_unpinned_anchor",
+        refusal="`--retire-source` while the successor carrier still holds an "
+                "anchor into the source carrying no ` at blob <sha>` pin. A "
+                "bare `<path>:<line>` resolves against whatever the file "
+                "holds, so once the file is gone it resolves against nothing "
+                "— and NOTHING FAILS, which is why it is refused before the "
+                "unlink instead of found afterwards. The ordinary cause is a "
+                "`--merge` into a carrier an earlier build wrote, whose "
+                "anchors predate the pin and are not this run's to rewrite",
+        firing_input="`migrate --merge --retire-source` where `ITEMS.md` "
+                     "already carries `evidence: BACKLOG.md:5-6` with no pin",
+        expect=exits.FINDING,
+        fire=lambda: _retire_run(merge=True, items=UNPINNED_ANCHOR_ITEMS),
+        # The SAME carrier and the SAME flags with that one anchor PINNED —
+        # the arms differ in the pin and in nothing else: same block, same id,
+        # same provenance, same merge. A control over an EMPTY carrier would
+        # pass against a build that never reads the homes.
+        control=lambda: _retire_run(merge=True,
+                                    items=PINNED_ANCHOR_ITEMS),
+        stage="wave 3 (lc-86)",
+    ),
     Row(
         ident="lane_new_exists",
         refusal="`lane new` refuses to overwrite an existing lane body — "
@@ -1657,6 +1755,114 @@ def _migrate_run(*, backlog=None, force=False, merge=False,
             buf = io.StringIO()
             with redirect_stdout(buf):
                 code = cli_mod.main(argv)
+            return Fired(code, buf.getvalue())
+        finally:
+            os.chdir(here)
+
+
+#: A carrier holding an anchor into `BACKLOG.md` with NO blob pin — the shape
+#: every build before lc-86 wrote. The `evidence` range is what the retire
+#: refusal reads; the `requirement` tail is the same anchor's other half and is
+#: there so the fixture is a real migrated block rather than a fragment.
+UNPINNED_ANCHOR_ITEMS = """schema: 2
+baseline: 1
+added: 0
+compacted: 0
+
+## xx-1
+grade: NEW
+requirement: an entry an earlier build migrated — record: BACKLOG.md:5
+goal: UNKNOWN
+write-set: UNKNOWN
+done-criterion: UNKNOWN
+evidence: BACKLOG.md:5-6
+blocked-by: decision regrade: fill goal, write-set, done-criterion and evidence, or drop
+"""
+
+#: The SAME block with both halves of the SAME anchor PINNED. One property
+#: differs between this and the fixture above — whether the pin is there — so
+#: the pair separates "the carrier is read" from "the pin is what decides".
+#: The sha is a literal 40-hex string and names no real blob on purpose: the
+#: refusal asks whether a pin is PRESENT, and a control whose sha had to
+#: resolve would be testing a second property nobody registered.
+PINNED_ANCHOR_ITEMS = (
+    UNPINNED_ANCHOR_ITEMS
+    .replace("record: BACKLOG.md:5\n",
+             "record: BACKLOG.md:5 at blob "
+             + "0" * 39 + "1\n")
+    .replace("evidence: BACKLOG.md:5-6\n",
+             "evidence: BACKLOG.md:5-6 at blob " + "0" * 39 + "1\n"))
+
+
+def _retire_run(*, merge=False, report_only=False, commit_source=True,
+                laws_present=True, laws_declared=True, items=None,
+                **repo_kw) -> Fired:
+    """Run `migrate --retire-source` in a scratch repo carrying an old carrier.
+
+    IT GOES THROUGH THE REAL PARSER AND THE REAL VERB, and sets the flag on
+    the parsed namespace afterwards. `--retire-source` is declared in the CLI
+    by a change outside the lane that built this stage, so `parse_args` does
+    not know it yet; everything else on the namespace — every default, every
+    other flag, the repo resolution, the declaration read, the context — is
+    the CLI's own. The line becomes a no-op the day the flag is declared, and
+    is left rather than removed so the row keeps firing either way.
+    """
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    if not laws_declared and "declaration" not in repo_kw:
+        # The declaration is otherwise VALID and stays readable — `laws` alone
+        # is blanked, so the arms differ in that value and in nothing else.
+        blank = json.loads(json.dumps(GOOD_FULL_DECLARATION))
+        blank["laws"] = ""
+        repo_kw["declaration"] = blank
+    with _Repo(items=items, **repo_kw) as r:
+        if items is None:
+            # The successor homes are seeded by `_Repo`, and `migrate` refuses
+            # to overwrite one — without this every row here would fire
+            # `migrate_would_overwrite` and prove THAT row instead of its own.
+            (r.dir / "ITEMS.md").unlink(missing_ok=True)
+            (r.dir / "ITEMS-DONE.md").unlink(missing_ok=True)
+        (r.dir / "BACKLOG.md").write_text(
+            "# old\n\n## Open\n\n- **READY 2026-01-01 — an ordinary entry.** "
+            "body\n", encoding="utf-8")
+        (r.dir / "BACKLOG-DONE.md").write_text(
+            "# old done\n\n## Done\n\n- **DONE 2026-01-01 — closed.** body\n",
+            encoding="utf-8")
+        if commit_source:
+            subprocess.run(["git", "add", "-f", "BACKLOG.md",
+                            "BACKLOG-DONE.md"],
+                           cwd=str(r.dir), capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-qm", "carriers"],
+                           cwd=str(r.dir), capture_output=True, text=True)
+            # ANTI-VACUITY, the same pin `_decl_run` takes: a silently failed
+            # commit would leave the carrier UNTRACKED, where the control arm
+            # degrades into the plant arm — the row green while proving
+            # nothing.
+            ls = subprocess.run(
+                ["git", "-C", str(r.dir), "rev-parse", "HEAD:BACKLOG.md"],
+                capture_output=True, text=True)
+            if ls.returncode != 0:
+                return Fired(-1, "SETUP FAILED: BACKLOG.md is not committed, "
+                                 "so this row measured an uncommitted repo. "
+                                 f"git said: {ls.stderr.strip()!r}")
+        if not laws_present:
+            (r.dir / "LAWS.md").unlink(missing_ok=True)
+        argv = ["--repo", str(r.dir), "migrate",
+                "--report", "docs/audits/report.md"]
+        if merge:
+            argv.append("--merge")
+        if report_only:
+            argv.append("--report-only")
+        here = os.getcwd()
+        try:
+            os.chdir(str(r.dir))
+            args = cli_mod.build_parser().parse_args(argv)
+            args.retire_source = True
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.cmd_migrate(args, lambda s: print(s))
             return Fired(code, buf.getvalue())
         finally:
             os.chdir(here)

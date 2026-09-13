@@ -27,6 +27,7 @@ that got the distinction right:
 
 import io
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -442,7 +443,19 @@ class AmbiguousEntries(unittest.TestCase):
         report = (d / REPORT).read_text(encoding="utf-8")
         self.assertNotIn("The statusline drift check", report)
         self.assertIn("AMBIGUOUS", report)
-        self.assertIn("BACKLOG.md:5", report)
+        # THE LINE IS RESOLVED, NEVER RESTATED (lc-86). This assertion carried
+        # a hardcoded `BACKLOG.md:5` and the freeze made it stale — the banner
+        # moves every line, so the number the report prints is the BANNERED
+        # file's. A restated number would have to be edited every time the
+        # banner's height changes, and each edit is a chance to write down
+        # what the tool does rather than what is true. So the report's own
+        # number is read back and RESOLVED against the file the run left on
+        # disk, which is the property that actually matters.
+        m = re.search(r"`BACKLOG\.md:(\d+)`", report)
+        self.assertIsNotNone(m, report[:400])
+        cited = (d / "BACKLOG.md").read_text(
+            encoding="utf-8").split("\n")[int(m.group(1)) - 1]
+        self.assertIn("The statusline drift check", cited)
 
 
 class SourceBlob(unittest.TestCase):
@@ -1577,6 +1590,352 @@ class MintedDecisionQuestionsAreAnswerable(unittest.TestCase):
         self.assertEqual(migrate.INCOMPLETE_DECISION,
                          "regrade: fill goal, write-set, done-criterion and "
                          "evidence, or drop")
+
+
+LIVE_HEAD = ("# BACKLOG — the live queue\n"
+             "\n"
+             "This file is the queue. Add work here.\n"
+             "\n"
+             "## Open\n"
+             "\n"
+             "- **READY 2026-08-03 — real open work.** body\n")
+
+#: The SAME file with the SAME title and a paragraph that makes NO liveness
+#: claim. One property differs between this fixture and the one above, which
+#: is what makes the pair separate "the banner is placed" from "the paragraph
+#: is what decides where".
+PROSE_HEAD = LIVE_HEAD.replace("This file is the queue. Add work here.",
+                               "Notes on how these entries were written.")
+
+
+def retire_run(repo: Path, *extra):
+    """`migrate --retire-source`, through the real parser and the real verb.
+
+    THE FLAG IS SET ON THE PARSED NAMESPACE, not passed on the command line:
+    declaring it lives in `cli.py`, outside the write set of the lane that
+    built this stage, so `parse_args` does not know the spelling yet. Every
+    other default, the repo resolution, the declaration read and the context
+    are the CLI's own. The line is a no-op once the flag is declared.
+    """
+    args = cli.build_parser().parse_args(
+        ["--repo", str(repo), "migrate", "--report", REPORT] + list(extra))
+    args.retire_source = True
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        code = cli.cmd_migrate(args, lambda s: print(s))
+    return code, buf.getvalue()
+
+
+class CitationPins(unittest.TestCase):
+    """lc-86 — a line number ALWAYS resolves, which is why a bare one lies so
+    quietly: `BACKLOG.md:43` names a line in whatever the file holds today,
+    not the entry the migration read. Measured in claude-code-cache-fix, where
+    313 of 318 pointers land on the wrong entry and nothing fails."""
+
+    def test_both_anchors_carry_the_pin_in_the_family_spelling(self):
+        """BOTH, and the spelling is byte-exact against the operator's
+        2026-09-12 ruling — `<path>:<line> at blob <sha>`. Asserted through
+        `migrate.BLOB_PIN` rather than against a literal here: a restated
+        separator would stay green the day the constant changed, which is the
+        same-parentage failure one level down."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — work.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertTrue(parsed.items)
+        sha = migrate.blob_sha((d / "BACKLOG.md").read_bytes())
+        for it in parsed.items:
+            for slot in ("requirement", "evidence"):
+                self.assertTrue(
+                    it.slots[slot].endswith(f"{migrate.BLOB_PIN}{sha}"),
+                    f"{slot}: {it.slots[slot]!r}")
+
+    def test_the_pinned_line_resolves_to_the_entry_it_names(self):
+        """THE PROPERTY, not the shape. A pin that named the wrong blob, or a
+        line number computed over the pre-banner file, would satisfy every
+        format assertion above and still point at the wrong body."""
+        d = build("# old\n\n## Open\n\n"
+                  "- **READY 2026-08-03 — the first entry.** body\n"
+                  "- **READY 2026-08-04 — the second entry.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        on_disk = (d / "BACKLOG.md").read_text(encoding="utf-8").split("\n")
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual(len(parsed.items), 2)
+        for it in parsed.items:
+            m = re.search(r"BACKLOG\.md:(\d+)-(\d+)", it.slots["evidence"])
+            body = "\n".join(on_disk[int(m.group(1)) - 1:int(m.group(2))])
+            title = it.slots["requirement"].split(" — record:")[0]
+            self.assertIn(title.split(" — ")[-1], body)
+
+    def test_the_record_tail_still_parses_with_the_pin(self):
+        """THE DEPENDENT THAT WOULD HAVE BROKEN IN SILENCE. The tail pattern
+        ends at the line number; the pin lengthened the tail. Unwidened,
+        `requirement_title` returns the whole rendered value, `duplicate_bodies`
+        compares a title against a title-plus-tail, and `merge_duplicate_body`
+        simply stops firing — a refusal going quiet, never a check going red.
+        Both spellings must parse: the old carriers are still out there."""
+        sha = "a" * 40
+        self.assertEqual(
+            migrate.requirement_title(f"a title — record: BACKLOG.md:5"
+                                      f"{migrate.BLOB_PIN}{sha}"),
+            "a title")
+        self.assertEqual(
+            migrate.requirement_title("a title — record: BACKLOG.md:5"),
+            "a title")
+
+    def test_a_pinned_range_is_not_read_as_unpinned(self):
+        """THE BACKTRACKING TRAP, and it is why the pattern carries a second
+        lookahead. Over `BACKLOG.md:8-8 at blob <sha>` a naive
+        `\\d+(?:-\\d+)?(?! at blob …)` gives up the `-8`, matches
+        `BACKLOG.md:8`, finds `-8 at blob…` is not the pin, and reports a
+        PINNED anchor as unpinned — a refusal firing on legitimate work."""
+        sha = "b" * 40
+        self.assertEqual(
+            migrate.unpinned_anchors(
+                f"evidence: BACKLOG.md:8-8{migrate.BLOB_PIN}{sha}\n",
+                "BACKLOG.md"),
+            [])
+        # THE KNOWN POSITIVE for the same instrument. A pattern that could
+        # never match returns exactly what a true absence returns.
+        self.assertEqual(
+            [tok for _n, tok in migrate.unpinned_anchors(
+                "evidence: BACKLOG.md:8-8\n", "BACKLOG.md")],
+            ["BACKLOG.md:8-8"])
+
+
+class FreezeBanner(unittest.TestCase):
+    """lc-86 — beat-the-books' `BACKLOG.md` was frozen in the repo's laws file
+    and edited by a desk four hours later (`8d4440e8`). A freeze lives where
+    the person about to append is looking, which is the file's own head."""
+
+    def test_a_live_reading_head_is_replaced(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        head = (d / "BACKLOG.md").read_text(encoding="utf-8")
+        self.assertIn(migrate.FROZEN_MARKER, head.split("\n")[0])
+        self.assertNotIn("the live queue\n", head.split("## Open")[0])
+        self.assertNotIn("Add work here", head)
+        self.assertIn(f"{migrate.DISPOSED_FROZEN} —", out)
+
+    def test_a_head_making_no_liveness_claim_keeps_its_prose(self):
+        """MUST NOT MOVE. The two errors are not symmetric: missing a
+        liveness claim leaves the banner inserted above an intact title, which
+        is merely less tidy, while matching ordinary prose DELETES a paragraph
+        nobody asked to lose. So the file keeps every word it had."""
+        d = build(PROSE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        head = (d / "BACKLOG.md").read_text(encoding="utf-8")
+        self.assertIn(migrate.FROZEN_MARKER, head.split("\n")[0])
+        self.assertIn("Notes on how these entries were written.", head)
+        self.assertIn("# BACKLOG — the live queue", head)
+
+    def test_the_banner_is_idempotent(self):
+        """Keyed on the MARKER, never on the banner's whole text — the banner
+        carries a DATE, so a second run on a later day would otherwise produce
+        different bytes for an unchanged file and report its own write as the
+        source having moved."""
+        text, first = migrate.apply_freeze_banner(
+            LIVE_HEAD, "BACKLOG.md", "ITEMS.md", "2026-09-13")
+        again, second = migrate.apply_freeze_banner(
+            text, "BACKLOG.md", "ITEMS.md", "2026-09-99")
+        self.assertEqual(text, again)
+        self.assertIn("already frozen", second)
+        self.assertNotIn("already frozen", first)
+
+    def test_report_only_touches_the_source_not_at_all(self):
+        """MUST NOT MOVE (S2). A run that writes no successor state has
+        nothing for the source to be superseded BY, so it does not touch it —
+        and `--report-only` exists precisely to be re-runnable."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        before = (d / "BACKLOG.md").read_bytes()
+        code, out = run_cli(d, "migrate", "--report", REPORT, "--report-only")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual((d / "BACKLOG.md").read_bytes(), before)
+        self.assertIn(f"{migrate.DISPOSED_UNTOUCHED} —", out)
+
+    def test_a_second_run_reports_no_spurious_move(self):
+        """S8, THE TRAP IN THIS ITEM. The banner changes the source's blob,
+        and `source_moved` exists because a source moving under the tool is a
+        finding. The recorded `source-blob:` must therefore be the POST-banner
+        blob, so the second run — which reads an already-bannered file —
+        compares equal."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        first = (d / "BACKLOG.md").read_bytes()
+        code, out = migrate_run(d, "--force")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("has MOVED", out)
+        self.assertEqual((d / "BACKLOG.md").read_bytes(), first)
+        self.assertEqual(
+            (d / "BACKLOG.md").read_text(encoding="utf-8").count(
+                migrate.FROZEN_MARKER), 1)
+
+    def test_the_freeze_stands_down_where_it_would_shift_a_cited_line(self):
+        """MEASURED, not reasoned: with the banner applied unconditionally two
+        of this repo's own re-import cases went red, because a carrier citing
+        `BACKLOG.md:5-6` stopped recognising a body the reader now saw at line
+        11. The re-import detector is the LOUD half; the quiet half is that
+        those anchors still RESOLVE afterwards, several lines off."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-01-01 — e.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS.md").write_text(
+            "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n\n"
+            "## lc-1\ngrade: NEW\n"
+            "requirement: an older build's entry — record: BACKLOG.md:5\n"
+            "goal: UNKNOWN\nwrite-set: UNKNOWN\ndone-criterion: UNKNOWN\n"
+            "evidence: BACKLOG.md:5-6\nblocked-by: NONE\n", encoding="utf-8")
+        before = (d / "BACKLOG.md").read_bytes()
+        code, out = migrate_run(d, "--merge")
+        self.assertIn(f"{migrate.DISPOSED_UNTOUCHED} —", out)
+        self.assertIn("no blob pin", out)
+        self.assertEqual((d / "BACKLOG.md").read_bytes(), before)
+
+
+class RetireSource(unittest.TestCase):
+    """lc-86, the amended requirement: a migration ENDS with the source
+    carrier deleted (operator decision 2026-09-12 — old state lives in git).
+    The flag exists because the precondition is not computable here."""
+
+    def test_the_source_is_deleted_and_its_citations_still_resolve(self):
+        """THE WHOLE POINT, end to end: after the file is gone, the anchor
+        the migration wrote still answers — through the blob, never the path."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        sha = migrate.blob_sha((d / "BACKLOG.md").read_bytes())
+        code, out = retire_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertFalse((d / "BACKLOG.md").exists())
+        self.assertIn(f"{migrate.DISPOSED_DELETED} —", out)
+        ev = items.parse((d / "ITEMS.md").read_text(
+            encoding="utf-8")).items[0].slots["evidence"]
+        self.assertIn(f"{migrate.BLOB_PIN}{sha}", ev)
+        m = re.search(r"BACKLOG\.md:(\d+)-(\d+)", ev)
+        blob = subprocess.run(["git", "-C", str(d), "cat-file", "-p", sha],
+                              capture_output=True, text=True)
+        self.assertEqual(blob.returncode, 0, blob.stderr)
+        self.assertIn("real open work",
+                      blob.stdout.split("\n")[int(m.group(1)) - 1])
+
+    def test_no_banner_is_written_before_the_delete(self):
+        """A sha whose bytes were never committed is a pointer to nothing the
+        moment the file is unlinked — this tool does not commit. So the
+        DELETED branch writes no banner and pins to the as-read blob, which
+        the refusal below guarantees is already in the object database."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        sha = migrate.blob_sha((d / "BACKLOG.md").read_bytes())
+        self.assertEqual(retire_run(d)[0], exits.CLEAN)
+        committed = subprocess.run(
+            ["git", "-C", str(d), "rev-parse", "HEAD:BACKLOG.md"],
+            capture_output=True, text=True).stdout.strip()
+        self.assertEqual(sha, committed)
+
+    def test_the_deletion_record_goes_into_the_declared_laws_file(self):
+        """THE DECLARED one, resolved through the declaration — never a
+        filename this tool picks."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        declared = json.loads(
+            (d / ".claude" / "lifecycle.json").read_text(
+                encoding="utf-8"))["laws"]
+        sha = migrate.blob_sha((d / "BACKLOG.md").read_bytes())
+        self.assertEqual(retire_run(d)[0], exits.CLEAN)
+        record = (d / declared).read_text(encoding="utf-8")
+        self.assertIn("Deletion record", record)
+        self.assertIn(sha, record)
+        self.assertIn("git cat-file -p", record)
+
+    def test_a_refusal_changes_nothing_at_all(self):
+        """The load-bearing half. A precondition on an irreversible act that
+        had already half-written is not a precondition."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        before = (d / "BACKLOG.md").read_bytes()
+        laws_before = (d / "LAWS.md").read_bytes()
+        code, out = retire_run(d, "--report-only")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[retire_source_not_writing]", out)
+        self.assertTrue((d / "BACKLOG.md").exists())
+        self.assertEqual((d / "BACKLOG.md").read_bytes(), before)
+        self.assertEqual((d / "LAWS.md").read_bytes(), laws_before)
+        self.assertFalse((d / "ITEMS.md").exists())
+
+    def test_an_uncommitted_edit_to_the_source_refuses(self):
+        """TRACKED IS NOT ENOUGH, and this is the half a presence check
+        misses: the blob the citations name is the one READ here, and it lives
+        only in the file about to be deleted unless it is also the committed
+        content."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "BACKLOG.md").write_text(LIVE_HEAD + "- **READY 2026-08-05 — "
+                                      "uncommitted.** body\n",
+                                      encoding="utf-8")
+        code, out = retire_run(d)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[retire_source_uncommitted]", out)
+        self.assertTrue((d / "BACKLOG.md").exists())
+
+    def test_a_declared_but_absent_laws_file_refuses(self):
+        """THE OTHER HALF of the laws condition, exercised HERE because the
+        roster cannot hold it. The presence half is decided in
+        `declaration.check_laws_present` — reused rather than reimplemented —
+        which is the same site `laws_absent_could_not_verify` owns, so a
+        roster plant keyed to it makes one mutation darken both rows and
+        proves neither. One site, one row; the coverage lives here instead."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "LAWS.md").unlink()
+        code, out = retire_run(d)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[retire_source_laws_absent]", out)
+        self.assertTrue((d / "BACKLOG.md").exists())
+        self.assertFalse((d / "ITEMS.md").exists())
+
+    def test_schema_from_cannot_retire_a_source_it_never_read(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        args = cli.build_parser().parse_args(
+            ["--repo", str(d), "migrate", "--schema-from", "1"])
+        args.retire_source = True
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli.cmd_migrate(args, lambda s: print(s))
+        self.assertEqual(code, exits.FINDING, buf.getvalue())
+        self.assertIn("[retire_source_not_writing]", buf.getvalue())
+        self.assertTrue((d / "BACKLOG.md").exists())
+
+
+class DispositionIsAlwaysStated(unittest.TestCase):
+    """The three-answers rule applied to the disposition: an omitted line
+    reads as 'checked and clean' and a source nobody touched reads as nothing
+    at all, and those are different answers."""
+
+    def test_every_mode_names_its_disposition(self):
+        for extra, want in ((("--report-only",), migrate.DISPOSED_UNTOUCHED),
+                            ((), migrate.DISPOSED_FROZEN)):
+            d = build(LIVE_HEAD)
+            self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+            code, out = migrate_run(d, *extra)
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertIn("DISPOSITION (lc-86):", out)
+            self.assertIn(want, out)
+
+    def test_the_summary_line_no_longer_claims_a_dry_run_over_a_freeze(self):
+        """A summary contradicting the stage three lines below it is the
+        paraphrase every reader believes, because it is the one at the top."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        out = migrate_run(d)[1]
+        self.assertNotIn("are READ and are not edited, moved or deleted", out)
+        report = (d / REPORT).read_text(encoding="utf-8")
+        self.assertNotIn("**A DRY RUN**", report)
+        self.assertIn("**FROZEN**", report)
 
 
 if __name__ == "__main__":

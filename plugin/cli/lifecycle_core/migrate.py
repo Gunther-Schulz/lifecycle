@@ -1,11 +1,32 @@
 """`lifecycle migrate` — the old carrier into `ITEMS.md`, and a REPORT.
 
-IT IS A DRY RUN (brief D-e). It WRITES the successor files and READS the old
-carrier; it never edits, moves or deletes `BACKLOG.md` or `BACKLOG-DONE.md`.
-Retiring the old carrier is a separate act after a human has read the report,
-and the design's acceptance criterion — "the report reconciles entry counts;
-zero entries routed to the ledger" — is a property of the REPORT, so nothing
-has to be destroyed to check it.
+IT READS THE OLD CARRIER, WRITES THE SUCCESSOR FILES, AND DISPOSES OF THE
+SOURCE (lc-86). Brief D-e's sentence — "it never edits, moves or deletes
+`BACKLOG.md` or `BACKLOG-DONE.md`" — was true of every build before this one
+and is false now, deliberately. A freeze declared only in a repo's laws file
+failed its first live test: the superseded carrier still described ITSELF as
+the live queue, and a desk edited it within four hours, because the freeze
+existed nowhere the writer looked. So the disposition is part of the
+migration, and the run's own output names which of exactly three happened:
+
+  * UNTOUCHED — any run that writes no successor state (`--report-only`, and
+    a `--schema-from` run without `--apply`). It touches the source not at
+    all: there is no successor yet for the source to be superseded BY.
+  * FROZEN — the DEFAULT for a writing run. A banner goes into the source's
+    HEAD, which is the one place a writer about to append does look.
+  * DELETED — under `--retire-source` and nothing else. The source is
+    unlinked and a deletion record goes into the declared laws file. The flag
+    exists because the precondition is NOT COMPUTABLE here: whether the
+    rescue passes are discharged and the inbound references triaged is a
+    judgment about people's work, and a tool that cannot check its own
+    precondition must not take the irreversible branch silently. So the
+    caller asserts it by passing the flag, and the default is the safe
+    disposition that still fixes the measured defect.
+
+The design's acceptance criterion — "the report reconciles entry counts; zero
+entries routed to the ledger" — is a property of the REPORT, so nothing has to
+be destroyed to check it; the disposition is a separate question and is
+reported separately.
 
 EVERY RULE APPLIED HERE IS THE DESIGN'S (§4 row 1, §3.1), AND NOTHING ELSE IS.
 An entry the rules do not cover is reported UNCLASSIFIED with its grade word
@@ -53,6 +74,22 @@ records a DIFFERENT sha answers COULD NOT VERIFY rather than quietly
 producing a second answer over a third file. The recorded case: three
 `BACKLOG.md` blobs in one afternoon, with a regenerated report whose record
 pointers were stale before the commit landed.
+
+AND EVERY CITATION CARRIES THAT BLOB INLINE (lc-86). A line number always
+resolves, which is why it lies so quietly: `BACKLOG.md:43` names a line in
+whatever `BACKLOG.md` happens to hold today, not the entry the migration read.
+So every anchor this build writes is `<path>:<line> at blob <sha>` — the
+family form, operator ruling 2026-09-12 — and the citation survives the source
+being frozen, edited or deleted. WHICH blob it names follows the disposition,
+and the two cases are not interchangeable: under FROZEN the banner goes on
+BEFORE the carrier is read, so the line numbers and the sha both describe the
+BANNERED file that is on disk (which is what makes a post-hoc banner's
+line-count-neutrality constraint disappear — nothing is anchored to the
+pre-banner shape); under DELETED nothing is written into the source at all,
+because this tool does not commit, and a sha whose bytes were never committed
+is a pointer to nothing the moment the file is unlinked — the committed blob
+is the only one `git cat-file -p` will still answer for, and the refusal below
+is what guarantees there is one.
 """
 
 import hashlib
@@ -680,13 +717,39 @@ class IdentAllocator:
         return ident
 
 
+#: THE FAMILY SPELLING OF A CITATION PIN (lc-86; operator ruling 2026-09-12,
+#: quoted in dotfiles' `## Deletion record`: citations "each carry their source
+#: blob inline, in the form `<path>:<line> at blob <sha>`", and "the blob pin
+#: above is the default for this repo family going forward").
+#:
+#: ONE SPELLING, HERE, because it is read back by three parties that must agree
+#: character for character: the tail parser below, the unpinned-anchor refusal,
+#: and a human resolving a citation with `git cat-file`. A second spelling
+#: anywhere is two bodies for one fact. The leading space is part of it — the
+#: pin follows a line number with exactly one space on each side of `at`.
+BLOB_PIN = " at blob "
+
+#: The 40-hex sha the pin names, as a pattern the readers share.
+_PINNED_TAIL = rf"{BLOB_PIN}[0-9a-f]{{40}}"
+
+
 def build_items(entries, prefix: str, source_name: str,
-                allocate=None) -> str:
+                source_blob: str, allocate=None) -> str:
     """The successor carrier. Ids are allocated in SOURCE ORDER, from 1.
 
     `allocate` overrides that for a MERGE (lc-17), where 1 is already taken
     and the carrier's own id space decides. It is None on every first
     migration, so the fresh-carrier path is bit-for-bit what it was.
+
+    `source_blob` is REQUIRED rather than defaulted (lc-86). Both anchors
+    below carry it inline, and a default would let a caller write an
+    unpinned anchor by omission — the one failure this parameter exists to
+    prevent, and the one that is invisible afterwards because a bare line
+    number resolves against whatever the file holds later. It is the blob of
+    the bytes the anchors' LINE NUMBERS index, which is the post-banner file
+    under a FROZEN disposition and the as-read file otherwise; `run` decides
+    which and this function is told, because a second notion of "the source's
+    blob" computed here would be the one that drifts.
     """
     blocks = []
     n = 0
@@ -720,7 +783,8 @@ def build_items(entries, prefix: str, source_name: str,
             # carrier that no longer exists; inheriting it would re-create
             # the 95-entry queue nobody believed, in a new file.
             "grade": "NEW",
-            "requirement": f"{title_of(e)} — record: {source_name}:{e.line}",
+            "requirement": (f"{title_of(e)} — record: {source_name}:{e.line}"
+                            f"{BLOB_PIN}{source_blob}"),
             # THE GAP, WRITTEN AS A GAP. §4 row 1 names UNKNOWN for the
             # write-set and says nothing about `goal`, `done-criterion` or
             # `evidence` — and a slot cannot be empty. UNKNOWN is the
@@ -733,7 +797,8 @@ def build_items(entries, prefix: str, source_name: str,
             # The source body IS the evidence a migrated entry actually has.
             # A line range, not a copy: the body stays where it is and git
             # keeps it.
-            "evidence": f"{source_name}:{e.line}-{e.end_line}",
+            "evidence": (f"{source_name}:{e.line}-{e.end_line}"
+                         f"{BLOB_PIN}{source_blob}"),
             "blocked-by": blocked,
         }))
     return blocks, n
@@ -776,6 +841,359 @@ def _rel(repo: Path, path: Path) -> str:
         return path.resolve().relative_to(repo.resolve()).as_posix()
     except ValueError:
         return str(path)
+
+
+# --- THE SOURCE CARRIER'S DISPOSITION (lc-86) --------------------------------
+#
+# THE MEASURED DEFECT IS NOT THAT THE OLD CARRIER SURVIVES — it is that it
+# survives DESCRIBING ITSELF AS THE LIVE QUEUE. beat-the-books' `BACKLOG.md`
+# was frozen on 2026-09-12 in the repo's laws file and edited by a desk four
+# hours later (`8d4440e8`, reverted `b3f2f814`, repaired post-hoc by
+# `260d4c85`); the same sweep found daneel's and statiker's old carriers
+# bannerless too. A freeze lives where the person about to append is looking,
+# which is the file's own head, and nowhere else.
+#
+# THE POST-HOC REPAIR HAD A CONSTRAINT THIS ORDERING REMOVES. A banner added
+# after the migration must be line-count-neutral or every citation into the
+# carrier shifts. Written by the tool BEFORE the carrier is read, the
+# constraint disappears: the reader sees the bannered text, so the line
+# numbers it produces and the blob they are pinned to describe the same bytes.
+
+#: The three dispositions, as a closed vocabulary the report renders and the
+#: tests assert against. Named rather than spelled inline: three literals in
+#: five places diverge, and the one that diverges is whichever nobody opened.
+DISPOSED_UNTOUCHED = "UNTOUCHED"
+DISPOSED_FROZEN = "FROZEN"
+DISPOSED_DELETED = "DELETED"
+
+#: The marker a frozen carrier's head carries. It is what makes the banner
+#: IDEMPOTENT, which S8's trap turns on: a second migration over the same repo
+#: re-reads a file this tool already bannered, and a banner applied twice
+#: would change the blob under the pin recorded by the first run — reported as
+#: a source that MOVED, which is the pin's own refusal firing on the tool's
+#: own output.
+FROZEN_MARKER = "FROZEN legacy carrier"
+
+#: What makes a paragraph a LIVENESS CLAIM, as a closed vocabulary rather than
+#: a judgment. Deliberately NARROW: the two errors are not symmetric. Missing
+#: one leaves the banner INSERTED above an intact title and changes nothing
+#: else, which is merely less tidy; matching prose that is not a liveness
+#: claim DELETES a paragraph nobody asked to lose. So the set is short enough
+#: to read, and every word in it is one a file uses about its own status.
+_LIVE_CLAIM = re.compile(
+    r"\b(?:live|queue|queued|active|scheduled|in progress|add work)\b",
+    re.IGNORECASE)
+
+
+def freeze_banner(src_name: str, items_home: str, on: str) -> str:
+    """The banner a FROZEN carrier's head carries, ending in a newline.
+
+    IT NAMES NO SHA, AND THAT IS NOT AN OMISSION. The shape this was written
+    from (beat-the-books `260d4c85`) carries `source blob <sha>`, which a
+    POST-HOC banner can do because the sha is taken before the banner exists.
+    Written by the migration the ordering is the other way round — the pin
+    names the BANNERED bytes — and a file cannot contain its own blob sha:
+    the text would have to be a sha1 preimage of itself. Naming the PRE-banner
+    blob instead would hand the reader a pointer that resolves only if
+    somebody happened to have committed the carrier, which under a freeze
+    nothing guarantees. So the banner points at where the shas actually are:
+    inline, on each citation, one per entry, each pinned to the blob that
+    entry's line numbers index.
+    """
+    return (
+        f"# {src_name} — {FROZEN_MARKER} (superseded by {items_home} {on})\n"
+        f"FROZEN at migration. Every citation the migration wrote into "
+        f"`{items_home}` carries\n"
+        f"the blob it resolves at, inline — `git cat-file -p <blob>` answers "
+        f"even after\n"
+        f"this file is gone. The live queue is `{items_home}`.\n"
+        f"Never append or edit here; deletion is booked "
+        f"(`migrate --retire-source`).\n")
+
+
+def apply_freeze_banner(text: str, src_name: str, items_home: str,
+                        on: str) -> tuple:
+    """`(new_text, what_was_done)` — the banner placed in the source's head.
+
+    THREE PLACEMENTS, and which one ran is REPORTED rather than inferred:
+
+      * ALREADY FROZEN — the head carries the marker, so the text comes back
+        BYTE-IDENTICAL. This is the idempotence S8 needs, and it is keyed on
+        the marker rather than on the banner's whole text because the banner
+        carries a DATE: a second run on a later day would otherwise produce
+        different bytes for an unchanged file and report its own write as the
+        source having moved.
+      * REPLACED — the title line and the paragraph immediately after it,
+        where that paragraph makes a liveness claim. That paragraph is the
+        lie the banner exists to remove; leaving it under the banner would
+        leave the file saying both things at once.
+      * INSERTED — above everything, changing nothing else. This is the
+        answer wherever the shape is not the one above, and it is the SAFE
+        direction: the file gains a head that says what it is, and no prose
+        anybody wrote is lost.
+    """
+    banner = freeze_banner(src_name, items_home, on)
+    lines = text.split("\n")
+    head = [ln for ln in lines[:6] if ln.strip()]
+    if any(FROZEN_MARKER in ln for ln in head):
+        return text, "already frozen — the head carries the marker"
+
+    i = 0
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+    if i < len(lines) and lines[i].lstrip().startswith("# "):
+        j = i + 1
+        while j < len(lines) and not lines[j].strip():
+            j += 1
+        k = j
+        while k < len(lines) and lines[k].strip():
+            k += 1
+        para = "\n".join(lines[j:k]).strip()
+        if para and _LIVE_CLAIM.search(para):
+            new = lines[:i] + banner.split("\n")[:-1] + lines[k:]
+            return ("\n".join(new),
+                    f"replaced the title line and the paragraph under it, "
+                    f"which described the file as live ({k - j} line(s))")
+        return (banner + "\n" + text,
+                "inserted above the title — the paragraph under it makes no "
+                "liveness claim, so nothing was replaced")
+    return (banner + "\n" + text,
+            "inserted at the head — the file opens with no `# ` title line, "
+            "so there was none to replace")
+
+
+def deletion_record(src_name: str, items_home: str, sha: str,
+                    on: str) -> str:
+    """The record a `--retire-source` run appends to the declared laws file.
+
+    THE RECORD IS THE DELETION'S WHOLE JUSTIFICATION, so it is written in the
+    same act rather than left as the thing somebody meant to write afterwards.
+    What it must carry is exactly what a reader holding a citation needs: the
+    path that is gone, the blob it is gone AT, and the command that answers.
+
+    IT CARRIES NO LINE-ANCHORED CITATION OF ITS OWN, deliberately — the
+    citations live in the successor carrier, each pinned to this same blob, and
+    a second copy of them here would be a body that drifts from the first.
+    """
+    return (
+        f"\n## Deletion record — {src_name} ({on})\n"
+        f"\n"
+        f"`{src_name}` was DELETED by `lifecycle migrate --retire-source`, "
+        f"superseded by\n"
+        f"`{items_home}`. Nothing is lost and every citation into it still "
+        f"resolves: the\n"
+        f"migration pinned each anchor to the blob it read, inline, in the "
+        f"form\n"
+        f"`<path>:<line>{BLOB_PIN}<sha>`.\n"
+        f"\n"
+        f"| path | blob deleted |\n"
+        f"|---|---|\n"
+        f"| `{src_name}` | `{sha}` |\n"
+        f"\n"
+        f"To resolve a citation, read the BLOB and never the path:\n"
+        f"\n"
+        f"```bash\n"
+        f"git cat-file -p {sha} | sed -n '<n>p'          # one line\n"
+        f"git cat-file -p {sha} | sed -n '<from>,<to>p'  # a range\n"
+        f"```\n")
+
+
+#: An anchor into the source carrier that is NOT pinned. The trailing
+#: `(?![\d-])` is load-bearing and is not decoration: without it the optional
+#: range group BACKTRACKS — over `BACKLOG.md:8-8 at blob <sha>` the engine
+#: gives up `-8`, matches `BACKLOG.md:8`, finds `-8 at blob…` is not the pin,
+#: and reports a PINNED anchor as unpinned. Measured on this pattern's own
+#: test. The class is the repo's own: a match over rendered text satisfied by
+#: a longer body that begins the same way.
+def _unpinned_anchor_pattern(src_name: str) -> "re.Pattern":
+    return re.compile(
+        rf"{re.escape(src_name)}:\d+(?:-\d+)?(?![\d-])(?!{_PINNED_TAIL})")
+
+
+def unpinned_anchors(text: str, src_name: str) -> list:
+    """Every `<src>:<line>` in `text` carrying no blob pin, with its line.
+
+    SCOPED TO THE LIVE CARRIER BY ITS CALLER, never to the done home: the
+    archive's `<!-- src:line-end — rule -->` markers sit beside the VERBATIM
+    body they describe, which the migration copied into the done home. That
+    body does not stop existing when the source is deleted, so those markers
+    are not citations into a file that is going away and are not pinned.
+    """
+    out = []
+    pat = _unpinned_anchor_pattern(src_name)
+    for n, raw in enumerate(text.split("\n"), start=1):
+        for m in pat.finditer(raw):
+            out.append((n, m.group(0)))
+    return out
+
+
+def committed_blob(repo: Path, rel: str) -> str | None:
+    """The blob sha `HEAD:<rel>` names, or None if it resolves to nothing.
+
+    THE OBJECT NAME, NOT THE FILE'S BYTES. A deletion is safe exactly when the
+    content a citation points at is already in git's object database, and
+    `rev-parse` answering is the only evidence of that which does not depend
+    on the working tree the deletion is about to change.
+    """
+    r = subprocess.run(["git", "-C", str(repo), "rev-parse", f"HEAD:{rel}"],
+                       capture_output=True, text=True)
+    sha = r.stdout.strip()
+    if r.returncode != 0 or not re.fullmatch(r"[0-9a-f]{40}", sha):
+        return None
+    return sha
+
+
+def retire_refusal(ctx, src_name: str, src_blob: str, writing_run: bool,
+                   items_text: str) -> tuple:
+    """`(row, message)` for the first unmet precondition of `--retire-source`,
+    or `(None, "")`.
+
+    FOUR CONDITIONS, EACH ITS OWN ROW, and the refusal names WHICH — a single
+    "cannot retire" would hand the operator one message for four different
+    repairs. Ordered cheapest-and-most-fundamental first: a run that writes no
+    successor state has no anchors for condition (c) to be about, so asking
+    (c) of it would be asking a question its own answer makes meaningless.
+
+    NOTHING IS WRITTEN BY A RUN THAT REFUSES — this is called before the
+    successor homes are written, so a refused `--retire-source` leaves the repo
+    exactly as it found it, including the source.
+    """
+    if not writing_run:
+        return ("retire_source_not_writing", (
+            "`--retire-source` on a run that writes no successor state. "
+            "Deleting the source would leave the repo with neither carrier: "
+            "the old one gone and the new one never written. `--report-only` "
+            "and a `--schema-from` run without `--apply` DESCRIBE; only a run "
+            "that produces the successor homes has anything to supersede the "
+            "source with."))
+
+    committed = committed_blob(ctx.repo, src_name)
+    if committed is None:
+        return ("retire_source_uncommitted", (
+            f"`--retire-source` over {src_name}, which `git rev-parse "
+            f"HEAD:{src_name}` does not resolve — it is untracked, or tracked "
+            "and never committed. Every citation this migration writes "
+            "resolves through `git cat-file -p <blob>`, and a blob that is in "
+            "no commit is gone with the file: the deletion would take the "
+            "bodies with it and leave pointers to nothing. Commit the carrier "
+            "first, then retire it."))
+    if committed != src_blob:
+        return ("retire_source_uncommitted", (
+            f"`--retire-source` over {src_name}, whose working-tree content is "
+            f"NOT what is committed: `HEAD:{src_name}` is blob {committed}, "
+            f"this run read blob {src_blob}. The citations would be pinned to "
+            "the bytes read here, and those bytes exist only in the file that "
+            "is about to be deleted. A committed file and a committed CONTENT "
+            "are different facts, and only the second one survives the "
+            "unlink."))
+
+    laws_rel = ctx.declaration.get("laws")
+    if not isinstance(laws_rel, str) or not laws_rel.strip():
+        return ("retire_source_laws_absent", (
+            "`--retire-source` in a repo whose declaration names no `laws` "
+            "file. The deletion record's home is the declared laws file — "
+            "never a filename this tool picks — and with none declared there "
+            "is nowhere to write the record that justifies the deletion. A "
+            "deletion with no record is exactly the state this whole stage "
+            "exists to stop happening by accident."))
+    # THE DECLARATION'S OWN CHECK, not a second resolver beside it. It answers
+    # into a `Result`, so one is handed to it and read back — a reimplemented
+    # `path.is_file()` here would be the second body that diverges the day the
+    # declaration's own rule about untracked laws files changes.
+    res = decl.Result(exits.CLEAN)
+    decl.check_laws_present(ctx.repo, laws_rel.strip(), res)
+    if res.unverified or res.findings:
+        return ("retire_source_laws_absent", (
+            f"`--retire-source` in a repo whose declared laws file "
+            f"{laws_rel.strip()!r} could not be read: "
+            + " ".join(list(res.unverified)
+                       + [f.message for f in res.findings])
+            + " The deletion record has nowhere to go, so the deletion does "
+              "not happen."))
+
+    loose = unpinned_anchors(items_text, src_name)
+    if loose:
+        shown = "; ".join(f"line {n}: {tok}" for n, tok in loose[:5])
+        return ("retire_source_unpinned_anchor", (
+            f"`--retire-source` over {src_name} while "
+            f"{len(loose)} anchor(s) in {_rel(ctx.repo, ctx.items_path)} name "
+            f"it with no `{BLOB_PIN.strip()} <sha>` pin — {shown}"
+            + (" …" if len(loose) > 5 else "")
+            + f". A bare `{src_name}:<line>` resolves against whatever the "
+              "file holds, so once the file is gone it resolves against "
+              "nothing at all — and nothing FAILS, which is why it has to be "
+              "refused here rather than found later. The ordinary cause is a "
+              "`--merge` into a carrier an earlier build wrote: those anchors "
+              "predate the pin and are not this run's to rewrite."))
+    return (None, "")
+
+
+def dispose_source(disposition: str, src: Path, src_name: str,
+                   bannered: bytes, banner_what: str, laws_rel: str,
+                   record: str, ctx) -> tuple:
+    """`(code, line)` — what happened to the SOURCE, and the line that says so.
+
+    IT RUNS AFTER THE SUCCESSOR HOMES AND BEFORE THE REPORT, which is the only
+    window where both facts are true: the successor exists, so the source is
+    genuinely superseded; and the report has not been rendered, so it can
+    record which disposition happened rather than predicting one.
+
+    IT RETURNS ITS LINE RATHER THAN PRINTING IT. The caller owns the order of
+    its own output, and a stage that printed would put its verdict above the
+    header line that introduces it — the one place a reader stops.
+    """
+    if disposition == DISPOSED_UNTOUCHED:
+        return exits.CLEAN, (
+            f"    DISPOSITION (lc-86):      {DISPOSED_UNTOUCHED} — "
+            + (banner_what or
+               f"this run writes no successor state, so {src_name} is not "
+               "touched at all. A source superseded by nothing is not "
+               "superseded."))
+
+    if disposition == DISPOSED_FROZEN:
+        try:
+            src.write_bytes(bannered)
+        except OSError as exc:
+            return exits.COULD_NOT_VERIFY, (
+                f"COULD NOT VERIFY: the successor homes are written but "
+                f"{src_name} could not be frozen ({exc!r}). This repo is now "
+                "MID-DISPOSITION: the carrier still reads as live, and the "
+                "citations just written are pinned to bytes that are not on "
+                "disk.")
+        return exits.CLEAN, (
+            f"    DISPOSITION (lc-86):      {DISPOSED_FROZEN} — {src_name} "
+            f"carries the freeze banner in its head: {banner_what}. The "
+            "citations were computed over the BANNERED file, so their line "
+            "numbers and their blob pin both describe the bytes now on disk.")
+
+    # DELETED. THE RECORD IS WRITTEN BEFORE THE UNLINK, and the order is the
+    # decision: a record that fails leaves the file present and recoverable,
+    # while an unlink that succeeded before a failing record would leave the
+    # undocumented deletion this whole stage exists to prevent.
+    laws_path = ctx.repo / laws_rel
+    try:
+        laws_old = laws_path.read_text(encoding="utf-8")
+        laws_path.write_text(laws_old.rstrip("\n") + "\n" + record,
+                             encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return exits.COULD_NOT_VERIFY, (
+            f"COULD NOT VERIFY: the deletion record could not be written to "
+            f"{laws_rel} ({exc!r}). {src_name} is STILL PRESENT — the record "
+            "is written first precisely so that this order holds.")
+    try:
+        src.unlink()
+    except OSError as exc:
+        return exits.COULD_NOT_VERIFY, (
+            f"COULD NOT VERIFY: {laws_rel} now carries the deletion record but "
+            f"{src_name} could not be deleted ({exc!r}). The record claims a "
+            "deletion that did not happen; remove the file by hand, or revert "
+            "the record.")
+    return exits.CLEAN, (
+        f"    DISPOSITION (lc-86):      {DISPOSED_DELETED} — {src_name} is "
+        f"UNLINKED and the deletion record is appended to {laws_rel}. The "
+        "file is deleted in the WORKING TREE and is NOT staged or committed: "
+        "committing is the caller's act here, as it is for every other file "
+        "this tool writes.")
 
 
 def live_carrier_readers(repo: Path, names, excluded) -> tuple:
@@ -871,7 +1289,19 @@ def residue_blocks(readers, src_label: str, ident: str) -> list:
 #: an entry whose own headline contains the phrase still resolves against the
 #: LAST tail rather than the first, and a requirement written by something
 #: other than this migration simply does not match and is its own title.
-_REQUIREMENT_RECORD_TAIL = re.compile(r"^(?P<title>.*) — record: \S+:\d+$")
+#:
+#: THE BLOB PIN IS OPTIONAL HERE AND REQUIRED NOWHERE ELSE (lc-86), and this
+#: is the dependent that would have broken in SILENCE. The pin lengthened the
+#: tail, and this pattern ends at the line number — so without the group below
+#: a requirement this build writes stops matching, `requirement_title` returns
+#: the whole rendered value instead of the headline, and `duplicate_bodies`
+#: compares a title against a title-plus-tail and finds nothing. Nothing
+#: fails: `merge_duplicate_body` simply stops firing on every carrier the new
+#: build wrote, which is a refusal going quiet rather than a check going red.
+#: Optional rather than mandatory because carriers written by every earlier
+#: build carry the UNPINNED tail and their titles must keep parsing.
+_REQUIREMENT_RECORD_TAIL = re.compile(
+    rf"^(?P<title>.*) — record: \S+:\d+(?:{_PINNED_TAIL})?$")
 
 
 def requirement_title(value: str) -> str:
@@ -1446,7 +1876,20 @@ def run_schema(args, out, ctx) -> int:
 
 
 def run(args, out, ctx) -> int:
+    retire = getattr(args, "retire_source", False)
     if args.schema_from is not None:
+        if retire:
+            # THE SCHEMA PATH HAS NO SOURCE CARRIER AT ALL (§3.8c): it bumps
+            # this repo's own declaration and carrier heads. There is nothing
+            # for `--retire-source` to name, and silently ignoring a flag that
+            # asks for an irreversible act is how one gets taken later by a
+            # caller who believes it was honoured.
+            out("FINDING [retire_source_not_writing] `--retire-source` with "
+                "`--schema-from`. The schema path migrates this repo's own "
+                "declaration and carrier heads; it reads no old carrier, so "
+                "there is no source to retire and nothing this run writes "
+                "supersedes one.")
+            return exits.FINDING
         return run_schema(args, out, ctx)
     src_name = args.from_carrier or "BACKLOG.md"
     done_name = args.from_done or "BACKLOG-DONE.md"
@@ -1486,7 +1929,14 @@ def run(args, out, ctx) -> int:
         out(f"COULD NOT VERIFY: a source carrier could not be read ({exc!r}).")
         return exits.COULD_NOT_VERIFY
 
-    src_blob = blob_sha(src_bytes)
+    #: THE BLOB AS READ, and it is the MOVE DETECTOR'S coordinate — never the
+    #: anchors'. cf-324's pin answers "did the source change under the tool
+    #: between two runs", so both sides of that comparison must be the bytes
+    #: found ON DISK. Comparing a recorded post-banner sha against a fresh
+    #: as-read one would report the tool's own freeze as a source that moved,
+    #: and a `--report-only` run followed by a writing run over the same
+    #: report path would refuse for a file nobody touched.
+    read_blob = blob_sha(src_bytes)
     done_blob = "NONE" if src_done is None else blob_sha(done_bytes)
 
     report_only = getattr(args, "report_only", False)
@@ -1521,7 +1971,7 @@ def run(args, out, ctx) -> int:
             prior_report = report_path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             prior_report = ""
-    moved = source_moved(prior_report, src_blob, done_blob, src_name,
+    moved = source_moved(prior_report, read_blob, done_blob, src_name,
                          done_name) if prior_report else None
     if moved is not None:
         what, recorded, now = moved
@@ -1534,6 +1984,118 @@ def run(args, out, ctx) -> int:
             "`--report` path to record a fresh answer, or restore the source "
             "the report was written from.")
         return exits.COULD_NOT_VERIFY
+
+    # --- THE DISPOSITION IS DECIDED HERE, BEFORE THE CARRIER IS READ (lc-86),
+    # and the ordering is the whole point of the item rather than a detail of
+    # it. Under FROZEN the reader must see the BANNERED text: its line numbers
+    # are then the bannered file's, the pin names the bannered file's blob, and
+    # a citation resolves against exactly what is on disk. Deciding it after
+    # the read would re-create the constraint a post-hoc banner labours under —
+    # be line-count-neutral or shift every anchor — and that constraint is what
+    # `260d4c85` had to satisfy by hand.
+    #
+    # THE WRITE ITSELF STILL HAPPENS IN `dispose_source`, after the successor
+    # homes exist. What is computed here is the BYTES; nothing has touched the
+    # source when this block ends, so a refusal below still leaves the repo
+    # untouched.
+    writing_run = not report_only
+    items_home = _rel(ctx.repo, ctx.items_path)
+    today = date.today().isoformat()
+    banner_what = ""
+    bannered_bytes = src_bytes
+    # THE FREEZE MOVES LINES, AND SOMETHING MAY ALREADY BE CITING THEM.
+    # Measured here, not reasoned: with the banner applied unconditionally,
+    # two of this repo's own re-import cases went red — a `--merge` whose
+    # carrier held `BACKLOG.md:5-6` stopped recognising the body it had
+    # already migrated, because the reader now saw that body at line 11. The
+    # re-import detector is only the LOUD half. The quiet half is worse and
+    # nothing catches it: those old anchors still RESOLVE afterwards, six
+    # lines off, pointing at whatever now sits there — the exact defect
+    # measured in claude-code-cache-fix, where 313 of 318 pointers land on the
+    # wrong entry and nothing fails.
+    #
+    # The population is the one S6(c) already names: anchors into this source
+    # carrying no blob pin. An anchor WITH a pin is unharmed — it names the
+    # blob it indexes and resolves there whatever happens to the file. So a
+    # freeze is safe exactly where every surviving anchor is pinned, and where
+    # it is not, the source is left alone and the run says so. It is the
+    # conservative direction: the carrier keeps reading as live, which is a
+    # visible defect, rather than gaining a head that silently invalidates
+    # other blocks' citations.
+    #
+    # ONLY UNDER `--merge`, because only there do the old blocks survive: a
+    # replacing run rewrites `ITEMS.md` whole and every anchor in it afterwards
+    # is this run's, pinned by construction.
+    freeze_blocked = []
+    if writing_run and not retire and merge:
+        for home in (ctx.items_path, ctx.done_path):
+            if not home.is_file():
+                continue
+            try:
+                freeze_blocked += unpinned_anchors(
+                    home.read_text(encoding="utf-8"), src_name)
+            except (OSError, UnicodeDecodeError):
+                continue
+    if not writing_run:
+        disposition = DISPOSED_UNTOUCHED
+    elif retire:
+        disposition = DISPOSED_DELETED
+    elif freeze_blocked:
+        disposition = DISPOSED_UNTOUCHED
+        banner_what = (
+            f"NOT frozen: {len(freeze_blocked)} anchor(s) already in the "
+            f"successor homes name {src_name} with no blob pin, and the "
+            "banner would move the lines they index — they would still "
+            "resolve, several lines off, which is the failure that reports "
+            "nothing. Re-migrate those blocks under a build that pins, or "
+            "freeze this carrier by hand")
+    else:
+        disposition = DISPOSED_FROZEN
+        src_text, banner_what = apply_freeze_banner(
+            src_text, src_name, items_home, today)
+        bannered_bytes = src_text.encode("utf-8")
+
+    #: THE ANCHORS' COORDINATE, which is NOT `read_blob` under a freeze. It is
+    #: the blob of the bytes whose LINE NUMBERS the anchors carry — so the
+    #: bannered file where one was written, and the file as read everywhere
+    #: else. Under DELETED it is deliberately the as-read blob and no banner is
+    #: applied: this tool does not commit, so bytes it wrote and then unlinked
+    #: would be in no object database, and `git cat-file -p` would answer for
+    #: nothing. The refusal below is what makes the as-read blob safe there —
+    #: it requires that blob to be already committed.
+    anchor_blob = blob_sha(bannered_bytes)
+
+    if retire:
+        # REFUSED BEFORE ANYTHING IS WRITTEN. The successor homes are still
+        # unwritten at this point, so a refusal leaves the repo exactly as it
+        # was found — which is what "changing nothing at all" has to mean for
+        # a precondition on an irreversible act.
+        #
+        # THE ANCHOR CONDITION READS THE CARRIER ONLY WHERE THE CARRIER
+        # SURVIVES THE RUN — under `--merge`, which appends. A replacing run
+        # (`--force`, or a first migration) rewrites `ITEMS.md` whole, so every
+        # anchor in it afterwards is this run's and carries its pin by
+        # construction; reading the file it is about to discard would refuse
+        # over anchors that will not exist, which is a guard firing on
+        # legitimate work (law 11). Under `--merge` the old blocks stay, their
+        # anchors are unpinned, they are not this run's to rewrite — and
+        # deleting the source breaks them exactly as it would break an unpinned
+        # anchor of our own.
+        items_text = ""
+        if merge and ctx.items_path.is_file():
+            try:
+                items_text = ctx.items_path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError) as exc:
+                out(f"COULD NOT VERIFY: `--retire-source` could not read "
+                    f"{items_home} ({exc!r}), so whether its anchors into "
+                    f"{src_name} carry their blob pin was not established. "
+                    "Nothing was written and nothing was deleted.")
+                return exits.COULD_NOT_VERIFY
+        row, why = retire_refusal(ctx, src_name, read_blob, writing_run,
+                                  items_text)
+        if row is not None:
+            out(f"FINDING [{row}] {why}")
+            return exits.FINDING
 
     read = read_carrier(src_text)
     for e in read.entries:
@@ -1627,7 +2189,7 @@ def run(args, out, ctx) -> int:
     allocate = (IdentAllocator(ctx.prefix, existing_items, existing_done_home)
                 if merge else None)
     written, n_items = build_items(read.entries, ctx.prefix, src_name,
-                                   allocate=allocate)
+                                   anchor_blob, allocate=allocate)
 
     # --- the migration's own residue (lc-65, §3.1b). Detected in EVERY mode
     # so `--report-only` can re-render its description; WRITTEN only by a run
@@ -1773,22 +2335,44 @@ def run(args, out, ctx) -> int:
         carried_src, carried_done = recorded_blobs(prior_report)
         carried_src.pop(src_name, None)
         carried_done.pop(done_name, None)
+
+    # --- THE DISPOSITION STAGE (lc-86), here and nowhere else: the successor
+    # homes exist above it, the report is rendered below it. `code` carries its
+    # answer into the run's own, because a freeze that failed to land leaves a
+    # carrier still reading as live — which is the whole defect.
+    disposition_code, disposition_line = dispose_source(
+        disposition, src, src_name, bannered_bytes, banner_what,
+        (ctx.declaration.get("laws") or "").strip(),
+        deletion_record(src_name, items_home, anchor_blob, today),
+        ctx)
+
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
         render_report(ctx, read, done_read, src_name, done_name, n_items,
                       unclassified, archive_count, baseline, ledger_count,
-                      lwhy, report_rel, closures, src_blob, done_blob,
+                      lwhy, report_rel, closures, anchor_blob, done_blob,
                       carried_src, carried_done, readers, readers_why,
-                      src_label, n_residue, reimported),
+                      src_label, n_residue, reimported, disposition),
         encoding="utf-8")
 
     # --- the run's own answer
-    out(f"migrate: DRY RUN — {src_name} and {done_name} are READ and are not "
-        "edited, moved or deleted (D-e).")
+    #
+    # THE OPENING SENTENCE FOLLOWS THE CODE (lc-86). It said "READ and are not
+    # edited, moved or deleted (D-e)" under every build before this one, and
+    # under a FROZEN or DELETED disposition that is now simply false — a
+    # summary line contradicting the stage three lines below it is the
+    # paraphrase every reader believes over the body.
+    if disposition == DISPOSED_UNTOUCHED:
+        out(f"migrate: DRY RUN — {src_name} and {done_name} are READ and "
+            "neither is edited, moved or deleted: this run writes no "
+            "successor state.")
+    else:
+        out(f"migrate: {src_name} is READ and then {disposition} (lc-86); "
+            f"{done_name} is READ and not touched.")
     if merge:
         out(f"    MODE: MERGE — {ctx.items_path.name} is APPENDED to; every "
             "entry already there keeps its id, its slots and its position.")
-    out(f"    source blob:              {src_blob}  ({src_name})")
+    out(f"    source blob:              {anchor_blob}  ({src_name})")
     out(f"    source done-home blob:    {done_blob}  ({done_name})")
     out(f"    source entries read:      {len(read.entries)}")
     out(f"    items written:            {n_items} → {ctx.items_path.name}")
@@ -1842,9 +2426,17 @@ def run(args, out, ctx) -> int:
         f"{ctx.done_path.name}, verbatim")
     out(f"    ledger lines:             {ledger_count} (nothing migrates into "
         "the ledger — §3.6, §4 row 1)")
+    # STATED IN EVERY MODE, INCLUDING UNTOUCHED. An omitted line reads as
+    # "checked and clean" and a source nobody touched reads as nothing at all;
+    # those are different answers and the three-answers rule does not let them
+    # share a rendering.
+    if disposition_code == exits.CLEAN:
+        out(disposition_line)
     out(f"    report:                   {report_rel}")
 
-    code = exits.CLEAN
+    code = disposition_code
+    if disposition_code != exits.CLEAN:
+        out(disposition_line)
     if merge and not report_only:
         code = exits.worst([code, merge_conservation(
             ctx, src_name, read, n_items, closures, unclassified,
@@ -2023,7 +2615,7 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
                   lwhy, report_rel="", closures=(), src_blob="",
                   done_blob="", carried_src=None, carried_done=None,
                   readers=(), readers_why="", src_label="", n_residue=0,
-                  reimported=()) -> str:
+                  reimported=(), disposition=DISPOSED_UNTOUCHED) -> str:
     """The classification report.
 
     IT DESCRIBES ENTRIES; IT DOES NOT QUOTE THEM. Every entry appears as its
@@ -2037,10 +2629,30 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     a(f"# Migration report — {src_name} → {ctx.items_path.name} "
       f"({date.today().isoformat()})")
     a("")
-    a("Produced by `lifecycle migrate`. **A DRY RUN**: the source carriers "
-      f"`{src_name}` and `{done_name}` were READ. They are not edited, not "
-      "moved and not deleted, and retiring them is a separate act after a "
-      "human has read this file.")
+    # THE HEADER FOLLOWS THE DISPOSITION (lc-86). It read "**A DRY RUN**: …
+    # not edited, not moved and not deleted" under every earlier build, and a
+    # report opening with that over a run that just froze or deleted the
+    # carrier is a paraphrase contradicting its own body — the half a reader
+    # believes, because it is the half at the top.
+    if disposition == DISPOSED_UNTOUCHED:
+        a("Produced by `lifecycle migrate`. **A DRY RUN**: the source carriers "
+          f"`{src_name}` and `{done_name}` were READ. They are not edited, not "
+          "moved and not deleted — this run wrote no successor state, so there "
+          "is nothing for them to have been superseded by.")
+    elif disposition == DISPOSED_FROZEN:
+        a("Produced by `lifecycle migrate`. The source carrier "
+          f"`{src_name}` was READ and then **FROZEN**: it carries a banner in "
+          f"its head naming `{ctx.items_path.name}` as the live queue. "
+          f"`{done_name}` was READ and is untouched. Every citation below and "
+          "in the successor carrier is pinned to the blob of the BANNERED "
+          "file, so the line numbers and the sha describe the same bytes.")
+    else:
+        a("Produced by `lifecycle migrate --retire-source`. The source carrier "
+          f"`{src_name}` was READ and then **DELETED**, with a deletion record "
+          "written into this repo's declared laws file. `{}` was READ and is "
+          "untouched. The deletion was refused unless the carrier's content "
+          "was already committed, so every citation below still resolves "
+          "through `git cat-file -p <blob>`.".format(done_name))
     a("")
     a("This report DESCRIBES entries — line number, grade word, rule "
       "applied. It does not quote their prose.")
