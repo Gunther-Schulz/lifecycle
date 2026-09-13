@@ -85,6 +85,8 @@ amended-evidence: 2026-09-12 executed at f2c37fe: node --test test/absence-scan.
 amended-blocked-by: 2026-09-12 NONE
 amend-reason: 2026-09-13 2026-09-13 The 2026-09-12 retirement pass dropped the lc-9 blocker as overtaken and wrote NONE, which was right about lc-9 and wrong about the item: its write-set has always named a cache-fix path, so NONE made it read SCHEDULABLE to the drain desk. Re-typed to the boundary that actually blocks it. Written through amend rather than park because park writes the BASE slot and this entry's amended line supersedes it — park left grade PARKED over an effective blocker of NONE.
 amended-blocked-by: 2026-09-13 evidence the realizing write is TWO copies, one outside this repo: the write-set names 'cache-fix test/absence-scan.test.mjs' and the done-criterion requires green on lifecycle AND on the cache-fix twin, so this desk cannot complete it however green this side goes. Unblocked by a desk holding the cache-fix copy, or an operator decision to land the halves separately with the divergence declared.
+amend-reason: 2026-09-13 2026-09-13 Same instrument repair as lc-53, same author, same day: the predicate was prose. Latent here only because PARKED items are not evaluated by the board — a promote would have surfaced exit 127. Converted to 'false  # <reason>'; blocked state unchanged.
+amended-blocked-by: 2026-09-13 evidence false  # realizing write is TWO copies, one outside this repo (cache-fix test/absence-scan.test.mjs); done-criterion needs green on both
 
 ## lc-29
 grade: READY
@@ -103,6 +105,8 @@ write-set: plugin/cli/lifecycle_core/roster.py,test/test_refusals.py,tools/prove
 done-criterion: a refusal whose text is narrower than what the code routes through it FAILS the ROUTE SETS check rather than noting it; red-first on exactly the lane-A state (two ambiguous-closure shapes routed through migration_unclassified, whose text names only the no-rule case), green once the text covers what it catches or the shapes get their own row
 evidence: roster.py:177 computes stray = watched - full and :183-187 prints it as a note with no exits.worst call, while :188-195 makes the mirror case (missing) a FINDING. Live instance: lane A routed two NEW ambiguous-closure shapes through migration_unclassified because refusals.py was outside its write set (my brief defect), and that row text reads "an entry whose grade word no rule covers" — false for those entries, which HAVE a grade word, mid-title
 blocked-by: evidence the migration_ambiguous_closure roster row exists — lane B builds it; making stray FAIL before that row lands would fire on the legitimate interim state lane A was forced into
+amend-reason: 2026-09-13 2026-09-13 The blocker's evidence has ARRIVED and nothing re-read it. Measured at the drain desk: the roster row exists (refusals.py:1521, ident=migration_ambiguous_closure) and passes its own pair — 'PASS migration_ambiguous_closure  plant FINDING / control CLEAN' — and the row's OWN stage note reads '[wave 3 (lc-17 lane B — the row lane A's write set could not reach; unblocks lc-30)]', naming this item by id. So the condition the blocker waited on was satisfied by lane B and the entry kept waiting. Separately, the predicate was written as PROSE and the board executes it, so this item reported FINDING [trigger_broken] exit 127 rather than 'blocked' — which is how it stayed invisible as a drainable item: a BROKEN line reads as a defect in the tooling, not as an item whose wait is over. Unblocking on the measurement, not converting to 'false' as the other five were.
+amended-blocked-by: 2026-09-13 NONE
 
 ## lc-31
 grade: READY
@@ -186,6 +190,8 @@ write-set: whichever change introduces the compaction verb in retire.py, plus th
 done-criterion: the compaction verb ships only WITH an answer to where a compacted item closure record lives. THE QUESTION, so it is not re-derived: compaction turns the moved body into a ledger line, so either the closure lines are LIFTED into that ledger line (one fact still one home, the home changing at compaction time) or DONE bodies carrying closure lines are EXEMPT from compaction (the record outlives the body, at the cost of the carrier not shrinking where it most would). Whichever is chosen, the verb REFUSES to compact a body it would silently strip: red-first is compacting a body carrying closed-reason and closed-ref and showing the record survives in whatever home the answer names. Must-not-move: a DROP still keeps exactly one ledger line and no second copy.
 evidence: lc-44 lane interim 3, 2026-08-27, citing cache-fix carrier-rework-design 3.1 and retire.py stating that never, compact and delete have no verb yet; the lc-44 ruling itself (judgment desk, 2026-08-27) for the pruning ground it rests on.
 blocked-by: evidence the compaction verb does not exist yet — this fires when it is written, and its trigger is that change, not a date
+amend-reason: 2026-09-13 2026-09-13 Instrument repair by the drain desk. The predicate was prose and the board executed it: FINDING [trigger_broken] exit 127. Converted to the carrier's own executable form (lc-3, lc-7). NOT a judgement about the evidence — the item stays blocked exactly as its author intended; only the spurious BROKEN is removed.
+amended-blocked-by: 2026-09-13 evidence false  # the compaction verb does not exist yet; this fires when it is written, and its trigger is that change, not a date
 
 ## lc-50
 grade: READY
@@ -224,6 +230,8 @@ evidence: executed at the flip: `--git-range EMPTY..main` exit 0 'clean'; `--git
 blocked-by: NONE
 amend-reason: 2026-09-13 2026-09-13 blocker TYPED, correcting a NONE that made this read dispatchable when it is not. Caught while enumerating the READY set for the drain: the write-set names tools/absence-scan.mjs, the declared byte-identical copy of cache-fix's scanner. lc-102 established the sequencing the hard way today — the two copies had silently diverged for seventeen days and a blind re-copy would have reverted lc-35's over-fire fix. Same boundary, same order. Recorded now rather than at dispatch time because an unblocked grade is what a successor desk enumerates from, and this desk's own enumeration nearly pulled it
 amended-blocked-by: 2026-09-13 evidence the repair has not landed in claude-code-cache-fix, which owns the canonical tools/absence-scan.mjs. This repo's copy is declared byte-identical and the identity is now watched by dotfiles df-178; patching it here alone re-breaks that identity, which is exactly what lc-102 spent today preventing in both directions. The write is cache-fix's first, then this repo re-copies and proves the port survived
+amend-reason: 2026-09-13 2026-09-13 Instrument repair, not a re-judgement: I wrote this predicate as PROSE earlier today and the board executes it, so it reported FINDING [trigger_broken] exit 127 — louder than blocked and semantically different. Converted to the executable form this carrier already uses (lc-3, lc-7): 'false  # <reason>' exits 1, which is exactly 'still blocked', with the reason preserved as the comment. The blocked state is unchanged; only the instrument is fixed.
+amended-blocked-by: 2026-09-13 evidence false  # the repair has not landed in claude-code-cache-fix, which owns the canonical tools/absence-scan.mjs; this repo's copy is declared byte-identical
 
 ## lc-55
 grade: READY
@@ -304,6 +312,8 @@ amend-reason: 2026-09-12 Retirement pass 2026-09-12: the blocked-by decision is 
 amended-blocked-by: 2026-09-12 NONE
 amend-reason: 2026-09-13 2026-09-13 Same correction as lc-24, same cause: the 2026-09-12 pass wrote NONE when it cleared a settled decision-blocker, and the entry's cross-repo write boundary then had nothing recording it, so the board graded it SCHEDULABLE. Written through amend rather than park for the same reason — park writes the base slot beneath a superseding amended line.
 amended-blocked-by: 2026-09-13 evidence the write-set's only element is a cache-fix path ('docs/directives/carrier-rework-design-2026-08-26.md@cache-fix'), so the realizing write lands entirely outside this repo; this desk surfaces such items and never executes them. Unblocked by a desk holding the cache-fix copy, or an operator decision moving the document's home.
+amend-reason: 2026-09-13 2026-09-13 Same instrument repair as lc-53 and lc-24. Prose predicate, latent under PARKED. Converted to 'false  # <reason>'; blocked state unchanged.
+amended-blocked-by: 2026-09-13 evidence false  # the write-set's only element is a cache-fix path, so the realizing write lands entirely outside this repo
 
 ## lc-67
 grade: READY
@@ -508,6 +518,8 @@ evidence: SURFACED by the lc-92 build lane 2026-09-13 as slot (g), NOT VERIFIED:
 blocked-by: evidence a reproduction that shows the re-import detector attributing an archived body's anchor to a pseudo-ident - a skipped re-import or an 'already migrated as' naming a pseudo-ident rather than a real item id - or a proof that the detector's own call path cannot reach that state
 amend-reason: 2026-09-13 the add was written with done-criterion UNKNOWN and the carrier's own shape check refused the commit, correctly: an entry the tool cannot grade is not a booking. The criterion is stated in BOTH directions because the honest disposition here is a settled question, not necessarily a repair
 amended-done-criterion: 2026-09-13 the question is SETTLED in one of the two directions and the entry records which: either a reproduction exists - a re-import skipped against a pseudo-ident, or an 'already migrated as <pseudo-ident>' message - and the detector is repaired with its own red-first arrangement and a MUST-NOT-MOVE keeping the archive answerable for the legitimate 'is this body already present' question; or the detector's call path is shown unable to reach that state, with the executed check quoted in the entry. A single non-reproduction does not satisfy either direction
+amend-reason: 2026-09-13 2026-09-13 Instrument repair by the drain desk, identical to lc-47: prose predicate executed by the board, exit 127. Converted to 'false  # <reason>'. Blocked state unchanged.
+amended-blocked-by: 2026-09-13 evidence false  # awaiting a reproduction showing the re-import detector attributing an archived body's anchor to a pseudo-ident
 
 ## lc-95
 grade: READY
