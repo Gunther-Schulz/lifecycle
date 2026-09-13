@@ -611,6 +611,11 @@ MUTATIONS = [
      "        ident = None",
      "the headline comparison between an incoming source entry and the bodies "
      "already in the successor homes"),
+    ("merge_source_self_duplicate", "migrate.py",
+     "        first = known.get(headline_of(e))",
+     "        first = None",
+     "the parsed-headline comparison between a later source entry and the "
+     "first source entry carrying it"),
 
     ("migration_ledger_nonzero", "migrate.py",
      "    elif ledger_count != 0:",

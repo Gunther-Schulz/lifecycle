@@ -737,6 +737,26 @@ class MergeMode(unittest.TestCase):
         self.assertEqual(after, before)
         self.assertNotIn("genuinely new work", after)
 
+    def test_a_source_that_repeats_its_own_headline_refuses_and_writes_nothing(self):
+        """An empty successor makes this the source-self route, not homes."""
+        d = build("# old\n\n## Open\n\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        before = (d / "ITEMS.md").read_text(encoding="utf-8")
+        (d / "SECOND.md").write_text(
+            "# second\n\n## Open\n\n"
+            "- **READY 2026-08-03 — repeated source work.** first body\n"
+            "- **READY 2026-08-03 — repeated source work.** second body\n"
+            "- **READY 2026-09-10 — genuinely new work.** body\n",
+            encoding="utf-8")
+        code, out = migrate_run(d, "--from", "SECOND.md",
+                                "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[merge_source_self_duplicate]", out)
+        after = (d / "ITEMS.md").read_text(encoding="utf-8")
+        self.assertEqual(after, before)
+        self.assertNotIn("genuinely new work", after)
+
     def test_a_headline_that_merely_resembles_one_present_still_merges(self):
         """MUST NOT MOVE. Without this arm a duplicate check loosened until
         the collisions stop scores identically to one that got the

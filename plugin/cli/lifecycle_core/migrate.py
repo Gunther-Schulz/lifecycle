@@ -1469,6 +1469,25 @@ def duplicate_bodies(entries, known: dict) -> list:
     return out
 
 
+def duplicate_source_bodies(entries) -> list:
+    """`[(later-entry, first-entry)]` for repeated incoming headlines.
+
+    The source is its own comparison set.  Re-imports are omitted because
+    their matching provenance says they will not be appended by this run.
+    """
+    known = {}
+    out = []
+    for e in entries:
+        if e.grade is None or e.reimported_as is not None:
+            continue
+        first = known.get(headline_of(e))
+        if first is not None:
+            out.append((e, first))
+        else:
+            known[headline_of(e)] = e
+    return out
+
+
 #: ONE PROVENANCE TOKEN, the exact shape `build_items` writes into the
 #: `evidence` slot — `{source}:{line}-{end}`. Matched with `fullmatch` against
 #: a WHOLE token rather than searched for inside a line: `BACKLOG.md:23-4` is
@@ -2279,6 +2298,18 @@ def run(args, out, ctx) -> int:
                                        provenance_index(*home_texts))
         for e, ident in reimported:
             e.reimported_as = ident
+
+        source_dupes = duplicate_source_bodies(read.entries)
+        if source_dupes and not report_only:
+            out(f"FINDING [merge_source_self_duplicate] {len(source_dupes)} "
+                f"entry/ies in {src_name} repeat a parsed source headline. "
+                "NOTHING was written: a merge appends, so a run that wrote "
+                "the rest and reported these would leave the carrier "
+                "half-merged and a re-run would write those bodies twice.")
+            for e, first in source_dupes:
+                out(f"    {src_name}:{e.line}  repeats {src_name}:{first.line}")
+                out(f"        entry: {title_of(e)}")
+            return exits.FINDING
 
         # A DUPLICATE BODY REFUSES, and the whole run refuses rather than the
         # entry alone. A merge is not idempotent — a partial append would put

@@ -1630,6 +1630,23 @@ LANE_ROWS = [
         stage="wave 3 (lc-17 lane B3 — merge mode)",
     ),
     Row(
+        ident="merge_source_self_duplicate",
+        refusal="`migrate --merge` where two non-re-imported entries in the "
+                "incoming source carry equal parsed HEADLINEs. The WHOLE RUN "
+                "refuses and nothing is written: a merge appends, so writing "
+                "the rest and reporting either entry would leave the carrier "
+                "half-merged and a re-run would write those bodies twice",
+        firing_input="`migrate --from BACKLOG.md --merge` where two source "
+                     "entries carry the same parsed headline",
+        expect=exits.FINDING,
+        fire=lambda: _migrate_run(merge=True,
+                                  backlog=MERGE_SOURCE_SELF_DUPLICATE),
+        control=lambda: _migrate_run(merge=True,
+                                     backlog=MERGE_SOURCE_SELF_DUPLICATE_OTHER),
+        stage="wave 6 (lc-33 — the source's self-repeat, the reach "
+              "merge_duplicate_body declines)",
+    ),
+    Row(
         ident="migration_ledger_nonzero",
         refusal="the acceptance criterion 'zero entries routed to the ledger' "
                 "(§3.6, §4 row 1) is checked at the ARTIFACT and not only in "
@@ -1830,6 +1847,22 @@ blocked-by: decision regrade: fill goal, write-set, done-criterion and evidence,
 #: `ITEMS.md` is populated, not in the entry count, not in the flag.
 MERGE_TARGET_ITEMS_OTHER = MERGE_TARGET_ITEMS.replace(
     "an ordinary entry", "a different entry")
+
+
+#: Two source entries carry the SAME parsed headline while both successor
+#: homes are absent.  The fire/control differ in one word of the second
+#: entry's headline, so neither the homes comparison nor a shape change can
+#: account for the verdict.
+MERGE_SOURCE_SELF_DUPLICATE = """# old
+
+## Open
+
+- **READY 2026-01-01 — repeated source work.** first body
+- **READY 2026-01-01 — repeated source work.** second body
+"""
+MERGE_SOURCE_SELF_DUPLICATE_OTHER = MERGE_SOURCE_SELF_DUPLICATE.replace(
+    "READY 2026-01-01 — repeated source work.** second body",
+    "READY 2026-01-01 — different source work.** second body")
 
 
 def _migrate_run(*, backlog=None, force=False, merge=False,
