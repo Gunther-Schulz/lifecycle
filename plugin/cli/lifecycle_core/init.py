@@ -97,6 +97,88 @@ def determine_laws(repo: Path):
             f"every author of CLAUDE.md's history is the operator ({operator})")
 
 
+#: How long `gh` gets to answer the visibility question before the reading
+#: is declared unresolved. Unlike the `git` calls above — local, instant —
+#: this one can sit behind a network round trip, so it carries a bound: a
+#: verb that hangs is worse than one that says it could not tell.
+GH_VISIBILITY_TIMEOUT_S = 10
+
+
+def determine_public(repo: Path):
+    """`(public, branch, reason)` per lc-81 — the `public` flag DERIVED, or
+    declared unresolved, never a silent default.
+
+    branch is one of "public", "private", "could-not-verify" — the same
+    three-shape contract `determine_laws` returns above, for the same
+    reason: a could-not-verify reading says WHICH route it took rather than
+    only that it happened.
+
+    `gh` IS NOT A DEPENDENCY OF THIS TOOL, and the remote check ahead of the
+    call is what keeps it from becoming one. A repo with no remote has
+    nothing to ask about and never reaches `gh` at all, so `init` in a fresh
+    local repo neither needs `gh` installed nor waits on it; where a remote
+    does exist and `gh` cannot answer — absent, unauthenticated, unreachable,
+    too slow — the reading is unresolved and `init` still writes its
+    declaration. A repair that made `init` FAIL without `gh` would be a
+    larger behaviour change than the defect it repairs.
+
+    THE UNRESOLVED BRANCH STILL WRITES `false`, AND THAT IS A DECISION.
+    `declaration.validate` refuses any third value for this key ("There is
+    no third value"), so an unresolved reading has no null to write; what it
+    has is the printed line. `true` is not the safe-looking fallback it
+    appears to be: `verbs.check_origin` REFUSES an item whose source cwd is
+    another repo on a repo declaring `public: true`, so a wrong `true` turns
+    a fresh repo's `item add` into a refusal, while a wrong `false` relaxes
+    a leak class this verb writes as OFF anyway. Both directions are wrong;
+    only one of them also breaks a verb. What stops either from being
+    SILENT is the caller-facing line, which is the whole of lc-81.
+    """
+    remotes = subprocess.run(
+        ["git", "-C", str(repo), "remote"], capture_output=True, text=True)
+    if remotes.returncode != 0 or not remotes.stdout.strip():
+        return (False, "could-not-verify",
+                "this repo has no git remote, so there is no hosted "
+                "repository whose visibility could be read (checked: "
+                "git remote)")
+
+    try:
+        gh = subprocess.run(
+            ["gh", "repo", "view", "--json", "visibility"],
+            cwd=str(repo), capture_output=True, text=True,
+            timeout=GH_VISIBILITY_TIMEOUT_S)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return (False, "could-not-verify",
+                f"`gh repo view --json visibility` could not be run here "
+                f"({exc!r}); gh is not a dependency this tool installs")
+    if gh.returncode != 0:
+        return (False, "could-not-verify",
+                f"`gh repo view --json visibility` exited {gh.returncode} "
+                f"({gh.stderr.strip()!r})")
+
+    try:
+        payload = json.loads(gh.stdout)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return (False, "could-not-verify",
+                "`gh repo view --json visibility` exited 0 but printed "
+                f"something that is not JSON ({gh.stdout.strip()[:120]!r})")
+    visibility = payload.get("visibility") if isinstance(payload, dict) else None
+    if not isinstance(visibility, str) or not visibility.strip():
+        return (False, "could-not-verify",
+                "`gh repo view --json visibility` returned JSON carrying no "
+                f"`visibility` string ({gh.stdout.strip()[:120]!r})")
+
+    word = visibility.strip().upper()
+    if word == "PUBLIC":
+        return (True, "public", "`gh repo view --json visibility` says PUBLIC")
+    if word in ("PRIVATE", "INTERNAL"):
+        return (False, "private",
+                f"`gh repo view --json visibility` says {word}")
+    return (False, "could-not-verify",
+            f"`gh repo view --json visibility` says {visibility!r}, which is "
+            "neither PUBLIC nor PRIVATE/INTERNAL — an unrecognised word is "
+            "not evidence of either, so it is not read as one")
+
+
 #: The three carrier kinds `init` COPIES from the plugin's own declaration,
 #: never invents (brief, section A). Populated lazily by `_plugin_kinds()`
 #: rather than at import time: the plugin's declaration is read from disk
@@ -184,6 +266,17 @@ def cmd_init(args, out, repo: Path) -> int:
     else:
         out(f"laws: {laws_file} — {branch} branch: {reason}")
 
+    is_public, visibility_branch, visibility_reason = determine_public(repo)
+    if visibility_branch == "could-not-verify":
+        out(f"public: {is_public} — COULD NOT VERIFY: {visibility_reason}. "
+            "Writing false because this key has no third value, NOT because "
+            "the repo was read as private; false is the direction that "
+            "relaxes the leak scan, so a repo that IS public must have this "
+            "corrected by hand before anything trusts that scan.")
+    else:
+        out(f"public: {is_public} — {visibility_branch} branch: "
+            f"{visibility_reason}")
+
     out("trigger-policy: on-demand (recommended next step: switch to "
         "`advise` once the router has run clean for a week — a suggestion "
         "in the file, never a silent switch)")
@@ -220,7 +313,7 @@ def cmd_init(args, out, repo: Path) -> int:
     doc = {
         "schema": decl.SCHEMA_FLOOR,
         "id-prefix": prefix,
-        "public": False,
+        "public": is_public,
         "laws": laws_file,
         "closure-home": "ITEMS-DONE.md",
         "trigger-policy": "on-demand",

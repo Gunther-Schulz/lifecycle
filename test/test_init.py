@@ -8,6 +8,7 @@ exactly the state `init` is supposed to CREATE rather than consume. `init`'s
 own tests need repos that do not already carry a declaration.
 """
 
+import inspect
 import io
 import json
 import os
@@ -358,6 +359,200 @@ class NoLanesIsAnEmptyListNeverAbsent(unittest.TestCase):
         self.assertIsNone(lane.problem, lane.problem)
         t = lanes_mod.evaluate_trigger(lane.trigger, cwd=r.dir)
         self.assertEqual(t.state, lanes_mod.QUIET)
+
+
+def _gh_on_path(case, *, stdout="", stderr="", exit_code=0):
+    """Put a `gh` on PATH that answers from a script instead of a network.
+
+    END-TO-END on purpose: the arms below drive the real `subprocess.run`
+    inside `determine_public` rather than stubbing the function, so the
+    exit-code read, the JSON parse and `cmd_init`'s own wiring are all
+    exercised. Stubbing the function would leave exactly the plumbing the
+    defect lived in untested.
+    """
+    bin_dir = Path(tempfile.mkdtemp(prefix="lifecycle-fakebin-"))
+    case.addCleanup(shutil.rmtree, bin_dir, True)
+    script = ["#!/bin/sh"]
+    if stderr:
+        script.append(f'printf \'%s\\n\' "{stderr}" >&2')
+    if stdout:
+        script.append("cat <<'LIFECYCLE_JSON'")
+        script.append(stdout)
+        script.append("LIFECYCLE_JSON")
+    script.append(f"exit {exit_code}")
+    gh = bin_dir / "gh"
+    gh.write_text("\n".join(script) + "\n", encoding="utf-8")
+    gh.chmod(0o755)
+    old_path = os.environ.get("PATH", "")
+    case.addCleanup(os.environ.__setitem__, "PATH", old_path)
+    os.environ["PATH"] = f"{bin_dir}{os.pathsep}{old_path}"
+    return gh
+
+
+class PublicFlagArm(unittest.TestCase):
+    """lc-81: `public` is DERIVED or declared unresolved — never a silent
+    hardcoded default.
+
+    `public` is the one field whose wrong value fails TOWARD EXPOSURE: a
+    declared-private repo relaxes the leak scan, and `verbs.check_origin`
+    reads the same flag. So these arms are a DISCRIMINATING SET rather
+    than one happy path — PUBLIC and PRIVATE must land DIFFERENT values,
+    because a check both of them satisfy measures nothing — and every
+    unresolved route must still leave a usable declaration behind.
+    """
+
+    def _repo_with_a_remote(self):
+        r = ScratchGitRepo()
+        self.addCleanup(r.close)
+        r.commit_as("op@example.invalid")
+        # A remote that cannot be reached by anything real: the arms fake
+        # `gh`, and a URL at .invalid guarantees that a fake which failed
+        # to land cannot silently become a network call instead.
+        r._git("remote", "add", "origin", "https://example.invalid/o/n.git")
+        return r
+
+    @staticmethod
+    def _declaration(r):
+        return json.loads((r.dir / ".claude" / "lifecycle.json").read_text())
+
+    def test_a_PUBLIC_gh_visibility_is_derived_into_the_flag(self):
+        """THE DEFECT'S OWN ARM: this is the repo the entry describes — gh
+        says PUBLIC — and the flag written must be true, with its reason."""
+        r = self._repo_with_a_remote()
+        _gh_on_path(self, stdout='{"visibility":"PUBLIC"}')
+        code, out = _run(["--repo", str(r.dir), "init"])
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIs(self._declaration(r)["public"], True, out)
+        self.assertIn("public: True", out)
+        self.assertIn("PUBLIC", out)
+
+    def test_a_PRIVATE_gh_visibility_is_derived_into_the_flag(self):
+        """THE DISCRIMINATING HALF. Without it, an implementation that
+        hardcoded `True` would pass the arm above — the two must DIFFER,
+        and the reason printed must name which reading was taken."""
+        r = self._repo_with_a_remote()
+        _gh_on_path(self, stdout='{"visibility":"PRIVATE"}')
+        code, out = _run(["--repo", str(r.dir), "init"])
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIs(self._declaration(r)["public"], False, out)
+        self.assertIn("public: False", out)
+        self.assertIn("private branch", out)
+
+    def test_no_remote_still_initialises_and_names_the_flag_unresolved(self):
+        """MUST-NOT-MOVE (2): a repo with no `gh` remote initialises rather
+        than failing — and reaches that state WITHOUT consulting `gh` at
+        all, which is why no fake is installed here. A repair that made
+        `init` depend on gh being installed, authenticated or reachable
+        would be a bigger behaviour change than the defect."""
+        r = ScratchGitRepo()
+        self.addCleanup(r.close)
+        r.commit_as("op@example.invalid")
+        code, out = _run(["--repo", str(r.dir), "init"])
+        self.assertEqual(code, exits.CLEAN, out)
+        doc = self._declaration(r)
+        self.assertIsInstance(doc["public"], bool)
+        self.assertIs(doc["public"], False, out)
+        self.assertEqual(set(doc.keys()), set(decl.REQUIRED_KEYS))
+        self.assertIn("public: False", out)
+        self.assertIn("COULD NOT VERIFY", out)
+        self.assertIn("no git remote", out)
+        self.assertIn("checked: git remote", out)
+
+    def test_a_gh_that_cannot_answer_is_unresolved_not_a_guess(self):
+        """The exit-code route. `init` still succeeds; the reading does
+        not, and says which command failed."""
+        r = self._repo_with_a_remote()
+        _gh_on_path(self, stderr="could not resolve to a Repository",
+                    exit_code=1)
+        code, out = _run(["--repo", str(r.dir), "init"])
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIs(self._declaration(r)["public"], False, out)
+        self.assertIn("public: False", out)
+        self.assertIn("COULD NOT VERIFY", out)
+        self.assertIn("gh repo view --json visibility", out)
+
+    def test_an_unrecognised_visibility_word_is_unresolved_not_a_guess(self):
+        """A visibility GitHub has not shipped yet must not silently
+        collapse into `false` as "not PUBLIC" — the word is quoted back."""
+        r = self._repo_with_a_remote()
+        _gh_on_path(self, stdout='{"visibility":"SOMETHING-NEW"}')
+        code, out = _run(["--repo", str(r.dir), "init"])
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIs(self._declaration(r)["public"], False, out)
+        self.assertIn("public: False", out)
+        self.assertIn("COULD NOT VERIFY", out)
+        self.assertIn("SOMETHING-NEW", out)
+
+    def test_output_gh_cannot_parse_as_json_is_unresolved(self):
+        """The parse route, separate from the exit-code route: a `gh` that
+        exits 0 and prints something else is the failure that reads most
+        like a success."""
+        r = self._repo_with_a_remote()
+        _gh_on_path(self, stdout="not json at all")
+        code, out = _run(["--repo", str(r.dir), "init"])
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIs(self._declaration(r)["public"], False, out)
+        self.assertIn("public: False", out)
+        self.assertIn("COULD NOT VERIFY", out)
+
+
+class ExistingCouldNotVerifyLinesAreFrozen(unittest.TestCase):
+    """MUST-NOT-MOVE (1) for lc-81: the could-not-verify lines `init`
+    ALREADY emitted keep their exact text.
+
+    This class NEVER calls `determine_public`. That is deliberate: an arm
+    that ran under the mechanism on trial could be skipped or diverted by
+    it and the swallowed proof would read as a pass, so the pin is asked
+    of an instrument independent of the thing being changed.
+
+    Two instruments, because they fail differently:
+
+    * the BEHAVIOURAL pin drives the one could-not-verify branch reachable
+      end-to-end from a scratch git repo, and compares the whole returned
+      tuple;
+    * the SOURCE pin covers the three branches that cannot be reached
+      without breaking git itself. It is a GOLDEN-TEXT pin and is labelled
+      as one — its job is to make an edit to those lines loud, not to
+      prove the branch executes. The fragments are the exact per-line
+      source literals, because adjacent Python string literals are not
+      contiguous in the source text.
+    """
+
+    #: The joined runtime reason of the one reachable branch.
+    _REACHABLE_REASON = ("no tracked CLAUDE.md in this repo (checked: "
+                         "git ls-files --error-unmatch CLAUDE.md)")
+
+    #: Source-contiguous fragments of every could-not-verify line that
+    #: existed before lc-81 — four `determine_laws` reasons and the two
+    #: lines `cmd_init` emits.
+    _SOURCE_FRAGMENTS = (
+        '"no tracked CLAUDE.md in this repo (checked: git ls-files "',
+        '"--error-unmatch CLAUDE.md)"',
+        '"git could not read CLAUDE.md\'s author history (checked: "',
+        '"git log --format=%ae -- CLAUDE.md; {log.stderr.strip()!r})"',
+        '"CLAUDE.md is tracked but carries no commit history "',
+        '"(checked: git log --format=%ae -- CLAUDE.md, 0 lines)"',
+        '"this repo\'s own operator identity could not be read "',
+        '"(checked: git config user.email)"',
+        '"laws: {laws_file} (the local overlay) — COULD NOT VERIFY: "',
+        '"COULD NOT VERIFY: git could not answer whether the "',
+        '"declaration is ignored (checked: git check-ignore --no-index "',
+    )
+
+    def test_the_reachable_branch_returns_its_reason_byte_for_byte(self):
+        r = ScratchGitRepo()
+        self.addCleanup(r.close)
+        r.commit_as("op@example.invalid")  # no CLAUDE.md at all
+        self.assertEqual(
+            init_mod.determine_laws(r.dir),
+            ("CLAUDE.local.md", "could-not-verify", self._REACHABLE_REASON))
+
+    def test_every_pre_existing_line_is_still_in_the_source_byte_for_byte(self):
+        src = inspect.getsource(init_mod)
+        for fragment in self._SOURCE_FRAGMENTS:
+            self.assertIn(fragment, src,
+                          "a could-not-verify line that predates lc-81 "
+                          f"moved: {fragment}")
 
 
 if __name__ == "__main__":
