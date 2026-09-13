@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 117
+added: 118
 compacted: 0
 
 ## lc-3
@@ -713,4 +713,13 @@ goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_waves.py
 done-criterion: Fifth bucket 'venue' keyed on the <word>:<rest> shape, with its own count and explicit zero; lc-23/lc-32's entries route there in a live run and the prose bucket no longer holds them; the --write-set help text gains the trailing-slash directory convention sentence so the convention lives where slot authors read; tests for the venue routing and a mutation red for the bucket
 evidence: VERIFIED AT THIS DESK: the live waves run at this desk shows lc-23 and lc-32 in the prose bucket with the decision: entries quoted; the grammar's paths/venues wording read in item add --help this session
+blocked-by: NONE
+
+## lc-126
+grade: READY
+requirement: The amendment supersession rule is pinned only against cases where FILE ORDER and DATE ORDER agree, so the arms cannot tell 'last line in the file wins' from 'latest date wins'. lc-7's two amended-evidence lines — the discriminator lc-77 shipped with — share the date 2026-09-12, so a stable sort by date preserves file order and last-wins holds under BOTH readings. The two rules diverge only where an amendment carrying an EARLIER date sits LATER in the block, which no item in the carrier exhibits today and which a hand-edited or merged carrier can produce at any time. record: lc-77 closing report slot (e), drain desk 2026-09-13
+goal: enforce-the-invariants
+write-set: test/test_items.py
+done-criterion: An arm exists whose fixture puts an EARLIER-dated amendment LATER in the block, asserting the FILE-ORDER answer: the later line wins regardless of its date. The rule IS file order, decided at the drain desk 2026-09-13 and derivable rather than a preference — it is the only total order an append-and-supersede carrier actually has, dates are prose the writer supplies and can repeat or mistype, and 'item amend' already appends. RED-FIRST, and it must be an assertion FAILURE rather than an error: build the fixture first and run it against a resolver mutated to sort by date, showing the two answers DIFFER on that fixture. An arm both readings satisfy is exactly the non-discrimination this entry exists to remove, so a green that cannot separate them proves nothing. MUST-NOT-MOVE: lc-77's existing lc-7 and lc-22 arms stay green and unedited, and 'item slots' output for every real carrier item is byte-unchanged, since no item in the carrier exercises the divergent case.
+evidence: SEARCHED BEFORE BOOKING, which is why the join is new: grep over ITEMS.md and ITEMS-DONE.md for 'same date|same-date|file order|file-order|date sort' returned 3 hits — lc-77's own closure line naming this residue, and two unrelated session-banner lines. Instrument reach shown rather than assumed: the pattern returns hits, so a zero on the booked-already question is an absence and not a dead pattern. GROUNDED AT THE ARTIFACT 2026-09-13: lc-7 carries exactly two amended-evidence lines, 832 and 1106 bytes, diverging at char 554, and BOTH are dated 2026-09-12 — verified by parsing ITEMS.md and hashing the two lines at the drain desk. That is what makes lc-7 a genuine discriminator for last-wins and a NON-discriminator for file-order-versus-date-order. Surfaced by the lc-77 executing lane in its slot (e), not by the desk, and recorded here because naming a gap in a closure reason does not discharge it.
 blocked-by: NONE
