@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 84
+added: 85
 compacted: 0
 
 ## lc-3
@@ -551,4 +551,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: per_source_counts reads the RAW BLOCK and BOTH homes, so a merge whose bodies are correctly placed exits 0 rather than 3. Red-first is already recorded and executed: the test case TheConservationCounterHasNotFollowedTheAnchor goes RED the moment the repair lands, so this gap cannot close unnoticed. MUST-NOT-MOVE: total conservation keeps its current clean answer, and a genuinely unbalanced merge still answers COULD NOT VERIFY rather than being rounded to clean by a wider read
 evidence: FOUND AND STOPPED ON by the lc-73 build lane 2026-09-12 rather than repaired, correctly: it changes a function the brief did not name, over the figure the whole conservation contract rests on. Measured by that lane at statiker 865e0a2 against a pinned copy: 4 + 25 read back out of the homes against 45 from the source, reproduced with the copy as a real git repo so the residue could-not-verify is not a confound. The lane also generalised it, and the general form is the reason this entry exists rather than a note: when a detector anchor is corrected, every OTHER reader of the same record inherits the old defect - the standing question at any anchor change is who else reads this record, and how
+blocked-by: NONE
+
+## lc-93
+grade: READY
+requirement: the session-start banner is plugin-worthy: every surfacing a fresh session gets on the operator's machine (item-carrier check, ready head, retirement-ratio line, ledger tail) is wired through machine-local settings.json hooks even though the tools it runs ship WITH this plugin — so an external install gets a carrier with no surfacing, and sessions start blind (statiker desk 1b204567's replication read, 2026-09-13). The fix is a plugin-shipped SessionStart hook: where the cwd repo carries .claude/lifecycle.json it prints item check + ready --head + the ratio line + the LEDGER.md tail; where it does not, it prints nothing (repo-scoped, zero noise elsewhere)
+goal: tend
+write-set: plugin/hooks (new SessionStart hook + hooks.json entry),plugin/.claude-plugin (manifest wiring)
+done-criterion: a fresh session in a lifecycle-carrying repo prints the banner with zero local settings.json wiring; a session elsewhere prints nothing; the hook's own battery covers both (the instrument pair); the operator's local wiring keeps working unchanged beside it
+evidence: this session's own start banner (statiker, 2026-09-13) as the target rendering; dotfiles settings.json:121-157 as the current machine-local wiring (df-171 lane read, same date); lifecycle plugin.json currently declares git-hooks only, no harness SessionStart (same lane)
 blocked-by: NONE
