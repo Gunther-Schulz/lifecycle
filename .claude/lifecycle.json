@@ -107,6 +107,20 @@
       },
       "growth": "unbounded-with-reason — one file per measurement, and a measurement is only taken when a question needs it; that is the control"
     },
+    "directives": {
+      "home": "docs/directives/*.md",
+      "writer": "session",
+      "reader": [
+        "verb:retire",
+        "session"
+      ],
+      "staleness": "change-coupling — a directive whose named desk, carrier state, or dispatch context has moved past its recorded instruction no longer directs current work",
+      "exit": {
+        "action": "never",
+        "recording-act": "none is taken: append-only historical; a superseding directive names the instruction it overtakes"
+      },
+      "growth": "unbounded-with-reason — one dated directive per live drain wave or desk handoff, and the recorded handoff or drain decision that requires it is the control"
+    },
     "refusal-registry": {
       "home": "plugin/cli/lifecycle_core/refusals.py",
       "writer": "session",
@@ -284,6 +298,19 @@
         "recording-act": "a dependents search over every declaring repo's template-bindings FIRST, then a ledger line naming the retired template and the repos that had bound it"
       },
       "growth": "unbounded-with-reason — one per SHARED procedure, and a procedure is only shared once two or more lanes use it; the sharing threshold is the control. EMPTY today (wave 2 extracts the first set), and the directory placeholder is what says so rather than the directory's absence"
+    },
+    "workflow definitions": {
+      "home": "plugin/workflows",
+      "writer": "session",
+      "reader": [
+        "session"
+      ],
+      "staleness": "no binder — a workflow no repo binds is stale by definition, and the plugin's suite runs every workflow against every binder so a binding that stops resolving is loud",
+      "exit": {
+        "action": "delete",
+        "recording-act": "a dependents search over every declaring repo's workflow bindings FIRST, then a ledger line naming the retired workflow and the repos that had bound it"
+      },
+      "growth": "unbounded-with-reason — the directory placeholder declares EMPTY until a workflow exists; then one file per SHARED procedure enters only once two or more lanes use it, so the sharing threshold is the control"
     }
   }
 }
