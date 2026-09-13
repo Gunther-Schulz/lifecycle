@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 94
+added: 95
 compacted: 0
 
 ## lc-3
@@ -634,3 +634,12 @@ write-set: tools/absence-scan.mjs (LANDS IN claude-code-cache-fix FIRST - this r
 done-criterion: the fallback either scans the range interior, or says truthfully what it does not scan - the message and the walk agree, whichever way they are made to agree. A verdict line reading clean over an unscanned interior is the defect; a degraded line that names the gap is an acceptable answer and a silent one is not. The USAGE line names the token as a literal. MUST-NOT-MOVE: the tip-tree walk keeps its current reach, and a genuine range with a resolvable base keeps scanning its interior exactly as it does now - this is about the FALLBACK, and widening the fallback must not narrow the normal path
 evidence: MEASURED AT THIS DESK against this repo's real history, 2026-09-13, not against a fixture: 'git rev-list HEAD --not --all --not HEAD --branches --tags --remotes' returns 0 commits here while 'git ls-tree -r --name-only HEAD' returns 57 files, and the control 'git rev-list HEAD~3..HEAD' returns 3 - so the walk discriminates and the zero is a real emptiness. Found first by the lc-89 build lane in two purpose-built fixtures, each carrying a blob added-then-removed inside the range: neither spelling of the fallback found it, identically, so lc-89 did not move this and it is not a regression. Every push this desk made today took the fallback path
 blocked-by: decision the cross-repo landing: this file is declared a byte-identical copy that lands in claude-code-cache-fix FIRST, so the repair is that repo's before it is this one's, and the sequencing is not this desk's to take
+
+## lc-103
+grade: READY
+requirement: this repo ships git hooks and has no guard that they stay LAUNCHABLE. A hook committed without its executable bit is a gate that fails OPEN - git cannot run it, the push proceeds, and every content check reports clean because the bytes are right. It happened here: 0cbd1ad committed tools/git-hooks/pre-push at mode 100644 with the SAME blob sha as the working file, so this repo's leak scan was a dead gate until d8c3934 repaired the mode. The cause generalizes past the incident: a Python file write drops the source's mode, and 'git status --porcelain' prints one ' M' for a mode change on an already-modified file, so the mode change hides inside the content change and the commit summary line is the first instrument that names it - after the commit. dotfiles guards this class twice over (pre-commit nonexec_hook_commands, doctor check_plugin_hook_files); this repo, which declares git-hooks in its own plugin.json, guards it not at all - record: lc-89 lane report 3a, 2026-09-13
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/declaration.py,test/
+done-criterion: a hook this repo ships cannot be committed or pass its own checks without the executable bit: the mode of every declared git-hook path is asserted against git's own record (git ls-tree's mode, not the filesystem alone, since a deployed symlink's target is what git stores), and the refusal is a registered roster row with plant AND control. Red-first is already in hand and must be reproduced: 0cbd1ad is a real commit in this history carrying mode 100644 on a hook, so the check goes red against that ref and green against d8c3934. MUST-NOT-MOVE: a NON-hook file's mode is not policed - this is about artifacts something launches, and a guard that fires on ordinary files trains the override reflex that kills it
+evidence: MEASURED AT THIS DESK, 2026-09-13, independently of the lane's report: 'git ls-tree 0cbd1ad -- tools/git-hooks/pre-push' returns mode 100644 and 'git ls-tree HEAD' returns 100755, with the SAME blob sha 887ecff8 in both - content identical, mode alone differing, which is exactly why a sha-only restore check passed it. The dead-gate consequence was measured by the lane at the artifact git actually runs: the .git/hooks/pre-push symlink answered 'permission denied'. The dotfiles-side guards are named from that repo's CLAUDE.md, RELAYED and not re-read here
+blocked-by: NONE
