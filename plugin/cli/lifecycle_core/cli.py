@@ -218,6 +218,54 @@ def cmd_item_check(args, out) -> int:
     return code
 
 
+def cmd_item_waves(args, out) -> int:
+    """`item waves` (lc-123) — the item→lane join, DERIVED from write-sets.
+
+    The routing corpus makes a derived join over write-boundaries the source
+    of a dispatch's item→lane mapping, and until this verb nothing computed
+    one: every drain paid a manual pass over prose or fell back to the
+    identity mapping nobody chose (measured 1.05 items/lane all-time for this
+    carrier). The join is mechanical, so it is the tool's; the sizing and the
+    tier are not, so they stay the desk's.
+
+    THE POPULATION IS `item ready --head`'s OWN PREDICATE, called here rather
+    than restated: `_blocker_state` plus the UNKNOWN-slot refusal, the exact
+    pair the head folds into `SCHEDULABLE`. A second spelling of
+    schedulability would be a second board, and the two would answer
+    differently the first time either moved — which is why this reaches into
+    `verbs` for a private helper instead of re-deriving the cheap half.
+    """
+    ctx, code = _context(args, out)
+    if ctx is None:
+        return code
+    parsed, why = verbs._load(ctx.items_path)
+    if parsed is None:
+        out(f"COULD NOT VERIFY: {why}")
+        return exits.COULD_NOT_VERIFY
+    done_parsed, done_why = verbs._load(ctx.done_path)
+
+    ready = [it for it in parsed.items if it.grade == "READY"]
+    schedulable, excluded = [], []
+    for it in ready:
+        unknown = items_mod.unknown_slots_of(it)
+        state, st_code, _note = verbs._blocker_state(it, ctx, parsed,
+                                                     done_parsed, done_why)
+        if state.startswith("UNBLOCKED") and not unknown:
+            schedulable.append(it)
+            continue
+        # THE GATE'S OWN VERDICT TRAVELS, never a fresh one: a broken blocker
+        # predicate is a FINDING wherever it is read, and a planning verb that
+        # swallowed it would report a tidy plan over a carrier the head calls
+        # red.
+        code = exits.worst([code, st_code])
+        excluded.append((it.ident, state + (
+            "; UNKNOWN slot(s): " + ", ".join(unknown) if unknown else "")))
+
+    return exits.worst([code, items_mod.report_waves(
+        schedulable, out, ready_n=len(ready), live_n=len(parsed.items),
+        excluded=excluded)])
+
+
 class _Parser(argparse.ArgumentParser):
     """argparse's own usage errors, remapped to the verb contract (§3.8c).
 
@@ -316,6 +364,11 @@ def build_parser() -> argparse.ArgumentParser:
     ready.add_argument("--head", action="store_true",
                        help="the DERIVED head: every READY item, ordered by "
                             "the declared head-rule. No cap (R22).")
+
+    its.add_parser("waves", help="the item→lane JOIN over the schedulable "
+                                 "READY set: write-set overlap, file-"
+                                 "granular. Reports the mapping, decides no "
+                                 "sizing and no tier")
 
     # `item amend` (lc-27) — the edit path that LEAVES A RECORD. The slot
     # flags are read from `verbs.AMEND_FLAGS` rather than listed again here:
@@ -568,6 +621,8 @@ def main(argv=None) -> int:
         path = f"item {args.item_action}"
         if args.item_action == "check":
             code = cmd_item_check(args, out)
+        elif args.item_action == "waves":
+            code = cmd_item_waves(args, out)
         elif args.item_action in ("add", "amend", "promote", "ready", "park",
                                   "close", "ratio", "statusline"):
             code = _carrier_verb(args, out)

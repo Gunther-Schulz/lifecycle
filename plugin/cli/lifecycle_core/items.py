@@ -27,6 +27,7 @@ skips everything from that heading onward; conservation still counts it.
 """
 
 import fcntl
+import posixpath
 import re
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -1434,3 +1435,317 @@ def check_parked_blockers(parsed: Parsed, prefix: str | None):
         if kind is None or kind == "none":
             untyped.append((it.ident, it.line, it.slots.get("blocked-by", "")))
     return untyped, None
+
+
+# --- the wave planner (lc-123) -----------------------------------------------
+
+#: The four answers `item waves` gives about ONE item's write-set. Only the
+#: first is a lane: an item whose write boundary cannot be read as this repo's
+#: paths is NEVER clustered, because clustering it would assert a join over a
+#: set nobody read. The other three are listed with counts and explicit zeros
+#: instead — an omitted key reads exactly like "checked and clean", which is
+#: the could-not-verify failure the three-answers rule forbids.
+WAVE_PATHS = "path-valued"
+WAVE_UNSET = "missing/UNKNOWN/NONE"
+WAVE_PROSE = "prose"
+WAVE_FOREIGN = "other-repo"
+
+#: The non-lane buckets, in report order. A RUN rather than three literals at
+#: the print site, so the report cannot quietly print only the ones that
+#: happen to be non-empty.
+WAVE_NON_PATH = (WAVE_UNSET, WAVE_PROSE, WAVE_FOREIGN)
+
+#: A repo-relative path ENTRY. Deliberately narrow: a space, a parenthesis, a
+#: semicolon or a colon means the author wrote prose or a VENUE
+#: (`decision:<question>`, which `item add --write-set` accepts beside paths),
+#: and prose read as a path would put an item in a lane on a boundary nobody
+#: stated. A TRAILING SLASH marks a directory entry — the only directory form
+#: recognised here, because deriving directory-ness from the working tree
+#: would make the join depend on what happens to exist today rather than on
+#: the slot the desk wrote.
+_WAVE_PATH_ENTRY = re.compile(r"^[A-Za-z0-9._][A-Za-z0-9._/-]*$")
+
+
+def _wave_foreign_entry(entry: str) -> bool:
+    """Does this entry name a boundary OUTSIDE the repo being planned?
+
+    `<path>@<repo>` is this carrier's own foreign form (lc-66, lc-67:
+    `docs/directives/…md@cache-fix`); an absolute path, a `~` path and a `../`
+    escape each name a boundary this repo's one writer does not hold. Such an
+    item is not unschedulable — it is unschedulable HERE, which is a different
+    sentence and the reason this bucket is its own key rather than prose.
+    """
+    return (entry.startswith("/") or entry.startswith("~")
+            or entry.startswith("../") or entry == ".."
+            or "@" in entry)
+
+
+def wave_normalize(entry: str) -> str:
+    """One path entry, normalized for comparison; a trailing slash SURVIVES.
+
+    The slash is the directory marker (see `_WAVE_PATH_ENTRY`), so a
+    normalizer that dropped it would silently turn `test/` — every file under
+    test — into `test`, a single file nothing else names, and the whole lane
+    it binds would vanish without a message.
+    """
+    trailing = entry.endswith("/")
+    p = posixpath.normpath(entry)
+    return f"{p}/" if trailing and not p.endswith("/") else p
+
+
+def effective_write_set(item: Item) -> str:
+    """The write-set IN FORCE for `item` — the amended value where one exists.
+
+    THE EFFECTIVE SLOT RULE, applied here rather than re-derived: a slot's
+    value is the LAST `amended-<slot>:` line where the block carries one, else
+    the base slot line. `parse` already resolves it (`_resolve_amendments`,
+    last-wins, order read off the file), so the rule is satisfied by reading
+    `slots` and would be BROKEN by reading the block's raw lines — which is
+    why this reader exists at all: a second reader that went to the raw text
+    would cluster items by a write boundary the desk had already superseded.
+    """
+    return item.slots.get("write-set", "")
+
+
+def classify_write_set(value: str):
+    """`(bucket, paths, why)` for ONE effective write-set slot.
+
+    `paths` is non-empty only for `WAVE_PATHS`; `why` is the quoted evidence
+    for every other bucket. A MIXED slot — some entries paths, some not —
+    lands in the non-path bucket with the count of what did parse, and is not
+    clustered: a join over the parsing half would be a lane assertion resting
+    on a partial read of the slot, and it would read exactly like a complete
+    one.
+    """
+    # Deferred: `verbs` imports THIS module, so the dependency only runs one
+    # way at import time. The split itself is single-sourced there on purpose
+    # — `write_set_entries` is the system's existing instance of "what the
+    # entries of a write-set are", sentinel handling included, and a second
+    # split here would drift from the intake join's the day either moved.
+    from . import verbs as verbs_mod
+
+    raw = (value or "").strip()
+    if not raw:
+        return WAVE_UNSET, [], "the slot is absent or empty"
+    entries = verbs_mod.write_set_entries(raw)
+    if not entries:
+        return WAVE_UNSET, [], f"every entry is a sentinel: {raw!r}"
+
+    parses = [e for e in entries if _WAVE_PATH_ENTRY.match(e)]
+    foreign = [e for e in entries if _wave_foreign_entry(e)]
+    if foreign:
+        return (WAVE_FOREIGN, [],
+                f"names a write boundary outside this repo: {foreign[0]!r} "
+                f"({len(parses)} of {len(entries)} entry/entries parse as "
+                "repo-relative paths)")
+    unparsed = [e for e in entries if not _WAVE_PATH_ENTRY.match(e)]
+    if unparsed:
+        return (WAVE_PROSE, [],
+                f"does not parse as a path: {unparsed[0]!r} "
+                f"({len(parses)} of {len(entries)} entry/entries parse as "
+                "paths — a MIXED slot is not clustered on its parsing half)")
+    return WAVE_PATHS, [wave_normalize(e) for e in entries], None
+
+
+def wave_covers(entry: str, other: str) -> bool:
+    """Does `entry` — a DIRECTORY entry — contain `other`?
+
+    Segment-wise, never by substring: `test/` contains `test/x.py` and does
+    NOT contain `testing/x.py`, which a `startswith("test")` would call a hit.
+    That is the prefix-match-in-an-equality's-costume shape, and the trailing
+    slash is what makes this containment a real answer rather than one.
+
+    CONTAINMENT IS THE CONSERVATIVE DIRECTION, and it is a decision: an item
+    claiming all of `test/` really does collide with one naming
+    `test/test_migrate.py`, so equality alone would UNDER-join and hand two
+    writers the same file in parallel — the one failure this join exists to
+    prevent. Over-joining costs elapsed time and nothing else, and the lane's
+    binder line names the directory entry so the desk can see the merge and
+    overrule it.
+    """
+    if not entry.endswith("/"):
+        return False
+    return other == entry[:-1] or other.startswith(entry)
+
+
+def wave_witnesses(a_paths, b_paths):
+    """`[(key, by_containment), …]` — why two items collide, from their sets.
+
+    The key is the path that BINDS them: the shared entry where they are
+    equal, the containing directory entry where one covers the other.
+    """
+    hits: dict = {}
+    for x in a_paths:
+        for y in b_paths:
+            if x == y:
+                hits.setdefault(x, False)
+            elif wave_covers(x, y):
+                hits[x] = True
+            elif wave_covers(y, x):
+                hits[y] = True
+    return sorted(hits.items())
+
+
+def _wave_ident_key(ident: str):
+    """Sort ids the way their author reads them — `lc-16` before `lc-100`.
+
+    A plain string sort puts `lc-100` first, and a report a desk scans for its
+    own item's lane is a report whose order has to be the obvious one.
+    """
+    prefix, _, tail = ident.rpartition("-")
+    return (prefix, 0, int(tail)) if tail.isdigit() else (prefix, 1, 0, ident)
+
+
+def wave_lanes(rows):
+    """The connected components of the file-overlap graph.
+
+    `rows` is `[(ident, [path, …]), …]`; a lane is
+    `{"members": [ident, …], "binders": [(key, by_containment, carriers,
+    covered)]}`. Members SERIALIZE (they share a file); lanes are disjoint and
+    therefore parallel. Single-item lanes are lanes: an item colliding with
+    nothing is the parallel case, not an omission.
+
+    A CONTAINMENT BINDER SPLITS ITS MEMBERS IN TWO, and the split is the
+    actionable half: `carriers` wrote the directory entry, `covered` were
+    pulled in by it. One coarse slot can merge every otherwise-disjoint lane
+    in a carrier, and a binder line that listed both sides together would show
+    the merge while hiding whose slot caused it — the desk would see a giant
+    lane and have nothing to sharpen.
+    """
+    parent = {ident: ident for ident, _ in rows}
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    binders: dict = {}
+    for i in range(len(rows)):
+        ida, pa = rows[i]
+        for j in range(i + 1, len(rows)):
+            idb, pb = rows[j]
+            hits = wave_witnesses(pa, pb)
+            if not hits:
+                continue
+            ra, rb = find(ida), find(idb)
+            if ra != rb:
+                parent[rb] = ra
+            for key, by_containment in hits:
+                seen = binders.setdefault(key, [False, set()])
+                seen[0] = seen[0] or by_containment
+                seen[1].update((ida, idb))
+
+    order = [ident for ident, _ in rows]
+    lanes: dict = {}
+    for ident in order:
+        lanes.setdefault(find(ident), []).append(ident)
+
+    owns = {ident: set(paths) for ident, paths in rows}
+    out = []
+    for root in dict.fromkeys(find(i) for i in order):
+        members = lanes[root]
+        member_set = set(members)
+        rows_out = []
+        for key, (by_containment, carried) in sorted(binders.items()):
+            inside = sorted(carried & member_set, key=_wave_ident_key)
+            if len(inside) < 2:
+                continue
+            carriers = [i for i in inside if key in owns[i]]
+            covered = [i for i in inside if key not in owns[i]]
+            rows_out.append((key, by_containment, carriers, covered))
+        out.append({"members": members, "binders": rows_out})
+    return out
+
+
+def report_waves(schedulable, out, *, ready_n, live_n, excluded) -> int:
+    """`item waves` — the join, printed. WRITES NOTHING, decides no sizing.
+
+    `schedulable` is `[Item]` already through the blocker gate (the caller
+    reuses `item ready --head`'s own predicate rather than restating it);
+    `excluded` is `[(ident, why)]` for every READY item the gate held back,
+    printed rather than subtracted — a population that shrank silently is a
+    plan over a set the reader never saw.
+
+    THE EXIT CODE ANSWERS ONE QUESTION: is the mapping COMPLETE? Every
+    schedulable item path-valued and the join covers the population, so the
+    run is CLEAN; any item whose boundary could not be read as paths, or an
+    empty population, and the lane list is not the whole answer — COULD NOT
+    VERIFY, which is exactly the promise `exits.worst` says that code
+    withdraws. It never returns FINDING: whether a prose write-set is a defect
+    is `item check`'s question and lc-111's item, and a planning verb that
+    also graded the carrier would be two checkers with one exit code.
+    """
+    out("item waves — the write-set join over the schedulable READY set. "
+        "READ-ONLY: it writes no carrier and schedules nothing.")
+    out(f"scanned: {live_n} live item(s), {ready_n} READY, "
+        f"{len(schedulable)} schedulable (the blocker gate), "
+        f"{len(excluded)} READY but held back.")
+    for ident, why in excluded:
+        out(f"    held back: {ident} — {why}")
+
+    if not schedulable:
+        out("")
+        out("COULD NOT VERIFY: no schedulable item, so there was nothing to "
+            f"join — not a plan with zero collisions. {ready_n} item(s) are "
+            f"graded READY and {len(excluded)} of those the blocker gate held "
+            "back; a lane list printed over an empty population reads exactly "
+            "like a carrier whose work is all independent.")
+        return exits.COULD_NOT_VERIFY
+
+    buckets: dict = {WAVE_UNSET: [], WAVE_PROSE: [], WAVE_FOREIGN: []}
+    rows = []
+    for it in schedulable:
+        bucket, paths, why = classify_write_set(effective_write_set(it))
+        if bucket == WAVE_PATHS:
+            rows.append((it.ident, paths))
+        else:
+            buckets[bucket].append((it.ident, why))
+
+    lanes = wave_lanes(rows)
+    out("")
+    out(f"LANES: {len(lanes)} over {len(rows)} path-valued item(s). Members of "
+        "one lane SHARE A FILE and serialize; the lanes are disjoint by "
+        "construction, so the whole set of lanes is the PARALLEL set — "
+        f"{len(lanes)} lane(s) can run at once.")
+    for n, lane in enumerate(lanes, start=1):
+        members = lane["members"]
+        if len(members) == 1:
+            out(f"lane {n}: {members[0]} alone — its write-set shares no file "
+                "with any other schedulable item.")
+            continue
+        out(f"lane {n}: {len(members)} item(s) — {', '.join(members)}")
+        for key, by_containment, carriers, covered in lane["binders"]:
+            if not covered:
+                out(f"      shared {key}: {', '.join(carriers)}")
+                continue
+            out(f"      shared {key} — a DIRECTORY entry, written by "
+                f"{', '.join(carriers)}; it covers files named by "
+                f"{len(covered)} other member(s): {', '.join(covered)}")
+
+    out("")
+    out("NOT CLUSTERED — a write-set that cannot be read as this repo's paths "
+        "is never put in a lane, because a join over a slot nobody could read "
+        "would read exactly like one over a slot that was read:")
+    for key in WAVE_NON_PATH:
+        hits = buckets[key]
+        out(f"  {key}: {len(hits)}" + (" — none" if not hits else ""))
+        for ident, why in hits:
+            out(f"      {ident}: {why}")
+
+    unread = sum(len(buckets[k]) for k in WAVE_NON_PATH)
+    out("")
+    out("NO SIZING, NO TIER, NO ORDER: this verb computes the join and stops. "
+        "How many lanes one dispatch carries, which tier each takes and what "
+        "runs first stay the desk's judgment — the mapping is derivable, the "
+        "crossover is not.")
+    if unread:
+        out(f"item waves: COULD NOT VERIFY — {unread} of "
+            f"{len(schedulable)} schedulable item(s) have a write-set this "
+            "join could not read, so the lanes above are a plan over "
+            f"{len(rows)} item(s) and NOT the whole schedulable set.")
+        return exits.COULD_NOT_VERIFY
+    out(f"item waves: CLEAN — every one of the {len(rows)} schedulable "
+        "item(s) carries a path-valued write-set, so the mapping above covers "
+        "the whole population.")
+    return exits.CLEAN
