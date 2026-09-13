@@ -346,6 +346,14 @@ MUTATIONS = [
      "every lane then reads as carrying one, and a lane that routes nowhere "
      "is a clean board again"),
 
+    ("park_over_superseding_amendment", "verbs.py",
+     "        if effective != value:",
+     "        if False:",
+     "`item park`'s supersession check — the comparison between the value "
+     "written and the value the reader would actually put in force; disabled, "
+     "park returns CLEAN over a blocker that does not govern, which is the "
+     "verb telling the truth about its slot and lying about the item"),
+
     ("unknown_item", "verbs.py",
      '        out(f"FINDING [unknown_item] no live block {args.ident!r} in "\n'
      '            f"{ctx.items_path.name}.")\n'

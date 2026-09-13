@@ -722,6 +722,22 @@ FOUR_BLOCKER_ITEMS = (
     + _blocked_block("xx-4", "READY", "NONE")
 )
 
+#: lc-112's PAIR, and the one property between its arms is the SUPERSEDING
+#: LINE: both blocks are READY with `blocked-by: NONE` and are parked by the
+#: same argv, and only the first carries an `amended-blocked-by:` line. An arm
+#: differing in the blocker value as well would prove whichever of the two the
+#: reader assumed.
+PARK_AMENDED_ITEMS = (
+    "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+    + _blocked_block("xx-1", "READY", "NONE")
+    + "amend-reason: 2026-09-12 the earlier wait was cleared by the "
+      "retirement pass\namended-blocked-by: 2026-09-12 NONE\n"
+)
+PARK_UNAMENDED_ITEMS = (
+    "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+    + _blocked_block("xx-1", "READY", "NONE")
+)
+
 #: lc-90's PAIR, and the one property between its arms is WHERE THE TARGET
 #: SITS: `xx-1` is blocked by `xx-2` in both, and only the second has `xx-2`
 #: closed. Both carriers hold two bodies against `baseline: 2`, so neither arm
@@ -1060,6 +1076,28 @@ VERB_ROWS = [
                               "decision which window is canonical"],
                              items=SEED_ITEMS),
         stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="park_over_superseding_amendment",
+        refusal="`item park` returning CLEAN over a blocker that would NOT "
+                "govern — the base `blocked-by:` slot written while an "
+                "`amended-blocked-by:` line supersedes it, so the grade moves "
+                "to PARKED and the EFFECTIVE blocker is whatever the "
+                "amendment says. The verb's success line is true about the "
+                "slot it wrote and false about the item",
+        firing_input="`item park <id> --blocked-by <typed>` on a block "
+                     "carrying a superseding `amended-blocked-by:` line",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
+                           "decision which window is canonical"],
+                          items=PARK_AMENDED_ITEMS),
+        # The SAME park of the SAME block, the amendment group ALONE removed:
+        # the arms differ in the superseding line and in nothing else, so the
+        # refusal is the supersession and not the park path.
+        control=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
+                              "decision which window is canonical"],
+                             items=PARK_UNAMENDED_ITEMS),
+        stage="wave 5 (lc-112)",
     ),
     Row(
         ident="amend_without_reason",
