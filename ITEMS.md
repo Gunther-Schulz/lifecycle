@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 114
+added: 115
 compacted: 0
 
 ## lc-3
@@ -732,4 +732,13 @@ goal: enforce-the-invariants
 write-set: plugin (slot parser continuation handling; close verb ref resolution) + battery
 done-criterion: a slot line after a wrapped value is credited (red case: the df-196 shape, blocker-moot last); close --ref HEAD stores the sha (red case: symbolic arg, stored value compared to rev-parse); battery green
 evidence: dotfiles ITEMS-DONE.md df-196 block (live reproduction), item check output 2026-09-13; the HEAD-symbol close and its hand repair 40f7d3a
+blocked-by: NONE
+
+## lc-123
+grade: READY
+requirement: The item-to-lane join is computed BY HAND at every drain, or not at all: the routing corpus demands a derived join over write-boundaries as the route line's mapping source and no verb computes it, so each drain pays a manual pass (2026-09-13: six clusters over 61 READY items derived by hand at the judgment desk) or defaults to the identity mapping — measured at the dispatch log 1.05 items/lane all-time for this carrier, ONE deliberate bundle ever (readout tools/dispatch-economics.py, dotfiles 7b5643f). The cheapest form must be the default form. Global by construction: every repo declaring this plugin gets it — record: judgment desk 746f6a5f, operator GO 2026-09-13
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_waves.py
+done-criterion: New verb 'item waves': over READY items whose blocker gate passes, parse each EFFECTIVE write-set slot as comma-separated paths; overlap graph, file-granular; connected components are LANES (members serialize, shared files named as collision evidence), disjoint lanes parallel. Missing/prose/other-repo write-sets LISTED under own keys with counts and explicit zeros, never clustered (surfaces the lc-111/lc-113 population per drain). NO sizing or tier logic — crossover stays desk judgment. DONE when: run over THIS carrier agrees with the hand-derived six-cluster plan of 2026-09-13 or the divergence is explained at the artifact; tests cover overlap-one-lane (shared file named), disjoint-two-lanes, prose-in-bucket-not-lane, empty-READY as could-not-verify not silence
+evidence: VERIFIED AT THIS DESK before booking: no waves/clusters/join verb in the parser (grep -c waves plugin/cli/lifecycle_core/cli.py = 0 at booking time; item subcommands are add/amend/promote/close/park/ready/check/ratio/slots-family only), and the dispatch-log measurement is this desk's own run of tools/dispatch-economics.py (dotfiles 7b5643f), not a relay: lifecycle 1.05 items/lane all-time, one multi-item lane, today 14/13 flagged IDENTITY-MAPPING. The six-cluster hand plan this must reproduce is in the judgment desk's record of this date
 blocked-by: NONE
