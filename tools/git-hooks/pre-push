@@ -105,7 +105,25 @@ def main() -> int:
         # No ranges reached us (an empty chain, or a push with nothing
         # parseable on stdin). Scan everything reachable from HEAD rather
         # than declaring a clean run over zero bytes.
-        ranges = ["..HEAD"]
+        #
+        # `EMPTY` IS THE SCANNER'S SENTINEL for "this push has no base" — the
+        # literal four-letter token, tested as `oldRef === "EMPTY"` in
+        # absence-scan.mjs's `rangeCommitArgs` and `rangeFiles`. It is not a
+        # placeholder and not a ref name, so DO NOT "simplify" it back to
+        # `..HEAD`: an empty base is not the sentinel, and the scanner then
+        # hands git a bare `^{commit}`, git answers `fatal: Not a valid
+        # object name`, and the same coverage is reached only by DEGRADING
+        # to EMPTY — announced on a `degraded:` line naming an empty ref.
+        # Measured for lc-89: the two spellings walk the IDENTICAL set (the
+        # degrade assigns `from = "EMPTY"` before any walk begins), so what
+        # the old spelling bought was a `fatal:` on every ordinary push — a
+        # check firing on a non-defect, which trains the reflex that
+        # discounts a real red.
+        #
+        # What the sentinel covers, so a later reader does not widen it by
+        # accident: every file reachable at HEAD (`ls-tree -r`), with the
+        # commit-interior walk bounded by what other refs already hold.
+        ranges = ["EMPTY..HEAD"]
 
     worst = 0
     for rng in ranges:
