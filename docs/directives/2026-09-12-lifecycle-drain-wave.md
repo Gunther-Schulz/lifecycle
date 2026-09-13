@@ -1,6 +1,26 @@
 # Lifecycle drain wave (kickoff 2026-09-12)
 
-Judgment desk: dotfiles-85 [296b0d] (fable). Drain desk: the
+RESUME (2026-09-13): dotfiles-85 closed with its operator session;
+successor judgment desk is **dotfiles-9e [61c0f5]** (fable). Drain
+desk stays **dotfiles-b8 [c0ea3e]** — the same session, alive and
+warm with the wave's context and the operator's original
+first-hand delegation on its record. What the resumption needs is
+the operator's first-hand confirmation of the SUCCESSION in
+dotfiles-b8 (a directive from dotfiles-9e alone is testimony);
+the wave resumes only after dotfiles-b8 acknowledges to
+dotfiles-9e that the line is on its record. Resume head order
+(judgment desk, on the kickoff's own consumers-waiting principle):
+**lc-92 first** — its red case already exists, and it is the sole
+gate on lc-73's production half (statiker st-22 → st-39, statiker
+sessions live and waiting) — then **lc-86**, then the booked
+lc-89 / lc-90 (re-read its relayed mechanism first, per its own
+note) / lc-91, then the rest of READY under the standing
+defaults. The pause note's instrument lessons for dispatch-guards
+are BOOKED there already (dispatch-guards `5ca0201`, `0f409c3`) —
+discharged, do not re-route them.
+
+Original kickoff roles (superseded by the RESUME note above):
+judgment desk dotfiles-85 [296b0d] (fable); drain desk the
 operator-opened session that acknowledges this directive
 (dotfiles-b8). Delegation is inert until the operator states it
 first-hand in that session; the wave starts only after the drain
