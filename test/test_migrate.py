@@ -1710,6 +1710,124 @@ class CitationPins(unittest.TestCase):
             ["BACKLOG.md:8-8"])
 
 
+class PinSurvivesAnEditAbove(unittest.TestCase):
+    """lc-38 — the anchor rule (a check anchored to mutating state) applied to
+    the migration's OWN output. A line number always resolves, so a pointer
+    below a later edit goes stale in silence: measured by the wave-4 desk
+    2026-08-27 over dotfiles, where 84 of 85 `BACKLOG.md` pointers land exactly
+    2 lines early and the one that does not is the single entry ABOVE the edit
+    (mechanism verified at `4959d2d`, +2 net INSIDE the first entry).
+
+    WHY THIS IS A SEPARATE CLASS FROM `CitationPins` ABOVE, which already
+    asserts that the pin is WRITTEN and that it names the right body at
+    migration time. Those cases read a source nobody has touched since, so
+    they pass identically against a build that anchors on line numbers alone —
+    the property they cannot see is the one lc-38 is about: what the pointer
+    answers AFTER the living file moves under it. lc-86 built the pin and this
+    class is what would go red if a later build dropped it, which is the half
+    that had no mechanism: the repair was proven by hand at the desk and
+    nothing in the battery held it.
+    """
+
+    #: One entry, deliberately the only one: the edit below is inserted ABOVE
+    #: it, so every line of the pointed body shifts and a pointer that survives
+    #: cannot be surviving by accident of a range that happens to still overlap.
+    SOURCE = ("# BACKLOG\n"
+              "\n"
+              "## Open\n"
+              "\n"
+              "- **READY 2026-08-03 — the pointed entry.** its body\n")
+
+    def migrated(self):
+        """A repo migrated ONCE, committed, with `(dir, line, end, sha, title)`
+        read back out of the carrier the tool wrote.
+
+        COMMITTED because the pin names bytes, and bytes answer only from the
+        object database: under a FROZEN disposition the sha is the POST-banner
+        blob, which this tool writes and does not commit. A fixture that
+        skipped the commit would fail at `cat-file` for a reason that has
+        nothing to do with an edit above anything.
+        """
+        d = build(self.SOURCE)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        commit_all(d, "migrated")
+        it = items.parse(
+            (d / "ITEMS.md").read_text(encoding="utf-8")).items[0]
+        # READ THROUGH `migrate.BLOB_PIN`, never against a restated separator:
+        # a literal here would stay green the day the constant changed, which
+        # is the same-parentage failure the pin itself exists to answer.
+        m = re.search(rf"BACKLOG\.md:(\d+)-(\d+){re.escape(migrate.BLOB_PIN)}"
+                      r"([0-9a-f]{40})", it.slots["evidence"])
+        self.assertIsNotNone(
+            m, f"the evidence slot carries no pinned anchor: "
+               f"{it.slots['evidence']!r}")
+        # The title comes from the READER, never retyped — a hand-copied
+        # headline that drifts by one character passes this against a build
+        # whose pointer resolves to nothing at all.
+        title = migrate.requirement_title(it.slots["requirement"])
+        return (d, int(m.group(1)), int(m.group(2)), m.group(3),
+                title.split(" — ")[-1])
+
+    @staticmethod
+    def insert_two_lines_above(d: Path, line: int) -> None:
+        """The done-criterion's own arrangement: two lines ABOVE the pointed
+        entry, in the LIVING source, committed."""
+        cur = (d / "BACKLOG.md").read_text(encoding="utf-8").split("\n")
+        cur.insert(line - 1, "- **READY 2026-08-01 — an entry above.** other")
+        cur.insert(line - 1, "")
+        (d / "BACKLOG.md").write_text("\n".join(cur), encoding="utf-8")
+        commit_all(d, "edit above the pointed entry")
+
+    def test_the_pointer_still_resolves_to_the_same_body(self):
+        """THE DONE-CRITERION, executed. The pointer is resolved through the
+        BLOB it names, and what comes back is the body the migration read.
+
+        THE SECOND HALF IS NOT A FLOURISH — it is what makes the first half
+        mean anything. Read at the same range in the LIVE file, the pointer now
+        lands on the entry that was inserted above, and that is exactly the
+        measured dotfiles defect. Without it this case passes on a file nobody
+        edited, i.e. against the very build it exists to refuse.
+        """
+        d, line, end, sha, title = self.migrated()
+        self.insert_two_lines_above(d, line)
+
+        pinned = subprocess.run(["git", "-C", str(d), "cat-file", "-p", sha],
+                                capture_output=True, text=True)
+        self.assertEqual(pinned.returncode, 0, pinned.stderr)
+        self.assertIn(title,
+                      "\n".join(pinned.stdout.split("\n")[line - 1:end]),
+                      "the pinned anchor no longer resolves to its own body")
+
+        live = (d / "BACKLOG.md").read_text(encoding="utf-8").split("\n")
+        self.assertNotIn(title, "\n".join(live[line - 1:end]),
+                         "the edit did not move the body, so this arrangement "
+                         "could not have registered a stale pointer")
+
+    def test_an_unresolvable_pin_fails_loudly_rather_than_resolving(self):
+        """MUST NOT MOVE, and it is what decides shippability: a pointer whose
+        blob cannot be resolved degrades to an honest COULD NOT VERIFY. A
+        corrupt pin that quietly returned SOMETHING would be strictly worse
+        than the stale line number, because nothing would look wrong.
+
+        THE PAIR IS THE POINT: the same command over the REAL sha answers, so
+        this is the resolution path discriminating rather than a `cat-file`
+        that refuses everything in this fixture.
+        """
+        d, line, end, sha, _title = self.migrated()
+        bogus = "d" * 40
+        self.assertNotEqual(bogus, sha)
+        bad = subprocess.run(["git", "-C", str(d), "cat-file", "-p", bogus],
+                             capture_output=True, text=True)
+        self.assertNotEqual(bad.returncode, 0,
+                            "a bogus blob resolved to something")
+        self.assertIn("Not a valid object name", bad.stderr)
+        good = subprocess.run(["git", "-C", str(d), "cat-file", "-p", sha],
+                              capture_output=True, text=True)
+        self.assertEqual(good.returncode, 0, good.stderr)
+
+
 class FreezeBanner(unittest.TestCase):
     """lc-86 — beat-the-books' `BACKLOG.md` was frozen in the repo's laws file
     and edited by a desk four hours later (`8d4440e8`). A freeze lives where
