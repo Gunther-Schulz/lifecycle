@@ -1609,21 +1609,18 @@ PROSE_HEAD = LIVE_HEAD.replace("This file is the queue. Add work here.",
 
 
 def retire_run(repo: Path, *extra):
-    """`migrate --retire-source`, through the real parser and the real verb.
+    """`migrate --retire-source`, on the COMMAND LINE, through `cli.main`.
 
-    THE FLAG IS SET ON THE PARSED NAMESPACE, not passed on the command line:
-    declaring it lives in `cli.py`, outside the write set of the lane that
-    built this stage, so `parse_args` does not know the spelling yet. Every
-    other default, the repo resolution, the declaration read and the context
-    are the CLI's own. The line is a no-op once the flag is declared.
+    THE ALTITUDE IS THE POINT AND IT IS PINNED HERE. An earlier draft set
+    `retire_source` on a parsed namespace, because the flag's declaration sat
+    outside that lane's write set — and every one of these tests would have
+    PASSED that way, proving the branch while leaving the plumbing the guard
+    ships with (argparse, the decision, the exit code) unexercised. A
+    unit-level green and a CLI green read identically in a test runner's
+    output, so the spelling has to be exercised rather than assumed.
     """
-    args = cli.build_parser().parse_args(
-        ["--repo", str(repo), "migrate", "--report", REPORT] + list(extra))
-    args.retire_source = True
-    buf = io.StringIO()
-    with redirect_stdout(buf):
-        code = cli.cmd_migrate(args, lambda s: print(s))
-    return code, buf.getvalue()
+    return run_cli(repo, "migrate", "--report", REPORT, "--retire-source",
+                   *extra)
 
 
 class CitationPins(unittest.TestCase):
@@ -1734,17 +1731,48 @@ class FreezeBanner(unittest.TestCase):
         self.assertIn("# BACKLOG — the live queue", head)
 
     def test_the_banner_is_idempotent(self):
-        """Keyed on the MARKER, never on the banner's whole text — the banner
-        carries a DATE, so a second run on a later day would otherwise produce
-        different bytes for an unchanged file and report its own write as the
-        source having moved."""
+        """SAME BYTES AND SAME BLOB, asserted as both rather than as "no
+        exception raised". Keyed on the MARKER, never on the banner's whole
+        text — the banner carries a DATE, so a second run on a later day would
+        otherwise produce different bytes for an unchanged file and report its
+        own write as the source having moved. The DATE IS DELIBERATELY
+        DIFFERENT between the two calls below: with the same date, a banner
+        that re-applied itself wholesale would still compare equal and this
+        would pass over a build that is not idempotent at all."""
         text, first = migrate.apply_freeze_banner(
             LIVE_HEAD, "BACKLOG.md", "ITEMS.md", "2026-09-13")
         again, second = migrate.apply_freeze_banner(
-            text, "BACKLOG.md", "ITEMS.md", "2026-09-99")
+            text, "BACKLOG.md", "ITEMS.md", "2027-01-01")
         self.assertEqual(text, again)
+        self.assertEqual(migrate.blob_sha(text.encode("utf-8")),
+                         migrate.blob_sha(again.encode("utf-8")))
         self.assertIn("already frozen", second)
         self.assertNotIn("already frozen", first)
+
+    def test_a_report_only_run_then_a_writing_run_reports_no_move(self):
+        """THE SEQUENCE THE SPLIT EXISTS FOR. `--report-only` writes no banner
+        and records the AS-READ blob; the writing run that follows over the
+        same `--report` path freezes the file and records the POST-banner one.
+        With one blob doing both jobs, the writing run compares its own
+        projected freeze against the dry run's record and refuses a file
+        nobody touched. The move check therefore stays on the as-read blob."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d, "--report-only")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(
+            migrate._RECORDED_SOURCE_BLOB.search(
+                (d / REPORT).read_text(encoding="utf-8")).group(1),
+            migrate.blob_sha((d / "BACKLOG.md").read_bytes()))
+        code, out = migrate_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("has MOVED", out)
+        # And the record now names the BANNERED file, which is what keeps the
+        # NEXT run clean — the property S8 turns on.
+        self.assertEqual(
+            migrate._RECORDED_SOURCE_BLOB.search(
+                (d / REPORT).read_text(encoding="utf-8")).group(1),
+            migrate.blob_sha((d / "BACKLOG.md").read_bytes()))
 
     def test_report_only_touches_the_source_not_at_all(self):
         """MUST NOT MOVE (S2). A run that writes no successor state has
@@ -1851,6 +1879,26 @@ class RetireSource(unittest.TestCase):
         self.assertIn(sha, record)
         self.assertIn("git cat-file -p", record)
 
+    def test_the_record_is_not_written_twice_for_one_deletion(self):
+        """KEYED ON PATH AND BLOB. A re-created carrier at the SAME content is
+        the same fact, and two bodies for one fact diverge. A re-created
+        carrier at DIFFERENT content is a different deletion and earns its own
+        record — the dotfiles precedent exactly: the exemption spends itself
+        on the one content it names."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(retire_run(d)[0], exits.CLEAN)
+        once = (d / "LAWS.md").read_text(encoding="utf-8")
+        self.assertEqual(once.count("## Deletion record"), 1)
+        # The SAME bytes back, committed, and retired again: one record.
+        (d / "BACKLOG.md").write_text(LIVE_HEAD, encoding="utf-8")
+        commit_all(d, "carrier back")
+        code, out = retire_run(d, "--force")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(
+            (d / "LAWS.md").read_text(encoding="utf-8").count(
+                "## Deletion record"), 1)
+
     def test_a_refusal_changes_nothing_at_all(self):
         """The load-bearing half. A precondition on an irreversible act that
         had already half-written is not a precondition."""
@@ -1900,15 +1948,23 @@ class RetireSource(unittest.TestCase):
     def test_schema_from_cannot_retire_a_source_it_never_read(self):
         d = build(LIVE_HEAD)
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        args = cli.build_parser().parse_args(
-            ["--repo", str(d), "migrate", "--schema-from", "1"])
-        args.retire_source = True
-        buf = io.StringIO()
-        with redirect_stdout(buf):
-            code = cli.cmd_migrate(args, lambda s: print(s))
-        self.assertEqual(code, exits.FINDING, buf.getvalue())
-        self.assertIn("[retire_source_not_writing]", buf.getvalue())
+        code, out = run_cli(d, "migrate", "--schema-from", "1",
+                            "--retire-source")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[retire_source_not_writing]", out)
         self.assertTrue((d / "BACKLOG.md").exists())
+
+    def test_the_flag_is_declared_on_the_migrate_parser(self):
+        """THE SPELLING, exercised rather than assumed. Every test above
+        reaches the branch through this one flag, so a build that dropped the
+        declaration would fail them all with a usage error — but a build that
+        declared a DIFFERENT spelling would too, and the message would say
+        nothing about which. Asserted against the parser itself."""
+        args = cli.build_parser().parse_args(
+            ["migrate", "--retire-source"])
+        self.assertTrue(args.retire_source)
+        self.assertFalse(cli.build_parser().parse_args(
+            ["migrate"]).retire_source)
 
 
 class DispositionIsAlwaysStated(unittest.TestCase):

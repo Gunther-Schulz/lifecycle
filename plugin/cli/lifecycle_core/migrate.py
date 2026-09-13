@@ -22,6 +22,13 @@ migration, and the run's own output names which of exactly three happened:
     precondition must not take the irreversible branch silently. So the
     caller asserts it by passing the flag, and the default is the safe
     disposition that still fixes the measured defect.
+    NO BANNER IS WRITTEN ON THIS BRANCH, and the reason is not style: this
+    tool does not commit, so bytes it wrote and then unlinked would be in no
+    object database, and every citation pinned to them would resolve to
+    nothing. The failure is SILENT — the run reports CLEAN, the carrier
+    reads fine, and `git cat-file` only refuses later, to somebody else. So
+    DELETED pins to the AS-READ blob, and the refusal's condition (a) is
+    what makes that safe by requiring it to be the committed content.
 
 The design's acceptance criterion — "the report reconciles entry counts; zero
 entries routed to the ledger" — is a property of the REPORT, so nothing has to
@@ -1130,7 +1137,7 @@ def retire_refusal(ctx, src_name: str, src_blob: str, writing_run: bool,
 
 def dispose_source(disposition: str, src: Path, src_name: str,
                    bannered: bytes, banner_what: str, laws_rel: str,
-                   record: str, ctx) -> tuple:
+                   record: str, blob: str, ctx) -> tuple:
     """`(code, line)` — what happened to the SOURCE, and the line that says so.
 
     IT RUNS AFTER THE SUCCESSOR HOMES AND BEFORE THE REPORT, which is the only
@@ -1173,8 +1180,17 @@ def dispose_source(disposition: str, src: Path, src_name: str,
     laws_path = ctx.repo / laws_rel
     try:
         laws_old = laws_path.read_text(encoding="utf-8")
-        laws_path.write_text(laws_old.rstrip("\n") + "\n" + record,
-                             encoding="utf-8")
+        # THE RECORD IS KEYED ON PATH AND BLOB, so writing it twice does not
+        # duplicate it. A re-created carrier is a DIFFERENT deletion and earns
+        # its own record: the dotfiles precedent is exact — "the exemption
+        # spends itself on the one content it names; a re-created carrier has
+        # a different blob". A record already naming THIS path at THIS blob is
+        # the same fact, and two bodies for one fact diverge.
+        already = (f"| `{src_name}` |" in laws_old
+                   and f"`{blob}`" in laws_old)
+        if not already:
+            laws_path.write_text(laws_old.rstrip("\n") + "\n" + record,
+                                 encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         return exits.COULD_NOT_VERIFY, (
             f"COULD NOT VERIFY: the deletion record could not be written to "
@@ -2344,7 +2360,7 @@ def run(args, out, ctx) -> int:
         disposition, src, src_name, bannered_bytes, banner_what,
         (ctx.declaration.get("laws") or "").strip(),
         deletion_record(src_name, items_home, anchor_blob, today),
-        ctx)
+        anchor_blob, ctx)
 
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(

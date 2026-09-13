@@ -1799,13 +1799,14 @@ def _retire_run(*, merge=False, report_only=False, commit_source=True,
                 **repo_kw) -> Fired:
     """Run `migrate --retire-source` in a scratch repo carrying an old carrier.
 
-    IT GOES THROUGH THE REAL PARSER AND THE REAL VERB, and sets the flag on
-    the parsed namespace afterwards. `--retire-source` is declared in the CLI
-    by a change outside the lane that built this stage, so `parse_args` does
-    not know it yet; everything else on the namespace — every default, every
-    other flag, the repo resolution, the declaration read, the context — is
-    the CLI's own. The line becomes a no-op the day the flag is declared, and
-    is left rather than removed so the row keeps firing either way.
+    THE FLAG IS ON THE COMMAND LINE AND THE RUN GOES THROUGH `cli.main`, which
+    is the altitude the guard actually operates at. An earlier draft of these
+    rows set `retire_source` on a parsed namespace instead, because the flag's
+    declaration sat outside that lane's write set — and those rows would have
+    PASSED: a row firing a constructed namespace proves the branch and reads
+    in `--test`'s output exactly like a row that proved the CLI. Nothing in
+    that output distinguishes them, which is why the altitude is pinned here
+    rather than remembered.
     """
     import io
     from contextlib import redirect_stdout
@@ -1850,7 +1851,7 @@ def _retire_run(*, merge=False, report_only=False, commit_source=True,
         if not laws_present:
             (r.dir / "LAWS.md").unlink(missing_ok=True)
         argv = ["--repo", str(r.dir), "migrate",
-                "--report", "docs/audits/report.md"]
+                "--report", "docs/audits/report.md", "--retire-source"]
         if merge:
             argv.append("--merge")
         if report_only:
@@ -1858,12 +1859,29 @@ def _retire_run(*, merge=False, report_only=False, commit_source=True,
         here = os.getcwd()
         try:
             os.chdir(str(r.dir))
-            args = cli_mod.build_parser().parse_args(argv)
-            args.retire_source = True
             buf = io.StringIO()
-            with redirect_stdout(buf):
-                code = cli_mod.cmd_migrate(args, lambda s: print(s))
-            return Fired(code, buf.getvalue())
+            try:
+                with redirect_stdout(buf):
+                    code = cli_mod.main(argv)
+            except SystemExit as exc:
+                # ANTI-VACUITY, and it is caught HERE because argparse RAISES.
+                # An unrecognised flag never returns a code — `parser.error`
+                # exits the process, and in-process that SystemExit escapes
+                # the row, aborts the whole roster mid-run and leaves `--test`
+                # with no summary line at all. Measured by removing the
+                # declaration: the run stopped at the row before these four,
+                # exit 3, no `rows:` line. A row that cannot fire must say so
+                # and let its siblings finish.
+                return Fired(-1, "SETUP FAILED: `--retire-source` is not "
+                                 "declared on the migrate parser, so this row "
+                                 f"measured a usage error (SystemExit "
+                                 f"{exc.code}).\n{buf.getvalue()}")
+            text = buf.getvalue()
+            if "unrecognized arguments" in text:
+                return Fired(-1, "SETUP FAILED: `--retire-source` is not "
+                                 "declared on the migrate parser, so this row "
+                                 f"measured a usage error.\n{text}")
+            return Fired(code, text)
         finally:
             os.chdir(here)
 

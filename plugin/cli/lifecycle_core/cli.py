@@ -517,6 +517,16 @@ def build_parser() -> argparse.ArgumentParser:
                           "and the report then point at their ids, which is "
                           "circular unless the report can be re-rendered "
                           "after the intake")
+    mig.add_argument("--retire-source", dest="retire_source",
+                     action="store_true",
+                     help="DELETE the source carrier after the successor "
+                          "homes are written, and write a deletion record "
+                          "into the declared laws file. Refuses unless the "
+                          "source is committed, the declaration names a laws "
+                          "file that exists, every anchor pointing at the "
+                          "source carries its blob pin, and the run writes "
+                          "successor state. Without it a writing run FREEZES "
+                          "the source with a banner instead")
     return p
 
 
