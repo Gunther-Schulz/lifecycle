@@ -108,10 +108,13 @@ def determine_public(repo: Path):
     """`(public, branch, reason)` per lc-81 — the `public` flag DERIVED, or
     declared unresolved, never a silent default.
 
-    branch is one of "public", "private", "could-not-verify" — the same
-    three-shape contract `determine_laws` returns above, for the same
-    reason: a could-not-verify reading says WHICH route it took rather than
-    only that it happened.
+    branch is one of "public", "private", "no-remote", "could-not-verify" —
+    the same named-branch contract `determine_laws` returns above, for the
+    same reason: a reading says WHICH route it took rather than only that it
+    happened. "no-remote" is a branch of its OWN and not a could-not-verify:
+    a repo with no git remote has no hosted repository that could be public,
+    so `false` there is DERIVED rather than guessed, and the printed line
+    says so instead of reading like the unresolved case.
 
     `gh` IS NOT A DEPENDENCY OF THIS TOOL, and the remote check ahead of the
     call is what keeps it from becoming one. A repo with no remote has
@@ -122,24 +125,35 @@ def determine_public(repo: Path):
     declaration. A repair that made `init` FAIL without `gh` would be a
     larger behaviour change than the defect it repairs.
 
-    THE UNRESOLVED BRANCH STILL WRITES `false`, AND THAT IS A DECISION.
-    `declaration.validate` refuses any third value for this key ("There is
-    no third value"), so an unresolved reading has no null to write; what it
-    has is the printed line. `true` is not the safe-looking fallback it
-    appears to be: `verbs.check_origin` REFUSES an item whose source cwd is
-    another repo on a repo declaring `public: true`, so a wrong `true` turns
-    a fresh repo's `item add` into a refusal, while a wrong `false` relaxes
-    a leak class this verb writes as OFF anyway. Both directions are wrong;
-    only one of them also breaks a verb. What stops either from being
-    SILENT is the caller-facing line, which is the whole of lc-81.
+    THE UNRESOLVED BRANCH WRITES `true`, AND THAT IS A DECISION (dispatcher
+    ruling, lc-81). `declaration.validate` refuses any third value for this
+    key ("There is no third value"), so an unresolved reading has no null to
+    write; what it has is the printed line. Both directions are wrong while
+    the truth is unknown — but they are wrong in different KINDS, and the
+    kind decides. `false` is SILENT under-protection: `check_origin` simply
+    does not run, and nothing ever says so. `true` is LOUD over-protection:
+    `verbs.check_origin` REFUSES an item whose source cwd is another repo,
+    by name, where a reader sees it at once and corrects the declaration in
+    one edit. An unknown that fails loudly catches what a silent exemption
+    hides. The "no-remote" branch above is what keeps the loud reading off
+    the common local-only repo, which is the objection that would otherwise
+    carry.
+
+    MEASURED, because the item this repairs assumed otherwise: `public` has
+    exactly ONE behavioural consumer in this repo today, `check_origin`.
+    Nothing under `tools/` reads the key at all, so the leak scan is NOT
+    gated by it — `leak-scan.source-scope-foreign-path` is the key that
+    gates that class, and `init` writes it off regardless. The
+    loud-over-silent argument above therefore stands on `check_origin`
+    alone, not on leak scanning.
     """
     remotes = subprocess.run(
         ["git", "-C", str(repo), "remote"], capture_output=True, text=True)
     if remotes.returncode != 0 or not remotes.stdout.strip():
-        return (False, "could-not-verify",
-                "this repo has no git remote, so there is no hosted "
-                "repository whose visibility could be read (checked: "
-                "git remote)")
+        return (False, "no-remote",
+                "this repo has no git remote, therefore no hosted "
+                "repository that could be public — false is DERIVED here, "
+                "not guessed (checked: git remote)")
 
     try:
         gh = subprocess.run(
@@ -147,23 +161,23 @@ def determine_public(repo: Path):
             cwd=str(repo), capture_output=True, text=True,
             timeout=GH_VISIBILITY_TIMEOUT_S)
     except (OSError, subprocess.SubprocessError) as exc:
-        return (False, "could-not-verify",
+        return (True, "could-not-verify",
                 f"`gh repo view --json visibility` could not be run here "
                 f"({exc!r}); gh is not a dependency this tool installs")
     if gh.returncode != 0:
-        return (False, "could-not-verify",
+        return (True, "could-not-verify",
                 f"`gh repo view --json visibility` exited {gh.returncode} "
                 f"({gh.stderr.strip()!r})")
 
     try:
         payload = json.loads(gh.stdout)
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return (False, "could-not-verify",
+        return (True, "could-not-verify",
                 "`gh repo view --json visibility` exited 0 but printed "
                 f"something that is not JSON ({gh.stdout.strip()[:120]!r})")
     visibility = payload.get("visibility") if isinstance(payload, dict) else None
     if not isinstance(visibility, str) or not visibility.strip():
-        return (False, "could-not-verify",
+        return (True, "could-not-verify",
                 "`gh repo view --json visibility` returned JSON carrying no "
                 f"`visibility` string ({gh.stdout.strip()[:120]!r})")
 
@@ -173,7 +187,7 @@ def determine_public(repo: Path):
     if word in ("PRIVATE", "INTERNAL"):
         return (False, "private",
                 f"`gh repo view --json visibility` says {word}")
-    return (False, "could-not-verify",
+    return (True, "could-not-verify",
             f"`gh repo view --json visibility` says {visibility!r}, which is "
             "neither PUBLIC nor PRIVATE/INTERNAL — an unrecognised word is "
             "not evidence of either, so it is not read as one")
@@ -269,10 +283,12 @@ def cmd_init(args, out, repo: Path) -> int:
     is_public, visibility_branch, visibility_reason = determine_public(repo)
     if visibility_branch == "could-not-verify":
         out(f"public: {is_public} — COULD NOT VERIFY: {visibility_reason}. "
-            "Writing false because this key has no third value, NOT because "
-            "the repo was read as private; false is the direction that "
-            "relaxes the leak scan, so a repo that IS public must have this "
-            "corrected by hand before anything trusts that scan.")
+            "Writing TRUE, and naming both consequences so neither is a "
+            "surprise: `item add` will now REFUSE an item whose source cwd "
+            "is another repo (`check_origin`), and that refusal is the "
+            "point — an unknown that fails loudly beats one that quietly "
+            "skips the check. This reading is NOT established; if the repo "
+            "is private, correct the flag by hand in one edit.")
     else:
         out(f"public: {is_public} — {visibility_branch} branch: "
             f"{visibility_reason}")

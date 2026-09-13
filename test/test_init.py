@@ -438,12 +438,18 @@ class PublicFlagArm(unittest.TestCase):
         self.assertIn("public: False", out)
         self.assertIn("private branch", out)
 
-    def test_no_remote_still_initialises_and_names_the_flag_unresolved(self):
+    def test_no_remote_still_initialises_and_DERIVES_false(self):
         """MUST-NOT-MOVE (2): a repo with no `gh` remote initialises rather
         than failing — and reaches that state WITHOUT consulting `gh` at
         all, which is why no fake is installed here. A repair that made
         `init` depend on gh being installed, authenticated or reachable
-        would be a bigger behaviour change than the defect."""
+        would be a bigger behaviour change than the defect.
+
+        AND THE VALUE HERE IS DERIVED, NOT UNRESOLVED: a repo with no
+        remote has no hosted repository that could be public. The arm
+        asserts the line does NOT present this as a could-not-verify
+        reading, because the unresolved case goes the other way (`true`)
+        and conflating the two would hide exactly that split."""
         r = ScratchGitRepo()
         self.addCleanup(r.close)
         r.commit_as("op@example.invalid")
@@ -453,23 +459,26 @@ class PublicFlagArm(unittest.TestCase):
         self.assertIsInstance(doc["public"], bool)
         self.assertIs(doc["public"], False, out)
         self.assertEqual(set(doc.keys()), set(decl.REQUIRED_KEYS))
-        self.assertIn("public: False", out)
-        self.assertIn("COULD NOT VERIFY", out)
+        self.assertIn("public: False — no-remote branch:", out)
         self.assertIn("no git remote", out)
         self.assertIn("checked: git remote", out)
+        self.assertNotIn("public: False — COULD NOT VERIFY", out)
 
-    def test_a_gh_that_cannot_answer_is_unresolved_not_a_guess(self):
+    def test_a_gh_that_cannot_answer_is_unresolved_and_fails_LOUD(self):
         """The exit-code route. `init` still succeeds; the reading does
-        not, and says which command failed."""
+        not, and says which command failed — and the value written is
+        `true`, the loud direction (dispatcher ruling): `check_origin`
+        then refuses a foreign-cwd item by name instead of silently not
+        running."""
         r = self._repo_with_a_remote()
         _gh_on_path(self, stderr="could not resolve to a Repository",
                     exit_code=1)
         code, out = _run(["--repo", str(r.dir), "init"])
         self.assertEqual(code, exits.CLEAN, out)
-        self.assertIs(self._declaration(r)["public"], False, out)
-        self.assertIn("public: False", out)
-        self.assertIn("COULD NOT VERIFY", out)
+        self.assertIs(self._declaration(r)["public"], True, out)
+        self.assertIn("public: True — COULD NOT VERIFY", out)
         self.assertIn("gh repo view --json visibility", out)
+        self.assertIn("check_origin", out)
 
     def test_an_unrecognised_visibility_word_is_unresolved_not_a_guess(self):
         """A visibility GitHub has not shipped yet must not silently
@@ -478,9 +487,8 @@ class PublicFlagArm(unittest.TestCase):
         _gh_on_path(self, stdout='{"visibility":"SOMETHING-NEW"}')
         code, out = _run(["--repo", str(r.dir), "init"])
         self.assertEqual(code, exits.CLEAN, out)
-        self.assertIs(self._declaration(r)["public"], False, out)
-        self.assertIn("public: False", out)
-        self.assertIn("COULD NOT VERIFY", out)
+        self.assertIs(self._declaration(r)["public"], True, out)
+        self.assertIn("public: True — COULD NOT VERIFY", out)
         self.assertIn("SOMETHING-NEW", out)
 
     def test_output_gh_cannot_parse_as_json_is_unresolved(self):
@@ -491,9 +499,28 @@ class PublicFlagArm(unittest.TestCase):
         _gh_on_path(self, stdout="not json at all")
         code, out = _run(["--repo", str(r.dir), "init"])
         self.assertEqual(code, exits.CLEAN, out)
-        self.assertIs(self._declaration(r)["public"], False, out)
-        self.assertIn("public: False", out)
-        self.assertIn("COULD NOT VERIFY", out)
+        self.assertIs(self._declaration(r)["public"], True, out)
+        self.assertIn("public: True — COULD NOT VERIFY", out)
+
+    def test_no_remote_and_unresolved_with_a_remote_land_OPPOSITE_values(self):
+        """THE ARM THAT PROVES THE SPLIT IS REAL. The two cases the ruling
+        separates must reach DIFFERENT values from the same verb — a build
+        that collapsed them (either way) satisfies every other arm in this
+        class in one direction or the other, and only this pair catches
+        it. Both repos are otherwise identical."""
+        bare = ScratchGitRepo()
+        self.addCleanup(bare.close)
+        bare.commit_as("op@example.invalid")
+        _code_a, out_a = _run(["--repo", str(bare.dir), "init"])
+
+        hosted = self._repo_with_a_remote()
+        _gh_on_path(self, stderr="gh is not authenticated", exit_code=1)
+        _code_b, out_b = _run(["--repo", str(hosted.dir), "init"])
+
+        self.assertIs(self._declaration(bare)["public"], False, out_a)
+        self.assertIs(self._declaration(hosted)["public"], True, out_b)
+        self.assertNotEqual(self._declaration(bare)["public"],
+                            self._declaration(hosted)["public"])
 
 
 class ExistingCouldNotVerifyLinesAreFrozen(unittest.TestCase):
