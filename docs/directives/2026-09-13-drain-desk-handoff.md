@@ -6,7 +6,14 @@ one resumed. Read before the first dispatch.
 
 State at writing: `main` at `4312399`, pushed, tree clean, carrier CLEAN,
 conservation 115, flow 2.14:1 against a 3:1 tripwire (no retirement pass owed),
-**45 schedulable**, no lane running.
+**44 schedulable** of 58 READY, no lane running.
+
+(Corrected in place, same session: this line first read 45. The figure came
+from counting lines containing `SCHEDULABLE` in `item ready --head` output,
+and one of them is lc-111's BODY, which discusses the word. That is the
+word-presence-over-free-prose count the backlog doctrine warns about, made by
+the desk that had just booked lc-111 for the adjacent defect. Count the item
+lines — `^\s*\d+\. lc-\d+ \[READY\].*SCHEDULABLE$` — never the word.)
 
 ## What this session closed
 
