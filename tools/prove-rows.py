@@ -442,6 +442,22 @@ MUTATIONS = [
     # removes machinery, because a mutation that crashes proves the branch is
     # reached and not that the row discriminates.
 
+    # lc-103. The replacement makes the condition ALWAYS TRUE so every mode
+    # takes the `continue`, which disables the finding without touching the
+    # separate symlink could-not-verify branch below it — one arm moves, which
+    # is what makes the row discriminate rather than merely react. Measured by
+    # the build lane against a scratch copy whose unmutated baseline ran green
+    # FIRST (80/80, exit 0): it darkened EXACTLY the two sibling rows and no
+    # other verdict. Anchor and replacement were chosen independently at the
+    # desk and by the lane and came out identical.
+    ("hook_not_executable", "declaration.py",
+     '        if mode == EXECUTABLE_MODE:\n            continue',
+     '        if mode != "no-such-mode":\n            continue',
+     "the committed-mode comparison that decides whether a git hook the repo "
+     "ships is launchable — with it folded away a hook committed at 100644 "
+     "reads as fine, which is the gate that fails OPEN while every content "
+     "check reports clean because the bytes are right"),
+
     ("declaration_retired_key", "declaration.py",
      "    for key, why in RETIRED_KEYS.items():\n        if key in doc:",
      "    for key, why in RETIRED_KEYS.items():\n        if False:",
