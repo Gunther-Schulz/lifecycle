@@ -19,6 +19,17 @@ those is a way for this guard to be wrong QUIETLY:
   * the population itself, over the REAL repo — the anti-vacuity pin. A guard
     whose population derives to nothing is green forever and reads exactly
     like a guard over a healthy repo.
+
+And the answer this file's own ARRANGEMENT needs (lc-115): the cases below
+that read THIS repo's recorded history have no arrangement at all outside a
+checkout of it — inside a `git archive HEAD` snapshot, which the guard/checker
+devbook now mandates for red-first and bite work, they produced two failures
+and three errors that belonged to the arrangement and not to the code. Two
+lanes diagnosed them independently and each paid attention for it; the live
+risk was a third lane silencing a correct instrument. So those cases SKIP with
+the arrangement named — the third answer, which this file already reached for
+one case over (a ref that no longer resolves) and left open for the case
+where there is no repository to ask.
 """
 
 import json
@@ -112,6 +123,74 @@ class _Fixture:
         return False
 
 
+def _absent_repository_reason():
+    """`""` when REPO_ROOT IS this repo's own git checkout, else the reason it
+    is not — the arrangement NAMED, because a bare skip reads as a pass.
+
+    The question is deliberately narrow: is there a repository here to ask.
+    It is asked of git rather than of `.git`, which is a file in a worktree
+    and a directory in a checkout, and it compares the TOPLEVEL against
+    REPO_ROOT — `rev-parse` walks UPWARDS, so an extracted snapshot that
+    happens to sit inside some other repository answers about THAT one, and
+    the refs below would then fail to resolve in a tree that reported itself
+    a repository.
+
+    What it does NOT cover, on purpose: a checkout whose pinned refs are
+    missing (a shallow clone). That is a repository, the question is
+    answerable, and `test_the_refs_this_proof_is_pinned_to_still_resolve`
+    says in its own words why that stays a loud failure rather than a skip.
+    Widening this predicate to cover it would silence that instrument.
+    """
+    p = subprocess.run(["git", "-C", str(REPO_ROOT), "rev-parse",
+                        "--show-toplevel"], capture_output=True, text=True)
+    if p.returncode != 0:
+        return (f"no git repository at {REPO_ROOT} "
+                f"(git rev-parse --show-toplevel said: "
+                f"{(p.stderr.strip() or p.stdout.strip())!r}) — these cases "
+                "read this repo's OWN recorded history (the pinned refs, the "
+                "committed hook modes), so an extracted snapshot carries no "
+                "arrangement for them and a red here would belong to the "
+                "arrangement, not to the code")
+    top = Path(p.stdout.strip()).resolve()
+    if top != REPO_ROOT:
+        return (f"{REPO_ROOT} is not a git checkout of its own: git reports "
+                f"the enclosing repository as {top}, which cannot answer for "
+                "this repo's recorded history — an extracted snapshot placed "
+                "inside another repository is the case, and it reads as a "
+                "repository to every cheaper test")
+    return ""
+
+
+class _NeedsThisRepo:
+    """Mixin: these cases read THIS repo's recorded history, so an absent
+    repository is answered with a skip that names the arrangement.
+
+    ONE body, mixed in, rather than the predicate restated per class: a
+    restatement drifts, and the class that keeps the old spelling goes back to
+    erroring in exactly the arrangement this exists for. The mixin is also
+    what the must-not-move arm below DERIVES its population from, so a class
+    that drops it is a class that silently leaves both.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        reason = _absent_repository_reason()
+        if reason:
+            raise unittest.SkipTest(reason)
+        super().setUpClass()
+
+
+def _guarded_classes():
+    """Every test class in this module that declares the precondition —
+    DERIVED from the mixin, never a list beside it. A pin over a restated
+    population grades the restatement."""
+    return sorted(
+        (obj for obj in globals().values()
+         if isinstance(obj, type) and issubclass(obj, unittest.TestCase)
+         and issubclass(obj, _NeedsThisRepo)),
+        key=lambda c: c.__name__)
+
+
 def _hook_findings(res):
     return [f for f in res.findings if f.row == "hook_not_executable"]
 
@@ -120,7 +199,7 @@ def _hook_unverified(res):
     return [u for u in res.unverified if "hook" in u or "HEAD" in u]
 
 
-class Population(unittest.TestCase):
+class Population(_NeedsThisRepo, unittest.TestCase):
     """THE ANTI-VACUITY PIN, over the real repo rather than a fixture.
 
     The guard's population is derived every run, so the way it fails silently
@@ -134,6 +213,11 @@ class Population(unittest.TestCase):
     stayed GREEN under the injection that removes the `tools/git-hooks/`
     half — measured, lc-103 bite 1 — because a pin over a restatement of the
     population grades the restatement.
+
+    Both cases need a repository: the first reads git's recorded modes, and
+    the second is a pass-shaped zero without one — `decl.read` finds no modes
+    to police, so it emits no finding and the assertion is satisfied by the
+    absence of the very arrangement it grades.
     """
 
     def test_both_halves_of_the_union_reach_a_real_member(self):
@@ -249,7 +333,7 @@ class CouldNotVerify(unittest.TestCase):
                 res.unverified)
 
 
-class TheRepoSOwnRecordedInstance(unittest.TestCase):
+class TheRepoSOwnRecordedInstance(_NeedsThisRepo, unittest.TestCase):
     """The pair the incident itself left behind, run at the REAL altitude.
 
     `0cbd1ad` committed `tools/git-hooks/pre-push` at 100644 and `d8c3934`
@@ -328,6 +412,83 @@ class TheRepoSOwnRecordedInstance(unittest.TestCase):
                         self.assertEqual(p.returncode, exits.CLEAN, p.stdout)
                 finally:
                     shutil.rmtree(work, ignore_errors=True)
+
+
+class TheSkipDoesNotSwallowTheProof(unittest.TestCase):
+    """MUST-NOT-MOVE: inside a real checkout the guarded cases RUN.
+
+    A precondition that skips too eagerly turns this repo's own recorded
+    instance of the defect into a permanent silent pass — strictly worse than
+    the arrangement noise it removes, because a green over a skipped proof is
+    indistinguishable from a green over a passing one at every altitude a
+    reader looks. So the not-skipped path is asserted rather than assumed,
+    at the EFFECT site: the guarded classes are loaded and run, and what is
+    read back is unittest's own skip list.
+
+    THIS CLASS DELIBERATELY DOES NOT CARRY THE MIXIN, and that is the whole
+    reason it can fire. A precondition that over-fires would skip this arm
+    along with everything it grades, and the run would report `OK (skipped)`
+    in exactly the arrangement the arm exists for — the guard's own blind
+    spot, wearing a pass. So it asks a DIFFERENT instrument whether a
+    checkout is here: the filesystem, for `.git` itself, which is a
+    directory in a checkout, a file in a worktree, and absent from an
+    extracted snapshot. Two measurements that CAN diverge is the point; where
+    they do — a `.git` git declines to answer for — this goes red rather than
+    quiet, which is the honest verdict on an arrangement nobody should be
+    trusting.
+
+    TWO answers are asserted, because a setUpClass that RAISES instead of
+    skipping empties the skip list too: nothing skipped, AND every loaded
+    case actually ran. `testsRun` is compared against the loader's own count
+    rather than a number written here, which would be the same restated
+    population this file exists to refuse.
+
+    What is NOT asserted here is that the guarded cases PASS. They assert
+    that themselves, in the same run, with their own messages; re-asserting
+    it would shadow those messages behind this one — a vaguer failure
+    forever, at exactly the site where the specific one was available.
+    """
+
+    def setUp(self):
+        if not (REPO_ROOT / ".git").exists():
+            raise unittest.SkipTest(
+                f"no .git at {REPO_ROOT} — the extracted-snapshot "
+                "arrangement, where the guarded cases are SUPPOSED to skip. "
+                "This arm asserts the not-skipped path and has no "
+                "arrangement here; the filesystem is asked rather than git "
+                "so that an over-firing predicate cannot silence it")
+
+    def test_every_guarded_case_runs_in_this_repos_own_checkout(self):
+        guarded = _guarded_classes()
+        self.assertNotIn(
+            type(self), guarded,
+            "this arm acquired the precondition it grades: an over-firing "
+            "predicate would now skip it too, and the whole must-not-move "
+            "answer would go silent while the run reported OK")
+        self.assertIn(Population, guarded)
+        self.assertIn(TheRepoSOwnRecordedInstance, guarded)
+
+        loader = unittest.TestLoader()
+        result = unittest.TestResult()
+        expected = 0
+        for cls in guarded:
+            suite = loader.loadTestsFromTestCase(cls)
+            loaded = suite.countTestCases()
+            self.assertGreater(loaded, 0,
+                               f"{cls.__name__} loaded no cases at all, so "
+                               "its silence proves nothing")
+            expected += loaded
+            suite.run(result)
+
+        self.assertEqual([f"{t}: {why}" for t, why in result.skipped], [],
+                         "a guarded case skipped inside this repo's OWN "
+                         "checkout — the precondition swallowed the very "
+                         "proof it exists to keep runnable")
+        self.assertEqual(result.testsRun, expected,
+                         "the guarded classes loaded "
+                         f"{expected} cases and ran {result.testsRun}: a "
+                         "precondition that raises rather than skips empties "
+                         "the skip list while running nothing")
 
 
 class NoCommitYet(unittest.TestCase):
