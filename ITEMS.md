@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 89
+added: 90
 compacted: 0
 
 ## lc-3
@@ -597,3 +597,12 @@ evidence: operator ask 2026-09-13 (statiker session 1b204567: '/close-session i 
 blocked-by: NONE
 amend-reason: 2026-09-13 the entry's premise changed within the hour of booking, and an entry whose premise has been overtaken executes stale unless the record says so: the 'one rm from gone' urgency is discharged, the shipping requirement is untouched. Recorded with the discriminating check (the sha pair) rather than the verdict alone, and with the no-auto-sync caveat that makes the pair go stale, so the next reader can tell a current copy from a drifted one
 amended-evidence: 2026-09-13 operator ask 2026-09-13 (statiker session 1b204567: '/close-session i think should be part of lifecycle too'); lc-93's symmetry basis and its widening; the local skill file as the source artifact. THE SURVIVAL HALF IS DISCHARGED AND THIS ITEM NO LONGER CARRIES IT: at booking the source file was tracked by NO repo on this machine (verified at this desk: ls-files --error-unmatch returned 'did not match', status --porcelain --ignored over claude/skills/ returned empty). The statiker desk rescued it the same hour - dotfiles 254efa8, pushed - and VERIFIED HERE rather than taken from the report: the path is now tracked, and sha256 of the tracked blob equals sha256 of the live file, 8bc8215780d96a1c11c963136f9bace2aa2c51b6a23d7c420e15522e2a7b66c1, so the copy is the artifact and not a stale snapshot. That desk also swept the class and found close-session its single member, the five ~/.claude/commands/*.md being dotfiles-tracked already - RELAYED, not re-run here. WHAT REMAINS OPEN IS THE SHIPPING HALF ONLY, and one live caveat rides with it: the tracked copy does NOT auto-sync, so the live ~/.claude/skills/ file and the repo copy can diverge until this item or an install.sh symlink lands - an edit to either side after 2026-09-13 13:10 makes that sha pair stale, and the pair is how a future reader checks
+
+## lc-98
+grade: READY
+requirement: the pre-push unbooked-commit guard belongs with this plugin: the dotfiles pre-push hook that refuses to push a subagent commit whose sha stands in no record carrier (LEDGER.md, JOURNAL, ITEMS.md, ITEMS-DONE.md) is machine-local today, yet the carriers it reads are this plugin's own — the ledger-coupling argument that moved the ledger tail here (lc-93) applies verbatim. A stack install gets the carriers but not the guard that makes pushes respect them, and this plugin already ships git-hooks (plugin.json declares the mechanism), so the home exists. Fired for real this date: it blocked a statiker push until the lane's commit had its LEDGER line
+goal: tend
+write-set: plugin git-hooks (the guard adopted from dotfiles git/hooks pre-push, carrier-path resolution generalized),plugin/.claude-plugin (wiring)
+done-criterion: the guard ships in the plugin's git-hooks with carrier paths resolved from the repo's lifecycle.json declarations rather than hardcoded; a repo without lifecycle.json is untouched; the dotfiles-local copy retires in favor of the shipped one at the operator's seam; battery covers fires-on-unbooked and silent-on-booked (both controls)
+evidence: operator second-look ask 2026-09-13 (statiker session); the guard's real fire same date (statiker push blocked until LEDGER line 7639b61 landed); df-171 lane's fact that lifecycle plugin.json declares git-hooks; the lc-93 ledger-coupling precedent
+blocked-by: NONE
