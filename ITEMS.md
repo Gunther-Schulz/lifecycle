@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 96
+added: 97
 compacted: 0
 
 ## lc-3
@@ -635,4 +635,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core (repo resolution + verb output), test/
 done-criterion: both mechanisms landed with red-first proof: the prefix-mismatch refusal shown RED on a cross-repo fixture (an ident carrying one declared prefix against a repo declaring another) and green on a matching pair; the resolved-repo output line asserted present in the verb battery, with the absent case as control
 evidence: incident 2026-09-13: a session operating across several repos of this stack had its cwd moved mid-turn (its own cd for an unrelated scan; the harness also moves cwd on its own) and an ident-taking amend ran against a neighboring repo's carrier — refused as unknown_item only because that ident did not exist there. A prefix-less ledger write minutes earlier would have committed silently into the wrong carrier under identical conditions
+blocked-by: NONE
+
+## lc-105
+grade: READY
+requirement: An AMENDED evidence blocker rides into the closure home alive and produces FINDING [blocked_in_done_home] against a body no verb can repair, by the identical route lc-90 fixed for the item type. lc-90 split the item type only; the evidence type was measured and deliberately not guessed at — record: lc-90 lane report 3/5 gap G1, 2026-09-13
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py,tools/prove-rows.py
+done-criterion: item close EVALUATES the evidence predicate before moving, through THE trigger evaluator lane list already calls and never a second body, and disposes on its mapping: 0 (evidence ARRIVED, the wait genuinely answered) discharges with a record; 1 (not arrived) REFUSES a DONE close and records ABANDONED under --drop; >=2 (BROKEN) is COULD NOT VERIFY and refuses, never a pass. Red-first on an amended evidence blocker at 6f05fa2, where close exits 0 and the next item check exits 2. The refusal is a registered roster row with plant AND control AND its own prove-rows mutation entry — anchored on its own message tail, never on a bare return line, which appears ten times in verbs.py. MUST-NOT-MOVE: the item-type dispositions lc-90 shipped are unchanged, and check_done_file's message sentence 'so it did not arrive here by a close' is repaired in this change since it is false for this case too
+evidence: MEASURED BY THE LANE AND CONFIRMED AT THIS DESK, 2026-09-13: old side and new side alike, an amended evidence blocker closes exit 0 then item check exits 2 with blocked_in_done_home. The disposition above is DERIVED, not invented — verbs.py:1321-1335 documents the evidence type as evaluated by the trigger evaluator with the mapping 0=UNBLOCKED, 1=waiting, >=2=BROKEN, and states in its own comment that BROKEN is a FINDING rather than a wait, and that two bodies behind one contract would disagree about exactly that case. So the close has a machine-side answer available and does not need to guess. The lane's worry that refusing traps the operator does not hold: the same two exits the item refusal prints apply — amend --blocked-by NONE with a reason, or --drop
 blocked-by: NONE
