@@ -662,3 +662,206 @@ class TheCostTestsThirdConjunct(unittest.TestCase):
         code, out = self._run(r, *self._add("--blocked-by", "NONE"))
         self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         self.assertIn("COULD NOT VERIFY", out)
+
+
+def _park_block(ident: str, grade: str, blocker: str,
+                amended: str | None = None) -> str:
+    """One fixture block, optionally carrying a superseding amendment group.
+
+    The amendment is the LAST thing in the block, which is where
+    `_resolve_amendments` requires it: a superseding line above the value it
+    supersedes is its own `item_shape` finding, and a fixture that tripped it
+    would red for a reason this class is not about.
+    """
+    body = (f"\n## {ident}\ngrade: {grade}\n"
+            "requirement: a park-supersession fixture block — LEDGER.md\n"
+            "goal: mitigate\nwrite-set: tools/thing.py\n"
+            "done-criterion: it goes red then green\nevidence: none yet\n"
+            f"blocked-by: {blocker}\n")
+    if amended is not None:
+        body += ("amend-reason: 2026-09-12 the earlier wait was cleared by "
+                 "the retirement pass\n"
+                 f"amended-blocked-by: 2026-09-12 {amended}\n")
+    return body
+
+
+class ParkWritesTheValueThatGoverns(unittest.TestCase):
+    """`item park` cannot return CLEAN over a blocker that would not govern.
+
+    THE DEFECT (lc-112). `cmd_item_park` wrote the BASE `blocked-by:` slot,
+    and `items.parse` resolves an `amended-blocked-by:` line LAST-WINS over
+    it. So on a block carrying such a line park moved the grade to PARKED,
+    printed the typed blocker back and returned CLEAN while the EFFECTIVE
+    blocker was untouched — the verb's output true about the slot it wrote and
+    false about the item. Measured n=2 at the drain desk 2026-09-13 (lc-24 and
+    lc-66, both `amended-blocked-by: 2026-09-12 NONE`), and INVISIBLE to park's
+    own output: what caught it was `item check` reading the carrier the way a
+    reader does.
+
+    AT THE CLI ALTITUDE ON PURPOSE, for the reason the class above states: a
+    unit call to the new helper reds against the old build as an ImportError or
+    an AttributeError — an ERROR, which proves only that the name is new and
+    scores identically against a build that carries the name and still writes
+    the ungoverned slot. Every arm below runs the verb, where the old build
+    accepts the same argv and its red is an assertion FAILURE at the defect.
+    Read `failures=` vs `errors=` per arm, never the red count.
+
+    THE CARRIER IS READ BACK, never the exit code trusted. A refusal that
+    returned FINDING and had already written the slot would satisfy an
+    exit-code assertion exactly as a real one does, and "nothing was written"
+    is half of what this refusal promises.
+
+    THE LAST TWO ARMS MUST NOT MOVE, and they are what decides shippability.
+    An ordinary block — no amendment line — must park exactly as it did
+    before, same output and same exit: a repair that changed the ordinary path
+    would be a bigger behaviour change than the defect. And the block whose
+    amendment ALREADY says what park was told must park too, because that is
+    the state `item amend` leaves behind and therefore the second half of the
+    repair route this refusal names.
+    """
+
+    TYPED = "evidence test -f docs/never-written.md"
+
+    def _repo(self, **kw):
+        r = refusals._Repo(**kw)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _carrier(self, *blocks) -> str:
+        return (f"schema: 2\nbaseline: {len(blocks)}\nadded: 0\n"
+                "compacted: 0\n" + "".join(blocks))
+
+    def _effective(self, repo, ident: str):
+        """What `items.parse` puts IN FORCE — the reader's answer, not park's.
+
+        A separate instrument from the verb under test on purpose: park prints
+        the value it WROTE, which is the one thing that cannot be trusted here.
+        """
+        parsed = items.parse(
+            (repo.dir / "ITEMS.md").read_text(encoding="utf-8"))
+        it = next((i for i in parsed.items if i.ident == ident), None)
+        return None if it is None else it.slots.get("blocked-by")
+
+    # --- the defect -------------------------------------------------------
+
+    def test_park_refuses_where_an_amendment_would_supersede_its_write(self):
+        """The measured defect: CLEAN over a blocker that does not govern."""
+        r = self._repo(items=self._carrier(
+            _park_block("xx-1", "READY", "NONE", amended="NONE")))
+        before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = self._run(r, "item", "park", "xx-1",
+                              "--blocked-by", self.TYPED)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[park_over_superseding_amendment]", out)
+        self.assertEqual(self._effective(r, "xx-1"), "NONE", out)
+        self.assertEqual((r.dir / "ITEMS.md").read_text(encoding="utf-8"),
+                         before,
+                         "the refusal wrote to the carrier")
+
+    def test_the_grade_does_not_move_on_that_refusal(self):
+        """The half `item check` caught: PARKED beside an untyped blocker.
+
+        Its own arm because the grade and the blocker are two writes of one
+        `_set_slots` call, and a repair that refused the blocker while letting
+        the grade through would produce exactly the state the drain desk
+        measured — and would pass the arm above.
+        """
+        r = self._repo(items=self._carrier(
+            _park_block("xx-1", "READY", "NONE", amended="NONE")))
+        code, out = self._run(r, "item", "park", "xx-1",
+                              "--blocked-by", self.TYPED)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("grade: READY",
+                      (r.dir / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_it_fires_on_a_TYPED_amendment_that_merely_differs(self):
+        """DISCRIMINATION, and the arm a narrower fix would fail.
+
+        Both measured instances amended to NONE, so a repair keyed to "the
+        effective blocker is untyped" would pass every other arm here and still
+        return CLEAN over this one — a typed amendment the park write does not
+        govern either. The invariant is that the EFFECTIVE blocker equals the
+        value given, not that it is typed.
+        """
+        r = self._repo(items=self._carrier(
+            _park_block("xx-1", "READY", "NONE",
+                        amended="decision which window is canonical")))
+        code, out = self._run(r, "item", "park", "xx-1",
+                              "--blocked-by", self.TYPED)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[park_over_superseding_amendment]", out)
+        self.assertEqual(self._effective(r, "xx-1"),
+                         "decision which window is canonical", out)
+
+    def test_the_refusal_names_the_verb_that_does_supersede(self):
+        """A refusal that does not name the route is a dead end (R11's
+        sibling): the desk repaired both measured items through `item amend`,
+        and that is the exit this refusal has to hand the next author."""
+        r = self._repo(items=self._carrier(
+            _park_block("xx-1", "READY", "NONE", amended="NONE")))
+        _code, out = self._run(r, "item", "park", "xx-1",
+                               "--blocked-by", self.TYPED)
+        self.assertIn("item amend xx-1", out)
+        self.assertIn("--reason", out)
+
+    # --- must not move ----------------------------------------------------
+
+    def test_a_block_with_no_amendment_parks_exactly_as_before(self):
+        """THE ORDINARY PATH, unchanged: same output, same write, same exit."""
+        r = self._repo(items=self._carrier(
+            _park_block("xx-1", "READY", "NONE")))
+        code, out = self._run(r, "item", "park", "xx-1",
+                              "--blocked-by", self.TYPED)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn(f"xx-1 → PARKED, blocked-by: {self.TYPED}", out)
+        self.assertEqual(self._effective(r, "xx-1"), self.TYPED, out)
+        self.assertIn("grade: PARKED",
+                      (r.dir / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_an_amendment_already_saying_it_parks_too(self):
+        """The state `item amend` leaves — the refusal's own repair route.
+
+        Here because a predicate keyed to the mere PRESENCE of an
+        `amended-blocked-by:` line would refuse this forever, which would make
+        the fix the refusal names unreachable: amend, then park, then refused
+        again. The value in force already equals the value given, so there is
+        nothing to refuse.
+        """
+        r = self._repo(items=self._carrier(
+            _park_block("xx-1", "READY", "NONE", amended=self.TYPED)))
+        code, out = self._run(r, "item", "park", "xx-1",
+                              "--blocked-by", self.TYPED)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self._effective(r, "xx-1"), self.TYPED, out)
+        self.assertIn("grade: PARKED",
+                      (r.dir / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_an_untyped_blocker_is_still_refused_before_any_of_this(self):
+        """`parked_without_typed_blocker` still owns its case, and first.
+
+        The new check sits after the typed gate, so a prose blocker must still
+        produce the OLD refusal — a new check that shadowed the named one would
+        leave every author reading the vaguer message forever.
+        """
+        r = self._repo(items=self._carrier(
+            _park_block("xx-1", "READY", "NONE", amended="NONE")))
+        code, out = self._run(r, "item", "park", "xx-1",
+                              "--blocked-by", "we should think about it")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[parked_without_typed_blocker]", out)
+        self.assertNotIn("[park_over_superseding_amendment]", out)

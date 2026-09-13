@@ -1412,6 +1412,40 @@ def cmd_item_park(args, out, ctx: Ctx) -> int:
     names the fix; there it catches the block that reached the file some
     other way. A rule enforced only on the write path is a convention with a
     mechanism's reputation.
+
+    THE BASE SLOT IS NOT ALWAYS THE VALUE IN FORCE (lc-112). This verb writes
+    the `blocked-by:` slot line, and `items.parse` resolves an
+    `amended-blocked-by:` line LAST-WINS over it — the rule `_effective_blocker`
+    below already states in its own words. So on a block carrying such a line
+    the write landed on a slot nothing reads: the grade moved to PARKED, the
+    verb printed the typed value back and returned CLEAN, and the EFFECTIVE
+    blocker stayed whatever the amendment said. Measured n=2 at the drain desk
+    2026-09-13 (lc-24 and lc-66, both `amended-blocked-by: 2026-09-12 NONE`):
+    park reported success and the very next `item check` reported
+    `parked_without_typed_blocker` about the block park had just written. The
+    verb's output was true about the slot and false about the item.
+
+    THE CHECK IS THE INVARIANT, ASKED OF THE READER'S OWN RESOLVER. Rather than
+    re-implement last-wins here — a second copy of a rule that would drift from
+    the first silently — the write is composed in memory and handed back to
+    `items.parse`, and the value it puts IN FORCE is compared with the value
+    given. A park whose blocker would not govern refuses; one that would
+    proceeds, which is every block carrying no amendment and so leaves the
+    ordinary path exactly as it was.
+
+    IT REFUSES RATHER THAN WRITING THE SUPERSEDING LINE ITSELF, and the reason
+    is in `append_amendment`'s own docstring: an in-place slot write is the
+    right shape for "a state transition the tool owns end to end (`item park`'s
+    grade)", while "a correction to a value a desk wrote is a DIFFERENT act".
+    That act is `item amend`, whose every amendment carries a `--reason`
+    BECAUSE the tool has no business inventing one ("The tool writes the slots;
+    the SESSION writes the prose, and there is no default here on purpose").
+    Appending from here would force park either to invent that reason or to
+    spell a second, reason-less amendment shape outside `render_amendment`,
+    which is the only place the shape is spelled. The refusal names `item
+    amend` instead — the route the desk took by hand on both measured items —
+    and after that amendment park succeeds, because the value in force is then
+    the value it was given.
     """
     value = (args.blocked_by or "").strip()
     kind, detail = items_mod.classify_blocker(value, ctx.prefix)
@@ -1440,6 +1474,32 @@ def cmd_item_park(args, out, ctx: Ctx) -> int:
         if not ok:
             out(f"FINDING [unknown_item] no live block {args.ident!r} in "
                 f"{ctx.items_path.name}.")
+            return exits.FINDING
+        # THE WRITE IS GRADED BEFORE IT LANDS (lc-112). `new` is the carrier
+        # this park would produce; the reader's own resolver says what the
+        # blocker in it would BE. Nothing is written on either refusing branch.
+        effective = _effective_slot(new, args.ident, "blocked-by")
+        if effective is None:
+            out(f"COULD NOT VERIFY: {args.ident!r} is in "
+                f"{ctx.items_path.name} — the slot write found it — but the "
+                "parser does not carry it back, so what the blocker would "
+                "resolve to cannot be read. Nothing was written.")
+            return exits.COULD_NOT_VERIFY
+        if effective != value:
+            out("FINDING [park_over_superseding_amendment] `item park` would "
+                f"write `blocked-by: {value}` into {args.ident}, and that "
+                f"value would NOT govern: the block carries a superseding "
+                f"`{items_mod.AMEND_PREFIX}blocked-by:` line, so the blocker "
+                f"in force would still be {effective!r}. The park was REFUSED "
+                "and nothing was written — the grade did not move. An "
+                "amendment supersedes the slot line by design, which is how "
+                "the carrier keeps what it used to say; a verb that wrote the "
+                "slot anyway would report a state the file does not have. Use "
+                f"`item amend {args.ident} --blocked-by {value!r} --reason "
+                "<why>` — an amendment IS the value in force — and then `item "
+                "park` again, which will then agree with the file. The "
+                "`--reason` is not ceremony here: it is the record of why the "
+                "earlier blocker stopped being the right one.")
             return exits.FINDING
         ctx.items_path.write_text(new, encoding="utf-8")
     out(f"{args.ident} → PARKED, blocked-by: {value}")
@@ -1735,6 +1795,37 @@ def _set_slots(text: str, ident: str, updates: dict):
 
 
 # --- `item close` (stage 5) ---------------------------------------------------
+
+def _effective_slot(text: str, ident: str, slot: str):
+    """The value `items.parse` puts IN FORCE for one slot of one block.
+
+    `None` where the block is not in the parsed carrier at all — the third
+    answer, kept separate from a slot that resolves to something: "the parser
+    does not carry this block" and "the blocker is X" are different facts, and
+    a caller that could not tell them apart would read an unreadable carrier as
+    an answer.
+
+    IT TAKES TEXT RATHER THAN A PATH so a caller can grade a write BEFORE it
+    lands (`item park`, lc-112): the question "would the value I am about to
+    write be the value in force?" is only askable of the carrier as it WOULD
+    be. Reading the file instead would answer about the carrier as it is,
+    which is the state nobody is asking about.
+
+    THE RESOLUTION RULE IS NOT RESTATED HERE, and that is the point. Last-wins
+    over an `amended-<slot>:` line lives in `items._resolve_amendments`; a
+    second copy in this module would be a paraphrase that drifts the first time
+    either changes. `_effective_blocker` below reads the same resolved slot for
+    the same reason, one question narrower.
+    """
+    try:
+        parsed = items_mod.parse(text)
+    except (ValueError, TypeError):
+        return None
+    it = next((i for i in parsed.items if i.ident == ident), None)
+    if it is None:
+        return None
+    return it.slots.get(slot)
+
 
 def _effective_blocker(ctx: Ctx, ident: str):
     """`(kind, detail)` of the blocker a close is about to end, or `(None, "")`.
