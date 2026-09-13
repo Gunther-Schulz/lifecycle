@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 85
+added: 86
 compacted: 0
 
 ## lc-3
@@ -552,3 +552,14 @@ write-set: plugin/hooks (new SessionStart hook + hooks.json entry),plugin/.claud
 done-criterion: a fresh session in a lifecycle-carrying repo prints the banner with zero local settings.json wiring; a session elsewhere prints nothing; the hook's own battery covers both (the instrument pair); the operator's local wiring keeps working unchanged beside it
 evidence: this session's own start banner (statiker, 2026-09-13) as the target rendering; dotfiles settings.json:121-157 as the current machine-local wiring (df-171 lane read, same date); lifecycle plugin.json currently declares git-hooks only, no harness SessionStart (same lane)
 blocked-by: NONE
+
+## lc-94
+grade: READY
+requirement: The re-import DETECTOR may inherit the pseudo-ident defect lc-92 found one function over, and one probe that did not reproduce it is not a clearance. provenance_index attributes every token following ANY one-word '## ' heading, and the archive holds source carriers VERBATIM - so an archived carrier's own '## Done' section re-opens attribution and its bodies enter the index under the pseudo-ident 'Done' (measured at lc-92: {('SECOND.md', 6, 7): 'Done'}). per_source_counts was fixed by cutting its INPUT at items.ARCHIVE_HEADING; the detector deliberately was NOT, because 'is this body already present' is a question the archive legitimately answers. The open question is whether that legitimate reading can still misattribute - a re-import skipped against a pseudo-ident, or an 'already migrated as Done' message - record: lc-92 closure, commit b260152
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: UNKNOWN
+evidence: SURFACED by the lc-92 build lane 2026-09-13 as slot (g), NOT VERIFIED: it probed once whether the detector visibly misattributes and did not reproduce a false re-import in that arrangement. Unverified, not cleared - a single non-reproduction is the failure-to-reproduce shape the corpus names, where the negative also confirms the checker's doubt. The mechanism it would run on is MEASURED and committed in b260152: provenance_index's corrected docstring states the pseudo-ident behaviour with the measured index quoted in it
+blocked-by: evidence a reproduction that shows the re-import detector attributing an archived body's anchor to a pseudo-ident - a skipped re-import or an 'already migrated as' naming a pseudo-ident rather than a real item id - or a proof that the detector's own call path cannot reach that state
+amend-reason: 2026-09-13 the add was written with done-criterion UNKNOWN and the carrier's own shape check refused the commit, correctly: an entry the tool cannot grade is not a booking. The criterion is stated in BOTH directions because the honest disposition here is a settled question, not necessarily a repair
+amended-done-criterion: 2026-09-13 the question is SETTLED in one of the two directions and the entry records which: either a reproduction exists - a re-import skipped against a pseudo-ident, or an 'already migrated as <pseudo-ident>' message - and the detector is repaired with its own red-first arrangement and a MUST-NOT-MOVE keeping the archive answerable for the legitimate 'is this body already present' question; or the detector's call path is shown unable to reach that state, with the executed check quoted in the entry. A single non-reproduction does not satisfy either direction
