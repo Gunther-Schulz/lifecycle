@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 95
+added: 96
 compacted: 0
 
 ## lc-3
@@ -635,4 +635,13 @@ goal: every-refusal-red-first
 write-set: plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/declaration.py,test/
 done-criterion: a hook this repo ships cannot be committed or pass its own checks without the executable bit: the mode of every declared git-hook path is asserted against git's own record (git ls-tree's mode, not the filesystem alone, since a deployed symlink's target is what git stores), and the refusal is a registered roster row with plant AND control. Red-first is already in hand and must be reproduced: 0cbd1ad is a real commit in this history carrying mode 100644 on a hook, so the check goes red against that ref and green against d8c3934. MUST-NOT-MOVE: a NON-hook file's mode is not policed - this is about artifacts something launches, and a guard that fires on ordinary files trains the override reflex that kills it
 evidence: MEASURED AT THIS DESK, 2026-09-13, independently of the lane's report: 'git ls-tree 0cbd1ad -- tools/git-hooks/pre-push' returns mode 100644 and 'git ls-tree HEAD' returns 100755, with the SAME blob sha 887ecff8 in both - content identical, mode alone differing, which is exactly why a sha-only restore check passed it. The dead-gate consequence was measured by the lane at the artifact git actually runs: the .git/hooks/pre-push symlink answered 'permission denied'. The dotfiles-side guards are named from that repo's CLAUDE.md, RELAYED and not re-read here
+blocked-by: NONE
+
+## lc-104
+grade: READY
+requirement: wrong-repo invocations under cwd resolution: an ident-taking verb run in the wrong repo fails only by LUCK (unknown_item — the ident happens not to exist there), and prefix-less verbs (ledger add, retire) land SILENTLY in whichever repo cwd points at. Two mechanisms: (1) every ident-taking verb checks the ident's prefix against the repo's declared id-prefix BEFORE existence, refusing with the diagnosis 'ident prefix X does not match this repo's prefix Y — wrong repo? pass --repo'; (2) every verb's first output line names the resolved repo path, so the silent class is visible at the artifact. A harness-side hook was considered and declined: cwd INTENT is not computable outside the CLI, so a hook over-fires on legitimate cwd-resolved use — the prefix predicate inside the CLI is computable with near-zero false fires
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core (repo resolution + verb output), test/
+done-criterion: both mechanisms landed with red-first proof: the prefix-mismatch refusal shown RED on a cross-repo fixture (an ident carrying one declared prefix against a repo declaring another) and green on a matching pair; the resolved-repo output line asserted present in the verb battery, with the absent case as control
+evidence: incident 2026-09-13: a session operating across several repos of this stack had its cwd moved mid-turn (its own cd for an unrelated scan; the harness also moves cwd on its own) and an ident-taking amend ran against a neighboring repo's carrier — refused as unknown_item only because that ident did not exist there. A prefix-less ledger write minutes earlier would have committed silently into the wrong carrier under identical conditions
 blocked-by: NONE
