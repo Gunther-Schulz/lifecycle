@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 87
+added: 88
 compacted: 0
 
 ## lc-3
@@ -577,3 +577,12 @@ evidence: MEASURED AT THIS DESK 2026-09-13, both invocations run on a clean tree
 blocked-by: NONE
 amend-reason: 2026-09-13 WIDENED 2026-09-13: the lc-86 build lane's V0 baseline measured the node runner at 62 bites against CLAUDE.md:346's 51 - same section, same class as the broken command already booked here, so it merges into this entry rather than minting a sibling. Booked, not fixed, and explicitly not the lane's to repair
 amended-requirement: 2026-09-13 This repo's own '## Verify' section misdescribes its own checks, in two places measured the same day. (i) THE COMMAND DOES NOT WORK: CLAUDE.md names 'python3 -m unittest discover -s test -p test_*.py -t .', and '-t .' puts the repo ROOT on sys.path and never test/, so test_migrate_residue (imports test_migrate) and test_tend_goal (imports test_init) die at import - the documented invocation reports Ran 306, FAILED (errors=2) while the honest suite is Ran 340, OK. (ii) THE BITE COUNT IS STALE: CLAUDE.md:346 says 'One of the 51 node bites fails here and is EXPECTED to' while 'node --test test/absence-scan.test.mjs' reports 62 tests. The named failing bite is still correct and still the only failure; it is the total that drifted. Both are the same class - a verify section whose own numbers and commands are not re-derived from the thing they describe - and a verify line that reports two errors on a clean tree is a check firing on a non-defect, training the reader to discount the red
+
+## lc-96
+grade: READY
+requirement: Retiring a source carrier needs a RE-ROOTING verb, and lc-86's refusal names the gap without filling it. lc-86 makes --retire-source refuse while any anchor in the successor homes pointing at the carrier under retirement lacks its 'at blob <sha>' pin - correct, because deleting the source breaks EARLIER migrations' unpinned anchors, which is exactly what dotfiles avoided by re-rooting 403 citations before it deleted its two carriers. But the tool ships no way to DO that re-rooting: a repo whose earlier runs wrote bare '<path>:<line>' anchors hits a refusal it can only satisfy by hand-editing a carrier the tool declares itself the only writer of (law 8) - record: lc-86 build lane critique C3, 2026-09-13
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a repo holding pre-change bare '<path>:<line>' and '<path>:<line>-<end>' anchors can re-root them to the family form 'at blob <sha>' through the tool, against a stated blob, without hand-editing a carrier - and --retire-source's refusal then passes on the same repo. MUST-NOT-MOVE, and it is the whole risk: re-rooting rewrites carrier bodies, so an anchor whose line range does NOT resolve in the named blob is refused and reported rather than pinned to a blob that does not contain it - the confident-wrong pointer dotfiles measured at 313 of 318 in another repo. The pass is idempotent: re-rooting an already-pinned anchor changes nothing
+evidence: SURFACED by the lc-86 build lane 2026-09-13 as the consequence of ruling C3 at this desk: the widened refusal is the right shape - refusing loudly beats deleting silently - and it names a state the tool cannot itself repair. The precedent that makes the gap concrete is dotfiles' own retirement, where citations were re-rooted in ab067d6 BEFORE the carriers were deleted, by hand, in a repo that had no verb for it either
+blocked-by: lc-86
