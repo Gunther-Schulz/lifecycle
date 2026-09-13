@@ -196,7 +196,19 @@ MUTATIONS = [
      "the could-not-verify ANSWER for an identity that could not be "
      "computed — folded into CLEAN, which is the number shaped like a pass"),
 
-    ("ledger_body", "ledger.py",
+    # FILE FIELD MOVED ledger.py -> grammar.py, 2026-09-13. The anchor STRING
+    # was never wrong; the predicate MOVED. lc-40 single-sourced it into
+    # grammar.check_prose and left ledger.check_prose a re-export, so this row
+    # read COULD NOT VERIFY (count 0 in ledger.py) for as long as that stood —
+    # a registered refusal silently unproven, which is worse than the defect it
+    # guards. Found by the lc-56 lane, landed here: prove-rows is never granted
+    # to a lane, so a check and its subject never share one author.
+    # DO NOT RE-POINT THIS AT items.py. The byte-identical line also sits at
+    # items.py:797 inside slot_value_problem, a DIFFERENT predicate about item
+    # SLOTS — pinned there the mutation would still compile, still go red, and
+    # prove the wrong thing. grammar.py is the ledger-prose predicate: its own
+    # message says "The ledger carries NO BODIES".
+    ("ledger_body", "grammar.py",
      '    if "\\n" in v or "\\r" in v:',
      "    if False:",
      "the ledger's one-line rule — the NO BODIES half"),
