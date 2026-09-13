@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
-from lifecycle_core import lanes, migrate  # noqa: E402
+from lifecycle_core import lanes, migrate, refusals  # noqa: E402
 
 
 class TriggerContract(unittest.TestCase):
@@ -882,6 +882,44 @@ class TheDecisionTableIsRecognised(unittest.TestCase):
         write `lane_stub()`, so a recogniser that missed it would refuse
         every lane this tool itself creates."""
         self.assertTrue(lanes.has_decision_table(lanes.lane_stub("drain")))
+
+    def test_the_other_generator_in_this_repo_is_accepted_too(self):
+        """The SECOND body that must not move, and the one the roster covers
+        only behaviourally: `refusals._lane_body` is this repo's other table
+        generator, and the `lane_table_absent` row uses it as its CONTROL —
+        so today a predicate that refused it would fail that row. That is
+        coverage by side effect: re-point the row's control at any other
+        body and this property stops being tested, silently, with every
+        suite still green. Asserted directly here so it cannot decay that
+        way.
+
+        Written at the drain desk rather than by the lane that wrote the
+        predicate: an assertion that a predicate accepts the OTHER generator
+        is a check on that predicate, and a check and its subject do not
+        share one author.
+        """
+        self.assertTrue(
+            lanes.has_decision_table(refusals._lane_body("exit 1")))
+
+    def test_the_two_generators_must_keep_disagreeing(self):
+        """THE CROSS-CHECK ITSELF, pinned. The two generators spell the first
+        column differently — `condition` in `lane_stub`, `when` in
+        `_lane_body` — and that disagreement is the whole reason their
+        agreement on the predicate means anything: a recogniser keyed on a
+        header WORD would accept one and refuse the other.
+
+        Collapsing them to one wording would destroy the only independent
+        instance while leaving every other test green, so the premise is
+        pinned INSIDE the check rather than left to the environment.
+        """
+        stub = lanes.lane_stub("drain")
+        fixture = refusals._lane_body("exit 1")
+        self.assertIn("| condition | workflow |", stub)
+        self.assertIn("| when | workflow |", fixture)
+        self.assertNotIn("| when | workflow |", stub)
+        self.assertNotIn("| condition | workflow |", fixture)
+        for body in (stub, fixture):
+            self.assertTrue(lanes.has_decision_table(body))
 
     def test_a_body_with_every_label_and_no_table_is_the_defect(self):
         """THE FIRING INPUT, at the unit: every part `LANE_PARTS` can see is
