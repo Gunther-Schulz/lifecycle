@@ -2170,6 +2170,17 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
     moment at every rationale line: a generated reason would be a paraphrase
     with nobody's judgment behind it, and it would read exactly like one
     somebody meant.
+
+    AND THE WRITE IS COMMITTED, through the one path every carrier write
+    already reaches (lc-56, the sibling of lc-25). This verb wrote the ledger
+    and said nothing about it, which is the assumed-delivery class: it does
+    not fail, it ACCUMULATES. The measured consequence is one level over —
+    `item ready` resolves a `decision` blocker against a ledger line, so an
+    item read as UNBLOCKED in a tree where the answer was never committed.
+    `--no-commit` is NOT mirrored from `item add` here: the flag lives on the
+    parser, which this change does not own, and the contract holds without it
+    — after CLEAN the line is committed, because a commit that fails is a
+    FINDING and not a CLEAN.
     """
     if not args.line_kind:
         out("COULD NOT VERIFY: `ledger add` needs a line kind: "
@@ -2201,5 +2212,13 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
     line = ledger.append(ctx.ledger_path, args.line_kind,
                          {k: str(v).strip() for k, v in slots.items()})
     out(f"ledger: {line}")
+    # ONE COMMIT PATH, not a second spelling: `commit_paths` is what every
+    # other carrier write in this file calls, and it commits BY PATHSPEC
+    # because the index is shared. EVERY line kind reaches this line — a
+    # commit written into one of the four branches above would be a fix for
+    # one kind of four, and the other three would keep accumulating.
+    code = commit_paths(ctx, (ctx.ledger_path,),
+                        f"lifecycle: ledger {args.line_kind}", out,
+                        what="the ledger line")
     args.fire_detail = f"ledger add {args.line_kind}"
-    return exits.CLEAN
+    return code
