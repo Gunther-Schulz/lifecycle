@@ -868,5 +868,159 @@ blocked-by: NONE
             r.close()
 
 
+class TheDecisionTableIsRecognised(unittest.TestCase):
+    """lc-12's recogniser, at the unit the roster row cannot reach.
+
+    The row proves the FINDING. What decides whether this guard is shippable
+    at all is the other side — which bodies it must NOT refuse (R11: a guard
+    that fires on legitimate work stops the lane) — and a control only has to
+    differ from its plant, so the must-not rows live here.
+    """
+
+    def test_the_stub_this_tool_writes_carries_one(self):
+        """The first body that must not move: `lane new` and `init --lane`
+        write `lane_stub()`, so a recogniser that missed it would refuse
+        every lane this tool itself creates."""
+        self.assertTrue(lanes.has_decision_table(lanes.lane_stub("drain")))
+
+    def test_a_body_with_every_label_and_no_table_is_the_defect(self):
+        """THE FIRING INPUT, at the unit: every part `LANE_PARTS` can see is
+        present, which is exactly why the `startswith` scan called it
+        complete."""
+        body = "# lane: x\n\nDecides: a\n\nTrigger: exit 1\n\nEnds: b\n"
+        for part in lanes.LANE_PARTS:
+            self.assertIn(part, "".join(body))
+        self.assertFalse(lanes.has_decision_table(body))
+
+    def test_a_header_and_delimiter_with_no_rows_is_still_a_table(self):
+        """MUST NOT MOVE. An EMPTY decision table is a different defect from
+        a MISSING one, and two of this repo's own lane fixtures are this
+        shape (`test_lane_list_json.py:80,83`). Demanding a body row here
+        would refuse a lane that carries the part §3.3 asks for."""
+        self.assertTrue(lanes.has_decision_table(
+            "Decides: x\nTrigger: exit 0\n| a | b |\n|---|---|\nEnds: y\n"))
+
+    def test_a_horizontal_rule_is_not_a_table(self):
+        """MUST NOT MOVE. `---` under a heading is ordinary markdown, and a
+        recogniser that took it for a table would call every lane complete —
+        the clean-forever failure this check exists to end."""
+        self.assertFalse(lanes.has_decision_table(
+            "# lane: x\n---\n\nDecides: a\nTrigger: exit 1\nEnds: b\n"))
+
+    def test_a_single_column_delimiter_is_not_a_decision_table(self):
+        """§3.3's table maps a condition TO a workflow. One column cannot
+        express a mapping, so it is not the part the design names."""
+        self.assertFalse(lanes.has_decision_table(
+            "Decides: a\n| only |\n|---|\n| x |\nTrigger: exit 1\nEnds: b\n"))
+
+    def test_a_delimiter_with_no_header_above_it_is_not_a_table(self):
+        """A delimiter row on its own is not a table in any markdown
+        renderer, and treating it as one would let a lane pass on a line
+        nobody reads as a table either."""
+        self.assertFalse(lanes.has_decision_table(
+            "Decides: a\n\n|---|---|\n\nTrigger: exit 1\nEnds: b\n"))
+
+    def test_prose_naming_tables_and_workflows_does_not_satisfy_it(self):
+        """THE FALSE-FIRE PROBE the predicate's own kind demands: this
+        predicate is TEXTUAL, so it is run against in-domain adversarial
+        prose by the same author — the module's own docstring, which talks
+        about decision tables at length and contains none."""
+        self.assertFalse(lanes.has_decision_table(lanes.__doc__))
+        self.assertFalse(lanes.has_decision_table(
+            lanes.has_decision_table.__doc__))
+        self.assertFalse(lanes.has_decision_table(
+            lanes.table_absent_message("drain")))
+
+    def test_a_body_that_was_never_read_has_no_opinion(self):
+        """The tri-state, at `read_lane`: a DECLARED lane with no file is
+        `None`, not `False`. "No opinion" and "read it, no table" are
+        different facts and only the second is a finding — a `False` here
+        would stack an invented finding on top of a real one."""
+        d = Path(tempfile.mkdtemp(prefix="lifecycle-lc12-"))
+        try:
+            lane = lanes.read_lane(d, "absent")
+            self.assertIsNone(lane.table_present)
+            self.assertIsNotNone(lane.problem)
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+
+class TheRouterRefusesALaneWithNoDecisionTable(unittest.TestCase):
+    """lc-12's done-criterion, at the altitude the guard operates at.
+
+    NOT A UNIT ARM, deliberately. A unit red leaves the plumbing the router
+    ships with — the walk, the exit code, the emitted row name — unexercised,
+    and that plumbing is where the defect lived: `read_lane` never asked the
+    question, so every layer above it reported a complete lane.
+
+    THE BODIES ARE LITERALS HERE, reaching through no name this build
+    introduced, so the arm is an assertion FAILURE against the old code
+    rather than an import or attribute ERROR. Measured against the HEAD
+    snapshot before the build: exit 0, CLEAN, byte-identical board to the
+    lane that carries a table.
+    """
+
+    NO_TABLE = ("# lane: x\n\nDecides: nothing — this is a fixture\n"
+                "Trigger: exit 1\n\nEnds: dropped\n")
+    WITH_TABLE = ("# lane: x\n\nDecides: nothing — this is a fixture\n"
+                  "Trigger: exit 1\n\n| when | workflow |\n|---|---|\n"
+                  "| never | none |\n\nEnds: dropped\n")
+
+    def _lane_list(self, body, argv=("lane", "list")):
+        from lifecycle_core import refusals
+        return refusals._lane_cli(list(argv), roster_lines=["@repo"],
+                                  lanes=["x"], lane_files={"x": body})
+
+    def test_a_lane_with_no_table_is_a_finding_naming_its_own_row(self):
+        r = self._lane_list(self.NO_TABLE)
+        self.assertEqual(r.code, 2, r.output)
+        self.assertIn("FINDING [lane_table_absent]", r.output)
+        self.assertIn("NO DECISION TABLE 1", r.output)
+
+    def test_the_same_lane_WITH_a_table_stays_clean(self):
+        """The pair. Both arms carry the same quiet `exit 1` predicate and
+        differ in the table alone, so a finding arriving for any other
+        reason fails here rather than passing as this row's proof."""
+        r = self._lane_list(self.WITH_TABLE)
+        self.assertEqual(r.code, 0, r.output)
+        self.assertNotIn("lane_table_absent", r.output)
+        self.assertIn("NO DECISION TABLE 0", r.output)
+
+    def test_it_is_not_reported_as_a_broken_trigger(self):
+        """The row it must NOT ship under. BROKEN is a state of the trigger
+        PREDICATE (§3.3's reserved codes); this lane's predicate answers
+        quietly and correctly. Folding the table finding into `problem`
+        would have named it `trigger_broken` and counted a working lane
+        BROKEN — the shadowing the new verdict exists to avoid."""
+        r = self._lane_list(self.NO_TABLE)
+        self.assertNotIn("trigger_broken", r.output)
+        self.assertIn("BROKEN 0", r.output)
+        self.assertIn("QUIET 1", r.output)
+
+    def test_json_and_longhand_carry_the_same_finding(self):
+        """`--json` changes the RENDERING, never the VERDICT — the emitter's
+        own non-negotiable, asserted for the row this item adds."""
+        import json as json_mod
+        text = self._lane_list(self.NO_TABLE)
+        js = self._lane_list(self.NO_TABLE, argv=("lane", "list", "--json"))
+        self.assertEqual(text.code, js.code)
+        doc = json_mod.loads(js.output)
+        rows = {f["row"] for r in doc["repos"]
+                for ln in r.get("lanes", [])
+                for f in ln.get("findings", [])}
+        self.assertIn("lane_table_absent", rows)
+        self.assertEqual(doc["table_absent"], 1)
+        self.assertIs(doc["repos"][0]["lanes"][0]["table_present"], False)
+
+    def test_a_lane_with_neither_a_trigger_nor_a_table_reports_both(self):
+        """Two defects, two findings. The table check runs BEFORE the
+        branches that return, so the louder finding does not swallow it —
+        the shape where a lane is repaired once and comes back."""
+        r = self._lane_list("# lane: x\n\nDecides: a\n\nEnds: b\n")
+        self.assertEqual(r.code, 2, r.output)
+        self.assertIn("FINDING [lane_table_absent]", r.output)
+        self.assertIn("FINDING [trigger_broken]", r.output)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1319,6 +1319,17 @@ def _lane_body(trigger: str) -> str:
             f"| never | none |\n\nEnds: dropped\n")
 
 
+#: The SAME body minus §3.3's fourth part, and nothing else (lc-12). Written
+#: as its own literal rather than a `.replace()` over `_lane_body`: a plant
+#: built by editing its own control is an expectation derived from the
+#: artifact it grades, and it would follow that artifact wherever it moved.
+#: Every LABELLED part is still here, which is the point — this is the body
+#: the `startswith` scan calls complete.
+def _lane_body_no_table(trigger: str) -> str:
+    return (f"# lane: x\n\nDecides: nothing — this is a row's fixture\n"
+            f"Trigger: {trigger}\n\nEnds: dropped\n")
+
+
 LANE_ROWS = [
     Row(
         ident="roster_absent",
@@ -1362,6 +1373,28 @@ LANE_ROWS = [
                                   lanes=["x"],
                                   lane_files={"x": _lane_body("exit 1")}),
         stage="wave 1, stage 7",
+    ),
+    Row(
+        ident="lane_table_absent",
+        refusal="a lane body carrying no decision table — §3.3 names FOUR "
+                "parsed parts and the table is the one with NO label, so the "
+                "`startswith` scan that finds the other three cannot reach "
+                "it: the board printed every label it could find over a lane "
+                "that routes nowhere, and exited CLEAN",
+        firing_input="a lane carrying `Decides:`, `Trigger:` and `Ends:` and "
+                     "no decision table; `lane list`",
+        expect=exits.FINDING,
+        fire=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"],
+                               lanes=["x"],
+                               lane_files={"x": _lane_body_no_table("exit 1")}),
+        # The SAME lane WITH the table: the arms differ in that part alone,
+        # both triggers are the quiet `exit 1`, and the control asserts
+        # nothing about the probed property — so a FINDING arriving for any
+        # other reason fails the pair rather than passing it.
+        control=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"],
+                                  lanes=["x"],
+                                  lane_files={"x": _lane_body("exit 1")}),
+        stage="wave 2 (lc-12)",
     ),
     Row(
         ident="unknown_item",

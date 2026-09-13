@@ -24,10 +24,16 @@ state are printed in full: an absent roster is BROKEN, a listed repo that
 does not resolve is NAMED. A table that omits what it has nothing to say
 about renders as silence, and silence reads as clean.
 
-WHAT THIS BUILD DOES NOT DO. The lane BODY's other three parsed parts
-(`Decides:`, the decision table, `Ends:`) are wave 2's, and so is the
-one-screen cap. This module parses `Trigger:` — what the router needs — and
-says so in its own output rather than implying it read the whole lane.
+WHAT THIS BUILD DOES NOT DO. `Decides:` and `Ends:` are reported by PRESENCE
+and not parsed, and the one-screen cap is not checked at all — both wave 2's.
+THE DECISION TABLE IS THE EXCEPTION, and lc-12 is why: it is §3.3's fourth
+parsed part and the only one with no label, so the `startswith` scan that
+finds the other three is structurally incapable of reaching it, and a lane
+missing it printed all three labels it could find and exited CLEAN. Its
+PRESENCE is therefore checked (`has_decision_table`) and its absence is a
+FINDING; its rows are not parsed. This module still parses no part's body
+beyond `Trigger:` — what the router needs — and says so in its own output
+rather than implying it read the whole lane.
 """
 
 import json
@@ -58,6 +64,63 @@ _TRIGGER_LINE = re.compile(r"^Trigger:\s*(.+?)\s*$")
 #: The lane's other three parsed parts (§3.3). Their PRESENCE is reported;
 #: parsing their bodies is wave 2's.
 LANE_PARTS = ("Decides:", "Trigger:", "Ends:")
+
+#: THE FOURTH PART, and the one no label can reach (lc-12). §3.3 names FOUR
+#: parsed parts; `LANE_PARTS` above carries three, because a decision table
+#: has no `Label:` prefix — the `startswith` scan is STRUCTURALLY incapable
+#: of finding it, so a lane missing the table printed all three labels it
+#: could find and the board exited CLEAN over a lane that routes nowhere.
+#:
+#: WHAT IS RECOGNISED, AND WHERE EACH CLAUSE COMES FROM. §3.3 says "a
+#: decision table → workflows" and names NO syntax, so the shape is derived
+#: from the two facts the design does state: a lane body is MARKDOWN
+#: (`lanes/<name>.md`), whose only table construct is the pipe table, and the
+#: table maps a condition TO a workflow, which takes at least two columns.
+#: The delimiter row is the signature — the one line of a markdown table that
+#: does not occur in ordinary prose — and the header line above it is what
+#: makes it a table rather than a stray horizontal rule.
+#:
+#: BODY ROWS ARE NOT REQUIRED, deliberately. A header and delimiter with no
+#: rows is an EMPTY decision table, which is a different defect from a
+#: MISSING one; demanding a row here would refuse a lane that carries the
+#: part §3.3 asks for, and a guard that fires on legitimate work stops the
+#: lane (R11). Two lane fixtures in this repo's own tests are exactly that
+#: shape, and they are legitimate.
+_TABLE_DELIM = re.compile(r"^\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*){1,}\|?$")
+
+
+def has_decision_table(text: str) -> bool:
+    """True where a lane body carries §3.3's decision table.
+
+    THE PAIR THIS EXISTS TO SEPARATE: a lane carrying the table, and a lane
+    carrying every LABELLED part and no table. Nothing could tell them apart
+    before — `parts_present` printed `Decides:, Trigger:, Ends:` over both
+    and the router exited CLEAN over both.
+    """
+    lines = text.split("\n")
+    for i, line in enumerate(lines):
+        if i == 0:
+            continue
+        if not _TABLE_DELIM.match(line.strip()):
+            continue
+        header = lines[i - 1].strip()
+        if header and "|" in header:
+            return True
+    return False
+
+
+def table_absent_message(name: str) -> str:
+    """ONE BODY for the finding, read by both renderers. A message restated
+    in the longhand and again in the JSON emitter is two bodies for one fact,
+    and the `--json` non-negotiable is that the two carry the SAME finding.
+    """
+    return (f"lane {name!r} carries no decision table. §3.3 names FOUR parsed "
+            "parts, and the table is the one with no label: the `startswith` "
+            "scan that finds `Decides:`, `Trigger:` and `Ends:` cannot reach "
+            "it, so this lane printed all three and read as complete. A lane "
+            "with no table routes nowhere — it is a trigger with no "
+            "disposition, which is the clean-board shape this module exists "
+            "against.")
 
 #: The three states a trigger predicate's exit code maps to. WORDS, never
 #: codes: returning the integer would let a caller pass a trigger's `2` into
@@ -169,14 +232,22 @@ class Lane:
     name: str
     path: Path | None
     trigger: str | None = None
-    #: Which of §3.3's four parts the body carries. Reported rather than
-    #: enforced: the one-screen cap and the decision table are wave 2's.
+    #: Which of §3.3's LABELLED parts the body carries. Reported rather than
+    #: enforced; the one-screen cap is wave 2's. The decision table is NOT in
+    #: this list and cannot be — it has no label for `LANE_PARTS` to match —
+    #: which is what `table_present` below carries instead (lc-12).
     parts_present: list = field(default_factory=list)
+    #: Whether the body carries §3.3's decision table. `None` where the body
+    #: was never READ (no file, unreadable): "no opinion" and "read it, no
+    #: table" are different facts and only the second is a finding — the same
+    #: split `lane_files_on_disk` makes for an absent directory.
+    table_present: bool | None = None
     problem: str | None = None
 
 
 def read_lane(repo: Path, name: str) -> Lane:
-    """Load one lane body and pull its `Trigger:` line out of it.
+    """Load one lane body, pull its `Trigger:` line out of it, and answer
+    whether it carries §3.3's decision table (lc-12).
 
     A lane the declaration names and the tree does not carry is a PROBLEM
     with a name, never an omission: the router prints it, because a lane
@@ -201,7 +272,8 @@ def read_lane(repo: Path, name: str) -> Lane:
             break
     present = [p for p in LANE_PARTS
                if any(ln.startswith(p) for ln in text.split("\n"))]
-    lane = Lane(name, path, trigger=trig, parts_present=present)
+    lane = Lane(name, path, trigger=trig, parts_present=present,
+                table_present=has_decision_table(text))
     if trig is None:
         lane.problem = (f"lane {name!r} carries no `Trigger:` line. §3.3 makes "
                         "the trigger one of the four parsed parts; without it "
@@ -487,6 +559,9 @@ class LaneRunResult:
     """One declared lane's state, as the walk found it."""
     name: str
     parts_present: list = field(default_factory=list)
+    #: Mirrors `Lane.table_present` exactly, tri-state included: `None` is a
+    #: body this walk never read, `False` is the lc-12 finding.
+    table_present: bool | None = None
     trigger: str | None = None
     problem: str | None = None
     not_run: bool = False
@@ -530,6 +605,12 @@ class RosterRunResult:
     fired: int = 0
     quiet: int = 0
     broken: int = 0
+    #: Lanes whose body was read and carries no decision table (lc-12).
+    #: Counted BESIDE `broken` and never inside it: BROKEN is a state of the
+    #: trigger PREDICATE (§3.3's reserved codes), and a lane with a working
+    #: predicate and no table has a state — what it lacks is the part that
+    #: turns that state into a route.
+    table_absent: int = 0
     code: int = exits.CLEAN
 
 
@@ -570,11 +651,22 @@ def gather_lane_list(args) -> RosterRunResult:
         for name in row.lanes:
             run.total_lanes += 1
             lane = read_lane(row.path, name)
+            # ITS OWN VERDICT, NEVER FOLDED INTO `problem` (lc-12). `problem`
+            # is rendered under `trigger_broken` by every branch below, so a
+            # missing table folded in there would ship under another row's
+            # name AND mark a lane with a working predicate BROKEN. It is
+            # also computed HERE, before the branches, because a lane can be
+            # both: a body with no `Trigger:` line and no table is two
+            # findings, and a branch that returned early would print one.
+            if lane.table_present is False:
+                run.table_absent += 1
+                codes.append(exits.FINDING)
             if lane.problem:
                 run.broken += 1
                 codes.append(exits.FINDING)
                 rr.lane_runs.append(LaneRunResult(
                     name=name, parts_present=lane.parts_present,
+                    table_present=lane.table_present,
                     trigger=lane.trigger, problem=lane.problem,
                     row="trigger_broken"))
                 continue
@@ -582,10 +674,12 @@ def gather_lane_list(args) -> RosterRunResult:
                 codes.append(exits.COULD_NOT_VERIFY)
                 rr.lane_runs.append(LaneRunResult(
                     name=name, parts_present=lane.parts_present,
+                    table_present=lane.table_present,
                     trigger=lane.trigger, not_run=True))
                 continue
             t = evaluate_trigger(lane.trigger, cwd=row.path)
             lr = LaneRunResult(name=name, parts_present=lane.parts_present,
+                               table_present=lane.table_present,
                                trigger=lane.trigger, state=t.state,
                                predicate_exit=t.code, detail=t.detail)
             if t.state == BROKEN:
@@ -648,6 +742,12 @@ def render_lane_list_longhand(run: RosterRunResult, out) -> None:
                "declared list is a stated fact)"))
 
         for lr in rr.lane_runs:
+            # BEFORE the trigger branches, and outside them: a lane can carry
+            # both findings, and the BROKEN branch below returns.
+            if lr.table_present is False:
+                out(f"    lane {lr.name}: no decision table")
+                out(f"        FINDING [lane_table_absent] "
+                    f"{table_absent_message(lr.name)}")
             if lr.problem:
                 out(f"    lane {lr.name}: BROKEN — {lr.problem}")
                 out("        FINDING [trigger_broken] a lane whose body or "
@@ -673,11 +773,13 @@ def render_lane_list_longhand(run: RosterRunResult, out) -> None:
         out("")
 
     out(f"lanes: {run.total_lanes} total   FIRE {run.fired}   "
-        f"QUIET {run.quiet}   BROKEN {run.broken}")
-    out("this build parses `Trigger:` only; `Decides:`, the decision table "
-        "and `Ends:` are reported by PRESENCE and are parsed in wave 2. The "
-        "one-screen cap is wave 2's too — this run does not check it and does "
-        "not imply it did.")
+        f"QUIET {run.quiet}   BROKEN {run.broken}   "
+        f"NO DECISION TABLE {run.table_absent}")
+    out("this build parses `Trigger:` only; `Decides:` and `Ends:` are "
+        "reported by PRESENCE and are parsed in wave 2. The decision table "
+        "is CHECKED for presence and its absence is a finding above (lc-12) "
+        "— its rows are not parsed either. The one-screen cap is wave 2's "
+        "too — this run does not check it and does not imply it did.")
     out(f"lane list: {exits.word(run.code)}")
 
 
@@ -737,8 +839,20 @@ def render_lane_list_json(run: RosterRunResult, out) -> None:
             lane_entry = {
                 "name": lr.name,
                 "parts_present": list(lr.parts_present),
+                "table_present": lr.table_present,
                 "trigger": lr.trigger,
             }
+            if lr.table_present is False:
+                # A `findings` LIST, the shape the declaration half already
+                # uses, rather than a second scalar beside `row`: a lane can
+                # carry this finding and `trigger_broken` at once, and a
+                # scalar would drop one — which is the finding set DIVERGING
+                # between the two renderings, the one thing `--json` may
+                # never do. The message body is the longhand's own.
+                lane_entry["findings"] = [{
+                    "row": "lane_table_absent",
+                    "message": table_absent_message(lr.name),
+                }]
             if lr.problem:
                 lane_entry["problem"] = lr.problem
             if lr.not_run:
@@ -762,6 +876,7 @@ def render_lane_list_json(run: RosterRunResult, out) -> None:
         "fired": run.fired,
         "quiet": run.quiet,
         "broken": run.broken,
+        "table_absent": run.table_absent,
         "code": exits.word(run.code),
         "exit": run.code,
     }
