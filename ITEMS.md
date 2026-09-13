@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 91
+added: 92
 compacted: 0
 
 ## lc-3
@@ -603,3 +603,12 @@ write-set: UNKNOWN — depends on the decision: plugin/cli/lifecycle_core/retire
 done-criterion: a repo that has retired a carrier under --retire-source reads CLEAN on 'lifecycle audit' for that reason alone, OR the finding is declared correct and the record moves to whatever home does not trip it - and the entry records WHICH, with the run that shows it. MUST-NOT-MOVE, and it is the whole risk: laws_scope_audit keeps firing on genuinely mis-homed prose. The forbidden repair is shaping the deletion record's text to slip past the checker - writing for the instrument, which the build lane explicitly declined to do and which would leave the record less useful to its actual reader
 evidence: MEASURED by the lc-86 build lane on the real artifact during its S5 verification, 2026-09-13, and reported rather than dodged: the lane states it did not shape the record to avoid the checker because that would be writing for the instrument. NOT RE-RUN AT THIS DESK - relayed from the lane's report, and the reproduction is cheap once lc-86's flag is reachable: retire a fixture carrier, then run 'lifecycle audit' in that repo
 blocked-by: decision which of the three readings is right: (1) the audit should know a deletion record's shape and pass it, (2) the record belongs in a home the audit does not scan, or (3) the finding is correct and a retired repo simply carries it, in which case the entry closes as DROPPED with that reason
+
+## lc-100
+grade: READY
+requirement: prove-rows silently degrades every OTHER writer in the checkout it runs in, and nothing tells either side. The prover's whole method is to disable one real condition in a real tracked file, run the roster, and restore by a file copy taken before the injection - 63 arms across nine files, of which 14 are in items.py, the carrier's OWN checker (item_shape, duplicate_id, conservation_short, conservation_surplus among them). TWO hazards, both silent and measured this date. (i) A carrier write landing inside an arm is graded by a checker with that branch dead: a malformed block is accepted and committed, and the writer's 'clean' looks identical either way. (ii) An EDIT landing inside an arm is DESTROYED by that arm's restore - the pre-injection copy goes back over it, the prover reports its own verdicts, and the edit is simply absent afterwards. The second is worse and was found by a build lane refusing to write while a prover ran - record: lc-86 lane exchange, 2026-09-13
+goal: lean-machinery-strict-checks
+write-set: tools/prove-rows.py,test/
+done-criterion: a concurrent writer cannot be silently degraded or silently overwritten by a prover run: prove-rows makes its run VISIBLE to other writers in the same checkout for its duration (a reservation the tool writes and removes, or a refusal to start where one is already held), and states in its own output which files it will mutate. MUST-NOT-MOVE: the prover keeps mutating REAL files in a REAL checkout - the mutation is the method and a copy-to-scratch redesign is a different item with a different risk. A lock that can be left behind after a crash is worse than none, so its release is proven by a test that kills the prover mid-arm
+evidence: MEASURED at this desk 2026-09-13, both directions. (i) A dispatcher-side re-grade caught items.py carrying 'if missing:' replaced by 'if False:' mid-run; prove-rows.py:283-288 carries exactly that mutation for row item_shape, and grep -c over the MUTATIONS table returns 14 items.py entries of 63. The carrier writes near that window were re-graded from a pristine git-archive export against the live carriers and came back CLEAN, so no damage this time - the quiet direction, not an all-clear. (ii) The destroy-an-edit direction was reasoned from the prover's own restore-by-file-copy by the lc-86 build lane, which declined to write for that reason; NOT executed as a reproduction by either party, so UNVERIFIED, and its reproduction is cheap: hold an edit in a file the table names, run one arm over it, read the file back
+blocked-by: NONE
