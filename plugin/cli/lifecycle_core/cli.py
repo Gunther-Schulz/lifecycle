@@ -331,6 +331,11 @@ def build_parser() -> argparse.ArgumentParser:
     its = it.add_subparsers(dest="item_action")
     its.add_parser("check", help="the shape check over the carrier file")
 
+    slots = its.add_parser("slots", help="one item's effective fixed slots")
+    slots.add_argument("ident")
+    slots.add_argument("--json", action="store_true",
+                       help="one JSON object instead of plain slot lines")
+
     add = its.add_parser("add", help="the ONLY admission path (the intake join)")
     add.add_argument("--requirement", help="why, one line + a record pointer")
     add.add_argument("--goal", help="one of the repo's declared goals")
@@ -621,6 +626,10 @@ def main(argv=None) -> int:
         path = f"item {args.item_action}"
         if args.item_action == "check":
             code = cmd_item_check(args, out)
+        elif args.item_action == "slots":
+            ctx, code = _context(args, out)
+            if ctx is not None:
+                code = items_mod.cmd_item_slots(args, out, ctx.items_path)
         elif args.item_action == "waves":
             code = cmd_item_waves(args, out)
         elif args.item_action in ("add", "amend", "promote", "ready", "park",

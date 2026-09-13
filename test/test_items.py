@@ -41,6 +41,57 @@ def run_done_check(text=None, prefix="xx"):
         return code, "\n".join(buf)
 
 
+class ItemSlotsOverTheRealCarrier(unittest.TestCase):
+    """`item slots` reads one parsed block's positional slots, never prose."""
+
+    REPO = Path(__file__).resolve().parents[1]
+
+    def _run(self, ident):
+        """Run the public verb; an unbuilt parser is deliberately an assertion red.
+
+        Catching argparse's `SystemExit` keeps the red at the claimed
+        observable: once the name exists, a first-wins implementation still
+        fails the value assertion below rather than changing this arm's kind.
+        """
+        import io
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(self.REPO), "item", "slots",
+                                     ident])
+        except SystemExit as exc:
+            code = exc.code
+        return code, buf.getvalue()
+
+    def _item(self, ident):
+        parsed = items.parse((self.REPO / "ITEMS.md").read_text(encoding="utf-8"))
+        return next(it for it in parsed.items if it.ident == ident)
+
+    def test_lc_7_reports_the_LAST_amended_evidence_not_the_first(self):
+        item = self._item("lc-7")
+        evidence = [raw.split(" ", 1)[1] for name, raw, _ in item.amendments
+                    if name == "amended-evidence"]
+        self.assertEqual(len(evidence), 2, "the real-carrier discriminator vanished")
+        self.assertNotEqual(evidence[0], evidence[1])
+
+        code, out = self._run("lc-7")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn(f"evidence: {evidence[-1]}", out)
+        self.assertNotIn(f"evidence: {evidence[0]}", out)
+
+    def test_lc_22_without_amendments_reports_base_slots_byte_unchanged(self):
+        item = self._item("lc-22")
+        self.assertEqual(item.amendments, [], "this control must have no amendments")
+
+        code, out = self._run("lc-22")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(out.splitlines(),
+                         [f"{slot}: {item.slots[slot]}" for slot in items.SLOTS])
+
+
 class Archive(unittest.TestCase):
 
     #: A body of exactly the kind the pre-migration archive holds: a `##`

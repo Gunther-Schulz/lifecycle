@@ -27,6 +27,7 @@ skips everything from that heading onward; conservation still counts it.
 """
 
 import fcntl
+import json
 import posixpath
 import re
 from contextlib import contextmanager
@@ -1199,6 +1200,40 @@ def check_file(path: Path, out, prefix: str | None = None) -> int:
         f"{len(parsed.problems) + len(bad_ids) + len(untyped) + len(unk_misplaced) + len(ready_unknown)}"
         f" shape finding(s), {len(c['unknown'])} unclassifiable grade word(s).")
     return code
+
+
+def cmd_item_slots(args, out, path: Path) -> int:
+    """Report one block's effective fixed slots without changing its carrier.
+
+    `parse` closes each positional block and calls `_resolve_amendments`, so
+    `item.slots` is the one existing answer to which amendment is in force.
+    Reading that mapping is intentionally not a scan for a slot word in prose:
+    a slot's place in the parsed block, not a word discussed by its body,
+    anchors this future checker-facing interface.
+    """
+    if not path.exists():
+        out(f"COULD NOT VERIFY: no carrier at {path}. An absent file and an "
+            "empty one are not the same answer, and neither has slots.")
+        return exits.COULD_NOT_VERIFY
+    try:
+        parsed = parse(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError) as exc:
+        out(f"COULD NOT VERIFY: {path} could not be read ({exc!r}).")
+        return exits.COULD_NOT_VERIFY
+
+    item = next((it for it in parsed.items if it.ident == args.ident), None)
+    if item is None:
+        out(f"FINDING [unknown_item] no live block {args.ident!r} in "
+            f"{path.name}.")
+        return exits.FINDING
+
+    slots = {slot: item.slots.get(slot, "") for slot in SLOTS}
+    if args.json:
+        out(json.dumps({"ident": item.ident, "slots": slots}, ensure_ascii=False))
+    else:
+        for slot in SLOTS:
+            out(f"{slot}: {slots[slot]}")
+    return exits.CLEAN
 
 
 # --- UNKNOWN, the declared transitional value (§3.1) --------------------------
