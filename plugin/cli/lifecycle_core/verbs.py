@@ -1708,27 +1708,111 @@ def _set_slots(text: str, ident: str, updates: dict):
 
 # --- `item close` (stage 5) ---------------------------------------------------
 
-def _moot_decision(ctx: Ctx, ident: str) -> str | None:
-    """The `decision` question a close is about to make MOOT, or None.
+def _effective_blocker(ctx: Ctx, ident: str):
+    """`(kind, detail)` of the blocker a close is about to end, or `(None, "")`.
 
     Read off the LIVE block before the move, because after the move the
     block is in the done home and this run would be asking a different file
-    the same question. Only `decision` blockers qualify: an `<item-id>`
-    blocker resolves mechanically on its target's DONE and an `evidence` one
-    is re-evaluated each pass, so neither is left hanging by a close. A
-    decision blocker sits in the OPERATOR's queue, and nothing else takes it
-    out of there.
+    the same question. THE VALUE IS THE EFFECTIVE ONE — `items.parse`
+    resolves an `amended-blocked-by:` line last-wins over the slot line — and
+    that is the whole point: `move_to_done` clears the slot LINE, so the base
+    value is gone by the time anything downstream could look, while an amended
+    value survives the close untouched (lc-90, measured at 11a8c1d).
+
+    THIS REPLACES `_moot_decision`, WHOSE DOCSTRING CARRIED THE FALSE PREMISE
+    (lc-90). It read: "Only `decision` blockers qualify: an `<item-id>` blocker
+    resolves mechanically on its target's DONE and an `evidence` one is
+    re-evaluated each pass, so neither is left hanging by a close." Nothing
+    resolves an item-id blocker — no verb rewrites the closing body's
+    `blocked-by`, no verb refused the close, and an amended one reached the
+    done home alive, where `item amend` correctly refuses to repair it. That
+    sentence is what made the defect reasonable to its author, so it goes with
+    the code rather than being left standing over it. The type that USES this
+    result now splits three ways: a `decision` blocker is recorded moot and
+    ledgered (the caller, unchanged), an `<item-id>` one is disposed by
+    `_item_blocker_disposition` below — which needs an answer this function's
+    predecessor never had, a refusal, because an item-id blocker names a target
+    whose state decides whether the wait was answered or is still live — and an
+    `evidence` one is still annotated by nothing, which lc-90 measured and did
+    not repair.
     """
     try:
         parsed = items_mod.parse(ctx.items_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError):
-        return None
+        return None, ""
     it = next((i for i in parsed.items if i.ident == ident), None)
     if it is None:
-        return None
-    kind, detail = items_mod.classify_blocker(
-        it.slots.get("blocked-by", ""), ctx.prefix)
-    return detail if kind == "decision" and detail else None
+        return None, ""
+    return items_mod.classify_blocker(it.slots.get("blocked-by", ""),
+                                      ctx.prefix)
+
+
+def _item_blocker_disposition(ctx: Ctx, ident: str, detail: str,
+                              dropping: bool, out) -> tuple[str | None, int]:
+    """`(the `blocker-moot:` record for an item-id blocker, code)` — lc-90.
+
+    THREE ANSWERS, and the split is the TARGET's state rather than the
+    closing item's, because that is what decides whether the wait was
+    ANSWERED or is still live:
+
+      * target DONE — the dependency genuinely happened, so the close RECORDS
+        it moot and does not refuse. Refusing here would fire on legitimate
+        work, which is the repair that stops the lane (R11): the ordinary case
+        is exactly this, the blocker closed first and the item followed.
+      * the close is a DROP — an abandonment may legitimately leave a live
+        dependency behind, and a drop is an exit of equal standing that must
+        stay available. The record says so IN THOSE WORDS (`item_moot_record`'s
+        second form): the wait ended because the waiter is gone, never because
+        anything answered it.
+      * anything else on a DONE close — REFUSE. A target still OPEN, a target
+        DROPPED (an item-id blocker resolves on its target's DONE, so a dropped
+        one can only expire — the same rule `_check_blocker` enforces at the
+        write path), or a target in NEITHER home. Recording any of those moot
+        would close an item over work that has not happened, which is the worse
+        direction by far, and the body is unamendable the moment it moves.
+
+    NOT A SILENT CLEAR EITHER, which is what the refused cases got before this:
+    `move_to_done` rewrites the `blocked-by:` LINE to NONE and its caller drops
+    the old value on the floor, so a close over a live dependency left no trace
+    at all unless an `amended-blocked-by:` line happened to supersede the slot
+    — and only then did anything downstream notice (lc-90's finding).
+    """
+    done_parsed, done_why = _load(ctx.done_path)
+    live_parsed, live_why = _load(ctx.items_path)
+    if done_parsed is None or live_parsed is None:
+        out(f"COULD NOT VERIFY: `blocked-by {detail}` names an item, and "
+            "whether that wait was answered cannot be read. "
+            f"{done_why or live_why}")
+        return None, exits.COULD_NOT_VERIFY
+
+    closed = next((i for i in done_parsed.items if i.ident == detail), None)
+    if closed is not None and closed.grade == "DONE":
+        return items_mod.item_moot_record(detail, abandoned=False), exits.CLEAN
+    if dropping:
+        return items_mod.item_moot_record(detail, abandoned=True), exits.CLEAN
+
+    live = next((i for i in live_parsed.items if i.ident == detail), None)
+    if closed is not None:
+        state = (f"{detail} is itself {closed.grade} in the closure home. An "
+                 "item-id blocker resolves on its target's DONE; a dropped "
+                 "target never reaches it, so this wait can only expire")
+    elif live is not None:
+        state = (f"{detail} is still live in the carrier, graded "
+                 f"{live.grade or '(none)'}")
+    else:
+        state = (f"{detail} is in NEITHER home — the wait points at nothing "
+                 "and never resolves")
+    out(f"FINDING [close_over_live_blocker] {ident} is blocked by {detail!r} "
+        f"and {state}. NOT CLOSED. A close that moved this body would end the "
+        "wait by deleting it: the moved body records `blocker-moot:` only for "
+        "a dependency that actually closed, and a closed body cannot be "
+        "amended afterwards — `item amend` refuses it, correctly, because the "
+        "done home holds what was true when the item closed. So the state is "
+        "refused at the one moment anything can still be done about it. Clear "
+        f"the blocker first — `item amend {ident} --blocked-by NONE --reason "
+        "<why the dependency no longer holds>` — or close it with --drop, "
+        "which records the wait as abandoned rather than as answered.")
+    return None, exits.FINDING
 
 
 def _resolve_refs(ctx: Ctx, raw: str, out) -> tuple[str | None, int]:
@@ -1837,7 +1921,18 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
             out(f"COULD NOT VERIFY: no carrier at {ctx.items_path}.")
             return exits.COULD_NOT_VERIFY
 
-        moot = _moot_decision(ctx, args.ident)
+        kind, detail = _effective_blocker(ctx, args.ident)
+        moot = detail if kind == "decision" and detail else None
+        # THE ITEM-ID TYPE IS DISPOSED BEFORE ANYTHING IS WRITTEN (lc-90):
+        # its answer can be a REFUSAL, and a refusal that arrived after the
+        # move would be a verdict about a body already sitting where nothing
+        # can amend it.
+        item_moot = None
+        if kind == "item" and detail:
+            item_moot, item_code = _item_blocker_disposition(
+                ctx, args.ident, detail, args.drop, out)
+            if item_code != exits.CLEAN:
+                return item_code
         # THE APPENDED LINES, IN `DONE_ONLY_SLOTS` ORDER, in ONE buffer write
         # with the move. Two writes would leave a body moved without its
         # record, or a record about a move that did not happen — and the
@@ -1847,6 +1942,8 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
         note_lines = []
         if moot:
             note_lines.append(f"blocker-moot: {moot}")
+        elif item_moot:
+            note_lines.append(f"blocker-moot: {item_moot}")
         if not args.drop:
             if reason:
                 note_lines.append(
@@ -1907,6 +2004,19 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
                 out(f"ledger: {line}")
                 touched.append(ctx.ledger_path)
                 moot_code = exits.CLEAN
+        elif item_moot:
+            # SPOKEN, and NOT LEDGERED — the two halves are deliberate. An
+            # item-id blocker is not a question in anybody's queue: it names a
+            # dependency whose own record is that item's closure, already in
+            # the ledger under its own id. A second `decision:` line about it
+            # would put one fact in two homes, which is the paraphrase-drift
+            # the carrier doctrine forbids. The body record is what the done
+            # home's own check reads back (lc-90).
+            out(f"blocker-moot: {item_moot}. Recorded on the moved body; no "
+                "ledger line, because an item-id blocker is not a question in "
+                "the operator's queue — its record is the target item's own "
+                "closure.")
+            moot_code = exits.CLEAN
         else:
             moot_code = exits.CLEAN
         if args.drop:

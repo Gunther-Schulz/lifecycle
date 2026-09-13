@@ -311,6 +311,229 @@ class ClosureRecordIsWritten(unittest.TestCase):
                          "the refused close touched a carrier")
 
 
+class ItemBlockerAtClose(unittest.TestCase):
+    """lc-90 — what a close does with an `<item-id>` blocker, all four states.
+
+    THE DEFECT WAS REACHABLE BY EXACTLY ONE ROUTE and the item's own wording
+    named the other one, so the fixtures here are built the way the defect
+    actually occurs. `move_to_done` rewrites the `blocked-by:` LINE to NONE, so
+    a base-slot blocker never reached the done home at all — it was DELETED,
+    silently, whatever its target was doing. An `amended-blocked-by:` line
+    resolves last-wins OVER that line and the move does not touch it, so an
+    amended blocker rode into the closure home alive and `item check` reported
+    `blocked_in_done_home` against a body no verb could repair afterwards —
+    `item amend` refuses a closed body, correctly. Measured at 11a8c1d on a
+    scratch repo: `item close` exited 0 and the next `item check` exited 2.
+
+    So the two halves are ONE defect with opposite signs: the amended value
+    survived and was reported, the base value was discarded and was not. Both
+    end here, at the verb, before anything moves.
+
+    THE ASSERTIONS ARE ABOUT THE FILE AND THE NEXT CHECK'S VERDICT, never the
+    close's own exit code alone: the close never runs the done home's shape
+    check, so at 11a8c1d it exited CLEAN over the state it had just minted.
+    """
+
+    def _repo(self, items_text, done_text=None):
+        r = refusals._Repo(items=items_text, done=done_text)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io, os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _carriers(self, repo):
+        return {n: (repo.dir / n).read_text(encoding="utf-8")
+                for n in ("ITEMS.md", "ITEMS-DONE.md", "LEDGER.md")}
+
+    #: The amended shape — the one the defect actually rode in on. The base
+    #: slot is NONE and the amendment carries the blocker, which is what the
+    #: move cannot clear.
+    #: `baseline` COUNTS BOTH HOMES and is passed rather than fixed: a
+    #: fixture whose baseline does not match the bodies it holds closes onto
+    #: a conservation finding, and an arm reading that as its own refusal
+    #: would be green for a reason nobody wrote down. Measured while writing
+    #: these: a hardcoded 2 turned the decision arm red on `conservation_short`.
+    def _amended(self, blocker, base="NONE", baseline=1):
+        return (
+            f"schema: 2\nbaseline: {baseline}\nadded: 0\ncompacted: 0\n"
+            + refusals._blocked_block("xx-1", "READY", base).rstrip("\n")
+            + "\namend-reason: 2026-09-13 the desk retyped the blocker\n"
+            + f"amended-blocked-by: 2026-09-13 {blocker}\n")
+
+    CLOSED_TARGET = refusals.EMPTY_DONE + refusals._blocked_block(
+        "xx-2", "DONE", "NONE")
+    DROPPED_TARGET = refusals.EMPTY_DONE + refusals._blocked_block(
+        "xx-2", "DROPPED", "NONE")
+
+    def test_the_AMENDED_blocker_that_survived_the_close_is_now_recorded(self):
+        """THE RED, made re-runnable. At 11a8c1d this exact arrangement closed
+        CLEAN and the next `item check` returned FINDING
+        `blocked_in_done_home` — against a body that HAD arrived by a close,
+        which is what made the finding unrepairable rather than merely
+        wrong."""
+        r = self._repo(self._amended("xx-2", baseline=2), self.CLOSED_TARGET)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        done = (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8")
+        self.assertIn(
+            f"blocker-moot: {items.item_moot_record('xx-2', abandoned=False)}",
+            done)
+        code, out = self._run(r, "item", "check")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("blocked_in_done_home", out)
+
+    def test_a_LIVE_target_refuses_the_close_and_moves_NOTHING(self):
+        """The must-not-move, and the refusal runs BEFORE the move: a verdict
+        delivered after it would be about a body already sitting where
+        `item amend` refuses to touch it."""
+        items_text = ("schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+                      + refusals._blocked_block("xx-1", "READY", "xx-2")
+                      + refusals._blocked_block("xx-2", "READY", "NONE"))
+        r = self._repo(items_text)
+        before = self._carriers(r)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("close_over_live_blocker", out)
+        self.assertEqual(self._carriers(r), before,
+                         "the refused close touched a carrier")
+
+    def test_the_BASE_slot_form_is_refused_too_and_was_SILENTLY_CLEARED(self):
+        """The half nothing reported. At 11a8c1d this closed CLEAN, the done
+        home stayed clean, and the live dependency was simply gone — the
+        `blocked-by:` line rewritten to NONE and the old value dropped by its
+        caller. A clean done home was never evidence that the wait had been
+        met."""
+        items_text = ("schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+                      + refusals._blocked_block("xx-1", "READY", "xx-2")
+                      + refusals._blocked_block("xx-2", "READY", "NONE"))
+        r = self._repo(items_text)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("xx-2 is still live in the carrier", out)
+
+    def test_a_DROPPED_target_refuses_rather_than_discharging(self):
+        """An item-id blocker resolves on its target's DONE — `_check_blocker`
+        refuses to WRITE one naming a dropped target for exactly this reason,
+        so a close that read DROPPED as a discharge would assert at one verb
+        what the tool refuses two verbs over."""
+        r = self._repo(self._amended("xx-2", baseline=2), self.DROPPED_TARGET)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("close_over_live_blocker", out)
+        self.assertIn("DROPPED", out)
+
+    def test_a_target_in_NEITHER_home_refuses(self):
+        """The fourth state. A blocker pointing at nothing never resolves, so
+        reading its absence as a discharge would make the emptiest possible
+        evidence the strongest."""
+        r = self._repo(self._amended("xx-9999"))
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("NEITHER home", out)
+
+    def test_a_DROP_records_the_wait_ABANDONED_never_answered(self):
+        """A drop is an exit of equal standing and must stay available over a
+        live dependency — but the record it writes says the waiter is gone,
+        which is the only thing a drop establishes. The two forms differ in
+        the file, not only in the prose: the answered form must be ABSENT."""
+        items_text = ("schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+                      + refusals._blocked_block("xx-1", "READY", "xx-2")
+                      + refusals._blocked_block("xx-2", "READY", "NONE"))
+        r = self._repo(items_text)
+        code, out = self._run(r, "item", "close", "xx-1", "--drop",
+                              "--reason", "overtaken by the rework")
+        self.assertEqual(code, exits.CLEAN, out)
+        done = (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8")
+        self.assertIn(items.item_moot_record("xx-2", abandoned=True), done)
+        self.assertNotIn(items.item_moot_record("xx-2", abandoned=False), done)
+        code, out = self._run(r, "item", "check")
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_a_CLOSED_target_beats_the_drop_form_on_a_DROP(self):
+        """The record states what is TRUE, not what the verb happened to be.
+        A drop whose blocker had genuinely closed records the closure — the
+        abandonment form would understate a wait that was met."""
+        r = self._repo(self._amended("xx-2", baseline=2), self.CLOSED_TARGET)
+        code, out = self._run(r, "item", "close", "xx-1", "--drop",
+                              "--reason", "overtaken by the rework")
+        self.assertEqual(code, exits.CLEAN, out)
+        done = (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8")
+        self.assertIn(items.item_moot_record("xx-2", abandoned=False), done)
+
+    def test_the_record_discharges_ONLY_the_id_it_NAMES(self):
+        """The discrimination arm. The discharge is an EQUALITY against a
+        record built for THAT id, so a body carrying the record for some other
+        item is still a surviving blocker — a predicate that merely looked for
+        a `blocker-moot:` line would clear every one of them."""
+        def home(named):
+            return (refusals.EMPTY_DONE
+                    + refusals._blocked_block("xx-1", "DONE", "xx-2")
+                    .rstrip("\n") + "\nblocker-moot: "
+                    + items.item_moot_record(named, abandoned=False) + "\n")
+
+        one_body = "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+        r = self._repo(one_body, home("xx-77"))
+        code, out = self._run(r, "item", "check")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("blocked_in_done_home", out)
+        # THE OTHER HALF OF THE PAIR, in the same fixture shape: the record
+        # for the id the blocker DOES name clears it. Without this arm the
+        # red above is equally consistent with a discharge that never fires.
+        r2 = self._repo(one_body, home("xx-2"))
+        code, out = self._run(r2, "item", "check")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("blocked_in_done_home", out)
+
+    def test_a_DECISION_blocker_keeps_EXACTLY_the_record_it_had(self):
+        """MUST-NOT-MOVE, both halves: the body line AND the ledger line. The
+        decision type is the one this item was forbidden to disturb."""
+        r = self._repo(self._amended("decision which window is canonical"))
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        c = self._carriers(r)
+        self.assertIn("blocker-moot: which window is canonical",
+                      c["ITEMS-DONE.md"])
+        self.assertIn("decision: which window is canonical", c["LEDGER.md"])
+        self.assertIn("moot (closed by xx-1)", c["LEDGER.md"])
+
+    def test_an_item_blocker_writes_NO_ledger_line(self):
+        """One fact, one home. The target item's own closure is already the
+        ledger's record of it; a second `decision:` line about a dependency
+        nobody asked as a question is the paraphrase-drift the carrier
+        doctrine forbids."""
+        r = self._repo(self._amended("xx-2", baseline=2), self.CLOSED_TARGET)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("decision:", self._carriers(r)["LEDGER.md"])
+
+    def test_an_UNREADABLE_done_home_is_COULD_NOT_VERIFY_not_a_close(self):
+        """Three answers. Whether the wait was answered is a question about
+        the closure home, so with that home unreadable the honest result is
+        neither a discharge nor a refusal — and it must not fall through to a
+        move, because the move would then write the state nobody could check.
+        """
+        r = self._repo(self._amended("xx-2", baseline=2), self.CLOSED_TARGET)
+        (r.dir / "ITEMS-DONE.md").unlink()
+        before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("COULD NOT VERIFY", out)
+        self.assertEqual((r.dir / "ITEMS.md").read_text(encoding="utf-8"),
+                         before, "an unverifiable close moved the body anyway")
+
+
 class LedgerStorableBlocker(unittest.TestCase):
     """lc-49 — the THREE hand-write doors into an unanswerable decision.
 

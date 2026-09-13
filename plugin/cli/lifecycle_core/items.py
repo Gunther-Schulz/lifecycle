@@ -1237,8 +1237,34 @@ def unknown_slots_of(item: Item) -> list:
 
 # --- the done home's own shape check (§3.8c; W1c's G4) -----------------------
 
-def _moot_discharges(item: Item, detail: str) -> bool:
-    """Did this body's closure record the very decision `detail` names (lc-48)?
+#: THE `blocker-moot:` RECORD FOR AN ITEM-ID BLOCKER, in the two states a
+#: close can honestly report about one (lc-90). Spelled HERE and nowhere else,
+#: for the reason `ledger.moot_answer` is spelled once: `verbs.py` writes the
+#: record and this module's discharge reads it back by EQUALITY, so a second
+#: spelling on either side would drift silently and the discharge would stop
+#: recognising the very line the close had just written.
+#:
+#: TWO FORMS BECAUSE THE TWO FACTS ARE DIFFERENT, and collapsing them would
+#: make the record lie in one direction: a target that CLOSED answered the
+#: wait, while a DROPPED closing item abandoned it unanswered. The second form
+#: claims no discharge — it records that the waiter is gone, which is the only
+#: thing a drop establishes.
+_ITEM_MOOT_ANSWERED = "{ident} (the blocker closed before this item did)"
+_ITEM_MOOT_ABANDONED = "{ident} (never resolved; this item was dropped)"
+
+
+def item_moot_record(ident: str, *, abandoned: bool) -> str:
+    """The `blocker-moot:` value a close writes for the item-id blocker `ident`.
+
+    The single writer of this shape, called by `verbs.cmd_item_close` rather
+    than composed there — see the note above.
+    """
+    shape = _ITEM_MOOT_ABANDONED if abandoned else _ITEM_MOOT_ANSWERED
+    return shape.format(ident=ident)
+
+
+def _moot_discharges(item: Item, detail: str, kind: str = "decision") -> bool:
+    """Did this body's closure record the very blocker `detail` names (lc-48)?
 
     EQUALITY, never containment or a normalised compare. The moot record is
     written by `item close` from the blocker's own DETAIL, so the two strings
@@ -1248,14 +1274,29 @@ def _moot_discharges(item: Item, detail: str) -> bool:
     be the prefix match in an equality's costume: any longer question that
     happens to begin with a shorter one would read as discharged.
 
-    Only the `decision` type reaches this. An `<item-id>` blocker resolves
-    mechanically on its target's DONE and an `evidence` one is re-evaluated
-    each pass, so neither is annotated by a close and neither has a moot
-    record to be discharged by — the caller's own type test is what keeps a
-    surviving blocker of those two kinds a finding.
+    TWO TYPES REACH THIS, and the earlier sentence here said one (lc-90). It
+    claimed an `<item-id>` blocker "resolves mechanically on its target's
+    DONE" — nothing resolves it: `move_to_done` clears the base `blocked-by:`
+    LINE, and where an `amended-blocked-by:` line supersedes that line the
+    EFFECTIVE blocker survives the close untouched, which is how a body that
+    did arrive by a close was still reported here. So a close now records an
+    item-id blocker too, in `item_moot_record`'s two forms, and this discharges
+    on either of them — for the id the effective blocker actually names, which
+    is what keeps a record about some other item from clearing this one.
+    An `evidence` blocker is still annotated by no close and still has no
+    record to be discharged by; the type test below is what keeps it a finding.
     """
     moot = (item.slots.get("blocker-moot") or "").strip()
-    return bool(moot) and moot == (detail or "").strip()
+    if not moot:
+        return False
+    if kind == "item":
+        target = (detail or "").strip()
+        return bool(target) and moot in (
+            item_moot_record(target, abandoned=False),
+            item_moot_record(target, abandoned=True))
+    if kind != "decision":
+        return False
+    return moot == (detail or "").strip()
 
 
 def check_done_file(path: Path, out, prefix: str | None = None) -> int:
@@ -1290,6 +1331,18 @@ def check_done_file(path: Path, out, prefix: str | None = None) -> int:
     docstring and the code disagreed and the CODE was right; the check is what
     changed. The DISCHARGE below is that repair, and it is deliberately narrow:
     the moot record must name the very question the effective blocker names.
+
+    THE SAME SURVIVAL REACHES THE OTHER TYPES, and lc-48 repaired only the one
+    it had measured (lc-90). An amended `<item-id>` blocker survives the close
+    exactly as the decision one did — measured at 11a8c1d on a scratch repo:
+    `item close` exited 0 and the next `item check` reported this row against a
+    body the close had just written. The close now records that type too
+    (`item_moot_record`) and the discharge above recognises it. An `evidence`
+    blocker is the REMAINDER, left as it stands rather than repaired blind: it
+    reaches this row by the same route and the same measurement, but what a
+    close should say about a predicate nobody re-evaluated is a design question
+    this repair did not settle — so for that one type the sentence below still
+    over-reads, and the body it names may well have arrived by a close.
     """
     if not path.exists():
         out(f"COULD NOT VERIFY: no done home at {path}. An absent closure "
@@ -1334,7 +1387,7 @@ def check_done_file(path: Path, out, prefix: str | None = None) -> int:
         # moved reports COULD NOT VERIFY — which is honest and is still a
         # row this repo can no longer prove.
         if kind not in (None, "none"):
-            if kind == "decision" and _moot_discharges(it, detail):
+            if _moot_discharges(it, detail, kind):
                 continue
             blocked.append(it)
             out(f"FINDING [blocked_in_done_home] {path.name}:{it.line}: "

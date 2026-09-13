@@ -722,6 +722,23 @@ FOUR_BLOCKER_ITEMS = (
     + _blocked_block("xx-4", "READY", "NONE")
 )
 
+#: lc-90's PAIR, and the one property between its arms is WHERE THE TARGET
+#: SITS: `xx-1` is blocked by `xx-2` in both, and only the second has `xx-2`
+#: closed. Both carriers hold two bodies against `baseline: 2`, so neither arm
+#: can separate on conservation — an arm differing in the identity as well as
+#: in the blocker's state would be a pair proving whichever of the two the
+#: reader assumed.
+BLOCKER_TARGET_LIVE_ITEMS = (
+    "schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+    + _blocked_block("xx-1", "READY", "xx-2")
+    + _blocked_block("xx-2", "READY", "NONE")
+)
+BLOCKER_TARGET_CLOSED_ITEMS = (
+    "schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+    + _blocked_block("xx-1", "READY", "xx-2")
+)
+BLOCKER_TARGET_CLOSED_DONE = EMPTY_DONE + _blocked_block("xx-2", "DONE", "NONE")
+
 #: A complete, valid `item add` — the argument baseline every row below
 #: mutates exactly one thing away from. A row that built its own argument
 #: list would drift from this one, and the drift would look like the row.
@@ -940,6 +957,29 @@ VERB_ROWS = [
         # own commit is not knowable from here.
         control=lambda: _cli(["item", "close", "xx-1", "--ref", "HEAD"],
                              items=SEED_ITEMS),
+        stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="close_over_live_blocker",
+        refusal="a DONE close over an item-id blocker whose target has NOT "
+                "closed — the move clears the `blocked-by:` line and a closed "
+                "body can never be amended, so a wait ended this way is a "
+                "dependency deleted rather than met (lc-90). The target's own "
+                "closure is what discharges it; a DROP records the wait as "
+                "abandoned instead, and a `decision` blocker keeps exactly the "
+                "moot record it already got",
+        firing_input="`item close xx-1` where xx-1 is blocked by xx-2 and "
+                     "xx-2 is still live",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "close", "xx-1"],
+                          items=BLOCKER_TARGET_LIVE_ITEMS),
+        # THE SAME CLOSE over the SAME blocker, with xx-2 CLOSED: the arms
+        # differ in the target's state alone, so neither the close nor the
+        # blocker's presence is what separates them. A control with no blocker
+        # at all would pass whether or not this refusal read the target.
+        control=lambda: _cli(["item", "close", "xx-1"],
+                             items=BLOCKER_TARGET_CLOSED_ITEMS,
+                             done=BLOCKER_TARGET_CLOSED_DONE),
         stage="wave 1, stage 5",
     ),
     Row(
