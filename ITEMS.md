@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 86
+added: 87
 compacted: 0
 
 ## lc-3
@@ -563,3 +563,12 @@ evidence: SURFACED by the lc-92 build lane 2026-09-13 as slot (g), NOT VERIFIED:
 blocked-by: evidence a reproduction that shows the re-import detector attributing an archived body's anchor to a pseudo-ident - a skipped re-import or an 'already migrated as' naming a pseudo-ident rather than a real item id - or a proof that the detector's own call path cannot reach that state
 amend-reason: 2026-09-13 the add was written with done-criterion UNKNOWN and the carrier's own shape check refused the commit, correctly: an entry the tool cannot grade is not a booking. The criterion is stated in BOTH directions because the honest disposition here is a settled question, not necessarily a repair
 amended-done-criterion: 2026-09-13 the question is SETTLED in one of the two directions and the entry records which: either a reproduction exists - a re-import skipped against a pseudo-ident, or an 'already migrated as <pseudo-ident>' message - and the detector is repaired with its own red-first arrangement and a MUST-NOT-MOVE keeping the archive answerable for the legitimate 'is this body already present' question; or the detector's call path is shown unable to reach that state, with the executed check quoted in the entry. A single non-reproduction does not satisfy either direction
+
+## lc-95
+grade: READY
+requirement: This repo's own documented verify command does not work. CLAUDE.md '## Verify' names 'python3 -m unittest discover -s test -p test_*.py -t .', and '-t .' puts the repo ROOT on sys.path and never test/, so test_migrate_residue (imports test_migrate) and test_tend_goal (imports test_init) die at import: the documented invocation reports Ran 306, FAILED (errors=2) while the honest suite is Ran 340, OK. A verify line that reports two errors on a clean tree is a check firing on a non-defect - it trains the reader to discount the red, which is the reflex that kills a suite the day its red is real - record: lc-92 lane report slot (b), 2026-09-13
+goal: lean-machinery-strict-checks
+write-set: CLAUDE.md,test/
+done-criterion: the command AS WRITTEN in CLAUDE.md '## Verify' runs the suite green on a clean tree - 340 tests, 0 errors, 0 skipped - whichever shape gets it there: the documented invocation corrected, or the two modules taught to import their siblings under it. Stated as the OUTCOME because either shape satisfies it and the site list does not carry its own completeness check. MUST-NOT-MOVE: discovery still reaches ALL the tests - a command that goes green by finding 306 instead of 340 is the defect with the sign flipped, so the count is asserted, not just the exit status
+evidence: MEASURED AT THIS DESK 2026-09-13, both invocations run on a clean tree at b260152: with '-t .' Ran 306, FAILED (errors=2); without it, Ran 340, OK. Independently measured first by the lc-92 build lane, which reported it as outside its box and did not touch it - two runs, two parties, same numbers. The two failing imports are pre-existing and unrelated to lc-92: neither module is in that item's write set
+blocked-by: NONE
