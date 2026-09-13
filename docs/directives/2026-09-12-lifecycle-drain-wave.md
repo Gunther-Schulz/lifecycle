@@ -1,23 +1,43 @@
 # Lifecycle drain wave (kickoff 2026-09-12)
 
-RESUME (2026-09-13): dotfiles-85 closed with its operator session;
-successor judgment desk is **dotfiles-9e [61c0f5]** (fable). Drain
-desk stays **dotfiles-b8 [c0ea3e]** — the same session, alive and
-warm with the wave's context and the operator's original
-first-hand delegation on its record. What the resumption needs is
-the operator's first-hand confirmation of the SUCCESSION in
-dotfiles-b8 (a directive from dotfiles-9e alone is testimony);
-the wave resumes only after dotfiles-b8 acknowledges to
-dotfiles-9e that the line is on its record. Resume head order
-(judgment desk, on the kickoff's own consumers-waiting principle):
-**lc-92 first** — its red case already exists, and it is the sole
-gate on lc-73's production half (statiker st-22 → st-39, statiker
-sessions live and waiting) — then **lc-86**, then the booked
-lc-89 / lc-90 (re-read its relayed mechanism first, per its own
-note) / lc-91, then the rest of READY under the standing
-defaults. The pause note's instrument lessons for dispatch-guards
-are BOOKED there already (dispatch-guards `5ca0201`, `0f409c3`) —
-discharged, do not re-route them.
+RESUME (2026-09-13, rev 2 — rev 1's "alive and warm" claim was
+FALSE, corrected on the drain desk's own measurement): dotfiles-85
+closed with its operator session; successor judgment desk is
+**dotfiles-9e [61c0f5]** (fable). Drain desk stays **dotfiles-b8
+[c0ea3e]** — the same PROCESS (yesterday's five lanes still listed
+as its teammates), but its CONTEXT WAS CLEARED: SessionStart fired
+as `:clear`, and its session record begins 2026-09-13 (83 entries,
+earliest 09:33:26Z — measured at that desk). It holds nothing of
+the 09-12 wave beyond this file and the repo; the on-disk arc
+record is the whole inheritance, working as designed. The
+operator's original delegation line is NOT on its record, so the
+resumption needs the operator to state BOTH first-hand in
+dotfiles-b8: that the lifecycle drain delegation stands, and that
+judgment succeeded to dotfiles-9e. The wave resumes only after
+dotfiles-b8 acknowledges to dotfiles-9e that the line is on its
+record.
+
+Resume head order (judgment desk ruling; basis is this file plus
+the carrier entries ALONE — the successor desks hold no yesterday
+context either, so any gap found on re-read is surfaced, never
+bridged from assumed memory): **lc-92 first** — its booked carrier
+entry and the pause note's gate paragraph below are the design
+sources, re-read before build; it is the sole gate on lc-73's
+production half (statiker st-22 → st-39; a statiker session is
+live and waiting, per ListAgents at the ruling) — then **lc-86**,
+then the booked lc-89 / lc-90 (re-read its relayed mechanism
+first, per its own note) / lc-91, then the rest of READY under
+the standing defaults. The pause note's instrument lessons for
+dispatch-guards are BOOKED there already (dispatch-guards
+`5ca0201`, `0f409c3`) — discharged, do not re-route them.
+
+One-writer note: rev 1 (`ebb0133`) was committed by dotfiles-9e
+directly in this working copy — the drain desk's own, under this
+directive's boundary. Tree clean and desk idle, nothing lost;
+acknowledged as a breach of exactly the class the pause note's
+last instrument lesson names. From here, directive edits travel
+as text handed to the drain desk, which lands them — this
+revision is the first under that protocol.
 
 Original kickoff roles (superseded by the RESUME note above):
 judgment desk dotfiles-85 [296b0d] (fable); drain desk the
