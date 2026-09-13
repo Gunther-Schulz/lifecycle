@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 88
+added: 89
 compacted: 0
 
 ## lc-3
@@ -586,3 +586,12 @@ write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: a repo holding pre-change bare '<path>:<line>' and '<path>:<line>-<end>' anchors can re-root them to the family form 'at blob <sha>' through the tool, against a stated blob, without hand-editing a carrier - and --retire-source's refusal then passes on the same repo. MUST-NOT-MOVE, and it is the whole risk: re-rooting rewrites carrier bodies, so an anchor whose line range does NOT resolve in the named blob is refused and reported rather than pinned to a blob that does not contain it - the confident-wrong pointer dotfiles measured at 313 of 318 in another repo. The pass is idempotent: re-rooting an already-pinned anchor changes nothing
 evidence: SURFACED by the lc-86 build lane 2026-09-13 as the consequence of ruling C3 at this desk: the widened refusal is the right shape - refusing loudly beats deleting silently - and it names a state the tool cannot itself repair. The precedent that makes the gap concrete is dotfiles' own retirement, where citations were re-rooted in ab067d6 BEFORE the carriers were deleted, by hand, in a repo that had no verb for it either
 blocked-by: lc-86
+
+## lc-97
+grade: READY
+requirement: the close-session skill is the session-END symmetric of lc-93's session-start banner and belongs in this plugin: its carrier-facing steps (do-or-book sweep, decision digest over ledger/journal lines, cutoff round) read and write this plugin's own carriers, and an external stack install currently ends sessions with no close discipline — the skill exists only as a machine-local untracked file (~/.claude/skills/close-session/SKILL.md, incl. the 5b decision-digest step added 2026-09-13). Ship it as a plugin skill: harness-generic guard steps (live subagents, armed timers, awaited peers) travel as-is; repo-role steps degrade gracefully where a repo lacks carriers
+goal: tend
+write-set: plugin (new close-session skill adopted from the local file),plugin/.claude-plugin (manifest wiring)
+done-criterion: the skill ships in the plugin payload with the local file adopted as source; a stack install gets /close-session with zero local wiring; the operator's local copy retires in favor of the shipped one at their next dot apply; packaging seam shared with lc-93 noted, sequencing the maintainer's call
+evidence: operator ask 2026-09-13 (statiker session 1b204567: '/close-session i think should be part of lifecycle too'); lc-93's symmetry basis and its widening; the local skill file as the source artifact
+blocked-by: NONE
