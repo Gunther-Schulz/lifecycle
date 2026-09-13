@@ -162,6 +162,29 @@ class TheNoRangesFallbackScansWithoutCryingWolf(unittest.TestCase):
         self.assertEqual(code, 1, f"a new-ref push scanned nothing:\n{text}")
         self.assertIn("Push BLOCKED", text, text)
 
+    def test_a_new_ref_push_names_no_fatal_and_no_empty_ref(self):
+        """lc-89's second site. The coverage arm above deliberately says
+        nothing about the message, because a control that also asserts the
+        probed property goes red for the defect and certifies nothing about
+        the axis it guards. This is that assertion, in its own arm: a first
+        push carries no old side, and the spelling that carries it must be
+        the scanner's `EMPTY` sentinel rather than a blank — a blank reaches
+        git as a bare `^{commit}` and the reader gets a `fatal:` on an
+        ordinary push, which is the non-defect fire this item exists to
+        stop."""
+        (self.dir / "ordinary.md").write_text("nothing interesting\n")
+        _git(self.dir, "add", "-A")
+        _git(self.dir, "commit", "-qm", "ordinary")
+        head = self._head()
+        code, text = self._run_hook(
+            f"refs/heads/main {head} refs/heads/main {ZERO}\n")
+        self.assertNotIn("fatal:", text, text)
+        self.assertNotIn("is not resolvable", text, text)
+        # The absence above is worthless without this: a hook that scanned
+        # nothing at all would satisfy both assertions.
+        self.assertIn("scope:", text, text)
+        self.assertEqual(code, 0, text)
+
 
 if __name__ == "__main__":
     unittest.main()

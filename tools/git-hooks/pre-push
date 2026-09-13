@@ -59,9 +59,13 @@ def ranges_from_stdin(text: str) -> list[str]:
     """`<local ref> <local sha> <remote ref> <remote sha>` per line.
 
     A deletion (local sha all zeros) pushes no content and is skipped. A new
-    ref (remote sha all zeros) has no old side: the scanner's own contract
-    accepts an EMPTY old, which is what makes a first push scan its whole
-    content instead of nothing.
+    ref (remote sha all zeros) has no old side, and the scanner spells that
+    `EMPTY` — the LITERAL four-letter token, tested as `oldRef === "EMPTY"`,
+    not an empty string (lc-89). The earlier wording here said the contract
+    "accepts an EMPTY old", which reads as "accepts a blank one"; it does
+    not, and the blank spelling is what made every first push of a new ref
+    print `fatal: Not a valid object name ^{commit}` before reaching the
+    same coverage by degrading to the sentinel anyway.
     """
     out = []
     for line in text.splitlines():
@@ -71,7 +75,7 @@ def ranges_from_stdin(text: str) -> list[str]:
         _lref, lsha, _rref, rsha = parts[:4]
         if lsha == ZERO:
             continue
-        old = "" if rsha == ZERO else rsha
+        old = "EMPTY" if rsha == ZERO else rsha
         out.append(f"{old}..{lsha}")
     return out
 
