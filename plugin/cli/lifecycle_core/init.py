@@ -58,17 +58,27 @@ def determine_laws(repo: Path):
     ignores them by what it reads, not by an extra filter (the brief's own
     point, verified by the Co-Authored-By test arm).
     """
-    ls = subprocess.run(
-        ["git", "-C", str(repo), "ls-files", "--error-unmatch", "CLAUDE.md"],
-        capture_output=True, text=True)
+    try:
+        ls = subprocess.run(
+            ["git", "-C", str(repo), "ls-files", "--error-unmatch", "CLAUDE.md"],
+            capture_output=True, text=True, timeout=GIT_COMMAND_TIMEOUT_S)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return ("CLAUDE.local.md", "could-not-verify",
+                "`git ls-files --error-unmatch CLAUDE.md` could not be run "
+                f"here ({exc!r})")
     if ls.returncode != 0:
         return ("CLAUDE.local.md", "could-not-verify",
                 "no tracked CLAUDE.md in this repo (checked: git ls-files "
                 "--error-unmatch CLAUDE.md)")
 
-    log = subprocess.run(
-        ["git", "-C", str(repo), "log", "--format=%ae", "--", "CLAUDE.md"],
-        capture_output=True, text=True)
+    try:
+        log = subprocess.run(
+            ["git", "-C", str(repo), "log", "--format=%ae", "--", "CLAUDE.md"],
+            capture_output=True, text=True, timeout=GIT_COMMAND_TIMEOUT_S)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return ("CLAUDE.local.md", "could-not-verify",
+                "`git log --format=%ae -- CLAUDE.md` could not be run here "
+                f"({exc!r})")
     if log.returncode != 0:
         return ("CLAUDE.local.md", "could-not-verify",
                 "git could not read CLAUDE.md's author history (checked: "
@@ -80,8 +90,14 @@ def determine_laws(repo: Path):
                 "CLAUDE.md is tracked but carries no commit history "
                 "(checked: git log --format=%ae -- CLAUDE.md, 0 lines)")
 
-    cfg = subprocess.run(["git", "config", "user.email"], cwd=str(repo),
-                         capture_output=True, text=True)
+    try:
+        cfg = subprocess.run(["git", "config", "user.email"], cwd=str(repo),
+                             capture_output=True, text=True,
+                             timeout=GIT_COMMAND_TIMEOUT_S)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return ("CLAUDE.local.md", "could-not-verify",
+                "`git config user.email` could not be run here "
+                f"({exc!r})")
     if cfg.returncode != 0 or not cfg.stdout.strip():
         return ("CLAUDE.local.md", "could-not-verify",
                 "this repo's own operator identity could not be read "
@@ -97,10 +113,15 @@ def determine_laws(repo: Path):
             f"every author of CLAUDE.md's history is the operator ({operator})")
 
 
+#: How long a local `git` command gets to answer before its reading is
+#: declared unresolved. A hung local command is no more useful than one
+#: that says it could not tell.
+GIT_COMMAND_TIMEOUT_S = 10
+
+
 #: How long `gh` gets to answer the visibility question before the reading
-#: is declared unresolved. Unlike the `git` calls above — local, instant —
-#: this one can sit behind a network round trip, so it carries a bound: a
-#: verb that hangs is worse than one that says it could not tell.
+#: is declared unresolved. Unlike local `git`, this can sit behind a network
+#: round trip, so it carries the same kind of bound.
 GH_VISIBILITY_TIMEOUT_S = 10
 
 
@@ -147,8 +168,13 @@ def determine_public(repo: Path):
     loud-over-silent argument above therefore stands on `check_origin`
     alone, not on leak scanning.
     """
-    remotes = subprocess.run(
-        ["git", "-C", str(repo), "remote"], capture_output=True, text=True)
+    try:
+        remotes = subprocess.run(
+            ["git", "-C", str(repo), "remote"], capture_output=True, text=True,
+            timeout=GIT_COMMAND_TIMEOUT_S)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return (True, "could-not-verify",
+                f"`git remote` could not be run here ({exc!r})")
     if remotes.returncode != 0 or not remotes.stdout.strip():
         return (False, "no-remote",
                 "this repo has no git remote, therefore no hosted "

@@ -8,6 +8,7 @@ exactly the state `init` is supposed to CREATE rather than consume. `init`'s
 own tests need repos that do not already carry a declaration.
 """
 
+import ast
 import inspect
 import io
 import json
@@ -580,6 +581,88 @@ class ExistingCouldNotVerifyLinesAreFrozen(unittest.TestCase):
             self.assertIn(fragment, src,
                           "a could-not-verify line that predates lc-81 "
                           f"moved: {fragment}")
+
+
+class GitSubprocessFailuresAreCouldNotVerify(unittest.TestCase):
+    """Every git reading is bounded and turns an unavailable git into a
+    named unresolved reading rather than an exception escaping `init`."""
+
+    def _without_git_on_path(self):
+        empty_bin = Path(tempfile.mkdtemp(prefix="lifecycle-no-git-"))
+        self.addCleanup(shutil.rmtree, empty_bin, True)
+        old_path = os.environ.get("PATH", "")
+        self.addCleanup(os.environ.__setitem__, "PATH", old_path)
+        os.environ["PATH"] = str(empty_bin)
+
+    def test_determine_laws_without_git_is_could_not_verify(self):
+        self._without_git_on_path()
+        try:
+            reading = init_mod.determine_laws(Path("/unreadable-repo"))
+        except OSError:
+            reading = ()
+        self.assertIn("could-not-verify", reading,
+                      "git missing from PATH did not yield COULD NOT VERIFY")
+
+    def test_determine_public_without_git_is_could_not_verify(self):
+        self._without_git_on_path()
+        try:
+            reading = init_mod.determine_public(Path("/unreadable-repo"))
+        except OSError:
+            reading = ()
+        self.assertIn("could-not-verify", reading,
+                      "git missing from PATH did not yield COULD NOT VERIFY")
+
+
+class AllInitSubprocessRunsAreGuarded(unittest.TestCase):
+    """Source-derived coverage: a later subprocess call cannot evade this
+    test merely because this test copied an earlier call-site count."""
+
+    @staticmethod
+    def _is_subprocess_run(node):
+        return (isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "run"
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "subprocess")
+
+    @staticmethod
+    def _handles_subprocess_errors(try_node):
+        for handler in try_node.handlers:
+            names = []
+            types = handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
+            for error in types:
+                if isinstance(error, ast.Name):
+                    names.append(error.id)
+                elif (isinstance(error, ast.Attribute)
+                      and isinstance(error.value, ast.Name)):
+                    names.append(f"{error.value.id}.{error.attr}")
+            if {"OSError", "subprocess.SubprocessError"}.issubset(names):
+                return True
+        return False
+
+    def test_each_subprocess_run_has_timeout_and_exception_guard(self):
+        tree = ast.parse(inspect.getsource(init_mod))
+        unguarded = []
+
+        def walk(node, guards=()):
+            if self._is_subprocess_run(node):
+                has_timeout = any(keyword.arg == "timeout" for keyword in node.keywords)
+                has_guard = any(self._handles_subprocess_errors(guard)
+                                for guard in guards)
+                if not (has_timeout and has_guard):
+                    missing = []
+                    if not has_timeout:
+                        missing.append("timeout")
+                    if not has_guard:
+                        missing.append("exception guard")
+                    unguarded.append(f"line {node.lineno}: missing {', '.join(missing)}")
+            for child in ast.iter_child_nodes(node):
+                walk(child, guards + (node,) if isinstance(node, ast.Try) else guards)
+
+        walk(tree)
+        self.assertEqual([], unguarded,
+                         "subprocess.run calls lacking safeguards:\n"
+                         + "\n".join(unguarded))
 
 
 if __name__ == "__main__":
