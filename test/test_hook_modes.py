@@ -249,6 +249,87 @@ class CouldNotVerify(unittest.TestCase):
                 res.unverified)
 
 
+class TheRepoSOwnRecordedInstance(unittest.TestCase):
+    """The pair the incident itself left behind, run at the REAL altitude.
+
+    `0cbd1ad` committed `tools/git-hooks/pre-push` at 100644 and `d8c3934`
+    restored the bit — SAME blob `887ecff8`, mode the only difference, which
+    is why a bytes-only restore check passed it and the leak scan was dead
+    for twenty minutes. A guard for this defect that cannot go red on the
+    repo's own recorded instance of it is unproven whatever else it asserts.
+
+    THE REFS ARE PINNED, NOT HEAD. HEAD carries a different blob today
+    (`7b5aafe` edited the file), so the mode pair still holds there but the
+    same-blob property — the thing that makes the demonstration sharp — exists
+    only between these two commits. A proof anchored to a moving ref expires
+    the next time anyone touches the file.
+
+    The clone is `--shared` into a temp directory and thrown away; nothing is
+    written to this repo, and no worktree is added to its `.git`.
+    """
+
+    REFS = {"0cbd1ad": "100644", "d8c3934": "100755"}
+
+    def _clone_at(self, ref, into):
+        subprocess.run(["git", "clone", "--quiet", "--shared",
+                        str(REPO_ROOT), str(into)],
+                       capture_output=True, text=True, check=True)
+        subprocess.run(["git", "-C", str(into), "checkout", "--quiet", ref],
+                       capture_output=True, text=True, check=True)
+
+    def test_the_refs_this_proof_is_pinned_to_still_resolve(self):
+        """A ref that no longer resolves turns every assertion below into a
+        setup error wearing a finding's clothes."""
+        for ref in self.REFS:
+            p = subprocess.run(["git", "-C", str(REPO_ROOT), "rev-parse",
+                                "--verify", "-q", f"{ref}^{{commit}}"],
+                               capture_output=True, text=True)
+            self.assertEqual(p.returncode, 0,
+                             f"{ref} no longer resolves in this checkout, so "
+                             "this proof has no arrangement — a shallow clone "
+                             "is the likely cause, and it is a loud failure "
+                             "rather than a silent skip on purpose")
+
+    def test_the_same_blob_at_two_modes_is_still_what_these_refs_carry(self):
+        blobs = set()
+        for ref, mode in self.REFS.items():
+            p = subprocess.run(["git", "-C", str(REPO_ROOT), "ls-tree", ref,
+                                "--", "tools/git-hooks/pre-push"],
+                               capture_output=True, text=True)
+            bits = p.stdout.split()
+            self.assertEqual(bits[0], mode, p.stdout)
+            blobs.add(bits[2])
+        self.assertEqual(len(blobs), 1,
+                         "the two refs no longer carry the SAME blob, so the "
+                         "pair stopped isolating the mode")
+
+    def test_the_guard_fires_at_the_defect_and_is_clean_at_the_fix(self):
+        for ref, mode in self.REFS.items():
+            with self.subTest(ref=ref, mode=mode):
+                work = Path(tempfile.mkdtemp(prefix=f"lc103-{ref}-"))
+                try:
+                    self._clone_at(ref, work / "repo")
+                    p = subprocess.run(
+                        [sys.executable,
+                         str(REPO_ROOT / "plugin" / "cli" / "lifecycle"),
+                         "--repo", str(work / "repo"), "kind", "check"],
+                        capture_output=True, text=True)
+                    fired = "[hook_not_executable]" in p.stdout
+                    if mode == "100644":
+                        self.assertTrue(fired, p.stdout)
+                        self.assertEqual(p.returncode, exits.FINDING, p.stdout)
+                        # The ONLY finding, so nothing else could have moved
+                        # the exit code — the pair would otherwise separate
+                        # something other than the mode.
+                        self.assertEqual(p.stdout.count("FINDING ["), 1,
+                                         p.stdout)
+                    else:
+                        self.assertFalse(fired, p.stdout)
+                        self.assertEqual(p.returncode, exits.CLEAN, p.stdout)
+                finally:
+                    shutil.rmtree(work, ignore_errors=True)
+
+
 class NoCommitYet(unittest.TestCase):
     """The state every other roster row's CONTROL is in.
 
