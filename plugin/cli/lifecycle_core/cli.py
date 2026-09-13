@@ -706,8 +706,12 @@ def _walk_verb(args, out) -> int:
 
 
 def cmd_migrate(args, out) -> int:
-    """Stage 9. A DRY RUN: it WRITES the successor files and READS the old
-    carrier, and it never edits, moves or deletes the old one (D-e)."""
+    """Stage 9. It WRITES the successor files, READS the old carrier, and
+    DISPOSES of it (lc-86) — UNTOUCHED on a run that writes no successor
+    state, FROZEN by default, DELETED under `--retire-source`. Brief D-e's
+    "it never edits, moves or deletes the old one" was true of every build
+    before lc-86 and is false now, deliberately; `migrate.py`'s module
+    docstring carries the reason and the three outcomes in full."""
     ctx, code = _context(args, out)
     if ctx is None:
         return code
