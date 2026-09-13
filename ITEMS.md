@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 92
+added: 93
 compacted: 0
 
 ## lc-3
@@ -611,4 +611,13 @@ goal: lean-machinery-strict-checks
 write-set: tools/prove-rows.py,test/
 done-criterion: a concurrent writer cannot be silently degraded or silently overwritten by a prover run: prove-rows makes its run VISIBLE to other writers in the same checkout for its duration (a reservation the tool writes and removes, or a refusal to start where one is already held), and states in its own output which files it will mutate. MUST-NOT-MOVE: the prover keeps mutating REAL files in a REAL checkout - the mutation is the method and a copy-to-scratch redesign is a different item with a different risk. A lock that can be left behind after a crash is worse than none, so its release is proven by a test that kills the prover mid-arm
 evidence: MEASURED at this desk 2026-09-13, both directions. (i) A dispatcher-side re-grade caught items.py carrying 'if missing:' replaced by 'if False:' mid-run; prove-rows.py:283-288 carries exactly that mutation for row item_shape, and grep -c over the MUTATIONS table returns 14 items.py entries of 63. The carrier writes near that window were re-graded from a pristine git-archive export against the live carriers and came back CLEAN, so no damage this time - the quiet direction, not an all-clear. (ii) The destroy-an-edit direction was reasoned from the prover's own restore-by-file-copy by the lc-86 build lane, which declined to write for that reason; NOT executed as a reproduction by either party, so UNVERIFIED, and its reproduction is cheap: hold an edit in a file the table names, run one arm over it, read the file back
+blocked-by: NONE
+
+## lc-101
+grade: READY
+requirement: one roster row can abort the whole roster, and the abort reads as a finding. argparse calls parser.error on an unrecognised flag, which raises SystemExit; in-process that escapes the row, stops lifecycle --test mid-run, and leaves it exiting 3 with NO 'rows:' summary line - measured 2026-09-13 at 73 of 77 rows never reached. The rows that did not run are INVISIBLE rather than red, so a truncated roster is a could-not-verify wearing a finding's clothes, inside the very instrument that enforces this repo's three-answer law. lc-86's build lane repaired its own helper (_retire_run catches SystemExit and returns a named SETUP FAILED, so the row fails and its siblings finish) and correctly declined to generalize from inside its item - record: lc-86 lane addendum 2/3, 2026-09-13
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/refusals.py,test/
+done-criterion: no single row can truncate the roster: every row helper that builds an argv or invokes a CLI entry point contains its own SystemExit, fails by name, and lets the remaining rows run - proven by a row deliberately given an argv that cannot parse, after which lifecycle --test still reports all rows with a summary line and the deliberate row failing by name. MUST-NOT-MOVE: a row that genuinely raises an unexpected exception still surfaces loudly - this is about CONTAINING a parse failure to its own row, never about swallowing errors, and a caught exception that produces a passing row is the defect with the sign flipped
+evidence: MEASURED by the lc-86 build lane 2026-09-13 while proving its own conversion non-vacuous: removing the --retire-source declaration from a copy aborted the roster at the row before its four, exit 3, no summary line. Its repair is IN THE TREE at 2d70f71 for _retire_run only, which is the worked example and the pattern to follow. NOT RE-RUN AT THIS DESK - relayed from the lane's report; the reproduction is cheap and is the item's own red-first. The other _cli-style helpers are UNAUDITED: neither the lane nor this desk has enumerated which of them build an argv that could stop parsing, and that enumeration is the build's first step rather than a premise
 blocked-by: NONE
