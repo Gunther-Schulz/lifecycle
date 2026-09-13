@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 97
+added: 98
 compacted: 0
 
 ## lc-3
@@ -624,4 +624,13 @@ goal: every-refusal-red-first
 write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py,tools/prove-rows.py
 done-criterion: item close EVALUATES the evidence predicate before moving, through THE trigger evaluator lane list already calls and never a second body, and disposes on its mapping: 0 (evidence ARRIVED, the wait genuinely answered) discharges with a record; 1 (not arrived) REFUSES a DONE close and records ABANDONED under --drop; >=2 (BROKEN) is COULD NOT VERIFY and refuses, never a pass. Red-first on an amended evidence blocker at 6f05fa2, where close exits 0 and the next item check exits 2. The refusal is a registered roster row with plant AND control AND its own prove-rows mutation entry — anchored on its own message tail, never on a bare return line, which appears ten times in verbs.py. MUST-NOT-MOVE: the item-type dispositions lc-90 shipped are unchanged, and check_done_file's message sentence 'so it did not arrive here by a close' is repaired in this change since it is false for this case too
 evidence: MEASURED BY THE LANE AND CONFIRMED AT THIS DESK, 2026-09-13: old side and new side alike, an amended evidence blocker closes exit 0 then item check exits 2 with blocked_in_done_home. The disposition above is DERIVED, not invented — verbs.py:1321-1335 documents the evidence type as evaluated by the trigger evaluator with the mapping 0=UNBLOCKED, 1=waiting, >=2=BROKEN, and states in its own comment that BROKEN is a FINDING rather than a wait, and that two bodies behind one contract would disagree about exactly that case. So the close has a machine-side answer available and does not need to guess. The lane's worry that refusing traps the operator does not hold: the same two exits the item refusal prints apply — amend --blocked-by NONE with a reason, or --drop
+blocked-by: NONE
+
+## lc-106
+grade: READY
+requirement: the mutation prover proves ROWS, not their BRANCHES, and a multi-site refusal is green over 30 of its 31 emit sites. declaration_malformed has 31 emit sites and ONE prove-rows mutation (the JSON-parse branch), so deleting any other branch leaves the row PROVEN and the prover silent. lifecycle --test itself counts 19 refusals emitted at more than one site. This is NOT the row-splitting question §3.8c settles (a row splits only where sites yield different ANSWER CLASSES, and these do not) — it is instrument REACH: a red certifies the class that fired, never the instrument's coverage of the routes into it — record: lc-91 lane closing report gap 2, 2026-09-13, surfaced by the lane and ruled at this desk
+goal: lean-machinery-strict-checks
+write-set: tools/prove-rows.py,test/
+done-criterion: the prover reports its own reach per row rather than leaving it unstated: for every row whose refusal is emitted at more than one site, either an anchor per answer-distinct branch, or an explicit per-row line naming how many of its emit sites the single mutation covers. A row whose branches are unproven must SAY so — silence reads as proven, which is the could-not-verify-as-pass failure this repo's three-answer law forbids. Red-first: delete a declaration_malformed branch that is NOT the anchored one and show the prover still reports the row PROVEN today, then show the new form naming the hole. MUST-NOT-MOVE: no row loses coverage it has, and rows with a single emit site report exactly as now
+evidence: MEASURED AT THIS DESK 2026-09-13, after the lane surfaced it: 'lifecycle --test' prints 'refusals emitted at MORE THAN ONE site: 19' and names declaration_malformed (31), item_shape (28), dangling_reference (9), unknown_item (9) among them. tools/prove-rows.py carries exactly one MUTATIONS entry per row ident. lc-91 added four refusal BRANCHES under the existing declaration_malformed row; the row stays PROVEN by its unrelated anchor, so the four new branches rest on paired tests and the lane's hand-run bites — a weaker instrument than a registered mutation, as the lane itself reported. Same pre-existing status as delegation, public, id-prefix and leak-scan's unknown-key branch, so this is a family question and not one lc-91 created
 blocked-by: NONE
