@@ -129,12 +129,26 @@ Added in the second wave, each paid for once:
   writer-reservation gate warned about a holder whose lane had already
   finished and reported. Decision recorded in `LEDGER.md`; build is lc-100,
   still open.
-- **`lc-120` carries a live decision blocker** and is the one thing here a
+- **`lc-119` carries a live decision blocker** and is the one thing here a
   desk should NOT rule alone: whether `lifecycle init`'s exit code should say
   that a declared value was unresolved, or whether the emitted COULD NOT
   VERIFY line is the whole contract. Fourteen existing assertions encode an
   answer nobody recorded as a decision, and a remote-less repo — the normal
   case — would flip to COULD NOT VERIFY almost always under the other reading.
+  (Ident corrected in place: this line first read `lc-120`. See the ident
+  drift below — the same error it describes.)
+
+**IDENT DRIFT, 2026-09-13, corrected here and in the ledger because two
+pushed commit messages carry it and cannot be.** The desk named idents from
+ARITHMETIC — "I booked two, so they are 119 and 120" — instead of reading the
+ident the add verb printed back. Real mapping: **lc-118** unguarded
+subprocess calls in `init`, **lc-119** the exit-code decision, **lc-120** the
+closure-record repair. The commits titled "book lc-119 and lc-120" and "book
+lc-121" are each off by one; their BODIES describe the right work, only the
+idents are wrong, and `lc-121` does not exist at all. A successor grepping
+for an ident should trust the carrier, never a commit subject. The class is
+this session's most-repeated one: a claim about state derived rather than
+read, at the one moment reading cost nothing.
 
 ## In flight elsewhere
 
