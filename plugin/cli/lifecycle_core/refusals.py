@@ -2500,7 +2500,124 @@ def _ratio_after_close() -> Fired:
             os.chdir(here)
 
 
-ROWS = ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
+# --- lc-103: the git hooks a repo SHIPS stay launchable ----------------------
+#
+# A hook committed without its executable bit is a gate that fails OPEN: git
+# cannot launch it, the push proceeds, and every CONTENT check reports clean
+# because the bytes are right. The pair below is the shape of the real
+# incident rather than a shape invented for it — `0cbd1ad` and `d8c3934` carry
+# the SAME blob `887ecff8` for `tools/git-hooks/pre-push`, 100644 and 100755,
+# so the mode is the only difference between a dead gate and a live one, which
+# is exactly why a bytes-only check passed it.
+#
+# TWO ROUTES, TWO ROWS. The refusal has two firing inputs because its
+# population is a union: a hook under `tools/git-hooks/` (the repo's own
+# tooling, and the route the real incident took) and a hook the plugin
+# manifest DECLARES. A row proving only the first would leave the second
+# green on its own blind spot, and the declared route is the one the
+# carrier's original done-criterion named.
+
+#: An ordinary tracked file, carried at 100644 in BOTH arms of both rows. The
+#: must-not-move control lives INSIDE the pair rather than beside it: a guard
+#: that policed ordinary files would fire in the CONTROL too, so the row stops
+#: discriminating instead of quietly widening.
+_PLAIN_FILE = "notes.md"
+
+_HOOK_BODY = "#!/bin/sh\nexit 0\n"
+
+
+def _hook_mode_run(mode: int, *, declared_by_manifest: bool = False) -> Fired:
+    """`decl.read` over a scratch repo that has COMMITTED one hook at `mode`.
+
+    The arms differ in the committed MODE alone and carry the same blob. The
+    mode is read back off git before the verdict counts: a fixture that never
+    received the mode it names returns a green byte-identical to a real one,
+    and `git init` on a filesystem mounted without the execute bit is one way
+    that happens.
+
+    With `declared_by_manifest`, the hook sits in a scratch PLUGIN tree inside
+    the repo and `declaration.plugin_root` is pointed at it for the run —
+    monkeypatched the way `_decl_run_with_templates` points at a scratch
+    template registry, because the real manifest's scripts resolve OUTSIDE any
+    scratch repo and would contribute no member at all.
+    """
+    with _Scratch(**_GOOD_KW) as s:
+        (s.dir / _PLAIN_FILE).write_text("an ordinary tracked file\n",
+                                         encoding="utf-8")
+        if declared_by_manifest:
+            root = s.dir / "pluginroot"
+            (root / ".claude-plugin").mkdir(parents=True)
+            (root / ".claude-plugin" / "plugin.json").write_text(
+                json.dumps({"name": "scratch",
+                            decl.PLUGIN_GIT_HOOKS_KEY: {
+                                "pre-commit": {"script": "hooks/pre-commit"}}},
+                           indent=2), encoding="utf-8")
+            rel = "pluginroot/hooks/pre-commit"
+        else:
+            rel = decl.REPO_GIT_HOOKS_DIR + "/pre-push"
+        hook = s.dir / rel
+        hook.parent.mkdir(parents=True, exist_ok=True)
+        hook.write_text(_HOOK_BODY, encoding="utf-8")
+        hook.chmod(mode)
+        s._run(["git", "add", "-A"])
+        s._run(["git", "commit", "-qm", "the hook, at the mode under test"])
+
+        want = decl.EXECUTABLE_MODE if mode & 0o111 else "100644"
+        ls = subprocess.run(["git", "-C", str(s.dir), "ls-tree", "HEAD", "--",
+                             rel], capture_output=True, text=True)
+        if not ls.stdout.startswith(want):
+            return Fired(-1, f"SETUP FAILED: this arm asked for {want} and "
+                             f"git recorded {ls.stdout.strip()!r}. The arm "
+                             "never carried the mode under test, so its "
+                             "verdict says nothing either way.")
+
+        orig = decl.plugin_root
+        if declared_by_manifest:
+            decl.plugin_root = lambda: s.dir / "pluginroot"
+        try:
+            res = decl.read(s.dir)
+        finally:
+            decl.plugin_root = orig
+        lines = [f"FINDING [{f.row}] {f.message}" for f in res.findings]
+        lines += [f"COULD NOT VERIFY: {u}" for u in res.unverified]
+        lines.append(f"kind check: {exits.word(res.code)}")
+        return Fired(res.code, "\n".join(lines))
+
+
+HOOK_ROWS = [
+    Row(
+        ident="hook_not_executable",
+        refusal="a git hook the repo SHIPS committed without its executable "
+                "bit — a gate git cannot launch, so it fails open while every "
+                "content check over it reports clean",
+        firing_input="`tools/git-hooks/pre-push` committed at mode 100644",
+        expect=exits.FINDING,
+        fire=lambda: _hook_mode_run(0o644),
+        # The same file, same bytes, committed at 100755 — and carrying the
+        # same ordinary 100644 file the plant carries, so neither the blob nor
+        # the presence of a non-hook file can be what separates the arms.
+        control=lambda: _hook_mode_run(0o755),
+        stage="lc-103",
+    ),
+    Row(
+        ident="hook_not_executable_declared",
+        finding_row="hook_not_executable",
+        refusal="the SAME refusal on its second firing input: a hook the "
+                "plugin manifest DECLARES, which is the half the carrier's "
+                "own done-criterion named and the half that would have been "
+                "green over this repo's actual incident",
+        firing_input="a manifest-declared `hooks/pre-commit` committed at "
+                     "mode 100644",
+        expect=exits.FINDING,
+        fire=lambda: _hook_mode_run(0o644, declared_by_manifest=True),
+        control=lambda: _hook_mode_run(0o755, declared_by_manifest=True),
+        stage="lc-103",
+    ),
+]
+
+
+ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
+        + HOOK_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #

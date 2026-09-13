@@ -547,6 +547,8 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
         check_schema_agreement(repo, doc, res)
     if repo is not None and lanes_readable:
         check_lanes_registered(repo, lanes, res)
+    if repo is not None:
+        check_hook_modes(repo, res)
 
 
 def head_lead_goal(hr):
@@ -976,6 +978,36 @@ def cli_verbs() -> frozenset:
 PLUGIN_GIT_HOOKS_KEY = "git-hooks"
 
 
+def plugin_root() -> Path:
+    """The plugin tree this build is running from.
+
+    ONE body for a fact two readers need: the manifest lives under it, and
+    the manifest's `script` values are relative to it. A second copy of this
+    expression beside the first would be the restated set this repo's own law
+    refuses — it stays right until the layout moves, and then one reader
+    follows and the other does not.
+    """
+    return Path(__file__).resolve().parents[2]
+
+
+def plugin_manifest() -> dict:
+    """The plugin's own `plugin.json` as a dict, `{}` where it cannot be read.
+
+    Unreadable yields an EMPTY manifest here rather than a raise, and every
+    caller must therefore decide for itself what an empty one means: for
+    `plugin_hooks` it is "no declared hook", for `check_hook_modes` it is a
+    population that contributes no member. Neither is a clean board over a
+    manifest this build could not open, because neither claims anything about
+    what the manifest does not say.
+    """
+    manifest = plugin_root() / ".claude-plugin" / "plugin.json"
+    try:
+        doc = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return {}
+    return doc if isinstance(doc, dict) else {}
+
+
 def plugin_hooks() -> frozenset:
     """Every git hook the plugin DECLARES in `plugin.json` (§3.8c, the seam).
 
@@ -985,12 +1017,7 @@ def plugin_hooks() -> frozenset:
     never fires. The manifest is the declaration; the dispatcher registration
     is the wiring, and they are different failures.
     """
-    manifest = Path(__file__).resolve().parents[2] / ".claude-plugin" / "plugin.json"
-    try:
-        doc = json.loads(manifest.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-        return frozenset()
-    hooks = doc.get(PLUGIN_GIT_HOOKS_KEY)
+    hooks = plugin_manifest().get(PLUGIN_GIT_HOOKS_KEY)
     if isinstance(hooks, dict):
         return frozenset(hooks)
     return frozenset()
@@ -1121,6 +1148,206 @@ def check_laws_present(repo: Path, laws_rel: str, res: Result) -> None:
     except (OSError, UnicodeDecodeError) as exc:
         res.cannot_verify(f"the declared laws file {laws_rel!r} could not be "
                           f"read ({exc!r}).")
+
+
+# --- the git hooks a repo SHIPS stay launchable ------------------------------
+
+#: Where a repo keeps the git hooks it owns ITSELF — its own tooling rather
+#: than plugin payload. `tools/` is this family's home for repo-owned checks,
+#: and a hook there is TRACKED, so the population is identical in a fresh
+#: clone. NOT `.git/hooks/*`: that is machine-local, untracked and absent in
+#: a fresh clone, so a guard reading it is green by construction exactly
+#: where it matters least.
+REPO_GIT_HOOKS_DIR = "tools/git-hooks"
+
+#: The only mode git can LAUNCH a tracked regular file at.
+EXECUTABLE_MODE = "100755"
+
+#: A tracked symlink. Git's record cannot answer launchability here — the
+#: TARGET's mode decides, and the target is not in this tree's record — so
+#: this is the could-not-verify answer: never a finding (which would be the
+#: guard firing on legitimate work) and never a silent pass.
+SYMLINK_MODE = "120000"
+
+
+def head_commit(repo: Path) -> bool | None:
+    """Three answers about HEAD: True a commit, False none yet, None unasked.
+
+    The middle answer is the one worth separating. A repo with no commit has
+    committed no hook, so the guarded set below is EMPTY — a state, not an
+    unanswered question — while a path git cannot be asked about at all
+    leaves the set UNKNOWN. Measured: `rev-parse --verify -q HEAD` exits 1 on
+    an unborn branch and 128 outside a work tree, which is what makes the two
+    distinguishable without parsing an error message.
+    """
+    try:
+        p = subprocess.run(["git", "-C", str(repo), "rev-parse", "--verify",
+                            "-q", "HEAD"], capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if p.returncode == 0:
+        return True
+    if p.returncode == 1:
+        return False
+    return None
+
+
+def tree_modes(repo: Path, pathspecs: list) -> dict | None:
+    """`{path: mode}` for the BLOBS HEAD's tree carries at `pathspecs`.
+
+    NOT recursive, deliberately: a directory pathspec with a trailing slash
+    then answers for the files DIRECTLY under it — the population the ruling
+    names — and a nested directory arrives as a tree entry this walk skips
+    rather than as a member it would have to explain.
+
+    `-z` because `ls-tree`'s default output QUOTES a path carrying special
+    characters: a quoted name is a RENDERED view of a path, and a lookup
+    against it is the paraphrase comparison this repo keeps finding. With
+    `-z` the name is the bytes.
+
+    None means git could not answer — no git, not a work tree, no such
+    revision — and is kept apart from the empty dict, which means git
+    answered and the tree carries nothing there.
+    """
+    try:
+        p = subprocess.run(["git", "-C", str(repo), "ls-tree", "-z", "HEAD",
+                            "--", *pathspecs], capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if p.returncode != 0:
+        return None
+    out = {}
+    for record in p.stdout.split("\0"):
+        meta, tab, path = record.partition("\t")
+        bits = meta.split()
+        if not tab or not path or len(bits) < 3 or bits[1] != "blob":
+            continue
+        out[path] = bits[0]
+    return out
+
+
+def declared_hook_scripts(repo: Path) -> list:
+    """The plugin-declared hook scripts that live INSIDE `repo`, repo-relative.
+
+    The manifest's `script` values are relative to the plugin tree. In the
+    plugin's OWN checkout that tree is inside the repo under test and its
+    hooks are this repo's payload; in a consumer repo the plugin is installed
+    elsewhere, and a hook shipped by someone else's release is not that
+    repo's to police. So membership is decided by containment, computed every
+    run, rather than by a flag anyone has to remember to set.
+    """
+    hooks = plugin_manifest().get(PLUGIN_GIT_HOOKS_KEY)
+    if not isinstance(hooks, dict):
+        return []
+    try:
+        root = Path(repo).resolve()
+    except OSError:
+        return []
+    out = []
+    for body in hooks.values():
+        script = body.get("script") if isinstance(body, dict) else None
+        if not isinstance(script, str) or not script.strip():
+            continue
+        try:
+            rel = (plugin_root() / script).resolve().relative_to(root)
+        except (ValueError, OSError):
+            continue
+        out.append(rel.as_posix())
+    return out
+
+
+def hook_population(repo: Path) -> tuple:
+    """`({path: mode}, [declared scripts])` — the whole guarded set, derived.
+
+    ONE body, because this is both what the check measures and what the
+    battery pins. A pin written over a DIFFERENT expression than the check's
+    own is a coverage assertion restated from its source, and it stays green
+    the day the check's derivation loses a half — measured here (lc-103, bite
+    1): with the `tools/git-hooks/` half removed from the check, a pin over
+    the helper called directly stayed GREEN, which is exactly the guard that
+    would have shipped green over this repo's own incident.
+
+    The dict is None where git could not answer at all; the declared list is
+    returned beside it because a declared script ABSENT from the tree is a
+    third answer the modes alone cannot express.
+    """
+    declared = declared_hook_scripts(repo)
+    return tree_modes(repo, [REPO_GIT_HOOKS_DIR + "/"] + declared), declared
+
+
+def check_hook_modes(repo: Path, res: Result) -> None:
+    """Every git hook this repo SHIPS is committed EXECUTABLE (mode 100755).
+
+    A hook committed at 100644 is a gate that fails OPEN: git cannot launch
+    it, the push or the commit proceeds, and every CONTENT check reports
+    clean because the bytes are right. Measured here — `0cbd1ad` committed
+    this repo's push gate at 100644 and `d8c3934` restored the bit against
+    the SAME blob `887ecff8`, mode alone differing, which is exactly why a
+    bytes-only restore check passed it; the leak scan was dead for those
+    twenty minutes. Second instance the same day in a sibling repo
+    (claude-code-cache-fix `d3f4ee8`). The cause generalises past both: a
+    Python atomic write creates its temp file at the default 0644 and
+    `os.replace` carries that mode onto the target, so the source's mode is
+    dropped while sha256 and `git status` both look right.
+
+    THE POPULATION IS DERIVED EVERY RUN, never a list beside the thing it
+    mirrors: the plugin-declared scripts that live inside this repo, UNION
+    every file directly under `tools/git-hooks/`. The declaration alone would
+    not do — this repo's manifest declares `pre-commit` and nothing else, so
+    a guard keyed on it would have been GREEN over the very file that
+    shipped dead, which is the expectation derived from an artifact that does
+    not mention the case.
+
+    THE MODE IS READ FROM GIT, NEVER `stat`. A deployed hook is reached
+    through a symlink, so `stat` follows the link and answers about the
+    target; and the committed mode is what a fresh clone gets, which is the
+    thing that actually fails open.
+    """
+    head = head_commit(repo)
+    if head is None:
+        res.cannot_verify(
+            "could not ask git for HEAD, so the committed mode of the hooks "
+            "this repo ships could not be read. A hook committed without its "
+            "executable bit is a gate that fails open, and nothing else here "
+            "would notice.")
+        return
+    if head is False:
+        return
+
+    modes, declared = hook_population(repo)
+    if modes is None:
+        res.cannot_verify(
+            "git could not read HEAD's tree, so the committed mode of the "
+            "hooks this repo ships could not be read. Unlaunchable and "
+            "unmeasured are not the same answer.")
+        return
+
+    for rel in declared:
+        if rel in modes:
+            continue
+        res.cannot_verify(
+            f"the plugin declares the git hook {rel!r} and HEAD carries no "
+            "blob there, so its committed mode could not be read. A declared "
+            "hook absent from the tree is the one that silently never fires.")
+
+    for path in sorted(modes):
+        mode = modes[path]
+        if mode == EXECUTABLE_MODE:
+            continue
+        if mode == SYMLINK_MODE:
+            res.cannot_verify(
+                f"{path} is a git hook this repo ships and HEAD carries it as "
+                "a SYMLINK, whose launchability is decided by the target's "
+                "mode rather than by anything in this tree's record.")
+            continue
+        res.add("hook_not_executable",
+                f"{path} is a git hook this repo ships and HEAD carries it at "
+                f"mode {mode}, not {EXECUTABLE_MODE}. Git cannot launch it, "
+                "so the gate FAILS OPEN — the push or the commit proceeds and "
+                "every content check reports clean, because the bytes are "
+                "right. Restore it with `git update-index --chmod=+x` and "
+                "commit that; a `chmod` in the working tree alone leaves the "
+                "committed mode, which is what a fresh clone gets, unchanged.")
 
 
 # --- one schema version per repo (§3.8c) -------------------------------------
