@@ -502,6 +502,21 @@ MUTATIONS = [
      "recorded against a body that has stopped waiting, which is what leaves "
      "an unanswerable question in the operator's queue"),
 
+    # ANCHORED ON THE MESSAGE TAIL, not on the bare `return None,
+    # exits.FINDING` — that spelling appears TEN times in verbs.py, so a bare
+    # anchor would mutate whichever one came first and prove a different row.
+    # Tying it to this refusal's own closing sentence means a reworded message
+    # reports COULD NOT VERIFY rather than silently moving the mutation.
+    ("close_over_live_blocker", "verbs.py",
+     "        \"which records the wait as abandoned rather than as answered.\")"
+     "\n    return None, exits.FINDING",
+     "        \"which records the wait as abandoned rather than as answered.\")"
+     "\n    return None, exits.CLEAN",
+     "the refusal of a DONE close over a live item-id dependency — the close "
+     "then proceeds and `move_to_done` rewrites the `blocked-by:` line to "
+     "NONE, so the wait is deleted with no record anywhere, which is the "
+     "silent half of lc-90 and the direction nothing reported"),
+
     ("laws_scope_audit", "retire.py",
      "    if not hits:",
      "    if True:",
