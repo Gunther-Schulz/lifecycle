@@ -344,8 +344,13 @@ def print_candidates(ctx: Ctx, found: list, out) -> None:
 
 # --- the cost test (§3.2) -----------------------------------------------------
 
-def cost_test(write_set: str, hunks: int | None, source: str):
+def cost_test(write_set: str, hunks: int | None, source: str,
+              blocker_kind: str | None):
     """`(verdict, message)` — verdict in "veto", "clear", "unverified".
+
+    THREE CONJUNCTS, and the ask is owed only where ALL THREE hold (§3.11):
+    "write-set <= 1 file AND session live AND no typed blocker -> the tool
+    asks 'do it now?'; any other shape -> NEW."
 
     "A one-file, one-hunk write-set with the session live prints 'do it
     now?'" The tool can see the file count; it cannot see the hunk count, so
@@ -353,12 +358,32 @@ def cost_test(write_set: str, hunks: int | None, source: str):
     test unevaluated, which is COULD NOT VERIFY rather than a pass. That
     distinction is the whole rule: a cost test that silently cleared every
     add it could not evaluate would clear exactly the adds worth vetoing.
+
+    `blocker_kind` is the third conjunct, CLASSIFIED BY THE CALLER — the same
+    `items.classify_blocker` call the add verb already makes, rather than a
+    second classifier here reading a raw value and a prefix. It is required
+    rather than defaulted: a default would let a caller drop the conjunct
+    silently, which is the defect this parameter closes.
     """
     entries = write_set_entries(write_set)
     if len(entries) != 1:
         return "clear", (f"cost test: not applicable — the write-set names "
                          f"{len(entries)} path(s); the do-it-now shape is one "
                          "file, one hunk.")
+    if blocker_kind not in (None, "none"):
+        # THE THIRD CONJUNCT, and it sits AHEAD of the hunk question because
+        # the conjunction is ALREADY false: demanding evidence that cannot
+        # change the verdict is what left a correctly blocked author with no
+        # verb at all — `item park` re-grades an ident that must already
+        # exist, and this add refused. A typed blocker names what this
+        # session cannot dissolve, so the work is not do-it-now whatever its
+        # hunk count, and the item must be bookable in ONE verb with its
+        # blocker intact.
+        return "clear", (
+            f"cost test: not applicable — the item carries a TYPED blocker "
+            f"({blocker_kind}), and the rule's third conjunct is NO typed "
+            "blocker. What the item waits for is what this session cannot "
+            "dissolve, so booking it is the only exit there is.")
     if hunks is None:
         return "unverified", (
             "the write-set names ONE file and the hunk count was not stated "
@@ -803,7 +828,10 @@ def _do_new(args, ctx: Ctx, parsed, done_parsed, done_why, slots, source, out) -
             "dissolve is the next step wearing an absence's costume.")
         return exits.FINDING
 
-    verdict, message = cost_test(slots["write-set"], args.hunks, source)
+    blocker_kind, _detail = items_mod.classify_blocker(
+        slots["blocked-by"], ctx.prefix)
+    verdict, message = cost_test(slots["write-set"], args.hunks, source,
+                                 blocker_kind)
     # USE-EVIDENCE AT THE EFFECT SITE (§3.11). The judgment register prices a
     # rule's retirement on its fire rate, and a rate reconstructed later from
     # git or from memory is the shape this design replaced everywhere else —

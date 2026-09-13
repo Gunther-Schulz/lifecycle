@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
-from lifecycle_core import exits, items  # noqa: E402
+from lifecycle_core import exits, items, refusals  # noqa: E402
 from lifecycle_core.refusals import (  # noqa: E402
     DONE_BLOCK, EMPTY_DONE, FOUR_BLOCKER_ITEMS, GOOD_ITEMS)
 
@@ -511,3 +511,154 @@ class BlockerTargets(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheCostTestsThirdConjunct(unittest.TestCase):
+    """§3.11's intake cost test has THREE conjuncts; the third is the blocker.
+
+    The declared rule (`judgment.RULES`, `intake-cost-test`) reads "write-set
+    <= 1 file AND session live AND no typed blocker -> the tool asks 'do it
+    now?'; any other shape -> NEW". A TYPED BLOCKER IS THEREFORE THE EXEMPTION
+    THE SPEC ALREADY GRANTS, and `cost_test` never received it — so a
+    correctly blocked one-file item was vetoed, twice, across two desks and
+    two repos.
+
+    What makes that a dead end rather than an annoyance is that the veto
+    leaves NO CORRECT VERB: `item park` re-grades an ident that must already
+    exist, so it cannot create the item; `item add` refuses it; and the
+    refusal's own two offered exits are both wrong here — inflating `--hunks`
+    is the override reflex, and `--source operator` writes FALSE PROVENANCE
+    whenever the asker was a peer desk rather than the operator, since a
+    delegation does not convert a desk's ask into the operator's decision. The
+    author's only compliant move is then to not book the item at all, which is
+    the silent loss the two-exits rule exists to prevent. These arms are that
+    third exit.
+
+    AT THE CLI ALTITUDE ON PURPOSE, and the reason is a measured trap rather
+    than a preference: a unit call to `cost_test` carrying the new argument
+    reds against the old build as a TypeError — an ERROR, which proves only
+    that the signature is new and scores identically against a build that
+    takes the argument and ignores it. Every arm below runs the verb the rule
+    actually ships behind, where the old build accepts every flag and its red
+    is an assertion FAILURE at the defect.
+
+    THE LAST THREE ARMS MUST NOT MOVE. Without them a change that merely
+    cleared more would score the same as one that got the distinction right:
+    an UNTYPED blocker buys no exemption, and an unblocked one-file add still
+    meets the ask and still refuses to clear what it cannot evaluate.
+    """
+
+    #: A real cross-boundary booking: one file, and the file is another
+    #: repo's — the realizing write is a desk this session is not.
+    FOREIGN_FILE = "../dotfiles/bootstrap/manifest.py"
+    DECISION_BLOCKER = ("decision when the judgment desk lands its bundled "
+                        "corpus queue")
+
+    def _repo(self, **kw):
+        r = refusals._Repo(**kw)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _add(self, *extra, write_set=None, hunks=None):
+        """One `item add --join new`, slots complete, one-file write-set."""
+        argv = [
+            "item", "add",
+            "--requirement", "the deploy roster is hand-checked — LEDGER.md",
+            "--goal", "verify",
+            "--write-set", write_set or self.FOREIGN_FILE,
+            "--done-criterion", "the roster is declared, not hand-checked",
+            "--evidence", "measured at the drainage desk",
+            "--absence", "the realizing write is another desk's",
+        ]
+        if hunks is not None:
+            argv += ["--hunks", str(hunks)]
+        return argv + list(extra)
+
+    # --- the third conjunct ---------------------------------------------
+
+    def test_a_typed_decision_blocker_is_not_met_with_the_do_it_now_ask(self):
+        """The rule's own third conjunct, at the altitude it ships at.
+
+        One file, one hunk, session live — the first two conjuncts hold — and
+        a correctly typed decision blocker, which makes the conjunction FALSE.
+        The declared answer is "any other shape -> NEW", so the ask must not
+        fire.
+        """
+        r = self._repo()
+        code, out = self._run(r, *self._add(
+            "--blocked-by", self.DECISION_BLOCKER, hunks=1))
+        self.assertNotIn("[cost_test_veto]", out)
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_a_typed_evidence_blocker_is_not_met_with_it_either(self):
+        """The conjunct says TYPED, not `decision`. `evidence` is typed too.
+
+        Here because a fix keyed to the one blocker type that happened to
+        appear in both live firings would pass the arm above and still leave
+        two thirds of §3.1's closed edge set vetoed.
+        """
+        r = self._repo()
+        code, out = self._run(r, *self._add(
+            "--blocked-by", "evidence the roster count stops moving", hunks=1))
+        self.assertNotIn("[cost_test_veto]", out)
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_the_add_to_parked_path_exists_end_to_end(self):
+        """The half that makes this a dead end, not a missing parameter.
+
+        A cross-boundary item must be creatable in ONE verb, parked, with its
+        typed blocker intact — and WITHOUT a hunk count, because an author who
+        cannot do the work here has no hunk count to state and the old build
+        met that with COULD NOT VERIFY. The carrier is read back rather than
+        the exit code trusted: an add that answers CLEAN and writes nothing
+        would satisfy an exit-code assertion exactly as a real one does.
+        """
+        r = self._repo()
+        code, out = self._run(r, *self._add(
+            "--blocked-by", self.DECISION_BLOCKER, "--grade", "PARKED"))
+        self.assertEqual(code, exits.CLEAN, out)
+        carrier = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        self.assertIn("grade: PARKED", carrier)
+        self.assertIn(f"blocked-by: {self.DECISION_BLOCKER}", carrier)
+        self.assertIn(self.FOREIGN_FILE, carrier)
+
+    # --- must not move ----------------------------------------------------
+
+    def test_an_untyped_blocker_buys_no_exemption(self):
+        """Prose is not a typed blocker, and must not become a way past the ask.
+
+        The exemption the spec grants is TYPED; if untyped prose bought it,
+        the ask would be escapable by writing a sentence.
+        """
+        r = self._repo()
+        code, out = self._run(r, *self._add(
+            "--blocked-by", "we should think about it", hunks=1))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[blocker_untyped]", out)
+
+    def test_an_unblocked_one_file_one_hunk_add_still_meets_the_ask(self):
+        r = self._repo()
+        code, out = self._run(r, *self._add("--blocked-by", "NONE", hunks=1))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[cost_test_veto]", out)
+
+    def test_an_unblocked_one_file_add_without_hunks_is_still_unverified(self):
+        r = self._repo()
+        code, out = self._run(r, *self._add("--blocked-by", "NONE"))
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("COULD NOT VERIFY", out)
