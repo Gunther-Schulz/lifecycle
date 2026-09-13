@@ -161,6 +161,8 @@ write-set: UNKNOWN
 done-criterion: every live item whose decision blocker resolved against a moot line before 9800163 is listed with its new board reading, and each is either genuinely blocked or genuinely unblocked by a named answer
 evidence: G4 closing report slot (g), lifecycle 9800163: "Whether any OTHER live item in the real ITEMS.md is currently mis-unblocked by an existing moot line: NOT swept." The fix landed in ledger.py/verbs.py; the carrier was deliberately untouched by that lane
 blocked-by: evidence the sweep has not been run over any real carrier; which carriers are in scope (lifecycle ITEMS.md, dotfiles ITEMS.md, cache-fix ITEMS.md) is the first thing it must decide
+amend-reason: 2026-09-13 2026-09-13 Completing the evidence-predicate repair pass of 3352097, which fixed six of eight and left this one. Prose predicate; latent only because a NEW item is not evaluated by the board, so a promote would surface exit 127 exactly as it did for the four READY ones. Converted to the carrier's own executable form (lc-3, lc-7). Blocked state unchanged.
+amended-blocked-by: 2026-09-13 evidence false  # the sweep has not been run over any real carrier; which carriers it must cover is undecided
 
 ## lc-38
 grade: READY
@@ -459,6 +461,8 @@ write-set: docs/seam-checklist.md,ITEMS.md
 done-criterion: A design artifact at docs/seam-checklist.md holds the closed question set, and lc-76, lc-77, lc-78 and lc-79 each cite it as their shared rubric (the ITEMS.md half of the write-set). It LANDS BEFORE those four are designed — a rubric arriving after the designs it grades has no consumer. Doubles as the axis map for a begehung-style review.
 evidence: Question set as RECEIVED (relay, twelve, verbatim): trigger observability, actor, consumer, carrier, exit, growth policy, instrument, write boundary, authority, succession, transitions, reach. Each already has an instance in today's wave: succession from the tool-owned class (.clippy/* outliving clippy — verified here at statiker_stop_guard.py:106), trigger observability from the non-event gap shape, write boundary from this wave's partial halts, instrument from three false-zero instruments in one day.
 blocked-by: evidence the operator reply's CONFIRMED full question set — this desk holds twelve via relay, and the sending desk's own message says the full list is in its operator reply, unseen here. Writing the rubric on a possibly-partial set would crystallise it as the graded standard for four designs and then need redoing.
+amend-reason: 2026-09-13 2026-09-13 Same completion as lc-37. Prose predicate, latent under PARKED. Converted to 'false  # <reason>'; the wait on the operator is unchanged and is exactly what 'false' now says in a form the board can execute.
+amended-blocked-by: 2026-09-13 evidence false  # awaiting the operator reply's CONFIRMED full question set; this desk cannot derive it
 
 ## lc-83
 grade: READY
