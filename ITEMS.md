@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 90
+added: 91
 compacted: 0
 
 ## lc-3
@@ -606,3 +606,12 @@ write-set: plugin git-hooks (the guard adopted from dotfiles git/hooks pre-push,
 done-criterion: the guard ships in the plugin's git-hooks with carrier paths resolved from the repo's lifecycle.json declarations rather than hardcoded; a repo without lifecycle.json is untouched; the dotfiles-local copy retires in favor of the shipped one at the operator's seam; battery covers fires-on-unbooked and silent-on-booked (both controls)
 evidence: operator second-look ask 2026-09-13 (statiker session); the guard's real fire same date (statiker push blocked until LEDGER line 7639b61 landed); df-171 lane's fact that lifecycle plugin.json declares git-hooks; the lc-93 ledger-coupling precedent
 blocked-by: NONE
+
+## lc-99
+grade: READY
+requirement: a retire makes the migrated repo's own audit go from CLEAN to FINDING, and nothing decides whether that is right. lc-86's --retire-source writes the deletion record into the declared laws file; retire.laws_scope_audit then reports 'FINDING [laws_scope_audit] 2 line(s) POSSIBLY MIS-HOMED' against that record's date and its file-shaped tokens. Measured on the real artifact by the lc-86 build lane, not reasoned. It is a review finding and never a refusal, so nothing breaks - but every repo that retires a carrier acquires a standing audit finding it cannot clear, and a finding nobody can clear is the discount reflex again: the next real laws_scope_audit hit in that repo reads as the known one - record: lc-86 build lane report 5/6, 2026-09-13
+goal: enforce-the-invariants
+write-set: UNKNOWN — depends on the decision: plugin/cli/lifecycle_core/retire.py (the audit learns the record's shape), or plugin/cli/lifecycle_core/migrate.py (the record lands somewhere else), or neither
+done-criterion: a repo that has retired a carrier under --retire-source reads CLEAN on 'lifecycle audit' for that reason alone, OR the finding is declared correct and the record moves to whatever home does not trip it - and the entry records WHICH, with the run that shows it. MUST-NOT-MOVE, and it is the whole risk: laws_scope_audit keeps firing on genuinely mis-homed prose. The forbidden repair is shaping the deletion record's text to slip past the checker - writing for the instrument, which the build lane explicitly declined to do and which would leave the record less useful to its actual reader
+evidence: MEASURED by the lc-86 build lane on the real artifact during its S5 verification, 2026-09-13, and reported rather than dodged: the lane states it did not shape the record to avoid the checker because that would be writing for the instrument. NOT RE-RUN AT THIS DESK - relayed from the lane's report, and the reproduction is cheap once lc-86's flag is reachable: retire a fixture carrier, then run 'lifecycle audit' in that repo
+blocked-by: decision which of the three readings is right: (1) the audit should know a deletion record's shape and pass it, (2) the record belongs in a home the audit does not scan, or (3) the finding is correct and a retired repo simply carries it, in which case the entry closes as DROPPED with that reason
