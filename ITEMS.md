@@ -43,15 +43,6 @@ amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12, verbatim from BACKL
 amend-reason: 2026-09-12 the earlier amendment named lc-77 for the OBSERVATIONS-kind entry, which was a forward guess made before the ids existed; the entry is lc-77's neighbour lc-78. Corrected here rather than left standing, and the ordering between the two entries stated while correcting it.
 amended-evidence: 2026-09-12 SOURCE BODY INLINED 2026-09-12, verbatim from BACKLOG.md:77-87 before that file's deletion: 'READY 2026-08-26 — dev-notes/ needs its OBSERVATIONS carrier. Design, decided: copy dispatch-guards four-slot form (incident + basis, class, pre-formulated rule text, consumer + drain seam) into dev-notes/lifecycle-OBSERVATIONS.md, same-class entries merging into the existing entry rather than a sibling; provenance dev-notes/OBSERVATIONS-FORM.md in that repo. Write-set: dev-notes/lifecycle-OBSERVATIONS.md. Verifier: the file exists and its head states the four slots. Done-criterion: the first instrument lesson from wave 2 lands in it rather than in a commit message.' RE-CHECKED at f09e32d and STILL OPEN: dev-notes/ holds exactly one file, README.md, 3 lines, so no OBSERVATIONS carrier exists here. The slots above are filled FROM that decided design rather than newly decided, which is why this amendment adds no judgment of its own. SEE ALSO lc-78, booked in this same pass, which asks whether this carrier class becomes a registered lifecycle kind; if it does, the four-slot free-prose form this entry would build is exactly what gets redesigned into positional slots rather than carried over, so the two entries are ordered: build this one only after lc-78's shape call, or build it knowing the shape is provisional. Legacy pointer, for the record: BACKLOG.md:77-87.
 
-## lc-12
-grade: READY
-requirement: Nothing checks that a lane carries its decision table — §3.3 names four parsed parts and LANE_PARTS detects three — record: wave2 L2a brief grounding, 2026-08-26
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/lanes.py,test/test_lanes.py
-done-criterion: a lane file missing its decision table is a FINDING with its own refusal row, red-proven on a lane carrying Decides:/Trigger:/Ends: and no table
-evidence: lanes.py:59 LANE_PARTS = ('Decides:', 'Trigger:', 'Ends:'); design §3.3 line 249 'four parsed parts' incl. 'a decision table -> workflows'. The table has no label prefix, so the startswith scan that finds the other three cannot find it.
-blocked-by: NONE
-
 ## lc-16
 grade: READY
 requirement: No verb reads the carrier BY goal. '--goal' occurs exactly once in the whole parser (cli.py:279, on 'item add'); 'item ready' takes only [--head] [ident] and 'item check'/'item ratio' take no arguments. So a repo can declare a closed goal set and set a goal per item, then never query by it — which breaks the consumer story for any carrier shared by more than one audience. Reported by the dotfiles desk, whose fire-rate review must read corpus entries out of a carrier that also holds machine and deploy work
