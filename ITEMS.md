@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 116
+added: 117
 compacted: 0
 
 ## lc-3
@@ -752,4 +752,13 @@ goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_waves.py
 done-criterion: A grouped mode (flag on item waves): assign each path-valued item to the group of its slot's most-frequent entry (frequency computed carrier-wide over the same population); print groups as lanes AND print every cross-group shared file as a SERIALIZE warning naming the file and both groups — the join's honesty kept as warnings, never dropped. DONE when: over this carrier the grouped run yields more than one group with every cross-group shared file named; tests: two items sharing only a low-frequency file, distinct dominant files, land in different groups WITH the warning naming that file; a mutation dropping the warning is an assertion FAILURE; the default (ungrouped) output is byte-identical to before the flag
 evidence: VERIFIED AT THIS DESK: the one-lane live run reproduced at this desk before the lane reported it, and the lane's component-count counterfactuals (1 shipped / 3 no-directories / 4 no-test / 5 neither / 1 no-hot-files) are in its part-2 report with the method stated; the desk did not re-run the counterfactuals — marked lane-measured
+blocked-by: NONE
+
+## lc-125
+grade: READY
+requirement: The write-set grammar accepts VENUES beside paths (--write-set help: comma-separated paths/venues) but item waves' four-bucket taxonomy has no venue key, so a legal venue entry (decision:who-seeds-greenfield-carriers in lc-23, lc-32) is bucketed as prose — a legal value wearing a defect's label. And directory-ness is read from a trailing slash only, a slot convention stated nowhere a slot author sees it — record: lc-123 closing report part 3/4, gaps (c)2 and (c)3, 2026-09-13
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_waves.py
+done-criterion: Fifth bucket 'venue' keyed on the <word>:<rest> shape, with its own count and explicit zero; lc-23/lc-32's entries route there in a live run and the prose bucket no longer holds them; the --write-set help text gains the trailing-slash directory convention sentence so the convention lives where slot authors read; tests for the venue routing and a mutation red for the bucket
+evidence: VERIFIED AT THIS DESK: the live waves run at this desk shows lc-23 and lc-32 in the prose bucket with the decision: entries quoted; the grammar's paths/venues wording read in item add --help this session
 blocked-by: NONE
