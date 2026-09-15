@@ -171,17 +171,6 @@ done-criterion: _resolve_refs resolves every accepted ref to its full 40-hex sha
 evidence: verbs.py:1584-1598 read at the artifact by the desk: the docstring states WRITTEN AS GIVEN, not resolved to a full sha, so this is the built design and not a slip. The predicate git rev-parse --verify <ref>^{commit} accepts HEAD, which is what makes the label writable
 blocked-by: NONE
 
-## lc-51
-grade: READY
-requirement: tools/prove-rows.py anchors its mutation arrangements by SUBSTRING, so an unrelated verb spelling the same line at a deeper indent silently retires another row's proof; and the two rows added for lc-44/lc-49 have no mutation arrangement at all, record: opus-lc44-48-49 report gaps 3 and 4, 2026-08-27
-goal: every-refusal-red-first
-write-set: tools/prove-rows.py,test/test_refusals.py
-done-criterion: Anchors match LINE-EXACT rather than by substring, and blocker_unstorable plus closed_ref_unresolvable each gain a recorded mutation arrangement. Red-first for the anchor half is already in hand and must be reproduced: a copy of move_uncommitted's anchor line indented one level deeper elsewhere in the file makes prove-rows report that row's source as moved. Must-not-move: prove-rows stays exit 0 over the existing arrangements, and the honest COULD NOT VERIFY answer is preserved, since that is what made this catchable
-evidence: measured live by the lane during its build: prove-rows went exit 0 to EXIT 3 with move_uncommitted and blocked_in_done_home both reporting 'the source moved under this arrangement'. move_uncommitted's anchor is `    if r.returncode != 0:` at 4-space indent, a substring of the same line at any deeper indent. The lane avoided both rather than repairing prove-rows (outside its write set) and spelled its own git check `if probe.returncode == 0: continue` with a comment saying why. Desk re-ran prove-rows at 8a5d664: exit 0
-blocked-by: NONE
-amend-reason: 2026-09-15 re-grounding pass: one of the three named rows has been proven since booking; corrected so the criterion names the rows that are actually missing rather than a satisfied one
-amended-done-criterion: 2026-09-15 CORRECTED 2026-09-15 by a re-grounding pass, verified at the desk against tools/prove-rows.py: the criterion named blocked_in_done_home among the rows lacking a recorded arrangement, and it HAS one now (1 occurrence). The two that genuinely still lack one are blocker_unstorable (0) and closed_ref_unresolvable (0). Done when those two carry a recorded arrangement proving each red-first, with the pair assertion the tool already demands: the named row goes dark and nothing proving another refusal goes dark with it.
-
 ## lc-52
 grade: READY
 requirement: every carrier verb that commits composes its own message and writes NO Co-Authored-By trailer, so an agent-authored carrier commit is unclaimable by trailer and the operator corpus's AI-attribution rule is unmet on this path, record: opus-lc44-48-49 report gap 5, 2026-08-27
