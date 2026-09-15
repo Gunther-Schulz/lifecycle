@@ -14,7 +14,9 @@ One source, two consumers.
 """
 
 import importlib.util
+import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -292,6 +294,179 @@ class TheRouteComparisonFailsInBothDirections(unittest.TestCase):
         self.assertIn("FINDING [route_set_unnamed]", out)
         self.assertIn("FINDING [route_set_unwatched]", out)
         self.assertNotIn("routes: CLEAN", out)
+
+
+class AContaminatedControlIsCouldNotVerify(unittest.TestCase):
+    """lc-143: a pair that separates nothing is the THIRD answer, not a FAIL.
+
+    THE DEFECT THIS GRADES is the emit-site coverage detector being disabled
+    by the very defect it detects. `emit_site_unregistered`'s control runs the
+    coverage check over a copy of the LIVE source, so a real unregistered emit
+    anywhere in the package contaminates the control too: both arms exit
+    FINDING, and the roster rendered that as `FAIL … the CONTROL also exited
+    FINDING`. The plant was correct, the check was correct, and the row was
+    reported broken — a could-not-verify wearing a failure's costume, which
+    law 1 forbids. The row cannot PROVE itself precisely when a real instance
+    exists, and the honest answer is that it could not look.
+
+    THE ARMS ARE DRIVEN THROUGH `cmd_test`, over a SWAPPED roster holding one
+    constructed row — the pattern the route arms above already use. The two
+    package-level checks are stubbed for the call: they read the LIVE source
+    and the LIVE registry, so under a swapped roster they answer about a
+    roster that does not exist, and their verdict would drown the row's.
+
+    THE PAIR THAT MAKES THIS DISCRIMINATE, not a single assertion: a
+    contaminated control answers COULD NOT VERIFY, and a genuinely broken
+    coverage check — the plant that fails to fire, which is exactly what
+    `prove-rows`' recorded mutation produces — still answers FAIL. Without the
+    second half, a change that answered COULD NOT VERIFY to everything would
+    score identically.
+    """
+
+    #: The verdict tokens a row's own entry can open with. A closed list,
+    #: spelled here rather than imported: reading it off `roster` would move
+    #: the expectation with the mutant.
+    _VERDICTS = ("PASS ", "FAIL ", "SKIP ", "ERROR", "COULD NOT VERIFY ")
+
+    def _core_copy(self, *, plant=False, live_defect=False):
+        """A copy of the package, optionally carrying each kind of emit.
+
+        `plant` is the row's own planted unregistered emit — the input under
+        test. `live_defect` is a REAL unregistered emit of the kind the check
+        exists to catch, in a different module: that is the contamination, and
+        it is manufactured here rather than taken from the working tree, which
+        is clean and must stay clean. The item's own scope note says the same:
+        this is about the instrument whenever a NEXT instance appears.
+        """
+        d = Path(tempfile.mkdtemp(prefix="lc143-cov-"))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        for f in (REPO / "plugin" / "cli" / "lifecycle_core").glob("*.py"):
+            shutil.copy2(f, d / f.name)
+        if plant:
+            t = d / "exits.py"
+            t.write_text(t.read_text(encoding="utf-8")
+                         + '\n\ndef _planted(out):\n'
+                           '    out("FINDING [not_a_registered_row] planted")\n',
+                         encoding="utf-8")
+        if live_defect:
+            t = d / "ledger.py"
+            t.write_text(t.read_text(encoding="utf-8")
+                         + '\n\ndef _live_defect(out):\n'
+                           '    out("FINDING [a_real_unregistered_emit] live")\n',
+                         encoding="utf-8")
+        return d
+
+    def _coverage(self, **kw):
+        buf = []
+        code = roster.check_coverage(buf.append, root=self._core_copy(**kw))
+        return refusals.Fired(code, "\n".join(buf))
+
+    def _grade(self, fired, control):
+        """`cmd_test` over ONE constructed row: its return code and its entry.
+
+        The entry is ISOLATED and asserted to exist exactly once — zero would
+        mean the arrangement never reached the row, two would mean no
+        assertion below can say which one it graded.
+        """
+        ident = "emit_site_unregistered"
+        row = refusals.Row(
+            ident=ident,
+            refusal="a constructed row standing in for the coverage check's "
+                    "own — this arm grades the PAIR's verdict, not a refusal",
+            firing_input="a planted unregistered emit in a package copy",
+            expect=exits.FINDING,
+            fire=lambda: fired,
+            control=lambda: control,
+        )
+        buf = []
+        with mock.patch.object(refusals, "ROWS", [row]), \
+                mock.patch.object(roster, "check_coverage",
+                                  lambda out, root=None: exits.CLEAN), \
+                mock.patch.object(roster, "check_routes",
+                                  lambda out: exits.CLEAN):
+            code = roster.cmd_test(buf.append)
+        lines = buf
+        heads = [i for i, l in enumerate(lines)
+                 if l.startswith(self._VERDICTS) and ident in l.split()]
+        self.assertEqual(
+            len(heads), 1,
+            f"the arrangement reached the row's verdict line {len(heads)} "
+            "time(s), not once, so no assertion below can say what it "
+            "graded:\n" + "\n".join(lines))
+        i = heads[0]
+        j = i + 1
+        while j < len(lines) and lines[j].startswith("      "):
+            j += 1
+        return code, "\n".join(lines[i:j]), "\n".join(lines)
+
+    def test_a_control_contaminated_by_a_live_defect_could_not_verify(self):
+        """THE DEFECT. Both arms fire because the package already carries a
+        real unregistered emit; the plant is fine and the pair is blind."""
+        fired = self._coverage(plant=True, live_defect=True)
+        control = self._coverage(live_defect=True)
+        self.assertEqual(fired.code, exits.FINDING, fired.output)
+        self.assertEqual(
+            control.code, exits.FINDING,
+            "the arrangement did not contaminate the control, so this arm "
+            f"cannot see the condition it certifies:\n{control.output}")
+
+        code, entry, whole = self._grade(fired, control)
+        self.assertTrue(
+            entry.startswith("COULD NOT VERIFY "),
+            "a pair whose control fired for a reason outside the input under "
+            "test was rendered as an ordinary verdict — the row is UNPROVEN "
+            f"in either direction and the entry does not say so:\n{entry}")
+        self.assertEqual(
+            code, exits.COULD_NOT_VERIFY,
+            "the roster folded a could-not-verify into one of its "
+            f"neighbours, which is the whole reason code 3 exists:\n{whole}")
+        self.assertIn(
+            "a_real_unregistered_emit", entry,
+            "the entry says the control also fired but never names WHAT "
+            f"contaminated it, so the reader cannot act on it:\n{entry}")
+
+    def test_a_coverage_check_that_stopped_firing_still_fails(self):
+        """MUST NOT MOVE, and the half that keeps the third answer honest.
+
+        This is the state `prove-rows`' recorded mutation produces — `if not
+        uncovered:` folded to `if True:`, the check reporting CLEAN over a
+        planted emit. A genuine breakage must not hide behind COULD NOT
+        VERIFY.
+        """
+        fired = self._coverage()                  # the check saw nothing
+        control = self._coverage()
+        self.assertEqual(fired.code, exits.CLEAN, fired.output)
+        code, entry, whole = self._grade(fired, control)
+        self.assertTrue(
+            entry.startswith("FAIL "),
+            "a plant that did not fire is a broken check, not an instrument "
+            f"that could not look:\n{entry}")
+        self.assertEqual(code, exits.FINDING, whole)
+
+    def test_a_breakage_and_a_contamination_together_still_fail(self):
+        """MUST NOT MOVE: the third answer never swallows a real breakage.
+
+        Both conditions at once — the plant silent AND the control fired.
+        FAIL is the answer that survives, because the row's own machinery is
+        demonstrably wrong and that is a verdict, not an absence of one.
+        """
+        fired = refusals.Fired(exits.CLEAN, "the check reported nothing")
+        control = self._coverage(live_defect=True)
+        self.assertEqual(control.code, exits.FINDING, control.output)
+        code, entry, whole = self._grade(fired, control)
+        self.assertTrue(entry.startswith("FAIL "), entry)
+        self.assertEqual(code, exits.FINDING, whole)
+
+    def test_an_uncontaminated_pair_still_passes(self):
+        """MUST NOT MOVE: with no live defect present the row proves itself
+        exactly as before — plant FINDING, control CLEAN, verdict PASS."""
+        fired = self._coverage(plant=True)
+        control = self._coverage()
+        self.assertEqual(fired.code, exits.FINDING, fired.output)
+        self.assertEqual(control.code, exits.CLEAN, control.output)
+        code, entry, whole = self._grade(fired, control)
+        self.assertTrue(entry.startswith("PASS "), entry)
+        self.assertEqual(code, exits.CLEAN, whole)
 
 
 if __name__ == "__main__":

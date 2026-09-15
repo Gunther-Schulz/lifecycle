@@ -12,6 +12,20 @@ exit something else, and a FINDING row must name itself in its own output.
 That is the pair, and without it "something happened" passes for "the right
 thing happened".
 
+A ROW HAS THE SAME THREE ANSWERS THE TOOL HAS (law 1, lc-143). A plant that
+answers wrongly is a FAIL: the row's machinery was read and found broken. A
+control that exits what the plant was supposed to prove is something else
+entirely — the arms did not separate, so the row is unproven in EITHER
+direction and the honest verdict is COULD NOT VERIFY. The two were one
+verdict until lc-143, and the case that exposed it is this module's own
+coverage check: its control scans a copy of the LIVE source, so a real
+unregistered emit anywhere in the package contaminates the control, and the
+row reported FAIL exactly when a genuine instance existed — the detector
+disabled by the defect it detects, rendered as a failure of the detector.
+Precedence is stated rather than left to fall out: a broken plant FAILS even
+when the control is also contaminated, because a demonstrated wrong answer is
+a verdict and must never hide behind an absence of one.
+
 THE COVERAGE CHECK IS THE SECOND HALF, and its limit is printed in its own
 output rather than left for a reader to discover. It walks the SOURCE for
 every site that emits a FINDING and asks whether that row is registered. It
@@ -285,8 +299,9 @@ def cmd_test(out, list_only: bool = False) -> int:
         "Each row runs its PLANT and its CONTROL; the pair is the proof.")
     out("")
 
-    passed = failed = skipped = raised = 0
+    passed = failed = skipped = raised = unverified = 0
     failures = []
+    unproven = []
     for row in refusals.ROWS:
         skip = getattr(row, "skip_reason", None)
         if skip:
@@ -304,26 +319,47 @@ def cmd_test(out, list_only: bool = False) -> int:
                 "\n", "\n      "))
             continue
 
-        problems = []
+        # BROKEN is what the PLANT answered; BLIND is what the CONTROL did.
+        # Kept apart because they are different answers: the first is a
+        # verdict about the row, the second is the absence of one.
+        broken = []
+        blind = []
         if fired.code != row.expect:
-            problems.append(f"plant exited {exits.word(fired.code)}, expected "
-                            f"{exits.word(row.expect)}")
+            broken.append(f"plant exited {exits.word(fired.code)}, expected "
+                          f"{exits.word(row.expect)}")
         if control.code == row.expect:
-            problems.append(f"the CONTROL also exited "
-                            f"{exits.word(row.expect)} — the input under test "
-                            "is not what produced it")
+            blind.append(f"the CONTROL also exited "
+                         f"{exits.word(row.expect)} — the input under test "
+                         "is not what produced it, so this pair separates "
+                         "nothing and the row is UNPROVEN in either "
+                         "direction")
         if row.expect == exits.FINDING and \
                 f"[{row.expected_finding_row}]" not in fired.output:
-            problems.append("the plant fired, but nothing in its output names "
-                            f"row [{row.expected_finding_row}]")
-        if problems:
+            broken.append("the plant fired, but nothing in its output names "
+                          f"row [{row.expected_finding_row}]")
+        if broken:
             failed += 1
             failures.append(row.ident)
             out(f"FAIL  {row.ident:<34} {row.stage}")
-            for p in problems:
+            for p in broken + blind:
                 out(f"      {p}")
             out(f"      plant output:\n      "
                 + fired.output.strip().replace("\n", "\n      "))
+        elif blind:
+            # The plant answered exactly as the row names it should. What
+            # went wrong is outside the input under test, so the CONTROL's
+            # output is the evidence here — it is what carries the name of
+            # whatever contaminated it, and without that name the reader is
+            # told the pair is blind and not what blinded it.
+            unverified += 1
+            unproven.append(row.ident)
+            out(f"COULD NOT VERIFY  {row.ident:<34} {row.stage}")
+            for p in blind:
+                out(f"      {p}")
+            out("      The plant answered exactly what this row names, so "
+                "this is not a failure of the row — the control could not "
+                "serve as one. Control output:")
+            out("      " + control.output.strip().replace("\n", "\n      "))
         else:
             passed += 1
             out(f"PASS  {row.ident:<34} plant "
@@ -343,17 +379,27 @@ def cmd_test(out, list_only: bool = False) -> int:
 
     out("")
     out(f"rows: {len(refusals.ROWS)}   {passed} passed, {failed} failed, "
-        f"{raised} raised, {skipped} skipped")
+        f"{unverified} could not verify, {raised} raised, {skipped} skipped")
     out(f"prose-rest rows (not executed, labelled): "
         f"{len(refusals.PROSE_REST)}")
     if skipped:
         out("EVERY SKIP IS A CHECK THAT DID NOT RUN, and it is listed above "
             "with its reason. A skip is never part of a green line.")
+    if unverified:
+        out("A ROW THAT COULD NOT BE VERIFIED IS NOT A ROW THAT FAILED, and "
+            "it is not part of a green line either. Its arms did not "
+            "separate, so nothing here says whether its refusal works; the "
+            "repair is to the ARRANGEMENT — give the control a source the "
+            "contaminating defect cannot reach — never to the row's verdict.")
     if raised:
+        code = exits.worst([code, exits.COULD_NOT_VERIFY])
+    if unverified:
         code = exits.worst([code, exits.COULD_NOT_VERIFY])
     if failed:
         code = exits.worst([code, exits.FINDING])
     if failures:
         out(f"FAILED/ERRORED: {', '.join(failures)}")
+    if unproven:
+        out(f"COULD NOT VERIFY: {', '.join(unproven)}")
     out(f"lifecycle --test: {exits.word(code)}")
     return code
