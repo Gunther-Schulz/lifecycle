@@ -687,15 +687,6 @@ done-criterion: a slot line after a wrapped value is credited (red case: the df-
 evidence: dotfiles ITEMS-DONE.md df-196 block (live reproduction), item check output 2026-09-13; the HEAD-symbol close and its hand repair 40f7d3a
 blocked-by: NONE
 
-## lc-124
-grade: READY
-requirement: item waves' specced join is truthful and unusable as a parallel plan over this carrier: the live run returns ONE lane over 51 path-valued items (c9c9182), and the lane's counterfactual killed the coarse-slot explanation — directory entries ignored still gives 3 components; six hot files (verbs.py in 15 slots, migrate.py 12, cli.py/items.py/test_items.py 9 each) chain the closure into one blob. A usable parallel set needs a PARTITION beside the honest join — record: lc-123 closing report part 2/4, gap (c)1, 2026-09-13
-goal: lean-machinery-strict-checks
-write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_waves.py
-done-criterion: A grouped mode (flag on item waves): assign each path-valued item to the group of its slot's most-frequent entry (frequency computed carrier-wide over the same population); print groups as lanes AND print every cross-group shared file as a SERIALIZE warning naming the file and both groups — the join's honesty kept as warnings, never dropped. DONE when: over this carrier the grouped run yields more than one group with every cross-group shared file named; tests: two items sharing only a low-frequency file, distinct dominant files, land in different groups WITH the warning naming that file; a mutation dropping the warning is an assertion FAILURE; the default (ungrouped) output is byte-identical to before the flag
-evidence: VERIFIED AT THIS DESK: the one-lane live run reproduced at this desk before the lane reported it, and the lane's component-count counterfactuals (1 shipped / 3 no-directories / 4 no-test / 5 neither / 1 no-hot-files) are in its part-2 report with the method stated; the desk did not re-run the counterfactuals — marked lane-measured
-blocked-by: NONE
-
 ## lc-125
 grade: READY
 requirement: The write-set grammar accepts VENUES beside paths (--write-set help: comma-separated paths/venues) but item waves' four-bucket taxonomy has no venue key, so a legal venue entry (decision:who-seeds-greenfield-carriers in lc-23, lc-32) is bucketed as prose — a legal value wearing a defect's label. And directory-ness is read from a trailing slash only, a slot convention stated nowhere a slot author sees it — record: lc-123 closing report part 3/4, gaps (c)2 and (c)3, 2026-09-13
