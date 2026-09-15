@@ -208,12 +208,15 @@ class ThePinIsTheVintageBlob(unittest.TestCase):
         """
         d = build()
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        # THE SECOND ITEM IS ADMITTED FIRST, and the reason is a measured
-        # property rather than fixture taste: a compacted id leaves BOTH
-        # homes, so the allocator — which returns the LOWEST unused n — mints
-        # `xx-1` again afterwards (`migrate.py`'s own note says so). Adding
-        # after the compaction would have this arm close a body that is not
-        # the one it thinks it is.
+        # THE SECOND ITEM IS ADMITTED FIRST, and the reason WAS a measured
+        # property rather than fixture taste: a compacted id left BOTH homes,
+        # so the allocator — which returns the LOWEST unused n — minted `xx-1`
+        # again afterwards, and adding after the compaction would have had
+        # this arm close a body that is not the one it thinks it is. lc-148
+        # closed that hole (the compaction record is now a home the allocator
+        # reads, and `ACompactedIdIsNeverReIssued` below is where that is
+        # asserted); the ordering stays because this arm is about the PIN and
+        # should not re-derive its subject from a behaviour it does not test.
         code, out = run_cli(d, *ADD)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("xx-2", out)
@@ -387,6 +390,164 @@ class TheDropRulingIsUntouched(unittest.TestCase):
             (d / "ITEMS-DONE.md").read_text(encoding="utf-8"), "xx-1")[1]
         self.assertNotIn(f"{items.CLOSED_REASON}:", body)
         self.assertNotIn(f"{items.CLOSED_REF}:", body)
+
+
+class ACompactedIdIsNeverReIssued(unittest.TestCase):
+    """lc-148, at the altitude the defect lives at.
+
+    THE WALK, NOT A UNIT CALL. `next_ident` was never wrong about the homes it
+    was GIVEN, so a unit arm on it passed throughout; what stopped being true
+    was its stated premise — every home is read — the day a verb started
+    taking bodies out of every home. The defect is only visible where the
+    caller assembles the homes, which is `item add`.
+
+    MEASURED BEFORE THE FIX, in this fixture: close xx-1, compact xx-1, then
+    `item add` printed `added xx-1 [READY] → ITEMS.md` while the ledger
+    already carried the compaction record, and `item check` reported CLEAN
+    throughout — the id back in circulation with nothing failing.
+    """
+
+    def _closed_and_compacted(self) -> Path:
+        d = build()
+        code, out = run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        self.assertEqual(code, exits.CLEAN, out)
+        code, out = run_cli(d, "item", "compact", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn(retire.compaction_question("xx-1"),
+                      (d / "LEDGER.md").read_text(encoding="utf-8"),
+                      "the fixture never recorded a compaction, so this arm "
+                      "could not have seen the defect")
+        return d
+
+    def test_item_add_after_a_compaction_does_not_re_issue_the_id(self):
+        d = self._closed_and_compacted()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = run_cli(d, *ADD)
+        self.assertEqual(code, exits.CLEAN, out)
+        # THE CARRIER, never the message: "added xx-2" is a summary, and a run
+        # that printed it while writing a block under another id would satisfy
+        # a text match.
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual([it.ident for it in parsed.items], ["xx-2"])
+        # And the record the allocator reads is the SAME line recovery reads —
+        # untouched by having been read.
+        self.assertIn(retire.compaction_question("xx-1"),
+                      (d / "LEDGER.md").read_text(encoding="utf-8"))
+
+    def test_the_SUPERSEDE_join_allocates_past_the_compacted_id_too(self):
+        """The allocator's second door. An arm on `new` alone certifies one
+        of the two call sites, and the other one writes a body just the
+        same."""
+        d = self._closed_and_compacted()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = run_cli(d, *ADD)
+        self.assertEqual(code, exits.CLEAN, out)
+        code, out = run_cli(d, *(ADD + ("--join", "supersede xx-2",
+                                        "--reason", REASON)))
+        self.assertEqual(code, exits.CLEAN, out)
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual([it.ident for it in parsed.items], ["xx-3"])
+        self.assertIn("## xx-2",
+                      (d / "ITEMS-DONE.md").read_text(encoding="utf-8"))
+
+    def test_an_ORDINARY_close_keeps_the_id_out_of_circulation_as_before(self):
+        """MUST-NOT-MOVE: ids are immutable across moves, which is the
+        property the allocator's docstring was always about."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        self.assertEqual(code, exits.CLEAN, out)
+        code, out = run_cli(d, *ADD)
+        self.assertEqual(code, exits.CLEAN, out)
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual([it.ident for it in parsed.items], ["xx-2"])
+
+    def test_a_decision_line_that_is_NOT_a_compaction_consumes_no_id(self):
+        """The negative half of the pair, and the one that fails if the
+        recogniser matches on an id appearing anywhere in a decision rather
+        than on the compaction sentence it was written with."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        with open(d / "LEDGER.md", "a", encoding="utf-8") as fh:
+            fh.write("decision: whether xx-2 belongs in this wave → yes\n")
+        code, out = run_cli(d, *ADD)
+        self.assertEqual(code, exits.CLEAN, out)
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual([it.ident for it in parsed.items], ["xx-1", "xx-2"])
+
+    def test_a_repo_with_NO_LEDGER_AT_ALL_still_allocates(self):
+        """MUST-NOT-MOVE, and the one a reuse test alone would never catch: a
+        change that made every allocation consult a missing file would pass
+        the arms above while breaking every fresh repo."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "LEDGER.md").unlink()
+        self.assertFalse((d / "LEDGER.md").exists())
+        code, out = run_cli(d, *ADD)
+        self.assertEqual(code, exits.CLEAN, out)
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual([it.ident for it in parsed.items], ["xx-1", "xx-2"])
+
+    def test_a_ledger_STAMPED_ABOVE_THE_FLOOR_is_could_not_verify(self):
+        """The third answer, and the difference between the two absences: an
+        absent ledger proves no compaction was recorded (the verb creates the
+        file), while a ledger this build refuses to parse is a home that
+        EXISTS and was not read. Allocating through it would mint an id whose
+        unusedness nothing established."""
+        from lifecycle_core import ledger as ledger_mod
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "LEDGER.md").write_text(
+            f"schema: {ledger_mod.SCHEMA_FLOOR + 1}\n", encoding="utf-8")
+        before = (d / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = run_cli(d, *ADD)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("COULD NOT VERIFY", out)
+        # NOTHING WAS WRITTEN: a refusal that had already appended the block
+        # would print the same line.
+        self.assertEqual((d / "ITEMS.md").read_text(encoding="utf-8"), before)
+
+
+class TheCompactionRecordReadsBackAsAHome(unittest.TestCase):
+    """One spelling, both directions. `compacted_ident` is
+    `compaction_question` read backwards, and the pair is what keeps the
+    allocator seeing what the verb wrote."""
+
+    def test_the_recogniser_reads_back_exactly_what_the_writer_wrote(self):
+        self.assertEqual(
+            retire.compacted_ident(retire.compaction_question("xx-9")), "xx-9")
+
+    def test_a_question_that_merely_STARTS_the_same_way_is_not_one(self):
+        """Both ends anchored. A head-only match is a prefix test wearing an
+        equality's costume, and the id it yields is whatever follows."""
+        longer = retire.compaction_question("xx-9") + " eventually"
+        self.assertIsNone(retire.compacted_ident(longer))
+        self.assertIsNone(retire.compacted_ident("whether xx-9 is compacted"))
+        self.assertIsNone(retire.compacted_ident(""))
+
+    def test_the_home_is_built_through_the_LEDGERS_OWN_PARSER(self):
+        """Read back out of `ledger.parse`, never out of a second reader over
+        the same text: two parsers for one line diverge silently, and the
+        divergence here puts compacted ids back into circulation."""
+        from lifecycle_core import ledger as ledger_mod
+        text = (f"schema: {ledger_mod.SCHEMA_FLOOR}\n"
+                + ledger_mod.render("decision",
+                                    {"question": retire.compaction_question("xx-4"),
+                                     "answer": "ITEMS-DONE.md at blob "
+                                               + "0" * 40}) + "\n"
+                + ledger_mod.render("dropped",
+                                    {"id": "xx-7", "reason": "overtaken"})
+                + "\n")
+        parsed = ledger_mod.parse(text)
+        self.assertEqual(parsed.unreadable, [], "the fixture ledger does not "
+                                                "parse, so this arm grades "
+                                                "nothing")
+        home = retire.compacted_home(parsed)
+        self.assertEqual([it.ident for it in home.items], ["xx-4"])
+
+    def test_no_ledger_is_an_EMPTY_home_rather_than_a_crash(self):
+        home = retire.compacted_home(None)
+        self.assertEqual(home.items, [])
 
 
 if __name__ == "__main__":

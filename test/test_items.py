@@ -1426,3 +1426,57 @@ class CloseRefusesADeclaredCarriedPointer(unittest.TestCase):
             "the same line without the DECLARATION still matched, so what "
             "the positive half found was not the marker — the pair differs "
             "in the marker's spelling and in nothing else")
+
+
+class TheAllocatorsHomesAreWhateverItIsGIVEN(unittest.TestCase):
+    """lc-148's contract, pinned where the allocator lives.
+
+    HONEST ABOUT ITS OWN REACH: this arm passes against the build that had the
+    defect, and that is not a reason to leave it out. `next_ident` was never
+    wrong about the homes it was given — it reads every `Parsed` it receives
+    and always did — so what is pinned here is the SHAPE the callers now
+    depend on: a third home, carried in the same variadic, counts exactly like
+    the carriers. The discriminating reds for lc-148 are the end-to-end arms
+    in `test_retire.py`, where the caller assembles the homes and where the id
+    actually came back into circulation.
+    """
+
+    def _home(self, *idents) -> items.Parsed:
+        p = items.Parsed()
+        for n, ident in enumerate(idents, start=1):
+            p.items.append(items.Item(ident=ident, slots={}, line=n))
+        return p
+
+    def test_an_id_only_a_THIRD_home_holds_is_not_re_issued(self):
+        live = self._home("xx-2")
+        done = self._home()
+        compacted = self._home("xx-1")
+        ident, why = items.next_ident("xx", live, done, compacted)
+        self.assertIsNone(why)
+        self.assertEqual(ident, "xx-3")
+
+    def test_the_SAME_call_without_that_home_mints_the_freed_id(self):
+        """The pair. Without it the arm above passes on an allocator that
+        returns `xx-3` for its own reasons, and the third home would be
+        proving nothing."""
+        live = self._home("xx-2")
+        done = self._home()
+        ident, why = items.next_ident("xx", live, done)
+        self.assertIsNone(why)
+        self.assertEqual(ident, "xx-1")
+
+    def test_an_EMPTY_third_home_changes_no_allocation(self):
+        """MUST-NOT-MOVE for every repo that has never compacted: an empty
+        home is not a missing one, and it must not shift a single id."""
+        live = self._home("xx-1")
+        done = self._home("xx-3")
+        self.assertEqual(items.next_ident("xx", live, done)[0],
+                         items.next_ident("xx", live, done, self._home())[0])
+
+    def test_no_id_prefix_still_REFUSES_whatever_homes_it_is_given(self):
+        """MUST-NOT-MOVE: the refusal is about the DECLARATION and a third
+        home does not answer it."""
+        ident, why = items.next_ident("", self._home(), self._home(),
+                                      self._home("xx-1"))
+        self.assertIsNone(ident)
+        self.assertIn("id-prefix", why)

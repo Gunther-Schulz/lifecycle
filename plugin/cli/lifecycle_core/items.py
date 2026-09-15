@@ -807,10 +807,21 @@ def slot_value_problem(slot: str, value: str) -> str | None:
 def next_ident(prefix: str, *parsed) -> tuple[str | None, str | None]:
     """`(next-id, why-not)` — the lowest unused `<prefix>-<n>`, n from 1.
 
-    EVERY home is read, live and closed. Ids are immutable across moves, so
-    an id allocator that looked only at the live carrier would re-issue the
-    id of everything ever closed — and the collision would surface as a
-    DUPLICATE finding months later, in a file nobody was editing.
+    EVERY home is read — live, closed, and COMPACTED. Ids are immutable across
+    moves, so an id allocator that looked only at the live carrier would
+    re-issue the id of everything ever closed — and the collision would
+    surface as a DUPLICATE finding months later, in a file nobody was editing.
+
+    THE THIRD HOME IS THE COMPACTION RECORD (lc-148), and it is here because
+    the sentence above was FALSE for one verb: `item compact` takes a body out
+    of both carriers, so after it the ids it folded were in no home this
+    function could see and `item add` re-issued them — measured, with `item
+    check` reporting CLEAN throughout. The record was already written and
+    already parsed; `retire.compacted_home` turns those ledger lines into a
+    home in this shape, and every CALLER passes it beside the other two. A
+    caller that passes only the carriers gets exactly the old behaviour, which
+    is why the omission is invisible and why all three call sites moved in one
+    change rather than one by one.
     """
     if not prefix:
         return None, ("no `id-prefix` in the declaration, so an id cannot be "

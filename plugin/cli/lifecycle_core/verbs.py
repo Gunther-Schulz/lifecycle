@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from . import exits, judgment, lanes, ledger
+from . import exits, judgment, lanes, ledger, retire
 from . import declaration as decl
 from . import grammar
 from . import items as items_mod
@@ -872,7 +872,14 @@ def _do_supersede(args, ctx: Ctx, parsed, slots, out) -> int:
             out(f"COULD NOT VERIFY: {why}")
             return exits.COULD_NOT_VERIFY
         done_parsed, done_why = _load(ctx.done_path)
-        ident, id_why = items_mod.next_ident(ctx.prefix, parsed2, done_parsed)
+        compacted, c_why = retire.compacted_home_at(ctx.ledger_path)
+        if compacted is None:
+            out(f"COULD NOT VERIFY: the compaction record could not be read, "
+                f"so an id cannot be proven unused — a compacted id is in "
+                f"neither carrier. {c_why}")
+            return exits.COULD_NOT_VERIFY
+        ident, id_why = items_mod.next_ident(ctx.prefix, parsed2, done_parsed,
+                                             compacted)
         if ident is None:
             out(f"COULD NOT VERIFY: {id_why}")
             return exits.COULD_NOT_VERIFY
@@ -952,7 +959,14 @@ def _do_new(args, ctx: Ctx, parsed, done_parsed, done_why, slots, source, out) -
             out(f"COULD NOT VERIFY: {why}")
             return exits.COULD_NOT_VERIFY
         done2, _w = _load(ctx.done_path)
-        ident, id_why = items_mod.next_ident(ctx.prefix, parsed2, done2)
+        compacted, c_why = retire.compacted_home_at(ctx.ledger_path)
+        if compacted is None:
+            out(f"COULD NOT VERIFY: the compaction record could not be read, "
+                f"so an id cannot be proven unused — a compacted id is in "
+                f"neither carrier. {c_why}")
+            return exits.COULD_NOT_VERIFY
+        ident, id_why = items_mod.next_ident(ctx.prefix, parsed2, done2,
+                                             compacted)
         if ident is None:
             out(f"COULD NOT VERIFY: {id_why}")
             return exits.COULD_NOT_VERIFY

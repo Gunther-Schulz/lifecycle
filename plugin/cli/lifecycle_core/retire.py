@@ -664,6 +664,93 @@ def compaction_answer(done_rel: str, blob: str, ref: str) -> str:
             f"git cat-file -p {blob}")
 
 
+#: THE QUESTION'S TWO FIXED HALVES, DERIVED FROM THE WRITER rather than
+#: restated beside it. `compacted_ident` below is `compaction_question` read
+#: backwards, and the pair is the ledger's own MOOT-answer shape (`ledger.py`):
+#: one spelling, writer and recogniser adjacent, because two literals for one
+#: sentence diverge SILENTLY — the writer keeps writing a shape the reader has
+#: stopped recognising, and here that reader is the id allocator, so every
+#: compacted id would quietly come back into circulation.
+_Q_HEAD, _Q_TAIL = compaction_question("\x00").split("\x00")
+
+
+def compacted_ident(question: str) -> str | None:
+    """The id a compaction question names, or None for any other question.
+
+    BOTH ENDS ARE ANCHORED. A head-only match is a prefix test wearing an
+    equality's costume: any longer question beginning the same way would
+    satisfy it, and the id it yielded would be whatever followed.
+    """
+    q = (question or "").strip()
+    if not q.startswith(_Q_HEAD) or not q.endswith(_Q_TAIL):
+        return None
+    ident = q[len(_Q_HEAD):len(q) - len(_Q_TAIL)].strip()
+    return ident or None
+
+
+def compacted_home(ledger_parsed) -> "items_mod.Parsed":
+    """The compacted ids as a HOME the allocator reads (lc-148).
+
+    `next_ident`'s reason for correctness is that EVERY home is read, live and
+    closed. Compaction is the first verb that takes a body out of BOTH, so the
+    record it writes is the third home — and this builds that home out of the
+    ledger lines `ledger.parse_line` has already read back, never out of a
+    second parser over the same text.
+
+    A `Parsed` rather than a bare set of ids, because a `Parsed` is what the
+    allocator reads — `migrate.IdentAllocator` builds the same shape for the
+    ids one run has issued. A second notion of "an id in use" would be a
+    second body for a fact the parser already holds.
+
+    `None` — no ledger to read — yields an EMPTY home rather than raising:
+    whether an unreadable ledger is could-not-verify is the CALLER's question,
+    because only the caller knows an absent file from a broken one.
+    """
+    home = items_mod.Parsed()
+    if ledger_parsed is None:
+        return home
+    for ln in getattr(ledger_parsed, "lines", ()):
+        if ln.kind != "decision":
+            continue
+        ident = compacted_ident(ln.slots.get("question", ""))
+        if ident:
+            home.items.append(items_mod.Item(ident=ident, slots={},
+                                             line=ln.lineno))
+    return home
+
+
+def compacted_home_at(ledger_path) -> tuple:
+    """`(home, why-not)` — the same home, read off the ledger FILE.
+
+    ONE BODY FOR TWO CALLERS (`item add`'s two joins and the migration's
+    allocator): the three answers below are a judgement, and a second copy of
+    that judgement in the other caller would be two bodies for one fact — the
+    divergence silent, since both would keep allocating.
+
+    AN ABSENT LEDGER IS AN EMPTY HOME, NOT COULD-NOT-VERIFY, and that is not
+    the usual absent-file shortcut: `item compact` writes its record through
+    `ledger.append`, which CREATES the file when it is missing, so a repo with
+    no ledger has recorded no compaction and no id was ever folded. The
+    absence is evidence, not ignorance — and an allocator that refused on a
+    missing file would pass its own reuse test while breaking every fresh
+    repo. A ledger that IS there and cannot be read is the other answer: the
+    home exists and this run could not see it, which is could-not-verify,
+    exactly what the done home already gets.
+    """
+    from . import ledger as ledger_mod
+
+    if not Path(ledger_path).exists():
+        return compacted_home(None), None
+    parsed, why = ledger_mod.read(Path(ledger_path))
+    if parsed is None:
+        return None, why
+    if parsed.refused:
+        return None, (f"{ledger_path} is stamped above the schema floor, so "
+                      "its body was not parsed and the ids compaction folded "
+                      "out of both carriers could not be read.")
+    return compacted_home(parsed), None
+
+
 def _git(repo: Path, *argv) -> tuple:
     import subprocess
     p = subprocess.run(["git", "-C", str(repo), *argv],

@@ -710,6 +710,56 @@ class MergeMode(unittest.TestCase):
         # The id that would have collided under once-then-increment.
         self.assertEqual(parsed.problems, [])
 
+    def test_a_merge_does_not_re_issue_an_id_THE_RECORD_holds(self):
+        """lc-148 at the THIRD call site, the one a fix for `item add` alone
+        would have left silent.
+
+        The hole above is CONSTRUCTED in the carrier; this one is the hole as
+        compaction really leaves it — the body gone from both homes and the
+        ledger's decision line the only place the id survives. An allocator
+        reading the two carriers finds `-3` free and mints it, which is the
+        same defect `item add` had, through the same function.
+        """
+        from lifecycle_core import ledger as ledger_mod
+        from lifecycle_core import retire as retire_mod
+
+        p = self.prefix()
+        d = build("# old\n\n## Open\n\n"
+                  "- **READY 2026-09-01 — merged one.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS.md").write_text(items_with(f"{p}-1", f"{p}-2"),
+                                    encoding="utf-8")
+        (d / "ITEMS-DONE.md").write_text(f"schema: {items.SCHEMA_FLOOR}\n",
+                                         encoding="utf-8")
+        line = ledger_mod.render(
+            "decision",
+            {"question": retire_mod.compaction_question(f"{p}-3"),
+             "answer": f"ITEMS-DONE.md at blob {'0' * 40}"})
+        with open(d / "LEDGER.md", "a", encoding="utf-8") as fh:
+            fh.write(line + "\n")
+        self.assertIsNotNone(
+            ledger_mod.parse_line(line),
+            "the fixture's record is a line the ledger's own parser cannot "
+            "read, so this arm grades a hole nothing could have seen")
+
+        code, out = migrate_run(d, "--from", "BACKLOG.md",
+                                "--from-done", "NONE", "--merge")
+        # THE RUN ANSWERS `FINDING`, AND NOT FOR THIS ARM'S SUBJECT. Every
+        # repo that has ever compacted has a ledger line, and the migration's
+        # `migration_ledger_nonzero` check counts the ledger's lines AFTER the
+        # run rather than the lines the run routed — so it fires on a ledger
+        # that was already there. That is stated here rather than worked
+        # around, because a fixture chosen to dodge it would have had no
+        # compaction record and this arm would grade nothing. The allocation
+        # is what is under test and it is read off the carrier.
+        self.assertIn("[migration_ledger_nonzero]", out)
+        self.assertNotIn("[migration_unclassified]", out)
+        self.assertEqual(code, exits.FINDING, out)
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual([it.ident for it in parsed.items],
+                         [f"{p}-1", f"{p}-2", f"{p}-4"])
+        self.assertEqual(parsed.problems, [])
+
     def test_a_duplicate_entry_body_refuses_and_writes_nothing(self):
         """RED-FIRST is the roster's job (`merge_duplicate_body` has a plant
         and a control); what is asserted here is the half a row cannot reach —

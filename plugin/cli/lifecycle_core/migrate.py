@@ -112,6 +112,7 @@ from . import declaration as decl
 from . import grammar
 from . import items as items_mod
 from . import ledger as ledger_mod
+from . import retire as retire_mod
 
 #: THE CLASSIFICATION RULES, as data rather than as branches, so the report
 #: can print the rule beside every entry it applied it to. Source: design §4
@@ -795,11 +796,17 @@ class IdentAllocator:
     THE HOLE IS THE DESIGNED FUTURE STATE, not a hypothetical. `next_ident`
     returns the LOWEST unused n, which may sit BELOW the maximum: `compacted`
     is a head field (`items.py`) and the conservation identity SUBTRACTS it,
-    so a compacted id leaves BOTH homes and nothing can see it any more. An
-    allocator that asked once and counted up from the answer walks straight
-    over the hole's successor — used {1,2,4} yields 3, and a three-entry merge
-    writes 3, 4, 5, re-issuing the live 4. The collision surfaces as a
-    DUPLICATE finding months later, in a file nobody was editing.
+    so a compacted id leaves BOTH homes. An allocator that asked once and
+    counted up from the answer walks straight over the hole's successor —
+    used {1,2,4} yields 3, and a three-entry merge writes 3, 4, 5, re-issuing
+    the live 4. The collision surfaces as a DUPLICATE finding months later,
+    in a file nobody was editing.
+
+    THE HOLE ITSELF IS NO LONGER INVISIBLE (lc-148): the caller passes the
+    COMPACTION RECORD as a third home, so a compacted id is seen and never
+    re-issued. What stays true is the sentence above it — asking ONCE and
+    counting up is wrong whatever the homes say, because the holes are in the
+    homes and not in the counter.
 
     So every allocation re-asks, against both real homes AND the ids this run
     has already issued. The issued set is a `Parsed` rather than a bare set of
@@ -2336,8 +2343,22 @@ def run(args, out, ctx) -> int:
                 out(f"        entry: {title_of(e)}")
             return exits.FINDING
 
-    allocate = (IdentAllocator(ctx.prefix, existing_items, existing_done_home)
-                if merge else None)
+    allocate = None
+    if merge:
+        # THE THIRD HOME (lc-148). A merge allocates into an id space the
+        # carriers no longer show in full: a compacted body is in neither of
+        # them, so an allocator reading only these two re-issues every id the
+        # compaction folded — the same defect `item add` had, through the same
+        # function, and a fix that covered only the verb would have left this
+        # one silent.
+        compacted, c_why = retire_mod.compacted_home_at(ctx.ledger_path)
+        if compacted is None:
+            out(f"COULD NOT VERIFY: the compaction record could not be read, "
+                f"so a merged id cannot be proven unused — a compacted id is "
+                f"in neither carrier. Nothing was written. {c_why}")
+            return exits.COULD_NOT_VERIFY
+        allocate = IdentAllocator(ctx.prefix, existing_items,
+                                  existing_done_home, compacted)
     written, n_items = build_items(read.entries, ctx.prefix, src_name,
                                    anchor_blob, allocate=allocate)
 
