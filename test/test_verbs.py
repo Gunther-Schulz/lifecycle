@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
-from lifecycle_core import exits, items, refusals, verbs  # noqa: E402
+from lifecycle_core import exits, items, ledger, refusals, verbs  # noqa: E402
 
 TAIL = " — record: BACKLOG.md:{n}"
 
@@ -954,6 +954,175 @@ class ItemStatusline(unittest.TestCase):
         self.assertIn("FINDING [trigger_broken]", head_out, head_out)
         self.assertIn("xx-1 [READY] goal=mitigate  not schedulable", head_out,
                       head_out)
+
+
+class DecisionBlockerAtClose(unittest.TestCase):
+    """lc-55 — `item ready` and `item close` over ONE ledger state.
+
+    THE DIVERGENCE, reproduced on a private clone at 9839f46: an operator
+    answers the question with `ledger add decision`, `item ready` reports
+    "UNBLOCKED — the ledger ANSWERS this decision" citing the line, and
+    `item close` then reports the same blocker "was never answered", writes
+    `blocker-moot:` onto the moved body and appends a SECOND `decision:` line
+    recording the question moot. One question, two contradictory lines, both
+    live in the carrier and neither marked as superseding the other.
+
+    THE MECHANISM IS ONE READER SHORT, not a disagreeing pair. `_blocker_state`
+    — what `item ready` calls — resolves a `decision` blocker against
+    `ledger.decision_for` (lc-26). `cmd_item_close` read the ledger NOWHERE: it
+    took `_effective_blocker`'s type and treated every `decision` blocker as
+    unanswered by construction, so its verdict could not depend on the ledger
+    state it was writing into. The repo has ONE trigger evaluator for
+    `evidence` blockers (CLAUDE.md, "The router, and the ONE trigger
+    evaluator") and ONE disposition for `<item-id>` ones; the `decision` type
+    had a reader used by exactly one of its two consumers.
+
+    THE ARMS ARE A PAIR AND DIFFER IN THE LEDGER LINE ALONE. Answered: no moot
+    record, no second line. Unanswered: the moot record, unchanged — the
+    must-not-move half, without which a close that had simply stopped
+    recording moot decisions would score identically on the first arm.
+    """
+
+    QUESTION = "which window is canonical"
+    ANSWER = "the 30-day window is canonical"
+
+    def _repo(self, ledger_text=None):
+        """One READY item blocked on QUESTION, and the ledger state under test.
+
+        The BASE slot form, not the amended one: `_effective_blocker` resolves
+        both and this is the shape the reproduction walked.
+        """
+        items_text = ("schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+                      + refusals._blocked_block("xx-1", "READY",
+                                                f"decision {self.QUESTION}"))
+        r = refusals._Repo(items=items_text, ledger_text=ledger_text)
+        self.addCleanup(r.close)
+        return r
+
+    def _ledger(self, answer):
+        """A ledger whose one `decision:` line carries `answer` for QUESTION.
+
+        Rendered by the ledger module rather than spelled here: a literal
+        would be a second spelling of a line shape whose recogniser is what
+        the arms are measuring.
+        """
+        return (ledger.head_text()
+                + ledger.render("decision", {"question": self.QUESTION,
+                                             "answer": answer}) + "\n")
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _carriers(self, repo):
+        return {n: (repo.dir / n).read_text(encoding="utf-8")
+                for n in ("ITEMS.md", "ITEMS-DONE.md", "LEDGER.md")}
+
+    def test_an_ANSWERED_decision_is_NOT_recorded_moot(self):
+        """THE RED. At 9839f46 this close wrote `blocker-moot:` onto the moved
+        body and appended `→ moot (closed by xx-1)` beneath the answer it had
+        just been given, exiting CLEAN over both."""
+        r = self._repo(self._ledger(self.ANSWER))
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        c = self._carriers(r)
+        self.assertNotIn(
+            "blocker-moot:", c["ITEMS-DONE.md"],
+            "the close recorded an ANSWERED question as moot, on a body "
+            "`item amend` refuses to touch afterwards:\n" + out)
+        self.assertNotIn(
+            ledger.moot_answer("xx-1"), c["LEDGER.md"],
+            "the close wrote a second, contradictory `decision:` line:\n"
+            + c["LEDGER.md"])
+        self.assertEqual(
+            c["LEDGER.md"].count(f"decision: {self.QUESTION}"), 1,
+            "one question, one home:\n" + c["LEDGER.md"])
+
+    def test_ready_and_close_AGREE_on_the_ANSWERED_state(self):
+        """The done-criterion itself, both verbs against ONE ledger state —
+        the agreement, not either verb's wording. Asserted on the verdict
+        SENTENCES the two verbs print, because the contradiction the item
+        records was readable in exactly those."""
+        r = self._repo(self._ledger(self.ANSWER))
+        ready_code, ready_out = self._run(r, "item", "ready", "xx-1")
+        self.assertEqual(ready_code, exits.CLEAN, ready_out)
+        self.assertIn("UNBLOCKED — the ledger ANSWERS this decision",
+                      ready_out, ready_out)
+        close_code, close_out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(close_code, exits.CLEAN, close_out)
+        self.assertNotIn(
+            "was never answered", close_out,
+            "`item close` called never-answered what `item ready` had just "
+            "read off the same line:\n" + close_out)
+
+    def test_an_UNANSWERED_decision_STILL_records_moot(self):
+        """MUST-NOT-MOVE, and the discrimination half of the pair: this arm
+        differs from the two above in the ledger's one line and nothing else.
+        Without it, a close that had stopped writing moot records altogether
+        would pass them both."""
+        r = self._repo()
+        ready_code, ready_out = self._run(r, "item", "ready", "xx-1")
+        self.assertEqual(ready_code, exits.CLEAN, ready_out)
+        self.assertIn("BLOCKED — in the OPERATOR's court", ready_out,
+                      ready_out)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        c = self._carriers(r)
+        self.assertIn(f"blocker-moot: {self.QUESTION}", c["ITEMS-DONE.md"],
+                      c["ITEMS-DONE.md"])
+        self.assertIn(ledger.moot_answer("xx-1"), c["LEDGER.md"],
+                      c["LEDGER.md"])
+
+    def test_ANOTHER_items_moot_line_is_not_an_answer_here(self):
+        """MUST-NOT-MOVE over the G4 scoping. A moot line says the question
+        died with ONE item; read as an answer it would clear every other item
+        waiting on it. `item ready` refuses it by name, and the close reaches
+        the same reader with the same `for_item`, so it must refuse it too —
+        a close that had taken any matching line as an answer would leave this
+        item's own wait unrecorded."""
+        r = self._repo(self._ledger(ledger.moot_answer("xx-9")))
+        ready_code, ready_out = self._run(r, "item", "ready", "xx-1")
+        self.assertEqual(ready_code, exits.CLEAN, ready_out)
+        self.assertIn("records this question MOOT", ready_out, ready_out)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        c = self._carriers(r)
+        self.assertIn(f"blocker-moot: {self.QUESTION}", c["ITEMS-DONE.md"],
+                      c["ITEMS-DONE.md"])
+        self.assertIn(ledger.moot_answer("xx-1"), c["LEDGER.md"],
+                      c["LEDGER.md"])
+
+    def test_an_UNREADABLE_ledger_is_COULD_NOT_VERIFY_not_a_close(self):
+        """The third answer, and the third state both verbs must agree on.
+        `item ready` already answers COULD NOT VERIFY here. At 9839f46 the
+        close exited CLEAN, wrote "was never answered" onto the moved body,
+        and CREATED the ledger to hold a moot line about a question nothing
+        could check — the assertion is unverifiable and the body is
+        unamendable the moment it moves."""
+        r = self._repo()
+        (r.dir / "LEDGER.md").unlink()
+        ready_code, ready_out = self._run(r, "item", "ready", "xx-1")
+        self.assertEqual(ready_code, exits.COULD_NOT_VERIFY, ready_out)
+        before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("COULD NOT VERIFY", out)
+        self.assertEqual((r.dir / "ITEMS.md").read_text(encoding="utf-8"),
+                         before, "an unverifiable close moved the body anyway")
+        self.assertFalse((r.dir / "LEDGER.md").exists(),
+                         "the close minted a ledger to hold a moot line it "
+                         "could not have checked")
 
 
 if __name__ == "__main__":

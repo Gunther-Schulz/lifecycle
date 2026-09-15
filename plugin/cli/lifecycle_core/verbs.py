@@ -1934,6 +1934,64 @@ def _item_blocker_disposition(ctx: Ctx, ident: str, detail: str,
     return None, exits.FINDING
 
 
+def _decision_blocker_disposition(ctx: Ctx, ident: str, detail: str,
+                                  out) -> tuple[str | None, int]:
+    """`(the `blocker-moot:` question for a `decision` blocker, code)` — lc-55.
+
+    THE SAME READER `item ready` USES, ASKED THE SAME QUESTION. Until this
+    existed `cmd_item_close` read the ledger NOWHERE: it took the blocker's
+    TYPE off `_effective_blocker` and treated every `decision` blocker as
+    unanswered by construction, so its verdict could not depend on the state
+    it was writing into. Measured on a private clone at 9839f46: an operator
+    answered with `ledger add decision`, `item ready` printed "UNBLOCKED — the
+    ledger ANSWERS this decision" citing `LEDGER.md:84`, and the close then
+    called the same blocker never answered and appended `LEDGER.md:85`
+    recording it moot. One question, two contradictory lines in one carrier,
+    and the moot one landed on a body `item amend` refuses afterwards.
+
+    SO THE CALL IS `ledger.decision_for(..., for_item=ident)`, byte-for-byte
+    the call `_blocker_state` makes — one reader, one question, agreement by
+    construction rather than by two bodies happening to match. `for_item`
+    carries G4's scoping across unchanged: a moot line speaks for its own
+    closer and for nobody else, so another item's moot line is still no
+    answer here and this item's wait is still recorded.
+
+    THREE ANSWERS, and the unreadable one REFUSES rather than falling through
+    — the shape `_item_blocker_disposition` above already holds for the
+    sibling type. A `blocker-moot:` line ASSERTS the question was never
+    answered; with the ledger unreadable that assertion is unverifiable, and
+    a close that wrote it anyway would mint the claim onto an unamendable
+    body — and, where the ledger is simply absent, would CREATE the file to
+    hold it. Dropping the record instead would be the silent clear lc-90
+    refused. So neither: the state is refused at the one moment anything can
+    still be done about it.
+    """
+    led, led_why = ledger.read(ctx.ledger_path)
+    if led is None:
+        out(f"COULD NOT VERIFY: `blocked-by decision {detail}` names a "
+            "question, and whether the ledger already ANSWERS it cannot be "
+            f"read. {led_why} NOT CLOSED: the `blocker-moot:` line this close "
+            "would write asserts the question was never answered, and that "
+            "assertion would land — unchecked and unamendable — on the moved "
+            "body. Answer the question (`ledger add decision`) or clear the "
+            f"blocker (`item amend {ident} --blocked-by NONE --reason <why>`) "
+            "once the ledger is readable.")
+        return None, exits.COULD_NOT_VERIFY
+    answers = ledger.decision_for(led, detail, for_item=ident)
+    if answers:
+        last = answers[-1]
+        out(f"blocker-moot: NOT WRITTEN — the ledger already settles this "
+            f"`decision` blocker for {ident}: {detail!r} → "
+            f"{last.slots.get('answer', '')!r} ({ctx.ledger_path.name}:"
+            f"{last.lineno}). A moot record says the question was NEVER "
+            "answered and `item ready` reads this same line as an ANSWER, so "
+            "writing one would put two contradictory verdicts about one "
+            "question in the carrier. No second `decision:` line either: one "
+            "fact, one home.")
+        return None, exits.CLEAN
+    return detail, exits.CLEAN
+
+
 def _resolve_refs(ctx: Ctx, raw: str, out) -> tuple[str | None, int]:
     """`(the `closed-ref:` value, code)` — every ref VERIFIED in this repo.
 
@@ -2137,7 +2195,18 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
             return exits.FINDING
 
         kind, detail = _effective_blocker(ctx, args.ident)
-        moot = detail if kind == "decision" and detail else None
+        # THE DECISION TYPE IS DISPOSED AGAINST THE LEDGER (lc-55), not from
+        # its type alone. `moot = detail if kind == "decision"` asserted
+        # "never answered" without ever reading the file that records the
+        # answer, which is how one close came to contradict the `item ready`
+        # run before it. Before the write, for the same reason the item-id
+        # disposition below is: its answer can be a COULD NOT VERIFY.
+        moot = None
+        if kind == "decision" and detail:
+            moot, decision_code = _decision_blocker_disposition(
+                ctx, args.ident, detail, out)
+            if decision_code != exits.CLEAN:
+                return decision_code
         # THE ITEM-ID TYPE IS DISPOSED BEFORE ANYTHING IS WRITTEN (lc-90):
         # its answer can be a REFUSAL, and a refusal that arrived after the
         # move would be a verdict about a body already sitting where nothing
