@@ -36,6 +36,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
 from lifecycle_core import cli, exits, items, retire  # noqa: E402
+from lifecycle_core import declaration as decl  # noqa: E402
 from lifecycle_core.refusals import (  # noqa: E402
     EMPTY_DONE, GOOD_FULL_DECLARATION, SEED_ITEMS)
 
@@ -548,6 +549,144 @@ class TheCompactionRecordReadsBackAsAHome(unittest.TestCase):
     def test_no_ledger_is_an_EMPTY_home_rather_than_a_crash(self):
         home = retire.compacted_home(None)
         self.assertEqual(home.items, [])
+
+
+class TheWalkAsksACompactedKindAboutItsExit(unittest.TestCase):
+    """lc-145 — the walk reports the done-bodies kind honestly.
+
+    TWO GATES, AND EITHER ALONE IS INERT (measured before building): the MODE
+    gate returned NOT APPLICABLE for every mode but `bounded-by-exit` BEFORE
+    `PERFORMED_EXITS` was ever consulted, so adding `compact` to that tuple
+    changed no kind's verdict — the old-vs-new audit diff over that one line
+    moved parentheticals in unrelated messages and nothing else.
+
+    ASSERTED INSIDE THE KIND'S OWN BLOCK. The walk prints twenty-odd kinds and
+    more than one of them can carry this finding, so a match over the whole
+    report would pass on a run that fired for a different kind entirely.
+    """
+
+    def _block(self, out: str, name: str) -> str:
+        """The one block for `name`, isolated before anything is asserted.
+
+        Exactly one, else ABORT: zero means the walk never reached the kind
+        and the assertion would be about a report that does not mention it;
+        two means the assertion cannot say which one it graded.
+        """
+        blocks = [b for b in out.split("\nkind: ")[1:]
+                  if b.split("\n", 1)[0].strip() == name]
+        self.assertEqual(len(blocks), 1,
+                         f"{len(blocks)} blocks for kind {name!r}; the "
+                         "arrangement did not put exactly one in front of "
+                         "the assertion")
+        return blocks[0]
+
+    def test_a_COMPACTED_kind_holding_bodies_with_no_compaction_FIRES(self):
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        self.assertEqual(code, exits.CLEAN, out)
+        code, out = run_cli(d, "audit")
+        block = self._block(out, "done bodies")
+        self.assertIn("[kind_grew_without_exit]", block)
+        self.assertIn("declares `compacted`", block)
+        self.assertIn("exit events: 0 (item compact)", block)
+        # THE WALK'S OWN ANSWER IS COULD NOT VERIFY BY CONSTRUCTION — the
+        # staleness half needs pass history and this is the first pass — so
+        # the exit code is 3 whatever the growth question found. That is
+        # exactly why the roster row calls `growth_verdict` instead: a pair
+        # whose plant and control both exit 3 discriminates nothing.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+
+    def test_the_SAME_kind_after_a_REAL_compaction_reads_the_EVENT(self):
+        """The control, and it is the one that proves the walk reads a
+        recorded event rather than an empty home: the kind still holds a body
+        here, so a pass cannot come from there being nothing to grade."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = run_cli(d, *ADD)
+        self.assertEqual(code, exits.CLEAN, out)
+        for ident in ("xx-1", "xx-2"):
+            code, out = run_cli(d, "item", "close", ident, "--reason", REASON)
+            self.assertEqual(code, exits.CLEAN, out)
+        code, out = run_cli(d, "item", "compact", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+
+        code, out = run_cli(d, "audit")
+        block = self._block(out, "done bodies")
+        self.assertIn("count:  1", block, "the kind's home is empty, so this "
+                                          "arm would pass on the zero-count "
+                                          "branch instead of on the event")
+        self.assertIn("exit events: 1 (item compact)", block)
+        self.assertIn("growth check: CLEAN — the exit has fired", block)
+        self.assertNotIn("[kind_grew_without_exit]", block)
+
+    def test_a_home_holding_NOTHING_is_CLEAN_without_claiming_a_fire(self):
+        """MUST-NOT-MOVE — a repo with no done bodies still reports the kind
+        CLEAN — and the message repair the widening made necessary: the
+        verdict was always right and the sentence was not, because a kind
+        holding nothing has had no exit fire for it.
+
+        THE HOME IS REMOVED RATHER THAN EMPTIED, and the difference is a
+        MEASURED defect in the counter that this change does not touch:
+        `list_home` decides a file's notion by SHAPE, so a carrier holding no
+        blocks reads as "a single file, one instance" and the kind is counted
+        as holding something. That is not new here — on the build before this
+        change, a repo whose `ITEMS.md` carries only its head already counted
+        1 and already fired this finding for the `items` kind (measured
+        2026-09-15 at 9e681e3). Reported as its own defect rather than
+        silently repaired under this item, and NOT pinned here, because an arm
+        asserting the miscount would enshrine it.
+        """
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "ITEMS-DONE.md").unlink()
+        code, out = run_cli(d, "audit")
+        block = self._block(out, "done bodies")
+        self.assertIn("count:  0", block)
+        self.assertIn("growth check: CLEAN — the home holds nothing", block)
+        # THE VERDICT LINE, not the phrase: the sentence this branch prints
+        # NAMES the answer it is not giving, so a bare search for those words
+        # matches the very message that refuses to claim them.
+        self.assertNotIn("growth check: CLEAN — the exit has fired", block)
+        self.assertNotIn("[kind_grew_without_exit]", block)
+
+    def test_an_UNBOUNDED_WITH_REASON_kind_is_still_NOT_APPLICABLE(self):
+        """MUST-NOT-MOVE, and the boundary of the widening: one mode is the
+        declared opt-out and it keeps its exemption. A gate that admitted
+        every mode would fire on kinds that said in their own declaration why
+        growth is controlled by something else."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = run_cli(d, "audit")
+        block = self._block(out, "ledger lines")
+        self.assertIn("growth check: NOT APPLICABLE", block)
+        self.assertIn("unbounded-with-reason", block)
+        self.assertNotIn("[kind_grew_without_exit]", block)
+
+    def test_a_BOUNDED_BY_EXIT_kinds_finding_text_is_unchanged(self):
+        """MUST-NOT-MOVE: the other findings keep their exact text. The mode
+        is now READ instead of restated, so this arm is what says the reading
+        returns the same words for the kind the message was written for."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = run_cli(d, "audit")
+        block = self._block(out, "items")
+        self.assertIn("[kind_grew_without_exit]", block)
+        self.assertIn("declares `bounded-by-exit`, and its exit has recorded "
+                      "NOTHING", block)
+
+    def test_compact_is_a_PERFORMED_exit_and_names_its_verb(self):
+        """The second gate, pinned where it is read: a kind whose exit this
+        build performs must not be answered NOT CHECKED, and the verb named
+        must be the one that writes the fire-log line."""
+        self.assertIn("compact", retire.PERFORMED_EXITS)
+        self.assertEqual(retire.EXIT_VERBS["compact"], ("item compact",))
+        self.assertEqual(sorted(retire.EXIT_CONTROLLED_MODES),
+                         sorted(m for m in decl.GROWTH_MODES
+                                if m != "unbounded-with-reason"),
+                         "the mode list is restated rather than derived, so a "
+                         "mode added to the declaration would be exempt "
+                         "silently")
 
 
 if __name__ == "__main__":

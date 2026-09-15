@@ -2399,6 +2399,14 @@ def _retire_growth(*, closed: bool) -> Fired:
     The control CLOSES an item through the real verb, so the exit event it
     reads is one the tool actually recorded rather than a line this row wrote
     into a log. A planted log line would prove the reader parses JSON.
+
+    AND IT COMPACTS, since lc-145. The close moves the body into the `done
+    bodies` kind, which declares `compacted` — a mode the growth gate now
+    admits — so a control that stopped at the close left ONE kind clean and
+    the NEXT one firing, and the roster answered COULD NOT VERIFY: both arms
+    exited FINDING and the pair separated nothing. The repair is the control
+    becoming what it always claimed to be — a repo where every declared exit
+    has actually fired — and not a narrower question for the row.
     """
     import io
     from contextlib import redirect_stdout
@@ -2412,6 +2420,8 @@ def _retire_growth(*, closed: bool) -> Fired:
             if closed:
                 with redirect_stdout(io.StringIO()):
                     cli_mod.main(["--repo", str(r.dir), "item", "close",
+                                  "xx-1"])
+                    cli_mod.main(["--repo", str(r.dir), "item", "compact",
                                   "xx-1"])
             buf = []
             code = retire_mod.growth_verdict(r.dir, GOOD_FULL_DECLARATION,
@@ -2638,7 +2648,9 @@ SCHEMA_ROWS = [
         ident="kind_grew_without_exit",
         refusal="a kind that GREW WITHOUT AN EXIT EVENT (the design's own "
                 "replacement for a cap) — its home holds instances, it "
-                "declares `bounded-by-exit`, and its exit has recorded nothing",
+                "declares a growth mode whose control IS an exit "
+                "(`bounded-by-exit` or `compacted`, never the declared opt-out "
+                "`unbounded-with-reason`), and its exit has recorded nothing",
         firing_input="a repo holding items with no `item close` ever recorded",
         expect=exits.FINDING,
         fire=lambda: _retire_growth(closed=False),

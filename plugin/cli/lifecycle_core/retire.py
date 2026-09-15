@@ -19,11 +19,13 @@ predicate here; counts are printed because a reader wants them, and they
 decide nothing.
 
 WHAT IS NOT CHECKED SAYS SO. Most declared exits are not acts this WALK
-reads — `never` and `delete` have no verb at all, and `compact` has one
-(`item compact`, below) whose events this walk does not yet read — so their kinds
-are reported NOT CHECKED with the reason rather than folded into a clean
-line. A walk that reported nine clean kinds while only checking one would be
-the assurance wider than its predicate that this whole arc keeps finding.
+reads — `never` and `delete` have no verb at all — so their kinds are
+reported NOT CHECKED with the reason rather than folded into a clean line. A
+walk that reported nine clean kinds while only checking one would be the
+assurance wider than its predicate that this whole arc keeps finding.
+`compact` LEFT that list with lc-145: the verb exists, it writes a fire-log
+line like any other, and a walk that went on answering NOT CHECKED for the
+kinds it serves was reporting the absence of a reader that was there.
 """
 
 import re
@@ -45,12 +47,32 @@ STALE_PASSES_STATUS = ("PLACEHOLDER — §3.11 rule 1 says so in the design's ow
 #: The exit actions this build actually PERFORMS and records. A kind whose
 #: exit is anything else has no event to look for, and saying that is a
 #: different answer from saying its exit never fired.
-PERFORMED_EXITS = ("move",)
+#:
+#: `compact` JOINED ON lc-145, because the verb joined the build: `item
+#: compact` performs and records that exit, so leaving it out here answered
+#: NOT CHECKED about a reader this build has.
+PERFORMED_EXITS = ("move", "compact")
+
+#: THE GROWTH MODES WHOSE CONTROL IS AN EXIT EVENT (lc-145), derived from the
+#: declaration's own closed list rather than restated beside it — a mode added
+#: there is asked the question by default, and a silent exemption is exactly
+#: what this repo's R22 alarm cannot afford.
+#:
+#: `unbounded-with-reason` is the ONE declared opt-out: that mode says outright
+#: that growth is controlled by something other than an exit, and it carries
+#: its reason. `compacted` is not an opt-out — it names compaction AS the
+#: control — so a compacted kind whose compaction has never fired is precisely
+#: the kind R22 means. Before lc-145 the gate below read `bounded-by-exit`
+#: alone, so every compacted kind was exempt from the alarm it had declared.
+UNCONTROLLED_GROWTH_MODE = "unbounded-with-reason"
+EXIT_CONTROLLED_MODES = tuple(m for m in decl.GROWTH_MODES
+                              if m != UNCONTROLLED_GROWTH_MODE)
 
 #: Which fire-log verb records each performed exit. Read from the design's
 #: own recording-act rather than guessed: `items`' declared recording act IS
-#: the `item close` fire-log line.
-EXIT_VERBS = {"move": ("item close",)}
+#: the `item close` fire-log line, and `done bodies`' is the `item compact`
+#: one.
+EXIT_VERBS = {"move": ("item close",), "compact": ("item compact",)}
 
 
 # --- the fire log, read back --------------------------------------------------
@@ -147,10 +169,11 @@ def check_growth(name, mode, action, count, log, log_present, out):
     different answer from "its exit never fired" and must not share a line
     with it.
     """
-    if mode != "bounded-by-exit":
+    if mode not in EXIT_CONTROLLED_MODES:
         out(f"    growth check: NOT APPLICABLE — `{mode or 'undeclared'}` is "
-            "not bounded-by-exit, so 'grew without an exit event' is not the "
-            "alarm this kind declared.")
+            "not controlled by an exit event "
+            f"({', '.join(EXIT_CONTROLLED_MODES)}), so 'grew without an exit "
+            "event' is not the alarm this kind declared.")
         return exits.CLEAN, "n/a"
     if action not in PERFORMED_EXITS:
         out(f"    growth check: NOT CHECKED — the declared exit action "
@@ -168,13 +191,24 @@ def check_growth(name, mode, action, count, log, log_present, out):
     out(f"    exit events: {len(events)} ({', '.join(verbs_)}) recorded for "
         "this repo")
     if count and not events:
+        # THE DECLARED MODE, READ rather than restated: this message named
+        # `bounded-by-exit` while the gate above admitted one mode, and the
+        # day the gate widened the sentence started lying about the very kind
+        # it was firing on (lc-145).
         out(f"    FINDING [kind_grew_without_exit] kind {name!r} holds "
-            f"{count} instance(s), declares `bounded-by-exit`, and its exit "
+            f"{count} instance(s), declares `{mode}`, and its exit "
             "has recorded NOTHING. The alarm is FLOW: the count above is not "
             "the finding and no size would be — a large kind draining "
             "steadily is fine and this one is not draining at all. A recorded "
             "DROP clears this exactly as a completion does.")
         return exits.FINDING, "grew"
+    if not count:
+        # NOT THE SAME CLEAN. A kind whose home holds nothing has not grown,
+        # and saying "the exit has fired" about it asserts an event that never
+        # happened — the verdict is the same and the sentence is not.
+        out("    growth check: CLEAN — the home holds nothing, so nothing has "
+            "grown. NOT the same answer as 'the exit has fired'.")
+        return exits.CLEAN, "clean"
     out("    growth check: CLEAN — the exit has fired for this kind.")
     return exits.CLEAN, "clean"
 
