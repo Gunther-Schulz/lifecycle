@@ -40,7 +40,7 @@ CLI = REPO / "plugin" / "cli" / "lifecycle"
 
 sys.path.insert(0, str(REPO / "plugin" / "cli"))
 
-from lifecycle_core import exits  # noqa: E402
+from lifecycle_core import exits, items  # noqa: E402
 
 #: Hooks are pointed at a path that cannot exist: a fixture repo on this
 #: machine inherits a GLOBAL `core.hooksPath`, so an un-neutralised commit here
@@ -138,6 +138,28 @@ done-criterion: the value wraps here and
 evidence: none
 blocked-by: NONE
 repair-note: a slot no schema declares
+"""
+
+#: lc-135's fourth judgment class: a continuation line after a BLANK line —
+#: no unambiguous host to join it to, so `repair_shape` lists it rather than
+#: guessing which slot it belongs to. Not one of df-196/df-184's shapes; a
+#: fixture confirmed at the desk (2026-09-15) to route to `item_shape`, the
+#: same row missing-slot and unknown-slot do.
+UNJOINABLE_CONTINUATION = """schema: 2
+baseline: 0
+added: 1
+compacted: 0
+
+## tt-1
+grade: READY
+requirement: r
+goal: g
+write-set: foo.py
+done-criterion: d
+
+  an orphan continuation after a blank line
+evidence: none
+blocked-by: NONE
 """
 
 ARCHIVE_CARRIER = """schema: 2
@@ -359,6 +381,124 @@ class TheJudgmentClassesAreListedNeverRepaired(unittest.TestCase):
                 before, sha(f.done()),
                 f"the archive was rewritten.\nstdout:\n{out}\nstderr:\n{err}")
             self.assertEqual(code, exits.CLEAN, f"{out}\n{err}")
+
+
+class TheJudgmentCheckerReconciliation(unittest.TestCase):
+    """lc-135: `repair_shape`'s judgment classes and `item check`'s residual
+    findings, over the SAME (repaired) carrier — pinned in correspondence,
+    never merged: a row says WHAT IS WRONG, a judgment class says WHAT THE
+    VERB DECLINED TO REPAIR AND WHY.
+
+    The four "agrees" arms below are the item's own real fixtures — the
+    exact shapes desk measurement 2026-09-15 found mapping one-to-one on
+    copies of dotfiles' carriers (closed-still-blocked -> blocked_in_done_
+    home, missing-slot/unknown-slot -> item_shape) — reconciling with zero
+    unmatched either way. The two red-first arms after them are
+    CONSTRUCTED: `JUDGMENT_TO_ROW` and the checker are each degraded in one
+    place, in isolation, to show the reconciliation actually discriminates
+    rather than agreeing by construction.
+    """
+
+    def test_missing_slot_reconciles_over_the_done_home(self):
+        rec = items.reconcile_repair_judgments(
+            MISSING_SLOT_DONE, items.check_done_file, prefix="tt")
+        self.assertTrue(rec.agrees,
+                        f"listed_only={rec.listed_only} "
+                        f"residual_only={rec.residual_only}")
+
+    def test_closed_still_blocked_reconciles_over_the_done_home(self):
+        rec = items.reconcile_repair_judgments(
+            BLOCKED_IN_DONE, items.check_done_file, prefix="tt")
+        self.assertTrue(rec.agrees,
+                        f"listed_only={rec.listed_only} "
+                        f"residual_only={rec.residual_only}")
+
+    def test_unknown_slot_reconciles_over_the_live_home(self):
+        rec = items.reconcile_repair_judgments(
+            UNKNOWN_SLOT, items.check_file, prefix="tt")
+        self.assertTrue(rec.agrees,
+                        f"listed_only={rec.listed_only} "
+                        f"residual_only={rec.residual_only}")
+
+    def test_unjoinable_continuation_reconciles_over_the_live_home(self):
+        """The fourth judgment class, not among the item's own dotfiles
+        fixtures but in JUDGMENT_TO_ROW: also routes to item_shape."""
+        rec = items.reconcile_repair_judgments(
+            UNJOINABLE_CONTINUATION, items.check_file, prefix="tt")
+        self.assertTrue(rec.agrees,
+                        f"listed_only={rec.listed_only} "
+                        f"residual_only={rec.residual_only}")
+
+    def test_a_clean_carrier_reconciles_with_both_lists_empty(self):
+        """The false-fire probe for this item: a carrier the tool itself
+        wrote lists nothing on either side."""
+        rec = items.reconcile_repair_judgments(
+            CLEAN_CARRIER, items.check_file, prefix="tt")
+        self.assertEqual(rec.listed_only, [])
+        self.assertEqual(rec.residual_only, [])
+        self.assertTrue(rec.agrees)
+
+    def test_a_judgment_class_with_no_row_surfaces_on_both_sides(self):
+        """Red-first (a): a judgment class this repo's own JUDGMENT_TO_ROW
+        does not map — simulating a class added with no row — can never
+        equal a real finding's (ident, row) pair. `None` is not a row any
+        checker emits, so the unmapped judgment lands in listed_only AND
+        the residual finding it should have matched, now unmatchable, lands
+        in residual_only — both sides diverge, which is the honest answer:
+        with no row named, nothing here can say which finding it meant.
+        This constructs the degraded mapping directly to prove the
+        comparison discriminates, rather than waiting for a future class to
+        exist."""
+        original = dict(items.JUDGMENT_TO_ROW)
+        del items.JUDGMENT_TO_ROW[items.JUDGMENT_BLOCKED_CLOSED]
+        try:
+            rec = items.reconcile_repair_judgments(
+                BLOCKED_IN_DONE, items.check_done_file, prefix="tt")
+        finally:
+            items.JUDGMENT_TO_ROW.clear()
+            items.JUDGMENT_TO_ROW.update(original)
+        self.assertFalse(rec.agrees)
+        self.assertEqual(rec.listed_only, [("tt-9", None)])
+        self.assertEqual(rec.residual_only,
+                         [("tt-9", "blocked_in_done_home")])
+
+    def test_a_silenced_checker_row_surfaces_as_listed_only(self):
+        """Red-first (b): the checker's row for a judged body goes silent —
+        a guard removed at that site — so the judgment is still listed but
+        no residual finding matches it any more."""
+        def silenced(path, out, prefix=None, text=None, collect=None):
+            probe: list = []
+            code = items.check_done_file(path, out, prefix=prefix,
+                                         text=text, collect=probe)
+            collect.extend(f for f in probe
+                           if f.row != "blocked_in_done_home")
+            return code
+
+        rec = items.reconcile_repair_judgments(
+            BLOCKED_IN_DONE, silenced, prefix="tt")
+        self.assertFalse(rec.agrees)
+        self.assertEqual(rec.listed_only, [("tt-9", "blocked_in_done_home")])
+        # THE PAIR: nothing ELSE went dark — the residual side is otherwise
+        # unaffected, so residual_only stays empty rather than also firing.
+        self.assertEqual(rec.residual_only, [])
+
+    def test_a_checker_row_with_no_judgment_surfaces_as_residual_only(self):
+        """The mirror shape: the checker starts reporting a body under a
+        reconciled row that `repair_shape` never judges at all — 'a row
+        added to the checker with no judgment class'."""
+        def widened(path, out, prefix=None, text=None, collect=None):
+            code = items.check_done_file(path, out, prefix=prefix,
+                                         text=text, collect=collect)
+            collect.append(items.Finding(
+                "item_shape", "ITEMS-DONE.md", 1,
+                "a defect repair_shape never judges", "tt-999"))
+            return code
+
+        rec = items.reconcile_repair_judgments(EMPTY_DONE, widened,
+                                               prefix="tt")
+        self.assertFalse(rec.agrees)
+        self.assertEqual(rec.residual_only, [("tt-999", "item_shape")])
+        self.assertEqual(rec.listed_only, [])
 
 
 class TheCommitContract(unittest.TestCase):

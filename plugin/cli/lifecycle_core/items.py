@@ -1731,6 +1731,102 @@ def repair_shape(text: str, prefix: str | None = None) -> ShapeRepair:
     return res
 
 
+#: THE CORRESPONDENCE (lc-135). `repair_shape`'s judgment classes are a
+#: SECOND VOCABULARY over findings the checker (`check_file` /
+#: `check_done_file`) already carries: a row says WHAT IS WRONG, a judgment
+#: class says WHAT THE VERB DECLINED TO REPAIR AND WHY. Desk measurement
+#: 2026-09-15 over copies of dotfiles' carriers found the mapping
+#: one-to-one: closed-still-blocked -> blocked_in_done_home (4/4),
+#: missing-slot and unknown-slot -> item_shape (5/5) — and
+#: unjoinable-continuation the same way (a continuation with no host is a
+#: malformed `slot: value` line under the live check too). Declared here,
+#: beside the JUDGMENT_* constants it maps, because the mapping IS the
+#: correspondence this item pins — widen it here and
+#: `reconcile_repair_judgments` widens with it, with no second edit.
+JUDGMENT_TO_ROW = {
+    JUDGMENT_MISSING: "item_shape",
+    JUDGMENT_UNKNOWN: "item_shape",
+    JUDGMENT_UNJOINABLE: "item_shape",
+    JUDGMENT_BLOCKED_CLOSED: "blocked_in_done_home",
+}
+
+#: The checker rows this reconciliation compares against — DERIVED from the
+#: mapping's own values, never repeated: a row this file's checkers emit for
+#: reasons `repair_shape` never judges (an id/prefix mismatch, say) is
+#: outside this set and outside the comparison, exactly because no judgment
+#: class could ever name it.
+_RECONCILED_ROWS = frozenset(JUDGMENT_TO_ROW.values())
+
+#: A `Path` the checker never reads from disk — `check_file`/`check_done_file`
+#: only consult it for `Finding.name` when `text=` is given, so this stands in
+#: for whichever real carrier the reconciliation is asked about.
+_RECONCILE_PATH = Path("<reconciliation>")
+
+
+@dataclass
+class JudgmentReconciliation:
+    """Whether `repair_shape`'s judgments and the checker's residual findings
+    — over the SAME (repaired) carrier text — name the same bodies.
+
+    Two closed lists, sorted `(ident, row)` pairs, EMPTY when the vocabularies
+    agree:
+
+    - `listed_only`: a body `repair_shape` judged that no residual finding
+      matches — either the checker's row for it went silent, or the judgment
+      class is not in `JUDGMENT_TO_ROW` at all (a class added with no row).
+    - `residual_only`: a residual finding under a row this file's `--test`
+      believes `repair_shape` covers, with no matching judgment — a row
+      that started firing on a body the verb was never taught to declare.
+
+    THE TWO VOCABULARIES STAY SEPARATE. This pins their CORRESPONDENCE, over
+    identity, never their prose and never a count: equal counts are not
+    agreement, and `agrees` is the only verdict this dataclass renders.
+    """
+    listed_only: list = field(default_factory=list)
+    residual_only: list = field(default_factory=list)
+
+    @property
+    def agrees(self) -> bool:
+        return not self.listed_only and not self.residual_only
+
+
+def reconcile_repair_judgments(text: str, checker, prefix: str | None = None
+                               ) -> JudgmentReconciliation:
+    """Run `repair_shape`, then `checker` over the REPAIRED text, and compare.
+
+    `checker` is `check_file` or `check_done_file` — whichever owns the
+    carrier `text` belongs to; both share the `(path, out, prefix=, text=,
+    collect=)` shape this calls them with. Grading the REPAIRED text, not the
+    original, is what makes the checker's findings RESIDUAL: every join and
+    move `repair_shape` actually performed already cleared its own finding,
+    so what is left over is exactly the population a judgment class should
+    explain — a defect check_file/check_done_file report BEFORE repair but
+    not after would silently vanish from both sides of this comparison, and
+    that is a difference the mechanical half accounts for, not the drift
+    lc-135 exists to catch.
+    """
+    repaired = repair_shape(text, prefix=prefix)
+
+    # `row` is None when `cls` carries no entry in JUDGMENT_TO_ROW — a
+    # judgment class with no row, which can never equal a real finding's
+    # `(ident, row)` pair below and so always lands in `listed_only`.
+    judged = {(ident, JUDGMENT_TO_ROW.get(cls))
+              for ident, cls, _detail in repaired.judgments}
+
+    collected: list = []
+    checker(_RECONCILE_PATH, lambda _s: None, prefix=prefix,
+            text=repaired.text, collect=collected)
+    residual = {(f.ident, f.row) for f in collected
+                if f.row in _RECONCILED_ROWS}
+
+    def _key(pair):
+        return (pair[0] or "", pair[1] or "")
+
+    return JudgmentReconciliation(
+        listed_only=sorted(judged - residual, key=_key),
+        residual_only=sorted(residual - judged, key=_key))
+
+
 def _repair_block(ident: str, body: list, first_lineno: int,
                   res: ShapeRepair, item, prefix: str | None) -> list:
     entries = []
