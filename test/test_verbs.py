@@ -790,6 +790,110 @@ class OneGrammarFindsAndEndsABlock(unittest.TestCase):
         self.assertIn("blocked-by: decision which window is canonical", first)
 
 
+class PromoteAlsoRespectsTheBlockBoundary(unittest.TestCase):
+    """lc-63 — `item promote` had NO RED OF ITS OWN for the lc-40
+    block-boundary defect. It is the SECOND caller of `_set_slots`
+    (`verbs.py`; park's call is the first, exercised above), and until this
+    class the fix's reach into promote was INFERENCE through the shared
+    helper, never an executed arm — a red certifies the CLASS that fired,
+    never the instrument's reach, and park and promote are two variants
+    because they write different slots.
+
+    MEASURED, not reasoned, against a private clone of `66bd2af` (the
+    commit the park arm's own docstring cites, ancestor of the lc-40 fix;
+    its own self-check — the CONTROL arm below, space-separated headings —
+    ran green first, proving the clone's arrangement sound before any red
+    from it is trusted): `item promote xx-1 --by ... --reason ...` on the
+    PLANT carrier (tab-separated second heading) exits 0 and writes `grade:
+    READY` into `xx-2` as well as `xx-1` — silent, because both blocks stay
+    well-formed afterwards and the carrier still parses. Run against the
+    CURRENT, fixed `_set_slots`, the same call leaves `xx-2` at `grade: NEW`
+    and only `xx-1` moves. Both runs used this exact fixture and the exact
+    `PROMOTE` argv below.
+
+    Mirrors `OneGrammarFindsAndEndsABlock` above: same tab plant, same
+    control separator, same shared helper — reached through the write
+    promote makes (`grade: READY`) rather than the one park makes
+    (`grade: PARKED` plus `blocked-by`).
+    """
+
+    #: Same plant as the park arm's fixture; the tab is the whole plant.
+    PLANT_SEP = "\t"
+    CONTROL_SEP = " "
+
+    @staticmethod
+    def _carrier(sep):
+        return (
+            "schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+            "\n## xx-1\ngrade: NEW\n"
+            "requirement: first block requirement\n"
+            "goal: mitigate\nwrite-set: tools/a.py\n"
+            "done-criterion: it goes red then green\nevidence: none yet\n"
+            "blocked-by: NONE\n"
+            f"\n##{sep}xx-2\ngrade: NEW\n"
+            "requirement: second block requirement\n"
+            "goal: mitigate\nwrite-set: tools/b.py\n"
+            "done-criterion: it goes red then green\nevidence: none yet\n"
+            "blocked-by: NONE\n")
+
+    #: xx-2 starts at `grade: NEW`, distinct from the `grade: READY` promote
+    #: writes into xx-1 — a mis-write into xx-2 is otherwise indistinguishable
+    #: from its own starting value, which is why the park fixture's shared
+    #: `grade: READY` shape would not discriminate here.
+    PROMOTE = ["item", "promote", "xx-1", "--by", "the drain desk",
+               "--reason", "lc-63's own red-first arm"]
+
+    def _xx2_slots(self, sep, text):
+        block = text.split(f"##{sep}xx-2", 1)[1]
+        return {ln.split(":", 1)[0]: ln.split(":", 1)[1].strip()
+                for ln in block.split("\n") if ":" in ln and not ln.startswith("#")}
+
+    def test_a_tab_headed_NEIGHBOUR_is_not_re_graded_by_promote(self):
+        """THE DEFECT. Red demonstrated separately against a private clone
+        of 66bd2af (pre-lc-40-fix, self-check green first via the CONTROL
+        arm): the same `item promote xx-1` call wrote `grade: READY` into
+        `xx-2` too, exit 0, no finding. Against the current, fixed
+        `_set_slots` this stays `NEW`."""
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        with refusals._Repo(items=self._carrier(self.PLANT_SEP)) as r:
+            here = os.getcwd()
+            try:
+                os.chdir(str(r.dir))
+                with redirect_stdout(io.StringIO()):
+                    code = cli_mod.main(["--repo", str(r.dir)] + self.PROMOTE)
+            finally:
+                os.chdir(here)
+            self.assertEqual(code, exits.CLEAN)
+            slots = self._xx2_slots(
+                self.PLANT_SEP,
+                (r.dir / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual(slots["grade"], "NEW",
+                         "xx-2 was re-graded by a promote that named xx-1")
+
+    def test_the_named_block_IS_still_promoted(self):
+        """The must-move half. Without it a build that refused to write
+        anything would pass the test above and prove nothing."""
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        with refusals._Repo(items=self._carrier(self.PLANT_SEP)) as r:
+            here = os.getcwd()
+            try:
+                os.chdir(str(r.dir))
+                with redirect_stdout(io.StringIO()):
+                    code = cli_mod.main(["--repo", str(r.dir)] + self.PROMOTE)
+            finally:
+                os.chdir(here)
+            self.assertEqual(code, exits.CLEAN)
+            text = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        first = text.split("## xx-1", 1)[1].split("\n##", 1)[0]
+        self.assertIn("grade: READY", first)
+
+
 class HeadingPredicatesAreDeliberatelyDifferent(unittest.TestCase):
     """The two heading questions `grammar` keeps apart, and the input that
     separates them — so a later edit collapsing them fails here rather than
