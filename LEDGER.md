@@ -85,6 +85,7 @@ decision: what landed in wave A of the lifecycle drain, and under which shas →
 decision: did the desk's specified design for lc-55's answered case survive measurement → NO. 'Write no blocker-moot line' holds only for a BASE-slot blocker; an amended-blocked-by line survives the close and left the answered blocker undischarged in the done home. The lane diverged with evidence; da727f6 adds a third record form. Detail in lc-55's closure body.
 decision: should lc-55's ANSWERED body record carry the answer text and the ledger line number → NO. A line number in a body slot pins a coordinate into a live append-only file (the pointer-rot class this repo pins blobs for), and the answer text would be a second home for a fact the ledger holds, against invariant 3. The record names THAT it was answered.
 decision: why does e66cb93 exist, when no item asked for it → Closing lc-22 reddened the battery: two ItemSlotsOverTheRealCarrier arms pinned live idents (lc-22, lc-7) in ITEMS.md, so a legitimate close raised StopIteration. The verb is correct; the anchors were not. Both re-anchored to a property, no-subject as a named skip.
+decision: was the basis on which lc-22 was held sound → NO, recorded wrong rather than dropped. The claim that no fixture placed the marker mid-line was refuted at failures=4: the predicate reads the LINE and the slot rendering already prefixed it. The desk's confirmation had reproduced the original framing, not tested it. Real defect: one control.
 
 ## Archive (pre-migration)
 
