@@ -723,15 +723,6 @@ done-criterion: the question is decided and the declaration matches the decision
 evidence: VERIFIED AT SOURCE 2026-09-13 at the statiker desk, independent of both desks: .claude/lifecycle.json:290 declares home=plugin/skills; workflows.py:6,55,138 resolves plugin/workflows/ as the registry; plugin/skills has NO functional referent anywhere in plugin/cli/ — zero hits, with the adjacent plugin/workflows hits from the same sweep proving the instrument reaches that subtree, so the zero is an absence and not a dead pattern; both directories exist on disk
 blocked-by: decision is workflow-templates home=plugin/skills intentional or a defect?
 
-## lc-129
-grade: READY
-requirement: item repair --shape: mechanically join wrapped slot values to one line and move amendment lines below the fixed slots; missing slots, unknown slots, and closed-still-blocked bodies are LISTED never invented. Design + transition table: docs/directives/drain-kickoff-2026-09-15.md section D2. Real fixtures named there: dotfiles ITEMS-DONE.md df-196 (wrapped + misplaced amendment), df-184/185/194/195 (missing blocked-by)
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,tools/prove-rows.py
-done-criterion: red-first per directive D2 table: df-196-copy round-trip preserves word multiset modulo joins with conservation identity unchanged; amendment repositioned; df-184-class judgment findings listed with the file byte-identical; commits or prints NOT COMMITTED per the lc-41 ruling (LEDGER.md:71)
-evidence: dotfiles ITEMS-DONE.md 2026-09-15: 15 wrapped-value findings in one block, 4 blocks missing blocked-by, 4 closed-still-blocked
-blocked-by: NONE
-
 ## lc-130
 grade: READY
 requirement: mint-time predicate lint: item add and item park refuse an evidence blocker whose predicate fails sh -n or exits >=2 on one probe run, predicate quoted in the refusal — kills the prose-as-predicate class at the pit of success (dotfiles df-237: prose predicate booked, item surfaced only as BROKEN at read time). Design + transition table: docs/directives/drain-kickoff-2026-09-15.md section D3. No new execution risk: blockers already execute on every item ready pass
