@@ -775,6 +775,24 @@ MUTATIONS = [
      "the FINDING answer for a lane body the declaration does not list — "
      "folded into could-not-verify, so the direction of the registration "
      "invariant that nothing watched reads as a shrug instead of a state"),
+
+    # lc-142. THE COUNT'S OWN TEST, not the `from_count = sum(…)` line above
+    # it and not the message below it. Folding the SUM would leave
+    # `from_count` undefined and the arm would raise, which proves the branch
+    # is reached and never that the row discriminates; anchoring the message
+    # would grade the printing rather than the decision. `if from_count > 1:`
+    # is the single place this refusal is decided, and with it folded the two
+    # arms become BYTE-IDENTICAL invocations — argparse discards the first
+    # `--from`, so `--from X --from X` and `--from X` reach `cmd_migrate` as
+    # the same run. That is what makes the darkening attributable to the
+    # repeated token and to nothing else, and it is the property the row's own
+    # fire/control pair was built around.
+    ("migrate_repeated_from", "cli.py",
+     "        if from_count > 1:",
+     "        if False:",
+     "the repeated-`--from` count's own test — a caller then names two "
+     "sources in one invocation, argparse keeps the second alone, and the "
+     "run reports a migration from a carrier it never opened"),
 ]
 
 
