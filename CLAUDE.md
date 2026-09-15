@@ -313,7 +313,13 @@ CODE watches are derived from the source. A row whose text names an effect
 WIDER than its routes fails, even though its plant and control both pass:
 `dangling_reference` said "typed reference" while the resolver reached
 `lane:` alone, so five of the six types could point at nothing and the roster
-stayed green. A green row and a covered refusal are different claims, and the
+stayed green. **THE MIRROR FAILS TOO, since lc-30**: a row whose text is
+NARROWER than what the code routes through it fires
+`FINDING [route_set_unnamed]`, where it once printed a note and contributed
+CLEAN. The two are separate refusals with OPPOSITE repairs — widen the code
+versus widen the text — and they are deliberately not one row with two
+firing inputs, because an operator told only "these disagree" cannot tell
+which repair is owed. A green row and a covered refusal are different claims, and the
 two sides of this comparison are read independently or it compares a claim
 against itself.
 
@@ -341,6 +347,23 @@ branch, so a mutation there darkens both. The assertion is therefore "the
 named row changed, and every row that changed proves the SAME refusal",
 with the family derived from the roster's own mapping rather than listed
 here. For a row with no sibling it is bit-for-bit the old "exactly one".
+
+**ADDING A ROW CAN RETIRE A NEIGHBOUR'S PROOF, and only prove-rows says
+so** (lc-30, 2026-09-15, measured not predicted). Where a check emits
+SEVERAL findings off ONE comparison, a mutation on the COMPARISON proves
+none of them. `route_set_unwatched`'s recorded mutation was
+`full = set(row.route_set)` → `full = set(watched)`, a correct proof while
+the mirror direction was only a NOTE; the moment lc-30 made that mirror a
+FINDING, the same mutation emptied BOTH difference sets and darkened two
+rows proving two different refusals — prove-rows answered
+`[route_set_unwatched] FAILED … This mutation removed adjacent machinery,
+so it proves nothing about any one row`, exit 2. The repair is not a
+fallback but SCOPING: each direction takes the same-parentage mutation
+narrowed to itself, leaving the other direction reading real input. So a
+new row whose verdict is computed from an expression an EXISTING
+arrangement mutates RE-CHECKS that arrangement before anyone claims
+prove-rows green — the existing row's FIRING is untouched either way, and
+it is its PROOF that silently retires.
 
 **The verdict it compares is the exit code AND the row name in the output.**
 Codes alone do not discriminate here: every finding is a `2`, so a guard
