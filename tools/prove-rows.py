@@ -218,6 +218,22 @@ MUTATIONS = [
      "    if False:",
      "the comparison between the two declared closure homes"),
 
+    # THE ANCHOR IS THE REFUSAL'S OWN BRANCH, never the predicate under it.
+    # `_CARRIED_POINTER` and `_carried_pointer_lines` are read by a SECOND
+    # caller — the corpus over-fire arm asks the helper directly, over prose
+    # that is not a carrier at all — so a mutation there would remove
+    # machinery this row does not name and darken a neighbour's question
+    # along with it. `if clauses:` is the single place the FINDING is
+    # decided; `if False:` folds it into the close that files the clause,
+    # which is precisely the defect lc-22 was found by.
+    ("close_carries_pointer", "verbs.py",
+     "        if clauses:",
+     "        if False:",
+     "the refusal's own verdict on a body that declares a forward-carrier "
+     "clause — the move then files that body in the closure home, where the "
+     "obligation the clause declares reads as discharged because its carrier "
+     "is filed as discharged"),
+
     # --- ASSIGNED ITEM C: the stage 1-3 rows, which passed their plant and
     # control pair but had never been shown to go dark. Each mutation below
     # folds one VERDICT into another rather than removing machinery: a
