@@ -699,6 +699,19 @@ blocked-by: NONE
 EMPTY_ITEMS = "schema: 2\nbaseline: 0\nadded: 0\ncompacted: 0\n"
 EMPTY_DONE = "schema: 2\n"
 
+#: THE SAME CARRIER WITH A SECOND BODY, built the way the `duplicate_id` row
+#: already builds one: the seed block under another id, with `baseline` raised
+#: so conservation balances. DERIVED from `SEED_ITEMS` rather than written out
+#: again — a second copy of the block would be a second body for one fixture,
+#: free to drift from the first the day either is edited.
+#:
+#: Its consumer is a control that must leave a kind HOLDING something after
+#: its exit has fired (`_retire_growth`): with one body, compacting it empties
+#: the home and the control passes for having nothing to check.
+TWO_SEED_ITEMS = (
+    SEED_ITEMS.replace("baseline: 1", "baseline: 2", 1).rstrip("\n") + "\n\n"
+    + SEED_ITEMS.split("\n\n", 1)[1].replace("## xx-1", "## xx-2", 1))
+
 
 def _blocked_block(ident: str, grade: str, blocker: str) -> str:
     return (f"\n{grammar.render_heading(ident)}\ngrade: {grade}\n"
@@ -2407,22 +2420,41 @@ def _retire_growth(*, closed: bool) -> Fired:
     exited FINDING and the pair separated nothing. The repair is the control
     becoming what it always claimed to be — a repo where every declared exit
     has actually fired — and not a narrower question for the row.
+
+    TWO BODIES, AND ONLY ONE OF THEM COMPACTED, because a control that
+    compacts its only body leaves the `done bodies` home EMPTY and then passes
+    through the nothing-to-check branch — clean for the reason a control must
+    never be clean for, and indistinguishable from a working one forever.
+    With two, the kind still HOLDS an instance and its exit has FIRED, which
+    is the state the row asserts is not a finding. The arms differ in the
+    exits having run and in nothing else: both carry the same two-body
+    carrier.
+
+    THE SETUP IS CHECKED RATHER THAN ASSUMED. Each verb's exit code is read,
+    and a setup that did not run answers SETUP FAILED instead of handing the
+    walk a repo whose state nobody established — a compaction that silently
+    refused would otherwise leave the kind holding bodies with no event and
+    fire the very finding this arm exists to be quiet about.
     """
     import io
     from contextlib import redirect_stdout
     from . import cli as cli_mod
     from . import retire as retire_mod
 
-    with _Repo(items=SEED_ITEMS) as r:
+    with _Repo(items=TWO_SEED_ITEMS) as r:
         here = os.getcwd()
         try:
             os.chdir(str(r.dir))
             if closed:
-                with redirect_stdout(io.StringIO()):
-                    cli_mod.main(["--repo", str(r.dir), "item", "close",
-                                  "xx-1"])
-                    cli_mod.main(["--repo", str(r.dir), "item", "compact",
-                                  "xx-1"])
+                for argv in (["item", "close", "xx-1"],
+                             ["item", "close", "xx-2"],
+                             ["item", "compact", "xx-1"]):
+                    buf = io.StringIO()
+                    with redirect_stdout(buf):
+                        rc = cli_mod.main(["--repo", str(r.dir)] + argv)
+                    if rc != exits.CLEAN:
+                        return Fired(-1, f"SETUP FAILED: {' '.join(argv)} "
+                                         f"exited {rc}\n{buf.getvalue()[-600:]}")
             buf = []
             code = retire_mod.growth_verdict(r.dir, GOOD_FULL_DECLARATION,
                                              buf.append)
