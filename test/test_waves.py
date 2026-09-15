@@ -540,5 +540,87 @@ class AVenueIsALegalValueNotADefect(WavesBase):
         self.assertIn("trailing slash", text.lower())
 
 
+class TheVERDICTSentenceIsTrueOfWhatItCounts(WavesBase):
+    """The report's own words about the population it excludes.
+
+    FOUR BUCKETS SIT OUTSIDE THE LANES FOR TWO DIFFERENT REASONS. The join
+    COULD NOT READ a missing slot or a prose one — that is a reading
+    failure and it routes to "somebody rewrite the slot". It read a venue
+    and a `<path>@<repo>` boundary perfectly well; those name no file HERE,
+    which routes to nothing at all because there is nothing wrong with
+    them. Both stay out of the lanes and both count toward the exit
+    contract — an item that is not in the plan is not in the plan. What
+    they must not share is the SENTENCE.
+
+    Saying the join "could not read" `decision:who-seeds-greenfield-
+    carriers` is an assurance WIDER than the predicate establishes: the
+    join reads it fine, and lc-125 exists to say so. The same sentence was
+    already false of `<path>@<repo>`, which this report has been calling
+    unreadable since lc-123 — so the overclaim has two instances, and the
+    venue bucket is what made the older one visible.
+    """
+
+    def test_a_venue_is_NOT_counted_as_a_reading_failure(self):
+        blocks = [block("xx-1", "tools/alpha.py"),
+                  block("xx-2", "tools/beta.py,decision:who-seeds-this")]
+        with self._repo(blocks) as r:
+            code, out = self._waves(r)
+            self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+            verdict = [l for l in out.splitlines()
+                       if l.startswith("item waves: COULD NOT VERIFY")]
+            # Exactly one, else the assertion cannot say which line it graded.
+            self.assertEqual(len(verdict), 1, out)
+            self.assertIn("0 with a write-set this join could not read",
+                          verdict[0])
+            self.assertIn("1 whose write-set it read", verdict[0])
+
+    def test_a_foreign_boundary_is_NOT_counted_as_a_reading_failure(self):
+        """The instance that predates lc-125: `<path>@<repo>` is this
+        carrier's own declared foreign form, not an unreadable slot."""
+        blocks = [block("xx-1", "tools/alpha.py"),
+                  block("xx-2", "docs/design.md@cache-fix")]
+        with self._repo(blocks) as r:
+            _code, out = self._waves(r)
+            verdict = [l for l in out.splitlines()
+                       if l.startswith("item waves: COULD NOT VERIFY")]
+            self.assertEqual(len(verdict), 1, out)
+            self.assertIn("0 with a write-set this join could not read",
+                          verdict[0])
+            self.assertIn("1 whose write-set it read", verdict[0])
+
+    def test_PROSE_really_IS_counted_as_a_reading_failure(self):
+        """THE MUST-NOT-MOVE HALF. Without it, a verb that called every
+        excluded item "read fine" would pass the two arms above — and prose
+        genuinely is the case where the join could not read the slot."""
+        blocks = [block("xx-1", "tools/alpha.py"),
+                  block("xx-2", "plugin (the parser bits) + battery")]
+        with self._repo(blocks) as r:
+            _code, out = self._waves(r)
+            verdict = [l for l in out.splitlines()
+                       if l.startswith("item waves: COULD NOT VERIFY")]
+            self.assertEqual(len(verdict), 1, out)
+            self.assertIn("1 with a write-set this join could not read",
+                          verdict[0])
+            self.assertIn("0 whose write-set it read", verdict[0])
+
+    def test_the_NOT_CLUSTERED_header_gives_BOTH_reasons(self):
+        with self._repo([block("xx-1", "tools/alpha.py")]) as r:
+            _code, out = self._waves(r)
+            header = [l for l in out.splitlines()
+                      if l.startswith("NOT CLUSTERED")]
+            self.assertEqual(len(header), 1, out)
+            self.assertIn("COULD NOT READ", header[0])
+            self.assertIn("NO FILE HERE", header[0])
+
+    def test_the_two_reasons_PARTITION_the_non_lane_buckets(self):
+        """Derived, so the sentence cannot drift from the run it describes:
+        every non-lane bucket is in exactly one reason, and the report order
+        is unchanged."""
+        self.assertEqual(items.WAVE_UNREADABLE + items.WAVE_NOT_A_FILE_HERE,
+                         items.WAVE_NON_PATH)
+        self.assertFalse(set(items.WAVE_UNREADABLE)
+                         & set(items.WAVE_NOT_A_FILE_HERE))
+
+
 if __name__ == "__main__":
     unittest.main()

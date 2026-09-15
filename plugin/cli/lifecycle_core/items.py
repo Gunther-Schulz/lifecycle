@@ -2026,10 +2026,28 @@ WAVE_PROSE = "prose"
 WAVE_VENUE = "venue"
 WAVE_FOREIGN = "other-repo"
 
-#: The non-lane buckets, in report order. A RUN rather than four literals at
-#: the print site, so the report cannot quietly print only the ones that
-#: happen to be non-empty.
-WAVE_NON_PATH = (WAVE_UNSET, WAVE_PROSE, WAVE_VENUE, WAVE_FOREIGN)
+#: WHY a bucket sits outside the lanes — two reasons, not one, and they route
+#: to different repairs. The join COULD NOT READ a missing slot or a prose
+#: one: a reading failure, repaired by somebody rewriting the slot. It read a
+#: venue and a `<path>@<repo>` boundary perfectly well; those name NO FILE
+#: HERE, which is repaired by nothing, because nothing is wrong with them.
+#:
+#: BOTH still count toward the exit contract — an item that is not in the plan
+#: is not in the plan, whatever the reason — so this split changes the
+#: SENTENCE and never the code. Saying the join "could not read"
+#: `decision:who-seeds-greenfield-carriers` is an assurance wider than the
+#: predicate establishes: it reads it fine, and lc-125 exists to say so. The
+#: same sentence was already false of `<path>@<repo>`, which this report had
+#: called unreadable since lc-123 — the venue bucket is what made the older
+#: instance visible.
+WAVE_UNREADABLE = (WAVE_UNSET, WAVE_PROSE)
+WAVE_NOT_A_FILE_HERE = (WAVE_VENUE, WAVE_FOREIGN)
+
+#: The non-lane buckets, in report order. COMPOSED from the two reasons rather
+#: than listed again, so a bucket cannot belong to a reason and be missing
+#: from the report — or sit in the report under no reason at all, which is how
+#: the sentence above came to describe a population it no longer matched.
+WAVE_NON_PATH = WAVE_UNREADABLE + WAVE_NOT_A_FILE_HERE
 
 #: A repo-relative path ENTRY. Deliberately narrow: a space, a parenthesis, a
 #: semicolon or a colon means the author wrote prose or a VENUE
@@ -2445,16 +2463,22 @@ def report_waves(schedulable, out, *, ready_n, live_n, excluded,
                     f"vs group ({gb}) {', '.join(side_b)}")
 
     out("")
-    out("NOT CLUSTERED — a write-set that cannot be read as this repo's paths "
-        "is never put in a lane, because a join over a slot nobody could read "
-        "would read exactly like one over a slot that was read:")
+    out("NOT CLUSTERED — for TWO reasons, kept apart because they route to "
+        "different repairs. A write-set the join COULD NOT READ as this "
+        "repo's paths is never put in a lane, because a join over a slot "
+        "nobody could read would read exactly like one over a slot that was "
+        "read. A write-set it read perfectly well that names NO FILE HERE — a "
+        "venue, another repo's boundary — has nothing to cluster and needs no "
+        "repair at all:")
     for key in WAVE_NON_PATH:
         hits = buckets[key]
         out(f"  {key}: {len(hits)}" + (" — none" if not hits else ""))
         for ident, why in hits:
             out(f"      {ident}: {why}")
 
-    unread = sum(len(buckets[k]) for k in WAVE_NON_PATH)
+    unreadable = sum(len(buckets[k]) for k in WAVE_UNREADABLE)
+    elsewhere = sum(len(buckets[k]) for k in WAVE_NOT_A_FILE_HERE)
+    unread = unreadable + elsewhere
     out("")
     out("NO SIZING, NO TIER, NO ORDER: this verb computes the join and stops. "
         "How many lanes one dispatch carries, which tier each takes and what "
@@ -2462,8 +2486,10 @@ def report_waves(schedulable, out, *, ready_n, live_n, excluded,
         "crossover is not.")
     if unread:
         out(f"item waves: COULD NOT VERIFY — {unread} of "
-            f"{len(schedulable)} schedulable item(s) have a write-set this "
-            "join could not read, so the lanes above are a plan over "
+            f"{len(schedulable)} schedulable item(s) are outside the lanes: "
+            f"{unreadable} with a write-set this join could not read, and "
+            f"{elsewhere} whose write-set it read and which name no file in "
+            "this repo. Either way the lanes above are a plan over "
             f"{len(rows)} item(s) and NOT the whole schedulable set.")
         return exits.COULD_NOT_VERIFY
     out(f"item waves: CLEAN — every one of the {len(rows)} schedulable "
