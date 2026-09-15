@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 124
+added: 125
 compacted: 0
 
 ## lc-3
@@ -784,4 +784,13 @@ goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/items.py,test/test_item_check_staged.py
 done-criterion: item check --staged renders COULD NOT VERIFY through out() like every other verb in this repo, exit code unchanged at 3; red-first by asserting the message on STDOUT against the current build, which writes it to stderr — an assertion FAILURE, not an error. The existing AStagedDeletionIsNotClean arm and the newly-introduced-could-not-verify arm both keep their subjects; only the stream moves. One home for the message, never both streams
 evidence: desk measurement 2026-09-15 over the package: out() 104, stderr 2, other 41 (the 'other' bucket is docstrings and the _WORDS table, not emit sites). The two stderr instances are refusals.py:211 and retire.py:355. Existing instances fix the idiom — the repo's own law, and the WHAT-SHAPE axis of fix placement. NOT urgent: the exit code already discriminates correctly, so no caller reading the code is misled today; this is an idiom repair, not a correctness one
+blocked-by: NONE
+
+## lc-133
+grade: READY
+requirement: tools/prove-rows.py RESTORE IS NOT CRASH-SAFE: it mutates a core file, runs the roster, and restores by file copy at the END of each arm — so a run interrupted mid-arm (SIGKILL, a harness timeout, an operator Ctrl-C) leaves the injected mutation LIVE in the tree with no marker that it did. Demonstrated at the drain desk 2026-09-15: the desk ran the tool on the LIVE shared checkout, killed it mid-arm, and left a one-line mutation standing in plugin/cli/lifecycle_core/migrate.py (duplicate_bodies, the known.get lookup replaced by None); found only by sha256-ing all 64 tracked files against their HEAD blobs. SHARPER than the known run-it-in-a-private-copy hazard: a lane that obeys the venue rule and is then interrupted still leaves a mutated tree, so the venue rule is load-bearing rather than merely tidy — record: lc-128 lane closing analysis plus desk incident, 2026-09-15
+goal: lean-machinery-strict-checks
+write-set: tools/prove-rows.py
+done-criterion: prove-rows REFUSES to start when any file it would mutate already differs from HEAD, naming the file and the difference; and it restores under try/finally so an ordinary exception cannot leak a mutation. Red-first BOTH ways: (1) plant a divergence in a mutation target and show the refusal fires under the finding code — an assertion FAILURE, not an error; (2) raise inside an arm and show the file equals its HEAD blob afterwards, which the current build fails. The refusal compares sha, never grep: a grep for the mutated form over migrate.py returns 1 LEGITIMATE HEAD hit at line 1549, so the obvious check reads as a false positive and only the sha comparison against the committed blob is authoritative
+evidence: The startup refusal is the load-bearing half and the one that survives SIGKILL, which try/finally does not: it turns BOTH hazards into one computable predicate — a co-writer's uncommitted work in a mutation target, and residue from a crashed earlier run — without needing to know whether the checkout is shared, which is not computable. Desk measurement: the killed run's residue was a single line in migrate.py, tree otherwise clean; restored from the committed blob (never git checkout --), sha256-verified equal at 0c9f1ef5a92f8b1c. A parallel lane independently confirmed the battery DISCRIMINATES that exact mutation (failures=6, errors=0), so the residue was detectable — just not by anything that was looking
 blocked-by: NONE
