@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 143
+added: 144
 compacted: 0
 
 ## lc-3
@@ -717,4 +717,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/retire.py,test/test_retire.py
 done-criterion: list_home distinguishes THREE answers where it now gives two: resolved-and-counted, resolved-and-empty, and COULD NOT RESOLVE — the third never reports CLEAN and never contributes a count of 0. A home is resolved against its own root rather than the repo: environment variables expanded with their XDG defaults (the live env has XDG_STATE_HOME EMPTY, so bare expansion yields /lifecycle/... and is NOT sufficient — the default $HOME/.local/state is what makes it resolve), `~` expanded, and a home carrying <placeholder> segments read as a pattern or refused at declaration time. Proven by a PAIR on each member: the fire-log kind reports a NON-zero count on a machine where the log exists, and reports COULD NOT VERIFY — not CLEAN — when the path is absent. The mutation that reds the arm must be an assertion FAILURE, read off the failures=/errors= split.
 evidence: Desk integration verification of wave 3 at db50df2, live tree, read-only audit run. Contradiction inside ONE report is what surfaced it: the audit header reads `exit events read from the fire log: 2 record(s) for this repo` — so read_fire_log resolves the path — while the fire-log KIND in the same walk reports its home `is not present`. read_fire_log is the existing instance the repair reuses; list_home is the site that does not.
+blocked-by: NONE
+
+## lc-152
+grade: READY
+requirement: LAW 24 IS AN ENUMERATION AT THE WRONG ALTITUDE and it has grown twice by counting cases the last wording missed: first `refusals need refusals.py`, then `a new verb has FOUR realizing surfaces`. Six realization-surface instances surfaced in wave 3 alone, and the lc-148/lc-145 lane reported a FIFTH surface in its closing report. A rule that needs another round every time a lane finds a surface nobody enumerated is stated as an or-list where it should be stated as a predicate.
+goal: lean-machinery-strict-checks
+write-set: CLAUDE.md
+done-criterion: Law 24 reads as a PREDICATE with the surfaces demoted to worked examples: a write boundary of named paths is complete only once each commissioned change is resolved to the file that REALIZES it. The predicate is QUOTED from the dispatch skill's realization-surfaces sentence rather than re-minted here, and the law says it is that rule instantiated for this repo — so the two cannot drift as two bodies for one fact. The four known surfaces (body verbs.py, wiring cli.py, slot vocabulary items.py, refusal refusals.py) survive as EXAMPLES beneath it, not as the rule. AND THE FIFTH SURFACE STAYS OUT: `which arrangement grades this predicate` is read-or-execute overlap, which is lc-139's instrument-coupling class, and folding it in would make one sentence answer two questions. The law may point at that class as adjacent; it may not absorb it. Checked by reading the rendered law, and by the journal basis (J20, J22, J25) still resolving.
+evidence: Ruled by dotfiles-89, the judgment desk this drain runs under, on the wave-3 digest, in answer to this desk's own question — execution is this desk's and no round trip is owed. Its grounding: the predicate already exists in the dispatch skill, so this is an instantiation rather than a mint, and the trigger-too-narrow clause says abstract upward rather than grow an or-list. The fifth-surface caution is the desk's too and is the reason lc-139 stays a separate item.
 blocked-by: NONE
