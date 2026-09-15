@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 133
+added: 134
 compacted: 0
 
 ## lc-3
@@ -811,3 +811,12 @@ write-set: CLAUDE.md,JOURNAL.md
 done-criterion: The repo laws carry the two-instrument rule with its journal pointer, per this repo's own standard that a law without a journal pointer has no basis. RULE TEXT, designed here so it is not re-derived: an item is read for its CURRENT truth by item slots <id>, which resolves amendments; the RAW block is read when the amendment HISTORY is what is wanted, because item slots drops amend-reason lines and those carry the why — measured on lc-47, whose deadlock-dissolution reasoning lives only in an amend-reason. A hand-rolled slice of ITEMS.md is neither and is refused as a reading method. Done when the law is in CLAUDE.md with its JOURNAL entry, and the JOURNAL entry carries the incident below. NOT a checker: no computable predicate distinguishes a hand-rolled read from any other file read, so this is prose-rest and says so — mechanizing it would need a guard over how a session reads a file, which does not exist.
 evidence: Measured in operation 2026-09-15, drain wave 1, desk dotfiles-f1. The desk composed lane briefs from a hand-rolled block extractor truncating at ~1600 chars; the four item bodies involved run to 2253 (lc-51), 2785 (lc-132), 3242 (lc-133) and 3423 (lc-30) chars. Three Background passages shipped stale: lc-132 cited two stderr sites both false against an amendment naming the real single site, lc-133 commissioned a red for a try/finally half already in live code, lc-30 commissioned a red on a live instance already repaired. Lane A and lane B each returned one in their critique pass and built against the item bodies correctly; the desk then swept all eleven wave and held items and found no fourth live instance. VERIFIED AT THE ARTIFACT, and it refuted the desk's first framing: the desk was about to book this as a MISSING verb, ran item slots lc-132 before claiming the absence, and found the verb exists AND had already resolved the amendment — its evidence line printed the corrected text, not the original. So the gap is discoverability and discipline, not capability, and the booking changed shape before it was written.
 blocked-by: NONE
+
+## lc-142
+grade: READY
+requirement: The migrate_repeated_from roster row ships with no recorded mutation arrangement in tools/prove-rows.py, so it is proven at --test level by its own fire/control pair and NOT proven red-first by a mutation. It joins the rows-with-no-recorded-mutation list the tool prints at the end of every run — the tool being honest, not the row being fine. Record: opus-lc31-roster critique pass, 2026-09-15.
+goal: every-refusal-red-first
+write-set: tools/prove-rows.py
+done-criterion: migrate_repeated_from carries a recorded mutation arrangement in tools/prove-rows.py and prove-rows asserts the pair the tool already demands: the named row goes dark under the mutation, and nothing proving another refusal goes dark with it. Red-first: with the arrangement recorded and its named condition disabled, prove-rows reports THIS row's verdict changing — an assertion FAILURE at the defect, not an error. MUST-NOT-MOVE: prove-rows stays exit 0 over every arrangement already recorded, and the rows-with-no-recorded-mutation list shrinks by exactly this one row and no other. The anchor must be written against lc-51's LINE-EXACT matcher, not the substring matcher it replaces.
+evidence: Surfaced by the opus-lc31-roster lane's critique pass 2026-09-15, flagged rather than bridged: its write boundary is refusals.py alone while the recorded mutations live in tools/prove-rows.py, which lane B holds this wave (verified at the artifact: prove-rows.py reads ' M' in the shared tree, another lane's uncommitted work). The row's own fire/control pair still runs under lifecycle --test, so this is a gap in RED-FIRST proof, not in the refusal's correctness. Same class as lc-51's two rows (blocker_unstorable, closed_ref_unresolvable), which that item closes this wave; this is the third member, created BY this wave rather than inherited, which is why it is booked rather than folded into lc-51's fixed criterion.
+blocked-by: lc-51
