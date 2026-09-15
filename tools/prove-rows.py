@@ -765,6 +765,21 @@ MUTATIONS = [
      "no commit is written into the closure record and reads exactly like a "
      "good one"),
 
+    # THE GUARD, NOT THE DETECTION. `pinned_body` still runs and `detail` is
+    # still computed — removing either would raise rather than answer, and an
+    # arm that RAISES proves the code is new. Disabling only the branch that
+    # ACTS on `detail` leaves the verb walking the same path and reaching the
+    # compaction it should have refused: the body leaves the carrier while the
+    # blob pin does not carry it, which is the silent strip this row exists to
+    # refuse. Anchor is a whole-line run and unique in retire.py (1 line-exact
+    # hit, 1 raw substring), so a deeper-indented twin cannot retire it.
+    ("compaction_would_strip", "retire.py",
+     "        if detail is not None:",
+     "        if False:",
+     "the guard that refuses to compact a body the blob pin does not carry — "
+     "disabled, the verb strips the body out of the carrier and the text is "
+     "recoverable from nowhere"),
+
     ("lane_undeclared", "declaration.py",
      '        res.add("lane_undeclared",\n'
      '                f"{lanes_mod.LANES_DIR}/{name}.md is a lane body and '
