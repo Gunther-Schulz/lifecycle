@@ -687,15 +687,6 @@ done-criterion: a slot line after a wrapped value is credited (red case: the df-
 evidence: dotfiles ITEMS-DONE.md df-196 block (live reproduction), item check output 2026-09-13; the HEAD-symbol close and its hand repair 40f7d3a
 blocked-by: NONE
 
-## lc-125
-grade: READY
-requirement: The write-set grammar accepts VENUES beside paths (--write-set help: comma-separated paths/venues) but item waves' four-bucket taxonomy has no venue key, so a legal venue entry (decision:who-seeds-greenfield-carriers in lc-23, lc-32) is bucketed as prose — a legal value wearing a defect's label. And directory-ness is read from a trailing slash only, a slot convention stated nowhere a slot author sees it — record: lc-123 closing report part 3/4, gaps (c)2 and (c)3, 2026-09-13
-goal: lean-machinery-strict-checks
-write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_waves.py
-done-criterion: Fifth bucket 'venue' keyed on the <word>:<rest> shape, with its own count and explicit zero; lc-23/lc-32's entries route there in a live run and the prose bucket no longer holds them; the --write-set help text gains the trailing-slash directory convention sentence so the convention lives where slot authors read; tests for the venue routing and a mutation red for the bucket
-evidence: VERIFIED AT THIS DESK: the live waves run at this desk shows lc-23 and lc-32 in the prose bucket with the decision: entries quoted; the grammar's paths/venues wording read in item add --help this session
-blocked-by: NONE
-
 ## lc-126
 grade: READY
 requirement: The amendment supersession rule is pinned only against cases where FILE ORDER and DATE ORDER agree, so the arms cannot tell 'last line in the file wins' from 'latest date wins'. lc-7's two amended-evidence lines — the discriminator lc-77 shipped with — share the date 2026-09-12, so a stable sort by date preserves file order and last-wins holds under BOTH readings. The two rules diverge only where an amendment carrying an EARLIER date sits LATER in the block, which no item in the carrier exhibits today and which a hand-edited or merged carrier can produce at any time. record: lc-77 closing report slot (e), drain desk 2026-09-13
