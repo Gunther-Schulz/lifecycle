@@ -663,12 +663,32 @@ MUTATIONS = [
     # kills it is the one that makes the derived set answer for the declared
     # one — which is precisely the same-parentage defect this check exists to
     # avoid, and it produces a wrong VERDICT rather than a crash.
+    # SCOPED TO ONE DIRECTION, and it was not always. Until lc-30 this
+    # arrangement read `full = set(row.route_set)` -> `full = set(watched)`,
+    # which is the same-parentage defect stated at its widest. That was a
+    # proof while the stray direction was a NOTE; once the mirror became
+    # `route_set_unnamed`, one mutation emptied BOTH difference sets and
+    # darkened two rows proving two refusals — which this tool's own rule
+    # says proves neither. So each direction now gets the same-parentage
+    # mutation SCOPED TO ITSELF: `full - watched` computed as
+    # `watched - watched` is still the derived set answering for the
+    # declared one, and it leaves the other direction reading real input.
     ("route_set_unwatched", "roster.py",
-     "        full = set(row.route_set)",
-     "        full = set(watched)",
-     "the independence of the two sides — the route set is then computed FROM "
-     "the code it grades, so it moves with the mutant and stays green on "
-     "every narrowing"),
+     "        missing = sorted(full - watched)",
+     "        missing = sorted(watched - watched)",
+     "the independence of the two sides in the UNWATCHED direction — the "
+     "route set is then computed FROM the code it grades, so it moves with "
+     "the mutant and stays green on every narrowing of the code"),
+
+    # The mirror, and NOT `if False:` for the reason stated above: the
+    # finding is a DIFFERENCE, so the mutation that kills it makes one side
+    # answer for the other rather than removing the branch around it.
+    ("route_set_unnamed", "roster.py",
+     "        stray = sorted(watched - full)",
+     "        stray = sorted(full - full)",
+     "the independence of the two sides in the UNNAMED direction — the "
+     "declared route set then answers for the derived one, so a refusal "
+     "catching more than its text says reads exactly like one that does not"),
 
     # ANCHORED ON THE COMPARISON, not on the branch around it — the same
     # choice `migration_ambiguous_closure` makes above and for the same

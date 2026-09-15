@@ -17,11 +17,12 @@ import importlib.util
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "plugin" / "cli"))
 
-from lifecycle_core import exits, refusals  # noqa: E402
+from lifecycle_core import exits, refusals, roster  # noqa: E402
 
 
 def _prove_rows():
@@ -197,6 +198,100 @@ class ProofArrangementsPointAtOnePlace(unittest.TestCase):
             len(mod.anchor_hits(text, anchor)), 0,
             "a line that merely BEGINS with the anchor was accepted — a "
             "prefix match standing in for an equality")
+
+
+class TheRouteComparisonFailsInBothDirections(unittest.TestCase):
+    """lc-30: the stray direction is a FINDING, never a note beside a CLEAN.
+
+    A SECOND INSTRUMENT beside the roster row. `route_set_unnamed`'s own
+    plant runs the whole check over a COPY of the package with one real row
+    narrowed, which is the altitude the check ships at; these arms drive
+    `check_routes` directly over a CONSTRUCTED row, so the two do not share
+    the copy machinery as a blind spot — a copy that failed to mutate
+    returns a green from the row and would leave these arms untouched.
+
+    THE MUST-NOT-MOVE ARMS ARE HERE TOO, and they are the half a
+    fires-on-everything change would pass without them: a row whose text and
+    watched set AGREE must stay silent, and the mirror direction must still
+    fire under its OWN name. Without those, a check that simply returned
+    FINDING would score identically to this one.
+    """
+
+    @staticmethod
+    def _routes(route_set, watched):
+        """`check_routes` over ONE synthetic row, and nothing else.
+
+        The roster is SWAPPED rather than appended to: the arms assert on the
+        row's own entry, and an assertion over a report that also holds the
+        86 real rows would pass on any report containing the grade anywhere.
+        """
+        row = refusals.Row(
+            ident="synthetic_probe",
+            refusal="a constructed row — this arm grades the COMPARISON, "
+                    "never a real refusal",
+            firing_input="not fired here",
+            expect=exits.FINDING,
+            fire=lambda: None,
+            control=lambda: None,
+            route_set=tuple(route_set),
+            routes_watched=lambda: set(watched),
+        )
+        buf = []
+        with mock.patch.object(refusals, "ROWS", [row]):
+            code = roster.check_routes(buf.append)
+        out = "\n".join(buf)
+        assert out.count("    synthetic_probe\n") == 1, (
+            "the arrangement did not reach the row's entry exactly once, so "
+            "no assertion below can say which row it graded:\n" + out)
+        return code, out
+
+    def test_a_route_the_code_watches_and_the_text_omits_is_a_finding(self):
+        code, out = self._routes(("a", "b"), {"a", "b", "c"})
+        self.assertEqual(
+            code, exits.FINDING,
+            "the code watches `c` and the refusal's text does not name it — "
+            "the refusal catches more than it says and this contributed "
+            f"CLEAN until lc-30:\n{out}")
+        self.assertIn("FINDING [route_set_unnamed]", out)
+        self.assertIn("c", out)
+
+    def test_that_finding_does_not_also_print_the_clean_verdict(self):
+        """The negative half: a verdict line contradicting the finding above
+        it is what a reader who stops at the verdict takes away."""
+        _code, out = self._routes(("a", "b"), {"a", "b", "c"})
+        self.assertNotIn(
+            "routes: CLEAN", out,
+            "the row emitted its finding AND printed the clean verdict — the "
+            f"`else` on `missing` is back:\n{out}")
+
+    def test_the_mirror_direction_still_fires_under_its_own_name(self):
+        """MUST NOT MOVE: `route_set_unwatched` is untouched by lc-30."""
+        code, out = self._routes(("a", "b", "c"), {"a", "b"})
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [route_set_unwatched]", out)
+        self.assertNotIn(
+            "FINDING [route_set_unnamed]", out,
+            "a route named by the text and watched by nothing was reported "
+            f"as the MIRROR defect — the two repairs are opposite:\n{out}")
+
+    def test_a_row_whose_text_and_code_agree_stays_silent(self):
+        """MUST NOT MOVE, and the arm that separates this change from one
+        that merely denies more: agreement is CLEAN in both directions."""
+        code, out = self._routes(("a", "b"), {"a", "b"})
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("FINDING [route_set_unnamed]", out)
+        self.assertNotIn("FINDING [route_set_unwatched]", out)
+        self.assertIn("routes: CLEAN", out)
+
+    def test_both_directions_at_once_name_both_rows(self):
+        """Disagreement in both directions is two findings, not one: the
+        repairs differ, so an operator told only "these disagree" cannot
+        tell which is owed."""
+        code, out = self._routes(("a", "x"), {"a", "y"})
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [route_set_unnamed]", out)
+        self.assertIn("FINDING [route_set_unwatched]", out)
+        self.assertNotIn("routes: CLEAN", out)
 
 
 if __name__ == "__main__":

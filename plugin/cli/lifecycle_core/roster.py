@@ -140,6 +140,16 @@ def check_routes(out) -> int:
     correctly on the one route it did watch. A green row is not the same
     claim as a covered refusal.
 
+    THE COMPARISON HAS TWO DIRECTIONS AND BOTH ARE FINDINGS (lc-30). The
+    mirror — the code watching a route the refusal's own TEXT does not
+    name — printed a note here and set no code, so a refusal catching MORE
+    than it says contributed CLEAN and the operator reading the finding got
+    a WRONG CAUSE for their entry. That asymmetry was itself the defect: one
+    difference set is `route_set_unwatched`, the other `route_set_unnamed`,
+    and a note is not a verdict. The two are separate rows rather than one
+    because they have separate REPAIRS — widen the code, or widen the text —
+    and an operator told only "these disagree" cannot tell which is owed.
+
     THE TWO SIDES ARE READ INDEPENDENTLY, which is what makes the comparison
     mean anything. The ROUTE SET is the closed vocabulary the refusal's own
     text names and is read from the DESIGN's side of the code (a declared
@@ -157,7 +167,10 @@ def check_routes(out) -> int:
     out("ROUTE SETS (design §3.8c) — beside its firing input, a row states "
         "the ROUTE SET it watches. A row whose refusal TEXT names an effect "
         "WIDER than its routes fails here, even though its plant and control "
-        "both pass: a green row and a covered refusal are different claims.")
+        "both pass: a green row and a covered refusal are different claims. "
+        "So does the MIRROR: a row whose code watches a route its own text "
+        "does not name catches MORE than it says, and the operator reading "
+        "that finding gets a wrong cause.")
 
     sites = emit_sites()
     declared = [r for r in refusals.ROWS if getattr(r, "route_set", ())]
@@ -181,10 +194,14 @@ def check_routes(out) -> int:
         out(f"        watched   (derived from the SOURCE):        "
             f"{', '.join(sorted(watched)) or '(none)'}")
         if stray:
-            out(f"        note: the code watches {', '.join(stray)}, which the "
-                "route set does not name — the TEXT is narrower than the "
-                "code, which is not this check's failure but is worth "
-                "knowing.")
+            out(f"        FINDING [route_set_unnamed] {len(stray)} route(s) "
+                f"watched by the code and named by nothing in this refusal's "
+                f"TEXT: {', '.join(stray)}. The refusal catches MORE than it "
+                "says, so an entry arriving by one of these is refused under "
+                "a text that does not describe it and the operator gets a "
+                "WRONG CAUSE. The repair is the TEXT's — widen it to what the "
+                "code watches, or split the extra route into its own row.")
+            code = exits.worst([code, exits.FINDING])
         if missing:
             out(f"        FINDING [route_set_unwatched] {len(missing)} route(s) "
                 f"named by this refusal and watched by nothing: "
@@ -193,9 +210,14 @@ def check_routes(out) -> int:
                 "input arriving by an unwatched route returns exactly what a "
                 "clean repo returns.")
             code = exits.worst([code, exits.FINDING])
-        else:
+        # NOT an `else` on `missing`, which is what it was: with the mirror
+        # now a finding, an `else` would print CLEAN over a row whose stray
+        # set is non-empty — the verdict line contradicting the finding two
+        # lines above it, and a reader who stops at the verdict taking the
+        # CLEAN.
+        if not missing and not stray:
             out("        routes: CLEAN — every route the refusal names is "
-                "watched.")
+                "watched, and every route it watches is named.")
 
     out(f"    rows with a declared route set: {len(declared)}")
     out(f"    rows without one: {len(undeclared)} — their route set is their "

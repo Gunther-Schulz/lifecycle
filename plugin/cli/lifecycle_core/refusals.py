@@ -2329,6 +2329,70 @@ def _route_check_over_copy(*, narrow: bool) -> Fired:
         shutil.rmtree(d, ignore_errors=True)
 
 
+def _route_text_check_over_copy(*, narrow: bool) -> Fired:
+    """The MIRROR of `_route_check_over_copy`: the TEXT narrowed, not the code.
+
+    `narrow=True` shortens `schema_above_floor`'s declared ROUTE SET to the
+    three carriers it would name if nobody had noticed the ledger parser also
+    emits the refusal — while the code keeps emitting it from `ledger.py`. So
+    the code watches a route the refusal's own text does not name, which is
+    the state that printed a note and contributed CLEAN until lc-30.
+
+    THE MUTATION IS ON THE OTHER SIDE ON PURPOSE. The sibling row narrows the
+    CODE and leaves the text claiming everything; this one narrows the TEXT
+    and leaves the code watching everything. Between them the two rows pin
+    both directions of one comparison, and neither can be satisfied by a
+    check that simply fires on every row.
+
+    A COPY rather than the live tree, for the reason `_coverage_over_copy`
+    gives: the check's red must not depend on editing the module that is
+    running it. And the mutation lands in the COPY's `refusals.py` rather
+    than in `roster.py`, because the route SET is declared on the design's
+    side — mutating the checker would be grading the check against itself.
+    """
+    d = Path(tempfile.mkdtemp(prefix="lifecycle-route-text-"))
+    try:
+        for f in Path(__file__).resolve().parent.glob("*.py"):
+            shutil.copy2(f, d / f.name)
+        if narrow:
+            target = d / "refusals.py"
+            text = target.read_text(encoding="utf-8")
+            gone = ('        _row.route_set = ("declaration", "items", '
+                    '"done", "ledger")\n')
+            assert gone in text, "the route-set attachment anchor moved"
+            text = text.replace(
+                gone,
+                '        _row.route_set = ("declaration", "items", "done")\n',
+                1)
+            target.write_text(text, encoding="utf-8")
+            # THE MUTATION IS READ BACK before the arm counts either way: a
+            # replace that silently matched nothing returns a green
+            # byte-identical to a real one.
+            back = target.read_text(encoding="utf-8")
+            assert gone not in back, "the route-set narrowing did not land"
+        src = (
+            "import json, sys\n"
+            f"sys.path.insert(0, {str(d.parent)!r})\n"
+            f"sys.path.insert(0, {str(Path(__file__).resolve().parents[1])!r})\n"
+            "import types\n"
+            f"pkg = types.ModuleType('lcopy')\n"
+            f"pkg.__path__ = [{str(d)!r}]\n"
+            "sys.modules['lcopy'] = pkg\n"
+            "from lcopy import roster as r\n"
+            "buf = []\n"
+            "code = r.check_routes(buf.append)\n"
+            "print(json.dumps({'code': code, 'out': '\\n'.join(buf)}))\n"
+        )
+        p = subprocess.run([__import__("sys").executable, "-c", src],
+                           capture_output=True, text=True)
+        if p.returncode != 0:
+            return Fired(-1, f"SETUP FAILED: {p.stderr[-800:]}")
+        rec = json.loads(p.stdout.strip().split("\n")[-1])
+        return Fired(rec["code"], rec["out"])
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def _retire_growth(*, closed: bool) -> Fired:
     """`retire`'s GROWTH question over a scratch repo, with and without a close.
 
@@ -2608,6 +2672,31 @@ SCHEMA_ROWS = [
         # alone, not in whether a copy was scanned.
         control=lambda: _route_check_over_copy(narrow=False),
         stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="route_set_unnamed",
+        refusal="the MIRROR of the row above: a refusal whose CODE watches a "
+                "route its own TEXT does not name. It catches MORE than it "
+                "says, so an entry refused by it is refused under a text that "
+                "does not describe it and the operator gets a WRONG CAUSE. "
+                "Until lc-30 this printed a note and contributed CLEAN",
+        firing_input="`schema_above_floor`'s route set narrowed to "
+                     "`declaration, items, done` while the code still emits "
+                     "the refusal from the ledger parser",
+        expect=exits.FINDING,
+        fire=lambda: _route_text_check_over_copy(narrow=True),
+        # THE SAME COPY with the route set naming every carrier the code
+        # watches: the arms differ in the TEXT's reach alone. A control
+        # differing in anything else — a second row, a different check, the
+        # resolver narrowed as the sibling row narrows it — would be a
+        # control a checker that FIRES ON EVERY ROW also passes, and the pair
+        # would score `return exits.FINDING` identically to the comparison
+        # this row is about. The mirror direction is held fixed by
+        # construction here: narrowing the text can only produce STRAY, never
+        # MISSING, so a red from this arm cannot be the sibling's finding
+        # wearing this row's name.
+        control=lambda: _route_text_check_over_copy(narrow=False),
+        stage="lc-30",
     ),
 ]
 
