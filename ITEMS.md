@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 137
+added: 138
 compacted: 0
 
 ## lc-3
@@ -764,4 +764,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/retire.py,test/test_retire.py
 done-criterion: PERFORMED_EXITS lists 'compact' and the retire walk reports the done-bodies kind honestly. RED-FIRST: today the walk prints NOT CHECKED for that kind while a compaction verb exists and 69 bodies have never been compacted — assert the kind_grew_without_exit finding appears, an assertion FAILURE at the defect. THE AUDIT COUNT MOVING 2 to 3 IS THE POINT, NOT A REGRESSION: a third finding that was always true and unreported is the walk becoming honest. Any arm or baseline pinning 'audit exits 3 with TWO findings' is re-examined one by one against this change, never bulk-updated. MUST-NOT-MOVE: the other two audit findings keep their exact text, and a repo with no done bodies still reports the kind clean rather than firing.
 evidence: Named by the lc-58/lc-47 lane 2026-09-15 while building the compaction verb, as a STOP it declined to push through: 'with the verb in existence, retire.PERFORMED_EXITS could gain compact, which moves the done bodies kind from NOT CHECKED to a live kind_grew_without_exit FINDING here (69 bodies, never compacted) — existing behaviour the brief did not name, so PERFORMED_EXITS stays untouched.' Desk baseline measured the same session: lifecycle audit exits 3 with exactly two findings (kind_grew_without_exit, laws_scope_audit) at the wave-2 base.
+blocked-by: lc-58
+
+## lc-146
+grade: READY
+requirement: cli.py's `_carrier_verb` (around lines 876-903) ends in an UNGUARDED FALLTHROUGH: `return verbs.cmd_item_close(args, out, ctx)`. It is safe today only because the call site's action tuple gates which actions reach it — so an action ADDED to that tuple without its own branch silently runs CLOSE, a destructive two-file MOVE, under another verb's name. The guard is a coincidence of the caller rather than a property of the function, and the next verb added to that carrier is the firing input. Record: opus-lc58-47 lane, reported not touched, 2026-09-15.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/cli.py,test/test_verbs.py
+done-criterion: The fallthrough cannot run CLOSE for an unrecognised action: either every action dispatches from an explicit branch and an unknown one RAISES or returns could-not-verify, or the fallthrough names the single action it serves and refuses anything else. RED-FIRST, and it is constructible without touching the caller: drive _carrier_verb with an action string that is in no branch and assert it does NOT reach cmd_item_close — today it does, as an assertion FAILURE at the defect. MUST-NOT-MOVE: every action that legitimately dispatches today still reaches the same verb, asserted per action rather than in aggregate, since an aggregate arm passes on a refuse-everything build.
+evidence: Found and reported rather than fixed by the lc-58/lc-47 lane 2026-09-15, whose own cli.py change adds a branch ABOVE that line and so would have masked it: 'safe today only because the call site's tuple gates it — an action added to that tuple without its own branch silently runs CLOSE'. The hazard is that the safety lives in the CALLER while the risk lives in the callee, so a future edit to the tuple carries a destructive default nobody reading the tuple would see.
 blocked-by: lc-58
