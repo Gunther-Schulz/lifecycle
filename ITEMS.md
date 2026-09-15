@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 126
+added: 127
 compacted: 0
 
 ## lc-3
@@ -757,4 +757,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py,tools/prove-rows.py
 done-criterion: red-first on a live carrier whose block carries grade DROPPED — today items.check_file returns exit 0 CLEAN with census 'open 0 closed 1 unknown 0'; after, a FINDING naming the block and the grade, as an assertion FAILURE not an error. The DONE case too, since both are closed grades. MUST-NOT-MOVE, and this is what decides shippability: every OPEN grade in the live home still passes, the done home's own open_grade_in_done_home direction is unchanged, and the archive section stays exempt. A recorded mutation in tools/prove-rows.py for the new row, since a row without one ships unproven by that instrument (69 of 84 carry one today)
 evidence: Measured at the desk, not inferred: items.check_file over GOOD_ITEMS with its single grade READY replaced by DROPPED returns exit 0 and prints 'census: open 0  closed 1  unknown 0  (total 1)' — the body is counted as closed while sitting in the LIVE carrier, and no row fires. The asymmetry is in the roster: open_grade_in_done_home exists (refusals.py:2442, emitted items.py:1579) and no live-home counterpart does. Surfaced by lc-29's lane as a SCOPE residual it declined to claim as a defect ('if reachable, this check does not see it'); the desk settled reachability by running it. The interaction with lc-29 is the reason this is worth building rather than noting
+blocked-by: NONE
+
+## lc-135
+grade: READY
+requirement: `item repair --shape` reports its judgment classes in a SECOND VOCABULARY over findings the registry already carries, and nothing checks that the two agree. Measured at the desk on copies of dotfiles' carriers: the verb's JUDGMENT classes map one-to-one onto registered rows — closed-still-blocked -> blocked_in_done_home (4/4), missing-slot and unknown-slot -> item_shape (5/5) — and the verb's listed set equals `item check`'s residual set EXACTLY over bodies (df-151/192/196/210, df-184/185/194/195, df-196), zero unmatched either way. So these are not unregistered findings, which is how the lc-130 lane framed it in its gap 2; they are one fact under two names. The two axes are defensible on their own — a row says WHAT IS WRONG, a JUDGMENT class says WHAT THE VERB DECLINED TO REPAIR AND WHY — but nothing holds them in correspondence, so a row added to the checker with no judgment class, or a class added with no row, drifts silently and the verb's list stops reconciling with the checker's residue. The reconciliation exists today only because a desk ran it by hand — record: lc-129/lc-130 integration, 2026-09-15
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,test/test_repair.py
+done-criterion: a check reconciles `item repair --shape`'s listed set against `item check`'s residual findings over the SAME carrier and fails when they diverge — every listed body still a finding, every residual finding listed, over bodies rather than counts (equal counts are not agreement; today's hand run proved identity because it compared identities). Red-first BOTH ways as assertion FAILURES: add a judgment class with no corresponding row and the check goes red; silence a row the verb lists and it goes red. MUST-NOT-MOVE: the two vocabularies stay separate — this pins their CORRESPONDENCE, it does not merge them, since a row and a judgment class answer different questions
+evidence: Desk measurement 2026-09-15 on COPIES of dotfiles' ITEMS.md and ITEMS-DONE.md (live carriers verified untouched afterwards): `item check` 23 findings before the repair, 9 after; the verb listed 9; the two sets identical over bodies with zero listed-but-not-remaining and zero remaining-but-not-listed; word multiset preserved 94147 to 94147. The mapping between vocabularies was legible only because both outputs were read side by side — which is the manual investigation this item exists to replace. The lc-130 lane surfaced the underlying question as its gap 2 and correctly declined to settle it at its tier; its framing (an unregistered emit site) is refuted by the mapping, and the real risk is drift between two correspondent vocabularies
 blocked-by: NONE
