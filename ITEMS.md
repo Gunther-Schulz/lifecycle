@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 120
+added: 121
 compacted: 0
 
 ## lc-3
@@ -757,4 +757,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,tools/prove-rows.py
 done-criterion: red-first per directive D1 table: staged hand-written block reported exit 2 with block quoted; same finding at HEAD untouched exit 0 with count; declared-repo-carrier-absent answers COULD NOT VERIFY named; --help documents --staged (the dotfiles wiring item's unblock predicate)
 evidence: dotfiles session dotfiles-89 2026-09-15: item check banner, 23 done-home findings, every one written by hand around the verb
+blocked-by: NONE
+
+## lc-129
+grade: READY
+requirement: item repair --shape: mechanically join wrapped slot values to one line and move amendment lines below the fixed slots; missing slots, unknown slots, and closed-still-blocked bodies are LISTED never invented. Design + transition table: docs/directives/drain-kickoff-2026-09-15.md section D2. Real fixtures named there: dotfiles ITEMS-DONE.md df-196 (wrapped + misplaced amendment), df-184/185/194/195 (missing blocked-by)
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,tools/prove-rows.py
+done-criterion: red-first per directive D2 table: df-196-copy round-trip preserves word multiset modulo joins with conservation identity unchanged; amendment repositioned; df-184-class judgment findings listed with the file byte-identical; commits or prints NOT COMMITTED per the lc-41 ruling (LEDGER.md:71)
+evidence: dotfiles ITEMS-DONE.md 2026-09-15: 15 wrapped-value findings in one block, 4 blocks missing blocked-by, 4 closed-still-blocked
 blocked-by: NONE
