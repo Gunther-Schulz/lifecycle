@@ -1386,6 +1386,39 @@ def item_moot_record(ident: str, *, abandoned: bool) -> str:
     return shape.format(ident=ident)
 
 
+#: THE `blocker-moot:` RECORD FOR A `decision` BLOCKER THE LEDGER ALREADY
+#: ANSWERS (lc-55) — the THIRD fact a close can honestly report about a
+#: blocker, beside `item_moot_record`'s two, and here for the same reason
+#: those two are separate: one record that covered both would make the body
+#: say the question died unanswered while the ledger holds its answer.
+#:
+#: THE UNANSWERED FORM STAYS THE BARE QUESTION and is deliberately not moved
+#: here: every record already sitting in a closure home carries it, and
+#: `_moot_discharges` reads it back by equality against the blocker's own
+#: detail. This form is ADDED beside it, never in place of it.
+#:
+#: WRITING NOTHING WAS THE OTHER CANDIDATE AND IT IS WRONG. `move_to_done`
+#: clears the base `blocked-by:` LINE, but an `amended-blocked-by:` line
+#: survives the close untouched (lc-90) — so a close that recorded nothing
+#: left an ANSWERED blocker standing in the closure home with nothing to
+#: discharge it, and the next `item check` reported `blocked_in_done_home`
+#: against a body `item amend` correctly refuses to repair. Measured on a
+#: private clone while building lc-55's first half, which wrote no record.
+_DECISION_MOOT_ANSWERED = ("{question} (answered in the ledger before this "
+                           "item closed)")
+
+
+def decision_moot_record(question: str) -> str:
+    """The `blocker-moot:` value a close writes for an ANSWERED decision.
+
+    The single writer of this shape, called by `verbs.cmd_item_close` rather
+    than composed there — the discharge below reads it back by EQUALITY, so a
+    second spelling on either side would drift and the discharge would stop
+    recognising the very line the close had just written.
+    """
+    return _DECISION_MOOT_ANSWERED.format(question=(question or "").strip())
+
+
 def _moot_discharges(item: Item, detail: str, kind: str = "decision") -> bool:
     """Did this body's closure record the very blocker `detail` names (lc-48)?
 
@@ -1408,6 +1441,14 @@ def _moot_discharges(item: Item, detail: str, kind: str = "decision") -> bool:
     is what keeps a record about some other item from clearing this one.
     An `evidence` blocker is still annotated by no close and still has no
     record to be discharged by; the type test below is what keeps it a finding.
+
+    THE `decision` TYPE HAS TWO RECORD FORMS NOW (lc-55), and both discharge
+    for the question the effective blocker actually names: the bare question,
+    written when the close makes an unanswered question moot, and
+    `decision_moot_record`'s answered form, written when the ledger already
+    answers it. Both are compared by EQUALITY against a record built from THIS
+    body's own detail, so a record about another question still discharges
+    nothing — the widening is one more exact shape, never a looser predicate.
     """
     moot = (item.slots.get("blocker-moot") or "").strip()
     if not moot:
@@ -1419,7 +1460,8 @@ def _moot_discharges(item: Item, detail: str, kind: str = "decision") -> bool:
             item_moot_record(target, abandoned=True))
     if kind != "decision":
         return False
-    return moot == (detail or "").strip()
+    question = (detail or "").strip()
+    return moot in (question, decision_moot_record(question))
 
 
 def check_done_file(path: Path, out, prefix: str | None = None, *,

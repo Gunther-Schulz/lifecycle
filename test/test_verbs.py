@@ -986,15 +986,26 @@ class DecisionBlockerAtClose(unittest.TestCase):
     QUESTION = "which window is canonical"
     ANSWER = "the 30-day window is canonical"
 
-    def _repo(self, ledger_text=None):
+    def _repo(self, ledger_text=None, *, amended=False):
         """One READY item blocked on QUESTION, and the ledger state under test.
 
         The BASE slot form, not the amended one: `_effective_blocker` resolves
         both and this is the shape the reproduction walked.
         """
+        blocker = f"decision {self.QUESTION}"
+        if amended:
+            # THE FORM THE BLOCKER SURVIVES THE MOVE IN. `move_to_done` clears
+            # the base `blocked-by:` LINE and does not touch an
+            # `amended-blocked-by:` one (lc-90), so only this shape can ask
+            # what the closure home holds afterwards.
+            body = (refusals._blocked_block("xx-1", "READY", "NONE")
+                    .rstrip("\n")
+                    + "\namend-reason: 2026-09-13 the desk retyped it\n"
+                    + f"amended-blocked-by: 2026-09-13 {blocker}\n")
+        else:
+            body = refusals._blocked_block("xx-1", "READY", blocker)
         items_text = ("schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
-                      + refusals._blocked_block("xx-1", "READY",
-                                                f"decision {self.QUESTION}"))
+                      + body)
         r = refusals._Repo(items=items_text, ledger_text=ledger_text)
         self.addCleanup(r.close)
         return r
@@ -1029,18 +1040,27 @@ class DecisionBlockerAtClose(unittest.TestCase):
         return {n: (repo.dir / n).read_text(encoding="utf-8")
                 for n in ("ITEMS.md", "ITEMS-DONE.md", "LEDGER.md")}
 
-    def test_an_ANSWERED_decision_is_NOT_recorded_moot(self):
-        """THE RED. At 9839f46 this close wrote `blocker-moot:` onto the moved
-        body and appended `→ moot (closed by xx-1)` beneath the answer it had
-        just been given, exiting CLEAN over both."""
+    def test_an_ANSWERED_decision_records_ANSWERED_never_moot(self):
+        """THE RED. At 9839f46 this close wrote the bare question as
+        `blocker-moot:` — the form that says nobody ever answered it — onto
+        the moved body, and appended `→ moot (closed by xx-1)` beneath the
+        answer it had just been given, exiting CLEAN over both.
+
+        THE TWO FORMS DIFFER IN THE FILE, not only in the prose: the answered
+        record must be present and the never-answered one ABSENT, the same
+        pair `test_a_DROP_records_the_wait_ABANDONED_never_answered` asserts
+        one blocker type over."""
         r = self._repo(self._ledger(self.ANSWER))
         code, out = self._run(r, "item", "close", "xx-1")
         self.assertEqual(code, exits.CLEAN, out)
         c = self._carriers(r)
+        self.assertIn(
+            f"blocker-moot: {items.decision_moot_record(self.QUESTION)}",
+            c["ITEMS-DONE.md"], c["ITEMS-DONE.md"])
         self.assertNotIn(
-            "blocker-moot:", c["ITEMS-DONE.md"],
-            "the close recorded an ANSWERED question as moot, on a body "
-            "`item amend` refuses to touch afterwards:\n" + out)
+            f"blocker-moot: {self.QUESTION}\n", c["ITEMS-DONE.md"],
+            "the close recorded an ANSWERED question as never-answered, on a "
+            "body `item amend` refuses to touch afterwards:\n" + out)
         self.assertNotIn(
             ledger.moot_answer("xx-1"), c["LEDGER.md"],
             "the close wrote a second, contradictory `decision:` line:\n"
@@ -1079,8 +1099,11 @@ class DecisionBlockerAtClose(unittest.TestCase):
         code, out = self._run(r, "item", "close", "xx-1")
         self.assertEqual(code, exits.CLEAN, out)
         c = self._carriers(r)
-        self.assertIn(f"blocker-moot: {self.QUESTION}", c["ITEMS-DONE.md"],
+        self.assertIn(f"blocker-moot: {self.QUESTION}\n", c["ITEMS-DONE.md"],
                       c["ITEMS-DONE.md"])
+        self.assertNotIn(items.decision_moot_record(self.QUESTION),
+                         c["ITEMS-DONE.md"],
+                         "the answered form on an unanswered question")
         self.assertIn(ledger.moot_answer("xx-1"), c["LEDGER.md"],
                       c["LEDGER.md"])
 
@@ -1102,6 +1125,57 @@ class DecisionBlockerAtClose(unittest.TestCase):
                       c["ITEMS-DONE.md"])
         self.assertIn(ledger.moot_answer("xx-1"), c["LEDGER.md"],
                       c["LEDGER.md"])
+
+    def test_an_AMENDED_answered_blocker_leaves_the_done_home_CLEAN(self):
+        """THE NEIGHBOURING CASE, and the one that caught the first half of
+        this fix mid-build. `move_to_done` clears the base `blocked-by:` LINE,
+        so a base-slot blocker is gone from the moved body whatever the close
+        records — every arm above runs on that form and none of them can see
+        this. An `amended-blocked-by:` line SURVIVES the close untouched
+        (lc-90), so it is the form that needs the record on the body, and a
+        close that wrote nothing for an ANSWERED question left it standing in
+        the closure home with nothing to discharge it: `item check` then
+        reported `blocked_in_done_home` against a body `item amend` correctly
+        refuses to repair. Measured on a private clone before this arm
+        existed — the close exited 0 and the next check exited 2."""
+        r = self._repo(self._ledger(self.ANSWER), amended=True)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn(
+            f"blocker-moot: {items.decision_moot_record(self.QUESTION)}",
+            (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8"))
+        check_code, check_out = self._run(r, "item", "check")
+        self.assertEqual(check_code, exits.CLEAN, check_out)
+        self.assertNotIn("blocked_in_done_home", check_out, check_out)
+
+    def test_the_ANSWERED_record_discharges_ONLY_the_question_it_NAMES(self):
+        """The discrimination arm for the widened discharge. The answered form
+        is one more EXACT shape, never a looser predicate: a body carrying the
+        record for some OTHER question is still a surviving blocker, and a
+        discharge that had merely looked for a `blocker-moot:` line would clear
+        every one of them."""
+        def home(named):
+            return (refusals.EMPTY_DONE
+                    + refusals._blocked_block("xx-1", "DONE", "NONE")
+                    .rstrip("\n")
+                    + "\namend-reason: 2026-09-13 the desk retyped it\n"
+                    + f"amended-blocked-by: 2026-09-13 decision {self.QUESTION}"
+                    + "\nblocker-moot: " + items.decision_moot_record(named)
+                    + "\n")
+        one_body = "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+        r = refusals._Repo(items=one_body, done=home("some other question"))
+        self.addCleanup(r.close)
+        code, out = self._run(r, "item", "check")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("blocked_in_done_home", out)
+        # The other half of the pair, same fixture shape: the record for the
+        # question the blocker DOES name clears it. Without this arm the red
+        # above is equally consistent with a discharge that never fires.
+        r2 = refusals._Repo(items=one_body, done=home(self.QUESTION))
+        self.addCleanup(r2.close)
+        code, out = self._run(r2, "item", "check")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("blocked_in_done_home", out)
 
     def test_an_UNREADABLE_ledger_is_COULD_NOT_VERIFY_not_a_close(self):
         """The third answer, and the third state both verbs must agree on.

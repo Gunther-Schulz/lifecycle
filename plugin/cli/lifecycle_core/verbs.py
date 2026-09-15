@@ -1934,9 +1934,16 @@ def _item_blocker_disposition(ctx: Ctx, ident: str, detail: str,
     return None, exits.FINDING
 
 
-def _decision_blocker_disposition(ctx: Ctx, ident: str, detail: str,
-                                  out) -> tuple[str | None, int]:
-    """`(the `blocker-moot:` question for a `decision` blocker, code)` — lc-55.
+def _decision_blocker_disposition(
+        ctx: Ctx, ident: str, detail: str,
+        out) -> tuple[str | None, str | None, int]:
+    """`(the `blocker-moot:` record, the question to LEDGER as moot, code)`.
+
+    TWO VALUES BECAUSE THE TWO ACTS SPLIT (lc-55). Every disposition here
+    writes a record onto the moved body; only the UNANSWERED one owes a
+    ledger `decision: … → moot` line. Returning one value for both would
+    force the caller to re-derive which case it is from the record's text,
+    which is the second spelling this module keeps refusing to mint.
 
     THE SAME READER `item ready` USES, ASKED THE SAME QUESTION. Until this
     existed `cmd_item_close` read the ledger NOWHERE: it took the blocker's
@@ -1976,20 +1983,19 @@ def _decision_blocker_disposition(ctx: Ctx, ident: str, detail: str,
             "body. Answer the question (`ledger add decision`) or clear the "
             f"blocker (`item amend {ident} --blocked-by NONE --reason <why>`) "
             "once the ledger is readable.")
-        return None, exits.COULD_NOT_VERIFY
+        return None, None, exits.COULD_NOT_VERIFY
     answers = ledger.decision_for(led, detail, for_item=ident)
     if answers:
         last = answers[-1]
-        out(f"blocker-moot: NOT WRITTEN — the ledger already settles this "
-            f"`decision` blocker for {ident}: {detail!r} → "
-            f"{last.slots.get('answer', '')!r} ({ctx.ledger_path.name}:"
-            f"{last.lineno}). A moot record says the question was NEVER "
-            "answered and `item ready` reads this same line as an ANSWER, so "
-            "writing one would put two contradictory verdicts about one "
-            "question in the carrier. No second `decision:` line either: one "
-            "fact, one home.")
-        return None, exits.CLEAN
-    return detail, exits.CLEAN
+        out(f"blocker-moot: the `decision` blocker {detail!r} was ANSWERED "
+            f"before this close — {last.slots.get('answer', '')!r} "
+            f"({ctx.ledger_path.name}:{last.lineno}) — so the moved body "
+            "records it ANSWERED and NO second `decision:` line is written. "
+            "The moot form would say the question died unanswered, which is "
+            "what `item ready` reads this same line as refuting: one "
+            "question, one verdict, one home.")
+        return items_mod.decision_moot_record(detail), None, exits.CLEAN
+    return detail, detail, exits.CLEAN
 
 
 def _resolve_refs(ctx: Ctx, raw: str, out) -> tuple[str | None, int]:
@@ -2201,10 +2207,17 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
         # answer, which is how one close came to contradict the `item ready`
         # run before it. Before the write, for the same reason the item-id
         # disposition below is: its answer can be a COULD NOT VERIFY.
+        # `decision_moot` is the RECORD the moved body carries; `moot` is the
+        # question this close makes MOOT and therefore ledgers below. They
+        # part company exactly where the ledger already holds an answer: the
+        # body still records what happened to the blocker — silence there
+        # leaves an AMENDED one standing in the closure home with nothing to
+        # discharge it (lc-90) — while the ledger gets no second line.
+        decision_moot = None
         moot = None
         if kind == "decision" and detail:
-            moot, decision_code = _decision_blocker_disposition(
-                ctx, args.ident, detail, out)
+            decision_moot, moot, decision_code = (
+                _decision_blocker_disposition(ctx, args.ident, detail, out))
             if decision_code != exits.CLEAN:
                 return decision_code
         # THE ITEM-ID TYPE IS DISPOSED BEFORE ANYTHING IS WRITTEN (lc-90):
@@ -2224,8 +2237,8 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
         # expects rather than as slots that wandered.
         date = _today()
         note_lines = []
-        if moot:
-            note_lines.append(f"blocker-moot: {moot}")
+        if decision_moot:
+            note_lines.append(f"blocker-moot: {decision_moot}")
         elif item_moot:
             note_lines.append(f"blocker-moot: {item_moot}")
         if not args.drop:
