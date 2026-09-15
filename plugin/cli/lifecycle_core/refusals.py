@@ -755,6 +755,65 @@ BLOCKER_TARGET_CLOSED_ITEMS = (
 )
 BLOCKER_TARGET_CLOSED_DONE = EMPTY_DONE + _blocked_block("xx-2", "DONE", "NONE")
 
+
+def _clause_block(ident: str, requirement: str) -> str:
+    """A valid block whose REQUIREMENT is the caller's, every other slot fixed.
+
+    Its own helper rather than a parameter on `_blocked_block`: that one's arms
+    vary the BLOCKER and every row built on it reads that way, and a second
+    varying slot there would make each of those rows say something it does not
+    mean.
+    """
+    return (f"\n{grammar.render_heading(ident)}\ngrade: READY\n"
+            f"requirement: {requirement}\n"
+            "goal: mitigate\nwrite-set: tools/thing.py\n"
+            "done-criterion: it goes red then green\nevidence: none yet\n"
+            "blocked-by: NONE\n")
+
+
+#: THE MOTIVATING CLAUSE (lc-22), copied from its source rather than described.
+#: Source: dotfiles `claude/BACKLOG.md` at commit `bb8edd4`, the L10 entry whose
+#: marker sits at line 163 — `git show bb8edd4:claude/BACKLOG.md`. That file was
+#: retired 2026-09-12, so the pointer resolves at that commit and nowhere else.
+#:
+#: UNWRAPPED, AND THE TRANSFORMATION IS STATED because it is the one thing
+#: between this fixture and the source bytes. The original is hard-wrapped
+#: across six lines; a carrier slot value is ONE line by this repo's own shape
+#: rule (`items.parse`: "a wrapped value is a shape break, not a long value").
+#: A verbatim paste would therefore be an `item_shape` finding and the red
+#: would belong to the ARRANGEMENT rather than to the defect. Newline-plus-
+#: indent became one space, nothing else moved, and the MARKER never spanned a
+#: line break — it sits entirely on line 163.
+CARRIED_POINTER_CLAUSE = (
+    "CARRIED POINTER (module 1 residue, 2026-08-26): accretion.md's "
+    "backlog-doctrine bullet says \"(mechanism: lifecycle plugin, wave "
+    "2)\" and its JOURNAL-stamped `(JOURNAL, …)` pointers are now "
+    "checked by `corpus-pointer-check.py` (c17a82f); when wave 2 "
+    "lands or is dropped, that parenthetical is re-worded to the "
+    "shipped mechanism or removed — this entry is the carrier that "
+    "moves with it."
+)
+
+#: lc-22's PAIR, and the one property between its arms is THE DECLARED MARKER.
+#: The control is the SAME 384 bytes with `CARRIED POINTER` respelled as
+#: ordinary prose, so it still carries "pointer", "carrier" and the sentence
+#: "this entry is the carrier that moves with it" — which makes the control the
+#: OVER-FIRE probe as well as the control. An arm that merely dropped the
+#: subject would pass whether or not the predicate anchored on the marker, and
+#: a predicate keyed on the loose words would refuse BOTH arms: measured over
+#: this repo's own prose corpus, the loose form hits 252 lines and the declared
+#: marker hits none (R11 — a guard that fires on legitimate work stops the
+#: lane).
+CARRIED_POINTER_ITEMS = (
+    "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+    + _clause_block("xx-1", CARRIED_POINTER_CLAUSE)
+)
+CARRIED_POINTER_PROSE_ITEMS = (
+    "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+    + _clause_block("xx-1", CARRIED_POINTER_CLAUSE.replace(
+        "CARRIED POINTER", "a carried pointer", 1))
+)
+
 #: A complete, valid `item add` — the argument baseline every row below
 #: mutates exactly one thing away from. A row that built its own argument
 #: list would drift from this one, and the drift would look like the row.
@@ -996,6 +1055,35 @@ VERB_ROWS = [
         control=lambda: _cli(["item", "close", "xx-1"],
                              items=BLOCKER_TARGET_CLOSED_ITEMS,
                              done=BLOCKER_TARGET_CLOSED_DONE),
+        stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="close_carries_pointer",
+        refusal="a close whose live body carries a DECLARED forward-carrier "
+                "clause — the uppercase marker `CARRIED POINTER`, an optional "
+                "parenthetical, then a colon. The move files that body in the "
+                "closure home, and the obligation the clause declares then "
+                "reads as discharged because its carrier is filed as "
+                "discharged (lc-22). WHAT THE PREDICATE ESTABLISHES is the "
+                "clause's PRESENCE in the body the move would file, and no "
+                "more: whether the pointer is still owed is what the clause "
+                "DECLARES, never anything this check measured. Cleared by "
+                "removing the clause from the body, or by splitting the "
+                "residue into its own item, which takes the clause with it; "
+                "there is no override flag, because a bypass files the clause "
+                "in the closure home, which is the one outcome the refusal "
+                "exists to prevent",
+        firing_input="`item close xx-1` where xx-1's requirement carries the "
+                     "lc-22 clause in its own words, from dotfiles `bb8edd4`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "close", "xx-1"],
+                          items=CARRIED_POINTER_ITEMS),
+        # THE SAME 384 BYTES with the marker respelled as ordinary prose. The
+        # arms differ in the DECLARED MARKER alone, so neither the subject
+        # matter nor the words "carrier" and "pointer" is what separates them
+        # — which is what makes this control the over-fire probe as well.
+        control=lambda: _cli(["item", "close", "xx-1"],
+                             items=CARRIED_POINTER_PROSE_ITEMS),
         stage="wave 1, stage 5",
     ),
     Row(

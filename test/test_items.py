@@ -916,3 +916,188 @@ class ParkWritesTheValueThatGoverns(unittest.TestCase):
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("[parked_without_typed_blocker]", out)
         self.assertNotIn("[park_over_superseding_amendment]", out)
+
+
+class CloseRefusesADeclaredCarriedPointer(unittest.TestCase):
+    """`item close` cannot file a body that declares a forward-carrier clause.
+
+    THE DEFECT (lc-22). The closure MOVE had no guard against carrying a
+    declared obligation into the closure home. An entry can name itself the
+    carrier for a pointer another desk still owes — "this entry is the carrier
+    that moves with it", the real clause's own words — and when its own work
+    closed, the move filed that clause among the closed bodies, where the
+    obligation then read as discharged because its carrier was filed as
+    discharged.
+
+    THE INPUT IS THE REAL ONE. `refusals.CARRIED_POINTER_CLAUSE` is the L10
+    entry's own text, read out of dotfiles `claude/BACKLOG.md` at `bb8edd4`
+    rather than composed here; the constant's comment carries the provenance
+    and the single transformation (unwrapping) the carrier's shape rule forces.
+
+    AT THE CLI ALTITUDE, for the reason the park class above states: a unit
+    call to the new helper reds against the old build as an AttributeError —
+    an ERROR, which proves only that the name is new. Every arm here but the
+    corpus one runs the verb, where the old build accepts the same argv and
+    its red is an assertion FAILURE at the defect. Read `failures=` vs
+    `errors=` per arm, never the red count. THE CORPUS ARM IS THE EXCEPTION
+    and says so in its own docstring.
+
+    BOTH HOMES ARE READ BACK BYTE-FOR-BYTE, never the exit code trusted. A
+    refusal that returned FINDING after appending to the closure home would
+    satisfy an exit-code assertion exactly as a real one does, and "the move
+    did not happen" is half of what this refusal promises.
+
+    THE MUST-NOT-MOVE ARM ASKS AN INSTRUMENT INDEPENDENT OF THE THING ON
+    TRIAL: it reads the two homes and the parsed carrier, never the predicate,
+    because an arm that asked the predicate whether the predicate had stayed
+    quiet would swallow its own proof.
+    """
+
+    #: A body about carriers and pointers that declares NOTHING — the same 384
+    #: bytes as the plant with the marker respelled. It is the control for the
+    #: refusal AND the over-fire probe, since it still says "this entry is the
+    #: carrier that moves with it".
+    PROSE = refusals.CARRIED_POINTER_PROSE_ITEMS
+    PLANT = refusals.CARRIED_POINTER_ITEMS
+
+    #: This repo's own prose, none of it written as a fixture for this guard.
+    CORPUS = ("CLAUDE.md", "JOURNAL.md", "LEDGER.md", "ITEMS.md",
+              "ITEMS-DONE.md")
+    REPO = Path(__file__).resolve().parents[1]
+
+    def _repo(self, **kw):
+        r = refusals._Repo(**kw)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _homes(self, repo):
+        return ((repo.dir / "ITEMS.md").read_bytes(),
+                (repo.dir / "ITEMS-DONE.md").read_bytes())
+
+    # --- the defect -------------------------------------------------------
+
+    def test_the_real_clause_REFUSES_the_close(self):
+        """The measured defect: the move went through and said nothing."""
+        r = self._repo(items=self.PLANT)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[close_carries_pointer]", out)
+
+    def test_the_refusal_QUOTES_the_clause_it_found(self):
+        """A refusal naming no text leaves the author hunting for it.
+
+        The whole clause, never a prefix: a quotation cut to a column width is
+        a partial view standing in for its body, and the reader cannot tell a
+        short clause from a clipped one.
+        """
+        r = self._repo(items=self.PLANT)
+        _code, out = self._run(r, "item", "close", "xx-1")
+        self.assertIn(refusals.CARRIED_POINTER_CLAUSE, out)
+
+    def test_NEITHER_home_moved_a_byte(self):
+        """The move must not have happened — the refusal's other half."""
+        r = self._repo(items=self.PLANT)
+        before = self._homes(r)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertEqual(self._homes(r), before,
+                         "a home changed under a refusal that promises no move")
+
+    def test_a_DROP_is_refused_too(self):
+        """A drop MOVES the body as well, so the clause lands either way.
+
+        No carve-out is made for `--drop`: an abandoned item's residue is the
+        orphaned-pointer case rather than an exception to it, and the clause
+        reaches the closure home by the same act.
+        """
+        r = self._repo(items=self.PLANT)
+        before = self._homes(r)
+        code, out = self._run(r, "item", "close", "xx-1", "--drop",
+                              "--reason", "overtaken by the schema wave")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[close_carries_pointer]", out)
+        self.assertEqual(self._homes(r), before)
+
+    # --- must not move ----------------------------------------------------
+
+    def test_a_body_DISCUSSING_carriers_closes_exactly_as_before(self):
+        """The over-fire arm at the verb: the same bytes, marker respelled.
+
+        Graded by the HOMES and by `items.parse`, never by the predicate: an
+        arm that asked the thing on trial whether it had stayed quiet would
+        report its own silence as a pass.
+        """
+        r = self._repo(items=self.PROSE)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("[close_carries_pointer]", out)
+
+        live = items.parse((r.dir / "ITEMS.md").read_text(encoding="utf-8"))
+        done = items.parse(
+            (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8"))
+        self.assertEqual([i.ident for i in live.items], [])
+        closed = next(i for i in done.items if i.ident == "xx-1")
+        self.assertEqual(closed.grade, "DONE")
+        self.assertIn("this entry is the carrier that moves with it",
+                      closed.slots["requirement"])
+
+    def test_an_ORDINARY_item_closes_exactly_as_before(self):
+        """Nothing about carriers at all — the plain path, unchanged."""
+        r = self._repo(items=refusals.SEED_ITEMS)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("[close_carries_pointer]", out)
+        done = items.parse(
+            (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8"))
+        self.assertEqual([i.ident for i in done.items], ["xx-1"])
+
+    # --- the wider over-fire arm ------------------------------------------
+
+    def test_the_predicate_is_silent_over_this_repos_OWN_prose(self):
+        """The arm the class devbook calls the one that matters — real prose.
+
+        REACHES THROUGH A NEW NAME, so against the old build this arm reds as
+        an ERROR and proves only that the code is new. It is not a defect red
+        and is not reported as one; it PINS a property, and its proof is the
+        pair the devbook demands for that case: loosen the predicate to the
+        words the design forbids and this arm goes red as an assertion FAILURE
+        (measured: 252 lines), while the positive control below proves the arm
+        can see the condition at all.
+
+        A ZERO HERE IS ONLY A FINDING WITH THE CONTROL IN THE SAME RUN: a
+        pattern that could never match returns exactly what a true absence
+        returns.
+        """
+        from lifecycle_core import verbs
+        self.assertTrue(
+            verbs._carried_pointer_lines(refusals.CARRIED_POINTER_CLAUSE),
+            "positive control silent — the instrument is dead, and every zero "
+            "below means nothing")
+
+        hits = []
+        for name in self.CORPUS:
+            path = self.REPO / name
+            self.assertTrue(path.exists(),
+                            f"{name} is not here: this arm grades the REAL "
+                            "prose and cannot verify without it")
+            text = path.read_text(encoding="utf-8")
+            hits += [f"{name}:{n}: {line}"
+                     for n, line in verbs._carried_pointer_lines(text)]
+        self.assertEqual(hits, [], "the predicate fires on prose nobody wrote "
+                                   "as a fixture — over-firing on legitimate "
+                                   "work stops the lane (R11)")

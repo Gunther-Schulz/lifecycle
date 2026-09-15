@@ -1978,6 +1978,71 @@ def _resolve_refs(ctx: Ctx, raw: str, out) -> tuple[str | None, int]:
     return ", ".join(refs), exits.CLEAN
 
 
+#: THE DECLARED FORWARD-CARRIER MARKER (lc-22). ONE SPELLING, and no synonym
+#: is added: a closure vocabulary that sprouts synonyms decays invisibly, and
+#: the `carried-forward` slot another carrier uses is a DIFFERENT detector's
+#: business — `item check` already surfaces it as an unknown slot.
+#:
+#: THE ANCHOR IS THE DECLARATION, NEVER THE SUBJECT. Uppercase marker, an
+#: optional parenthetical, then a colon. Matching the loose words "carrier" or
+#: "pointer" over free prose is what a guard must not do here: measured over
+#: this repo's own CLAUDE.md, JOURNAL.md, LEDGER.md and both item homes, the
+#: loose form hits 252 lines and this one hits none, so the loose form would
+#: refuse very nearly every close in the repo — a guard firing on legitimate
+#: work stops the lane (R11), and the repair is the narrow anchor rather than
+#: a softened report.
+_CARRIED_POINTER = re.compile(
+    r"CARRIED[ \t]+POINTER[ \t]*(?:\([^)\n]*\))?[ \t]*:")
+
+
+def _carried_pointer_lines(text: str) -> list:
+    """`[(lineno, stripped line)]` for every declared clause in `text`.
+
+    LINE-BASED, and the limit is stated rather than left to be found: a clause
+    WRAPPED across lines is not matched. That is not a hole the predicate
+    leaves open — a wrapped value is already an `item_shape` finding by this
+    carrier's own rule ("slot values are ONE line"), so a body that could hide
+    a clause that way is refused by the parser before a close can reach it.
+
+    TEXT IN, NOTHING READ: the same reason `_effective_slot` takes text. It
+    makes the predicate askable of any string — the corpus over-fire arm runs
+    it over this repo's own prose, which is not a carrier at all.
+    """
+    return [(n, line.strip())
+            for n, line in enumerate(text.split("\n"), start=1)
+            if _CARRIED_POINTER.search(line)]
+
+
+def _carried_pointer_clauses(ctx: Ctx, ident: str) -> tuple[list, str]:
+    """`(clauses, why-unreadable)` for the body a close is about to file.
+
+    THE SUBJECT IS THE RAW BLOCK `replace_body` HANDS THE MOVE, not the slot
+    values in force. What reaches the closure home is the block's bytes, and an
+    `amended-…:` line supersedes a VALUE without deleting the line that carried
+    the clause — the earlier line is retained, so the clause still travels. The
+    clearance is therefore removing it from the body, or splitting the residue
+    into its own item, which is what the refusal says.
+
+    THREE ANSWERS (R1). An unreadable carrier is `why`, never an empty clause
+    list: "no clause here" and "this file could not be read" are different
+    facts, and folding the second into the first would let a close proceed over
+    a body nothing graded. A block that is simply ABSENT is neither — that is
+    `move_to_done`'s `unknown_item`, which owns the case and keeps it.
+    """
+    try:
+        text = ctx.items_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return [], (f"the carrier at {ctx.items_path} could not be read "
+                    f"({type(exc).__name__}), so whether this body declares a "
+                    "forward-carrier clause is unknown. A close over an "
+                    "ungraded body is the one thing this refusal exists to "
+                    "stop, so it is not assumed clean.")
+    _kept, body = items_mod.replace_body(text, ident)
+    if body is None:
+        return [], ""
+    return _carried_pointer_lines(body), ""
+
+
 def cmd_item_close(args, out, ctx: Ctx) -> int:
     """The MOVE, then conservation — re-run at EVERY close, not asserted once.
 
@@ -2039,6 +2104,37 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
         if not ctx.items_path.exists():
             out(f"COULD NOT VERIFY: no carrier at {ctx.items_path}.")
             return exits.COULD_NOT_VERIFY
+
+        # THE FORWARD-CARRIER CLAUSE IS READ FIRST, BEFORE ANYTHING IS
+        # WRITTEN (lc-22). Its verdict can be a refusal, and a refusal
+        # arriving after the move would be a verdict about a body already
+        # sitting where nothing can amend it — the same reason the item-id
+        # blocker below is disposed before the write. Its OWN verdict rather
+        # than a branch folded into a neighbouring one: it answers a different
+        # question from every other check here and owes its own message.
+        clauses, why = _carried_pointer_clauses(ctx, args.ident)
+        if why:
+            out(f"COULD NOT VERIFY: {why}")
+            return exits.COULD_NOT_VERIFY
+        if clauses:
+            out(f"FINDING [close_carries_pointer] {args.ident} declares a "
+                "forward-carrier clause and is NOT CLOSED. The move would "
+                "file this body in the closure home, where the obligation the "
+                "clause declares reads as discharged because its carrier is "
+                "filed as discharged (lc-22). Quoted from the body, whole:")
+            for lineno, line in clauses:
+                out(f"    line {lineno}: {line}")
+            out("WHAT THIS ESTABLISHES is that the clause is THERE. Whether "
+                "the pointer is still owed is what the clause itself declares "
+                "— this check did not measure it and does not claim to. Clear "
+                "it the way the clause asks: re-word or remove the pointer it "
+                "names, then take the clause out of the body; or split the "
+                "residue into its own item, which carries the clause away "
+                "with it and leaves this one closable. There is no override "
+                "flag, and that is deliberate — a bypass files the clause "
+                "among the closed bodies, which is the single outcome this "
+                "refusal exists to prevent.")
+            return exits.FINDING
 
         kind, detail = _effective_blocker(ctx, args.ident)
         moot = detail if kind == "decision" and detail else None
