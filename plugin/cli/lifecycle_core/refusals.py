@@ -2968,8 +2968,92 @@ HOOK_ROWS = [
 ]
 
 
+
+# --- lc-58 + lc-47: the compaction verb's own refusal ------------------------
+#
+# `item compact` removes a closed body from the done home and leaves a ledger
+# line naming the BLOB the body is recoverable at. Everything rests on that
+# blob actually carrying the body: a pin that does not is a record pointing at
+# text nobody can get back, and the carrier has shrunk by exactly the amount
+# that is now nowhere. The failure is SILENT by construction — the verb writes
+# a well-formed line, the identity still balances, and only someone running
+# `git cat-file` a year later finds out — which is why the check is a refusal
+# before the write rather than a report after it.
+
+#: The closure reason the pair closes with, and the ONE-CHARACTER-CLASS edit
+#: that separates the arms. The edit lands INSIDE the `closed-reason:` value,
+#: so the block's SHAPE is untouched: an edit that broke the shape would be
+#: caught by a different check and this row would be scoring another refusal's
+#: verdict under its own name.
+_COMPACT_REASON = ("the checker went red on the real defect and green after, "
+                   "arrangement recorded")
+_COMPACT_REASON_EDITED = _COMPACT_REASON.replace("red on", "RED on")
+
+
+def _compact_run(*, edited: bool) -> Fired:
+    """`item compact` over a repo that has actually CLOSED a body.
+
+    THE ARMS DIFFER IN ONE DIMENSION: whether the closed body was edited after
+    its close and left UNCOMMITTED. The close, its reason, and the commit it
+    produced are identical in both, so a red here cannot be the close's doing.
+
+    The edit is read back off disk before the verdict counts. A plant that
+    never landed returns a green byte-identical to a real one, and a
+    `replace` whose anchor has drifted is exactly how that happens.
+    """
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    with _Repo(items=SEED_ITEMS) as r:
+        here = os.getcwd()
+        try:
+            os.chdir(str(r.dir))
+            with redirect_stdout(io.StringIO()):
+                cli_mod.main(["--repo", str(r.dir), "item", "close", "xx-1",
+                              "--reason", _COMPACT_REASON])
+            done = r.dir / "ITEMS-DONE.md"
+            if edited:
+                text = done.read_text(encoding="utf-8")
+                planted = text.replace(_COMPACT_REASON,
+                                       _COMPACT_REASON_EDITED)
+                done.write_text(planted, encoding="utf-8")
+                if _COMPACT_REASON_EDITED not in done.read_text(
+                        encoding="utf-8"):
+                    return Fired(-1, "SETUP FAILED: the edit is not in the "
+                                     "done home after the write, so this arm "
+                                     "never carried the difference under "
+                                     "test and its verdict says nothing.")
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(r.dir), "item", "compact",
+                                     "xx-1"])
+            return Fired(code, buf.getvalue())
+        finally:
+            os.chdir(here)
+
+
+COMPACT_ROWS = [
+    Row(
+        ident="compaction_would_strip",
+        refusal="`item compact` refuses a closed body whose text is NOT "
+                "recoverable at the blob pin the record would carry — the "
+                "carrier would shrink and the text would be nowhere, and "
+                "nothing afterwards would say so",
+        firing_input="a closed body edited after its close and left "
+                     "uncommitted, so the live text and the pinned blob "
+                     "differ",
+        expect=exits.FINDING,
+        fire=lambda: _compact_run(edited=True),
+        # The SAME repo, the SAME close, WITHOUT the edit: the arms differ in
+        # whether the body still matches what git holds, and in nothing else.
+        control=lambda: _compact_run(edited=False),
+        stage="lc-58 + lc-47",
+    ),
+]
+
 ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
-        + HOOK_ROWS)
+        + HOOK_ROWS + COMPACT_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #

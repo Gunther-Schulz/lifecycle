@@ -958,6 +958,38 @@ def report_conservation(c: dict, out) -> int:
     return exits.FINDING
 
 
+def bump_compacted(text: str) -> tuple[str, bool]:
+    """`(text, True)` with the head's `compacted:` count ONE higher.
+
+    THE COUNT IS PERSISTED, NEVER RE-DERIVED, for the reason `conservation`
+    above states about the whole right-hand side: a number recomputed from
+    the files it grades moves with every corruption and stays green on all of
+    them. So the compaction act increments it here.
+
+    A HEAD CARRYING NO `compacted:` LINE RETURNS False rather than growing
+    one. A key this function invented would put a value in the identity's
+    right-hand side that no migration wrote, and the caller's answer to that
+    is COULD NOT VERIFY — which is a different answer from a bump that
+    happened, and must not share its exit code.
+
+    Its own function beside `conservation` rather than a branch inside the
+    compaction verb: the head's shape is this module's, and a second writer
+    of a head line is the second spelling `grammar` exists to prevent.
+    """
+    lines = text.split("\n")
+    for i, ln in enumerate(lines):
+        if grammar.starts_section(ln):
+            break
+        if grammar.is_slot(ln, "compacted"):
+            try:
+                n = int(ln.split(":", 1)[1].strip())
+            except ValueError:
+                return text, False
+            lines[i] = grammar.render_slot("compacted", n + 1)
+            return "\n".join(lines), True
+    return text, False
+
+
 # --- the move's own integrity ------------------------------------------------
 
 def check_move_integrity(items_parsed: Parsed, done_parsed: Parsed | None,

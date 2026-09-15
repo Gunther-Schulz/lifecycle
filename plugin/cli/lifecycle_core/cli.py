@@ -562,6 +562,13 @@ def build_parser() -> argparse.ArgumentParser:
                                      "was given")
     close.add_argument("--no-commit", dest="no_commit", action="store_true")
 
+    compact = its.add_parser("compact",
+                             help="the DONE BODY's declared exit: collapse "
+                                  "one closed body to a ledger line, the body "
+                                  "kept recoverable at a BLOB pin")
+    compact.add_argument("ident")
+    compact.add_argument("--no-commit", dest="no_commit", action="store_true")
+
     its.add_parser("ratio", help="capture against drain — the FLOW alarm "
                                  "(R22); a ratio, never a size")
 
@@ -769,7 +776,7 @@ def main(argv=None) -> int:
         elif args.item_action == "waves":
             code = cmd_item_waves(args, out)
         elif args.item_action in ("add", "amend", "promote", "ready", "park",
-                                  "close", "ratio", "statusline"):
+                                  "close", "compact", "ratio", "statusline"):
             code = _carrier_verb(args, out)
         else:
             stage = NOT_YET_BUILT.get(path, "a later wave")
@@ -899,6 +906,8 @@ def _carrier_verb(args, out) -> int:
         return verbs.cmd_item_statusline(args, out, ctx)
     if args.item_action == "park":
         return verbs.cmd_item_park(args, out, ctx)
+    if args.item_action == "compact":
+        return retire_mod.cmd_item_compact(args, out, ctx)
     return verbs.cmd_item_close(args, out, ctx)
 
 

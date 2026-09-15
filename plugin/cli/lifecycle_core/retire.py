@@ -18,8 +18,9 @@ is fine and a small one that never drains is not, so no count appears in a
 predicate here; counts are printed because a reader wants them, and they
 decide nothing.
 
-WHAT IS NOT CHECKED SAYS SO. Most declared exits are not acts this build
-performs — `never`, `compact` and `delete` have no verb yet — so their kinds
+WHAT IS NOT CHECKED SAYS SO. Most declared exits are not acts this WALK
+reads — `never` and `delete` have no verb at all, and `compact` has one
+(`item compact`, below) whose events this walk does not yet read — so their kinds
 are reported NOT CHECKED with the reason rather than folded into a clean
 line. A walk that reported nine clean kinds while only checking one would be
 the assurance wider than its predicate that this whole arc keeps finding.
@@ -609,4 +610,228 @@ def cmd_audit(args, out, repo: Path, doc: dict) -> int:
 def cmd_kind_sweep(args, out, repo: Path, doc: dict) -> int:
     code = sweep(repo, doc, out)
     out(f"kind sweep: {exits.word(code)}")
+    return code
+
+
+# --- `item compact` — the done body's declared exit (lc-58 + lc-47) ----------
+#
+# THE LAST ARROW OF AN ITEM'S LIFE. `.claude/lifecycle.json` registers a kind
+# `done bodies` whose exit action is `compact` and whose growth control is
+# `compacted`; until this verb existed the arrow was unreachable and the
+# carrier's conservation line could only ever read `compacted 0` — a number
+# nothing could ever move, which is a count shaped like a control.
+#
+# WHERE THE RECORD LIVES, and the two answers this is NOT (lc-47). The entry
+# offered LIFT (put the closure lines in the record) or EXEMPT (spare bodies
+# carrying them); measured over the real done home, EXEMPT spares every body
+# holding the mass and LIFT only relocates ~60k characters into a ledger read
+# chronologically. So neither: the body leaves the carrier and stays
+# recoverable at a BLOB PIN, which shrinks the carrier and moves the fact one
+# step — from a file a reader loads to git-at-a-pin — rather than into a
+# second live home (invariant 3).
+#
+# THE PIN IS A BLOB SHA AND NEVER A REVISION. `git cat-file -p <40-hex>`
+# yields the same bytes forever; `HEAD:ITEMS-DONE.md` names whatever the file
+# holds today. The sibling repo measured what the second costs: 313 of 318
+# line-anchored pointers landed on the wrong entry and NOTHING FAILED,
+# because a line number always resolves. A compaction pinning a revision
+# would manufacture confident wrong pointers, which is worse than one that
+# pinned nothing at all.
+
+#: What a resolved pin must look like before anything is written. A pin that
+#: is not 40 hex is not a blob, whatever git printed.
+_BLOB_SHA = re.compile(r"^[0-9a-f]{40}$")
+
+#: The record's KIND is read from the DECLARATION, not invented here: the
+#: `done bodies` kind declares its exit recording-act as "a ledger decision
+#: line naming the compacted range". So this writes an ordinary `decision:`
+#: line through `ledger.append` and the ledger's closed four-kind vocabulary
+#: does not move for this verb.
+#:
+#: NEITHER HALF MAY CARRY THE LEDGER'S OWN SEPARATORS (`grammar.check_prose`):
+#: a value carrying ` — ` or ` → ` parses into different slots than it was
+#: written with. Both halves below are composed from an id, a path and hex,
+#: so neither can.
+NO_CLOSED_REF = "no closed-ref recorded"
+
+
+def compaction_question(ident: str) -> str:
+    return f"where the compacted body of {ident} resolves"
+
+
+def compaction_answer(done_rel: str, blob: str, ref: str) -> str:
+    return (f"{done_rel} at blob {blob}; closed-ref {ref}; recover with "
+            f"git cat-file -p {blob}")
+
+
+def _git(repo: Path, *argv) -> tuple:
+    import subprocess
+    p = subprocess.run(["git", "-C", str(repo), *argv],
+                       capture_output=True, text=True)
+    return p.returncode, (p.stdout if p.returncode == 0
+                          else (p.stderr or p.stdout))
+
+
+def pinned_body(repo: Path, done_rel: str, ident: str) -> tuple:
+    """`(blob, body, why)` — the done body as GIT holds it, at a blob pin.
+
+    RESOLVED BEFORE ANYTHING IS WRITTEN, and the blob it returns is what the
+    record carries. The body is extracted by `items.replace_body` — the SAME
+    function the caller extracts the live body with — so the comparison the
+    caller makes is between two parsed blocks and never a match over rendered
+    text, which any longer body beginning the same way would satisfy.
+    """
+    code, out = _git(repo, "rev-parse", f"HEAD:{done_rel}")
+    if code != 0:
+        return None, None, (f"git holds no {done_rel} at HEAD "
+                            f"({out.strip()[:160]!r}), so there is no "
+                            "committed copy to resolve the body back out of")
+    blob = out.strip()
+    if not _BLOB_SHA.match(blob):
+        return None, None, (f"the pin resolved to {blob!r}, which is not a "
+                            "40-hex blob sha — a record carrying it would not "
+                            "resolve for anybody")
+    code, text = _git(repo, "cat-file", "-p", blob)
+    if code != 0:
+        return blob, None, (f"blob {blob} could not be read "
+                            f"({text.strip()[:160]!r})")
+    _kept, body = items_mod.replace_body(text, ident)
+    if body is None:
+        return blob, None, (f"blob {blob} carries no `{ident}` block, so the "
+                            "committed copy of the done home does not hold "
+                            "this body at all")
+    return blob, body, None
+
+
+def cmd_item_compact(args, out, ctx) -> int:
+    """Collapse one closed body to a ledger line, the body kept at a blob pin.
+
+    THE ORDER IS RECORD FIRST, and it carries the same judgment
+    `verbs.move_to_done` states for append-then-delete: the window between
+    the writes must fall on the recoverable side. The record is written, then
+    the body is removed, then the head's count is raised — so a crash leaves
+    a record naming a body that is still present (over-recorded, visible and
+    harmless), never a body removed with nothing naming where it went. The
+    head bump last means a crash before it leaves the identity SHORT, which
+    is the loud finding rather than the quiet one.
+
+    NOTHING IS WRITTEN UNTIL THE PIN IS PROVEN. Every refusal below returns
+    before the first write, so a refused compaction leaves the tree exactly as
+    it found it — which is what makes "it refused" checkable by reading the
+    carrier rather than by trusting the message.
+    """
+    from . import ledger as ledger_mod
+    from . import verbs as verbs_mod
+
+    ident = args.ident
+    if not ctx.done_path.exists():
+        out(f"COULD NOT VERIFY: no done home at {ctx.done_path}. An absent "
+            "closure home and one holding no such body are not the same "
+            "answer: the first means this verb could not run.")
+        return exits.COULD_NOT_VERIFY
+    done_rel = str(ctx.done_path.relative_to(ctx.repo))
+
+    with items_mod.carrier_lock(ctx.items_path):
+        items_text = ctx.items_path.read_text(encoding="utf-8")
+        items_parsed = items_mod.parse(items_text)
+        if "compacted" not in items_parsed.head:
+            out("COULD NOT VERIFY: the carrier head declares no `compacted:`, "
+                "so this exit has nowhere to be counted and the conservation "
+                "identity could not survive it. Nothing was written.")
+            return exits.COULD_NOT_VERIFY
+
+        # AN ID IN BOTH HOMES IS NOT COMPACTED, and the row is the one that
+        # already owns this input. Compacting the done copy of a DUPLICATE
+        # would delete exactly the copy `item check` tells a reader to KEEP,
+        # and the identity would come out balanced afterwards — the surplus
+        # absorbed by the bump, so the state that made it visible would be
+        # gone. A repair wearing an exit's costume.
+        live = {it.ident for it in items_parsed.items}
+        if ident in live:
+            out(f"FINDING [duplicate_id] id {ident!r} is in BOTH homes, so it "
+                "is NOT compactable: this is the interrupted-close window, "
+                "which is DUPLICATE and recoverable. Compacting the done copy "
+                "would delete the copy the repair keeps and leave the "
+                "identity balanced afterwards, so the evidence of the "
+                "interruption would go with it. The repair is unchanged — "
+                "delete the LIVE copy once the done copy is confirmed "
+                "complete, then compact.")
+            return exits.FINDING
+
+        done_text = ctx.done_path.read_text(encoding="utf-8")
+        kept, body = items_mod.replace_body(done_text, ident)
+        if body is None:
+            out(f"FINDING [unknown_item] no closed block {ident!r} in "
+                f"{done_rel}. Compaction is the DONE BODY's exit, so a live "
+                "item takes `item close` first; and a body below "
+                f"`{items_mod.ARCHIVE_HEADING}` is held verbatim and is not "
+                "reachable from here at all.")
+            return exits.FINDING
+
+        blob, pinned, why = pinned_body(ctx.repo, done_rel, ident)
+        detail = None
+        if pinned is None:
+            detail = why
+        elif pinned != body:
+            detail = (f"the body in {done_rel} and the body at blob {blob} "
+                      f"DIFFER — {len(body)} characters here against "
+                      f"{len(pinned)} there. The difference is uncommitted, "
+                      "so it exists in no blob any record could name")
+        if detail is not None:
+            out(f"FINDING [compaction_would_strip] {ident} was NOT compacted: "
+                f"{detail}. This verb's whole design is that the body leaves "
+                "the carrier and stays byte-for-byte recoverable at a blob "
+                "pin, so a body the pin does not carry is one it would strip "
+                "SILENTLY — the carrier would shrink and the text would be "
+                "nowhere. COMMIT the done home and run this again. Nothing "
+                "was written.")
+            return exits.FINDING
+
+        ref = NO_CLOSED_REF
+        for ln in body.split("\n"):
+            if grammar.is_slot(ln, items_mod.CLOSED_REF):
+                ref = ln.split(":", 1)[1].strip() or NO_CLOSED_REF
+                break
+        new_items, bumped = items_mod.bump_compacted(items_text)
+        if not bumped:
+            out("COULD NOT VERIFY: the head's `compacted:` count is not an "
+                "integer this build could raise, so the identity could not "
+                "record this exit. Nothing was written.")
+            return exits.COULD_NOT_VERIFY
+
+        # 1. THE RECORD, before the tree ever holds one body fewer.
+        line = ledger_mod.append(ctx.ledger_path, "decision",
+                                 {"question": compaction_question(ident),
+                                  "answer": compaction_answer(done_rel, blob,
+                                                              ref)})
+        out(f"ledger: {line}")
+        # 2. THE BODY LEAVES. 3. THE COUNT RISES.
+        ctx.done_path.write_text(kept.rstrip("\n") + "\n", encoding="utf-8")
+        ctx.items_path.write_text(new_items, encoding="utf-8")
+        out(f"compacted {ident}: {len(body)} character(s) left {done_rel}; "
+            f"the body resolves at blob {blob}")
+        if ref == NO_CLOSED_REF:
+            out(f"closed-ref: {NO_CLOSED_REF} on this body, and the record "
+                "says so rather than omitting the field. A closure "
+                "legitimately has none; the BLOB is what makes the body "
+                "recoverable either way.")
+        code = verbs_mod.commit_paths(
+            ctx, [ctx.ledger_path, ctx.done_path, ctx.items_path],
+            f"lifecycle: compact {ident}", out,
+            skip=getattr(args, "no_commit", False), what="the compaction")
+
+        # CONSERVATION IS RE-RUN AT THE ACT, never asserted about it. This is
+        # the first exit that moves the identity's RIGHT-hand side, so a run
+        # that only ever saw closures would never have exercised the
+        # subtraction at all.
+        after = items_mod.parse(ctx.items_path.read_text(encoding="utf-8"))
+        try:
+            done_after = items_mod.parse(
+                ctx.done_path.read_text(encoding="utf-8"))
+            done_why = None
+        except (OSError, UnicodeDecodeError) as exc:
+            done_after, done_why = None, f"{done_rel} could not be read ({exc!r})"
+        code = exits.worst([code, items_mod.report_conservation(
+            items_mod.conservation(after, done_after, done_why), out)])
+    args.fire_detail = f"compact {ident}"
     return code
