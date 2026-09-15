@@ -237,6 +237,88 @@ def cmd_item_check(args, out, err=None) -> int:
     return code
 
 
+def cmd_item_repair(args, out) -> int:
+    """`item repair --shape` (lc-129) — the MECHANICAL half of hand damage.
+
+    TWO HALVES, AND THE SPLIT IS THE DESIGN. It joins wrapped slot values and
+    moves appended lines below the fixed slots — repairs where every word
+    survives — and it LISTS missing slots, unknown slots, closed-still-blocked
+    bodies and unjoinable continuations, whose repair would mean writing a
+    value nobody wrote. The listed bodies are not touched; `items.repair_shape`
+    carries the reasoning at the transform.
+
+    THE EXIT CONTRACT, in this repo's three answers: CLEAN when nothing is left
+    for judgment — the mechanical repairs landed, or there was nothing to
+    repair; FINDING when anything was LISTED, including a run that also
+    repaired, because the listing is the part a caller must act on; COULD NOT
+    VERIFY when a home could not be read, naming which.
+
+    IT COMMITS ITS WRITE OR SAYS `NOT COMMITTED` (the lc-41 ruling): every
+    carrier-WRITING verb answers the commit question in the same closed
+    vocabulary, and a run that wrote nothing says so rather than leaving a
+    reader to tell silence from a failed commit.
+    """
+    ctx, code = _context(args, out)
+    if ctx is None:
+        return code
+
+    code = exits.CLEAN
+    written = []
+    judgments = []
+    for path in (ctx.items_path, ctx.done_path):
+        if not path.exists():
+            out(f"COULD NOT VERIFY: no carrier at {path}. An absent file and "
+                "a clean one are not the same answer, and neither is a "
+                "repair.")
+            code = exits.worst([code, exits.COULD_NOT_VERIFY])
+            continue
+        try:
+            with items_mod.carrier_lock(path):
+                before = path.read_text(encoding="utf-8")
+                res = items_mod.repair_shape(before, prefix=ctx.prefix)
+                if res.text != before:
+                    path.write_text(res.text, encoding="utf-8")
+                    written.append(path)
+        except (OSError, UnicodeDecodeError) as exc:
+            out(f"COULD NOT VERIFY: {path} could not be read or written "
+                f"({exc!r}).")
+            code = exits.worst([code, exits.COULD_NOT_VERIFY])
+            continue
+
+        for ident, slot, lineno, joined in res.joins:
+            out(f"joined: {path.name}:{lineno} {ident} `{slot}:` — "
+                f"{joined} continuation line(s) folded back into the value. "
+                "Every word survives; only the line breaks are gone.")
+        for ident, name, lineno in res.moves:
+            out(f"moved: {path.name}:{lineno} {ident} `{name}:` — below the "
+                "fixed slots, in file order, so the block reads as what it "
+                "said and then what it now says.")
+        judgments += [(path.name, j) for j in res.judgments]
+
+    for name, (ident, klass, detail) in judgments:
+        out(f"JUDGMENT [{klass}] {name} {ident}: {detail} — LISTED, not "
+            "repaired. Supplying this is a desk decision; a verb that guessed "
+            "it would put a value nobody wrote into the carrier under the "
+            "tool's own authority.")
+    if judgments:
+        out(f"item repair --shape: {len(judgments)} body/bodies left for the "
+            "desk pass.")
+        code = exits.worst([code, exits.FINDING])
+
+    if written:
+        msg = (f"item repair --shape: {len(written)} carrier(s) reshaped "
+               "(wrapped values joined, appended lines moved below the fixed "
+               "slots)")
+        code = exits.worst([code, verbs.commit_paths(
+            ctx, written, msg, out,
+            skip=getattr(args, "no_commit", False),
+            what="the shape repair")])
+    else:
+        out("NOT COMMITTED: there is nothing to commit — no carrier's shape "
+            "changed. The files are as this run found them.")
+    return code
+
+
 def cmd_item_waves(args, out) -> int:
     """`item waves` (lc-123) — the item→lane join, DERIVED from write-sets.
 
@@ -356,6 +438,20 @@ def build_parser() -> argparse.ArgumentParser:
                           "commit-time gate. Findings already at HEAD are "
                           "counted, not reported, so a repo that carries "
                           "some can still commit.")
+
+    rep = its.add_parser("repair",
+                         help="the MECHANICAL half of hand-written damage: "
+                              "wrapped values joined, appended lines moved "
+                              "below the fixed slots. Never invents — missing "
+                              "slots, unknown slots and closed-still-blocked "
+                              "bodies are LISTED for a desk pass")
+    rep.add_argument("--shape", action="store_true", required=True,
+                     help="REQUIRED, and it is the verb's whole scope: this "
+                          "repairs SHAPE. A bare `item repair` would read as "
+                          "a verb that repairs whatever it finds, which is "
+                          "the invention the design refuses.")
+    rep.add_argument("--no-commit", dest="no_commit", action="store_true",
+                     help="skip the commit (a batching caller owns it)")
 
     slots = its.add_parser("slots", help="one item's effective fixed slots")
     slots.add_argument("ident")
@@ -652,6 +748,8 @@ def main(argv=None) -> int:
         path = f"item {args.item_action}"
         if args.item_action == "check":
             code = cmd_item_check(args, out)
+        elif args.item_action == "repair":
+            code = cmd_item_repair(args, out)
         elif args.item_action == "slots":
             ctx, code = _context(args, out)
             if ctx is not None:

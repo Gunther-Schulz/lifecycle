@@ -1619,6 +1619,196 @@ def check_done_file(path: Path, out, prefix: str | None = None, *,
     return code
 
 
+# --- the shape repair (lc-129) -----------------------------------------------
+
+#: THE SPLIT IS THE WHOLE VERB. A wrapped value and an appended line sitting
+#: among the fixed slots are damage to a block's SHAPE: every word survives the
+#: repair, and the transformation is total on its input. A missing slot, an
+#: unknown slot and a closed body still carrying its blocker are damage to its
+#: CONTENT, where repairing means supplying a value nobody wrote — which is the
+#: failure this verb must not have. So those are LISTED for a desk pass and
+#: their bodies are not touched.
+#:
+#: THE CLASS NAMES ARE THE VERB'S OUTPUT VOCABULARY, closed and declared here
+#: rather than spelled at each emit site: the desk pass reads the list, and a
+#: fourth name improvised at a fourth site is a grade word nobody counts.
+JUDGMENT_MISSING = "missing-slot"
+JUDGMENT_UNKNOWN = "unknown-slot"
+JUDGMENT_BLOCKED_CLOSED = "closed-still-blocked"
+#: A continuation line with NO slot line above it to join to — the one wrapped
+#: value the mechanical half cannot repair, because choosing a host for it
+#: would be choosing which slot the words belong to. Listed, never guessed.
+JUDGMENT_UNJOINABLE = "unjoinable-continuation"
+
+
+@dataclass
+class ShapeRepair:
+    """What one pass over a carrier changed, and what it refused to change."""
+    text: str = ""
+    #: `(ident, slot, lineno, continuation-lines-joined)`
+    joins: list = field(default_factory=list)
+    #: `(ident, line-name, lineno)`
+    moves: list = field(default_factory=list)
+    #: `(ident, one of the JUDGMENT_* words, detail)`
+    judgments: list = field(default_factory=list)
+
+    @property
+    def repaired(self) -> bool:
+        return bool(self.joins or self.moves)
+
+
+def _appended_line(name: str) -> bool:
+    """Is `name` a line the block ACCUMULATED rather than one of its seven?
+
+    The three kinds ride one predicate because the checker already treats them
+    as one: `_resolve_amendments`, `_check_promotions` and `_close_block`'s
+    `tail_out_of_place` each fire on the same arrangement — an appended record
+    sitting among the values it could be read as superseding. A repair that
+    moved one kind and left its twins would leave two thirds of that finding
+    standing, under a verb whose report said the block was repaired.
+    """
+    return (_is_amend_line(name) or name in PROMOTION_LINES
+            or name in DONE_ONLY_SLOTS)
+
+
+def _entry_kind(name: str) -> str:
+    if name in SLOTS:
+        return "fixed"
+    if _appended_line(name):
+        return "appended"
+    return "other"
+
+
+def repair_shape(text: str, prefix: str | None = None) -> ShapeRepair:
+    """Join wrapped slot values; move appended lines below the fixed slots.
+
+    THE ARCHIVE AND THE HEAD PASS THROUGH VERBATIM. Those bodies predate the
+    tool and are skipped by every shape check here; joining their wrapped prose
+    would rewrite history the parser deliberately does not grade.
+
+    NOTHING IS PARSED AND RE-RENDERED. The rebuild is over the block's own
+    LINES, so a value this build cannot classify still reaches the output
+    character for character — which is what lets the verb repair a block that
+    also carries an unknown slot without touching the unknown slot.
+    """
+    res = ShapeRepair()
+    parsed = parse(text)
+    by_ident = {}
+    for it in parsed.items:
+        by_ident.setdefault(it.ident, it)
+
+    lines = text.split("\n")
+    n = len(lines)
+    out_lines = []
+    i = 0
+    while i < n and not _BLOCK_HEADING.match(lines[i]) \
+            and lines[i].strip() != ARCHIVE_HEADING:
+        out_lines.append(lines[i])
+        i += 1
+
+    while i < n:
+        if lines[i].strip() == ARCHIVE_HEADING:
+            out_lines.extend(lines[i:])
+            break
+        m = _BLOCK_HEADING.match(lines[i])
+        if not m:
+            # A line outside any block. The parser reports it; this verb has
+            # no block to attach it to, so it travels unchanged.
+            out_lines.append(lines[i])
+            i += 1
+            continue
+        out_lines.append(lines[i])
+        ident = m.group(1)
+        start = i + 1
+        i = start
+        while i < n and not _BLOCK_HEADING.match(lines[i]) \
+                and lines[i].strip() != ARCHIVE_HEADING:
+            i += 1
+        out_lines.extend(_repair_block(ident, lines[start:i], start + 1, res,
+                                       by_ident.get(ident), prefix))
+
+    res.text = "\n".join(out_lines)
+    return res
+
+
+def _repair_block(ident: str, body: list, first_lineno: int,
+                  res: ShapeRepair, item, prefix: str | None) -> list:
+    entries = []
+    for off, raw in enumerate(body):
+        lineno = first_lineno + off
+        if not raw.strip():
+            entries.append({"name": None, "kind": "blank", "lineno": lineno,
+                            "lines": [raw]})
+            continue
+        sm = _SLOT_LINE.match(raw)
+        if sm:
+            name = sm.group(1)
+            entries.append({"name": name, "kind": _entry_kind(name),
+                            "lineno": lineno, "lines": [raw]})
+            continue
+        host = entries[-1] if entries else None
+        if host is None or host["kind"] in ("blank", "orphan"):
+            # A BLANK LINE ENDS A VALUE. A continuation after one is not
+            # unambiguously the wrapped tail of the slot above it, and picking
+            # a host for it would be picking which slot owns the words.
+            res.judgments.append((ident, JUDGMENT_UNJOINABLE,
+                                  f"line {lineno}: {raw.strip()[:60]!r}"))
+            entries.append({"name": None, "kind": "orphan", "lineno": lineno,
+                            "lines": [raw]})
+            continue
+        host["lines"].append(raw)
+
+    for e in entries:
+        if len(e["lines"]) > 1:
+            joined = " ".join([e["lines"][0].rstrip()]
+                              + [ln.strip() for ln in e["lines"][1:]])
+            res.joins.append((ident, e["name"], e["lineno"],
+                              len(e["lines"]) - 1))
+            e["lines"] = [joined]
+
+    # THE MOVE LANDS THE APPENDED LINES IMMEDIATELY AFTER THE LAST FIXED SLOT,
+    # never at the end of the block — and it keeps them in FILE ORDER. Both
+    # halves are the append-only ethic: `_resolve_amendments` reads LAST WINS
+    # off the file, so an earlier amendment moved below a later one would
+    # change which value is in force, and that is an invention, not a repair.
+    fixed_at = [k for k, e in enumerate(entries) if e["kind"] == "fixed"]
+    if fixed_at:
+        last = max(fixed_at)
+        move_at = [k for k in range(last) if entries[k]["kind"] == "appended"]
+        if move_at:
+            moving = set(move_at)
+            head = [e for k, e in enumerate(entries[:last + 1])
+                    if k not in moving]
+            moved = [entries[k] for k in move_at]
+            entries = head + moved + entries[last + 1:]
+            for e in moved:
+                res.moves.append((ident, e["name"], e["lineno"]))
+
+    names = [e["name"] for e in entries if e["name"]]
+    missing = [s for s in SLOTS if s not in names]
+    if missing:
+        res.judgments.append((ident, JUDGMENT_MISSING, ", ".join(missing)))
+    unknown = list(dict.fromkeys(nm for nm in names
+                                 if _entry_kind(nm) == "other"))
+    if unknown:
+        res.judgments.append((ident, JUDGMENT_UNKNOWN, ", ".join(unknown)))
+    if item is not None and item.grade in GRADES_CLOSED:
+        # THE SAME PREDICATE `check_done_file` USES, reached through the same
+        # two calls rather than re-derived: a second reading of "is this
+        # blocker discharged" would disagree with the checker about exactly
+        # the bodies a desk pass is being handed.
+        raw_blocker = item.slots.get("blocked-by", "")
+        kind, detail = classify_blocker(raw_blocker, prefix)
+        if kind not in (None, "none") and not _moot_discharges(item, detail,
+                                                               kind):
+            res.judgments.append((ident, JUDGMENT_BLOCKED_CLOSED, raw_blocker))
+
+    out = []
+    for e in entries:
+        out.extend(e["lines"])
+    return out
+
+
 # --- the staged shape gate ---------------------------------------------------
 
 #: How long a `git show` may take before the staged check calls it unreadable.
