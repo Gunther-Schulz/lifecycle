@@ -42,14 +42,44 @@ by construction. `__pycache__` is cleared around every arm: a stale `.pyc`
 would let the unmutated module answer for the mutated source, which reads
 exactly like a row that does not discriminate.
 
+IT REFUSES TO START OVER A MUTATION TARGET THAT ALREADY DIFFERS FROM HEAD,
+and the restore under `try/finally` is not a substitute for that check. The
+`finally` covers an ordinary exception; it covers neither a SIGKILL nor a
+harness timeout nor an operator Ctrl-C, and a run cut down between the write
+and the restore leaves the injected mutation LIVE in the tree with nothing
+marking that it did. Measured 2026-09-15: a desk ran this tool on a live
+shared checkout, killed it mid-arm, and left a one-line mutation standing in
+`migrate.py` — found only by sha256-ing every tracked file against its HEAD
+blob, because nothing was looking.
+
+The startup refusal is the half that survives that kill, and it turns BOTH
+hazards into ONE computable predicate: residue from an earlier crashed run,
+and a co-writer's uncommitted work in a file this tool is about to overwrite.
+Neither needs the question "is this checkout shared?", which is not
+computable. A dirty mutation target is a FINDING rather than a
+could-not-verify because the tool DID form a verdict — it read both sides and
+found them different; what it refuses is to proceed, not to answer.
+
+THE COMPARISON IS SHA, NEVER GREP. Searching the source for the mutated form
+is the instrument that looks cheapest and is wrong: the replacement text of
+at least one recorded arrangement occurs LEGITIMATELY in its own file at
+HEAD, so a grep reports a false positive on a clean tree and nothing
+distinguishes it from residue. Only the working bytes against the committed
+blob are authoritative — and `git status` is not that instrument either: its
+stat cache keys on (mtime, size), so a restore preserving both can leave a
+byte-identical file reading modified, and a same-size edit under a kept
+timestamp can leave a changed one reading clean.
+
     python3 tools/prove-rows.py            # every row that has a mutation
     python3 tools/prove-rows.py <ident>…   # only these
 
-Exit: 0 every proof held · 2 a proof failed · 3 a mutation anchor was not
+Exit: 0 every proof held · 2 a proof failed, OR a file this run would mutate
+already differs from HEAD (the refusal above) · 3 a mutation anchor was not
 found (the source moved under the arrangement — the arrangement is stale,
 which is a finding about THIS file, not about the row).
 """
 
+import hashlib
 import os
 import shutil
 import subprocess
@@ -686,6 +716,44 @@ MUTATIONS = [
 ]
 
 
+def head_blob(rel: str):
+    """The committed bytes of `rel` at HEAD, or `None` where HEAD has none."""
+    r = subprocess.run(["git", "-C", str(REPO), "show", f"HEAD:{rel}"],
+                       capture_output=True)
+    return r.stdout if r.returncode == 0 else None
+
+
+def dirty_targets(paths) -> list:
+    """`[(rel, why)]` for every file whose working bytes differ from HEAD's.
+
+    THE PRECONDITION THIS TOOL CANNOT RUN WITHOUT, checked before anything is
+    written. Every path here is one the run would overwrite and then restore
+    from a backup taken moments earlier — so a file already carrying somebody's
+    uncommitted work, or residue from a crashed earlier run, is not a tree this
+    tool may touch: the backup would capture the FOREIGN state and the restore
+    would write it back as though it were the original.
+
+    A path absent from HEAD counts as differing. The tool cannot establish what
+    it would be restoring such a file TO, and proceeding on an unknown baseline
+    is the same hazard by a quieter route.
+    """
+    out = []
+    for path in sorted(paths):
+        rel = path.relative_to(REPO).as_posix()
+        blob = head_blob(rel)
+        work = path.read_bytes()
+        if blob is None:
+            out.append((rel, "HEAD carries no blob at this path, so there is "
+                             "no committed state to restore it to"))
+            continue
+        if blob != work:
+            out.append((rel,
+                        f"working sha256 {hashlib.sha256(work).hexdigest()} "
+                        f"!= HEAD blob sha256 "
+                        f"{hashlib.sha256(blob).hexdigest()}"))
+    return out
+
+
 def clear_pycache():
     for d in CORE.rglob("__pycache__"):
         shutil.rmtree(d, ignore_errors=True)
@@ -762,6 +830,25 @@ def main(argv) -> int:
             print(f"COULD NOT VERIFY: no mutation recorded for "
                   f"{', '.join(sorted(unknown))}")
             return COULD_NOT_VERIFY
+
+    # BEFORE the backup, because the backup is what makes a dirty target
+    # dangerous: it would capture the foreign state and the restore would
+    # write it back under this tool's hand.
+    dirty = dirty_targets({CORE / fname for _, fname, *_ in rows})
+    if dirty:
+        print(f"REFUSING TO START — {len(dirty)} file(s) this run would "
+              "mutate already differ from HEAD:")
+        for rel, why in dirty:
+            print(f"    {rel}")
+            print(f"        {why}")
+        print("\nThis tool overwrites each of those files and restores them "
+              "from a backup taken at startup, so running now would capture "
+              "the current state as the 'original' and write it back as such. "
+              "Either commit the work, or restore the file from its committed "
+              "blob — `git show HEAD:<path>` — never with `git checkout`, "
+              "`git restore` or `git stash`, which are whole-file destructive "
+              "against uncommitted work.")
+        return FINDING
 
     backup = Path(tempfile.mkdtemp(prefix="prove-rows-"))
     for f in CORE.glob("*.py"):
