@@ -805,7 +805,19 @@ class TheCostTestsThirdConjunct(unittest.TestCase):
         """
         r = self._repo()
         code, out = self._run(r, *self._add(
-            "--blocked-by", "evidence the roster count stops moving", hunks=1))
+            # THE PREDICATE IS A SHELL PREDICATE, and this fixture used to
+            # spell it as bare prose — an instance of the very class lc-130's
+            # mint lint exists to refuse (it parses, then exits 127,
+            # `the: command not found`). Respelled in the carrier's OWN idiom
+            # for a wait that has not arrived (`evidence false  # <prose>`,
+            # live at ITEMS.md:13 and :24): exit 1, still waiting, which is
+            # what this arm's name asserts. `:` would also mint, but it exits
+            # 0 — "the evidence ARRIVED" — and that is not what a fixture
+            # named `is_not_met` should say. The arm's SUBJECT is untouched:
+            # it grades the cost test's third conjunct, which is about the
+            # blocker being TYPED, never about how it resolves.
+            "--blocked-by", "evidence false  # the roster count stops moving",
+            hunks=1))
         self.assertNotIn("[cost_test_veto]", out)
         self.assertEqual(code, exits.CLEAN, out)
 
