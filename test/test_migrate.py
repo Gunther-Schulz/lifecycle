@@ -2357,5 +2357,71 @@ class DeclaredClosureVocabulary(unittest.TestCase):
             self.assertFalse(migrate.grade_word_shaped(junk), junk)
 
 
+class RepeatedFromRefuses(unittest.TestCase):
+    """lc-31 — argparse's plain (non-`append`) dest OVERWRITES a repeated
+    `--from`: `build_parser().parse_args(["migrate", "--from", "A.md",
+    "--from", "B.md"])` returned `from_carrier="B.md"` with NO output, so a
+    caller believed two sources were read and one was silently discarded.
+    argparse overwriting is a silent wrong answer at the migration entry
+    point. Distinct from `--merge`, which is a second INVOCATION naming a
+    second source; this is ONE invocation naming two — `--merge` itself is
+    untouched by this fix.
+
+    RED, executed against a private clone of `b387ef0` (this item's own
+    base commit): the same `parse_args` call there returns `'B.md'`,
+    silently — pinned below as `test_a_repeated_from_is_the_measured_defect
+    _shape_pre_fix`, which is true of BOTH the old and the fixed build (the
+    refusal added by this item runs before that value is ever trusted, not
+    by changing what argparse itself does with it).
+    """
+
+    def test_a_repeated_from_is_the_measured_defect_shape_pre_fix(self):
+        """Pins argparse's own overwrite as a fact independent of the fix:
+        a plain (non-`append`) dest keeps only the LAST `--from`. This is
+        exactly what made the bug silent, and exactly what the refusal
+        below exists to intercept before this value is trusted anywhere."""
+        ns = cli.build_parser().parse_args(
+            ["migrate", "--from", "A.md", "--from", "B.md"])
+        self.assertEqual(ns.from_carrier, "B.md")
+
+    def test_a_second_from_in_one_invocation_refuses(self):
+        """THE FIX. `main()` refuses before ever resolving a repo or
+        reading a source, so the repeated flag is caught however the rest
+        of the invocation is spelled."""
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli.main(["--repo", "/nonexistent/path/for-lc-31",
+                             "migrate", "--from", "A.md", "--from", "B.md"])
+        self.assertEqual(code, exits.FINDING)
+        self.assertIn(
+            "one --from per invocation; use --merge for a second source",
+            buf.getvalue())
+
+    def test_the_equals_form_is_also_caught(self):
+        """`--from=A.md --from=B.md` is the same flag under argparse's
+        other accepted spelling; the raw-argv count the fix takes must see
+        both forms or a caller need only reach for `=` to slip through."""
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli.main(["--repo", "/nonexistent/path/for-lc-31",
+                             "migrate", "--from=A.md", "--from=B.md"])
+        self.assertEqual(code, exits.FINDING)
+        self.assertIn(
+            "one --from per invocation; use --merge for a second source",
+            buf.getvalue())
+
+    def test_a_single_from_is_unchanged(self):
+        """MUST-NOT-MOVE. The ordinary, single-source invocation is not
+        touched by this fix."""
+        ns = cli.build_parser().parse_args(["migrate", "--from", "A.md"])
+        self.assertEqual(ns.from_carrier, "A.md")
+
+    def test_no_from_at_all_is_unchanged(self):
+        """MUST-NOT-MOVE, the other boundary: the documented default (no
+        `--from`) still parses to `None`, and absence is not a repetition."""
+        ns = cli.build_parser().parse_args(["migrate"])
+        self.assertIsNone(ns.from_carrier)
+
+
 if __name__ == "__main__":
     unittest.main()

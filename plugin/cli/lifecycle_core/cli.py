@@ -823,7 +823,23 @@ def main(argv=None) -> int:
             code = exits.COULD_NOT_VERIFY
     elif args.verb == "migrate":
         path = "migrate"
-        code = cmd_migrate(args, out)
+        # lc-31: argparse's plain (non-`append`) dest OVERWRITES on a
+        # repeated `--from`, so `--from A.md --from B.md` silently keeps
+        # only B.md — the caller believes two sources were read and one
+        # was. Counted from the RAW argv rather than from `args.from_carrier`
+        # (which by then holds only the survivor and cannot say how many
+        # there were), and gated to `migrate` because `--from` is that
+        # verb's own flag alone (grepped: no other subparser declares it).
+        # Distinct from `--merge`, which reads a SECOND INVOCATION's source;
+        # this is one invocation naming two.
+        from_count = sum(1 for a in argv
+                         if a == "--from" or a.startswith("--from="))
+        if from_count > 1:
+            out("FINDING [migrate_repeated_from] one --from per invocation; "
+                "use --merge for a second source")
+            code = exits.FINDING
+        else:
+            code = cmd_migrate(args, out)
     elif args.verb == "desk":
         if not args.desk_action:
             out("COULD NOT VERIFY: `desk` needs an action: state.")
