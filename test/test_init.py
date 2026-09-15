@@ -113,7 +113,11 @@ class DerivedIdPrefix(unittest.TestCase):
         r.commit_as("op@example.invalid")
         self.addCleanup(r.close)
         code, out = _run(["--repo", str(r.dir), "init", "--id-prefix", "zz"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: this fixture has no tracked CLAUDE.md, so the laws
+        # reading is unresolved and the exit code now carries that —
+        # legitimately-changed from CLEAN, since --id-prefix does
+        # not touch the laws or public readings this arm is not about.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         doc = json.loads((r.dir / ".claude" / "lifecycle.json").read_text())
         self.assertEqual(doc["id-prefix"], "zz")
         self.assertIn("explicit --id-prefix", out)
@@ -128,7 +132,10 @@ class RefusalArm(unittest.TestCase):
         r.commit_as("op@example.invalid")
         self.addCleanup(r.close)
         code1, out1 = _run(["--repo", str(r.dir), "init"])
-        self.assertEqual(code1, exits.CLEAN, out1)
+        # lc-119: no tracked CLAUDE.md here, so the first (successful) init
+        # carries an unresolved laws reading in its exit code —
+        # legitimately-changed.
+        self.assertEqual(code1, exits.COULD_NOT_VERIFY, out1)
 
         code2, out2 = _run(["--repo", str(r.dir), "init"])
         self.assertEqual(code2, exits.FINDING, out2)
@@ -142,7 +149,9 @@ class RefusalArm(unittest.TestCase):
         _run(["--repo", str(r.dir), "init", "--id-prefix", "aa"])
         code, out = _run(["--repo", str(r.dir), "init", "--id-prefix", "bb",
                          "--force"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: no tracked CLAUDE.md — laws unresolved — legitimately
+        # changed from CLEAN.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         doc = json.loads((r.dir / ".claude" / "lifecycle.json").read_text())
         self.assertEqual(doc["id-prefix"], "bb")
 
@@ -194,7 +203,12 @@ class RoundTrip(unittest.TestCase):
         r.commit_as("op@example.invalid")
         self.addCleanup(r.close)
         code, out = _run(["--repo", str(r.dir), "init"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: this fixture also has no tracked CLAUDE.md, so init's OWN
+        # exit code now carries the unresolved laws reading too —
+        # legitimately-changed. This does not disturb the gap this test
+        # documents (kind check answering COULD NOT VERIFY on the absent
+        # carriers below); both readings now agree the repo is unresolved.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         code2, out2 = _run(["--repo", str(r.dir), "kind", "check"])
         self.assertEqual(code2, exits.COULD_NOT_VERIFY, out2)
         self.assertIn("is not present", out2)
@@ -261,7 +275,10 @@ class LawsBranchArm(unittest.TestCase):
         r.commit_as("op@example.invalid")  # no CLAUDE.md at all
         self.addCleanup(r.close)
         code, out = _run(["--repo", str(r.dir), "init"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: this arm's own name is the unresolved laws branch — the
+        # exit code now carries exactly what the name says.
+        # Legitimately-changed from CLEAN.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         doc = json.loads((r.dir / ".claude" / "lifecycle.json").read_text())
         self.assertEqual(doc["laws"], "CLAUDE.local.md")
         self.assertIn("COULD NOT VERIFY", out)
@@ -304,7 +321,11 @@ class GitVisibilityArm(unittest.TestCase):
         r.commit_as("op@example.invalid")
         self.addCleanup(r.close)
         code, out = _run(["--repo", str(r.dir), "init"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: no tracked CLAUDE.md — laws unresolved — legitimately
+        # changed from CLEAN. This arm is about git-visibility, not
+        # laws, so the unrelated unresolved reading is left as-is rather
+        # than masked by adding a CLAUDE.md this arm does not need.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
 
         ignored = decl.ignored_by_git(r.dir, decl.DECLARATION_REL)
         self.assertFalse(ignored, "the declaration must not be git-ignored")
@@ -322,7 +343,9 @@ class GitVisibilityArm(unittest.TestCase):
         self.addCleanup(r.close)
         _run(["--repo", str(r.dir), "init"])
         code, out = _run(["--repo", str(r.dir), "init", "--force"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: no tracked CLAUDE.md — laws unresolved — legitimately
+        # changed from CLEAN.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         gi_text = (r.dir / ".gitignore").read_text(encoding="utf-8")
         self.assertEqual(gi_text.count("!.claude/lifecycle.json"), 1)
         self.assertEqual(gi_text.count("ITEMS.md.lock"), 1)
@@ -338,7 +361,9 @@ class NoLanesIsAnEmptyListNeverAbsent(unittest.TestCase):
         r.commit_as("op@example.invalid")
         self.addCleanup(r.close)
         code, out = _run(["--repo", str(r.dir), "init"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: no tracked CLAUDE.md — laws unresolved — legitimately
+        # changed from CLEAN.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         doc = json.loads((r.dir / ".claude" / "lifecycle.json").read_text())
         self.assertIn("lanes", doc)
         self.assertEqual(doc["lanes"], [])
@@ -348,7 +373,9 @@ class NoLanesIsAnEmptyListNeverAbsent(unittest.TestCase):
         r.commit_as("op@example.invalid")
         self.addCleanup(r.close)
         code, out = _run(["--repo", str(r.dir), "init", "--lane", "drain"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: no tracked CLAUDE.md — laws unresolved — legitimately
+        # changed from CLEAN.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         body = (r.dir / "lanes" / "drain.md").read_text(encoding="utf-8")
         self.assertIn("Decides:", body)
         self.assertIn("Trigger:", body)
@@ -405,6 +432,15 @@ class PublicFlagArm(unittest.TestCase):
     def _repo_with_a_remote(self):
         r = ScratchGitRepo()
         self.addCleanup(r.close)
+        # A tracked CLAUDE.md so the LAWS reading resolves (operator-only)
+        # instead of adding its own could-not-verify to every arm below —
+        # lc-119 makes an unresolved declared value reach the exit code,
+        # and these arms exist to discriminate on the PUBLIC branch alone;
+        # an unresolved laws reading would report COULD_NOT_VERIFY for
+        # every arm here regardless of what gh answers, which is exactly
+        # the non-discriminating confound the corpus's instrument rules
+        # warn against.
+        r.write("CLAUDE.md", "# laws\n")
         r.commit_as("op@example.invalid")
         # A remote that cannot be reached by anything real: the arms fake
         # `gh`, and a URL at .invalid guarantees that a fake which failed
@@ -453,6 +489,11 @@ class PublicFlagArm(unittest.TestCase):
         and conflating the two would hide exactly that split."""
         r = ScratchGitRepo()
         self.addCleanup(r.close)
+        # A tracked CLAUDE.md, same reason as `_repo_with_a_remote` above:
+        # isolate this arm to the PUBLIC branch alone, so a laws-unresolved
+        # reading cannot also darken this "no-remote is DERIVED, not
+        # unresolved" assertion.
+        r.write("CLAUDE.md", "# laws\n")
         r.commit_as("op@example.invalid")
         code, out = _run(["--repo", str(r.dir), "init"])
         self.assertEqual(code, exits.CLEAN, out)
@@ -475,7 +516,11 @@ class PublicFlagArm(unittest.TestCase):
         _gh_on_path(self, stderr="could not resolve to a Repository",
                     exit_code=1)
         code, out = _run(["--repo", str(r.dir), "init"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: the public branch is unresolved here (gh failed) and the
+        # laws branch is resolved (the fixture now carries CLAUDE.md) — so
+        # this reading is unresolved for exactly the reason the test name
+        # says. Legitimately-changed from CLEAN.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         self.assertIs(self._declaration(r)["public"], True, out)
         self.assertIn("public: True — COULD NOT VERIFY", out)
         self.assertIn("gh repo view --json visibility", out)
@@ -487,7 +532,9 @@ class PublicFlagArm(unittest.TestCase):
         r = self._repo_with_a_remote()
         _gh_on_path(self, stdout='{"visibility":"SOMETHING-NEW"}')
         code, out = _run(["--repo", str(r.dir), "init"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: public unresolved (unrecognised word), laws resolved —
+        # legitimately-changed from CLEAN.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         self.assertIs(self._declaration(r)["public"], True, out)
         self.assertIn("public: True — COULD NOT VERIFY", out)
         self.assertIn("SOMETHING-NEW", out)
@@ -499,7 +546,9 @@ class PublicFlagArm(unittest.TestCase):
         r = self._repo_with_a_remote()
         _gh_on_path(self, stdout="not json at all")
         code, out = _run(["--repo", str(r.dir), "init"])
-        self.assertEqual(code, exits.CLEAN, out)
+        # lc-119: public unresolved (unparseable JSON), laws resolved —
+        # legitimately-changed from CLEAN.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         self.assertIs(self._declaration(r)["public"], True, out)
         self.assertIn("public: True — COULD NOT VERIFY", out)
 
@@ -522,6 +571,28 @@ class PublicFlagArm(unittest.TestCase):
         self.assertIs(self._declaration(hosted)["public"], True, out_b)
         self.assertNotEqual(self._declaration(bare)["public"],
                             self._declaration(hosted)["public"])
+
+
+class TwoUnresolvedReadingsStillReadOneExitCode(unittest.TestCase):
+    """lc-119's aggregation reuses the branch each reading already
+    returned (`laws_unresolved` / `public_unresolved`) and folds them
+    through `exits.worst`, never a second detection of the same
+    condition — the COMMON section's "two paths must not double-report".
+    No existing PublicFlagArm/LawsBranchArm fixture exercises BOTH
+    readings unresolved at once, so this is new coverage of the
+    combination itself, not a re-examination of a prior CLEAN assertion.
+    """
+
+    def test_laws_and_public_both_unresolved_is_one_could_not_verify_exit(self):
+        r = ScratchGitRepo()
+        self.addCleanup(r.close)
+        r.commit_as("op@example.invalid")  # no CLAUDE.md: laws unresolved
+        r._git("remote", "add", "origin", "https://example.invalid/o/n.git")
+        _gh_on_path(self, stderr="gh is not authenticated", exit_code=1)
+        code, out = _run(["--repo", str(r.dir), "init"])
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("no tracked CLAUDE.md", out)
+        self.assertIn("public: True — COULD NOT VERIFY", out)
 
 
 class ExistingCouldNotVerifyLinesAreFrozen(unittest.TestCase):

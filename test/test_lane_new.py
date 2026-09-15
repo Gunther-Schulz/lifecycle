@@ -277,7 +277,13 @@ class OneStubBodyNotTwo(unittest.TestCase):
         try:
             code, out = _run(["--repo", str(via_init.dir), "init",
                               "--force", "--lane", "pr"])
-            self.assertEqual(code, exits.CLEAN, out)
+            # lc-119 (write-set widened 2026-09-15): this fixture carries
+            # no tracked CLAUDE.md, so the laws reading is unresolved and
+            # init's exit code now carries that — legitimately-changed
+            # from exits.CLEAN. This arm is about the STUB BODY being
+            # byte-identical, not about the laws/public branches, so the
+            # fixture is left as-is rather than altered to keep CLEAN.
+            self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
             init_body = (via_init.dir / "lanes" / "pr.md").read_text(
                 encoding="utf-8")
         finally:

@@ -194,7 +194,15 @@ class FreshRepo(unittest.TestCase):
         buf = io.StringIO()
         with redirect_stdout(buf):
             code = cli.main(["--repo", str(r.dir), "init", "--id-prefix", "xx"])
-        self.assertEqual(code, exits.CLEAN, buf.getvalue())
+        # lc-119 (write-set widened 2026-09-15): this is ONE source
+        # assertion shared by all four test methods below via _init() —
+        # not four separate assertions to re-examine. ScratchGitRepo (from
+        # test_init) carries no tracked CLAUDE.md, so the laws reading is
+        # unresolved and init's exit code now carries that —
+        # legitimately-changed from exits.CLEAN. This class is about the
+        # reserved-goal contract, not laws/public, so the fixture is left
+        # as-is rather than altered to keep CLEAN.
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, buf.getvalue())
         r.seed_carriers()
         r.commit_as("op@example.invalid")
         return r, buf.getvalue()

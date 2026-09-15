@@ -18,6 +18,12 @@ EVERY DEFAULT THIS VERB WRITES IS PRINTED WITH ITS REASON. §3.11's own rule:
 the tool assumes when a line is absent." An unstated derivation (the
 id-prefix, the laws branch) reads afterwards exactly like a hand-authored
 choice, so every one of them is echoed to the caller as it is decided.
+
+AN UNRESOLVED DECLARED VALUE REACHES THE EXIT CODE (operator decision
+2026-09-13, LEDGER.md:79, lc-119): `cmd_init` exits COULD_NOT_VERIFY,
+never CLEAN, whenever the laws branch or the public branch could not be
+determined — the printed COULD NOT VERIFY line is prose a human reads, and
+a machine calling this verb reads only the code.
 """
 
 import copy
@@ -299,6 +305,7 @@ def cmd_init(args, out, repo: Path) -> int:
             "this verb cannot see)")
 
     laws_file, branch, reason = determine_laws(repo)
+    laws_unresolved = branch == "could-not-verify"
     if branch == "could-not-verify":
         out(f"laws: {laws_file} (the local overlay) — COULD NOT VERIFY: "
             f"{reason}. Taking the overlay branch; this reading is NOT "
@@ -307,6 +314,7 @@ def cmd_init(args, out, repo: Path) -> int:
         out(f"laws: {laws_file} — {branch} branch: {reason}")
 
     is_public, visibility_branch, visibility_reason = determine_public(repo)
+    public_unresolved = visibility_branch == "could-not-verify"
     if visibility_branch == "could-not-verify":
         out(f"public: {is_public} — COULD NOT VERIFY: {visibility_reason}. "
             "Writing TRUE, and naming both consequences so neither is a "
@@ -413,6 +421,17 @@ def cmd_init(args, out, repo: Path) -> int:
         out(f"declaration visible to git: {decl.DECLARATION_REL} is not "
             "ignored (checked: git check-ignore --no-index).")
         code = exits.CLEAN
+
+    # THE EXIT CODE CARRIES IT (operator decision 2026-09-13, LEDGER.md:79,
+    # all-as-recommended via the judgment desk): a declared value this verb
+    # could not resolve — the laws branch, the public flag — must not read
+    # as CLEAN, because a machine reading the code cannot see the printed
+    # COULD NOT VERIFY line above. This reuses the branch each reading
+    # already returned (`laws_unresolved` / `public_unresolved`), never a
+    # second detection of the same condition, so the unrunnable-git path
+    # lc-118 guards and this aggregation do not double-report one failure.
+    if laws_unresolved or public_unresolved:
+        code = exits.worst([code, exits.COULD_NOT_VERIFY])
 
     lane_lines_dir = repo / "lanes"
     for name in lane_names:
