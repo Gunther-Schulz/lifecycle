@@ -83,6 +83,7 @@ decision: does the codex delegation survive the Claude credit reset, or was it i
 decision: what becomes of wave 2's three in-flight codex lanes (lc-34, lc-119, lc-79) at the drain desk's clean close → BACKED OUT, not integrated: mid-red-first when the close landed, and their clones are disposable. Nothing applied, tree clean, all work pushed. The three items stay READY with premises re-grounded this session, so the next desk redispatches from the carrier. No state lost.
 decision: what landed in wave A of the lifecycle drain, and under which shas → lc-128 d99d62e; lc-22 1caa4dc a065459 18681de; lc-55 90518a9 da727f6; desk repair e66cb93. Closes b1782ee 43f10f6 f9d7b54, adds 5ce80fa 9839f46 eedb8ca. Opus lanes, guard-checker-bau class. Bodies and evidence in ITEMS-DONE.md.
 decision: did the desk's specified design for lc-55's answered case survive measurement → NO. 'Write no blocker-moot line' holds only for a BASE-slot blocker; an amended-blocked-by line survives the close and left the answered blocker undischarged in the done home. The lane diverged with evidence; da727f6 adds a third record form. Detail in lc-55's closure body.
+decision: should lc-55's ANSWERED body record carry the answer text and the ledger line number → NO. A line number in a body slot pins a coordinate into a live append-only file (the pointer-rot class this repo pins blobs for), and the answer text would be a second home for a fact the ledger holds, against invariant 3. The record names THAT it was answered.
 
 ## Archive (pre-migration)
 
