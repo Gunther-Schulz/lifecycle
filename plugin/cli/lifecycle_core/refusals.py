@@ -1667,6 +1667,32 @@ LANE_ROWS = [
         stage="wave 1, stage 9",
     ),
     Row(
+        ident="migrate_repeated_from",
+        refusal="a repeated `--from` in ONE `migrate` invocation. argparse's "
+                "plain dest OVERWRITES, so `--from A.md --from B.md` keeps "
+                "B.md alone and silently discards A.md: the caller believes "
+                "two sources were read and one was, at the entry point whose "
+                "whole job is reading a source. A second source is `--merge`, "
+                "which reads a second INVOCATION's carrier; this is one "
+                "invocation naming two (lc-31)",
+        firing_input="`migrate --from BACKLOG.md --from BACKLOG.md` — the "
+                     "flag twice in one argv, counted from the RAW argv "
+                     "because `args.from_carrier` by then holds the survivor "
+                     "alone and cannot say how many there were",
+        expect=exits.FINDING,
+        fire=lambda: _migrate_run(from_sources=("BACKLOG.md", "BACKLOG.md")),
+        # THE SAME MIGRATE NAMING THE SAME SOURCE ONCE: the arms differ in the
+        # repeated flag alone, so neither the verb nor `--from` is what
+        # separates them — strip the refusal and the two runs are the same
+        # invocation, because argparse discards the first occurrence. A
+        # control naming a DIFFERENT second source would differ in that path's
+        # existence as well as in the repeat, and one changing the verb or the
+        # flag would score a check that refuses every `migrate --from`
+        # identically.
+        control=lambda: _migrate_run(from_sources=("BACKLOG.md",)),
+        stage="wave 1, stage 9 (lc-31)",
+    ),
+    Row(
         ident="migration_unclassified",
         refusal="an entry whose grade word no rule in §4 row 1 or §3.1 covers "
                 "(D-f): reported with its grade word and line number, never "
@@ -1994,7 +2020,7 @@ MERGE_SOURCE_SELF_DUPLICATE_OTHER = MERGE_SOURCE_SELF_DUPLICATE.replace(
 
 
 def _migrate_run(*, backlog=None, force=False, merge=False,
-                 **repo_kw) -> Fired:
+                 from_sources=(), **repo_kw) -> Fired:
     """Run `migrate` in a scratch repo carrying an old carrier."""
     import io
     from contextlib import redirect_stdout
@@ -2017,6 +2043,11 @@ def _migrate_run(*, backlog=None, force=False, merge=False,
             encoding="utf-8")
         argv = ["--repo", str(r.dir), "migrate",
                 "--report", "docs/audits/report.md"]
+        # `migrate_repeated_from` needs the SAME flag more than once, which no
+        # keyword can express: one `--from <path>` per element, and the empty
+        # default leaves every other row's argv byte-identical.
+        for src in from_sources:
+            argv += ["--from", src]
         if force:
             argv.append("--force")
         if merge:
