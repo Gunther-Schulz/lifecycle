@@ -1511,5 +1511,193 @@ class TheProbeOrdering(unittest.TestCase):
                 f"does not run first.\n{out}")
 
 
+class TheCarrierVerbDispatchHasNoDefault(unittest.TestCase):
+    """lc-146: an action with no branch of its own must not run CLOSE.
+
+    `_carrier_verb` ended in an unguarded `return verbs.cmd_item_close(...)`,
+    so whatever the CALLER's action tuple admitted without a branch here ran
+    a two-file MOVE under that action's name. The safety was a property of a
+    tuple someone else edits; the risk sat in this function. These arms hold
+    the callee to it directly, which is why they drive `_carrier_verb` rather
+    than the CLI surface — argparse `choices` would refuse the very input the
+    hazard is about, so a surface-level arm cannot reach it at all.
+
+    PER ACTION, NEVER IN AGGREGATE. "Nothing unexpected was called" passes
+    against a build that refuses everything, which is the other way to make
+    the unknown-action arm green and the wrong one.
+    """
+
+    #: action → the function the dispatch must reach. HAND-WRITTEN BECAUSE IT
+    #: IS THE CLAIM: a table derived from cli.py's own branches would move
+    #: with the mutant and stay green on exactly the rewiring these arms
+    #: exist to catch. Its COMPLETENESS against the caller is a separate arm,
+    #: and that one IS derived from the source.
+    DESTINATIONS = {
+        "add": "cmd_item_add",
+        "amend": "cmd_item_amend",
+        "promote": "cmd_item_promote",
+        "ready": "cmd_item_ready",
+        "park": "cmd_item_park",
+        "close": "cmd_item_close",
+        "compact": "cmd_item_compact",
+        "ratio": "cmd_item_ratio",
+        "statusline": "cmd_item_statusline",
+    }
+
+    #: `compact` lives in `retire`, every other destination in `verbs`, and
+    #: `cmd_item_head` is the `ready --head` fork. Recorded here so the patch
+    #: set is the WHOLE set of functions the dispatch can reach: one left
+    #: unpatched would run for real, and an arm that wrote to the fixture
+    #: would be measuring something other than where the call went.
+    IN_RETIRE = ("cmd_item_compact",)
+    ALSO_PATCHED = ("cmd_item_head",)
+
+    def _drive(self, repo, action, **extra):
+        """`(code, calls, output)` for one `_carrier_verb` invocation.
+
+        Every reachable destination is replaced by a recorder, so WHICH verb
+        the dispatch chose is read off the call it made rather than off a
+        side effect it left.
+        """
+        import argparse
+        import contextlib
+        from unittest import mock
+        from lifecycle_core import cli as cli_mod
+        from lifecycle_core import retire as retire_mod
+
+        calls = []
+
+        def recorder(label):
+            def _called(a, o, c):
+                calls.append(label)
+                return exits.CLEAN
+            return _called
+
+        kwargs = {"repo": str(repo.dir), "item_action": action,
+                  "ident": "xx-1", "head": False}
+        kwargs.update(extra)
+        args = argparse.Namespace(**kwargs)
+        lines = []
+        with contextlib.ExitStack() as stack:
+            for act, name in self.DESTINATIONS.items():
+                mod = retire_mod if name in self.IN_RETIRE else verbs
+                stack.enter_context(
+                    mock.patch.object(mod, name, recorder(act)))
+            for name in self.ALSO_PATCHED:
+                stack.enter_context(
+                    mock.patch.object(verbs, name, recorder(name)))
+            code = cli_mod._carrier_verb(args, lines.append)
+        return code, calls, "\n".join(lines)
+
+    def _caller_actions(self):
+        """The action set the CALLER admits, read out of cli.py's own syntax
+        tree — never restated here, which is a comparison basis that cannot
+        age loudly: the tuple gains an action and a restated copy stays
+        green while covering one member fewer."""
+        import ast
+        from lifecycle_core import cli as cli_mod
+
+        source = Path(cli_mod.__file__).read_text(encoding="utf-8")
+        found = []
+        for node in ast.walk(ast.parse(source)):
+            if not isinstance(node, ast.Compare):
+                continue
+            if len(node.ops) != 1 or not isinstance(node.ops[0], ast.In):
+                continue
+            left = node.left
+            if not (isinstance(left, ast.Attribute)
+                    and left.attr == "item_action"):
+                continue
+            right = node.comparators[0]
+            if not isinstance(right, (ast.Tuple, ast.List, ast.Set)):
+                continue
+            found.append({e.value for e in right.elts
+                          if isinstance(e, ast.Constant)})
+        return found
+
+    def test_an_UNBRANCHED_action_never_reaches_the_destructive_close(self):
+        """The defect itself.
+
+        THE ARM CARRIES ITS OWN POSITIVE CONTROL, and without it the negative
+        below proves nothing: `_carrier_verb` returns before any dispatch
+        when the context does not resolve, and "no verb was called" is then
+        true for a reason that has nothing to do with the dispatch. So the
+        SAME fixture drives a known action first and that call must be seen.
+        """
+        with refusals._Repo() as r:
+            code, calls, out = self._drive(r, "park")
+            self.assertEqual(
+                calls, ["park"],
+                "the fixture never reached the dispatch at all, so the "
+                f"unknown-action arm below would be quiet for free.\n{out}")
+            self.assertEqual(code, exits.CLEAN, out)
+
+            code, calls, out = self._drive(r, "quarantine")
+            self.assertNotIn(
+                "close", calls,
+                "an action with NO BRANCH of its own reached cmd_item_close "
+                "— a two-file MOVE ran under another verb's name, which is "
+                f"the whole of lc-146.\n{out}")
+            self.assertEqual(
+                calls, [],
+                f"an unrecognised action dispatched to a verb.\n{out}")
+            self.assertEqual(
+                code, exits.COULD_NOT_VERIFY,
+                "an action this dispatch does not carry is COULD NOT "
+                f"VERIFY, never an act.\n{out}")
+            self.assertIn("COULD NOT VERIFY", out, out)
+
+    def test_every_action_the_caller_admits_reaches_ITS_OWN_verb(self):
+        """MUST-NOT-MOVE, one subTest per action: an aggregate arm passes
+        against a build that refuses everything."""
+        with refusals._Repo() as r:
+            for action in sorted(self.DESTINATIONS):
+                with self.subTest(action=action):
+                    code, calls, out = self._drive(r, action)
+                    self.assertEqual(
+                        calls, [action],
+                        f"`item {action}` no longer reaches "
+                        f"{self.DESTINATIONS[action]}.\n{out}")
+                    self.assertEqual(code, exits.CLEAN, out)
+
+    def test_the_READY_fork_keeps_both_of_its_own_answers(self):
+        """The branch this edit sits beside: `--head` is a different verb and
+        an id-less run is a refusal, not a pick."""
+        with refusals._Repo() as r:
+            code, calls, out = self._drive(r, "ready", head=True)
+            self.assertEqual(calls, ["cmd_item_head"], out)
+            self.assertEqual(code, exits.CLEAN, out)
+
+            code, calls, out = self._drive(r, "ready", ident=None)
+            self.assertEqual(
+                calls, [],
+                f"an id-less `item ready` dispatched to a verb.\n{out}")
+            self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+
+    def test_the_destination_table_covers_every_action_the_caller_admits(self):
+        """The coverage half, derived from the source.
+
+        An action added to the caller's tuple without a destination here is
+        an action the arms above never walk — and after lc-146 it is also an
+        action the dispatch refuses, so this arm is where that shows up.
+        """
+        found = self._caller_actions()
+        self.assertEqual(
+            len(found), 1,
+            "cli.py carries "
+            f"{len(found)} `item_action in <tuple>` comparisons; this arm "
+            "reads one. Zero means the extraction stopped matching the "
+            "source and every assertion below it is vacuous.")
+        admitted = found[0]
+        self.assertTrue(
+            admitted,
+            "the extracted action set is EMPTY, which reads exactly like a "
+            "caller that admits nothing — an unread instrument, not a pass.")
+        self.assertEqual(
+            admitted, set(self.DESTINATIONS),
+            "the caller's action tuple and this file's destination table "
+            "have parted company.")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -881,6 +881,20 @@ def main(argv=None) -> int:
 
 
 def _carrier_verb(args, out) -> int:
+    """The carrier verbs — ONE BRANCH EACH, and no default (lc-146).
+
+    This used to END in an unguarded `return verbs.cmd_item_close(...)`, and
+    it was safe only because the CALLER's action tuple happened to admit
+    nothing without a branch here. So the guard was a property of a tuple
+    somebody else edits while the risk — a two-file MOVE — sat in this
+    function, and an action added there would have run CLOSE under its own
+    name with nothing at either site saying so.
+
+    `close` therefore names itself like every other action, and an action
+    this dispatch does not carry is COULD NOT VERIFY. The caller and this
+    function can still disagree; what changed is that they now disagree
+    LOUDLY, on the first run, rather than by moving a body.
+    """
     ctx, code = _context(args, out)
     if ctx is None:
         return code
@@ -908,7 +922,14 @@ def _carrier_verb(args, out) -> int:
         return verbs.cmd_item_park(args, out, ctx)
     if args.item_action == "compact":
         return retire_mod.cmd_item_compact(args, out, ctx)
-    return verbs.cmd_item_close(args, out, ctx)
+    if args.item_action == "close":
+        return verbs.cmd_item_close(args, out, ctx)
+    out(f"COULD NOT VERIFY: `item {args.item_action}` reached the carrier "
+        "verbs with no branch of its own. The caller admits it and this "
+        "dispatch does not carry it; refusing is the only answer that does "
+        "not act on a guess about which verb was meant, and the guess this "
+        "function used to make was `close` — a two-file move.")
+    return exits.COULD_NOT_VERIFY
 
 
 def _walk_verb(args, out) -> int:
