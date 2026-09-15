@@ -88,6 +88,7 @@ decision: why does e66cb93 exist, when no item asked for it → Closing lc-22 re
 decision: was the basis on which lc-22 was held sound → NO, recorded wrong rather than dropped. The claim that no fixture placed the marker mid-line was refuted at failures=4: the predicate reads the LINE and the slot rendering already prefixed it. The desk's confirmation had reproduced the original framing, not tested it. Real defect: one control.
 decision: what becomes of 7d9a0fc, written after lc-125 closed and the lane's grant ended → KEPT, not reverted: desk-verified correct (566 OK, 85/85 CLEAN, exit 3 and counts unchanged), and the lapse was caused by the desk's own close message reanimating the lane. Reverting sound work over a desk-caused fault is destructive. Recorded here since lc-125's closure cannot know of it.
 decision: did the NOT-CLUSTERED sentence mislabel anything besides venue → YES, predating lc-125: the other-repo bucket (the path-at-repo foreign form from lc-66/lc-67) has counted as unreadable since lc-123 while being read fine. Repaired in the same commit, not split into its own item, because one sentence carried one defect and splitting after the repair is fiction.
+dropped: lc-137 — DUPLICATE of lc-55, which closed at 90518a9 on 2026-09-15 at 14:04, about 2.5 hours before this was booked from a 2026-09-14 body carried across on a venue decision without re-reading this repo. Full account on the dropped body.
 
 ## Archive (pre-migration)
 
