@@ -1131,7 +1131,18 @@ VERB_ROWS = [
         # in the carrier. `finding_row` declares the family, so a mutation at
         # this site darkens this row alone and prove-rows reads that as the
         # honest case rather than a stray.
-        refusal="dangling typed reference over the CARRIER — a `blocked-by "
+        # THE LABEL NAMES THE ITEM TYPE, not the typed-reference family, and
+        # that is deliberate: "dangling typed reference" is the exact phrase
+        # `check_routes` records as its motivating case (roster.py:136) — a
+        # text claiming the family while the code reached one member. The
+        # declaration half carries a `route_set` and is graded on it; this
+        # row has none and, being a one-site refusal, has no vocabulary for
+        # one to grade, so nothing mechanical stands between its label and
+        # that same overclaim. The label is narrowed by hand instead, in the
+        # sibling's idiom (`dangling_reference_item` names which half it is).
+        refusal="dangling ITEM-id reference over the CARRIER — the ITEM half "
+                "of §3.9's row, never the declaration half's other typed "
+                "forms: a `blocked-by "
                 "<item-id>` already in the file naming an id no home holds, "
                 "or naming one the done home holds as DROPPED (lc-29: the "
                 "same reach as the write path, which refuses both; an "
