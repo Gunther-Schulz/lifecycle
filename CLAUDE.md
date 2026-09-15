@@ -120,7 +120,12 @@ journal pointer is where the incident lives.
 17. **Reports are booked from the file, never the summary**; every figure a
     lane reports is re-run at the integrating desk before it is believed — and
     a discrepancy between your count and a lane's is a claim about your
-    instrument first. (J11)
+    instrument first. **A CONSOLE RENDERING IS A SUMMARY TOO:** where a
+    runner exposes a result OBJECT, a claim about which test did what comes
+    off the object (`res.skipped`, `t.id()`), never off `-v` output, which
+    prints one test's name beside the NEXT test's status. Same for any
+    two-column rendering read by eye — a `grep -c` over a diff counts
+    context lines alongside changed ones. (J11, J24)
 18. **A brief is not amended in place after dispatch; the executor re-reads it
     at HEAD before each verifier run; a correction that matters is a
     stop-and-redispatch.** Three clauses because three parties: the sender does
@@ -354,6 +359,18 @@ branch, so a mutation there darkens both. The assertion is therefore "the
 named row changed, and every row that changed proves the SAME refusal",
 with the family derived from the roster's own mapping rather than listed
 here. For a row with no sibling it is bit-for-bit the old "exactly one".
+
+**A NEW ARRANGEMENT IS ADMITTED ON A PAIR, not on a PROVEN** (lc-142,
+2026-09-15). `PROVEN` is also what an arrangement prints when it could
+never have gone red — an anchor pointing at something the mutation cannot
+reach reads identically to one that works. So a newly recorded arrangement
+runs TWICE: at its real anchor, which must give `rows changed: <the row>`;
+and re-pointed at an INERT anchor (a comment line), which must give
+`rows changed: NONE` and FAIL with "the row did NOT change". Both quoted.
+The cost is one extra run of a single ident, not a full walk, and without
+it the first run's PROVEN is an unread instrument. Related but distinct
+from the sibling question below: that one asks whether a mutation darkens
+too MANY rows, this one whether it darkens any at all.
 
 **ADDING A ROW CAN RETIRE A NEIGHBOUR'S PROOF, and only prove-rows says
 so** (lc-30, 2026-09-15, measured not predicted). Where a check emits

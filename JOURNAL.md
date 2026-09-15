@@ -391,3 +391,51 @@ other file read. There is nothing to hook. The cheap detector is the one
 that actually fired here — an executing lane opening the item body the brief
 summarised — which is a reason to keep commissioning the critique pass, not
 a reason to believe a lint could replace it.
+
+### J24 — cited by law 17 (a rendering is a view over a result object)
+
+Drain waves 1 and 2, 2026-09-15. THREE instances in one day across TWO
+parties of a single shape: a claim about WHICH test did what, read off a
+console rendering instead of the runner's result object.
+
+The mechanism, and it is specific to `unittest -v`: the runner prints a
+test's NAME line and then, for the NEXT test, its DOCSTRING first line
+followed by the status. So a name and a status that belong to DIFFERENT
+tests sit on adjacent lines, and reading them as a pair attributes the
+status to the wrong test.
+
+- A wave-1 lane reported the battery's one skip by its DOCSTRING.
+- A second wave-1 lane reported it by a neighbouring test NAME.
+- The desk "resolved" the apparent disagreement by declaring them one test
+  seen through two namespaces, and shipped that resolution into two lane
+  messages and a live brief. They were two different tests.
+- A wave-2 lane then reproduced the desk's error independently, from the
+  brief, by the same adjacency.
+
+The truth, read from the parsed result: the skipping test is
+`test_verbs.LedgerStorableBlocker.test_the_67_REPAIRED_dotfiles_TEXTS_all_pass_and_the_OLD_ONES_do_not`,
+skipped because the arm grades real texts in a sibling checkout that is
+absent from a clone. Nobody's original quotation was a lie; the PAIRING was
+an artefact of the rendering.
+
+THE INSTRUMENT:
+
+    res = unittest.TextTestRunner(stream=io.StringIO(), verbosity=0).run(suite)
+    for t, why in res.skipped: print(t.id(), why)
+
+`t.id()` is the structure. The console is a view over it, and the view puts
+unrelated rows side by side.
+
+WIDER THAN SKIPS, which is why this is a law pointer and not a brief
+paragraph: the same day, the desk counted failures in a node battery by
+`grep -c` over a DIFF, where context lines and changed lines render alike —
+the count said a class was touched when the only mention was context.
+Filtering on the diff marker answered it. Any two-column rendering read by
+eye has this property where the structure is available parsed.
+
+The law it extends already carried the other half: a discrepancy between
+your count and a lane's is a claim about YOUR instrument first. That clause
+is what sent the desk to reproduce a lane's ARRANGEMENT rather than correct
+its number — and the arrangement was the finding twice: once here, and once
+when the same desk ran a mutating tool in the clone it was testing in, and
+read three failures that were its own doing.
