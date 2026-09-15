@@ -30,6 +30,7 @@ import fcntl
 import json
 import posixpath
 import re
+import subprocess
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -1108,21 +1109,104 @@ def census(parsed: Parsed) -> dict:
 
 # --- the shape check ---------------------------------------------------------
 
-def check_file(path: Path, out, prefix: str | None = None) -> int:
-    """The pre-commit shape check over one carrier file."""
-    if not path.exists():
-        out(f"COULD NOT VERIFY: no carrier at {path}. An absent file and an "
-            "empty one are not the same answer, and neither is clean.")
-        return exits.COULD_NOT_VERIFY
-    try:
-        text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError) as exc:
-        out(f"COULD NOT VERIFY: {path} could not be read ({exc!r}).")
-        return exits.COULD_NOT_VERIFY
+#: Every run of digits, for the identity normalization below.
+_DIGIT_RUN = re.compile(r"\d+")
+
+
+@dataclass(frozen=True)
+class Finding:
+    """One shape finding, as DATA beside the line the check prints.
+
+    The check used to emit findings through `out` and return nothing but an
+    exit code, so a second reader — `item check --staged`, which must say
+    which findings are NEW — had only the rendered line to work from. That
+    line carries no block ident (a `parsed.problems` tuple is
+    `(row, line, message)` by construction, items.py's `Parsed.problems`),
+    and it carries the carrier's BASENAME rather than its path. Parsing it
+    back would be a comparison over rendered text standing in for a
+    comparison of bodies.
+
+    So the check builds these and renders FROM them: one source, and the
+    printed line is `render()` of this object rather than a sibling
+    f-string that can drift from it.
+    """
+    row: str
+    #: The carrier as the printed line names it — its basename.
+    name: str
+    line: int
+    msg: str
+    #: The block this finding sits in, or None for a finding that belongs to
+    #: no block (a head line, a line before the first block).
+    ident: str | None = None
+
+    def render(self) -> str:
+        return f"FINDING [{self.row}] {self.name}:{self.line}: {self.msg}"
+
+    def identity(self, carrier_path: str) -> tuple:
+        """What makes two findings THE SAME finding across a staged edit.
+
+        THE LINE NUMBER IS NOT IN IT, and that is the load-bearing decision:
+        a staged block inserted above a pre-existing one shifts every line
+        below it, so a line-keyed identity reports the whole carrier as new
+        — which is the gate-fires-on-legitimate-work class (law 11). The
+        message's DIGITS go the same way and for the same reason: several
+        messages quote the line number back.
+
+        The ident is what discriminates two blocks carrying the same defect,
+        whose normalized messages are otherwise equal.
+        """
+        return (self.row, carrier_path, self.ident,
+                _DIGIT_RUN.sub("#", self.msg))
+
+
+def _owning_ident(parsed: Parsed, line: int) -> str | None:
+    """The block a line sits in: the last block STARTING at or above it.
+
+    DERIVED, not read: a `Parsed` item records where it starts and not where
+    it ends, so this is the only answer available from the parse. It is
+    sound for the use it has — a finding's identity — because a finding
+    below the last block's start belongs to that block, and one above the
+    first block's start belongs to the head, which is `None`.
+    """
+    owner = None
+    for it in parsed.items:
+        if it.line <= line:
+            owner = it.ident
+        else:
+            break
+    return owner
+
+
+def check_file(path: Path, out, prefix: str | None = None, *,
+               text: str | None = None, collect: list | None = None) -> int:
+    """The pre-commit shape check over one carrier file.
+
+    `text` runs the check over a body that is not on disk — the git INDEX's,
+    for `--staged`. `collect` receives every `Finding` the run produced, in
+    printed order. Neither changes what the check FINDS or prints; they are
+    the reporting mode's two handles on a check that otherwise only speaks
+    through `out`.
+    """
+    if text is None:
+        if not path.exists():
+            out(f"COULD NOT VERIFY: no carrier at {path}. An absent file and an "
+                "empty one are not the same answer, and neither is clean.")
+            return exits.COULD_NOT_VERIFY
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            out(f"COULD NOT VERIFY: {path} could not be read ({exc!r}).")
+            return exits.COULD_NOT_VERIFY
+
+    def finding(row, line, msg, ident=None):
+        f = Finding(row, path.name, line, msg, ident)
+        if collect is not None:
+            collect.append(f)
+        out(f.render())
 
     parsed = parse(text)
     for row, line, msg in parsed.problems:
-        out(f"FINDING [{row}] {path.name}:{line}: {msg}")
+        finding(row, line, msg, _owning_ident(parsed, line))
 
     if parsed.refused:
         out(f"item check: {exits.word(exits.FINDING)} — the body was not "
@@ -1131,30 +1215,32 @@ def check_file(path: Path, out, prefix: str | None = None) -> int:
 
     bad_ids = check_ids(parsed, prefix)
     for ident, line in bad_ids:
-        out(f"FINDING [item_shape] {path.name}:{line}: id {ident!r} does not "
-            f"match the declared prefix {prefix!r} — ids are "
-            f"`{prefix}-<n>` and immutable across moves.")
+        finding("item_shape", line,
+                f"id {ident!r} does not match the declared prefix "
+                f"{prefix!r} — ids are `{prefix}-<n>` and immutable across "
+                "moves.", ident)
 
     untyped, blockers_unverified = check_parked_blockers(parsed, prefix)
     for ident, line, value in untyped:
-        out(f"FINDING [parked_without_typed_blocker] {path.name}:{line}: "
-            f"block {ident!r} is PARKED with an untyped `blocked-by`: "
-            f"{value!r}. The types are closed — `<{prefix or 'prefix'}-<n>>`, "
-            "`decision <question>`, `evidence <predicate>` — because an "
-            "aging item is routed by WHOSE COURT it sits in, and prose sits "
-            "in nobody's. A parked item nothing can re-evaluate is a drop "
-            "waiting to happen quietly.")
+        finding("parked_without_typed_blocker", line,
+                f"block {ident!r} is PARKED with an untyped `blocked-by`: "
+                f"{value!r}. The types are closed — "
+                f"`<{prefix or 'prefix'}-<n>>`, `decision <question>`, "
+                "`evidence <predicate>` — because an aging item is routed "
+                "by WHOSE COURT it sits in, and prose sits in nobody's. A "
+                "parked item nothing can re-evaluate is a drop waiting to "
+                "happen quietly.", ident)
     if blockers_unverified:
         out(f"COULD NOT VERIFY: {blockers_unverified}")
 
     unk_counts, unk_misplaced = unknown_slots(parsed)
     for ident, line, slot in unk_misplaced:
-        out(f"FINDING [unknown_slot_misplaced] {path.name}:{line}: block "
-            f"{ident!r} holds UNKNOWN in `{slot}`. UNKNOWN is the migration's "
-            "declared marker for a slot nobody ever recorded, and the grade "
-            "workflow fills it — but a grade is one of the five and a blocker "
-            "is typed or NONE, so UNKNOWN there is a value nothing can ever "
-            "fill in.")
+        finding("unknown_slot_misplaced", line,
+                f"block {ident!r} holds UNKNOWN in `{slot}`. UNKNOWN is the "
+                "migration's declared marker for a slot nobody ever "
+                "recorded, and the grade workflow fills it — but a grade is "
+                "one of the five and a blocker is typed or NONE, so UNKNOWN "
+                "there is a value nothing can ever fill in.", ident)
     if unk_counts:
         out("UNKNOWN slots (the migration's declared transitional value, "
             "filled by the grade workflow before READY): "
@@ -1187,12 +1273,13 @@ def check_file(path: Path, out, prefix: str | None = None) -> int:
                      for it in parsed.items
                      if it.grade == "READY" and unknown_slots_of(it)]
     for ident, line, slots_ in ready_unknown:
-        out(f"FINDING [ready_with_unknown_slot] {path.name}:{line}: block "
-            f"{ident!r} is READY and still holds UNKNOWN in "
-            + ", ".join(f"`{s}`" for s in slots_)
-            + ". READY is the desk's judgment that a fresh context could "
-              "execute this now, and a slot nobody has ever written is the "
-              "one thing that judgment cannot have been made over.")
+        finding("ready_with_unknown_slot", line,
+                f"block {ident!r} is READY and still holds UNKNOWN in "
+                + ", ".join(f"`{s}`" for s in slots_)
+                + ". READY is the desk's judgment that a fresh context could "
+                  "execute this now, and a slot nobody has ever written is "
+                  "the one thing that judgment cannot have been made over.",
+                ident)
     if ready_unknown:
         code = exits.worst([code, exits.FINDING])
 
@@ -1335,7 +1422,9 @@ def _moot_discharges(item: Item, detail: str, kind: str = "decision") -> bool:
     return moot == (detail or "").strip()
 
 
-def check_done_file(path: Path, out, prefix: str | None = None) -> int:
+def check_done_file(path: Path, out, prefix: str | None = None, *,
+                    text: str | None = None,
+                    collect: list | None = None) -> int:
     """The done home is a KIND with the TOOL as its writer, so shape applies.
 
     IT DID NOT BEFORE, and that was the gap: `item check` ran `check_file`
@@ -1380,20 +1469,27 @@ def check_done_file(path: Path, out, prefix: str | None = None) -> int:
     this repair did not settle — so for that one type the sentence below still
     over-reads, and the body it names may well have arrived by a close.
     """
-    if not path.exists():
-        out(f"COULD NOT VERIFY: no done home at {path}. An absent closure "
-            "home and an empty one are not the same answer, and neither is "
-            "clean.")
-        return exits.COULD_NOT_VERIFY
-    try:
-        text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError) as exc:
-        out(f"COULD NOT VERIFY: {path} could not be read ({exc!r}).")
-        return exits.COULD_NOT_VERIFY
+    if text is None:
+        if not path.exists():
+            out(f"COULD NOT VERIFY: no done home at {path}. An absent closure "
+                "home and an empty one are not the same answer, and neither is "
+                "clean.")
+            return exits.COULD_NOT_VERIFY
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            out(f"COULD NOT VERIFY: {path} could not be read ({exc!r}).")
+            return exits.COULD_NOT_VERIFY
+
+    def finding(row, line, msg, ident=None):
+        f = Finding(row, path.name, line, msg, ident)
+        if collect is not None:
+            collect.append(f)
+        out(f.render())
 
     parsed = parse(text)
     for row, line, msg in parsed.problems:
-        out(f"FINDING [{row}] {path.name}:{line}: {msg}")
+        finding(row, line, msg, _owning_ident(parsed, line))
     if parsed.refused:
         out(f"done-home check: {exits.word(exits.FINDING)} — the body was not "
             "parsed.")
@@ -1401,17 +1497,19 @@ def check_done_file(path: Path, out, prefix: str | None = None) -> int:
 
     bad_ids = check_ids(parsed, prefix)
     for ident, line in bad_ids:
-        out(f"FINDING [item_shape] {path.name}:{line}: id {ident!r} does not "
-            f"match the declared prefix {prefix!r}.")
+        finding("item_shape", line,
+                f"id {ident!r} does not match the declared prefix "
+                f"{prefix!r}.", ident)
 
     open_here = [it for it in parsed.items if it.grade not in GRADES_CLOSED]
     for it in open_here:
-        out(f"FINDING [open_grade_in_done_home] {path.name}:{it.line}: block "
-            f"{it.ident!r} is graded {it.grade or '(none)'} in the CLOSURE "
-            "home. Every body here left the carrier by a close, so its grade "
-            "is DONE or DROPPED; an open grade here is a body that arrived by "
-            "some other path — and conservation counts it on the closed side "
-            "whatever its grade says.")
+        finding("open_grade_in_done_home", it.line,
+                f"block {it.ident!r} is graded {it.grade or '(none)'} in the "
+                "CLOSURE home. Every body here left the carrier by a close, "
+                "so its grade is DONE or DROPPED; an open grade here is a "
+                "body that arrived by some other path — and conservation "
+                "counts it on the closed side whatever its grade says.",
+                it.ident)
 
     blocked = []
     for it in parsed.items:
@@ -1426,15 +1524,15 @@ def check_done_file(path: Path, out, prefix: str | None = None) -> int:
             if _moot_discharges(it, detail, kind):
                 continue
             blocked.append(it)
-            out(f"FINDING [blocked_in_done_home] {path.name}:{it.line}: "
-                f"block {it.ident!r} is closed and still carries "
-                f"`blocked-by: {it.slots.get('blocked-by', '')}`. A closed "
-                "item waits for nothing, and this body carries no "
-                "`blocker-moot:` naming that question — so it did not "
-                "arrive here by a close, which is the path that records the "
-                "question as moot precisely so the operator's decision "
-                "queue does not keep listing it after the item that asked "
-                "it is gone.")
+            finding("blocked_in_done_home", it.line,
+                    f"block {it.ident!r} is closed and still carries "
+                    f"`blocked-by: {it.slots.get('blocked-by', '')}`. A "
+                    "closed item waits for nothing, and this body carries no "
+                    "`blocker-moot:` naming that question — so it did not "
+                    "arrive here by a close, which is the path that records "
+                    "the question as moot precisely so the operator's "
+                    "decision queue does not keep listing it after the item "
+                    "that asked it is gone.", it.ident)
 
     n = len(parsed.items)
     out(f"done home: {n} closed block(s), archive {parsed.archive_lines} "
@@ -1445,6 +1543,185 @@ def check_done_file(path: Path, out, prefix: str | None = None) -> int:
     out(f"done-home check: {exits.word(code)} — "
         f"{len(parsed.problems) + len(bad_ids) + len(open_here) + len(blocked)}"
         " finding(s).")
+    return code
+
+
+# --- the staged shape gate ---------------------------------------------------
+
+#: How long a `git show` may take before the staged check calls it unreadable.
+#: Bounded because the consumer is a pre-commit hook, which the harness
+#: cancels at its own limit and whose output is then discarded — an unbounded
+#: child there turns a gate's could-not-verify branch into silence.
+_GIT_TIMEOUT = 20
+
+
+def rel_to(repo: Path, path: Path) -> str:
+    """A carrier's path as GIT spells it: repo-relative, forward slashes.
+
+    `git show :<path>` reads the index only under the repo-relative spelling,
+    and the declaration gives homes that way already — this is the one place
+    the absolute `Ctx` path is turned back.
+    """
+    try:
+        return path.resolve().relative_to(repo.resolve()).as_posix()
+    except ValueError:
+        return path.name
+
+
+def _git_blob(repo: Path, spec: str) -> tuple[str | None, str]:
+    """`(text, why-not)` for one `git show <spec>` — `:<path>` is the INDEX.
+
+    A failure is never folded into "empty": an absent blob and an empty one
+    are different answers, and only the caller knows which of them is the
+    defect it is looking for.
+    """
+    try:
+        p = subprocess.run(["git", "-C", str(repo), "show", spec],
+                           capture_output=True, text=True,
+                           timeout=_GIT_TIMEOUT)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, f"`git show {spec}` could not run ({exc!r})"
+    if p.returncode != 0:
+        detail = (p.stderr or "").strip().splitlines()
+        return None, (f"`git show {spec}` exited {p.returncode}"
+                      + (f": {detail[0]}" if detail else ""))
+    return p.stdout, ""
+
+
+def _quote_block(text: str, finding: Finding) -> list:
+    """The block a finding sits in, as quoted lines — its LINE if it has none.
+
+    Quoted rather than pointed at: the consumer is a commit-time gate, and a
+    line number into a body the committer is in the middle of editing is the
+    one pointer that will have moved by the time they read it.
+    """
+    if finding.ident:
+        _, body = replace_body(text, finding.ident)
+        if body is not None:
+            return [f"    | {ln}" for ln in body.rstrip("\n").split("\n")]
+    lines = text.split("\n")
+    if 1 <= finding.line <= len(lines):
+        return [f"    | {lines[finding.line - 1]}"]
+    return ["    | (the finding names no block and no line of this body)"]
+
+
+def check_staged(repo: Path, carriers, out, err) -> int:
+    """`item check --staged`: the shape findings a STAGED edit INTRODUCES.
+
+    WHY A DIFF AND NOT THE PLAIN CHECK. A commit-time gate that refused every
+    finding in the carrier would refuse every commit in a repo that carries
+    any — dotfiles carries 23 — and a guard that fires on legitimate work is
+    the class law 11 forbids: it trains `--no-verify`, which kills every lane
+    in the hook at once. So the gate asks the narrower question the committer
+    can actually answer: did THIS edit introduce a break.
+
+    THE IDENTITY CARRIES NO LINE NUMBER (`Finding.identity`). A block staged
+    above a pre-existing one shifts every line under it, and a line-keyed
+    diff would then report the untouched remainder as newly broken — the
+    same false fire by another route.
+
+    `carriers` is `(repo-relative path, Path, checker, prefix)` per carrier:
+    the live home takes `check_file`, the closure home `check_done_file`.
+    Both are checked because both are carriers the tool owns (law 8), and a
+    gate guarding one of two leaves the other's breaks reported by nothing
+    while the wiring reads as covered.
+    """
+    silent = lambda _s: None  # noqa: E731
+    unverified: list = []
+    new_all: list = []
+    pre_existing = 0
+    unchanged: list = []
+    #: Carriers whose staged body was actually scanned. Counted here and not
+    #: derived from `len(carriers) - len(unverified)`: a carrier can be both
+    #: graded AND carry a could-not-verify (the newly-introduced case below),
+    #: so the subtraction would under-report exactly where it is read.
+    graded = 0
+
+    for rel, path, checker, prefix in carriers:
+        idx_text, idx_why = _git_blob(repo, f":{rel}")
+        head_text, head_why = _git_blob(repo, f"HEAD:{rel}")
+
+        if idx_text is None and head_text is None:
+            unverified.append(
+                f"{rel}: readable at neither the index nor HEAD — {idx_why}; "
+                f"{head_why}. The declaration names this carrier, so its "
+                "absence from both is not a clean answer about the staged "
+                "shape: nothing was checked.")
+            continue
+        if idx_text is None:
+            unverified.append(
+                f"{rel}: resolves at HEAD but not in the index — {idx_why}. "
+                "A carrier staged for deletion has no staged body to check, "
+                "and a deletion reported as 'no new findings' would be the "
+                "loudest thing this gate could be silent about.")
+            continue
+
+        graded += 1
+        idx_findings: list = []
+        idx_code = checker(path, silent, prefix=prefix,
+                           text=idx_text, collect=idx_findings)
+        head_findings: list = []
+        head_code = exits.CLEAN
+        if head_text is not None:
+            head_code = checker(path, silent, prefix=prefix,
+                                text=head_text, collect=head_findings)
+
+        # A COULD-NOT-VERIFY THE EDIT INTRODUCED is its own answer, not a
+        # clean one (law 1). The check reports that state through its CODE
+        # rather than through a finding line — an unclassifiable grade word
+        # prints a census line, not a `FINDING` — so a gate reading only the
+        # finding set would pass a staged `grade: BOGUS` in silence.
+        if (idx_code == exits.COULD_NOT_VERIFY
+                and head_code != exits.COULD_NOT_VERIFY):
+            unverified.append(
+                f"{rel}: the staged body is COULD NOT VERIFY where HEAD's is "
+                f"{exits.word(head_code)} — the check could not classify "
+                "something this edit introduced. Run `item check` without "
+                "`--staged` for the naming line.")
+
+        baseline = {f.identity(rel) for f in head_findings}
+        for f in idx_findings:
+            if f.identity(rel) in baseline:
+                pre_existing += 1
+            else:
+                new_all.append((rel, idx_text, f))
+
+        if head_text is not None and idx_text == head_text:
+            unchanged.append(rel)
+
+    for rel, idx_text, f in new_all:
+        out(f.render())
+        for ln in _quote_block(idx_text, f):
+            out(ln)
+
+    if len(unchanged) == len(carriers):
+        out("staged: nothing staged for the carriers "
+            + ", ".join(rel for rel, _p, _c, _x in carriers)
+            + " — their index bodies equal HEAD's. A clean answer about this "
+              "commit, not a could-not-verify.")
+
+    # THE COUNTS NAME THE CARRIERS THEY COVER. A bare "0 pre-existing" beside
+    # a carrier nothing graded is a pass-shaped number over an absence, which
+    # is the one output this repo's three-answers law forbids outright.
+    out(f"staged: {len(new_all)} NEW shape finding(s); "
+        f"{pre_existing} pre-existing finding(s) carried, not reported — "
+        "they are in the carrier at HEAD and this commit did not introduce "
+        f"them. Counted over {graded} of {len(carriers)} declared carrier(s).")
+
+    if unverified:
+        for why in unverified:
+            err(f"COULD NOT VERIFY: {why}")
+        # "condition(s)", not "carrier(s)": a carrier can be scanned AND
+        # still carry a could-not-verify, so counting carriers here would
+        # contradict the "counted over N of M" line directly above it.
+        out(f"item check --staged: {exits.word(exits.COULD_NOT_VERIFY)} — "
+            f"{len(unverified)} could-not-verify condition(s), so the counts "
+            "above are not a full verdict; see stderr.")
+        return exits.COULD_NOT_VERIFY
+
+    code = exits.FINDING if new_all else exits.CLEAN
+    out(f"item check --staged: {exits.word(code)} — {len(new_all)} finding(s) "
+        "this staged edit introduced.")
     return code
 
 

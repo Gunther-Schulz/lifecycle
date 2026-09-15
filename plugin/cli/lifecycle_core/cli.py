@@ -177,10 +177,29 @@ def _context(args, out):
     return verbs.context(repo, res.declaration, out)
 
 
-def cmd_item_check(args, out) -> int:
+def cmd_item_check(args, out, err=None) -> int:
     ctx, code = _context(args, out)
     if ctx is None:
         return code
+
+    # `--staged` IS A DIFFERENT QUESTION, not a filter over this one. The
+    # plain check asks what is wrong with the carrier; the staged check asks
+    # what THIS COMMIT made wrong. The cross-home checks below (move
+    # integrity, blocker targets, conservation) answer neither — they are
+    # about the two homes' relationship, which a staged diff of one body at a
+    # time cannot see — so they stay on the plain path rather than being run
+    # over index text that has no matching second home.
+    if getattr(args, "staged", False):
+        if err is None:
+            err = lambda s: sys.stderr.write(f"{s}\n")  # noqa: E731
+        return items_mod.check_staged(
+            ctx.repo,
+            [(items_mod.rel_to(ctx.repo, ctx.items_path), ctx.items_path,
+              items_mod.check_file, ctx.prefix),
+             (items_mod.rel_to(ctx.repo, ctx.done_path), ctx.done_path,
+              items_mod.check_done_file, ctx.prefix)],
+            out, err)
+
     code = items_mod.check_file(ctx.items_path, out, prefix=ctx.prefix)
 
     # THE MOVE'S OWN WINDOW. `check_file` reads one home; an id sitting in
@@ -329,7 +348,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     it = sub.add_parser("item", help="the item carrier")
     its = it.add_subparsers(dest="item_action")
-    its.add_parser("check", help="the shape check over the carrier file")
+    chk = its.add_parser("check",
+                         help="the shape check over the carrier file")
+    chk.add_argument("--staged", action="store_true",
+                     help="read the carriers from the git INDEX and report "
+                          "only findings this staged edit INTRODUCED — the "
+                          "commit-time gate. Findings already at HEAD are "
+                          "counted, not reported, so a repo that carries "
+                          "some can still commit.")
 
     slots = its.add_parser("slots", help="one item's effective fixed slots")
     slots.add_argument("ident")
