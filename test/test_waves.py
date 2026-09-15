@@ -60,13 +60,16 @@ class WavesBase(unittest.TestCase):
     def _repo(self, blocks):
         return refusals._Repo(items=carrier(blocks))
 
-    def _waves(self, repo):
+    def _waves(self, repo, *, grouped=False):
         here = os.getcwd()
+        argv = ["--repo", str(repo.dir), "item", "waves"]
+        if grouped:
+            argv.append("--grouped")
         try:
             os.chdir(str(repo.dir))
             buf = io.StringIO()
             with redirect_stdout(buf):
-                code = cli_mod.main(["--repo", str(repo.dir), "item", "waves"])
+                code = cli_mod.main(argv)
             return code, buf.getvalue()
         finally:
             os.chdir(here)
@@ -343,6 +346,108 @@ class TheUnitsUnderTheReport(unittest.TestCase):
         self.assertEqual(
             sorted(["lc-100", "lc-16", "lc-9"], key=items._wave_ident_key),
             ["lc-9", "lc-16", "lc-100"])
+
+
+class TheGroupedPartition(WavesBase):
+    """lc-124: the PARTITION beside the join, and the warnings that keep it
+    honest.
+
+    THE JOIN'S ANSWER OVER THIS CARRIER IS ONE LANE — true, and not a
+    schedule. The grouped mode puts each item in the group of its
+    most-frequent entry. It is a PLAN, never a permission: two groups can
+    still share a file, so every cross-group shared file prints as a
+    SERIALIZE warning naming the file and both groups. A grouping that
+    dropped a warning would be WORSE than the one-lane answer it replaces,
+    because it would read as a parallel set.
+    """
+
+    # Two dominant files (3 carriers each) and ONE low-frequency edge:
+    # `tools/cold.py` is named by xx-2 and xx-3 alone and chains the whole
+    # carrier into a single lane. The done-criterion's own case — two items
+    # sharing only a low-frequency file, with distinct dominant files.
+    BLOCKS = [
+        block("xx-1", "tools/hot_a.py"),
+        block("xx-2", "tools/hot_a.py,tools/cold.py"),
+        block("xx-3", "tools/hot_b.py,tools/cold.py"),
+        block("xx-4", "tools/hot_b.py"),
+        block("xx-5", "tools/hot_a.py"),
+        block("xx-6", "tools/hot_b.py"),
+    ]
+
+    def _group_of(self, out, ident):
+        for line in out.splitlines():
+            if not line.startswith("group "):
+                continue
+            head, _, body = line.partition("—")
+            members = [t.strip(" ,") for t in body.split()]
+            if ident in members:
+                return head.split()[1]
+        return None
+
+    def test_the_join_closes_this_carrier_into_ONE_lane(self):
+        """The baseline the partition exists to answer. Without this arm the
+        two-group assertion below could pass over a carrier that was already
+        two lanes, proving nothing about grouping."""
+        with self._repo(self.BLOCKS) as r:
+            _code, out = self._waves(r)
+            self.assertIn("LANES: 1 over 6 path-valued item(s)", out)
+
+    def test_ONE_lane_partitions_into_TWO_groups_by_dominant_file(self):
+        with self._repo(self.BLOCKS) as r:
+            code, out = self._waves(r, grouped=True)
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertIn("GROUPS: 2 over 6 path-valued item(s)", out)
+            self.assertEqual(self._group_of(out, "xx-1"),
+                             self._group_of(out, "xx-2"), out)
+            self.assertEqual(self._group_of(out, "xx-3"),
+                             self._group_of(out, "xx-4"), out)
+            self.assertNotEqual(self._group_of(out, "xx-2"),
+                                self._group_of(out, "xx-3"), out)
+
+    def test_the_cross_group_shared_file_is_NAMED_with_BOTH_groups(self):
+        """The warning is the whole safety of the mode: xx-2 and xx-3 are
+        printed as parallel and share `tools/cold.py`. Naming the file
+        without naming both groups would leave the desk re-deriving which
+        pair to serialize."""
+        with self._repo(self.BLOCKS) as r:
+            _code, out = self._waves(r, grouped=True)
+            serialize = [l for l in out.splitlines()
+                         if l.strip().startswith("tools/cold.py:")]
+            self.assertEqual(len(serialize), 1, out)
+            line = serialize[0]
+            self.assertIn("tools/hot_a.py", line)
+            self.assertIn("tools/hot_b.py", line)
+            self.assertIn("xx-2", line)
+            self.assertIn("xx-3", line)
+
+    def test_a_partition_with_no_cross_group_file_prints_its_ZERO(self):
+        """An omitted SERIALIZE section reads exactly like `checked, nothing
+        crosses` — the could-not-verify failure law 1 forbids."""
+        blocks = [block("xx-1", "tools/hot_a.py"),
+                  block("xx-2", "tools/hot_b.py")]
+        with self._repo(blocks) as r:
+            _code, out = self._waves(r, grouped=True)
+            self.assertIn("SERIALIZE: 0 — none", out)
+
+    def test_the_flag_does_NOT_change_the_exit_code(self):
+        """Grouping is a rendering of the same population; the contract that
+        says which population could not be read is unmoved by it."""
+        blocks = [block("xx-1", "tools/hot_a.py"),
+                  block("xx-2", "plugin (the parser bits) + battery")]
+        with self._repo(blocks) as r:
+            plain, _out = self._waves(r)
+            grouped, out = self._waves(r, grouped=True)
+            self.assertEqual(plain, exits.COULD_NOT_VERIFY, out)
+            self.assertEqual(grouped, plain, out)
+
+    def test_WITHOUT_the_flag_no_grouping_is_printed(self):
+        """The default output is byte-identical to before the flag existed;
+        this is that claim's fixture-level half (the repo-level half is the
+        captured-stdout diff in the item's record)."""
+        with self._repo(self.BLOCKS) as r:
+            _code, out = self._waves(r)
+            self.assertNotIn("GROUPS:", out)
+            self.assertNotIn("SERIALIZE", out)
 
 
 if __name__ == "__main__":

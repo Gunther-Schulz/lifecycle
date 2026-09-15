@@ -364,7 +364,7 @@ def cmd_item_waves(args, out) -> int:
 
     return exits.worst([code, items_mod.report_waves(
         schedulable, out, ready_n=len(ready), live_n=len(parsed.items),
-        excluded=excluded)])
+        excluded=excluded, grouped=getattr(args, "grouped", False))])
 
 
 class _Parser(argparse.ArgumentParser):
@@ -492,10 +492,17 @@ def build_parser() -> argparse.ArgumentParser:
                        help="the DERIVED head: every READY item, ordered by "
                             "the declared head-rule. No cap (R22).")
 
-    its.add_parser("waves", help="the item→lane JOIN over the schedulable "
-                                 "READY set: write-set overlap, file-"
-                                 "granular. Reports the mapping, decides no "
-                                 "sizing and no tier")
+    waves = its.add_parser("waves", help="the item→lane JOIN over the "
+                                         "schedulable READY set: write-set "
+                                         "overlap, file-granular. Reports "
+                                         "the mapping, decides no sizing "
+                                         "and no tier")
+    waves.add_argument("--grouped", action="store_true",
+                       help="APPEND a partition beside the join: each item "
+                            "in the group of its write-set's most-frequent "
+                            "entry, plus every cross-group shared file as a "
+                            "SERIALIZE warning. A plan, never a permission — "
+                            "the lanes above it stay the truthful answer")
 
     # `item amend` (lc-27) — the edit path that LEAVES A RECORD. The slot
     # flags are read from `verbs.AMEND_FLAGS` rather than listed again here:

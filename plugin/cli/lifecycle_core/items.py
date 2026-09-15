@@ -2233,7 +2233,89 @@ def wave_lanes(rows):
     return out
 
 
-def report_waves(schedulable, out, *, ready_n, live_n, excluded) -> int:
+def wave_entry_frequency(rows):
+    """`{entry: how many of these items name it}` — CARRIER-WIDE.
+
+    Counted over ITEMS, never over occurrences, and over the same population
+    the join above runs on: the number's whole meaning is "how many writers
+    would a group cut here hold", so an item naming one file twice must not
+    make that file look like two carriers.
+    """
+    freq: dict = {}
+    for _ident, paths in rows:
+        for p in set(paths):
+            freq[p] = freq.get(p, 0) + 1
+    return freq
+
+
+def wave_group_key(paths, freq):
+    """The entry an item is GROUPED BY: its most-frequent path, ties by name.
+
+    The tie-break is alphabetical rather than slot order, because slot order
+    is the desk's typing order — a partition that moved when someone
+    reordered a comma-separated list would be a plan nobody could reproduce.
+    """
+    return min(paths, key=lambda p: (-freq.get(p, 0), p))
+
+
+def wave_groups(rows):
+    """`[(key, [ident, …]), …]` — the PARTITION beside the join (lc-124).
+
+    THE JOIN IS TRUE AND UNUSABLE AS A SCHEDULE, which is why this exists
+    beside it rather than instead of it. Over this carrier the join closed
+    49 path-valued items into ONE lane — not because the slots are coarse
+    (ignoring directory entries still gave 3 components) but because six hot
+    files chain every otherwise-disjoint pair. The partition answers the
+    other question: which group each item belongs to if the carrier is cut
+    on its hot files. That cut runs THROUGH real collisions, so it is a PLAN
+    and never a permission — `wave_group_serializations` is what keeps it
+    honest. Groups are ordered by size then key, so a desk reading the
+    report twice reads the same order.
+    """
+    freq = wave_entry_frequency(rows)
+    groups: dict = {}
+    for ident, paths in rows:
+        groups.setdefault(wave_group_key(paths, freq), []).append(ident)
+    return sorted(groups.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+
+
+def wave_group_serializations(rows, groups):
+    """`[(key, (group_a, group_b), [ident, …], [ident, …]), …]` — every file
+    crossing a group boundary, with BOTH groups and both sides named.
+
+    THIS IS WHAT MAKES THE GROUPING SAFE TO READ, and dropping one of these
+    lines would make the grouped mode WORSE than the one-lane answer it
+    sits beside: two groups printed side by side read as parallel, and a
+    file both of them write is exactly the one-writer breach the join exists
+    to prevent — it does not stop being one because a frequency count put
+    the two items in different groups. The collision notion is the JOIN'S
+    OWN (`wave_witnesses`), containment included: a second spelling of
+    "these two collide" would answer differently from the lane list printed
+    directly above it, and the desk would have no way to tell which was
+    lying.
+    """
+    owner = {ident: key for key, members in groups for ident in members}
+    hits: dict = {}
+    for i in range(len(rows)):
+        ida, pa = rows[i]
+        for j in range(i + 1, len(rows)):
+            idb, pb = rows[j]
+            ga, gb = owner[ida], owner[idb]
+            if ga == gb:
+                continue
+            for key, _by_containment in wave_witnesses(pa, pb):
+                first, second = sorted((ga, gb))
+                sides = hits.setdefault((key, (first, second)), (set(), set()))
+                sides[0 if ga == first else 1].add(ida)
+                sides[0 if gb == first else 1].add(idb)
+    return [(key, pair,
+             sorted(side_a, key=_wave_ident_key),
+             sorted(side_b, key=_wave_ident_key))
+            for (key, pair), (side_a, side_b) in sorted(hits.items())]
+
+
+def report_waves(schedulable, out, *, ready_n, live_n, excluded,
+                 grouped=False) -> int:
     """`item waves` — the join, printed. WRITES NOTHING, decides no sizing.
 
     `schedulable` is `[Item]` already through the blocker gate (the caller
@@ -2297,6 +2379,36 @@ def report_waves(schedulable, out, *, ready_n, live_n, excluded) -> int:
             out(f"      shared {key} — a DIRECTORY entry, written by "
                 f"{', '.join(carriers)}; it covers files named by "
                 f"{len(covered)} other member(s): {', '.join(covered)}")
+
+    # THE GROUPED SECTION IS APPENDED, never substituted for the lane list:
+    # the join is the truthful answer and the partition is a proposal over
+    # it, so a reader must be able to see both at once. Appending is also
+    # what makes the default output byte-identical to the verb before this
+    # flag existed — nothing above this branch moved.
+    if grouped:
+        groups = wave_groups(rows)
+        crossings = wave_group_serializations(rows, groups)
+        out("")
+        out(f"GROUPS: {len(groups)} over {len(rows)} path-valued item(s) — a "
+            "PLAN, never a permission. Each item sits in the group of its "
+            "write-set's MOST-FREQUENT entry, counted over these same "
+            f"{len(rows)} item(s). Unlike lanes, groups are NOT disjoint by "
+            "construction: the cut runs through real collisions, and every "
+            "one of them is named below.")
+        for n, (key, members) in enumerate(groups, start=1):
+            out(f"group {n} ({key}): {len(members)} item(s) — "
+                + ", ".join(sorted(members, key=_wave_ident_key)))
+        if not crossings:
+            out("SERIALIZE: 0 — none. No file crosses a group boundary over "
+                "this population, so the groups above are parallel as "
+                "printed.")
+        else:
+            out(f"SERIALIZE: {len(crossings)} cross-group shared file(s) — "
+                "these group PAIRS do NOT run at once; dispatching them in "
+                "parallel hands two writers one file.")
+            for key, (ga, gb), side_a, side_b in crossings:
+                out(f"      {key}: group ({ga}) {', '.join(side_a)} "
+                    f"vs group ({gb}) {', '.join(side_b)}")
 
     out("")
     out("NOT CLUSTERED — a write-set that cannot be read as this repo's paths "
