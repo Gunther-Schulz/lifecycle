@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 130
+added: 131
 compacted: 0
 
 ## lc-3
@@ -777,3 +777,12 @@ write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
 done-criterion: ONE of three directions has landed, or been declined with a reason: commit by a pathspec of the lines the verb itself wrote; or refuse to commit when the carrier is dirty on entry; or document the wholesale-commit contract so callers stage deliberately. The choice is this repo's and is the blocker below. Whichever lands, the red-first case is a carrier dirty with an unrelated hand edit at verb entry, and the must-not-move is that a clean-carrier invocation still commits exactly what the verb wrote
 evidence: INCIDENT verified at the artifact 2026-09-14 at the statiker desk: a hand-appended fact line to statiker LEDGER.md (that carrier's own declaration names `session` a writer for ledger lines, and the verb has no fact form) was absorbed by the verb's commit 03ce106 'lifecycle: ledger decision'. Read back with git show --stat: 1 file changed, 2 insertions, both lines intended, nothing else swept, so NO DAMAGE in that instance. The hazard is the general shape, where the absorbed edit is another writer's or is not yet meant to land. SECOND OBSERVATION, same shape, 2026-09-15: the same verb was invoked four times in one session against a carrier the desk was also hand-editing. GOAL SLOT chosen by the foreign desk and owned by this repo's reader: re-grade if lean-machinery-strict-checks is the wrong family
 blocked-by: decision which of the three repair directions this repo takes: pathspec-scoped commit, refuse-on-dirty, or document the contract
+
+## lc-139
+grade: READY
+requirement: item waves computes its join over WRITE sets only, so a lane that edits a shared VERIFICATION INSTRUMENT collides with every lane that RUNS that instrument and the join reports the two as disjoint. The verb prints that the lanes are disjoint by construction and that the whole set of lanes is the PARALLEL set — an assurance wider than its predicate establishes, which is what stops anyone looking. Record: drain wave 1 composition, 2026-09-15, desk dotfiles-f1.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,test/test_waves.py
+done-criterion: The join either REPORTS an instrument-read collision or its own output states, in the verb text, that its predicate covers write-write only and names what it therefore cannot see. Red-first on the measured wave-1 case: tools/prove-rows.py in one lane write-set while three sibling lanes run it as their verifier — today the verb reports 1 lane over 47 path-valued items and no collision, and the GROUPS cut places the prove-rows group beside groups whose verification executes it. An assertion FAILURE at the defect, not an error. MUST-NOT-MOVE: the honest COULD NOT VERIFY line for items outside the lanes keeps its exact text, and no item gains a phantom collision — the discriminating pair is an instrument-read collision that IS reported beside an ordinary disjoint pair that is NOT.
+evidence: Measured while composing drain wave 1 at 2387394, desk dotfiles-f1: item waves --grouped put tools/prove-rows.py in the lane-B write set and placed the items.py, init.py, cli.py and test-file groups in the parallel set beside it, reporting no collision between them — while this repo declared Verify section makes python3 tools/prove-rows.py a verifier every one of those lanes runs. The desk had to serialize by hand and mandate a private clone per lane. Sharpened by lc-133: prove-rows mutates core files in whatever tree it runs in and restores at the end of each arm, so the unseen collision is not merely a stale read but a live mutation in a co-writer tree. Class named in the dispatch skill escalation ladder (overlap counts any agent READ-OR-EXECUTE set against another write set, not only write against write) — opened at that text, 2026-09-15; what is novel here is that this repo join cannot express it. Booking assigned by the judgment desk dotfiles-89, 2026-09-15, which declined the corpus mint as a duplicate home and routed the tool gap here.
+blocked-by: NONE
