@@ -754,12 +754,27 @@ test("source: every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic 
   // a rename or a moved directory causes. The repo ROOT is in the list because
   // its absence is the defect this widening repairs, and a plain
   // `files.length > 0` would not have caught it.
-  for (const root_ of ["test", "tools", "proxy", "docs"]) {
+  // THESE THREE LINES DESCRIBED ANOTHER REPO UNTIL 2026-09-15, and the test had
+  // therefore never passed here: `proxy/` has never existed in this repo (git
+  // log --all over proxy/* is empty), `BACKLOG.md` was deliberately RETIRED in
+  // 2c77eee, and the tree is 64 source files rather than 500+. This file is a
+  // per-repo COPY of a suite extracted elsewhere (see the header), and the
+  // repo-shape assertions were carried across unadapted. The cost was not the
+  // red — it is that the red lands on a GUARD-THE-GUARD assertion that runs
+  // BEFORE the UUID scan below, so the check this test exists for had never
+  // executed once. A scope guard that collapses the whole test is the failure
+  // it was written to prevent, pointed at itself.
+  // Roots and floor are DERIVED from the scanner's own predicates over
+  // `git ls-files` (2026-09-15: test 26, plugin 20, docs 8, root-level 5,
+  // tools 4, dev-notes 1 — walk size 64), never guessed. `plugin/` is named
+  // because it is the largest source root here and its silent disappearance is
+  // exactly this guard's subject.
+  for (const root_ of ["test", "tools", "docs", "plugin"]) {
     assert.ok(files.some((f) => f.startsWith(root_ + "/")), `the walk collected no file under ${root_}/`);
   }
   assert.ok(files.some((f) => !f.includes("/")), "the walk collected no root-level file");
-  assert.ok(files.includes("BACKLOG.md"), "BACKLOG.md is not in the walk — the file this widening exists for");
-  assert.ok(files.length > 500, `the walk must enumerate the tree, got ${files.length} files`);
+  assert.ok(files.includes("ITEMS.md"), "ITEMS.md is not in the walk — this repo's carrier, the file this widening exists for");
+  assert.ok(files.length > 50, `the walk must enumerate the tree, got ${files.length} files`);
   // The deferral's own precondition, asserted rather than assumed: every file
   // the scanner routes to scanSourceText must be in this roster.
   assert.ok(files.some((f) => f.endsWith(".md")) && files.some((f) => f.endsWith(".mjs")),
