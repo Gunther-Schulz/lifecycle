@@ -1542,6 +1542,7 @@ class TheCarrierVerbDispatchHasNoDefault(unittest.TestCase):
         "compact": "cmd_item_compact",
         "ratio": "cmd_item_ratio",
         "statusline": "cmd_item_statusline",
+        "supersede-closure": "cmd_item_supersede_closure",
     }
 
     #: `compact` lives in `retire`, every other destination in `verbs`, and

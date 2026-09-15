@@ -1073,6 +1073,43 @@ VERB_ROWS = [
         stage="wave 1, stage 5",
     ),
     Row(
+        # A SIBLING ROW, NOT A SECOND REFUSAL (lc-120). `item
+        # supersede-closure` writes a ref onto a body that has ALREADY stopped
+        # being edited, so the cause and the repair are `closed_ref_
+        # unresolvable`'s exactly — a permanent dangling ref that reads like a
+        # good one, cleared by giving one that resolves. §3.8c splits a row
+        # only where the sites yield different ANSWER CLASSES, and these do
+        # not; the mirror case is lc-30, where two refusals with OPPOSITE
+        # repairs had to stop sharing a name because the operator was handed
+        # one cause for two defects. Two firing inputs, one refusal, declared
+        # through `finding_row` rather than derived by string surgery.
+        ident="closure_pointer_ref_unresolvable",
+        finding_row="closed_ref_unresolvable",
+        refusal="`item supersede-closure --ref` naming something that is not "
+                "a commit in this repo — the pointer is appended to a CLOSED "
+                "body, which nothing amends afterwards, so a ref that resolves "
+                "to nothing there is permanent (lc-120)",
+        firing_input="`item supersede-closure xx-2 --ref <a 40-hex sha no "
+                     "object has>` against a done home holding xx-2",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "supersede-closure", "xx-2", "--ref",
+                           "0123456789abcdef0123456789abcdef01234567",
+                           "--line", "the closure reason was falsified the "
+                                     "same hour"],
+                          done=BLOCKER_TARGET_CLOSED_DONE),
+        # THE SAME VERB ON THE SAME BODY WITH THE SAME LINE, and a ref that
+        # DOES resolve. The arms differ in the ref alone, so neither the verb
+        # nor the flag nor the closed body is what separates them — the
+        # control would otherwise score identically against a build that
+        # refused every supersede-closure.
+        control=lambda: _cli(["item", "supersede-closure", "xx-2", "--ref",
+                              "HEAD",
+                              "--line", "the closure reason was falsified the "
+                                        "same hour"],
+                             done=BLOCKER_TARGET_CLOSED_DONE),
+        stage="wave 1, stage 5 (lc-120)",
+    ),
+    Row(
         ident="close_over_live_blocker",
         refusal="a DONE close over an item-id blocker whose target has NOT "
                 "closed — the move clears the `blocked-by:` line and a closed "

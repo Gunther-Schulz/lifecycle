@@ -569,6 +569,25 @@ def build_parser() -> argparse.ArgumentParser:
     compact.add_argument("ident")
     compact.add_argument("--no-commit", dest="no_commit", action="store_true")
 
+    supers = its.add_parser("supersede-closure",
+                            help="APPEND a forward pointer to a CLOSED body "
+                                 "(lc-120) — nothing existing is rewritten; "
+                                 "`item amend` still refuses a closed body "
+                                 "and this does not soften it")
+    supers.add_argument("ident")
+    supers.add_argument("--ref", required=True,
+                        help="the commit that carries the later record — "
+                             "verified against this repo, because a pointer "
+                             "onto a body that has stopped being edited is "
+                             "permanent and a dangling one reads exactly like "
+                             "a good one")
+    supers.add_argument("--line", required=True,
+                        help="the SESSION's one line saying what was "
+                             "superseded. REQUIRED and with no default: a "
+                             "generated sentence would be a paraphrase with "
+                             "nobody's judgment behind it")
+    supers.add_argument("--no-commit", dest="no_commit", action="store_true")
+
     its.add_parser("ratio", help="capture against drain — the FLOW alarm "
                                  "(R22); a ratio, never a size")
 
@@ -776,7 +795,8 @@ def main(argv=None) -> int:
         elif args.item_action == "waves":
             code = cmd_item_waves(args, out)
         elif args.item_action in ("add", "amend", "promote", "ready", "park",
-                                  "close", "compact", "ratio", "statusline"):
+                                  "close", "compact", "ratio", "statusline",
+                                  "supersede-closure"):
             code = _carrier_verb(args, out)
         else:
             stage = NOT_YET_BUILT.get(path, "a later wave")
@@ -924,6 +944,8 @@ def _carrier_verb(args, out) -> int:
         return retire_mod.cmd_item_compact(args, out, ctx)
     if args.item_action == "close":
         return verbs.cmd_item_close(args, out, ctx)
+    if args.item_action == "supersede-closure":
+        return verbs.cmd_item_supersede_closure(args, out, ctx)
     out(f"COULD NOT VERIFY: `item {args.item_action}` reached the carrier "
         "verbs with no branch of its own. The caller admits it and this "
         "dispatch does not carry it; refusing is the only answer that does "

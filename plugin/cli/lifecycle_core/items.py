@@ -103,7 +103,59 @@ SLOTS = ("grade", "requirement", "goal", "write-set", "done-criterion",
 CLOSED_REASON = "closed-reason"
 CLOSED_REF = "closed-ref"
 
-DONE_ONLY_SLOTS = ("superseded-by", "blocker-moot", CLOSED_REASON, CLOSED_REF)
+#: THE FORWARD POINTER (lc-120). A closed body's slots cannot be corrected —
+#: `item amend` refuses one and that refusal is RIGHT: the done home holds what
+#: was true when the item closed, and editing it there would rewrite a record
+#: other counts have already read. The consequence was that a slot which turns
+#: out FALSE keeps asserting itself forever while its correction lives only in
+#: a ledger line the done-home reader never loads. That is the appended-
+#: correction failure at carrier scale: both versions stand, and the reader who
+#: stops at the first takes the superseded one.
+#:
+#: SO THE REPAIR IS APPEND-ONLY, and it is not an amendment by another name.
+#: The original `closed-reason:` and `closed-ref:` are never touched. A pointer
+#: is not an edit of the record — it is the record saying a later one exists.
+#:
+#: IT REPEATS, like the amendment and promotion lines above and for the reason
+#: this entry itself documents. A single-valued pointer would leave the SECOND
+#: superseding correction with no home, which is precisely the defect this slot
+#: repairs, reintroduced one level up. The alternative — refusing a second
+#: pointer — would need a refusal of its own, and the only refusal this work
+#: was ruled to add is the sibling of `closed_ref_unresolvable`.
+CLOSURE_SUPERSEDED_BY = "closure-superseded-by"
+
+DONE_ONLY_SLOTS = ("superseded-by", "blocker-moot", CLOSED_REASON, CLOSED_REF,
+                   CLOSURE_SUPERSEDED_BY)
+
+#: `<date> <ledger-ref> <one line>`, the three parts the design names. Checked
+#: as ONE predicate with ONE home because two consumers read it: the parser
+#: grades what is on disk and the verb grades what it is about to write, and a
+#: second spelling would let the writer produce a line its own reader refuses —
+#: the divergence `grammar` exists to prevent, applied to one more value.
+#:
+#: The REF is matched as a bare token rather than as a sha: `item close --ref`
+#: writes the operator's own spelling and this follows it, so whether the ref
+#: RESOLVES is a question for the repo and not for a regex (the verb asks git).
+_CLOSURE_POINTER_VALUE = re.compile(r"^(\d{4}-\d{2}-\d{2})\s+(\S+)\s+(\S.*)$")
+
+
+def closure_pointer_problem(value: str) -> str | None:
+    """Why `value` is not a well-formed forward pointer, or None.
+
+    THE ONE PREDICATE FOR BOTH DOORS — see `_CLOSURE_POINTER_VALUE` above.
+    """
+    v = (value or "")
+    if not v.strip():
+        return (f"`{CLOSURE_SUPERSEDED_BY}:` is empty. The pointer's whole "
+                "content is a date, a ref and a sentence; an empty one records "
+                "that a correction exists and says nothing about where.")
+    if not _CLOSURE_POINTER_VALUE.match(v):
+        return (f"`{CLOSURE_SUPERSEDED_BY}:` is not `<date> <ledger-ref> <one "
+                f"line>`: {v[:60]!r}. A pointer nobody can place in time, or "
+                "that names no ref, or that names a ref and then says nothing, "
+                "is a claim that a correction exists rather than a route to "
+                "it — which is the state this slot exists to end.")
+    return None
 
 #: The transitional value a migrated slot carries when nobody ever recorded
 #: one (§3.1). DECLARED rather than conventional: the retire lane must not
@@ -216,6 +268,12 @@ class Item:
     #: put lines with no slot to supersede through the resolver, and every
     #: reader of `amendments` would then be reading two kinds of act.
     promotions: list = field(default_factory=list)
+    #: `(name, raw-value, lineno)` for every forward pointer, IN FILE ORDER.
+    #: Its own list for the promotions' reason exactly: a pointer resolves no
+    #: slot either. It says a LATER record exists and leaves every existing
+    #: line asserting what it always asserted, which is what makes it a
+    #: pointer rather than an amendment the done home is not allowed to have.
+    closure_pointers: list = field(default_factory=list)
 
     @property
     def grade(self) -> str:
@@ -402,6 +460,14 @@ def parse(text: str) -> Parsed:
             current.promotions.append((slot, val, lineno))
             seen_order.append(slot)
             continue
+        # FORWARD POINTERS REPEAT TOO (lc-120), and are routed before the
+        # repeat check for the amendment lines' reason: a body whose SECOND
+        # correction is a shape finding has no route for that correction,
+        # which is the defect this slot was added to end.
+        if slot == CLOSURE_SUPERSEDED_BY:
+            current.closure_pointers.append((slot, val, lineno))
+            seen_order.append(slot)
+            continue
         if slot in current.slots:
             out.problems.append(("item_shape", lineno,
                                  f"block {current.ident!r} repeats slot "
@@ -474,6 +540,19 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
             f"block {item.ident!r}: `{CLOSED_REASON}:` does not open with its "
             f"ISO date: {closed_reason[:60]!r}. A closure records WHEN the "
             "item left; undated it is prose beside a grade."))
+
+    # THE FORWARD POINTER IS GRADED ON ITS OWN SHAPE (lc-120), in its own
+    # verdict for the reason the closure reason's date check is in one: these
+    # lines are OPTIONAL and they REPEAT, so a check folded into a neighbour
+    # would run only when that neighbour was present and only for the first
+    # pointer. Every pointer on the block is graded, not just the first — the
+    # second is exactly the one an append-only path exists to allow.
+    for _name, raw, lineno in item.closure_pointers:
+        problem = closure_pointer_problem(raw)
+        if problem:
+            out.problems.append((
+                "item_shape", lineno,
+                f"block {item.ident!r}: {problem}"))
 
     known_order = [s for s in seen_order if s in SLOTS]
     tail_out_of_place = [s for s in seen_order[:len(known_order)]
@@ -745,6 +824,32 @@ def append_promotion(text: str, ident: str, date: str, by: str, reason: str):
     judgment of a grade that never moved.
     """
     return _append_to_block(text, ident, render_promotion(date, by, reason))
+
+
+def render_closure_pointer(date: str, ref: str, line: str) -> str:
+    """The ONE line a forward-pointer act appends (lc-120).
+
+    Spelled here and nowhere else, for `render_amendment`'s reason: the verb
+    writes this shape and `closure_pointer_problem` grades it, so a literal at
+    the writing end would be free to drift from the predicate at the reading
+    end — and it would drift QUIETLY, the writer producing a line its own
+    reader had stopped recognising.
+    """
+    return grammar.render_slot(CLOSURE_SUPERSEDED_BY, f"{date} {ref} {line}")
+
+
+def append_closure_pointer(text: str, ident: str, date: str, ref: str,
+                           line: str):
+    """Append one forward pointer to a CLOSED block. `(text, found)`.
+
+    THE SAME WALK the two appended kinds above use, and the reuse is the
+    point: `_append_to_block` already backs over the blank lines between
+    blocks, and a second walk written for the done home would land pointers in
+    the gap — where they parse as belonging to the FOLLOWING body, which in a
+    closure home is somebody else's closed record.
+    """
+    return _append_to_block(text, ident,
+                            [render_closure_pointer(date, ref, line)])
 
 
 def _append_to_block(text: str, ident: str, body: list):

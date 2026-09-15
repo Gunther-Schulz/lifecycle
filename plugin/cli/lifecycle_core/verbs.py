@@ -2438,6 +2438,92 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
     return code
 
 
+# --- `item supersede-closure` (lc-120) ----------------------------------------
+
+def cmd_item_supersede_closure(args, out, ctx: Ctx) -> int:
+    """Append a FORWARD POINTER to a closed body. Nothing existing is touched.
+
+    `item amend` REFUSES a closed body and this verb does not soften that. The
+    refusal's ground is correct — the done home holds what was true when the
+    item closed, and correcting it there would edit a record other counts have
+    already read — but it left a slot that turns out FALSE asserting itself
+    forever, with its correction living only in a ledger line the done-home
+    reader never loads. Both versions then stand and the reader who stops at
+    the first takes the superseded one.
+
+    SO THIS APPENDS AND NEVER REWRITES. The original `closed-reason:` and
+    `closed-ref:` come out of the act byte-identical; what the body gains is
+    one line saying a later record exists and where it is. That is why this is
+    a verb beside `item amend` rather than a relaxation of it: amending would
+    change what the record says, and this changes only what it POINTS AT.
+
+    THE REF IS VERIFIED, through `_resolve_refs` and not a second resolver.
+    A pointer is written once onto a body that has ALREADY stopped being
+    edited, so a ref that resolves to nothing there is permanent and reads
+    exactly like a good one — the same cause and the same repair as
+    `closed_ref_unresolvable`'s own case, which is why this fires that refusal
+    rather than minting a second name for one defect.
+
+    WHAT "LEDGER-REF" MEANS, settled rather than assumed: `ledger.parse_line`
+    keys on KIND and returns kind plus slots, and the ledger carries no
+    per-line identifier at all — so a reference INTO it can only be the commit
+    that appended the line, and git's own `rev-parse --verify <ref>^{commit}`
+    is the predicate.
+    """
+    line = (args.line or "").strip()
+    problem = ledger.check_prose(line, "the pointer's one line")
+    if problem:
+        out(f"FINDING [ledger_body] {problem} The pointer's whole job is to "
+            "route a reader to the later record in one line; a body here "
+            "would be a second copy of what the ref already points at.")
+        return exits.FINDING
+
+    ref_value, ref_code = _resolve_refs(ctx, (args.ref or "").strip(), out)
+    if ref_code != exits.CLEAN:
+        return ref_code
+
+    date = _today()
+    # GRADED BEFORE IT IS WRITTEN, by the predicate the PARSER will grade it
+    # with. The verb must not be able to write a line its own carrier check
+    # then refuses — that would leave the repair path producing the finding
+    # class it exists to clear.
+    problem = items_mod.closure_pointer_problem(f"{date} {ref_value} {line}")
+    if problem:
+        out(f"FINDING [item_shape] {problem}")
+        return exits.FINDING
+
+    with items_mod.carrier_lock(ctx.done_path):
+        if not ctx.done_path.exists():
+            out(f"COULD NOT VERIFY: no done home at {ctx.done_path}. An absent "
+                "closure home and one holding no such body are different "
+                "answers, and neither is 'appended'.")
+            return exits.COULD_NOT_VERIFY
+        text = ctx.done_path.read_text(encoding="utf-8")
+        new, ok = items_mod.append_closure_pointer(text, args.ident, date,
+                                                   ref_value, line)
+        if not ok:
+            # THE LIVE CARRIER IS NAMED IN THE REFUSAL, because the near-miss
+            # is real: a desk reaching for this verb on an item that has not
+            # closed yet wants `item amend`, and a bare "no such block" would
+            # send it looking for a missing body instead.
+            out(f"FINDING [unknown_item] no closed block {args.ident!r} in "
+                f"{ctx.done_path.name}. This verb annotates a body that has "
+                "ALREADY closed; an item still live in "
+                f"{ctx.items_path.name} is corrected with `item amend`, which "
+                "supersedes a slot in place of pointing past it.")
+            return exits.FINDING
+        ctx.done_path.write_text(new, encoding="utf-8")
+        out(f"{args.ident}: forward pointer appended to {ctx.done_path.name}. "
+            "NOTHING existing was rewritten — the closure record still says "
+            "what it said.")
+        out(f"    {items_mod.render_closure_pointer(date, ref_value, line)}")
+        code = commit_paths(ctx, (ctx.done_path,),
+                            f"lifecycle: supersede-closure {args.ident}", out,
+                            skip=args.no_commit, what="the forward pointer")
+    args.fire_detail = f"supersede-closure {args.ident}"
+    return code
+
+
 # --- `ledger add` (stage 6) ---------------------------------------------------
 
 def cmd_ledger_add(args, out, ctx: Ctx) -> int:

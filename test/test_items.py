@@ -510,7 +510,19 @@ class ClosedBodySlotVocabulary(unittest.TestCase):
                     "records something a CLOSURE did")
         missing = [s for s in items.DONE_ONLY_SLOTS
                    if f"`{s}:`" not in restated]
-        self.assertEqual(missing, ["closed-reason", "closed-ref"],
+        # DERIVED, for the reason this whole class exists. A hardcoded
+        # `["closed-reason", "closed-ref"]` here is the restated enumeration
+        # one level up — inside the positive CONTROL, where it ages exactly as
+        # badly and is harder to see. It went red when lc-120 added a fifth
+        # slot, which is this arm catching its own defect rather than the
+        # vocabulary's; the expectation now grows with the source.
+        expected = [s for s in items.DONE_ONLY_SLOTS
+                    if s not in ("superseded-by", "blocker-moot")]
+        self.assertTrue(expected,
+                        "the control cannot discriminate: the pre-lc-44 text "
+                        "names every slot the vocabulary now holds, so an "
+                        "empty `missing` would prove nothing")
+        self.assertEqual(missing, expected,
                          "the pre-lc-44 text must still be caught")
 
 
@@ -1480,3 +1492,103 @@ class TheAllocatorsHomesAreWhateverItIsGIVEN(unittest.TestCase):
                                       self._home("xx-1"))
         self.assertIsNone(ident)
         self.assertIn("id-prefix", why)
+
+
+class ForwardPointerShape(unittest.TestCase):
+    """lc-120 — the done home ACCEPTS a well-formed pointer and grades the rest.
+
+    Acceptance is the half a verb cannot assert about itself: the verb writes
+    the line and this decides whether the carrier's own check reads it back as
+    well-formed. The two must agree by construction, which is why the verb
+    grades what it is about to write with the predicate used here.
+    """
+
+    POINTER = ("closure-superseded-by: 2026-09-15 7113d78 the closure reason "
+               "was falsified the same hour\n")
+
+    def _done(self, *extra: str) -> str:
+        return EMPTY_DONE + "\n" + DONE_BLOCK + "".join(extra)
+
+    def test_a_well_formed_pointer_reads_CLEAN(self):
+        code, out = run_done_check(self._done(self.POINTER))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("unknown slot", out)
+
+    def test_the_SAME_body_WITHOUT_the_pointer_is_also_clean(self):
+        """The control. Without it, the arm above passes equally against a
+        check that stopped grading the done home at all."""
+        code, out = run_done_check(self._done())
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_TWO_pointers_on_one_body_read_CLEAN(self):
+        """They repeat by design — a body needing a second correction is
+        exactly the case a single-valued slot would strand."""
+        second = ("closure-superseded-by: 2026-09-16 abc1234 and the evidence "
+                  "slot too\n")
+        code, out = run_done_check(self._done(self.POINTER, second))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("repeats slot", out)
+
+    def test_each_MALFORMED_shape_is_named_rather_than_accepted(self):
+        """Per case, not in aggregate: an aggregate arm passes against a check
+        that refuses every pointer, well-formed or not — and the clean arms
+        above would then be the ones failing, which is a different report."""
+        for label, value, expect in (
+                ("no date", "7113d78 the reason was falsified", "is not"),
+                ("no ref", "2026-09-15", "is not"),
+                ("ref but no line", "2026-09-15 7113d78", "is not"),
+                ("empty", "", "is empty"),
+                ("date not ISO", "15-09-2026 7113d78 falsified", "is not")):
+            with self.subTest(case=label):
+                code, out = run_done_check(
+                    self._done(f"closure-superseded-by: {value}\n"))
+                self.assertEqual(code, exits.FINDING, out)
+                self.assertIn("[item_shape]", out)
+                # THE PREDICATE'S OWN MESSAGE, not merely `item_shape` plus the
+                # slot name. A build with NO well-formedness check answers
+                # `unknown slot(s): closure-superseded-by` — same row, same
+                # exit, and the slot name appears in it — so the looser
+                # assertion passes on a build that grades nothing. Measured
+                # against the old tree, where this arm was green before the
+                # check existed.
+                self.assertIn(expect, out)
+                self.assertNotIn("unknown slot", out)
+
+    def test_a_LIVE_block_carrying_the_slot_is_a_finding(self):
+        """Closed-only, like every other slot a CLOSURE writes: on a live item
+        the line claims an act that has not happened."""
+        live = GOOD_ITEMS.rstrip("\n") + "\n" + self.POINTER
+        code, out = run_check(live)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[done_slot_on_live_item]", out)
+
+    def test_a_pointer_AMONG_the_fixed_slots_is_a_finding(self):
+        """The appended lines sit after the block's own slots, so a diff over
+        an annotated body shows an addition rather than a reordering."""
+        misplaced = DONE_BLOCK.replace("goal: mitigate\n",
+                                       "goal: mitigate\n" + self.POINTER, 1)
+        code, out = run_done_check(EMPTY_DONE + "\n" + misplaced)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[item_shape]", out)
+        # The ORDERING message, for the reason the malformed arm states: a
+        # build that merely calls the slot unknown answers `item_shape` here
+        # too, so the looser assertion is green on a build that has never
+        # heard of the slot and cannot be placing it anywhere.
+        self.assertIn("among the fixed slots", out)
+        self.assertNotIn("unknown slot", out)
+
+    def test_the_predicate_has_ONE_home_the_writer_and_reader_share(self):
+        """The writer grades what it is about to write with the predicate the
+        parser grades it with. Asserted directly, because the failure of a
+        second spelling is SILENT: the writer keeps producing a shape the
+        reader has stopped recognising."""
+        self.assertIsNone(items.closure_pointer_problem(
+            "2026-09-15 7113d78 the reason was falsified"))
+        self.assertIsNotNone(items.closure_pointer_problem("2026-09-15"))
+        rendered = items.render_closure_pointer("2026-09-15", "7113d78",
+                                                "the reason was falsified")
+        self.assertTrue(rendered.startswith("closure-superseded-by: "))
+        value = rendered.split(": ", 1)[1]
+        self.assertIsNone(items.closure_pointer_problem(value),
+                          "the renderer produced a value its own reader "
+                          "refuses")
