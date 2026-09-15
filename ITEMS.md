@@ -723,17 +723,6 @@ done-criterion: the question is decided and the declaration matches the decision
 evidence: VERIFIED AT SOURCE 2026-09-13 at the statiker desk, independent of both desks: .claude/lifecycle.json:290 declares home=plugin/skills; workflows.py:6,55,138 resolves plugin/workflows/ as the registry; plugin/skills has NO functional referent anywhere in plugin/cli/ — zero hits, with the adjacent plugin/workflows hits from the same sweep proving the instrument reaches that subtree, so the zero is an absence and not a dead pattern; both directories exist on disk
 blocked-by: decision is workflow-templates home=plugin/skills intentional or a defect?
 
-## lc-130
-grade: READY
-requirement: mint-time predicate lint: item add and item park refuse an evidence blocker whose predicate fails sh -n or exits >=2 on one probe run, predicate quoted in the refusal — kills the prose-as-predicate class at the pit of success (dotfiles df-237: prose predicate booked, item surfaced only as BROKEN at read time). Design + transition table: docs/directives/drain-kickoff-2026-09-15.md section D3. No new execution risk: blockers already execute on every item ready pass
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,tools/prove-rows.py
-done-criterion: red-first per directive D3 table: df-237's literal prose predicate as fixture is refused with the predicate quoted; test -f /etc/hostname mints; refusal is an assertion failure at the defect, not an error
-evidence: dotfiles item ready 2026-09-15: df-237 FINDING trigger_broken, sh -c syntax error, exit 2 reserved-for-broken
-blocked-by: NONE
-amend-reason: 2026-09-15 refusals.py added: the requirement is a REFUSAL (item add and item park REFUSE an unparseable predicate), and law 2 makes every refusal a registry row with its firing input. The original slot would have put the lane in a box with no exit — the work verifies, the roster's emit-site coverage fails, and the only repair is a path the brief placed out of bounds. Desk correction at wave-A round 3, before dispatch; the test file is assigned in the brief.
-amended-write-set: 2026-09-15 plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py
-
 ## lc-131
 grade: READY
 requirement: The close_carries_pointer refusal names a clearance route that NO VERB performs: its message says remove the clause from the body, or split the residue into its own item. item amend only APPENDS and deliberately RETAINS the earlier line (test_the_earlier_line_is_RETAINED_not_rewritten), and law 8 makes the tool the only writer of its carriers. The only route today is a shape-preserving HAND EDIT, which the repo-local pre-commit permits but law 8 forbids in principle — a guard whose sanctioned clearance requires violating a law is the fires-on-legitimate-work class (law 11) with no declared exemption — record: lc-22 closing report gap 2, 2026-09-15
