@@ -212,15 +212,6 @@ amended-blocked-by: 2026-09-13 evidence the repair has not landed in claude-code
 amend-reason: 2026-09-13 2026-09-13 Instrument repair, not a re-judgement: I wrote this predicate as PROSE earlier today and the board executes it, so it reported FINDING [trigger_broken] exit 127 — louder than blocked and semantically different. Converted to the executable form this carrier already uses (lc-3, lc-7): 'false  # <reason>' exits 1, which is exactly 'still blocked', with the reason preserved as the comment. The blocked state is unchanged; only the instrument is fixed.
 amended-blocked-by: 2026-09-13 evidence false  # the repair has not landed in claude-code-cache-fix, which owns the canonical tools/absence-scan.mjs; this repo's copy is declared byte-identical
 
-## lc-55
-grade: READY
-requirement: item ready and item close disagree about whether one blocker was answered, and the disagreement is written into the ledger as a second contradictory line. Measured on a scratch clone 2026-08-28, wave-5 T walk: ledger add decision wrote the answer at LEDGER.md:35, item ready reported UNBLOCKED citing that line, and item close then reported the same blocker was never answered, wrote blocker-moot: on the moved body and appended LEDGER.md:36 recording the question as moot. One question, two answers, both live in the carrier
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
-done-criterion: item ready and item close reach the SAME verdict on one blocker from one ledger state, red-first on the recorded walk: today ready says UNBLOCKED and close says never answered on the identical item
-evidence: wave-5 T walk, scratch clone of lifecycle at 66bd2af, probe item lc-55: ready output UNBLOCKED with LEDGER.md:35 cited, close output blocker-moot never answered, ledger lines 35 and 36 contradictory. Mechanism NOT established at the desk, only the divergence
-blocked-by: NONE
-
 ## lc-58
 grade: READY
 requirement: the compacted arrow has no verb. retire WALKS and REPORTS and says so in its own output: the acts its findings call for are their own verbs, but no compaction verb exists in the CLI surface, so the last arrow of an item life is unreachable and the conservation line can only ever read compacted 0
