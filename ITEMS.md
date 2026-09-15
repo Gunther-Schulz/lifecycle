@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 141
+added: 142
 compacted: 0
 
 ## lc-3
@@ -727,4 +727,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/retire.py,test/test_retire.py
 done-criterion: list_home answers zero instances for a carrier holding only its `schema:` head, and the discriminator is that schema head (law 14: every carrier has one, no ordinary file does) rather than the heading prefix. Proven by a PAIR, not by a green: an arm that builds an empty carrier and asserts the count is 0 and the kind reports CLEAN, plus a mutation of the discriminator that reds that arm as an assertion FAILURE (failures=1, errors=0 read off the split). No arm may assert the current miscount.
 evidence: lane opus-lc148-145 closing report part 2a, gap 1, measured at 9e681e3 on the items kind; desk source read at db50df2, retire.py:139-153 — absent home returns [] at :140, empty carrier returns [home] at :153.
+blocked-by: NONE
+
+## lc-150
+grade: READY
+requirement: migration_ledger_nonzero OVER-FIRES: it tests that the ledger count is not zero, where the count is the ledger lines AFTER the run rather than the lines the run itself routed. So every repo that has ever recorded a decision — a compaction included — gets a FINDING from any --merge, and the merge still writes. Law 11 shape: a guard firing on legitimate work, which trains the reader to discount the red that will one day be real. Found by the lc-148/lc-145 lane because its migrate arm needs a fixture carrying a compaction record.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: The row counts the lines the RUN routed, not the ledger total: a --merge into a repo whose ledger already carries unrelated lines answers CLEAN, and a --merge that genuinely routes nothing still answers FINDING. Both halves proven — the false-fire arm is the one that must go from FINDING to CLEAN on the fix, and the true-fire arm must not move. prove-rows keeps a recorded arrangement for the row and its mutation reds only that row.
+evidence: lane opus-lc148-145 closing report part 2a, gap 2; the lane's own migrate arm asserts the allocation off the carrier and carries a comment naming why the run answers FINDING. Its part 3b records the consequence: the merge's other answers are unverified by that lane because this over-fire masks the run's exit code.
 blocked-by: NONE
