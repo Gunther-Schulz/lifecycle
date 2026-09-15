@@ -90,6 +90,7 @@ decision: what becomes of 7d9a0fc, written after lc-125 closed and the lane's gr
 decision: did the NOT-CLUSTERED sentence mislabel anything besides venue → YES, predating lc-125: the other-repo bucket (the path-at-repo foreign form from lc-66/lc-67) has counted as unreadable since lc-123 while being read fine. Repaired in the same commit, not split into its own item, because one sentence carried one defect and splitting after the repair is fiction.
 dropped: lc-137 — DUPLICATE of lc-55, which closed at 90518a9 on 2026-09-15 at 14:04, about 2.5 hours before this was booked from a 2026-09-14 body carried across on a venue decision without re-reading this repo. Full account on the dropped body.
 decision: drain wave 3: is the lc-120 lane CLOSED or HELD? The desk sent both answers and a later reader meets the earlier one first → HELD, not closed. The directive supersedes the earlier 'write grant over'. Grant is six paths, effective on the desk's signal once the lc-148/lc-145 and lc-146 lanes close. The lane writes nothing meanwhile and re-grounds before building. Body and the two ruled design calls: lc-120's evidence.
+decision: Should law 24 keep growing by enumerating realizing surfaces, and does the lane-reported FIFTH surface belong in it? → No to both. Restate at PREDICATE altitude, surfaces demoted to examples; the fifth is read-or-execute overlap and stays lc-139's class. Ruled by dotfiles-89. Booked as lc-152 and HELD: opus-lc120 is live, reads this law, and is building the verb it governs.
 
 ## Archive (pre-migration)
 
