@@ -77,7 +77,14 @@ journal pointer is where the incident lives.
 7. **The leak scan is armed before the repo's own first commit** and runs on
    every push; a clean scan never shown to fire proves nothing. (J7)
 8. **The tool is the only writer of the carriers it owns**; a hand edit that
-   breaks the shape fails at commit; a lock serializes writers. (J8)
+   breaks the shape fails at commit; a lock serializes writers. **And it is
+   their authoritative READER:** an item's CURRENT truth comes from
+   `item slots <id>`, which resolves amendments, and its amendment HISTORY
+   from the raw block, which `item slots` drops — both reads exist because
+   neither is sufficient. A hand-rolled slice of a carrier is neither, and a
+   truncating one drops exactly the lines that supersede, since amendment
+   slots sit at the end of a block. Prose-rest: no predicate distinguishes
+   such a read from any other file read. (J8, J23)
 9. **A two-file move is one act**: append, delete, commit. A crash leaves a
    DUPLICATE, never a loss, and the next check says so. (J8)
 10. **READY is judged, never derived.** Blocker clearance decides

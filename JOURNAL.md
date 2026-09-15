@@ -344,3 +344,50 @@ to move the catch UPSTREAM of the commit, where a human is composing.
 Judgment-desk GO 2026-09-15 (dotfiles-89), home ruled to this repo's own
 project file rather than the global corpus or the dispatch skill: the
 general rule lives there already; this is its one-repo instantiation.
+
+### J23 — cited by law 8 (the tool is the carrier's reader too)
+
+Drain wave 1, 2026-09-15. A desk composed four lane briefs by reading item
+bodies through a hand-rolled block extractor that truncated at ~1600
+characters. Amendment slots sit at the END of a block by construction, and
+the bodies ran to 2253, 2785, 3242 and 3423 characters, so the reads dropped
+exactly the lines that supersede. THREE Background passages shipped stale:
+
+- lc-132's brief cited two `stderr` emit sites, both FALSE — the item's own
+  `amended-evidence` had already re-measured on the EMIT FUNCTION rather
+  than the token and found 98 `out()` against exactly ONE `err()`.
+- lc-133's brief commissioned a red for a `try/finally` half already live at
+  `prove-rows.py:790-798`; the item's amended criterion had narrowed to the
+  startup refusal alone.
+- lc-30's brief commissioned a red-first on a live instance the item's own
+  amended-evidence records as SPENT.
+
+Two lanes caught one each in their critique pass, BEFORE their first build
+call, and built against the item body rather than the brief. The desk then
+swept all eleven wave and held items rather than repairing only the two
+reported instances, and found a fourth (lc-51) that no lane had reached yet.
+
+THE REPO ALREADY HAD THE RIGHT INSTRUMENT AND NOTHING POINTED AT IT. The
+desk was about to book this as a MISSING VERB, ran `item slots lc-132`
+before claiming the absence, and found the verb exists AND had already
+resolved the amendment — its `evidence:` line printed the corrected text,
+not the original. So the gap was discoverability, not capability, and the
+booking changed shape before it was written.
+
+BOTH READS ARE NEEDED, WHICH IS WHY THE LAW NAMES TWO. `item slots <id>`
+emits the slots with amendments RESOLVED — the current truth — and emits
+ZERO `amend-reason` lines. But the reasoning lives there: lc-47's
+deadlock-dissolution (an evidence blocker whose truth is produced by the
+very change it gates is not a blocker, it is a coupling) exists ONLY in an
+`amend-reason`, and so does lc-34's record of a previous desk running the
+refusals.py write-set check across a cohort — a precedent that would have
+prevented three lanes of wave-1 rework had anyone read it. Measured
+2026-09-15: `item slots lc-34 | grep` for that sentence returns nothing; the
+raw block carries it.
+
+PROSE-REST, and the law says so rather than pretending otherwise: no
+computable predicate distinguishes a hand-rolled read of a carrier from any
+other file read. There is nothing to hook. The cheap detector is the one
+that actually fired here — an executing lane opening the item body the brief
+summarised — which is a reason to keep commissioning the critique pass, not
+a reason to believe a lint could replace it.
