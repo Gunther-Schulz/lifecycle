@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 142
+added: 143
 compacted: 0
 
 ## lc-3
@@ -736,4 +736,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: The row counts the lines the RUN routed, not the ledger total: a --merge into a repo whose ledger already carries unrelated lines answers CLEAN, and a --merge that genuinely routes nothing still answers FINDING. Both halves proven — the false-fire arm is the one that must go from FINDING to CLEAN on the fix, and the true-fire arm must not move. prove-rows keeps a recorded arrangement for the row and its mutation reds only that row.
 evidence: lane opus-lc148-145 closing report part 2a, gap 2; the lane's own migrate arm asserts the allocation off the carrier and carries a comment naming why the run answers FINDING. Its part 3b records the consequence: the merge's other answers are unverified by that lane because this over-fire masks the run's exit code.
+blocked-by: NONE
+
+## lc-151
+grade: READY
+requirement: AN UNRESOLVABLE HOME IS COUNTED AS AN EMPTY ONE, so the growth alarm is structurally blind on exactly the kinds whose growth is OUTSIDE the repo. list_home builds `repo / home` for every declared home, so a home that is not repo-relative can never resolve — and the miss is not an error but a silent count of 0, which the growth check then reports as CLEAN with the words `the home holds nothing, so nothing has grown`. Measured at the desk on the live tree at db50df2: kind `the fire log` declares $XDG_STATE_HOME/lifecycle/fire.jsonl and reports count 0 / CLEAN, while the real file is 112 MB and 1,035,153 lines; kind `plugin cache versions` declares ~/.claude/plugins/cache/<marketplace>/<plugin> and reports count 0 / CLEAN while 9 cached plugin version directories exist. A REGISTRY-WIDE SWEEP of all 21 kinds found exactly these two non-repo-relative homes and both are blind; every repo-relative home resolves. So the enumeration is closed, with the two members as its own positive controls.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/retire.py,test/test_retire.py
+done-criterion: list_home distinguishes THREE answers where it now gives two: resolved-and-counted, resolved-and-empty, and COULD NOT RESOLVE — the third never reports CLEAN and never contributes a count of 0. A home is resolved against its own root rather than the repo: environment variables expanded with their XDG defaults (the live env has XDG_STATE_HOME EMPTY, so bare expansion yields /lifecycle/... and is NOT sufficient — the default $HOME/.local/state is what makes it resolve), `~` expanded, and a home carrying <placeholder> segments read as a pattern or refused at declaration time. Proven by a PAIR on each member: the fire-log kind reports a NON-zero count on a machine where the log exists, and reports COULD NOT VERIFY — not CLEAN — when the path is absent. The mutation that reds the arm must be an assertion FAILURE, read off the failures=/errors= split.
+evidence: Desk integration verification of wave 3 at db50df2, live tree, read-only audit run. Contradiction inside ONE report is what surfaced it: the audit header reads `exit events read from the fire log: 2 record(s) for this repo` — so read_fire_log resolves the path — while the fire-log KIND in the same walk reports its home `is not present`. read_fire_log is the existing instance the repair reuses; list_home is the site that does not.
 blocked-by: NONE
