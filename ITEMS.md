@@ -750,15 +750,6 @@ done-criterion: the question is decided and the declaration matches the decision
 evidence: VERIFIED AT SOURCE 2026-09-13 at the statiker desk, independent of both desks: .claude/lifecycle.json:290 declares home=plugin/skills; workflows.py:6,55,138 resolves plugin/workflows/ as the registry; plugin/skills has NO functional referent anywhere in plugin/cli/ — zero hits, with the adjacent plugin/workflows hits from the same sweep proving the instrument reaches that subtree, so the zero is an absence and not a dead pattern; both directories exist on disk
 blocked-by: decision is workflow-templates home=plugin/skills intentional or a defect?
 
-## lc-128
-grade: READY
-requirement: item check gains --staged: read the carrier from the git INDEX, report only findings ABSENT at HEAD, machine-readable exits — the checker half of a commit-time shape gate, so hand-written carrier damage is refused at the write instead of reported to the next session. Design + transition table: docs/directives/drain-kickoff-2026-09-15.md section D1. Motivating evidence: dotfiles ITEMS-DONE.md, 23 findings 2026-09-15, all hand-written blocks
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,tools/prove-rows.py
-done-criterion: red-first per directive D1 table: staged hand-written block reported exit 2 with block quoted; same finding at HEAD untouched exit 0 with count; declared-repo-carrier-absent answers COULD NOT VERIFY named; --help documents --staged (the dotfiles wiring item's unblock predicate)
-evidence: dotfiles session dotfiles-89 2026-09-15: item check banner, 23 done-home findings, every one written by hand around the verb
-blocked-by: NONE
-
 ## lc-129
 grade: READY
 requirement: item repair --shape: mechanically join wrapped slot values to one line and move amendment lines below the fixed slots; missing slots, unknown slots, and closed-still-blocked bodies are LISTED never invented. Design + transition table: docs/directives/drain-kickoff-2026-09-15.md section D2. Real fixtures named there: dotfiles ITEMS-DONE.md df-196 (wrapped + misplaced amendment), df-184/185/194/195 (missing blocked-by)
