@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 121
+added: 122
 compacted: 0
 
 ## lc-3
@@ -766,4 +766,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,tools/prove-rows.py
 done-criterion: red-first per directive D2 table: df-196-copy round-trip preserves word multiset modulo joins with conservation identity unchanged; amendment repositioned; df-184-class judgment findings listed with the file byte-identical; commits or prints NOT COMMITTED per the lc-41 ruling (LEDGER.md:71)
 evidence: dotfiles ITEMS-DONE.md 2026-09-15: 15 wrapped-value findings in one block, 4 blocks missing blocked-by, 4 closed-still-blocked
+blocked-by: NONE
+
+## lc-130
+grade: READY
+requirement: mint-time predicate lint: item add and item park refuse an evidence blocker whose predicate fails sh -n or exits >=2 on one probe run, predicate quoted in the refusal — kills the prose-as-predicate class at the pit of success (dotfiles df-237: prose predicate booked, item surfaced only as BROKEN at read time). Design + transition table: docs/directives/drain-kickoff-2026-09-15.md section D3. No new execution risk: blockers already execute on every item ready pass
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,tools/prove-rows.py
+done-criterion: red-first per directive D3 table: df-237's literal prose predicate as fixture is refused with the predicate quoted; test -f /etc/hostname mints; refusal is an assertion failure at the defect, not an error
+evidence: dotfiles item ready 2026-09-15: df-237 FINDING trigger_broken, sh -c syntax error, exit 2 reserved-for-broken
 blocked-by: NONE
