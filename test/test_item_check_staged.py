@@ -235,16 +235,20 @@ class NothingStagedSaysSo(unittest.TestCase):
 class UnreadableCarrierIsTheThirdAnswer(unittest.TestCase):
     """Arm (c): declared and absent from both index and HEAD — exit 3."""
 
-    def test_exit_three_and_stderr_names_what_was_missing(self):
+    def test_exit_three_and_stdout_names_what_was_missing(self):
+        # lc-132: COULD NOT VERIFY moves to out() — one home for the
+        # message, never both streams. The subject (exit 3, the missing
+        # carriers named) is unchanged; only the stream moves.
         with tempfile.TemporaryDirectory(prefix="lc128-") as td:
             fx = Fixture(td, carrier=None, done=None, commit=False)
             fx.git("add", "-A")
             fx.git("commit", "-qm", "declaration only")
             code, stdout, stderr = fx.check("--staged")
             self.assertEqual(code, exits.COULD_NOT_VERIFY, stdout + stderr)
-            self.assertIn("COULD NOT VERIFY", stderr)
-            self.assertIn("ITEMS.md", stderr)
-            self.assertIn("ITEMS-DONE.md", stderr)
+            self.assertIn("COULD NOT VERIFY", stdout)
+            self.assertIn("ITEMS.md", stdout)
+            self.assertIn("ITEMS-DONE.md", stdout)
+            self.assertNotIn("COULD NOT VERIFY", stderr)
             self.assertEqual(finding_lines(stdout), [], stdout)
 
     def test_the_counts_name_how_much_they_cover(self):
@@ -280,12 +284,15 @@ class AStagedDeletionIsNotClean(unittest.TestCase):
     """A carrier staged for deletion has no staged body to grade."""
 
     def test_exit_three_naming_the_index_absence(self):
+        # lc-132: same subject (exit 3, the index-absence named); only the
+        # stream moves, from err()/stderr to out()/stdout.
         with tempfile.TemporaryDirectory(prefix="lc128-") as td:
             fx = Fixture(td)
             fx.git("rm", "-q", "--cached", "ITEMS.md")
             code, stdout, stderr = fx.check("--staged")
             self.assertEqual(code, exits.COULD_NOT_VERIFY, stdout + stderr)
-            self.assertIn("resolves at HEAD but not in the index", stderr)
+            self.assertIn("resolves at HEAD but not in the index", stdout)
+            self.assertNotIn("resolves at HEAD but not in the index", stderr)
 
 
 class ANewlyIntroducedCouldNotVerifyIsNotClean(unittest.TestCase):
@@ -298,6 +305,8 @@ class ANewlyIntroducedCouldNotVerifyIsNotClean(unittest.TestCase):
     """
 
     def test_exit_three_when_the_staged_body_cannot_be_classified(self):
+        # lc-132: same subject (exit 3, the unclassifiable grade named);
+        # only the stream moves, from err()/stderr to out()/stdout.
         with tempfile.TemporaryDirectory(prefix="lc128-") as td:
             fx = Fixture(td)
             fx.stage("ITEMS.md",
@@ -306,7 +315,9 @@ class ANewlyIntroducedCouldNotVerifyIsNotClean(unittest.TestCase):
             self.assertEqual(finding_lines(stdout), [], stdout)
             self.assertEqual(code, exits.COULD_NOT_VERIFY, stdout + stderr)
             self.assertIn("could not classify something this edit introduced",
-                          stderr)
+                          stdout)
+            self.assertNotIn("could not classify something this edit introduced",
+                             stderr)
 
 
 class FindingIdentity(unittest.TestCase):

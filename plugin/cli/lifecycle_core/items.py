@@ -1972,14 +1972,19 @@ def check_staged(repo: Path, carriers, out, err) -> int:
         f"them. Counted over {graded} of {len(carriers)} declared carrier(s).")
 
     if unverified:
+        # ONE HOME FOR THE MESSAGE, never both streams — every other verb in
+        # this repo renders COULD NOT VERIFY through out(), and this was the
+        # package's one err() emit of the phrase (lc-132). `err` stays a
+        # parameter: cli.py's caller still supplies one, and narrowing the
+        # signature is a change to a file outside this item's write-set.
         for why in unverified:
-            err(f"COULD NOT VERIFY: {why}")
+            out(f"COULD NOT VERIFY: {why}")
         # "condition(s)", not "carrier(s)": a carrier can be scanned AND
         # still carry a could-not-verify, so counting carriers here would
         # contradict the "counted over N of M" line directly above it.
         out(f"item check --staged: {exits.word(exits.COULD_NOT_VERIFY)} — "
             f"{len(unverified)} could-not-verify condition(s), so the counts "
-            "above are not a full verdict; see stderr.")
+            "above are not a full verdict.")
         return exits.COULD_NOT_VERIFY
 
     code = exits.FINDING if new_all else exits.CLEAN
