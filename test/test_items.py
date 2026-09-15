@@ -261,6 +261,95 @@ class Amendments(unittest.TestCase):
                          "LAST wins — the file is append-only, so it is "
                          "chronological")
 
+    def test_amendment_order_is_FILE_order_not_DATE_order(self):
+        """lc-126 — the LAST-WINS rule (`_resolve_amendments`, items.py)
+        reads order off the FILE, never off the dates on the amendment
+        lines. Every existing arm in this class has the two orders
+        agreeing — the arm above carries the SAME date, `2026-08-27`, on
+        both corrections — so none of them can tell "last line in the file
+        wins" from "latest date wins" apart. This fixture forces the two
+        orders to DIVERGE: the amendment FIRST in the file carries the
+        LATER date (`2026-09-01`), the one LAST in the file carries the
+        EARLIER date (`2026-08-01`).
+
+        RED-FIRST, per the class devbook's rule for a check that pins an
+        ALREADY-TRUE property (no red exists against the shipped build —
+        `_resolve_amendments` already reads order off the file, never the
+        date): proven by TWO mutations, both assertion failures, run by
+        hand against a scratch copy before this arm was written.
+          * of the BUILD it grades — a resolver that sorts
+            `item.amendments` by the ISO date on each `amended-<slot>:`
+            line (a stable sort, so same-day pairs keep file order)
+            instead of the shipped code's plain file-order loop. Against
+            this fixture `goal` resolves to `"verify"` (the LATER-dated
+            line) instead of `"retire"`, and the main assertion below —
+            run against that mutated resolver — fails.
+          * of its own ARRANGEMENT — swap the two dates so file order and
+            date order AGREE (the later line also carries the later date,
+            as the arm above does): the shipped build and the date-sorted
+            mutation then produce the SAME value on that fixture, so a
+            green there proves nothing — exactly the non-discrimination
+            this entry exists to remove.
+        `_resolve_by_date` below is the first mutation kept in the
+        battery, never imported by production code, so the discriminator
+        assertion is re-run on every pass rather than trusted from a
+        one-off scratch run.
+        """
+        fixture = self._amended(
+            "amend-reason: 2026-08-27 the goal was mis-recorded at intake",
+            "amended-goal: 2026-09-01 verify",
+            "amend-reason: 2026-08-27 verify was wrong too",
+            "amended-goal: 2026-08-01 retire")
+
+        p = items.parse(fixture)
+        self.assertEqual(p.problems, [])
+        self.assertEqual(
+            p.items[0].slots["goal"], "retire",
+            "FILE order must win: 'retire' is the LAST amendment line in "
+            "the block even though its date (2026-08-01) is EARLIER than "
+            "the first amendment's (2026-09-01) — a date-order resolver "
+            "would pick 'verify' instead")
+
+        by_date = self._resolve_by_date(items.parse(fixture).items[0])
+        self.assertEqual(
+            by_date, "verify",
+            "the date-order mutation must pick the OTHER value on this "
+            "fixture, or the fixture does not discriminate 'last in the "
+            "file' from 'latest date' at all")
+        self.assertNotEqual(
+            p.items[0].slots["goal"], by_date,
+            "the two rules agree on this fixture — a green here would "
+            "prove nothing, which is the non-discrimination this entry "
+            "exists to remove")
+
+    @staticmethod
+    def _resolve_by_date(item):
+        """The BUILD mutation this arm's docstring proves against:
+        `_resolve_amendments` with its file-order loop replaced by a
+        stable sort on the ISO date of each `amended-<slot>:` line. Lives
+        only here, never imported by `lifecycle_core`, as the re-runnable
+        half of the class devbook's red-first proof for an already-true
+        property — the other half (the arrangement mutation) is prose in
+        the caller's docstring, since it changes the FIXTURE, not the
+        code, and has no separate implementation to keep.
+        """
+        ordered = sorted(
+            item.amendments,
+            key=lambda entry: (items._AMEND_VALUE.match(entry[1]).group(1)
+                               if items._AMEND_VALUE.match(entry[1])
+                               else ""))
+        value = None
+        for name, raw, _lineno in ordered:
+            if name == items.AMEND_REASON:
+                continue
+            m = items._AMEND_VALUE.match(raw)
+            if not m:
+                continue
+            slot = name[len(items.AMEND_PREFIX):]
+            if slot == "goal":
+                value = m.group(2)
+        return value
+
     def test_an_undated_amendment_line_is_a_finding(self):
         code, out = run_check(self._amended("amended-goal: verify"))
         self.assertEqual(code, exits.FINDING, out)
