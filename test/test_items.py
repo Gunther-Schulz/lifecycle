@@ -965,6 +965,23 @@ class CloseRefusesADeclaredCarriedPointer(unittest.TestCase):
               "ITEMS-DONE.md")
     REPO = Path(__file__).resolve().parents[1]
 
+    #: THE TRUE SOURCE LINE, byte-for-byte: dotfiles `claude/BACKLOG.md` at
+    #: `bb8edd4`, line 163 — `git show bb8edd4:claude/BACKLOG.md | sed -n
+    #: '163p'`, read back through `cat -A` to pin the whitespace. TWO LEADING
+    #: SPACES and `commit. ` BEFORE the marker: in the wild the declaration
+    #: does NOT sit at column 0, and that is the property the arm below pins.
+    #:
+    #: WHY IT IS PINNED BY NAME rather than left to the fixtures. Every OTHER
+    #: fixture here reaches the predicate through `_clause_block`, which
+    #: renders `requirement: {value}` — so each one carries prose before the
+    #: marker INCIDENTALLY, as a side effect of the slot rendering, and would
+    #: go on carrying it only for as long as that rendering happens to look
+    #: that way. A property no test names is a property the next refactor is
+    #: free to drop, and its loss would be silent: the fixtures would still
+    #: pass, against a predicate that had stopped matching the real thing.
+    SOURCE_LINE = ("  commit. CARRIED POINTER (module 1 residue, 2026-08-26): "
+                   "accretion.md's")
+
     def _repo(self, **kw):
         r = refusals._Repo(**kw)
         self.addCleanup(r.close)
@@ -1084,8 +1101,21 @@ class CloseRefusesADeclaredCarriedPointer(unittest.TestCase):
         returns.
         """
         from lifecycle_core import verbs
+        # THE CONTROL IS PREFIXED AT THE CALL SITE, and the prefix is the
+        # whole point of it. `CARRIED_POINTER_CLAUSE` begins AT the marker, so
+        # as a bare string its line 1 puts the declaration at column 0 — the
+        # one shape the real source line never has. A control in that shape
+        # certifies the arm against a predicate anchored to the start of a
+        # line, which is a predicate that would MISS every clause in the wild:
+        # measured, a `^`-anchored twin leaves this arm green while reding
+        # four arms at the verb altitude. An arm whose control cannot see the
+        # property it certifies is a weaker instrument than it reads as. The
+        # constant itself stays untouched — it is the plant's subject and the
+        # quoted-clause arm's expectation, and prefixing it there would move
+        # two other arms' subjects to fix this one's control.
         self.assertTrue(
-            verbs._carried_pointer_lines(refusals.CARRIED_POINTER_CLAUSE),
+            verbs._carried_pointer_lines(
+                "commit. " + refusals.CARRIED_POINTER_CLAUSE),
             "positive control silent — the instrument is dead, and every zero "
             "below means nothing")
 
@@ -1101,3 +1131,57 @@ class CloseRefusesADeclaredCarriedPointer(unittest.TestCase):
         self.assertEqual(hits, [], "the predicate fires on prose nobody wrote "
                                    "as a fixture — over-firing on legitimate "
                                    "work stops the lane (R11)")
+
+    # --- the mid-line property, pinned by name ----------------------------
+
+    def test_the_marker_is_found_MID_LINE_not_only_at_column_zero(self):
+        """The declaration is anchored to ITSELF, never to the line's start.
+
+        THE INPUT IS THE REAL SOURCE LINE, byte-for-byte (`SOURCE_LINE`
+        above): two leading spaces and `commit. ` before the marker. That is
+        how the clause actually occurs, and no other arm in this class states
+        it — the rest reach the predicate through `_clause_block`, which puts
+        `requirement: ` in front of the marker as a side effect of rendering a
+        slot. They therefore exercise the property by accident, and a rename
+        or a re-rendering of that helper would drop it with every one of them
+        still green.
+
+        THE PAIR IS OVER ONE PROPERTY, THE MARKER'S SPELLING. The positive is
+        the source line; the negative is the SAME line with `CARRIED POINTER`
+        respelled as prose, so it keeps the leading whitespace, the `commit. `
+        prefix and the subject, and differs in the declaration alone. Without
+        the negative the positive would pass against a predicate that matched
+        any line whatsoever.
+
+        WHAT PROVES THIS ARM, since it pins a property the shipped build
+        already has and so has no red of its own (class devbook: such a check
+        earns its place by TWO mutations, both assertion FAILURES):
+          * of the BUILD it grades — anchor the predicate with `^` and the
+            positive half fails, because the marker is not at column 0 here.
+            That is the defect this property excludes;
+          * of its own ARRANGEMENT — respell the marker inside SOURCE_LINE
+            and the positive half fails against the SHIPPED build, which is
+            what shows the arm reads the declaration in this fixture rather
+            than passing on the fixture merely existing.
+        A THIRD OBSERVATION, not one of the two reds because it produces a
+        GREEN: under the `^`-anchored build a SOURCE_LINE with its `commit. `
+        prefix removed matches again. That is what identifies the prefix,
+        rather than anything else on the line, as the load-bearing part.
+        """
+        from lifecycle_core import verbs
+
+        found = verbs._carried_pointer_lines(self.SOURCE_LINE)
+        self.assertEqual(
+            [line for _n, line in found], [self.SOURCE_LINE.strip()],
+            "the declaration was not found mid-line. A predicate that only "
+            "matches at column 0 misses every clause as it actually occurs: "
+            "the source line carries `commit. ` before the marker, and a "
+            "carrier's own slot rendering puts `requirement: ` there")
+
+        respelled = self.SOURCE_LINE.replace(
+            "CARRIED POINTER", "a carried pointer", 1)
+        self.assertEqual(
+            verbs._carried_pointer_lines(respelled), [],
+            "the same line without the DECLARATION still matched, so what "
+            "the positive half found was not the marker — the pair differs "
+            "in the marker's spelling and in nothing else")
