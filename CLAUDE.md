@@ -145,19 +145,41 @@ journal pointer is where the incident lives.
     reader**; a home is always explicit, never a default the tool assumes.
     (J20)
 24. **A verb named is a verb placed in a stage**; a refusal named has its
-    firing input; neither exists in prose alone. And an ITEM whose
-    done-criterion will emit a NEW finding carries `refusals.py` in its
-    write set — a refusal's realizing file is always that one, because
-    law 2 puts it there, so a boundary that cannot reach it commissions
-    work that cannot be finished inside it. **AND THAT REASONING IS NOT
-    ABOUT REFUSALS: a NEW VERB has FOUR realizing surfaces by
-    construction** — its BODY (`verbs.py`), its WIRING (`cli.py`: the
-    subparser, the action tuple, the `_carrier_verb` branch), any SLOT
-    VOCABULARY it writes (`items.py`, where acceptance is decided), and
-    its REFUSAL. An item proposing a verb carries every surface its own
-    criterion reaches, or it commissions a halt. Prose, not a predicate:
-    "does this criterion propose a verb" is not computable and a guard
-    over item prose fires on legitimate work (law 11). (J20, J22, J25)
+    firing input; neither exists in prose alone. **AND A WRITE BOUNDARY
+    IS COMPLETE ONLY WHEN EVERY COMMISSIONED CHANGE RESOLVES TO THE FILE
+    THAT REALIZES IT *AND* TO EVERY FILE THAT MUST MOVE WITH IT.**
+    Neither half is minted here: REALIZES is the dispatch skill's
+    realization-surfaces rule, MUST-MOVE-WITH is the global corpus's
+    dependents rule, whose own convention already says the dependents
+    search rides the change — and a `write-set:` slot is what mechanizes
+    that at booking time. Realizes is the SUBSET. Every boundary halt
+    this repo has measured sat in the difference between the two.
+    WORKED EXAMPLES, which are not the rule and never bound it. An item
+    whose done-criterion emits a NEW finding carries `refusals.py`,
+    because law 2 puts a refusal's realizing file there. A NEW VERB
+    realizes in four places: its BODY (`verbs.py`), its WIRING
+    (`cli.py`: the subparser, the action tuple, the `_carrier_verb`
+    branch), any SLOT VOCABULARY it writes (`items.py`, where
+    acceptance is decided), and its REFUSAL. lc-120 carried all four,
+    ran green end to end, and still could not land: `test_verbs.py`
+    holds a hand-written dispatch table that DERIVES the action tuple
+    from source and grades itself against it. That file realizes
+    nothing — the verb works without it — and depends loudly, so it
+    reddened the moment the tuple grew.
+    READ THAT INCIDENT THE RIGHT WAY ROUND: the table is the anchor
+    rule's GOOD form, and its red is the dependents rule WORKING. The
+    defect was never the table; it was a write set that did not carry
+    it. A law that made anyone derive that table to keep a boundary
+    quiet would trade one loud red for permanent silent drift.
+    NOT THIS LAW: "which ARRANGEMENT grades this predicate" is
+    instrument coupling — read-or-execute overlap between agents — and
+    belongs to lc-139, not here. One sentence answering both questions
+    would answer neither.
+    Prose, not a predicate: "does this criterion propose a verb" is not
+    computable and a guard over item prose fires on legitimate work
+    (law 11). The computable slice is per-SHAPE and lives at booking:
+    lc-154 for a source-derivable enumeration, the one shape measured.
+    (J20, J22, J25, J26)
 25. **Every schema change ships its migration, dry-run first, over every
     declared repo, before it is applied anywhere.** (J21)
 

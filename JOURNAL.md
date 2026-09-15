@@ -481,3 +481,51 @@ guard over item prose would fire on legitimate work — law 11. The
 computable slice already exists downstream (the emit-site coverage check
 fails `--test` for an unregistered refusal); everything upstream of the
 commit is booking discipline.
+
+### J26 — cited by law 24 (a change resolves to what realizes it AND what must move with it)
+
+LAW 24 HAD BEEN WIDENED TWICE BY ENUMERATION — first "a refusal realizes in
+`refusals.py`", then "a new verb has FOUR realizing surfaces" — and each
+widening was driven by counting cases the previous wording missed. A rule that
+needs another round every time a lane finds a surface nobody enumerated is
+stated at the wrong altitude. This is the round that stopped counting.
+
+THE MEASUREMENT THAT FORCED IT, from lc-120. Its grant covered all four
+realizing surfaces. `lifecycle --test` was CLEAN at 89 rows, the verb worked
+end to end in a scratch repo, every surface satisfied — and the whole battery
+still went red on a seventh file: `test/test_verbs.py`, whose DESTINATIONS
+table derives `cli.py`'s action tuple from source and grades a hand-written
+expectation against it. That file REALIZES nothing; the verb runs correctly
+without it. It DEPENDS, and it says so loudly the moment the tuple grows.
+Cost: one halt, one round trip, one grant, with the work already built and
+green.
+
+SO THE PREDICATE TAKES BOTH HALVES, and neither is new. REALIZES is the
+dispatch skill's realization-surfaces rule; MUST-MOVE-WITH is the global
+corpus's dependents rule, which already demands the dependents search ride the
+change. The law's job here is to say that a `write-set:` slot IS that search,
+performed at booking time. Realizes is the subset; the difference between the
+two is where every measured halt has sat.
+
+THE INCIDENT IS NOT AN ARGUMENT AGAINST THE TABLE, and the framing matters
+enough to record. A hand expectation graded against a derived source is the
+anchor rule's good form: it fails LOUDLY on growth, which is why this gap
+surfaced as one red rather than as silent drift. Deriving that table to keep
+boundaries quiet would trade a loud red for permanent blindness — the
+restated-enumeration defect the same lane repaired one file over, where a
+hardcoded `["closed-reason", "closed-ref"]` had been asserted against the very
+vocabulary it graded.
+
+WHAT IS DELIBERATELY NOT FOLDED IN. Lane 1 reported a different fifth
+surface — "which ARRANGEMENT grades this predicate", where widening a gate
+invalidates another row's control. That is read-or-execute overlap between
+agents, booked as lc-139's instrument-coupling class. Two questions, two rules;
+one sentence covering both would cover neither.
+
+THE GRADE ON THE NEW HALF, carried from the lane that measured it: ONE
+instance, ONE measurement. The lane declined to call it a class and that grade
+travels with the law. The computable slice is per-shape and booked as lc-154 —
+for a source-derivable enumeration, the files that derive and grade it are
+greppable before a lane is briefed. Nothing wider is claimed: a general
+dependents checker over item prose is judgment-shaped and would fire on
+legitimate work (law 11).
