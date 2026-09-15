@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 145
+added: 146
 compacted: 0
 
 ## lc-3
@@ -719,4 +719,13 @@ goal: enforce-the-invariants
 write-set: CLAUDE.md,tools/git-hooks/pre-push
 done-criterion: The repo's own statement about its arming is TRUE of the machine it runs on, and the guarantee does not rest on an unstated dependency. Either (a) the repo states that core.hooksPath, when set, is what executes, names the foreign hook as the actual runner, and says what happens if that config is unset or repointed; or (b) the repo makes its own hook reachable regardless. EITHER WAY the claim `no template is extracted until that hook exists` is replaced by one about the hook that EXECUTES, since existence was never the property that mattered. PROVEN BY A PAIR, not by reading: an arm shows the scan running when the documented condition holds, and a second shows what happens with core.hooksPath unset — the second is the one that reveals whether the protection survives at all. A check asserting only that the symlink exists is the exact defect being repaired and may not be the verifier.
 evidence: Found by opus-lc120 while measuring whether committing part of its work would leave main red. It read tools/git-hooks/pre-push and correctly concluded no battery runs at pre-push, but attributed that to an unexpanded tilde making hooks not run at all. The desk re-measured: git expands the tilde itself, the hooks DO run, and the file the lane read is the one git BYPASSES. Right conclusion, wrong mechanism — and the wrong mechanism was the dangerous half, since `no pre-push runs here` would license assuming there is no leak gate, when the leak gate is precisely what does run and blocked this desk's own push twice today, the second time over this very item's first draft.
+blocked-by: NONE
+
+## lc-154
+grade: READY
+requirement: LAW 24's `must move with` HALF HAS NO OBSERVER AT THE MOMENT IT FIRES. The law says a write boundary is complete only once every change resolves to what REALIZES it and to every file that must MOVE WITH it, and the second half is checked today by a human noticing. For ONE measurable shape it is computable: where the change edits a SOURCE-DERIVABLE ENUMERATION, the files that derive that enumeration and grade themselves against it are greppable BEFORE a lane is briefed. Measured instance: lc-120 added a member to cli.py's `item_action` tuple; test/test_verbs.py derives that tuple from source and compares it to a hand-written DESTINATIONS table, so it went red although it realizes nothing. The cost of having no observer was one lane halt, one round trip to the desk, and one grant — with the work already built and green.
+goal: lean-machinery-strict-checks
+write-set: tools/write-set-dependents.py,test/test_tools.py
+done-criterion: Given the location of a source-derivable enumeration, a tool lists the tracked files that DERIVE it and assert against it, for inclusion in a write set at booking time. PROVEN ON A PAIR drawn from the repo, never on a planted row: the KNOWN POSITIVE is cli.py's `item_action` tuple, whose answer MUST contain test/test_verbs.py — the file whose absence cost lc-120 its halt; the KNOWN NEGATIVE is an enumeration no file grades, whose answer must be empty. A tool that returns test_verbs.py for every input has not discriminated. ITS OUTPUT SET HAS THREE ANSWERS, not two: an enumeration it cannot resolve answers COULD NOT VERIFY and names what it could not read, never an empty list, because an empty list here reads as `nothing depends on this` and is the exact false clean the item exists to prevent.
+evidence: Ruled a repo booking by the judgment desk on the wave-3 law-24 round, after lc-120's lane surfaced the shape and explicitly declined to generalise it: one instance, one measurement, a hypothesis rather than a class. That grade is carried here deliberately — the tool is scoped to the source-derivable-enumeration shape and claims nothing beyond it.
 blocked-by: NONE
