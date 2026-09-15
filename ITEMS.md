@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 122
+added: 123
 compacted: 0
 
 ## lc-3
@@ -767,3 +767,12 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,t
 done-criterion: red-first per directive D3 table: df-237's literal prose predicate as fixture is refused with the predicate quoted; test -f /etc/hostname mints; refusal is an assertion failure at the defect, not an error
 evidence: dotfiles item ready 2026-09-15: df-237 FINDING trigger_broken, sh -c syntax error, exit 2 reserved-for-broken
 blocked-by: NONE
+
+## lc-131
+grade: READY
+requirement: The close_carries_pointer refusal names a clearance route that NO VERB performs: its message says remove the clause from the body, or split the residue into its own item. item amend only APPENDS and deliberately RETAINS the earlier line (test_the_earlier_line_is_RETAINED_not_rewritten), and law 8 makes the tool the only writer of its carriers. The only route today is a shape-preserving HAND EDIT, which the repo-local pre-commit permits but law 8 forbids in principle — a guard whose sanctioned clearance requires violating a law is the fires-on-legitimate-work class (law 11) with no declared exemption — record: lc-22 closing report gap 2, 2026-09-15
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: a desk holding an item whose body carries a declared CARRIED POINTER clause can clear it WITHOUT a hand edit, by a verb the tool owns; red-first on the lc-22 fixture body — today every route is a hand edit or a law-8 violation
+evidence: THREE READINGS for the blocked decision: (1) a dedicated clearance verb requiring the residue to be booked as its own item first, then striking the clause — honours the refusal's own wording, desk's current preference; (2) a general body-line removal verb — contradicts amend's deliberate supersede-by-append design; (3) declare the hand edit a sanctioned exemption the guard itself verifies, per law 11's repair shape. Evidence read by the lane: items.py _append_to_block, verbs.py _set_slots, the amendment arms in test_items.py. Guard is INERT today: 0 bodies in either home carry the marker, measured with two independent instruments (line-based, and whitespace-normalised across wraps), positive control firing in both — so this blocks nobody now and becomes load-bearing the first time a desk writes a clause
+blocked-by: decision which clearance route for a declared CARRIED POINTER clause: a dedicated clearance verb, a body-line removal verb, or a declared hand-edit exemption
