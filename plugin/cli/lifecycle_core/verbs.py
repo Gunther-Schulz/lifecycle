@@ -667,6 +667,84 @@ def _collect_slots(args, ctx: Ctx, out):
     return slots, exits.CLEAN
 
 
+#: How long the mint's PARSE check may take. `sh -n` reads a program and
+#: executes nothing, so it answers in milliseconds; the bound is here because
+#: an unbounded child on a write path turns a refusal into a hang. The RUN's
+#: own bound is the trigger evaluator's (`lanes.TRIGGER_TIMEOUT_S`), which is
+#: the one every later `item ready` pass will spend.
+_PARSE_TIMEOUT_S = 10
+
+
+def _predicate_lint(detail: str, ctx: Ctx, out) -> int:
+    """Refuse an `evidence` blocker whose predicate cannot work (lc-130).
+
+    THE DEFECT: prose booked into a shell slot. `item ready` reads it, the
+    evaluator reports BROKEN, and until somebody reads that board the item
+    waits in nobody's court — measured in a live carrier, where the repair
+    came weeks later and by hand. The check belongs at the MINT because that
+    is where the author is still holding the text.
+
+    `sh -n` FIRST, AND THAT ORDER IS MEASURED RATHER THAN STYLISTIC. The real
+    incident's predicate fails the PARSE (`sh -n` exit 2), so the case this
+    verb exists for is caught without executing anything at all. Only a
+    predicate that parses earns the one probe run — and a mint that ran an
+    unparseable program to find out it was unparseable would be executing
+    prose somebody typed into a slot.
+
+    THE PROBE IS THE ONE TRIGGER EVALUATOR, never a second `subprocess.run`
+    here. §3.1 says an evidence blocker is "evaluated like a trigger" and
+    `item ready` calls that function; a second body behind the contract would
+    disagree about the `>=2` BROKEN case first, which is exactly the case this
+    lint turns on — a mint that admitted what the reader calls broken would
+    have moved the defect rather than closed it.
+
+    NO NEW EXECUTION RISK, and the reason is not that the risk is small: the
+    same predicate is already run by `lanes.evaluate_trigger` on every `item
+    ready` pass over this item. This adds the FIRST of those runs, not a
+    kind of run the item did not already carry.
+    """
+    try:
+        # `/bin/sh` RATHER THAN A PATH LOOKUP, and it is the invocation-mode
+        # half of law 5: `lanes.evaluate_trigger` runs the predicate through
+        # `subprocess`'s `shell=True`, which is `/bin/sh -c` by construction.
+        # A parse check resolving `sh` off PATH could grade the predicate
+        # under a different grammar than the one that will run it, and would
+        # then pass exactly the program the evaluator cannot read. Not a
+        # machine path (R6): this is the interpreter the stdlib itself names.
+        p = subprocess.run(["/bin/sh", "-n", "-c", detail],
+                           capture_output=True, text=True,
+                           timeout=_PARSE_TIMEOUT_S)
+    except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
+        out(f"COULD NOT VERIFY: the evidence predicate ({detail!r}) could not "
+            f"be parse-checked ({exc!r}). An unchecked predicate and a good "
+            "one are not the same answer, and neither is a refusal.")
+        return exits.COULD_NOT_VERIFY
+    if p.returncode != 0:
+        tail = (p.stderr or p.stdout or "").strip().replace("\n", " ")[:200]
+        out(f"FINDING [blocker_predicate_broken] the evidence predicate "
+            f"({detail!r}) is not a shell program: `sh -n` exited "
+            f"{p.returncode}. {tail} An `evidence` blocker is EXECUTED — "
+            "§3.1 has it evaluated like a trigger — so prose booked into "
+            "this slot never parses, reports BROKEN on every `item ready` "
+            "pass, and leaves the item waiting in nobody's court until a "
+            "reader happens to open the board. If what the item waits for is "
+            "a judgment rather than a fact a command can settle, it is a "
+            "`decision <question>` blocker and belongs in the operator's "
+            "court; if it is a fact, write the command that decides it.")
+        return exits.FINDING
+    t = lanes.evaluate_trigger(detail, cwd=ctx.repo)
+    if t.state == lanes.BROKEN:
+        exited = (f"exited {t.code}, which §3.3 RESERVES for broken"
+                  if t.code is not None else "did not answer at all")
+        out(f"FINDING [blocker_predicate_broken] the evidence predicate "
+            f"({detail!r}) PARSES but is BROKEN on one probe run: it "
+            f"{exited}. {t.detail} `item ready` reads that same code through "
+            "the same evaluator, so this blocker would report BROKEN on "
+            "every pass — a wait that can only expire, never clear.")
+        return exits.FINDING
+    return exits.CLEAN
+
+
 def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out) -> int:
     """Typed, LEDGER-STORABLE if it is a decision, and — for an item-id
     blocker — pointing at an item that IS.
@@ -710,6 +788,14 @@ def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out) -> 
                 "normalised on your behalf, because an escaped spelling puts "
                 "two forms of every value in the file.")
             return exits.FINDING
+    if kind == "evidence":
+        # THE THIRD DOOR IS WHY IT IS HERE. `item amend --blocked-by` reaches
+        # this function too, and it is the door the design's own table does
+        # not name — the same reason the storability half above sits here
+        # rather than in the verbs somebody remembered.
+        code = _predicate_lint(detail, ctx, out)
+        if code != exits.CLEAN:
+            return code
     if kind != "item":
         return exits.CLEAN
     if done_parsed is None:

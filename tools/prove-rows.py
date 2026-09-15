@@ -114,6 +114,20 @@ MUTATIONS = [
      "    if False:",
      "the typed-blocker test in `_check_blocker`"),
 
+    # THE ANCHOR IS THE GATE, NOT THE PARSE BRANCH INSIDE IT, and the reason
+    # is that the narrower mutation darkens NOTHING: the plant's predicate is
+    # prose, so neutralising the `sh -n` test only lets it fall through to the
+    # probe, which exits 2 on the same syntax error and emits the same row.
+    # A mutation whose row keeps firing proves the row, not the mutation.
+    ("blocker_predicate_broken", "verbs.py",
+     "    if kind == \"evidence\":\n"
+     "        # THE THIRD DOOR IS WHY IT IS HERE.",
+     "    if False:\n"
+     "        # THE THIRD DOOR IS WHY IT IS HERE.",
+     "the mint-time lint's gate on an `evidence` blocker — removed, prose "
+     "booked into a shell slot is admitted and the item waits in nobody's "
+     "court"),
+
     ("dangling_reference_item", "verbs.py",
      "    if detail not in known:",
      "    if False:",

@@ -627,9 +627,24 @@ class LedgerStorableBlocker(unittest.TestCase):
         """MUST-NOT-MOVE, and the sharpest arm: df-135's blocker was an
         EVIDENCE one before the amend retyped it. Only the ledger stores a
         decision question, so only that type is gated — a check keyed on the
-        separator rather than on the TYPE would fire here."""
-        self._accepted(self._add("evidence " + self.DF_135[len("decision "):]),
-                       "item add (evidence)")
+        separator rather than on the TYPE would fire here.
+
+        THE PREDICATE IS SPELLED `false  # <prose>` SINCE lc-130, and the
+        reason is a finding rather than a convenience: df-135's question
+        retyped as an evidence blocker is PROSE IN A SHELL SLOT — it parses,
+        and it exits 127 — which is the exact class the mint-time predicate
+        lint exists to refuse. This fixture was one instance of it. The
+        spelling is the LIVE CARRIER's own idiom for a wait that has not
+        arrived (ITEMS.md:13, :24), the same one `test_items.py`'s
+        third-conjunct arm took: exit 1, still waiting. It leaves the property
+        under test untouched — the value is still an `evidence` blocker and
+        still carries the ledger's own ` — ` separator, so a storability check
+        keyed on the separator rather than on the TYPE still fires here.
+        Swapping this for a separator-free predicate would have removed the
+        discrimination, which is why it was not done."""
+        self._accepted(
+            self._add("evidence false  # " + self.DF_135[len("decision "):]),
+            "item add (evidence)")
 
     def test_an_ITEM_ID_blocker_is_UNAFFECTED(self):
         fired = refusals._cli(refusals.GOOD_ADD + ["--blocked-by", "xx-1"],
@@ -1197,6 +1212,199 @@ class DecisionBlockerAtClose(unittest.TestCase):
         self.assertFalse((r.dir / "LEDGER.md").exists(),
                          "the close minted a ledger to hold a moot line it "
                          "could not have checked")
+
+
+class TheMintTimePredicateLint(unittest.TestCase):
+    """`evidence <predicate>` is LINTED at the mint (lc-130).
+
+    THE DEFECT IT KILLS: prose booked into a shell slot. The predicate never
+    parses, every `item ready` pass reports it BROKEN, and until someone reads
+    that board the item waits in nobody's court — caught by hand, late, in a
+    live carrier.
+
+    WHY IT SITS IN `_check_blocker` AND NOT IN THE TWO VERBS THE DESIGN NAMES.
+    That function already serves THREE doors — `item add`, `item park` and
+    `item amend --blocked-by` — and its own docstring records why: a per-verb
+    check covers exactly the verbs somebody remembered. The third door is the
+    one a per-verb reading misses, so it has its own arm below.
+
+    WHAT THE FIXTURE PREDICATES CAN DO: nothing. Each one is inert by
+    construction — a read of a file every Linux carries, a bare `exit`, or a
+    `touch` INSIDE the test's own temp directory. `TheProbeOrdering` below
+    proves that claim rather than asserting it: a marker the probe would write
+    is present after a predicate that PARSES, and absent after one that does
+    not — the pair, not the zero alone.
+    """
+
+    #: Prose in a shell slot. The real incident's predicate is a private
+    #: carrier's text and does not travel into this public repo; what makes
+    #: the case is the FAILURE MODE, and this reproduces it exactly — `sh -n`
+    #: exits 2 on the unbalanced parenthesis, before anything is executed.
+    PROSE = ("an operating interval has passed since the burst (measure then "
+             "cut: the timing rule; the next review is the consumer")
+    #: Parses, and exits 0 — the design's own must-not-move control.
+    MINTS = "test -f /etc/hostname"
+
+    def _run(self, repo, *argv):
+        import io, os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _add(self, repo, predicate):
+        return self._run(repo, *(refusals.GOOD_ADD
+                                 + ["--blocked-by", f"evidence {predicate}"]))
+
+    def test_a_predicate_that_does_not_PARSE_is_refused_at_item_add(self):
+        with refusals._Repo() as r:
+            before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+            code, out = self._add(r, self.PROSE)
+            self.assertEqual(
+                code, exits.FINDING,
+                f"prose in a shell slot was admitted.\n{out}")
+            self.assertIn("blocker_predicate_broken", out,
+                          f"the refusal names no registry row.\n{out}")
+            self.assertIn(
+                self.PROSE, out,
+                "the refusal does not QUOTE the predicate — the author "
+                f"cannot see which text failed.\n{out}")
+            self.assertEqual(
+                (r.dir / "ITEMS.md").read_text(encoding="utf-8"), before,
+                "the carrier was written despite the refusal")
+
+    def test_the_same_predicate_is_refused_at_item_park(self):
+        with refusals._Repo(items=refusals.FOUR_BLOCKER_ITEMS) as r:
+            before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+            code, out = self._run(r, "item", "park", "xx-3",
+                                  "--blocked-by", f"evidence {self.PROSE}")
+            self.assertEqual(code, exits.FINDING, out)
+            self.assertIn("blocker_predicate_broken", out, out)
+            self.assertEqual(
+                (r.dir / "ITEMS.md").read_text(encoding="utf-8"), before,
+                "the park wrote the grade over an unparseable predicate")
+
+    def test_the_THIRD_door_amend_is_covered_too(self):
+        """The door the design's own table does not name. It is free here
+        only because the check sits at the shared function — a per-verb
+        repair would have covered the two that were remembered."""
+        with refusals._Repo(items=refusals.FOUR_BLOCKER_ITEMS) as r:
+            before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+            code, out = self._run(r, "item", "amend", "xx-3",
+                                  "--reason", "the blocker was retyped",
+                                  "--blocked-by", f"evidence {self.PROSE}")
+            self.assertEqual(code, exits.FINDING, out)
+            self.assertIn("blocker_predicate_broken", out, out)
+            self.assertEqual(
+                (r.dir / "ITEMS.md").read_text(encoding="utf-8"), before,
+                "the amendment was appended over an unparseable predicate")
+
+    def test_a_predicate_that_parses_and_exits_2_or_more_is_refused(self):
+        """§3.3 RESERVES `>=2` for BROKEN, and the mint reads that reservation
+        through the ONE trigger evaluator rather than a second body of its
+        own — two readings would disagree about this case first."""
+        with refusals._Repo() as r:
+            code, out = self._add(r, "exit 7")
+            self.assertEqual(code, exits.FINDING,
+                             f"a predicate exiting 7 was admitted.\n{out}")
+            self.assertIn("blocker_predicate_broken", out, out)
+            self.assertIn("exit 7", out,
+                          f"the refusal does not quote the predicate.\n{out}")
+
+    def test_a_predicate_exiting_0_MINTS(self):
+        with refusals._Repo() as r:
+            code, out = self._add(r, self.MINTS)
+            self.assertEqual(
+                code, exits.CLEAN,
+                f"a working predicate was refused — a guard that fires on "
+                f"legitimate work stops the lane (R11).\n{out}")
+            self.assertIn(f"evidence {self.MINTS}",
+                          (r.dir / "ITEMS.md").read_text(encoding="utf-8"),
+                          "the blocker did not reach the carrier")
+
+    def test_a_predicate_exiting_1_MINTS(self):
+        """QUIET is the ordinary state of an evidence blocker — the evidence
+        has not arrived yet. Refusing it would refuse every blocker booked
+        before its evidence exists, which is all of them."""
+        with refusals._Repo() as r:
+            code, out = self._add(r, "test -f /nonexistent-lifecycle-probe")
+            self.assertEqual(code, exits.CLEAN,
+                             f"a waiting predicate was refused.\n{out}")
+
+    def test_the_lint_does_NOT_reach_the_other_blocker_TYPES(self):
+        """The scope arm. A `decision` blocker and an item-id blocker are
+        prose and an id by design; a lint that ran over them would refuse
+        every legitimate one of both kinds."""
+        with refusals._Repo(items=refusals.FOUR_BLOCKER_ITEMS) as r:
+            code, out = self._run(r, *(refusals.GOOD_ADD + [
+                "--blocked-by", f"decision {self.PROSE}"]))
+            self.assertEqual(
+                code, exits.CLEAN,
+                f"the lint reached a `decision` blocker.\n{out}")
+            self.assertNotIn("blocker_predicate_broken", out, out)
+        with refusals._Repo(items=refusals.FOUR_BLOCKER_ITEMS) as r:
+            code, out = self._run(r, *(refusals.GOOD_ADD
+                                       + ["--blocked-by", "xx-1"]))
+            self.assertEqual(code, exits.CLEAN,
+                             f"the lint reached an item-id blocker.\n{out}")
+
+
+class TheProbeOrdering(unittest.TestCase):
+    """`sh -n` FIRST, and the MARKER is what proves it.
+
+    A read of the implementation would say the parse check runs before the
+    probe. That is a NON-EVENT claim about execution — "nothing ran" returns
+    byte-identically whether the ordering holds or the probe is simply
+    broken — so it is answered by an instrument at the effect site: a marker
+    file the predicate would create. The zero counts only as a PAIR, with a
+    known positive beside it.
+    """
+
+    def _add(self, repo, predicate):
+        import io, os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(
+                    ["--repo", str(repo.dir)] + refusals.GOOD_ADD
+                    + ["--blocked-by", f"evidence {predicate}"])
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def test_a_PARSING_predicate_is_probed_and_a_BROKEN_one_never_runs(self):
+        with refusals._Repo() as r:
+            positive = r.dir / "marker-probe-ran"
+            # KNOWN POSITIVE: it parses, it exits 0, and running it leaves the
+            # marker. Without this arm the negative below is equally
+            # consistent with a probe that never runs at all.
+            code, out = self._add(r, f"touch {positive}")
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertTrue(
+                positive.exists(),
+                "the probe did not run — so the negative arm below proves "
+                f"nothing about ordering.\n{out}")
+        with refusals._Repo() as r:
+            negative = r.dir / "marker-must-not-exist"
+            # The SAME touch, followed by text that cannot parse. `sh -n`
+            # rejects the whole program, so nothing in it executes.
+            code, out = self._add(r, f"touch {negative}; if ((( ")
+            self.assertEqual(code, exits.FINDING, out)
+            self.assertFalse(
+                negative.exists(),
+                "an unparseable predicate was EXECUTED — the parse check "
+                f"does not run first.\n{out}")
 
 
 if __name__ == "__main__":

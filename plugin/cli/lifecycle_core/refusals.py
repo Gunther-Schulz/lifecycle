@@ -1016,6 +1016,31 @@ VERB_ROWS = [
         stage="wave 1, stage 4",
     ),
     Row(
+        ident="blocker_predicate_broken",
+        refusal="an `evidence` blocker whose predicate cannot work — prose "
+                "booked into a shell slot, or a command that is BROKEN on "
+                "one probe run. The item then waits in nobody's court: every "
+                "`item ready` pass reports the predicate BROKEN and the board "
+                "shows it only to whoever opens it (lc-130)",
+        firing_input="`item add --blocked-by 'evidence <prose with an "
+                     "unbalanced parenthesis>'` — `sh -n` exits 2 and nothing "
+                     "is executed",
+        expect=exits.FINDING,
+        fire=lambda: _cli(GOOD_ADD + [
+            "--blocked-by",
+            "evidence an operating interval has passed since the burst "
+            "(measure then cut: the timing rule; the next review is the "
+            "consumer"]),
+        # THE SAME VERB, THE SAME BLOCKER TYPE, a predicate that parses and
+        # exits 0: the arms differ in the predicate alone, so neither `item
+        # add` nor the `evidence` type is what separates them. A control
+        # using a `decision` blocker would have scored a lint that refuses
+        # every evidence predicate identically.
+        control=lambda: _cli(GOOD_ADD + ["--blocked-by",
+                                         "evidence test -f /etc/hostname"]),
+        stage="wave 1, stage 4 (lc-130)",
+    ),
+    Row(
         ident="closed_ref_unresolvable",
         refusal="`item close --ref` naming something that is not a commit in "
                 "this repo — a closure record is written once onto a body "
