@@ -133,7 +133,11 @@ journal pointer is where the incident lives.
     reader**; a home is always explicit, never a default the tool assumes.
     (J20)
 24. **A verb named is a verb placed in a stage**; a refusal named has its
-    firing input; neither exists in prose alone. (J20)
+    firing input; neither exists in prose alone. And an ITEM whose
+    done-criterion will emit a NEW finding carries `refusals.py` in its
+    write set — a refusal's realizing file is always that one, because
+    law 2 puts it there, so a boundary that cannot reach it commissions
+    work that cannot be finished inside it. (J20, J22)
 25. **Every schema change ships its migration, dry-run first, over every
     declared repo, before it is applied anywhere.** (J21)
 

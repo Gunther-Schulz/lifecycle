@@ -283,3 +283,64 @@ and would misrepresent this entry's own lesson as that law's basis). Per
 this file's own rule, "a journal entry nothing cites is stale by
 change-coupling": this one is stale until either a new law is earned from
 it or a session finds an existing law it genuinely supports.
+
+### J22 — cited by law 24 (an item that will name a refusal reaches refusals.py)
+
+Drain wave 1, 2026-09-15. THREE firings in ONE wave of a single shape: an
+item whose done-criterion emits a NEW finding, dispatched with a write set
+that cannot reach `plugin/cli/lifecycle_core/refusals.py`, where law 2 says
+every refusal is a registry row with its firing input.
+
+The firings, each measured rather than argued:
+
+- **lc-31 shipped the defect.** Its write set was `cli.py` +
+  `test/test_migrate.py`. The lane built the refusal correctly, emitted
+  `FINDING [migrate_repeated_from]` at `cli.py:838`, had nowhere to declare
+  the row, and reported the gap rather than reaching outside its box or
+  dropping the bracket tag that would have silenced the coverage scanner.
+  The repo went red: `lifecycle --test` 84 of 85, `emit_site_unregistered`.
+  A sibling lane bisected it over ten commits — clean at the parent, red at
+  `c7c6f74` — rather than inferring the boundary. A second dispatch
+  registered the row (`bc35cea`); the item closed at two commits and two
+  lanes for what was one item's work.
+
+- **lc-30 could not be built at all.** Same shape, caught BEFORE shipping:
+  the lane implemented the fix inside the declared boundary in a private
+  clone and `lifecycle --test` answered `FINDING [emit_site_unregistered]
+  ... route_set_unnamed: emitted at roster.py:184`. It halted at the write
+  boundary and returned the decision, having rejected three escapes by name
+  — reusing a row whose text means the OPPOSITE case (which would hand the
+  operator a wrong cause, verbatim the defect lc-30 exists to remove),
+  emitting a finding with no bracketed row name (evading the scanner's
+  regex while violating the law it enforces), and `--no-verify`.
+
+- **The third is older and is recorded in lc-30's own evidence**, in the
+  dispatching desk's own words: "lane A routed two NEW ambiguous-closure
+  shapes through `migration_unclassified` because refusals.py was outside
+  its write set (my brief defect)".
+
+THE CARRIER ALREADY KNEW THE SHAPE. `lc-134` names `refusals.py` in its
+write set for exactly this reason, and `lc-34`'s amend-reason records a
+previous drain desk running the check across a cohort: "lc-33 and lc-68 DID
+need their write-sets widened for a roster row and this one does NOT". So
+the question is standard at this repo's dispatch join, and three briefs in
+one wave still failed to ask it. That is what makes this a law rather than
+an incident: the knowledge existed and did not reach the composing moment.
+
+MECHANISM, stated so the rule is checkable where it is reused: this is the
+dispatch discipline's realization-surfaces rule — a write boundary is
+complete only once each commissioned change is resolved to the file that
+REALIZES it — instantiated for one repo. A refusal's realizing file is
+`refusals.py`, always, because law 2 puts it there.
+
+PROSE, NOT A PREDICATE, deliberately. "The criterion emits a NEW finding"
+is judgment-shaped: a lint keyed on the criterion's text would fire on
+entries that merely DISCUSS findings and stay silent on one that emits
+without saying so, which is the over- and under-firing the mechanism bar
+forbids. The computable slice already exists and is downstream — the
+emit-site coverage check fails `--test` — and this law's whole purpose is
+to move the catch UPSTREAM of the commit, where a human is composing.
+
+Judgment-desk GO 2026-09-15 (dotfiles-89), home ruled to this repo's own
+project file rather than the global corpus or the dispatch skill: the
+general rule lives there already; this is its one-repo instantiation.
