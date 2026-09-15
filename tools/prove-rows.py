@@ -648,9 +648,11 @@ MUTATIONS = [
     ("kind_grew_without_exit", "retire.py",
      "    if count and not events:",
      "    if False:",
-     "R22's replacement for the cap — a bounded-by-exit kind whose exit has "
+     "R22's replacement for the cap — an EXIT-CONTROLLED kind whose exit has "
      "recorded nothing then reports clean, and growth is watched by nothing "
-     "at all"),
+     "at all. Since lc-145 that is every mode the declaration does not opt "
+     "out of, `compacted` among them — not `bounded-by-exit` alone, which is "
+     "what this line said while the predicate had already widened under it"),
 
     ("unregistered_persisted_thing", "retire.py",
      "    if not unregistered:",
