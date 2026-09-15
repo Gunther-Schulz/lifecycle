@@ -100,11 +100,15 @@ CLEAN, FINDING, COULD_NOT_VERIFY = 0, 2, 3
 #: what makes "exactly one row changes" a meaningful assertion rather than a
 #: coincidence.
 MUTATIONS = [
+    # SPELLED FROM LINE START TO LINE END, like every other anchor here. It
+    # used to begin mid-line, at the `[` of the argument list; `anchor_hits`
+    # accepts whole-line runs ONLY, so the mid-line spelling would have gone
+    # to COULD NOT VERIFY. Same site, same effect — only the spelling moved.
     ("declaration_ignored_tracked", "declaration.py",
-     '["git", "-C", str(repo), "check-ignore",\n                            '
-     '"--no-index", str(rel)]',
-     '["git", "-C", str(repo), "check-ignore",\n                            '
-     'str(rel)]',
+     '        p = subprocess.run(["git", "-C", str(repo), "check-ignore",\n'
+     '                            "--no-index", str(rel)],',
+     '        p = subprocess.run(["git", "-C", str(repo), "check-ignore",\n'
+     '                            str(rel)],',
      "the `--no-index` flag that lets check-ignore see a TRACKED path"),
 
     ("unknown_grade_write", "verbs.py",
@@ -149,11 +153,18 @@ MUTATIONS = [
     # prose, so neutralising the `sh -n` test only lets it fall through to the
     # probe, which exits 2 on the same syntax error and emits the same row.
     # A mutation whose row keeps firing proves the row, not the mutation.
+    # THE SECOND LINE RUNS TO ITS OWN END, not to a convenient stop inside
+    # it. `    if kind == "evidence":` occurs twice in this file, so the
+    # comment line is what disambiguates — but cut mid-line it was a PREFIX
+    # match, satisfied by any longer line starting the same way, which is the
+    # failure `anchor_hits` rejects at the far end.
     ("blocker_predicate_broken", "verbs.py",
      "    if kind == \"evidence\":\n"
-     "        # THE THIRD DOOR IS WHY IT IS HERE.",
+     "        # THE THIRD DOOR IS WHY IT IS HERE. `item amend --blocked-by` "
+     "reaches",
      "    if False:\n"
-     "        # THE THIRD DOOR IS WHY IT IS HERE.",
+     "        # THE THIRD DOOR IS WHY IT IS HERE. `item amend --blocked-by` "
+     "reaches",
      "the mint-time lint's gate on an `evidence` blocker — removed, prose "
      "booked into a shell slot is admitted and the item waits in nobody's "
      "court"),
@@ -703,6 +714,37 @@ MUTATIONS = [
      "finding is still PRINTED and the run exits CLEAN, which is the shape a "
      "caller reading only the code cannot see"),
 
+    # THE STORABILITY TEST ITSELF, not the `classify_blocker` call above it.
+    # Removing the classification would make EVERY blocker untyped and darken
+    # `blocker_untyped` too — the wrong defect, proving the branch is reached
+    # rather than that this row discriminates. Folding the `if why:` leaves
+    # the question classified, the ledger's own predicate still consulted,
+    # and the unstorable answer simply ignored: the item is admitted with a
+    # `blocked-by:` line nothing can ever answer, which is the row's defect.
+    ("blocker_unstorable", "verbs.py",
+     '        why = ledger.check_prose(detail, "the decision question")\n'
+     "        if why:",
+     '        why = ledger.check_prose(detail, "the decision question")\n'
+     "        if False:",
+     "the mint-time storability test on a `decision` blocker — removed, a "
+     "question the ledger refuses is written into the carrier anyway and "
+     "`item ready` can never match it back"),
+
+    # THE PROBE'S VERDICT, not the probe. Removing the `rev-parse` call would
+    # raise rather than answer, and an arm that RAISES proves the code is new,
+    # never that the row discriminates. Inverting the verdict to `if True`
+    # makes every ref resolve, so the loop falls through and the close writes
+    # the unresolvable ref into a body that then stops being edited — the
+    # permanent label this row exists to refuse.
+    ("closed_ref_unresolvable", "verbs.py",
+     "        if probe.returncode == 0:\n"
+     "            continue",
+     "        if True:\n"
+     "            continue",
+     "the resolution test behind `item close --ref` — removed, a ref naming "
+     "no commit is written into the closure record and reads exactly like a "
+     "good one"),
+
     ("lane_undeclared", "declaration.py",
      '        res.add("lane_undeclared",\n'
      '                f"{lanes_mod.LANES_DIR}/{name}.md is a lane body and '
@@ -714,6 +756,41 @@ MUTATIONS = [
      "folded into could-not-verify, so the direction of the registration "
      "invariant that nothing watched reads as a shrug instead of a state"),
 ]
+
+
+def anchor_hits(text: str, anchor: str) -> list:
+    """Offsets where `anchor` occurs as a run of COMPLETE LINES.
+
+    LINE-EXACT, NEVER SUBSTRING, and the difference is a row's proof. An
+    anchor is an indented source line, so a plain substring search finds it
+    inside the SAME line at any DEEPER indent — `    if r.returncode != 0:`
+    is a substring of `        if r.returncode != 0:`. An unrelated verb
+    spelling a git check the ordinary way then makes the anchor match twice,
+    `move_uncommitted`'s arrangement goes to COULD NOT VERIFY, and that row's
+    proof is retired by a change that has nothing to do with it. It happened:
+    `_resolve_refs` spells its probe `if probe.returncode == 0: continue`
+    with a comment saying it had to, because the natural spelling would have
+    darkened another row's arrangement.
+
+    The mirror hazard is the other end: an anchor ending mid-line is a PREFIX
+    match wearing an equality's costume, satisfied by any longer line that
+    begins the same way. So BOTH ends are anchored to a line boundary, and
+    every recorded anchor is a whole-line run — there is no mid-line form and
+    no fallback to one, because a fallback would reinstate exactly the hole.
+
+    Returned as OFFSETS rather than a count, because the caller must write at
+    the offset this function accepted: `str.replace` would substitute the
+    first SUBSTRING occurrence, which may be one of the mid-line matches this
+    function exists to reject.
+    """
+    out, i = [], text.find(anchor)
+    while i != -1:
+        end = i + len(anchor)
+        if (i == 0 or text[i - 1] == "\n") and \
+                (end == len(text) or text[end] == "\n"):
+            out.append(i)
+        i = text.find(anchor, i + 1)
+    return out
 
 
 def head_blob(rel: str):
@@ -868,15 +945,17 @@ def main(argv) -> int:
     for ident, fname, anchor, replacement, what in rows:
         path = CORE / fname
         text = path.read_text(encoding="utf-8")
-        if text.count(anchor) != 1:
-            stale.append((ident, fname, text.count(anchor)))
-            print(f"\n[{ident}] COULD NOT VERIFY — the anchor appears "
-                  f"{text.count(anchor)} times in {fname}, not once. The "
+        hits = anchor_hits(text, anchor)
+        if len(hits) != 1:
+            stale.append((ident, fname, len(hits)))
+            print(f"\n[{ident}] COULD NOT VERIFY — the anchor matches "
+                  f"{len(hits)} complete-line run(s) in {fname}, not one. The "
                   "source moved under this arrangement.")
             continue
+        at = hits[0]
         try:
             clear_pycache()
-            path.write_text(text.replace(anchor, replacement, 1),
+            path.write_text(text[:at] + replacement + text[at + len(anchor):],
                             encoding="utf-8")
             clear_pycache()
             after = verdicts()
