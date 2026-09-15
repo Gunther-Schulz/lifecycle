@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 123
+added: 124
 compacted: 0
 
 ## lc-3
@@ -776,3 +776,12 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals
 done-criterion: a desk holding an item whose body carries a declared CARRIED POINTER clause can clear it WITHOUT a hand edit, by a verb the tool owns; red-first on the lc-22 fixture body — today every route is a hand edit or a law-8 violation
 evidence: THREE READINGS for the blocked decision: (1) a dedicated clearance verb requiring the residue to be booked as its own item first, then striking the clause — honours the refusal's own wording, desk's current preference; (2) a general body-line removal verb — contradicts amend's deliberate supersede-by-append design; (3) declare the hand edit a sanctioned exemption the guard itself verifies, per law 11's repair shape. Evidence read by the lane: items.py _append_to_block, verbs.py _set_slots, the amendment arms in test_items.py. Guard is INERT today: 0 bodies in either home carry the marker, measured with two independent instruments (line-based, and whitespace-normalised across wraps), positive control firing in both — so this blocks nobody now and becomes load-bearing the first time a desk writes a clause
 blocked-by: decision which clearance route for a declared CARRIED POINTER clause: a dedicated clearance verb, a body-line removal verb, or a declared hand-edit exemption
+
+## lc-132
+grade: READY
+requirement: item check --staged writes its COULD NOT VERIFY message to STDERR, against this repo's own idiom: measured across plugin/cli/lifecycle_core/*.py, COULD NOT VERIFY reaches the user via out() 104 times and via stderr twice. The divergence entered through the dispatch brief, which specified stderr without reading the repo's existing instances; the executing lane followed the brief and FLAGGED the divergence as deviation 3 rather than silently diverging. One verb rendering the three-answer contract differently from every other is the seam where a future reader mis-reads the contract — record: lc-128 closing report deviation 3, 2026-09-15; desk measurement same day
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/items.py,test/test_item_check_staged.py
+done-criterion: item check --staged renders COULD NOT VERIFY through out() like every other verb in this repo, exit code unchanged at 3; red-first by asserting the message on STDOUT against the current build, which writes it to stderr — an assertion FAILURE, not an error. The existing AStagedDeletionIsNotClean arm and the newly-introduced-could-not-verify arm both keep their subjects; only the stream moves. One home for the message, never both streams
+evidence: desk measurement 2026-09-15 over the package: out() 104, stderr 2, other 41 (the 'other' bucket is docstrings and the _WORDS table, not emit sites). The two stderr instances are refusals.py:211 and retire.py:355. Existing instances fix the idiom — the repo's own law, and the WHAT-SHAPE axis of fix placement. NOT urgent: the exit code already discriminates correctly, so no caller reading the code is misled today; this is an idiom repair, not a correctness one
+blocked-by: NONE
