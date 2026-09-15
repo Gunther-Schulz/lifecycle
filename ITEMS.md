@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 125
+added: 126
 compacted: 0
 
 ## lc-3
@@ -768,4 +768,13 @@ goal: lean-machinery-strict-checks
 write-set: tools/prove-rows.py
 done-criterion: prove-rows REFUSES to start when any file it would mutate already differs from HEAD, naming the file and the difference; and it restores under try/finally so an ordinary exception cannot leak a mutation. Red-first BOTH ways: (1) plant a divergence in a mutation target and show the refusal fires under the finding code — an assertion FAILURE, not an error; (2) raise inside an arm and show the file equals its HEAD blob afterwards, which the current build fails. The refusal compares sha, never grep: a grep for the mutated form over migrate.py returns 1 LEGITIMATE HEAD hit at line 1549, so the obvious check reads as a false positive and only the sha comparison against the committed blob is authoritative
 evidence: The startup refusal is the load-bearing half and the one that survives SIGKILL, which try/finally does not: it turns BOTH hazards into one computable predicate — a co-writer's uncommitted work in a mutation target, and residue from a crashed earlier run — without needing to know whether the checkout is shared, which is not computable. Desk measurement: the killed run's residue was a single line in migrate.py, tree otherwise clean; restored from the committed blob (never git checkout --), sha256-verified equal at 0c9f1ef5a92f8b1c. A parallel lane independently confirmed the battery DISCRIMINATES that exact mutation (failures=6, errors=0), so the residue was detectable — just not by anything that was looking
+blocked-by: NONE
+
+## lc-134
+grade: READY
+requirement: The live home has NO MIRROR of open_grade_in_done_home: a body carrying a CLOSED grade (DONE or DROPPED) while it sits in ITEMS.md passes item check CLEAN, and the census counts it as closed while it is live. The done home is guarded in one direction only. Consequence measured with lc-29 in hand: an item-id blocker naming a live-but-DROPPED target resolves as EXISTS and is never refused, so lc-29's widening — which reads the grade from the DONE home, per its own design — cannot see it. Such a body arises from a hand edit or an interrupted close, which is exactly the population the carrier checks exist for (law 8: the tool is the only writer, and the check catches what slipped past by hand) — record: lc-29 closing report slot (g), settled as REACHABLE by desk measurement 2026-09-15
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py,tools/prove-rows.py
+done-criterion: red-first on a live carrier whose block carries grade DROPPED — today items.check_file returns exit 0 CLEAN with census 'open 0 closed 1 unknown 0'; after, a FINDING naming the block and the grade, as an assertion FAILURE not an error. The DONE case too, since both are closed grades. MUST-NOT-MOVE, and this is what decides shippability: every OPEN grade in the live home still passes, the done home's own open_grade_in_done_home direction is unchanged, and the archive section stays exempt. A recorded mutation in tools/prove-rows.py for the new row, since a row without one ships unproven by that instrument (69 of 84 carry one today)
+evidence: Measured at the desk, not inferred: items.check_file over GOOD_ITEMS with its single grade READY replaced by DROPPED returns exit 0 and prints 'census: open 0  closed 1  unknown 0  (total 1)' — the body is counted as closed while sitting in the LIVE carrier, and no row fires. The asymmetry is in the roster: open_grade_in_done_home exists (refusals.py:2442, emitted items.py:1579) and no live-home counterpart does. Surfaced by lc-29's lane as a SCOPE residual it declined to claim as a defect ('if reachable, this check does not see it'); the desk settled reachability by running it. The interaction with lc-29 is the reason this is worth building rather than noting
 blocked-by: NONE
