@@ -2023,12 +2023,13 @@ def check_parked_blockers(parsed: Parsed, prefix: str | None):
 WAVE_PATHS = "path-valued"
 WAVE_UNSET = "missing/UNKNOWN/NONE"
 WAVE_PROSE = "prose"
+WAVE_VENUE = "venue"
 WAVE_FOREIGN = "other-repo"
 
-#: The non-lane buckets, in report order. A RUN rather than three literals at
+#: The non-lane buckets, in report order. A RUN rather than four literals at
 #: the print site, so the report cannot quietly print only the ones that
 #: happen to be non-empty.
-WAVE_NON_PATH = (WAVE_UNSET, WAVE_PROSE, WAVE_FOREIGN)
+WAVE_NON_PATH = (WAVE_UNSET, WAVE_PROSE, WAVE_VENUE, WAVE_FOREIGN)
 
 #: A repo-relative path ENTRY. Deliberately narrow: a space, a parenthesis, a
 #: semicolon or a colon means the author wrote prose or a VENUE
@@ -2039,6 +2040,24 @@ WAVE_NON_PATH = (WAVE_UNSET, WAVE_PROSE, WAVE_FOREIGN)
 #: would make the join depend on what happens to exist today rather than on
 #: the slot the desk wrote.
 _WAVE_PATH_ENTRY = re.compile(r"^[A-Za-z0-9._][A-Za-z0-9._/-]*$")
+
+#: A VENUE entry — `<word>:<rest>`, the shape `item add --write-set` accepts
+#: beside paths (`decision:who-seeds-greenfield-carriers`). It is a LEGAL slot
+#: value naming a boundary that is not a file, so it earns its own bucket
+#: rather than the prose label it wore: prose says a human must rewrite the
+#: slot, a venue says the boundary genuinely is a decision and there is
+#: nothing to rewrite. Two answers, two repairs.
+#:
+#: DELIBERATELY NARROWER THAN `<word>:<rest>` READS, and the narrowing is the
+#: whole shippability question: a PATH can wear that shape too. The word half
+#: admits no slash and no dot, so `docs/notes:draft.md` and
+#: `plugin/cli/x.py:12` are excluded by their prefix; the rest half admits no
+#: dot, so `notes:draft.md` is excluded by its extension. Everything doubtful
+#: therefore stays PROSE, which is the conservative direction: a venue
+#: miscalled prose is the status quo this bucket improves on, while a path
+#: miscalled a venue is a defect newly wearing a legal value's label — the
+#: same inversion pointing the other way, and the worse one.
+_WAVE_VENUE_ENTRY = re.compile(r"^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9_-]*$")
 
 
 def _wave_foreign_entry(entry: str) -> bool:
@@ -2114,6 +2133,17 @@ def classify_write_set(value: str):
                 f"({len(parses)} of {len(entries)} entry/entries parse as "
                 "repo-relative paths)")
     unparsed = [e for e in entries if not _WAVE_PATH_ENTRY.match(e)]
+    venues = [e for e in unparsed if _WAVE_VENUE_ENTRY.match(e)]
+    # ALL of the unreadable half must be venues, never merely some: one
+    # genuinely prose entry makes the slot unreadable, and prose is the
+    # answer that says a human has to rewrite it. A slot graded `venue` on
+    # its venue entries alone would hide the prose one behind a legal label.
+    if unparsed and len(venues) == len(unparsed):
+        return (WAVE_VENUE, [],
+                f"names a VENUE, not a path: {venues[0]!r} "
+                f"({len(parses)} of {len(entries)} entry/entries parse as "
+                "paths — a venue is a LEGAL write-set value this join cannot "
+                "cluster, not a defect)")
     if unparsed:
         return (WAVE_PROSE, [],
                 f"does not parse as a path: {unparsed[0]!r} "
@@ -2350,7 +2380,11 @@ def report_waves(schedulable, out, *, ready_n, live_n, excluded,
             "like a carrier whose work is all independent.")
         return exits.COULD_NOT_VERIFY
 
-    buckets: dict = {WAVE_UNSET: [], WAVE_PROSE: [], WAVE_FOREIGN: []}
+    # DERIVED from the run, never listed again: a bucket added to
+    # `WAVE_NON_PATH` and forgotten here would raise on its first member —
+    # loud, but only for the one carrier that happens to carry it, and
+    # silent-by-absence in the report's zeros for every other.
+    buckets: dict = {key: [] for key in WAVE_NON_PATH}
     rows = []
     for it in schedulable:
         bucket, paths, why = classify_write_set(effective_write_set(it))

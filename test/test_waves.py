@@ -325,9 +325,13 @@ class TheUnitsUnderTheReport(unittest.TestCase):
                 self.assertEqual(paths, [])
 
     def test_a_venue_entry_is_not_a_path(self):
+        """RE-AIMED BY lc-125: this arm asserted `WAVE_PROSE` until the venue
+        bucket existed. The claim it was written to make — a venue is not a
+        path and is never clustered — is unchanged and still asserted here;
+        what moved is which of the four non-lane buckets carries it."""
         bucket, paths, why = items.classify_write_set(
             "plugin/cli/x.py,decision:who-owns-this")
-        self.assertEqual(bucket, items.WAVE_PROSE)
+        self.assertEqual(bucket, items.WAVE_VENUE)
         self.assertEqual(paths, [])
         self.assertIn("1 of 2", why)
 
@@ -448,6 +452,92 @@ class TheGroupedPartition(WavesBase):
             _code, out = self._waves(r)
             self.assertNotIn("GROUPS:", out)
             self.assertNotIn("SERIALIZE", out)
+
+
+class AVenueIsALegalValueNotADefect(WavesBase):
+    """lc-125: the fifth bucket.
+
+    `item add --write-set` accepts "comma-separated paths/venues", so
+    `decision:<question>` is a LEGAL slot value. Bucketed as prose it wore a
+    defect's label — and the two answers route to different repairs: prose
+    means someone must rewrite the slot, a venue means the work's boundary
+    genuinely is a decision and there is nothing to rewrite.
+
+    IT IS STILL NOT A LANE. A venue names no file, so an item carrying one is
+    never clustered and stays inside the could-not-verify count. The bucket
+    changes what the report CALLS it, never what the join claims about it.
+    """
+
+    def test_a_venue_entry_routes_to_the_venue_bucket(self):
+        bucket, paths, why = items.classify_write_set(
+            "plugin/cli/x.py,decision:who-owns-this")
+        self.assertEqual(bucket, items.WAVE_VENUE)
+        self.assertEqual(paths, [])
+        self.assertIn("1 of 2", why)
+        self.assertIn("VENUE", why)
+
+    def test_an_ordinary_PATH_BEARING_A_COLON_never_routes_to_venue(self):
+        """THE ARM THAT DECIDES SHIPPABILITY. `<word>:<rest>` is a shape a
+        path can wear, and a path relabelled `venue` would be a defect
+        wearing a legal value's label — the exact inversion this item exists
+        to undo, pointing the other way. The conservative direction is
+        prose: a venue miscalled prose is the status quo, a path miscalled a
+        venue is new damage.
+        """
+        for entry in ("docs/notes:draft.md", "plugin/cli/x.py:12",
+                      "notes:draft.md", "tools/a:b/c.py"):
+            with self.subTest(entry=entry):
+                bucket, _paths, _why = items.classify_write_set(entry)
+                self.assertEqual(bucket, items.WAVE_PROSE)
+
+    def test_a_plain_path_is_untouched_by_the_new_bucket(self):
+        bucket, paths, _why = items.classify_write_set("tools/alpha.py")
+        self.assertEqual(bucket, items.WAVE_PATHS)
+        self.assertEqual(paths, ["tools/alpha.py"])
+
+    def test_a_MIXED_prose_and_venue_slot_stays_PROSE(self):
+        """One unreadable entry is enough to make the slot unreadable, and
+        prose is the answer that says a human must rewrite it."""
+        bucket, _paths, _why = items.classify_write_set(
+            "decision:who-owns-this,plugin (the parser bits)")
+        self.assertEqual(bucket, items.WAVE_PROSE)
+
+    def test_the_venue_bucket_prints_its_count_and_LEAVES_prose_empty(self):
+        blocks = [block("xx-1", "tools/alpha.py"),
+                  block("xx-2", "tools/beta.py,decision:who-seeds-this")]
+        with self._repo(blocks) as r:
+            code, out = self._waves(r)
+            self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+            self.assertIn("  venue: 1", out)
+            self.assertIn("  prose: 0 — none", out)
+
+    def test_a_venue_item_lands_in_NO_lane(self):
+        """The half a presence assertion cannot catch: renaming the bucket
+        must not start clustering the item on its parsing half."""
+        blocks = [block("xx-1", "tools/alpha.py"),
+                  block("xx-2", "tools/alpha.py,decision:who-seeds-this")]
+        with self._repo(blocks) as r:
+            _code, out = self._waves(r)
+            self.assertIsNone(self._lane_of(out, "xx-2"), out)
+            self.assertIn("LANES: 1 over 1 path-valued item(s)", out)
+
+    def test_a_carrier_with_no_venue_prints_the_venue_ZERO(self):
+        with self._repo([block("xx-1", "tools/alpha.py")]) as r:
+            _code, out = self._waves(r)
+            self.assertIn("  venue: 0 — none", out)
+
+    def test_the_write_set_help_carries_the_trailing_slash_CONVENTION(self):
+        """The convention lived only in `_WAVE_PATH_ENTRY`'s comment, where
+        no slot author reads it — so a directory write-set was written
+        without the slash and silently became a single file nothing names."""
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            try:
+                cli_mod.main(["item", "add", "--help"])
+            except SystemExit:
+                pass
+        text = buf.getvalue()
+        self.assertIn("trailing slash", text.lower())
 
 
 if __name__ == "__main__":

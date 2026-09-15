@@ -462,7 +462,12 @@ def build_parser() -> argparse.ArgumentParser:
     add.add_argument("--requirement", help="why, one line + a record pointer")
     add.add_argument("--goal", help="one of the repo's declared goals")
     add.add_argument("--write-set", dest="write_set",
-                     help="comma-separated paths/venues, or NONE, or UNKNOWN")
+                     help="comma-separated paths/venues, or NONE, or UNKNOWN. "
+                          "A TRAILING SLASH marks a directory entry — `test/` "
+                          "means every file under it, `test` means one file "
+                          "of that name; the slash is the only directory form "
+                          "the wave join reads, and it reads the slot rather "
+                          "than the working tree")
     add.add_argument("--done-criterion", dest="done_criterion")
     add.add_argument("--evidence")
     add.add_argument("--blocked-by", dest="blocked_by",
