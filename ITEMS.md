@@ -81,15 +81,6 @@ amended-blocked-by: 2026-09-13 evidence the realizing write is TWO copies, one o
 amend-reason: 2026-09-13 2026-09-13 Same instrument repair as lc-53, same author, same day: the predicate was prose. Latent here only because PARKED items are not evaluated by the board — a promote would have surfaced exit 127. Converted to 'false  # <reason>'; blocked state unchanged.
 amended-blocked-by: 2026-09-13 evidence false  # realizing write is TWO copies, one outside this repo (cache-fix test/absence-scan.test.mjs); done-criterion needs green on both
 
-## lc-29
-grade: READY
-requirement: The carrier-side blocker check is NARROWER than the write side under ONE refusal name: items.check_blocker_targets asks only whether the blocker id EXISTS in either home, while verbs._check_blocker also refuses a blocker naming a DROPPED target — an id-blocker resolves on its target DONE, which a dropped item never reaches. So an item blocked on a dropped id passes item check and can never drain — record: lane C closing report (c) gap 3, 2026-08-27
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
-done-criterion: the read side and the write side agree on what an item-id blocker resolves against, or the asymmetry is declared with its reason in both sites; red-first on a carrier whose blocker names a DROPPED id — today the write side refuses it and the carrier check passes it
-evidence: lane C built the carrier-side check to lc-28 done-criterion exactly (id EXISTS in either home) and declined to widen it, stating the narrower reach in the row text and the check docstring rather than leaving it implied — so the assurance is no wider than its predicate. The asymmetry is real and under one refusal name (dangling_reference), which is what makes it worth a booking rather than a comment.
-blocked-by: decision widen the carrier check to match the write side, narrow the write side, or declare the asymmetry intentional with its reason at both sites
-
 ## lc-30
 grade: READY
 requirement: The ROUTE SETS check is asymmetric: a route the refusal TEXT names but nothing watches is a FINDING (route_set_unwatched), while the reverse — the code routing a shape through a refusal whose text does NOT name it — prints a note and sets no code (roster.py:183-187, "not this check failure but is worth knowing"). So a refusal can catch more than it says, and the operator reading the finding gets a WRONG cause for their entry — record: lane A gap 1, judgment desk ruling 2026-08-27
