@@ -1132,7 +1132,11 @@ VERB_ROWS = [
         # this site darkens this row alone and prove-rows reads that as the
         # honest case rather than a stray.
         refusal="dangling typed reference over the CARRIER — a `blocked-by "
-                "<item-id>` already in the file naming an id no home holds. "
+                "<item-id>` already in the file naming an id no home holds, "
+                "or naming one the done home holds as DROPPED (lc-29: the "
+                "same reach as the write path, which refuses both; an "
+                "id-blocker resolves on its target's DONE, and neither a "
+                "missing target nor a dropped one can reach it). "
                 "The write path is not the only path in: a merge or a hand "
                 "edit reaches the file without passing it, and the result is "
                 "a PERMANENT SILENT PARK — the block never surfaces in `item "

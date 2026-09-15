@@ -1031,11 +1031,23 @@ def check_blocker_targets(items_parsed: Parsed, done_parsed: Parsed | None,
     reading the live home alone would report every such blocker as dangling,
     which is the same over-fire one homeless step away.
 
-    NARROWER THAN THE WRITE PATH, stated rather than implied: `_check_blocker`
-    also refuses a blocker naming a DROPPED target (an id-blocker resolves on
-    DONE, and a dropped target never reaches it). This asks only whether the
-    id EXISTS. The reach is what lc-28's done-criterion names, and a message
-    claiming more than the predicate establishes is what stops anyone looking.
+    THE SAME REACH AS THE WRITE PATH — lc-29, and it was not true before it.
+    The two sides now agree on what an item-id blocker RESOLVES AGAINST: its
+    target's DONE. `verbs._check_blocker` refuses both a blocker naming an id
+    no home holds and one naming a DROPPED target, at all three of its doors,
+    and the `item ready` resolver answers the same two; this check asks both
+    questions over the carrier. They are ONE refusal because they are one
+    failure: an id no home holds can never reach DONE and a DROPPED one never
+    will, so each is the same PERMANENT SILENT PARK, differing only in whether
+    the target was never there or is there and buried. The earlier asymmetry
+    meant a blocker the write path refuses outright could sit in the file
+    forever with the only check that reads the file calling it CLEAN.
+
+    lc-28 built this to EXISTENCE and SAID SO — in the docstring and in the ok
+    line — rather than leaving the narrowness implied. That stated reach is
+    what made the gap bookable (lc-29) instead of invisible, and it is why
+    this paragraph is part of the change rather than commentary on it: an
+    assurance outliving its predicate is what stops anyone looking.
     """
     typed = []
     untypeable = []
@@ -1064,22 +1076,41 @@ def check_blocker_targets(items_parsed: Parsed, done_parsed: Parsed | None,
 
     known = {it.ident for it in items_parsed.items} | {
         it.ident for it in done_parsed.items}
-    dangling = [(it, detail) for it, detail in typed if detail not in known]
+    buried = {it.ident for it in done_parsed.items if it.grade == "DROPPED"}
+    # ONE LIST, TWO MESSAGES — not two lists with two verdicts. The roster
+    # carries this as ONE row (`dangling_reference_carrier`), so one exit
+    # answer is what a reader can act on; a second verdict beside it would
+    # split a refusal the design keeps whole and would need its own plant,
+    # control and §3.9 line to say anything. The REPAIR differs between the
+    # two, which is why the messages do.
+    dangling = [(it, detail) for it, detail in typed
+                if detail not in known or detail in buried]
     for it, detail in dangling:
-        out(f"FINDING [dangling_reference] line {it.line}: block "
-            f"{it.ident!r} is blocked by {detail!r}, an id NEITHER home "
-            "holds. A blocker pointing at nothing reads exactly like one "
-            "pointing at live work and it never resolves: the block never "
-            "surfaces in `item ready` because it reads as blocked, and "
-            "nothing else ever says the wait is fictional — a permanent "
-            "silent park. Point it at a real id, or retype the blocker to "
-            "the court it actually sits in.")
+        if detail not in known:
+            out(f"FINDING [dangling_reference] line {it.line}: block "
+                f"{it.ident!r} is blocked by {detail!r}, an id NEITHER home "
+                "holds. A blocker pointing at nothing reads exactly like one "
+                "pointing at live work and it never resolves: the block never "
+                "surfaces in `item ready` because it reads as blocked, and "
+                "nothing else ever says the wait is fictional — a permanent "
+                "silent park. Point it at a real id, or retype the blocker to "
+                "the court it actually sits in.")
+        else:
+            out(f"FINDING [dangling_reference] line {it.line}: block "
+                f"{it.ident!r} is blocked by {detail!r}, which is DROPPED. An "
+                "item-id blocker resolves on its target's DONE; a dropped "
+                "target never reaches DONE, so this blocker can only expire, "
+                "never clear — the same permanent silent park as an id no "
+                "home holds, one grade over. The write path refuses this "
+                "blocker outright; a merge or a hand edit reaches the file "
+                "without passing it. Point it at a live id, or retype the "
+                "blocker to the court it actually sits in.")
     if dangling:
         return exits.FINDING
     out(f"blocker targets: CLEAN — {len(typed)} item-id blocker(s), every id "
-        f"resolved in one of the two homes. Checked for EXISTENCE only; a "
-        "blocker naming a DROPPED target is refused at the write path, not "
-        "here.")
+        f"resolved in one of the two homes and none of them DROPPED. The "
+        "reach is the write path's: an id-blocker resolves on its target's "
+        "DONE, so a target that cannot reach DONE is refused here too.")
     return exits.CLEAN
 
 

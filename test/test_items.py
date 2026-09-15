@@ -595,6 +595,111 @@ class BlockerTargets(unittest.TestCase):
         self.assertEqual(out, "")
 
 
+def _done_home_holding(ident, grade):
+    """The done home with one closed body at the named GRADE.
+
+    THE ARMS BELOW DIFFER IN THE GRADE ALONE, which is what makes the pair
+    say anything: a fixture that also moved the id would be red for a
+    neighbouring reason and would prove nothing about the grade.
+    """
+    return EMPTY_DONE + (
+        f"\n## {ident}\ngrade: {grade}\n"
+        "requirement: the closed target — LEDGER.md\ngoal: mitigate\n"
+        "write-set: tools/thing.py\ndone-criterion: done\n"
+        "evidence: none yet\nblocked-by: NONE\n")
+
+
+class BlockerTargetDropped(BlockerTargets):
+    """lc-29 — the carrier check reaches the DROPPED target the write side
+    already refuses.
+
+    THE ASYMMETRY THIS CLOSES: `verbs._check_blocker` refuses a blocker
+    naming a DROPPED id at `item add`, `item park` and `item amend`, and the
+    `item ready` resolver reports the same; only the carrier check asked
+    whether the id merely EXISTS. A blocker resolves on its target's DONE,
+    and a dropped target never reaches DONE — so the block waits forever and
+    drains never, which is the same PERMANENT SILENT PARK the dangling-id
+    half exists to catch, one grade over.
+
+    IT INHERITS `BlockerTargets` DELIBERATELY: every must-not-move arm there
+    — the other three blocker forms, the live-id control, the two
+    could-not-verify answers, the silent clean carrier — re-runs under this
+    class too, so a widening that broke one of them cannot ship quietly.
+    """
+
+    def test_a_DROPPED_target_is_a_finding(self):
+        """RED-FIRST AT THE DEFECT. On the old side this carrier reported
+        `blocker targets: CLEAN` in so many words — the write path refuses
+        the same blocker and the carrier check passed it."""
+        code, out = self._run(FOUR_BLOCKER_ITEMS,
+                              done=_done_home_holding("xx-9999", "DROPPED"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [dangling_reference]", out)
+        self.assertIn("DROPPED", out)
+        self.assertIn("xx-9999", out)
+        self.assertIn("'xx-1'", out)
+
+    def test_a_DONE_target_at_the_same_site_stays_CLEAN(self):
+        """THE OTHER HALF OF THE PAIR, differing in the GRADE ALONE. A check
+        that fired on any closed target would score identically against the
+        arm above while refusing a wait that HAS been answered."""
+        code, out = self._run(FOUR_BLOCKER_ITEMS,
+                              done=_done_home_holding("xx-9999", "DONE"))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("blocker targets: CLEAN", out)
+
+    def test_the_other_three_forms_do_not_fire_beside_a_DROPPED_target(self):
+        """THE OVER-FIRE ARM, asked in the state the widening creates rather
+        than in the clean one: a scope test run against a carrier with
+        nothing to find passes on a check that ignores the forms entirely."""
+        code, out = self._run(FOUR_BLOCKER_ITEMS,
+                              done=_done_home_holding("xx-9999", "DROPPED"))
+        self.assertEqual(out.count("FINDING [dangling_reference]"), 1, out)
+        for must_not in ("xx-2", "xx-3", "xx-4", "decision which window",
+                         "evidence test -f /nonexistent"):
+            self.assertNotIn(must_not, out)
+
+    def test_an_id_in_NEITHER_home_keeps_its_OWN_finding(self):
+        """MUST-NOT-MOVE. The dangling-id case is not reclassified into the
+        dropped one: its message says the id is in neither home, which is a
+        different repair from retargeting a dropped one. An assertion on the
+        row name alone would pass on either message."""
+        code, out = self._run(FOUR_BLOCKER_ITEMS)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("NEITHER home", out)
+        self.assertNotIn("DROPPED", out)
+
+    def test_the_DROPPED_body_is_found_BESIDE_other_closed_bodies(self):
+        """The lookup resolves the id, not merely the presence of a dropped
+        body somewhere in the done home. A check that asked "is anything
+        DROPPED here?" would pass this arm and the next one identically."""
+        done = (_done_home_holding("xx-5000", "DONE")
+                + "\n## xx-9999\ngrade: DROPPED\n"
+                  "requirement: the dropped target — LEDGER.md\n"
+                  "goal: mitigate\nwrite-set: tools/thing.py\n"
+                  "done-criterion: done\nevidence: none yet\n"
+                  "blocked-by: NONE\n")
+        code, out = self._run(FOUR_BLOCKER_ITEMS, done=done)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("xx-9999", out)
+
+    def test_a_DONE_target_stays_CLEAN_though_a_DROPPED_body_sits_beside_it(
+            self):
+        """THE OTHER HALF OF THAT PAIR, differing in WHICH id the blocker
+        names. The same done home, the same dropped body present — a check
+        keyed on the home rather than on the target fires here too."""
+        done = (_done_home_holding("xx-5000", "DONE")
+                + "\n## xx-9999\ngrade: DROPPED\n"
+                  "requirement: the dropped target — LEDGER.md\n"
+                  "goal: mitigate\nwrite-set: tools/thing.py\n"
+                  "done-criterion: done\nevidence: none yet\n"
+                  "blocked-by: NONE\n")
+        code, out = self._run(FOUR_BLOCKER_ITEMS.replace(
+            "blocked-by: xx-9999", "blocked-by: xx-5000"), done=done)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("FINDING", out)
+
+
 if __name__ == "__main__":
     unittest.main()
 
