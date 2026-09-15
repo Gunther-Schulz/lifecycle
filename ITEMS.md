@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 128
+added: 129
 compacted: 0
 
 ## lc-3
@@ -768,3 +768,12 @@ write-set: UNKNOWN
 done-criterion: every explicit-zero assertion in the batteries is either PAIRED with a non-zero arm over the same producer, or recorded as unpaired with the reason no non-zero case exists. Red-first per repaired arm: disable the producer and the PAIR goes red where the zero arm alone stayed green — assertion FAILURES, read off the failures=/errors= split per arm. The sweep's own output names every explicit-zero arm found and its disposition, so a zero count here is itself a stated zero rather than an omitted key
 evidence: The lc-124 instance is measured, not reasoned: mutation dropping every SERIALIZE warning -> failures=1, the cross-group arm, with the 'SERIALIZE: 0 — none' arm GREEN in the same run. The lane reported it as a candidate lesson rather than letting the passing arm imply coverage it does not have. Why this is worth a sweep rather than a note: law 1's stated-zero rule is applied across this repo's checkers and batteries, so the shape recurs wherever someone wrote an explicit zero and stopped — and the failure is silent by construction, since the arm passes
 blocked-by: evidence false  # the sweep over explicit-zero arms has not been run, so which arms carry the shape is unknown and the realizing write-set with it
+
+## lc-137
+grade: READY
+requirement: `item close` records an ANSWERED decision blocker as "never answered" and writes that inversion into the durable ledger: `item ready` resolves the blocker against the ledger by question-slot equality (verbs.py:1325) while `item close` reads the slot through `_effective_blocker` (verbs.py:1830) and never consults the ledger, so two predicates answer one question inside one tool and the losing one owns the permanent record. MOVED HERE from statiker st-68 on the operator's venue decision of 2026-09-15; full provenance in that repo's LEDGER.md and ITEMS-DONE.md st-68
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: A close over an item whose decision blocker the ledger ANSWERS records the answer, not a mootness: the same resolver `item ready` already uses (verbs.py:1325, the 'ledger ANSWERS this decision' path) is ASKED from `_effective_blocker` (verbs.py:1830) rather than re-implemented beside it, which is that file's own stated rule for park. Mootness stays the record for a blocker the ledger does NOT answer. Red-first and DISCRIMINATING, three arms: an item whose decision blocker the ledger answers closes with the answer on the moved body and NO moot ledger line (RED today); an item with an unanswered blocker still records `blocker-moot` (control, must not regress); and a cross-question NEAR-MISS, a ledger decision whose text differs from the blocker by one clause, still records moot, because question-slot EQUALITY is the contract and a looser match would silently clear real blockers
+evidence: FOUR FIRINGS executed at the statiker desk across three days, deterministic not intermittent. Firings 3 and 4 back-to-back: closing st-74 and st-64 each appended a moot line asserting the blocker was never answered, while statiker LEDGER.md:116 and :117 carry answers to those exact questions recorded hours earlier through `ledger add decision`, and `item ready` printed UNBLOCKED for BOTH citing those exact lines before either was built. Firing 1: st-63. Firing 2: st-67. SOURCE READ rather than inferred: `_effective_blocker` parses the carrier, classifies the slot and returns (kind, detail) with no ledger read on any path; the caller at verbs.py:2043 sets moot unconditionally when kind is decision. Silent in the direction that matters: the close SUCCEEDS, the item lands DONE correctly, only the record is wrong, so nothing fires, and that wrong record is what the session-start hook prints as the ledger tail to the next session opening the repo. GOAL SLOT chosen by the foreign desk and owned by this repo's reader: re-grade if enforce-the-invariants is the wrong family
+blocked-by: NONE
