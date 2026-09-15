@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 136
+added: 137
 compacted: 0
 
 ## lc-3
@@ -756,3 +756,12 @@ write-set: test/test_prove_rows.py
 done-criterion: An automated arm covers prove-rows' startup refusal as a DISCRIMINATING PAIR, not a single assertion: a fixture whose mutation target is dirty gets exit FINDING with the file named, and the SAME fixture clean proceeds — the arms differing in the dirtiness alone, so neither the tool nor the fixture is what separates them. The dirty arm asserts on the refusal's MESSAGE TEXT (the named path and the sha mismatch), never on the exit code alone, because prove-rows exits non-zero for several reasons and a code-only assertion cannot say which fired. RED-FIRST against the pre-lc-133 build at b387ef0, where no refusal exists: the dirty arm must FAIL there as an assertion failure, not error — a fixture reaching through a name the old side lacks proves only that the code is new. ALSO COVER the spec gap lc-133's lane decided rather than inherited: a file ABSENT from HEAD counts as differing and refuses. MUST-NOT-MOVE: the clean arm still completes the full walk, so the arm cannot pass by making prove-rows refuse everything.
 evidence: Named by the lc-133 lane in its own (g) NOT VERIFIED slot rather than left for a reader to notice: 'lc-133's refusal has NO automated arm. The item's write set is tools/prove-rows.py alone and no test file covers prove-rows (grepped test/ and plugin/). Its proof is my executed CLI pair, which does not re-run.' The desk reproduced that pair independently at closing — control clean exits 0 and completes at 72 of 86 rows; fire with one target dirtied exits 2 naming the file and both sha256s — so the behaviour is established and only its PERMANENCE is not. The lane also named a second untested path in the same slot: it proved the refusal fires on residue but never killed a run mid-arm to create that residue, so the SIGKILL path itself is unexercised; same predicate either way, but the end-to-end kill is untested and this arm is where it would live.
 blocked-by: lc-30
+
+## lc-145
+grade: READY
+requirement: retire.PERFORMED_EXITS does not list 'compact', so the `done bodies` kind reads NOT CHECKED in the retire walk rather than as a kind that grew without an exit. Once the compaction verb exists (lc-58/lc-47) the honest state is a live kind_grew_without_exit FINDING here — 69 done bodies, never compacted — and `lifecycle audit` moves from two findings to three. Surfaced by the lc-58/lc-47 lane as existing behaviour its brief did not name, and HELD rather than taken: the lane stopped instead of quietly widening its own scope. Record: opus-lc58-47 critique correction, 2026-09-15.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/retire.py,test/test_retire.py
+done-criterion: PERFORMED_EXITS lists 'compact' and the retire walk reports the done-bodies kind honestly. RED-FIRST: today the walk prints NOT CHECKED for that kind while a compaction verb exists and 69 bodies have never been compacted — assert the kind_grew_without_exit finding appears, an assertion FAILURE at the defect. THE AUDIT COUNT MOVING 2 to 3 IS THE POINT, NOT A REGRESSION: a third finding that was always true and unreported is the walk becoming honest. Any arm or baseline pinning 'audit exits 3 with TWO findings' is re-examined one by one against this change, never bulk-updated. MUST-NOT-MOVE: the other two audit findings keep their exact text, and a repo with no done bodies still reports the kind clean rather than firing.
+evidence: Named by the lc-58/lc-47 lane 2026-09-15 while building the compaction verb, as a STOP it declined to push through: 'with the verb in existence, retire.PERFORMED_EXITS could gain compact, which moves the done bodies kind from NOT CHECKED to a live kind_grew_without_exit FINDING here (69 bodies, never compacted) — existing behaviour the brief did not name, so PERFORMED_EXITS stays untouched.' Desk baseline measured the same session: lifecycle audit exits 3 with exactly two findings (kind_grew_without_exit, laws_scope_audit) at the wave-2 base.
+blocked-by: lc-58
