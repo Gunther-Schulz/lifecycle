@@ -66,27 +66,62 @@ class ItemSlotsOverTheRealCarrier(unittest.TestCase):
             code = exc.code
         return code, buf.getvalue()
 
-    def _item(self, ident):
+    def _live(self):
         parsed = items.parse((self.REPO / "ITEMS.md").read_text(encoding="utf-8"))
-        return next(it for it in parsed.items if it.ident == ident)
+        return parsed.items
 
-    def test_lc_7_reports_the_LAST_amended_evidence_not_the_first(self):
-        item = self._item("lc-7")
-        evidence = [raw.split(" ", 1)[1] for name, raw, _ in item.amendments
-                    if name == "amended-evidence"]
-        self.assertEqual(len(evidence), 2, "the real-carrier discriminator vanished")
-        self.assertNotEqual(evidence[0], evidence[1])
+    def _subject(self, predicate, what):
+        """A live item satisfying `predicate`, chosen at RUN TIME.
 
-        code, out = self._run("lc-7")
+        ANCHORED TO A PROPERTY, NEVER TO AN ID. Both arms below grade the
+        REAL carrier, and every live id is mutating state: the item an arm
+        names closes one day, the lookup raises, and the red belongs to a
+        legitimate close rather than to `item slots`. MEASURED 2026-09-15 —
+        closing `lc-22` errored this class with `StopIteration`, and the
+        sibling arm pinned `lc-7` exactly the same way, so the class held
+        one landmine per arm. What each arm needs is a SHAPE (amended, or
+        not), which the carrier keeps supplying whoever closes what.
+
+        NO SUBJECT IS COULD NOT VERIFY, never a silent pass: an arm that
+        selected nothing would assert nothing and read green, which is the
+        pass-shaped number law 1 forbids. The repo's own idiom for a real
+        input that is absent today is a skip that NAMES what is missing
+        (see `test_pre_push_hook`'s no-carrier arm).
+        """
+        for it in self._live():
+            if predicate(it):
+                return it
+        self.skipTest(f"no live item {what}: this arm grades the REAL "
+                      "carrier and has no subject today — COULD NOT VERIFY, "
+                      "not a pass")
+
+    @staticmethod
+    def _amended_evidence(item):
+        return [raw.split(" ", 1)[1] for name, raw, _ in item.amendments
+                if name == "amended-evidence"]
+
+    def test_an_AMENDED_item_reports_the_LAST_evidence_not_the_first(self):
+        item = self._subject(
+            lambda it: len(self._amended_evidence(it)) >= 2,
+            "carrying two or more `amended-evidence` lines")
+        evidence = self._amended_evidence(item)
+        self.assertNotEqual(evidence[0], evidence[-1],
+                            "the real-carrier discriminator vanished: this "
+                            "subject's first and last amendment are equal, so "
+                            "a first-wins implementation would pass")
+
+        code, out = self._run(item.ident)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn(f"evidence: {evidence[-1]}", out)
         self.assertNotIn(f"evidence: {evidence[0]}", out)
 
-    def test_lc_22_without_amendments_reports_base_slots_byte_unchanged(self):
-        item = self._item("lc-22")
-        self.assertEqual(item.amendments, [], "this control must have no amendments")
+    def test_an_UNAMENDED_item_reports_base_slots_byte_unchanged(self):
+        item = self._subject(
+            lambda it: not it.amendments
+            and all(s in it.slots for s in items.SLOTS),
+            "carrying no amendments and all fixed slots")
 
-        code, out = self._run("lc-22")
+        code, out = self._run(item.ident)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertEqual(out.splitlines(),
                          [f"{slot}: {item.slots[slot]}" for slot in items.SLOTS])
