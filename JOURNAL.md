@@ -439,3 +439,45 @@ is what sent the desk to reproduce a lane's ARRANGEMENT rather than correct
 its number — and the arrangement was the finding twice: once here, and once
 when the same desk ran a mutating tool in the clone it was testing in, and
 read three failures that were its own doing.
+
+### J25 — cited by law 24 (a new verb has four realizing surfaces)
+
+Drain waves 1-3, 2026-09-15. FIVE instances in three waves of ONE desk
+failure: a write boundary that cannot reach the file which REALIZES the
+commissioned change. The dispatch discipline states the general rule — a
+boundary is complete only once each change is resolved to its realizing
+file. Law 24 was minted from the first two instances and names ONE such
+file, `refusals.py`, for one kind of change. The desk then checked law 24,
+found it satisfied, and treated the boundary as answered — four more times.
+
+  1. lc-31  — refusal shipped unregistered; repo went red, second lane.
+  2. lc-30  — could not be built inside its boundary at all.
+  3. lc-47/lc-58 — the VERB's surface (cli.py) and the record's kind.
+  4. lc-148 — the ALLOCATOR's call sites; the ruled design's write was in
+     verbs.py and migrate.py, neither in the item's set.
+  5. lc-120 — the verb's WIRING and its SLOT VOCABULARY; the lane halted
+     with nothing written and both halves measured.
+
+THE GENERALISATION, from the lc-120 lane, which is what makes this a law
+rather than a fifth incident: **a NEW VERB has FOUR realizing surfaces by
+construction** — its BODY (`verbs.py`), its WIRING (`cli.py`: the
+subparser, the action tuple, the `_carrier_verb` branch), any SLOT
+VOCABULARY it writes (`items.py`, where acceptance is decided), and its
+REFUSAL (`refusals.py`). lc-120's booked write set carried one of the four.
+
+FOUND PROSPECTIVELY, which is the part worth keeping: that lane then swept
+the live carrier for siblings and found lc-131 — "a dedicated clearance
+verb", write set `verbs.py, refusals.py, test/test_items.py`, the same
+three files and the same missing wiring, waiting to halt a future lane.
+THE SWEEP CARRIED ITS OWN CONTROL: 5 candidates matched, 2 were real
+members, 1 already correct (lc-107 carries cli.py), 2 were false positives
+(lc-41 adds no verb — it makes EXISTING verbs commit). The instrument
+over-fires, so each hit's PARSED write-set was read rather than the regex
+trusted. A sweep whose hits are all members has usually not been controlled.
+
+PROSE, NOT A PREDICATE, and the lane judged this before the desk did:
+"does this criterion propose a new verb" has no computable predicate, and a
+guard over item prose would fire on legitimate work — law 11. The
+computable slice already exists downstream (the emit-site coverage check
+fails `--test` for an unregistered refusal); everything upstream of the
+commit is booking discipline.

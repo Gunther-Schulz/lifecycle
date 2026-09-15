@@ -149,7 +149,15 @@ journal pointer is where the incident lives.
     done-criterion will emit a NEW finding carries `refusals.py` in its
     write set — a refusal's realizing file is always that one, because
     law 2 puts it there, so a boundary that cannot reach it commissions
-    work that cannot be finished inside it. (J20, J22)
+    work that cannot be finished inside it. **AND THAT REASONING IS NOT
+    ABOUT REFUSALS: a NEW VERB has FOUR realizing surfaces by
+    construction** — its BODY (`verbs.py`), its WIRING (`cli.py`: the
+    subparser, the action tuple, the `_carrier_verb` branch), any SLOT
+    VOCABULARY it writes (`items.py`, where acceptance is decided), and
+    its REFUSAL. An item proposing a verb carries every surface its own
+    criterion reaches, or it commissions a halt. Prose, not a predicate:
+    "does this criterion propose a verb" is not computable and a guard
+    over item prose fires on legitimate work (law 11). (J20, J22, J25)
 25. **Every schema change ships its migration, dry-run first, over every
     declared repo, before it is applied anywhere.** (J21)
 
