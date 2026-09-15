@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 127
+added: 128
 compacted: 0
 
 ## lc-3
@@ -749,3 +749,12 @@ write-set: plugin/cli/lifecycle_core/items.py,test/test_repair.py
 done-criterion: a check reconciles `item repair --shape`'s listed set against `item check`'s residual findings over the SAME carrier and fails when they diverge — every listed body still a finding, every residual finding listed, over bodies rather than counts (equal counts are not agreement; today's hand run proved identity because it compared identities). Red-first BOTH ways as assertion FAILURES: add a judgment class with no corresponding row and the check goes red; silence a row the verb lists and it goes red. MUST-NOT-MOVE: the two vocabularies stay separate — this pins their CORRESPONDENCE, it does not merge them, since a row and a judgment class answer different questions
 evidence: Desk measurement 2026-09-15 on COPIES of dotfiles' ITEMS.md and ITEMS-DONE.md (live carriers verified untouched afterwards): `item check` 23 findings before the repair, 9 after; the verb listed 9; the two sets identical over bodies with zero listed-but-not-remaining and zero remaining-but-not-listed; word multiset preserved 94147 to 94147. The mapping between vocabularies was legible only because both outputs were read side by side — which is the manual investigation this item exists to replace. The lc-130 lane surfaced the underlying question as its gap 2 and correctly declined to settle it at its tier; its framing (an unregistered emit site) is refuted by the mapping, and the real risk is drift between two correspondent vocabularies
 blocked-by: NONE
+
+## lc-136
+grade: NEW
+requirement: AN EXPLICIT-ZERO ASSERTION IS SATISFIED BY A DEAD PRODUCER, so it is never the arm that proves the producer runs — and this repo applies explicit-zero discipline WIDELY, because law 1 requires a stated zero rather than an omitted key. Measured instance, lc-124's battery: the arm asserting 'SERIALIZE: 0 — none' over a no-crossing fixture stayed GREEN under a mutation that dropped EVERY warning, because a fixture with no crossings legitimately expects that line whether the producer runs or not. Only the cross-group arm discriminated. The explicit-zero arm and the cross-group arm LOOK like a pair and are not. Unknown: how many other explicit-zero assertions in this repo's batteries have the same shape — an arm that would stay green if the thing it reports on stopped being computed — record: lc-124 closing report slot (e) lesson 2, 2026-09-15, found by the lane in its own battery rather than shipped
+goal: every-refusal-red-first
+write-set: UNKNOWN
+done-criterion: every explicit-zero assertion in the batteries is either PAIRED with a non-zero arm over the same producer, or recorded as unpaired with the reason no non-zero case exists. Red-first per repaired arm: disable the producer and the PAIR goes red where the zero arm alone stayed green — assertion FAILURES, read off the failures=/errors= split per arm. The sweep's own output names every explicit-zero arm found and its disposition, so a zero count here is itself a stated zero rather than an omitted key
+evidence: The lc-124 instance is measured, not reasoned: mutation dropping every SERIALIZE warning -> failures=1, the cross-group arm, with the 'SERIALIZE: 0 — none' arm GREEN in the same run. The lane reported it as a candidate lesson rather than letting the passing arm imply coverage it does not have. Why this is worth a sweep rather than a note: law 1's stated-zero rule is applied across this repo's checkers and batteries, so the shape recurs wherever someone wrote an explicit zero and stopped — and the failure is silent by construction, since the arm passes
+blocked-by: evidence false  # the sweep over explicit-zero arms has not been run, so which arms carry the shape is unknown and the realizing write-set with it
