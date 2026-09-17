@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 147
+added: 148
 compacted: 0
 
 ## lc-3
@@ -732,4 +732,13 @@ goal: general-maintenance
 write-set: lifecycle plugin checker code beside the existing shape/conservation checks; the compose-time convention text in the plugin's docs
 done-criterion: a lifecycle check resolves each entry's cited file:line and named artifacts against the working tree and reports THREE answers per citation (resolves-and-matches / resolves-but-diverged / gone) — "matches" checkable only for citations carrying a content anchor (a quoted fragment beside the pointer), entries without anchors reported as UNANCHORED rather than passed; red-first on fixtures reconstructed from the measured cs-36/cs-37/cs-39 instances; the companion convention (a citation carries a quoted fragment beside its line number — the dispatch-brief content-anchor rule generalized to carrier entries) stated in the plugin docs
 evidence: CachyOS-Setup freeze-arc wave close 2026-09-17, desk session 04c231 digest; peer desk measurement message with per-instance bases at 43305a3; dispatch skill section 1 content-anchor clause (the same rule at brief grain)
+blocked-by: NONE
+
+## lc-156
+grade: READY
+requirement: THE INVESTIGATION-RECORD MINT NAMES A CHECKER THAT WAS NEVER BOOKED. The 2026-09-17 corpus mint (calibration module "Investigation record" bullet; format: dotfiles claude/investigation-record-format.md) created a lintable carrier — one file per project+arc under ~/.local/state/claude/investigations/, five slots, fixed-shape basis lines, closure by graduation — and its format file stated "the mechanical check of this rule is lifecycle-plugin work, booked separately". Verified 2026-09-17 at this carrier: zero entries mention it — a consumer named over an unwritten list, the assumed-delivery class, inside the mint built to fight that class. The carrier family precedent is this plugin's own ITEMS.md enforcement (closed vocabulary, slot anchors, closure moves); the investigation record currently has NO mechanical check, only prose conventions plus the visible reply line.
+goal: enforce-the-invariants
+write-set: plugin checker code beside the existing shape/conservation checks; test fixtures
+done-criterion: a checker over ~/.local/state/claude/investigations/*.md reports per record: five-slot presence; ESTABLISHED/OPEN line shape (leading [VERIFIED|INVALIDATED|PENDING] tag, em-dash-separated basis — a tagged line with no basis fails); NOW nonempty; and the closure gate — a record marked closed carries graduation pointers and zero undrained [PENDING] lines. THREE answers per check (pass / fail / COULD NOT VERIFY with what it could not read — an unreadable file is never clean). Red-first on fixtures: a planted basis-less [VERIFIED] line and a closed-with-undrained-slots record both go red against the checker; KNOWN POSITIVE: the live pilot record (CachyOS-Setup--marvel-rivals-freeze.md, in operation since 2026-09-17) passes as-is, or its deviations are findings named at build time. OUT OF SCOPE, deliberately: the "record: +VERIFIED …" reply-line duty — its trigger (is this reply diagnosis-continuing?) is judgment-shaped, fails the mechanism bar, and stays a visible-output convention; the checker covers the FILE's form only. On green, dotfiles claude/investigation-record-format.md's pointer sentence is confirmed against the shipped checker name (the amendment citing this item lands with this booking, from the desk).
+evidence: grep -i investigation over this ITEMS.md, 0 entry hits, 2026-09-17 (the false "booked separately" claim); investigation-record-format.md closing paragraph; operator question 2026-09-17 ("the write to it is linted or form-checked? we use a script/hook/lint for items.md") — the mint round's own admission gap, caught by its requester
 blocked-by: NONE
