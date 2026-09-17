@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 146
+added: 147
 compacted: 0
 
 ## lc-3
@@ -723,4 +723,13 @@ goal: lean-machinery-strict-checks
 write-set: tools/write-set-dependents.py,test/test_tools.py
 done-criterion: Given the location of a source-derivable enumeration, a tool lists the tracked files that DERIVE it and assert against it, for inclusion in a write set at booking time. PROVEN ON A PAIR drawn from the repo, never on a planted row: the KNOWN POSITIVE is cli.py's `item_action` tuple, whose answer MUST contain test/test_verbs.py — the file whose absence cost lc-120 its halt; the KNOWN NEGATIVE is an enumeration no file grades, whose answer must be empty. A tool that returns test_verbs.py for every input has not discriminated. ITS OUTPUT SET HAS THREE ANSWERS, not two: an enumeration it cannot resolve answers COULD NOT VERIFY and names what it could not read, never an empty list, because an empty list here reads as `nothing depends on this` and is the exact false clean the item exists to prevent.
 evidence: Ruled a repo booking by the judgment desk on the wave-3 law-24 round, after lc-120's lane surfaced the shape and explicitly declined to generalise it: one instance, one measurement, a hypothesis rather than a class. That grade is carried here deliberately — the tool is scoped to the source-derivable-enumeration shape and claims nothing beyond it.
+blocked-by: NONE
+
+## lc-155
+grade: READY
+requirement: Carrier citations rot silently in THREE kinds, each needing its own cure — measured 2026-09-17 in CachyOS-Setup ITEMS.md by the freeze-arc wave close (peer desk cachyos-setup-02, all instances verified at that repo's base 43305a3): (1) WRONG POINTER — a cited line or named artifact does not hold the claim (4 instances: a :162 for content at 435; a :42 and a :101 for content at 366-370; a named prototype script existing nowhere on disk); (2) WRONG FIGURE — a stated count diverging from the primary record ("~180 freezes" where the session's own log says 558); (3) CORRECT POINTER, STALE CONTENT — the citation resolves but the text it names has gone stale (a known-issues line naming 610.43.03 as current on a 615.71.09 box; misled a human reader for a month). Rate with its denominator: 3 of 7 explicit line/count citations wrong across one lane's five entries, concentrated in the file that changes most. A resolver-only checker catches kind 1 alone; kind 3 is invisible to it; kind 2 needs the figure re-derived from the primary record.
+goal: general-maintenance
+write-set: lifecycle plugin checker code beside the existing shape/conservation checks; the compose-time convention text in the plugin's docs
+done-criterion: a lifecycle check resolves each entry's cited file:line and named artifacts against the working tree and reports THREE answers per citation (resolves-and-matches / resolves-but-diverged / gone) — "matches" checkable only for citations carrying a content anchor (a quoted fragment beside the pointer), entries without anchors reported as UNANCHORED rather than passed; red-first on fixtures reconstructed from the measured cs-36/cs-37/cs-39 instances; the companion convention (a citation carries a quoted fragment beside its line number — the dispatch-brief content-anchor rule generalized to carrier entries) stated in the plugin docs
+evidence: CachyOS-Setup freeze-arc wave close 2026-09-17, desk session 04c231 digest; peer desk measurement message with per-instance bases at 43305a3; dispatch skill section 1 content-anchor clause (the same rule at brief grain)
 blocked-by: NONE
