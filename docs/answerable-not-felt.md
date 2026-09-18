@@ -452,6 +452,143 @@ miniature: `firelog.py` records guard fires, and the judgment register records
 fired / legitimate / overridden. The lever is widening what gets captured by
 construction, not inventing a new mechanism.
 
+## THE PLAN — five mechanisms (operator-framed, 2026-09-18)
+
+This supersedes the earlier "mechanize the answerable half" framing as the
+arc's build plan. It is stated in the operator's own terms because their
+framing replaced the desk's: the desk had this as BOOKKEEPING (record what
+happened); the operator has it as KEEPING THE WORKING CONTEXT IN VIEW (record
+what the next decision needs). Same mechanism, different reason — and the
+reason decides what gets written.
+
+**The idea in one line: the project keeps a system of record; sessions WRITE
+to it as they work and READ from it because the system announces itself.**
+
+Not rules telling a session what to do — FACTS it can use. A rule constrains
+and has a measured ceiling; a fact informs. Some facts are judgments or
+hypotheses, marked as such so they can be revised when evidence arrives, which
+is what the `[VERIFIED]` / `[PENDING]` / `[INVALIDATED]` vocabulary is for. A
+record that can be wrong and say so is the only kind safe to accumulate.
+
+### 1. The system announces itself — MOSTLY BUILT
+
+A session-start hook puts the project's state in front of the session: open
+items, ledger tail, ready set, gate status. The session does not have to know
+to go looking.
+
+**This works and today is the evidence.** This desk knew lc-157 existed only
+because the banner said so, and every booking went into the carrier instead of
+into chat because the carrier announced itself first. **This is the half that
+carries the AWARENESS — "this system exists and I am meant to use it" — which
+the operator identifies as carrying the bulk.**
+
+### 2. Sessions WRITE as they work — THE REAL GAP
+
+Every record entry today is a deliberate act someone had to remember to make.
+Measured by a peer the same day: nine hours, the visible-output record line
+emitted ONCE. A carrier written from recollection drifts exactly like a stale
+label.
+
+Instead, **the act of doing the work also records it** — decisions with their
+reasons, what was found, what was tried and ABANDONED, hypotheses marked as
+hypotheses. Not everything: the parts a later decision would need.
+
+**The operator's test: closing a session should have almost nothing left to
+do.** If the close has work, something upstream deferred instead of writing.
+
+**The worked example, from a peer the same day:** it built a tool that does
+not background itself, having written one the day before that does; the
+deployed helper already accepted the variant it was arming by hand. Every
+piece of plumbing existed. Not a discipline failure — the existing tool was
+not IN VIEW. A record removes the need for the read-the-existing-instances
+rule to fire at all, because yesterday's instance is already in what the
+session is reading.
+
+### 3. Watch for SURPRISES, not for guards firing
+
+A guard firing is usually an old lesson working correctly — enforcement, not
+learning. The signal is a check being SURPRISED: a test failing on a case
+nobody planted, two independently-built measurements disagreeing, a control
+that should have fired and did not, a runner reporting a pass-shaped number
+over zero executions.
+
+**Cheapest path: extend three instruments this stack already runs** — battery
+green/red comparisons, independently-built-instrument divergence, and
+red-first / positive-control discipline on new guards. No new observation
+channel needed.
+
+### 4. Lifecycle governs the SHAPE
+
+Extend lifecycle's existing job — homes, staleness, exits, growth, fire
+rate — to the record and to the global corpus. **Shape, never content:**
+whether a rule is right, whether it is ethic or lens, stays the operator's.
+(Booked: lc-158.)
+
+### 5. RE-GROUND THE SCOPE AT PICKUP — the scoping answer
+
+**The operator's opening question this session was how to make work
+well-scoped and complete BEFORE building. Measured against this repo's own
+carrier, that is the wrong target.**
+
+Of 88 COMPLETED items, **55% had their scope amended between booking and
+closing**, and the slot pattern says what moved:
+
+| slot amended | share | what it means |
+|---|---|---|
+| evidence | 39% | the facts the scope rested on moved |
+| done-criterion | 19% | what "done" means changed |
+| write-set | 17% | where the work lands changed |
+| **requirement** | **5%** | **what the work IS — almost never changes** |
+
+The amend-reasons are explicit about the mechanism: *"the sweep population
+grew while this entry stood"*, *"the booked path never existed"*, *"booked
+against a premise this repo had already killed"*, *"the decision it named was
+answered by the operator this afternoon"*.
+
+**So scope does not fail at booking — it DECAYS after it.** People state what
+they want accurately (requirement, 95% stable); what rots is the evidence
+around it. A scope cannot be finished in advance because its facts keep
+moving. lc-159's half 2 is this desk's own instance: booked as a cross-repo
+schema migration, and by build time the premise was dead and the real work was
+five times smaller.
+
+**The mechanism: an item's EVIDENCE is re-read against the world at PICKUP,
+not only written at booking.** Not the whole scope — the facts it rests on.
+This is the cheapest item on the board because `lifecycle` already knows an
+item's evidence slot and its write-set paths: checking that cited paths still
+resolve and cited facts still hold is a verb, not an architecture. It is also
+already proven by hand — lc-156 shipped correctly only because its executor
+was told to grade against the format file at HEAD rather than the booked
+criterion, and the booked text turned out to be the stale half.
+
+**And this is why the scoping question and the recording question are ONE
+question.** What decays is evidence; a system that records as it works is a
+system whose evidence stays live. The 44% of OPEN items already carrying
+amendments are scopes being kept current by hand, one retirement pass at a
+time. Mechanism 2 makes that a byproduct instead of a chore.
+
+### What the plan does NOT solve, stated so it is not assumed
+
+- **The unmechanizable half** (19 YES / 19 NO at event grain): taste, naming,
+  scope-of-the-corpus judgments, and "this rule is correct and it is
+  ceremony". That is the operator designing the system, not a gap.
+- **DIRECTION DRIFT** — an arc where every round is correct work pointed
+  slightly away from the question. Cost the most on 2026-09-18, in two
+  separate arcs, and has NO mechanism. The GOAL-slot-unmoved-while-ESTABLISHED
+  -fills shape is an unprobed guess.
+- **Completeness as distinct from scope decay.** The 55% measures decay, never
+  sufficiency. Whether a booked item was COMPLETE is unmeasured.
+- **Trust calibration** (lc-161) and **whether desk/peer beats a single
+  session** (no control arm exists).
+
+### The one thing worth measuring next
+
+Some repos on this machine have the session-start hook and some do not. **That
+is a live natural experiment for mechanism 1's central claim** — does a record
+that ANNOUNCES ITSELF change behaviour versus one sitting on disk? It is the
+research scout's gap #1 (the unrun "record present but never referenced" arm)
+in a form this stack can actually run.
+
 ## The payoff — mechanized levers let prose RETIRE (a leaner corpus)
 
 Beyond catching more gaps, each lever has a second payoff that ties directly to
