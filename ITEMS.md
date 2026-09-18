@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 155
+added: 156
 compacted: 0
 
 ## lc-3
@@ -795,3 +795,12 @@ write-set: UNKNOWN
 done-criterion: a reader of the checkout cannot mistake a prove-rows window for a real red: either prove-rows mutates a COPY and the live tree is never inconsistent, or an open window is detectable and `--test` answers COULD NOT VERIFY under it. Red-first: a roster run issued DURING a window must not report a passing row as FAILED
 evidence: MEASURED 2026-09-18. --test at 99e998c, clean tree, 3 runs: 104/104 CLEAN. Under migration_unclassified's recorded mutation (which replaces the emission TEXT, so migrate still exits FINDING while the row NAME is absent): 102 passed/2 failed, both lines reading 'the plant fired, but nothing in its output names row'. Under migration_ambiguous_closure's (closure-word scan folded): 103/1 — the peer desk's exact count. The reported red straddled the two, consistent with a read crossing prove-rows' step between arrangements. tools/prove-rows.py already refuses to START on a dirty target; the symmetric hazard to READERS has no marker at all. _coverage_over_copy in refusals.py is the copy pattern already in this repo
 blocked-by: decision does prove-rows mutate a COPY, or does an open window become detectable and make --test answer COULD NOT VERIFY?
+
+## lc-164
+grade: READY
+requirement: AN UNFALSIFIABLE EVIDENCE BLOCKER PARSES, SO THE CARRIER ACCEPTS IT. The gate checks SYNTAX (sh -n), never DISCRIMINATION. Measured in operation today by a peer desk, booked and accepted: evidence test -n "$(pgrep -f 'freeze-wait.bt')" && test -z "$(pgrep -f 'freeze-capture-preflight' | head -0)" — head -0 emits nothing, so the second clause is TRUE FOR EVERY INPUT and the predicate collapses to 'a tracer is running', which was true at booking. The item would have read UNBLOCKED while the thing it waits for had not happened, and nothing downstream could detect it. This is the corpus's unprovable-check class (a predicate no input could falsify) inside the mechanism that decides schedulability.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: an evidence blocker is EXECUTED at booking time and its exit code recorded on the entry. A predicate returning 0 AT BOOKING is either an item already unblocked or a predicate that cannot fail, and both are reported — neither is detectable later. RED-FIRST: the head -0 predicate above is the firing input and must be refused or flagged; a predicate that genuinely discriminates (exit 1 at booking, exit 0 once its condition holds) passes. MUST-NOT-MOVE: a predicate whose execution is slow or has side effects is not run twice, and an unrunnable one is COULD NOT VERIFY rather than accepted silently.
+evidence: Peer desk cachyos-setup-33, 2026-09-18, in operation: the predicate above was booked and ACCEPTED by this carrier; sh -n passes it. Their proposed mechanism, adopted as this criterion, with their own reasoning that it clears the mechanism bar because running a predicate is computable and its exit code is a fact rather than a judgment. THEY ALSO NAMED A SECOND HALF worth having: the three blockers they retyped by hand today each got a live-exit / constructed-positive / constructed-negative exercise, and NOTHING IN THE CARRIER KNOWS THEY DID THAT — a slot for the exercise record would make its ABSENCE visible, which is the only thing that makes a discipline hold.
+blocked-by: NONE
