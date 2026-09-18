@@ -320,6 +320,41 @@ literature predicts artifact-reading dominates (arXiv:2606.09863: no judge
 configuration over prose exceeds AUROC 0.65, across five models, five prompt
 strategies, and a baseline given the full ground-truth spec).
 
+> **MEASURED, SAME DAY. The question above was run and the study is at
+> `docs/audits/2026-09-18-desk-peer-catch-study.md`** — 103 graded correction
+> events, 9 sessions, 6 projects, 3 lanes, read-only over raw transcripts.
+>
+> **ANSWER: two asymmetric information holders.** The one-directional reading
+> is refuted, and hardest in the direction it does not permit — the lane with
+> the cleanest breakdown found cross-session catches at **8:1 PEER→DESK** (one
+> desk→peer, one ambiguous); a second lane split 3:2. The desk is not
+> predominantly the checker.
+>
+> **BASIS CONFIRMED THE PREDICTION:** of 25 cross-session catches, ~21 cite a
+> concrete artifact read against ~4 resting on reasoning. The literature's
+> judge ceiling reproduced from the other side, in this machine's own data.
+>
+> **A FINDING NOBODY WENT LOOKING FOR, and it is the one that changes what to
+> build: a peer's own "self-correction" label is not evidence of who caught
+> something.** Two independent cases where a desk praised its peer's
+> self-correction — once as "the arc's best piece of self-correction" — where
+> the transcript shows the catch was OPERATOR-triggered. A peer sees only what
+> is reported to it, never the other session's private turns with the
+> operator. So a desk systematically OVER-ATTRIBUTES self-correction to its
+> peer, and the operator's trust calibration (lc-161) is built from exactly
+> those reports.
+>
+> **SCOPE, stated because the counts invite over-reading:** the instrument
+> reads INBOUND records only, so SELF and MECHANISM are under-counted BY
+> CONSTRUCTION and only the CROSS row carries weight. All 63 SELF events are
+> self-catches that were COMMUNICATED. And no control arm exists — this
+> measures who catches, never whether desk/peer beats a single session.
+>
+> **The re-grading that moved the headline:** filing "a party's own dispatched
+> lane caught it" as SELF hides cross-context catching, because a dispatched
+> lane IS a separate context with its own information. Re-split, one lane's 34
+> SELF became 12 lane-caught / 18 true-self / 4 can't-tell — near parity.
+
 **Not answered by the incident that first suggested it.** The `args.pid`
 inversion was offered as evidence that a more capable desk was wrong in the
 deciding half — but both sessions were Opus (operator, 2026-09-18), so the tier
