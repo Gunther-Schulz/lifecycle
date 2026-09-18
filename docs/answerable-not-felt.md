@@ -482,7 +482,40 @@ into chat because the carrier announced itself first. **This is the half that
 carries the AWARENESS — "this system exists and I am meant to use it" — which
 the operator identifies as carrying the bulk.**
 
-### 2. Sessions WRITE as they work — THE REAL GAP
+### 2. Sessions maintain a NARROWING as they work — THE REAL GAP
+
+**IT IS NOT A LOG. It is a live picture of what is still open and what has
+been ruled out** (operator, 2026-09-18, correcting this desk's framing). The
+desk had written this as "record what happened as you go", which produces an
+accumulating pile that guides nothing. Daneel does not do that: hypotheses are
+ELIMINATED, `[PENDING]` becomes `[VERIFIED]` or `[INVALIDATED]`, and the space
+of live possibilities shrinks with every step.
+
+**That is why it guides by existing.** Not because it stores things — a log
+stores things and guides nothing — but because at any moment it says HERE IS
+WHAT IS STILL OPEN AND HERE IS WHAT IS RULED OUT. A session reading it
+inherits the narrowing instead of redoing it.
+
+**And this is exactly how the ESTIMATE half resolves.** An estimate is not
+wrong-then-right; it starts wide and narrows as evidence arrives. Where the
+work lands, what counts as done, which facts hold — each begins as a
+hypothesis and gets eliminated down to an answer. Daneel's structure IS the
+mechanism by which mechanism 5's estimate half converges.
+
+The format already encoded this and the desk had been describing it wrongly:
+`NOW` is OVERWRITTEN (the current picture) while `ESTABLISHED` accumulates
+(what has been settled). One slot is the narrowing, the other its residue.
+
+**It also explains the peer's worked example precisely.** They did not fail to
+LOG the previous day's tool. They failed to have its conclusion in the LIVE
+PICTURE — so "does a backgrounding tool already exist?" was still open for
+them when it had already been closed.
+
+**What is NOT proven, and it is the plan's sharpest open claim:** that the
+narrowing works ACROSS SESSIONS and OUTSIDE a protocol run. Statiker and
+daneel maintain it inside their cycles and it dies with the arc. Whether a
+project-level narrowing — carried by lifecycle, read at session start — does
+the same job is what nobody has run.
 
 Every record entry today is a deliberate act someone had to remember to make.
 Measured by a peer the same day: nine hours, the visible-output record line
