@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 214
+added: 215
 compacted: 0
 
 ## lc-3
@@ -1231,4 +1231,13 @@ goal: enforce-the-invariants
 write-set: docs/audits/,docs/answerable-not-felt-research.md
 done-criterion: A DESIGNED probe, or a recorded finding that no available measurement discriminates — both are closures. The item asks: what measurement would show THIS repo corpus growth degrading rather than helping, and do we already hold the data? Candidates in hand: the fire log (verb, repo, outcome, no session id), the judgment register fire counts, the adherence split, the item ratio over time. THE DISCRIMINATING QUESTION IS NAMED BEFORE ANY DATA IS PULLED: what outcome would flip the verdict each way, since a measurement consistent with both decides neither. MUST-NOT-BUILD: no probe whose result is consistent with both erosion and health; and the paper is OPENED at a desk before it is rested on, since it is lane-verified and unread here. If the honest answer is that nothing available discriminates, that IS the finding and the item closes on it — a named could-not-verify, never a quiet drop.
 evidence: LANE-VERIFIED and NOT opened at any desk here: arXiv:2605.09315. MEASURED here 2026-09-18: 63 new item headings against 18 closures in one day, 3.5:1, above the 3:1 tripwire, while item ratio reported CLEAN over its lifetime window.
+blocked-by: NONE
+
+## lc-223
+grade: READY
+requirement: FOUR EXTERNAL MECHANISMS WORTH TAKING WERE SURVEYED AND NONE IS BOOKED — they live only in docs/audits/2026-09-18-tooling-prior-art.md, whose kind declares reader session with no read trigger, so they rot where nothing looks.
+goal: enforce-the-invariants
+write-set: CLAUDE.md,ITEMS.md,docs/audits/2026-09-18-tooling-prior-art.md
+done-criterion: Each of the four gets a disposition — adopted with its own entry, or DROPPED with a one-line reason. Both are exits. (1) STRYKER killedBy per-mutant test attribution as a published result-schema field; prove-rows already computes this and prints it in prose, so the question is whether its output is meant to be consumed by anything but us — if not, DROP and record that, because the decline is the more interesting answer. (2) CHECKOV requires every check to ship passing AND failing resources, which is law 2s pair adopted at scale; the borrow is evidence the discipline survives real users, which one repo cannot establish, so the disposition is a note in law 2s basis rather than a code change. (3) DOSU per-document ttl_days frontmatter — a kind declaring its own shelf life, the staleness stage gaining a WHEN the way lc-168 gave the writer one; note its honest limit before adopting, since it measures decay and says nothing about completeness. (4) SONARSOURCE S2699 flags a test with no assertions and is blind to one PRESENT and tautological — not a mechanism to take but a fact for law 22s basis: the industry answer to is-this-test-dead cannot see the dead test we care about. MUST-NOT-BUILD: no adoption of any of the four before the source is opened at a desk.
+evidence: RELAYED (three sonnet discovery lanes, carried as theirs): all four mechanisms, their repos, stars and recency. NOT MEASURED HERE — no project was installed, opened or executed at any desk in this repo, and that is the entry own constraint rather than a caveat. MEASURED (this desk): the audit file exists at docs/audits/2026-09-18-tooling-prior-art.md and the audits kind declares reader session with no trigger, read from .claude/lifecycle.json. DERIVED: that an entry living only in an audit rots, since no verb reads that kind and the loop map ranks unfired reads as the top gap.
 blocked-by: NONE
