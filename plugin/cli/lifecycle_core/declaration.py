@@ -541,6 +541,8 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
             for name, body in kinds.items():
                 _validate_kind(name, body, res, world)
 
+    if repo is not None:
+        check_records_kind_declared(repo, doc, res)
     if repo is not None and isinstance(doc.get("laws"), str) and doc["laws"].strip():
         check_laws_present(repo, doc["laws"], res)
     if repo is not None:
@@ -820,6 +822,62 @@ def _validate_template_bindings(tb: dict, res: Result) -> None:
                       "a template gaining a slot after a binding was "
                       "written leaves exactly this second shape, with no "
                       "value to see. `workflow bind --set` fills either.")
+
+
+#: The investigation record's home, as the format file fixes it. Matched as a
+#: SUBSTRING of a declared `home`, because a repo may legitimately spell the
+#: XDG root as `$XDG_STATE_HOME`, `${XDG_STATE_HOME}` or an expanded path —
+#: what identifies the kind is the directory the records actually live in.
+RECORDS_HOME_MARK = "claude/investigations"
+
+
+def check_records_kind_declared(repo, doc, res: Result) -> None:
+    """A repo whose investigation records EXIST must register the kind.
+
+    INVARIANT 1 REACHES OUT OF THE TREE HERE, which is the whole reason this
+    check exists rather than the sweep. `kind sweep` walks TRACKED files, and
+    the investigation record is deliberately outside every repo — XDG state,
+    so no repo is dirtied and no permission dialog fires from the
+    config-directory protection. That design is right and it has a
+    consequence nobody had drawn: the sweep structurally CANNOT see these
+    files, so the one carrier that grades them (`lifecycle record check`,
+    shipped 2026-09-18) was grading a kind no declaration governed. One
+    carrier ends and none picks up.
+
+    SILENT WHERE THERE IS NOTHING TO GOVERN. A repo with no records of its
+    own needs no kind, so the absence of both is clean — this fires only
+    where the files are actually there, which is what keeps it off every
+    repo that never opened an investigation.
+    """
+    from . import records as records_mod
+
+    prefix = Path(repo).resolve().name
+    try:
+        found = sorted(records_mod.records_dir().glob(f"{prefix}--*.md"))
+    except OSError:
+        return
+    if not found:
+        return
+
+    kinds = doc.get("kinds")
+    if isinstance(kinds, dict):
+        for body in kinds.values():
+            home = isinstance(body, dict) and body.get("home")
+            if isinstance(home, str) and RECORDS_HOME_MARK in home:
+                return
+
+    res.add("records_kind_undeclared",
+            f"{len(found)} investigation record(s) exist for this repo "
+            f"({', '.join(p.name for p in found[:3])}"
+            + (", …" if len(found) > 3 else "")
+            + ") and no registered kind names their home. They sit OUTSIDE "
+              "the tree by design, so `kind sweep` cannot reach them — it "
+              "walks tracked files — and their absence from the declaration "
+              "is therefore invisible to every other check. Register the "
+              "kind with all six stages; the home is a pattern under "
+              f"`{RECORDS_HOME_MARK}`, the files are never moved into any "
+              "tree, and `the fire log` is the precedent for an XDG home "
+              "declared as a per-repo kind.")
 
 
 def _validate_kind(name: str, body, res: Result, world) -> None:

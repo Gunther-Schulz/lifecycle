@@ -242,6 +242,21 @@
       },
       "growth": "bounded-by-exit — one rule per path shape this repo produces and does not track; the `.claude/*` negation is the declaration's own visibility"
     },
+    "investigation records": {
+      "home": "$XDG_STATE_HOME/claude/investigations/lifecycle--*.md",
+      "writer": "session",
+      "reader": [
+        "session",
+        "verb:record check"
+      ],
+      "staleness": "change-coupling \u2014 a record whose NOW no longer composes its ESTABLISHED lines toward GOAL is stale by the format's own slot discipline and is rewritten before the next probe is chosen. The ESTABLISHED lines themselves age like any cited basis: a line whose command, file or output has moved past the citation no longer establishes what it claims.",
+      "exit": {
+        "action": "never",
+        "recording-act": "a `## CLOSED` heading whose body carries the graduation pointers \u2014 ESTABLISHED lines to the ledger or docs of the repo they describe, OPEN lines to the item carrier or a recorded one-line disposition. `lifecycle record check` refuses a closure that is undrained or unpointed.",
+        "detail": "THE FILE NEVER MOVES INTO ANY TREE, and that is the stage rather than an omission. Closure here is GRADUATION of the record's CONTENT, never relocation of the file: the body goes to the carrier that will be re-read, and the record stays in XDG state as history. The three benefits the format file names are what the home protects \u2014 no repo is dirtied, no permission dialog fires from the `.claude`-shape protection, and the record survives across repo states and branches, which is exactly what a multi-session arc needs. `the fire log` is the precedent: a machine-wide XDG path declared as a per-repo kind with all six stages."
+      },
+      "growth": "unbounded-with-reason \u2014 one file per project+arc, and an arc opens only when work turns diagnosis-shaped or passes a skip-gauge no. The flow control is the closure gate rather than a count: a record cannot close with undrained slots, so an arc that ends leaves its lines in the carriers that consume them instead of accumulating here. A cap would bound the LABEL and be escaped by opening a second arc (R22)."
+    },
     "the fire log": {
       "home": "$XDG_STATE_HOME/lifecycle/fire.jsonl",
       "writer": "verb:--test, verb:item add, verb:item close, verb:kind check",

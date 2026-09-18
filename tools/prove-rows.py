@@ -887,6 +887,18 @@ MUTATIONS = [
      "    if never:",
      "    if False:",
      "the test that every registered verify command actually EXECUTED"),
+
+    # lc-166. THE EXISTENCE HALF, which is where this refusal is decided: the
+    # check fires only where records actually sit at the home, and folding
+    # the early return makes it return before the declaration is ever read.
+    # Anchoring the `res.add` would grade the printing rather than the
+    # decision, and anchoring the kind-scan would leave the finding firing
+    # for every repo that has no records at all — a guard over legitimate
+    # work, which is a different defect from an unproven row.
+    ("records_kind_undeclared", "declaration.py",
+     "    if not found:\n        return",
+     "    if True:\n        return",
+     "the test that this repo has investigation records to govern at all"),
 ]
 
 

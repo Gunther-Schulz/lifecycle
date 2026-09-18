@@ -3454,6 +3454,82 @@ def _ready_goal_run(goal: str) -> Fired:
         r.close()
 
 
+def _records_kind_run(*, declare: bool) -> Fired:
+    """`kind check` over a repo whose investigation records EXIST.
+
+    THE RECORDS HOME IS REDIRECTED THROUGH `XDG_STATE_HOME`, never the
+    machine's: a row that read the real home would grade whatever that home
+    held on the day it ran — the premise-drift class this plugin's own anchor
+    rule forbids — and the plant would mean writing a file into records
+    another session owns.
+    """
+    d = json.loads(json.dumps(GOOD_FULL_DECLARATION))
+    if declare:
+        d["kinds"]["investigation records"] = {
+            "home": "$XDG_STATE_HOME/claude/investigations/x--*.md",
+            "writer": "session",
+            "reader": ["session"],
+            "staleness": "change-coupling — the cited basis no longer resolves",
+            "exit": {"action": "never",
+                     "recording-act": "a `## CLOSED` heading with pointers"},
+            "growth": "unbounded-with-reason — one file per arc",
+        }
+    state = Path(tempfile.mkdtemp(prefix="lifecycle-xdg-"))
+    r = _Repo(declaration=d)
+    old = os.environ.get("XDG_STATE_HOME")
+    try:
+        home = state / "claude" / "investigations"
+        home.mkdir(parents=True)
+        # NAMED FOR THE REPO ITSELF: the check globs `<repo dir name>--*.md`,
+        # so a fixed filename would match nothing and the row would pass for
+        # a reason that has nothing to do with the declaration.
+        (home / f"{r.dir.resolve().name}--arc.md").write_text(
+            "# rec\n", encoding="utf-8")
+        os.environ["XDG_STATE_HOME"] = str(state)
+        buf = []
+        code = _kind_check(r, buf.append)
+        return Fired(code, "\n".join(buf))
+    finally:
+        if old is None:
+            os.environ.pop("XDG_STATE_HOME", None)
+        else:
+            os.environ["XDG_STATE_HOME"] = old
+        r.close()
+        shutil.rmtree(state, ignore_errors=True)
+
+
+def _kind_check(repo_obj, out) -> int:
+    from . import cli as cli_mod
+    import io
+    from contextlib import redirect_stdout
+
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        code = cli_mod.main(["--repo", str(repo_obj.dir), "kind", "check"])
+    out(buf.getvalue())
+    return code
+
+
+RECORDS_KIND_ROWS = [
+    Row(
+        ident="records_kind_undeclared",
+        refusal="investigation records EXIST for a repo whose declaration "
+                "registers no kind for them — invariant 1 reaching a home "
+                "the tracked-file sweep structurally cannot see",
+        firing_input="a repo with a record at the XDG investigations home "
+                     "and no kind whose `home` names that directory",
+        expect=exits.FINDING,
+        fire=lambda: _records_kind_run(declare=False),
+        # The SAME repo with the SAME record present, and the kind declared:
+        # the arms differ in the declaration alone. A control with no record
+        # would come back clean because there was nothing to govern, which
+        # says nothing about whether the check reads the declaration.
+        control=lambda: _records_kind_run(declare=True),
+        stage="lc-166",
+    ),
+]
+
+
 GOAL_ROWS = [
     Row(
         ident="verify_check_did_not_run",
@@ -3511,7 +3587,8 @@ GOAL_ROWS = [
 
 
 ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
-        + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS + GOAL_ROWS)
+        + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS + GOAL_ROWS
+        + RECORDS_KIND_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #
