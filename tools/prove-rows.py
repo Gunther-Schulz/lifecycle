@@ -963,9 +963,19 @@ def dirty_targets(paths) -> list:
     return out
 
 
+#: The package tree this run mutates and imports: a COPY, built at startup.
+#: None before it exists, and then every mutation, every import and every
+#: __pycache__ clear happens inside it. The live checkout is never written.
+WORK_ROOT = None
+WORK_CORE = None
+
+
 def clear_pycache():
-    for d in CORE.rglob("__pycache__"):
-        shutil.rmtree(d, ignore_errors=True)
+    for root in (WORK_CORE, CORE):
+        if root is None:
+            continue
+        for d in Path(root).rglob("__pycache__"):
+            shutil.rmtree(d, ignore_errors=True)
 
 
 def verdicts(only=None) -> dict:
@@ -986,7 +996,7 @@ def verdicts(only=None) -> dict:
     """
     src = (
         "import json, sys\n"
-        f"sys.path.insert(0, {str(CLI)!r})\n"
+        f"sys.path.insert(0, {str(WORK_ROOT or CLI)!r})\n"
         "from lifecycle_core import refusals\n"
         "out = {}\n"
         "for row in refusals.ROWS:\n"
@@ -1016,7 +1026,7 @@ def sibling_map() -> dict:
     """
     src = (
         "import json, sys\n"
-        f"sys.path.insert(0, {str(CLI)!r})\n"
+        f"sys.path.insert(0, {str(WORK_ROOT or CLI)!r})\n"
         "from lifecycle_core import refusals\n"
         "print(json.dumps({r.ident: r.expected_finding_row\n"
         "                  for r in refusals.ROWS}))\n"
@@ -1050,18 +1060,42 @@ def main(argv) -> int:
         for rel, why in dirty:
             print(f"    {rel}")
             print(f"        {why}")
-        print("\nThis tool overwrites each of those files and restores them "
-              "from a backup taken at startup, so running now would capture "
-              "the current state as the 'original' and write it back as such. "
-              "Either commit the work, or restore the file from its committed "
+        print("\nSince lc-163 this tool mutates a COPY and never writes "
+              "your checkout, so this is no longer about clobbering "
+              "uncommitted work — the reason is now PROVENANCE. The copy is "
+              "taken from the working tree, so a run over a dirty target "
+              "proves rows against code no commit contains, and the "
+              "`PROVEN` it prints cites a state nobody can fetch. Either "
+              "commit the work, or restore the file from its committed "
               "blob — `git show HEAD:<path>` — never with `git checkout`, "
               "`git restore` or `git stash`, which are whole-file destructive "
               "against uncommitted work.")
         return FINDING
 
+    # THE COPY IS THE WHOLE lc-163 REPAIR. This tool proves a check by
+    # DISABLING it, so while it ran the live checkout was deliberately wrong
+    # — and unmarked, so a reader could not tell a mutation window from a
+    # real regression. Measured 2026-09-18: a peer desk read the tree
+    # mid-run, saw two roster rows FAIL, and reported a regression against a
+    # commit that is deterministically CLEAN. That is this repo's own
+    # signature class — the wrong answer shaped exactly like the right one —
+    # sitting inside its verification tool, where a second party pays for it.
+    #
+    # `backup` stays as the restore source BETWEEN rows: a pristine copy, so
+    # one row's mutation cannot leak into the next.
     backup = Path(tempfile.mkdtemp(prefix="prove-rows-"))
     for f in CORE.glob("*.py"):
         shutil.copy2(f, backup / f.name)
+
+    global WORK_ROOT, WORK_CORE
+    WORK_ROOT = Path(tempfile.mkdtemp(prefix="prove-rows-work-"))
+    WORK_CORE = WORK_ROOT / CORE.name
+    WORK_CORE.mkdir()
+    for f in CORE.glob("*.py"):
+        shutil.copy2(f, WORK_CORE / f.name)
+    print(f"mutating a COPY (lc-163): {WORK_CORE}")
+    print("the live checkout is never written by this run, so a roster read "
+          "during it sees the committed code and not a mutation.")
 
     siblings = sibling_map()
     clear_pycache()
@@ -1075,7 +1109,7 @@ def main(argv) -> int:
     failures = []
     stale = []
     for ident, fname, anchor, replacement, what in rows:
-        path = CORE / fname
+        path = WORK_CORE / fname
         text = path.read_text(encoding="utf-8")
         hits = anchor_hits(text, anchor)
         if len(hits) != 1:

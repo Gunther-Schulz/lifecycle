@@ -121,6 +121,7 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
     def _run(self, d, core):
         """`main([])` over the fixture, its exit code and everything it said."""
         mod = _prove_rows()
+        self._live_during = []
         arrangements = [("probe_row", "probe_mod.py", ANCHOR, REPLACEMENT,
                          "the fixture module's one decided condition")]
 
@@ -129,7 +130,28 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
             # writes, so a walk that never mutated returns the baseline
             # signature and the arrangement reports FAILED rather than a
             # PROVEN nobody earned.
-            text = (core / "probe_mod.py").read_text(encoding="utf-8")
+            #
+            # WHICH TREE IT LOOKS AT IS THE PREMISE, and since lc-163 the
+            # walk mutates a COPY and never the live checkout. Read lazily
+            # off the tool — `WORK_CORE` is set inside `main()`, after this
+            # closure is built — so this stub follows the walk instead of
+            # pinning the tree the walk used to write. Left pointed at
+            # `core`, it reported every row FAILED: the check's premise had
+            # drifted while the check itself still looked sound, which is the
+            # anchor class this repo already names.
+            # getattr, not attribute access: the red-first proof runs
+            # this arm against the PRE-lc-163 tool, which has no such
+            # name — and an AttributeError there would be a red that
+            # proves the module is old, never that the arm
+            # discriminates.
+            work = getattr(mod, "WORK_CORE", None)
+            watched = Path(work) if work else core
+            # RECORDED FOR lc-163's ARM: this closure runs while a mutation
+            # is applied, so it is the one moment a test can see what a
+            # concurrent READER of the checkout would see.
+            self._live_during.append(
+                self._sha((core / "probe_mod.py").read_bytes()))
+            text = (watched / "probe_mod.py").read_text(encoding="utf-8")
             return {"probe_row": "0/unnamed" if REPLACEMENT in text
                     else "2/named"}
 
@@ -236,11 +258,20 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
         self.assertEqual(code, mod.FINDING, out)
 
     def test_the_clean_walk_restores_the_file_byte_for_byte(self):
-        """MUST NOT MOVE: the walk still mutates and still puts it back.
+        """MUST NOT MOVE: the live target ends at its committed bytes.
 
         Asserted against the COMMITTED BLOB rather than `git status`, whose
         stat cache keys on (mtime, size) and can report a byte-identical file
         as modified and a same-size edit as clean.
+
+        SINCE lc-163 THE GUARANTEE IS STRONGER THAN THIS ARM CAN SEE: the
+        walk mutates a copy, so the live file is not restored — it is never
+        written at all. This arm still pins the end state because an end
+        state is what a reader of the checkout depends on; what it cannot
+        distinguish is restored-correctly from never-touched, and the probe
+        that CAN is the hash sampler run during the walk (lc-163's own
+        evidence: 3 files diverging under the old tool, 0 under this one,
+        same sampler and same arrangements).
         """
         d, core, target = self._fixture()
         before = target.read_bytes()
@@ -252,6 +283,36 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
                          "the walk did not restore the target to its "
                          "committed bytes")
         self.assertEqual(before, target.read_bytes())
+
+    def test_the_live_target_is_never_written_DURING_the_walk(self):
+        """lc-163 — the window itself, observed from inside it.
+
+        THE END STATE IS NOT THE PROPERTY. A walk that mutates the live file
+        and restores it perfectly ends byte-identical, so the restore arm
+        above passes either way — and for the whole time it ran, a second
+        party reading the checkout saw a source file with one check disabled,
+        with nothing marking the window. That is what happened on
+        2026-09-18: a peer desk read the tree mid-walk, saw two roster rows
+        FAIL, and reported a regression against a commit that was
+        deterministically CLEAN.
+
+        So this arm samples from INSIDE the window: the verdict stub runs
+        while the mutation is applied, and it records what the LIVE file
+        looked like at that instant. Under the in-place tool those samples
+        differ from the committed bytes; under the copy they cannot.
+        """
+        d, core, target = self._fixture()
+        before = self._sha(target.read_bytes())
+        code, out, mod = self._run(d, core)
+        self.assertEqual(code, mod.CLEAN, out)
+        self.assertTrue(self._live_during,
+                        "nothing sampled from inside the walk — the arm "
+                        "proves nothing about the window it names")
+        self.assertEqual(set(self._live_during), {before},
+                         "the live target differed from its committed bytes "
+                         "while the walk ran: a reader of this checkout "
+                         "would have seen a disabled check, and the end "
+                         "state cannot show it")
 
 
 if __name__ == "__main__":
