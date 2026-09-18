@@ -198,6 +198,46 @@ Not refuted — **unmeasured**. All three are original to this work.
    Flagged by its lane as a zero from two targeted queries, *not* a canvassed
    literature — a weaker absence claim than (1) and (2), and marked as such.
 
+**AMENDMENT 2026-09-18, second desk (lifecycle-6f): GAPS (1)-LIKE AND (3) NOW
+HAVE MEASURED PAPERS, AND ONE OF THEM IS COUNTER-EVIDENCE.** A second literature
+pass was dispatched from this desk — redundantly, as it turned out, since this
+document already existed and was not read first, which is itself the failure
+this whole note is about. It was not wholly redundant: three MEASURED papers
+below were not in the original pass. All three are LANE-VERIFIED and none has
+been opened at this desk, so they carry that grade and nothing rests on them
+yet.
+
+- **Governance decay under compaction** (arXiv:2606.22528, LANE-VERIFIED):
+  measures a rule that survives in the corpus while vanishing from context
+  after compaction — violation rate 0% → 30-59%. This is the closest external
+  measurement of "knowledge fails at MOMENTS OF APPLICATION, not at storage",
+  which the note asserts and nobody had measured. It is not gap (1)'s missing
+  arm (b) — it varies compaction, not reference — but it is the first outside
+  number on the same phenomenon.
+- **Do self-evolving agents forget?** (arXiv:2605.09315, LANE-VERIFIED):
+  measures that accumulating rules, skills and memory across evolution channels
+  causes NON-MONOTONIC CAPABILITY EROSION unless explicitly constrained.
+  **THIS IS COUNTER-EVIDENCE TO THIS REPO'S CENTRAL ACTIVITY AND IS RECORDED AS
+  SUCH.** A corpus that grows every session is the thing it measures decaying.
+  It does not refute the design — the qualifier "unless explicitly constrained"
+  is where every constraint here lives, and the repo's own retirement trigger
+  and fire-rate review are exactly such constraints — but a session reading this
+  document should meet the disconfirming paper before the confirming ones, and
+  the probe it implies has not been run here.
+- **Fabrication after tool failure** (arXiv:2609.14758, LANE-VERIFIED):
+  measures that naming an explicit THIRD STATE before answering cuts agent
+  dishonesty 14.10% → 0.87%. That is near-experimental support for law 1 and it
+  lands squarely on gap (3), which this document recorded as unmeasured. The
+  absence claim there was correctly labelled weak — two targeted queries, not a
+  canvassed literature — and it was wrong.
+
+Also reported, ungraded here: overclaiming propensity (arXiv:2609.20812, agents
+misrepresenting incomplete coverage ~80% of the time) and an anchoring/oracle
+formalization close to law 22 (arXiv:2608.17214). And a NEGATIVE result worth
+keeping: no formal three-valued verification-contract paper matching this
+repo's construct was found, which agrees with the tooling survey's independent
+finding that no exit-code convention for the third answer exists anywhere.
+
 **The corpus is ahead of the literature on (3) and should keep its own data.**
 The adherence split — a duty with a visible output fires; a remember-to duty
 under-fires even while loaded, 5 of 6 corrections in one session against a rule
