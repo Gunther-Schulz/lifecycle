@@ -28,6 +28,34 @@ querying-instead-of-feeling buys). Everything below is means to this end, and it
 is the pruning test: a mechanism that does not move dependability, efficiency, or
 autonomy does not belong here.
 
+## The stance underneath — ENABLE, don't constrain (operator, 2026-09-18)
+
+The deepest framing, and the reason this beats more rules. A corpus built as a
+pile of PATCHES is CONSTRAINING — each rule reacts to a seen failure ("don't do
+X, always check Y, remember Z") — and that has a ceiling: it can only patch
+failures already seen; every patch costs context and attention every turn; the
+remember-to ones under-fire anyway; and — measured in this very corpus
+(skill-craft) — a strong model steered too tightly performs BELOW its own
+default. Over-constraining suppresses the intelligence it is paying for.
+
+The alternative is to ENABLE via the ENVIRONMENT: build a ground where the right
+move is the natural move and the wrong one is hard or visible (the pit of
+success), instead of a mind that must hold rules. Then attention is spent on the
+PROBLEM, not on self-policing; the environment carries the FLOOR (mechanically,
+reliably), the intelligence provides the CEILING (unburdened). This SCALES where
+patching does not — a good ground catches whole CLASSES of failure at once,
+including unenumerated ones, because the freed intelligence handles the long
+tail, not a rule.
+
+This RE-SORTS the corpus rather than deleting it: mechanizable patches move into
+the environment (their prose retires — see the payoff section); the genuine
+work-ETHICS — disprove before building on, enumerate before claiming complete —
+STAY, because those are stances a mind holds, not bookkeeping a mechanism can
+carry. End state: a SMALLER corpus that is more purely about judgment, on a
+ground good enough that intelligence can just work. Same family as daneel
+(investigation state held externally and QUERIED, not carried in the head) and
+statiker — build the ground, do not shackle the worker.
+
 ## The class
 
 An agent asserts a STATE OF ITS OWN WORK from memory or feeling instead of
