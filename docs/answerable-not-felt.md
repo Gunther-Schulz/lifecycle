@@ -545,6 +545,56 @@ while here the player rewrites the rules as part of playing — which is the met
 loop and has no clean game analogue. And skipping a frame is free in a game;
 here the skipped tick IS the failure.
 
+### WHAT THIS FRAME HAS ACTUALLY PRODUCED — graded, because an explanatory frame that predicts nothing feels profound
+
+**The grading is here rather than in a journal because the risk is IN this
+section:** a frame that explains everything after the fact is indistinguishable
+from a true one while it is only ever applied backwards. Astrology has that
+property. So the ledger, honestly:
+
+**RESTATED, not discovered.** "The tick is the verb" did not find the gap —
+lc-168 had already named the missing stage as the WHEN, measured at the schema
+the same morning, and mechanism 2 was already the verb-writer pattern. The frame
+arrived afterwards and said it better. Better words are worth something and are
+not a discovery.
+
+**GENUINELY NEW — one insight.** *A player loop survives harsh, delayed, even
+unfair feedback, and cannot survive FALSE feedback.* That explains why nine
+review findings and five incidents were one class, and it grounds the asymmetry
+this arc kept using without justifying: over-firing is visible and annoying,
+falsely passing corrupts every later decision. It is a mechanism, not a relabel,
+and nothing else in this design produced it.
+
+**GENUINELY NEW — one diagnosis.** Grinding as an inner loop running while the
+meta loop never advances, which turns "ten sessions to find a groove" from a
+complaint into a shape with a test.
+
+**GENUINELY NEW — one MECHANISM, and exactly one: lc-193.** The loop's named
+pathology is a SOFTLOCK, and asking what a softlock is HERE gives a state this
+carrier can reach and cannot detect — the blocker EDGES are validated and the
+GRAPH is never traversed, so a cycle waits forever while every check reports
+clean. Nothing else in this design was looking for that, and it is lc-14's own
+"permanent silent park" reached from a direction the check built for lc-14 does
+not watch.
+
+**MINED AND REJECTED, listed so the count is not inflated:** feedback LATENCY
+(checks fire at commit rather than at the act) and AFFORDANCE (the seventeen
+buttonless kinds are also invisible) both look like yields and both collapse
+into lc-174 and lc-168. A frame is not made productive by booking restatements
+of what was already booked.
+
+**THE FALSIFIABLE PREDICTION, so this does not stay backward-looking:** an
+ACT-anchored mechanism should outperform a timer- or memory-anchored one. The
+close-time observer fires on a skill invocation; lc-174 fires at session start;
+both are acts. **If a memory-anchored duty ever measurably outperforms an
+act-anchored one at the same job, this frame is wrong** and the section is
+rewritten rather than defended.
+
+**Net: the frame earns its place as VOCABULARY and as one mechanism's parent.
+It is not a design generator and must not be cited as one.** Its best property
+is cheap: "game loop" recruits a large shared understanding for free on every
+future read, where "self-administering" named nothing and could not be graded.
+
 ## THE PLAN — five mechanisms (operator-framed, 2026-09-18)
 
 This supersedes the earlier "mechanize the answerable half" framing as the
