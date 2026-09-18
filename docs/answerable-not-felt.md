@@ -537,6 +537,57 @@ not IN VIEW. A record removes the need for the read-the-existing-instances
 rule to fire at all, because yesterday's instance is already in what the
 session is reading.
 
+### 2b. THE MISSING STAGE IS **WHEN** — and it is what self-administering means
+
+**The operator's sharpening, 2026-09-18, and it names the gap exactly.**
+Self-administering is not only THAT something gets written. It is the system
+deciding WHERE, WHEN and WHAT — rather than a person deciding each time.
+wan2gp is the counter-case that proves it: it has a large, working, heavily
+READ knowledge layer, and it is ad-hoc on all three axes and triggered by the
+operator. Knowledge without a system. It works, and it works because the
+operator was the writer-of-last-resort throughout.
+
+**A REGISTERED KIND ALREADY ANSWERS FOUR OF THE FIVE QUESTIONS AND NOT THE
+FIFTH:**
+
+| question | declared as | present? |
+|---|---|---|
+| WHAT | the kind itself | yes |
+| WHERE | `home` | yes |
+| WHO | `writer` | yes |
+| FOR WHOM | `reader` | yes |
+| HOW LONG | `staleness` / `exit` / `growth` | yes |
+| **WHEN** | — | **NOWHERE** |
+
+**And the WHEN is exactly what separates the two populations measured today.**
+For the 4 verb-written kinds the trigger is IMPLICIT — the write fires because
+the verb ran, so `item close` writing a closure needs nobody to remember. For
+the 17 `writer: session` kinds there is no WHEN at all, which is precisely why
+they need a person to decide it is time. The writer field was read this
+morning as predicting DRIFT; the sharper reading is that it predicts
+SELF-ADMINISTRATION, and drift is the symptom.
+
+**THE MECHANISM IS ALREADY BUILT, ONE LAYER OVER.** `lanes.evaluate_trigger`
+runs a `Trigger:` predicate and maps its exit to fire / quiet / broken, with a
+mapping total on purpose so no code falls through into silence — and it is
+already the SINGLE evaluator shared by lane triggers and by `item ready`'s
+`evidence` blockers. So a seventh stage on the kind is not a new mechanism; it
+is an existing, proven evaluator applied to a question the schema does not yet
+ask.
+
+**What that makes mechanism 2, restated:** not "make records better" and not
+even "make acts write", but **move writes from the operator-prompted column
+into the self-initiated one.** That has a number today — 4 of 22 — and a
+target.
+
+**And it corrects gate 1.** "Are things written and read" is not sufficient: a
+record that fills only when the operator says *write that down* passes a naive
+write-count while failing the actual test. Gate 1 must distinguish
+SELF-INITIATED writes from PROMPTED ones, which is measurable in the same
+transcripts — a write following an operator message on that topic is prompted;
+one arising from the work itself is not. Otherwise we would measure wan2gp's
+success and call it self-management.
+
 ### 3. Watch for SURPRISES, not for guards firing
 
 A guard firing is usually an old lesson working correctly — enforcement, not
