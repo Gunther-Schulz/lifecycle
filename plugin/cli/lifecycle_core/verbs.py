@@ -514,6 +514,64 @@ def _insert_before_archive(done_text: str, body: str) -> str:
     return done_text.rstrip("\n") + "\n\n" + body.rstrip("\n") + "\n"
 
 
+#: The env var through which a CALLING SESSION supplies the attribution block
+#: its own harness prescribes. It is an env var and not a constant because
+#: the block names a MODEL and a SESSION URL, and neither is knowable from
+#: inside this process — the verb is invoked BY a session, and a constant
+#: compiled in here would attribute every future commit to whatever model was
+#: current the day the line was written.
+COMMIT_TRAILER_ENV = "LIFECYCLE_COMMIT_TRAILER"
+
+#: The two halves the machine's pre-push guard reads together. Keep these in
+#: sync with `dotfiles/git/hooks/pre-push:_ist_subagent_trailer`, which is the
+#: CONSUMER — this constant exists to avoid writing the shape it flags.
+_COAUTHOR_CLAUDE = "Co-Authored-By: Claude "
+_SESSION_TRAILER = "Claude-Session:"
+
+
+def attribution_block(env=None) -> tuple[str, str]:
+    """`(block, warning)` — the AI attribution to append, and what to say.
+
+    WHOLE OR NOTHING, AND THE REASON IS A DIFFERENT TOOL. This machine's
+    global pre-push hook decides BOOKED vs UNBOOKED subagent commits by one
+    predicate: a `Co-Authored-By: Claude ` trailer WITHOUT a
+    `Claude-Session:` trailer. A block supplied with only its first half
+    therefore does not merely under-attribute — it FORGES the shape that
+    guard acts on, and that hook's own comments record its false-fire budget
+    as already spent (10 of 234 desk commits, a union variant decided and
+    then withdrawn). So a half block is DROPPED, never written.
+
+    A WARNING, NEVER A REFUSAL. Refusing the commit would leave a carrier's
+    halves on disk and uncommitted — the exact split `commit_paths` exists to
+    prevent — as a punishment for an unset environment variable. An absent
+    trailer is already named on every push by the hook above, so the gap
+    stays measured rather than papered over either way.
+
+    The `Claude ` in the first constant is load-bearing: an ordinary HUMAN
+    co-author trailer is not the flagged shape and passes through untouched.
+    """
+    import os
+    env = os.environ if env is None else env
+    raw = (env.get(COMMIT_TRAILER_ENV) or "").strip()
+    if not raw:
+        return "", (
+            f"no attribution trailer: {COMMIT_TRAILER_ENV} is unset, so this "
+            "commit records no AI co-authorship. The pre-push hook names "
+            "unmarked commits on every push, so this is visible, not hidden.")
+    lines = raw.splitlines()
+    claims_claude = any(ln.startswith(_COAUTHOR_CLAUDE) for ln in lines)
+    has_session = any(ln.startswith(_SESSION_TRAILER) for ln in lines)
+    if claims_claude and not has_session:
+        return "", (
+            f"attribution DROPPED: {COMMIT_TRAILER_ENV} carries a "
+            f"`{_COAUTHOR_CLAUDE.strip()}` trailer with no "
+            f"`{_SESSION_TRAILER}` trailer. That pair is exactly what the "
+            "pre-push hook reads as an UNBOOKED SUBAGENT commit, so writing "
+            "it would forge a finding in another tool. Supply both trailers "
+            "or none; committing bare instead.")
+    return raw, ""
+
+
 def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False,
                  what: str = "the move") -> int:
     """Commit exactly the files this act wrote, BY PATHSPEC, never the index.
@@ -534,7 +592,11 @@ def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False,
             "batching writes owns that commit.")
         return exits.CLEAN
     rel = [str(p.relative_to(ctx.repo)) for p in paths]
-    r = subprocess.run(["git", "-C", str(ctx.repo), "commit", "-m", msg,
+    block, warning = attribution_block()
+    if warning:
+        out(warning)
+    full_msg = f"{msg}\n\n{block}" if block else msg
+    r = subprocess.run(["git", "-C", str(ctx.repo), "commit", "-m", full_msg,
                         "--"] + rel, capture_output=True, text=True)
     if r.returncode != 0:
         out(f"FINDING [move_uncommitted] {what} is on disk but was NOT "

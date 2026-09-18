@@ -1700,5 +1700,125 @@ class TheCarrierVerbDispatchHasNoDefault(unittest.TestCase):
             "have parted company.")
 
 
+class TheCommitAttributionTrailer(unittest.TestCase):
+    """`commit_paths` writes AI attribution, and writes it whole or not at all.
+
+    THE DEFECT THIS ARM FIXES was found in operation, not predicted: two
+    commits in another repo (`6fe939f`, `1e451a1`) produced by `item amend`
+    carried no `Co-Authored-By` trailer. The reporting peer proposed checking
+    `item add` and `item close` as separate axes; the surface answers that by
+    construction instead — `commit_paths` is the ONE commit implementation in
+    this package and has nine call sites, so every carrier write shared the
+    defect and no verb ever differed from another.
+
+    WHY THE TOOL CANNOT COMPOSE THE TRAILER ITSELF, which is the whole reason
+    this is an env var and not a constant. The block names a MODEL and a
+    SESSION URL. Both belong to whichever session invoked the verb, and
+    neither is knowable from inside a CLI process. A constant compiled in
+    here would attribute every commit made by every future session to
+    whatever model happened to be current on the day this line was written —
+    a label the checked party writes about itself, which is precisely the
+    class the arc this fix belongs to exists to remove.
+
+    WHY A HALF-BLOCK IS DROPPED RATHER THAN WRITTEN, and this is the arm that
+    would not exist without reading the consumer. This machine's global
+    pre-push hook (`core.hooksPath` -> dotfiles/git/hooks) decides
+    BOOKED vs UNBOOKED by exactly this predicate: `_ist_subagent_trailer`
+    counts a commit as an unbooked subagent commit when it carries
+    `Co-Authored-By: Claude ` AND LACKS `Claude-Session:`. So a trailer
+    supplied with only its first half does not merely under-attribute — it
+    FORGES the shape a different guard acts on, in a repo whose false-fire
+    budget that hook's own comments record as already spent. Dropping it is
+    the only option that cannot manufacture a false positive there.
+
+    AND IT IS A WARNING, NEVER A REFUSAL. Refusing the commit would leave the
+    carrier's halves written to disk and uncommitted — the exact split
+    `commit_paths` exists to prevent — to punish an unset environment
+    variable. The operator's decision was commit-bare-and-warn, and the
+    malformed case inherits it: an absent attribution is already named on
+    every push by the hook above, so the gap stays measured either way.
+    """
+
+    COMPLETE = ("Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>\n"
+                "Claude-Session: https://claude.ai/code/session_example")
+
+    def test_unset_env_yields_no_block_and_says_so(self):
+        block, warning = verbs.attribution_block({})
+        self.assertEqual(block, "")
+        self.assertIn(verbs.COMMIT_TRAILER_ENV, warning)
+
+    def test_a_complete_block_passes_through_untouched(self):
+        block, warning = verbs.attribution_block(
+            {verbs.COMMIT_TRAILER_ENV: self.COMPLETE})
+        self.assertEqual(block, self.COMPLETE)
+        self.assertEqual(warning, "")
+
+    def test_the_half_block_is_dropped_and_the_reason_is_named(self):
+        """The forged-unbooked-subagent shape never reaches a commit."""
+        half = "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+        block, warning = verbs.attribution_block(
+            {verbs.COMMIT_TRAILER_ENV: half})
+        self.assertEqual(block, "")
+        self.assertIn("Claude-Session:", warning)
+
+    def test_a_human_coauthor_is_not_the_forged_shape(self):
+        """The discriminating arm: the guard's predicate is `Claude `, so an
+        ordinary human co-author trailer must pass. Without this, a predicate
+        keyed on `Co-Authored-By:` alone would read as correct on all three
+        arms above while silently refusing every human co-authored commit."""
+        human = "Co-Authored-By: Someone Real <someone@example.invalid>"
+        block, warning = verbs.attribution_block(
+            {verbs.COMMIT_TRAILER_ENV: human})
+        self.assertEqual(block, human)
+        self.assertEqual(warning, "")
+
+    def test_the_trailer_reaches_the_actual_commit_object(self):
+        """AT THE EFFECT SITE. The three arms above grade a pure function;
+        this one grades the thing the defect was about — what `git log`
+        shows for a commit the tool actually made. A helper returning the
+        right string proves nothing if the caller drops it."""
+        import os
+        import subprocess
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for cmd in (["init", "-q"],
+                        ["config", "user.email", "t@example.invalid"],
+                        ["config", "user.name", "T"],
+                        ["config", "commit.gpgsign", "false"]):
+                subprocess.run(["git", "-C", str(root)] + cmd, check=True,
+                               capture_output=True)
+            f = root / "carrier.md"
+            f.write_text("body\n")
+            subprocess.run(["git", "-C", str(root), "add", "carrier.md"],
+                           check=True, capture_output=True)
+
+            ctx = verbs.Ctx(repo=root, declaration={}, prefix="xx",
+                            items_path=root / "ITEMS.md",
+                            done_path=root / "ITEMS-DONE.md",
+                            ledger_path=root / "LEDGER.md")
+
+            said = []
+            old = os.environ.get(verbs.COMMIT_TRAILER_ENV)
+            os.environ[verbs.COMMIT_TRAILER_ENV] = self.COMPLETE
+            try:
+                code = verbs.commit_paths(ctx, (f,), "a carrier write",
+                                          said.append)
+            finally:
+                if old is None:
+                    os.environ.pop(verbs.COMMIT_TRAILER_ENV, None)
+                else:
+                    os.environ[verbs.COMMIT_TRAILER_ENV] = old
+
+            self.assertEqual(code, exits.CLEAN, said)
+            body = subprocess.run(
+                ["git", "-C", str(root), "log", "-1", "--format=%B"],
+                capture_output=True, text=True).stdout
+            self.assertIn("Co-Authored-By: Claude Opus 5", body)
+            self.assertIn("Claude-Session:", body)
+            self.assertIn("a carrier write", body)
+
+
 if __name__ == "__main__":
     unittest.main()
