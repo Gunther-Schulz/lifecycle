@@ -244,6 +244,20 @@
       "growth": "bounded-by-exit — an entry leaves by being applied or dropped, and the drain seam is the retirement quota; never loaded by operational files",
       "trigger": "none, declared why: an observation is written when an instrument is found wanting DURING use, which is a reading of the using session and leaves no artifact until it is written"
     },
+    "reading roster": {
+      "home": ".claude/required-reading.json",
+      "writer": "session",
+      "reader": [
+        "session"
+      ],
+      "staleness": "change-coupling — a roster naming a file the tree no longer holds, or omitting one a fresh context must read before working here",
+      "exit": {
+        "action": "never",
+        "recording-act": "none is taken: the roster is this repo's declared reading floor, and a repo without one has no floor rather than a smaller one"
+      },
+      "growth": "bounded-by-exit — one entry per artifact a fresh context must read before working here; the roster's own `_not_listed_on_purpose` block is the bound's record, naming what was considered and refused rather than leaving the omissions silent",
+      "trigger": "none, declared why: the computable candidate — a kind whose `reader` names `session` and which no roster entry lists — OVER-FIRES by construction, since 20 of this repo's 25 kinds name `session` while the roster deliberately lists two. A guard firing on legitimate work trains the override reflex, so the mechanism bar is unmet and this stays a person's act."
+    },
     "git config": {
       "home": ".gitignore",
       "writer": "session",
