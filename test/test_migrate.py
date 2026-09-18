@@ -25,6 +25,8 @@ that got the distinction right:
   * a re-run over an UNMOVED source still answers.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import json
 import re

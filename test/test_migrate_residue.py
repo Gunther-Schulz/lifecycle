@@ -22,6 +22,8 @@ repo it ever runs in — so the exclusions are tested with the mentions
 actually present rather than in a repo where nothing says the name at all.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import subprocess
 import sys
 import unittest
@@ -45,6 +47,7 @@ SOURCE = ("# old carrier\n\n"
 
 def commit(repo: Path, rel: str, text: str):
     """Write a TRACKED file — tracked is the whole population the detector
+
     reads, so an uncommitted fixture would test the untracked case by
     accident."""
     p = repo / rel

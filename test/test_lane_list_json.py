@@ -15,6 +15,8 @@ and "this repo was skipped" must not read the same), an unresolved roster
 entry, and an absent roster.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import os
 import sys
@@ -38,6 +40,7 @@ def _run(argv):
 
 class LaneListJsonBase(unittest.TestCase):
     """Points `XDG_CONFIG_HOME` at a fresh scratch dir per test, so the
+
     roster is this test's own and never a real one on the machine running
     the suite — the same isolation `lanes.roster_path()` is designed for."""
 

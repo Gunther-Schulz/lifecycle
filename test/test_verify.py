@@ -13,6 +13,8 @@ the SAME block with one unrunnable command returns COULD NOT VERIFY. Without
 the second, a verb that always said CLEAN would pass the first.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import shutil
 import sys
 import tempfile
@@ -48,6 +50,7 @@ class TheBlockIsParsed(unittest.TestCase):
 
     def test_a_comment_only_line_is_not_a_command(self):
         """The real block wraps long notes onto their own comment lines.
+
         Running one would report a command nobody registered."""
         text = laws("true   # a note\n       # continued on its own line\nfalse")
         self.assertEqual(verify.parse_block(text), ["true", "false"])

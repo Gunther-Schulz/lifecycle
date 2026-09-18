@@ -15,6 +15,8 @@ slot. An assertion on what must NOT appear catches a check degrading where a
 presence assertion catches only one breaking.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import os
 import sys
@@ -29,6 +31,7 @@ from lifecycle_core import cli as cli_mod, exits, items, refusals  # noqa: E402
 
 def carrier(blocks, baseline=0):
     """A carrier file from `[(ident, {slot: value}), …]`, slots in order."""
+
     out = [f"schema: {items.SCHEMA_FLOOR}", f"baseline: {baseline}",
            "added: 0", "compacted: 0", ""]
     for ident, slots in blocks:

@@ -15,6 +15,8 @@ dotfiles' migrated carrier 2026-08-27: 126 of 138 live items matched an
 ordinary add.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import sys
 import unittest
 from pathlib import Path

@@ -6,6 +6,8 @@ archive section that must NOT be shape-checked, an absent file that must not
 read as an empty one, and the census's refusal to guess.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import sys
 import tempfile
 import unittest
@@ -30,6 +32,7 @@ def run_check(text=None, prefix="xx"):
 
 def run_done_check(text=None, prefix="xx"):
     """`check_done_file` over a throwaway done home. Its own runner because
+
     the done home asks three questions the live check cannot (§3.8c), and a
     caller that reached for `run_check` would be grading the wrong file."""
     with tempfile.TemporaryDirectory(prefix="lifecycle-done-") as td:

@@ -27,6 +27,8 @@ to exercise the real plumbing — stdin parse, range construction, the scanner
 subprocess, and the translated exit code.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import os
 import re
 import shutil

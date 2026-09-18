@@ -21,6 +21,8 @@ turn the acceptance arm green for the fixture's reason instead of the
 build's.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import json
 import sys
@@ -52,6 +54,7 @@ UNDECLARED = "not-a-declared-goal-at-all"
 
 def add_with_goal(goal):
     """`GOOD_ADD` with its `--goal` value replaced and nothing else touched:
+
     the arms below differ in that one token, so a red belongs to the goal
     check and not to a differently-shaped add."""
     argv = list(GOOD_ADD)

@@ -29,6 +29,8 @@ redirect it: the real `plugin/workflows/` ships holding only `.gitkeep`,
 and a fixture template must never be planted there.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import json
 import sys
@@ -55,6 +57,7 @@ def _run(argv):
 
 class ScratchRegistry:
     """A throwaway `plugin/workflows/`-shaped directory, monkeypatched onto
+
     `workflows.registry_dir` for the test's duration — isolated from the
     real registry the same way `refusals.py`'s `_decl_run_with_templates`
     and `_workflow_cli` isolate it for the roster rows."""

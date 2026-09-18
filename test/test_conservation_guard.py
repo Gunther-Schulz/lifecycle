@@ -19,6 +19,8 @@ two together say it discriminates.
     law 11's guard-fires-on-legitimate-work, which is what kills guards.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import shutil
 import sys
 import tempfile

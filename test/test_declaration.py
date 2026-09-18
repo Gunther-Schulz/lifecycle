@@ -1,5 +1,7 @@
 """The repository declaration's registered homes stay sweep-complete."""
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import json
 import subprocess
 import sys

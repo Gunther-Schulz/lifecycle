@@ -16,6 +16,8 @@ source-derived arm asserts what must NOT appear — the cheap instrument that
 catches a check DEGRADING rather than only breaking.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import os
 import re
 import sys

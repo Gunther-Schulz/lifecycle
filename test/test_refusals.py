@@ -13,6 +13,8 @@ The rows are not restated here. They are imported from
 One source, two consumers.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import importlib.util
 import shutil
 import sys

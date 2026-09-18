@@ -32,6 +32,8 @@ one case over (a ref that no longer resolves) and left open for the case
 where there is no repository to ask.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import json
 import os
 import shutil
@@ -52,6 +54,7 @@ HOOK_BODY = "#!/bin/sh\nexit 0\n"
 
 class _Fixture:
     """A real git repo carrying a valid declaration, plus whatever this test
+
     plants. A real `git init` and a real commit, because the whole subject is
     what git's TREE records — a fake would answer whatever was hoped for."""
 

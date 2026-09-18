@@ -29,6 +29,8 @@ Every arm here reaches only through names the OLD build already had (`cli`,
 `exits`, the CLI surface), so its red is an assertion FAILURE at the defect.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import json
 import shutil

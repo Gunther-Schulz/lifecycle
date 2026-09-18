@@ -15,6 +15,8 @@ exit-code assertion alone would score those three builds identically, which
 is precisely the false red the devbook records for a fix that adds a flag.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import json
 import subprocess
 import sys
@@ -44,6 +46,7 @@ DECLARATION = {
 }
 
 HEAD_CARRIER = """schema: 2
+
 baseline: 0
 added: 1
 compacted: 0

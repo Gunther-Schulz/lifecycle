@@ -12,6 +12,8 @@ record: an expectation derived from the artifact it grades moves with the
 artifact and stays green on the drift it exists to catch.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import tempfile
 import unittest
 from pathlib import Path

@@ -12,6 +12,8 @@ being BROKEN rather than quiet. A mapping that silently folded 2 into quiet
 would leave every board in the system clean forever.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import shutil
 import subprocess
 import sys
@@ -40,6 +42,7 @@ class TriggerContract(unittest.TestCase):
 
     def test_every_code_above_two_is_broken(self):
         """>=2 is RESERVED, so the mapping is total above the edge — not a
+
         list of the codes somebody happened to think of."""
         for code in (3, 7, 42, 127):
             with self.subTest(code=code):

@@ -15,6 +15,8 @@ is reported as DUPLICATE and RECOVERABLE, and it is NOT reported as loss.
 A reader who takes DUPLICATE for corruption deletes a copy at random.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import json
 import shutil

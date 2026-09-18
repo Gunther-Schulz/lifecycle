@@ -9,6 +9,8 @@ environment over a refusal), and the `delegation` declaration field accepted
 both absent and present.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import json
 import os
@@ -45,6 +47,7 @@ def _run(argv, env=None):
 
 class ScratchStateHome:
     """A throwaway `$XDG_STATE_HOME`, isolated from the real machine's —
+
     the same reason `refusals.py`'s `_desk_cli` isolates it for the roster
     rows: a test run must not leave `desk-state/*.json` debris under the
     operator's real state directory."""

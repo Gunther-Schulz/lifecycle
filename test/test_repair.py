@@ -27,6 +27,8 @@ because a listed class whose body moved has been repaired by a verb that was
 told not to.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import hashlib
 import json
 import subprocess
@@ -57,6 +59,7 @@ DECLARATION = {
 }
 
 CLEAN_CARRIER = """schema: 2
+
 baseline: 0
 added: 1
 compacted: 0

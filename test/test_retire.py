@@ -23,6 +23,8 @@ LATER close rewrites the done home, the pinned blob still yields the body and
 would have erased.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import json
 import shutil
@@ -58,6 +60,7 @@ ADD = ("item", "add",
 
 def build(items_text=SEED_ITEMS, done_text=EMPTY_DONE) -> Path:
     """A real git work tree — `git` is the instrument under test here, so a
+
     fixture without a history would answer about nothing."""
     d = Path(tempfile.mkdtemp(prefix="lifecycle-compact-"))
     run = lambda *a: subprocess.run(a, cwd=str(d), capture_output=True,  # noqa: E731

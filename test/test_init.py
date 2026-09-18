@@ -8,6 +8,8 @@ exactly the state `init` is supposed to CREATE rather than consume. `init`'s
 own tests need repos that do not already carry a declaration.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import ast
 import inspect
 import io

@@ -79,6 +79,7 @@ found (the source moved under the arrangement — the arrangement is stale,
 which is a finding about THIS file, not about the row).
 """
 
+import atexit
 import hashlib
 import os
 import shutil
@@ -1163,6 +1164,24 @@ def main(argv) -> int:
     backup = Path(tempfile.mkdtemp(prefix="prove-rows-"))
     for f in CORE.glob("*.py"):
         shutil.copy2(f, backup / f.name)
+
+    # THE FIRE LOG IS ISOLATED FOR THIS RUN (lc-183). Every arm here runs the
+    # WHOLE roster, and every roster row that drives a real verb appends a
+    # record — to the OPERATOR'S machine-wide log, because `firelog.state_dir`
+    # falls back to the real `~/.local/state` when `XDG_STATE_HOME` is unset.
+    # Measured: two arms alone added 183 records, and 81.6% of that 132MB log
+    # was scratch-repo noise from this tool and the suite.
+    #
+    # IT IS SET HERE RATHER THAN IN THE TEST PACKAGE because this tool spawns
+    # its own `sys.executable` children that import `lifecycle_core` directly
+    # and never touch `test/`. Children inherit this environment, which is
+    # what makes one assignment cover every arm. The isolation set is checked
+    # against what the exercised path CONSUMES, not against what one entry
+    # point happens to import — and this is the second entry point.
+    if not os.environ.get("XDG_STATE_HOME"):
+        _state = tempfile.mkdtemp(prefix="prove-rows-state-")
+        os.environ["XDG_STATE_HOME"] = _state
+        atexit.register(shutil.rmtree, _state, ignore_errors=True)
 
     global WORK_ROOT, WORK_CORE
     WORK_ROOT = Path(tempfile.mkdtemp(prefix="prove-rows-work-"))

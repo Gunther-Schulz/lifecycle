@@ -33,6 +33,8 @@ the name and doing nothing — so these arms go red at `b387ef0` as assertion
 FAILURES.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import contextlib
 import hashlib
 import importlib.util

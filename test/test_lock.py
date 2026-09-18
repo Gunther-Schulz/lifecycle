@@ -15,6 +15,8 @@ With the lock they queue and produce N. "Subagents never book" is a
 CONVENTION and conventions do not serialize anything; this does.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import subprocess
 import sys
 import tempfile
@@ -25,6 +27,7 @@ CLI = Path(__file__).resolve().parents[1] / "plugin" / "cli"
 sys.path.insert(0, str(CLI))
 
 CHILD = r"""
+
 import sys, time
 sys.path.insert(0, {cli!r})
 from contextlib import nullcontext

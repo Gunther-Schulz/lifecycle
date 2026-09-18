@@ -20,6 +20,8 @@ finding at all:
     one can no longer leave the others silently behind.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import json
 import shutil

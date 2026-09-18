@@ -14,6 +14,8 @@ pipe-delimited `event|intent` grammar `~/.claude/runbook-format.md` governs
 for `docs/runbooks/` standing procedures, a different artifact entirely.
 """
 
+import _isolation  # noqa: F401  # lc-183: before any verb runs
+
 import io
 import json
 import os
@@ -40,6 +42,7 @@ def _run(argv):
 
 class ScratchGitRepo:
     """A git work tree with a declaration and both carrier homes — enough
+
     for `kind check`'s one-schema-per-repo agreement to read CLEAN, which
     `lane list`'s per-repo declaration read otherwise degrades to COULD NOT
     VERIFY over (an unrelated finding that would obscure the lane state
