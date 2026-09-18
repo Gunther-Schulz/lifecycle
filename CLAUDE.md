@@ -424,19 +424,24 @@ Codes alone do not discriminate here: every finding is a `2`, so a guard
 removed at one site while a shared one catches the same input under a
 different row's name reads as "unchanged" and the row reads as unproven.
 
-**One of the 51 node bites fails here and is EXPECTED to** — read it
-before treating it as a defect. `source: every UUID in a tracked
-SOURCE_SCANNABLE file is on the synthetic allowlist` guards itself
-against a silent scope collapse by asserting the walk reached
-`test/`, `tools/`, `proxy/` and `docs/`, that `BACKLOG.md` is in it,
-and that it enumerated more than 500 files. Those anchors are
-claude-code-cache-fix's tree, and the file is a byte-identical copy
-that is not edited here — so the bite structurally cannot pass in
-this repo. It is a COULD NOT VERIFY for that one bite, never a
-statement about the scanner: the other 50 pass, and the scanner is
-separately red-proven on this repo's own files by the pre-push hook.
-Making it portable means parameterising the anchors in cache-fix
-first, so both copies move together.
+**All 62 node bites pass here, and this paragraph used to say one of
+them could not** — corrected in place 2026-09-18 because a reader who
+stops at the first version treats a real red as expected. `source:
+every UUID in a tracked SOURCE_SCANNABLE file is on the synthetic
+allowlist` guards itself against a silent scope collapse, and its
+anchors named claude-code-cache-fix's tree (`proxy/`, `BACKLOG.md`,
+more than 500 files) rather than this one. This file recorded that as
+a permanent COULD NOT VERIFY. It was neither permanent nor confined
+to the guard: those three assertions run BEFORE the UUID scan, so the
+scan they protect had never executed once — a scope guard collapsing
+the very test it guards, which is the check-that-fires-on-a-non-defect
+class pointed at its own subject. `7fe9e68` derives the roots and the
+floor from the scanner's own predicates over `git ls-files`; the bite
+has run green since, and that test's own duration moved 1.4ms → 14.9ms
+— the cost of the scan it had been dying in front of, which is how one
+tells a body that RUNS from one that merely stopped failing.
+MEASURED 2026-09-18: 62 pass, 0 fail, 0 skipped. A red here is now a
+defect, and nothing in this file says otherwise.
 
 ## Carve-outs
 
