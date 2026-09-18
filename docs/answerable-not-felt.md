@@ -115,3 +115,48 @@ CHECKER into this plugin — so the mechanism is migrating to lifecycle regardle
 Open question for next session: should the whole FEATURE (not just its checker)
 have its home in the lifecycle plugin, given it is the same persist-and-query
 family as everything above? Decide against the plugin's boundary, not by default.
+
+**Operator's motivation (2026-09-18):** the records persist GLOBALLY
+(`~/.local/state/claude/investigations/`, one flat dir) and cannot be attributed
+to a project except by the filename prefix (`<project>--<arc>.md`) — so consider
+persisting them at PROJECT level for real attribution. **But the global home was
+a deliberate choice** (dotfiles `claude/investigation-record-format.md`): tool
+state (XDG), OUTSIDE every repo AND outside `~/.claude/`, so (a) no project repo
+is dirtied by the record, (b) no permission dialog fires (the `.claude/`-shape
+protection), (c) it survives across repo states and branches. A project-level
+move must KEEP those three benefits — so the likely shape is the lifecycle
+plugin OWNING per-project attribution (a registry, or per-project tool-state
+keyed to the repo) while the files stay OUT of the repo tree, rather than
+literally moving them into the repo. Understand the original rationale before
+changing it — the operator flagged this explicitly, and the format file states
+it verbatim.
+
+## Next session — scout the external landscape IN PARALLEL (operator direction)
+
+The operator's framing (2026-09-18): persistence + the right triggers + the
+desk/peer session division may be three faces of ONE lever for improving LLM
+work, and there is likely research that aligns with it and can sharpen or
+correct the design. Dispatch research lane(s) to run in the BACKGROUND while the
+design discussion proceeds in parallel — operator refinement: NOT blocking-first,
+concurrent; the findings AUGMENT the design rather than gate it. Discovery
+dispatch, judgment held at the desk. Search axes:
+
+- **Persistent external state / memory for LLM agents** — scratchpads, external
+  or working memory, state-offload — and its measured effect on reliability over
+  long/multi-session horizons. (Our observation: the investigation record GUIDES
+  by mere existence, keeping "where we are" in front of the model vs brittle
+  memory.)
+- **Trigger / seam-based self-verification** — checkpointing, verify-at-boundary,
+  self-check at commit/step seams vs continuous judgment. "Answerable, not felt"
+  as a possible known pattern; the silent-error / failure-shaped-like-success
+  class and whether the literature names it.
+- **Multi-agent role division** — planner/executor, critic/actor, overseer/worker
+  (our desk/peer) — and WHY it helps: does it externalize judgment from execution
+  and force explicit hand-offs that resist single-context drift? The operator
+  notes the desk+peer combination "works best for reasons not fully figured out";
+  candidate reading is that it is the persist-and-query lever at the
+  session-STRUCTURE level (two parties, explicit state hand-off between them).
+
+Return: aligned findings, terms of art, and any mechanism we have not thought of,
+each graded against this note's class and lever. This scouting is what decides
+whether the 5 ranked mechanisms above are the right cut or a reinvention.
