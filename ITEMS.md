@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 188
+added: 189
 compacted: 0
 
 ## lc-3
@@ -1016,4 +1016,13 @@ goal: enforce-the-invariants
 write-set: tools/prove-rows.py,test/test_prove_rows.py
 done-criterion: the baseline is GRADED against each row declared expectation before any mutation is judged, and a row whose baseline already disagrees is reported as a finding about the ROSTER rather than folded into a proof about the mutation. AND the row-name assertion covers could-not-verify rows: a row is named in its own output whatever its expected code, so no row is graded on an exit code alone. RED-FIRST: plant a row whose baseline disagrees with its declared expect and the run must not print PROVEN for it; strip a could-not-verify row own name from its message and the run must notice, where today it cannot. MUST-NOT-MOVE: all 110 rows keep their current verdicts at this pin, since every baseline agrees today — a change that flipped any of them would mean the grading is wrong rather than newly present.
 evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs, with the four rows named: laws_absent_could_not_verify, unknown_grade_read, cost_test_unverified, conservation_unverified. DERIVED: both halves are one omission — the tool compares signatures without ever consulting what each row DECLARED it would do, so the declaration is decorative on both axes. MEASURED at this desk today, and it is why this matters beyond the latent case: the same tool granted PROVEN to a crashed arm until an hour ago, so its verdicts are the thing currently least entitled to be trusted on their own word.
+blocked-by: NONE
+
+## lc-197
+grade: READY
+requirement: THE ARRANGEMENT FOR capture_dominated CANNOT BE REPAIRED WITHOUT SPLITTING THE CONDITION IT MUTATES. Its mutation makes the ratio path divide by zero, so the arm crashes rather than answering — and since today a crash is honestly reported as COULD NOT VERIFY, the row is now openly unproven rather than falsely proven. The cause is in the CODE, not the arrangement: the zero guard also guards the division, so every mutation of it crashes by construction. This is the lc-164 shape exactly — two firing inputs of ONE refusal decided at two branches, where the honest repair is one composed verdict tested at a single condition.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,tools/prove-rows.py,test/test_items.py
+done-criterion: capture_dominated has ONE deciding condition that a mutation can disable without crashing, and prove-rows answers PROVEN for it at a real anchor and FAILED at an inert one. RED-FIRST: today the recorded arrangement yields RAISED ZeroDivisionError and the row reads COULD NOT VERIFY. MUST-NOT-MOVE: both firing inputs keep their OWN messages — a carrier that never drains and one past the tripwire are different things to be told — and the zero-drain path still never divides. The ratio arithmetic and the tripwire value do not change.
+evidence: MEASURED at this desk 2026-09-18 immediately after repairing the crash-reads-as-proof defect: a full prove-rows walk returned exactly ONE could-not-verify row, capture_dominated, so this is the entire residue of that repair. DERIVED: any mutation of the zero guard reaches the division on the next line, so no anchor on that condition can both darken the row and let the arm answer — the split has to happen in the code. RELAYED from review lane 2 via lifecycle-6f, carried as theirs: they found the crash and graded it critical.
 blocked-by: NONE
