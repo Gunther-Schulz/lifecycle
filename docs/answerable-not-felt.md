@@ -452,6 +452,99 @@ miniature: `firelog.py` records guard fires, and the judgment register records
 fired / legitimate / overridden. The lever is widening what gets captured by
 construction, not inventing a new mechanism.
 
+## THE ORGANISING FRAME: THE PLAYER LOOP (operator, 2026-09-18)
+
+**The operator's frame, and it replaces "self-administering" with something
+testable.** Their first framing was a game's LOOP; their correction was the one
+that matters — **not the engine's `input → update → render`, but the loop the
+PLAYER runs, which includes judgment**:
+
+> perceive state → form intent → **act** → get feedback → update model → repeat
+
+**Judgment sits in "form intent", between perceiving and acting.** That is this
+design's own sentence, reached from the other side and by someone else.
+
+### What the frame dissolves: the tick
+
+The engine reading raised a problem it could not answer — the tick. A game owns
+its clock; this system does not, and a loop with an irregular timestep is where
+drift lives. **The player loop has no clock. The world responds to the ACT.**
+
+**So the tick is the VERB**, and that is the whole gap in one line:
+
+> **A kind with a verb is in the loop. A kind with `writer: session` is a
+> mechanic with no button** — it can only fire if somebody remembers it exists.
+
+4 of 22 kinds have a button. 17 do not. That is not a missing scheduler; it is
+seventeen mechanics the player cannot press, and it is why the write half was
+never the thing that needed fixing.
+
+### What the frame catches that nothing else did: FALSE FEEDBACK
+
+**A player loop survives harsh feedback, delayed feedback, even unfair
+feedback. It cannot survive FALSE feedback**, because every later decision is
+made on a corrupted model.
+
+That is why the robustness review's nine findings and the day's five incidents
+all felt like one thing: **they were one thing.** A check reporting CLEAN over a
+population it never examined is the game saying "you're fine" while the player
+dies. And it explains the asymmetry this arc kept hitting without naming: a
+check that OVER-fires is annoying and visible, a check that falsely PASSES is
+lethal to learning — the same reason a game that reports a hit on a miss is
+worse than one that is merely too strict.
+
+**This is the strongest argument yet for spending on the three-answer contract
+and the denominator rule**, and it is why they are not hygiene.
+
+### The three nested loops, and where "ten sessions to find a groove" lives
+
+Games run loops at different rates deliberately; so does this.
+
+| loop | the player | rate | tightens when |
+|---|---|---|---|
+| inner | the session | minutes | checks fire, records write |
+| session | pick up → narrow → close | hours | the record carries forward |
+| meta | the project finds its groove | weeks | rules retire, prose leans out |
+
+**GRINDING IS AN INNER LOOP THAT RUNS WHILE THE META LOOP NEVER ADVANCES** —
+sessions completing, project not moving. That is the operator's "ten sessions
+to find its groove", and it is a LOOP-COUPLING problem rather than a
+productivity one: nothing in the inner loop feeds the outer.
+
+**FIRST MEASURED INSTANCE OF THE COUPLING WORKING, 2026-09-18:** lc-172's
+denominator rule shipped in the morning and then DEMANDED the row lc-170 needed
+in the afternoon — the build desk's own words, *"the two items paid each other
+back inside a day"*, and the row in question (`home_unresolvable`) is a
+could-not-verify refusal that the pre-widening emit-site scan could not have
+seen. One instance. Not a pattern, and recorded as one instance.
+
+### The operator is a player too, on the outer loop
+
+Check in, judge, redirect, leave. Their loop tightens as trust calibrates,
+which is exactly what lc-161 books as decision absorption. **A good design makes
+the inner loop work without the outer one, and makes the outer one meaningful
+because of the inner.** The desk/peer arrangement is that shape already; its
+failure mode is the operator being pulled back INTO the inner loop, which is
+what the interruption count measures.
+
+### The test this frame buys, replacing an untestable word
+
+"Self-administering" could not be graded. This can:
+
+1. **Does every mechanic have a button?** — every kind reaches a verb, or
+   declares why it cannot (lc-168's trigger stage).
+2. **Is the feedback true?** — no check reports clean over a population it did
+   not examine (lc-172 and the robustness round's whole yield).
+3. **Does the inner loop advance the outer one?** — a session's work retires
+   prose, or sharpens a rule, or removes a class, rather than only closing
+   items.
+
+**Where the analogy is NOT to be pushed**, stated so a later reader does not
+over-read it: a game's player acts under a fixed rule set they cannot edit,
+while here the player rewrites the rules as part of playing — which is the meta
+loop and has no clean game analogue. And skipping a frame is free in a game;
+here the skipped tick IS the failure.
+
 ## THE PLAN — five mechanisms (operator-framed, 2026-09-18)
 
 This supersedes the earlier "mechanize the answerable half" framing as the
