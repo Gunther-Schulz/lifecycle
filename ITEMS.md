@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 205
+added: 206
 compacted: 0
 
 ## lc-3
@@ -1188,4 +1188,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: A run that writes no successor state does not print a written count for a file it did not produce — it says what it WOULD write, in the conditional, or it does not print the line. RED-FIRST: a --report-only run currently prints 'items written: 3 -> ITEMS.md' with no ITEMS.md on disk; after, the output contains no unconditional written-count for an absent file. CONTROL that must stay green: a real writing run still reports its actual counts unchanged.
 evidence: RELAYED from the lc-192 lane, NOT reproduced at this desk, and booked at that grade: it observed 'items written: 3 -> ITEMS.md' two lines under 'migrate: DRY RUN — ... this run writes no successor state' on a --report-only run that produced no ITEMS.md. DERIVED from the lane's read: the site is migrate.py:2549. MEASURED here: nothing. First build step is to reproduce it, which is cheap — one --report-only run and one ls.
+blocked-by: NONE
+
+## lc-214
+grade: READY
+requirement: THE DELETION-RECORD IDEMPOTENCE TEST IS TWO INDEPENDENT SUBSTRING TESTS, NOT A ROW MATCH, ON THE IRREVERSIBLE BRANCH. migrate.py:1295-1296 computes already = (f'| `{src_name}` |' in laws_old AND f'`{blob}`' in laws_old). Its own comment claims 'a record already naming THIS path at THIS blob'; what it examines is that this path occurs SOMEWHERE in the file and this blob occurs SOMEWHERE in the file, not that they occur in the SAME ROW. The corpus's substring-test-over-rendered-text class — a prefix match in an equality's costume. It matters because src.unlink() at 1306 runs regardless on the DELETE path, and the returned disposition line at 1313-1318 states unconditionally that the deletion record is appended, which is also false on an ordinary already-recorded re-run.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate_residue.py
+done-criterion: The idempotence test matches a ROW — this path AND this blob in the same record — rather than two independent substring hits anywhere in the file. The disposition line says what actually happened rather than asserting a record was appended when the already-branch skipped it. RED-FIRST, and the discriminating input is NOT constructed but drawn from a realistic laws file: a file already holding a deletion record for the same path at an EARLIER blob, with this run's blob cited anywhere else in the same file. Today already is True, no record is written, and the unlink still runs. MUST-NOT-BUILD: nothing changes about WHEN the delete happens; this is about what the idempotence test establishes and what the disposition line claims.
+evidence: RELAYED from the lc-192 lane, explicitly DERIVED-only on its side too — it read 1295-1296 and 1306 and 1313-1318 and did NOT exercise the --retire-source delete path. MEASURED at this desk: nothing. So this entry is two levels from an execution and is booked at that grade deliberately. FIRST BUILD STEP: exercise the delete path against the discriminating laws file, because a wrongness claim on an IRREVERSIBLE branch that has never been run is exactly the one that must not be repaired from reading alone.
 blocked-by: NONE
