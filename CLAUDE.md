@@ -182,6 +182,28 @@ journal pointer is where the incident lives.
     (J20, J22, J25, J26)
 25. **Every schema change ships its migration, dry-run first, over every
     declared repo, before it is applied anywhere.** (J21)
+26. **A DESIGN ANSWERS WHAT MUST BE WRITTEN BEFORE IT ANSWERS WHAT MUST BE
+    REMEMBERED, NOTICED OR DECIDED WELL.** Operator direction, 2026-09-18, as
+    the guiding principle for everything designed here. The question comes
+    first, at sign-off, and it is answerable or the design is not signed: what
+    must be WRITTEN at the moment this fires, whose ABSENCE IS COMPUTABLE?
+    The slot demands the STATEMENT, never the answer — a genuinely undecidable
+    question states that in one line and passes — and the fill's QUALITY stays
+    judgment, which is the boundary that keeps this from becoming the
+    over-constraint it exists to avoid. It is the transition table's OBSERVER
+    column asked as a design question rather than read as a schema field.
+    **AND A CLAIM IN PROSE BESIDE A MECHANISM IS HELD BY NOTHING.** It
+    inherits the mechanism's authority to every reader while no check grades
+    it, which makes it worse than a bare claim standing alone. The direction
+    that bites is the SILENT one: a declared expectation going stale toward
+    FAILING is loud and somebody looks, while one going stale toward PASSING
+    degrades the instrument — readers are trained that a red here is expected,
+    and the one real red arrives pre-discounted. This file did exactly that to
+    its own readers for a month.
+    Not a licence to mechanize judgment: where the trigger is not a computable
+    predicate with near-zero false fires, the computable slice precipitates and
+    the remainder stays prose (law 11 still binds, and a guard firing on
+    legitimate work still stops the lane). (J27)
 
 ---
 

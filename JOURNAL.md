@@ -529,3 +529,82 @@ for a source-derivable enumeration, the files that derive and grade it are
 greppable before a lane is briefed. Nothing wider is claimed: a general
 dependents checker over item prose is judgment-shaped and would fire on
 legitimate work (law 11).
+
+### J27 — cited by law 26 (a prose claim beside a mechanism is held by nothing)
+
+2026-09-18. FOUR INSTANCES IN ONE DAY, one class, found by four different
+routes and none of them by a check. The class: the stack HELD the thing, and
+the thing was not retrieved at the moment it applied.
+
+1. **A structural fact, one query away, derived instead across a day.**
+   `.claude/lifecycle.json` at `9a1eded` — yesterday's HEAD — declared 21 kinds
+   split 4 verb-written / 16 `writer: session` / 1 producer. That split is the
+   discriminator between a kind that self-administers and one that drifts, and
+   it is what the arc's section 2b spent an afternoon arriving at by reasoning.
+   Found by the operator asking whether the session had wasted time on the axis
+   it was fixing.
+
+2. **A design re-inventing a pattern the repo had already proven.** Mechanism 2
+   ("state-advancing acts write") is the verb-writer pattern, working on 4 of
+   22 kinds. Found by the begehung's second round, whose registered lens was
+   the operator's own naming of the existing carriers; recorded as that round's
+   class.
+
+3. **A document written SIX HOURS EARLIER BY THE SAME SESSION, not reached.**
+   Asked to mechanize a duty whose firing moment is a non-event, the desk
+   declared detection uncomputable and designed a printed readout.
+   `docs/required-slots-as-an-autonomy-lever.md` (`d57e02b`, that same morning,
+   at the operator's direction) carries the escape verbatim — require a WRITE
+   at the moment of deciding; the slot's presence is computable, the fill's
+   quality is judgment. Found by the operator: *"didn't we not too long ago
+   find a solution for this class?"*
+
+   THIS IS THE INSTANCE THAT SETS THE SCOPE. There was no session boundary to
+   cross. The context that failed to retrieve the document is the context that
+   wrote it, so the failure is not ignorance of the carrier and cannot be
+   repaired by announcing carriers harder. **Retrieval fails at moments of
+   APPLICATION; the session boundary is only the most visible of them.**
+
+4. **The laws file trained its own readers to discount a red, for a month.**
+   `## Verify` stated that one of 51 node bites "structurally cannot pass in
+   this repo" and told the reader to expect it. Measured 2026-09-18: 62 pass,
+   0 fail, 0 skipped — `7fe9e68` had repaired it in August by deriving the
+   guard's roots from `git ls-files`, and this file never moved with it. The
+   bite exists to catch a silent scope collapse, which is precisely the alarm
+   the stale sentence taught readers to ignore. Found by a peer desk running
+   the block and reading the output against the prose beside it.
+
+**WHY NO MECHANISM CAUGHT (4), AND IT GENERALISES.** `lifecycle verify` —
+shipped the same day, `e7c4a9a` — parses the `## Verify` fenced block and
+EXECUTES its commands, asserting EXECUTED against REGISTERED. The stale claim
+was not a command. It was prose BESIDE the fence asserting an expected OUTCOME
+of one, and the verb holds no expectation about it. So the mechanism ran
+correctly, reported correctly, and the false sentence sat two lines above its
+output for a month. A claim in prose beside a mechanism is held by nothing —
+and it inherits the mechanism's authority to every reader, which is what makes
+it worse than an unsupported claim standing alone.
+
+**THE ASYMMETRY THAT MAKES THIS A LAW RATHER THAN AN OBSERVATION.** A declared
+expectation that goes stale in the FAILING direction is loud: the command goes
+red and somebody looks. In the PASSING direction it is silent and it degrades
+the instrument — the reader is trained that a red here is expected, so the one
+real red arrives pre-discounted. The check does not break; it stops being
+believed. The cheap instrument across the class is the assertion on what must
+NOT appear, which catches a check DEGRADING where a presence-assertion catches
+only one breaking.
+
+**THE COMPUTABLE SLICE, booked as lc-176:** an expectation about a registered
+verify command is declared in a form the verb CHECKS (an expected pass/fail
+count, or a named known-failure the verb asserts is still failing), so a bite
+that starts passing makes the declared expectation WRONG and the verb says so.
+RED-FIRST is available and is instance 4 itself: declare one expected failure,
+run the block, get zero, and the verb must go red. The judgment remainder stays
+prose — whether an expectation is the RIGHT one is not computable, and a guard
+over that would fire on legitimate work (law 11).
+
+**WHAT IS DELIBERATELY NOT CLAIMED.** Instance 3's own candidate seam — that
+the moment a session declares something *uncomputable* or *not mechanizable* is
+a retrieval seam, because it is a claim about what solutions exist made from
+memory — is ONE instance, unprobed, and is recorded in the design note as a
+candidate rather than booked. One occurrence is not a class, which is the same
+grade J26's new half carries.
