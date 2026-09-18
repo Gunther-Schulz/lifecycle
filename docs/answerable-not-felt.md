@@ -144,6 +144,13 @@ All one shape: a state assumed rather than queried, its failure indistinguishabl
 
 1. **Momentum.** The intake/verify check is skipped under the same momentum that
    carries the work — the observed condition under which the gauge gets skipped.
+   **AMENDED 2026-09-18 (desk 9553b0), and the amendment bounds this item
+   rather than removing it.** Momentum explains why a party cannot reliably
+   check ITSELF; it does not explain why a desk/peer split helps, and the
+   original note used it for both. It is also not a defect to be suppressed:
+   momentum is what depth in the work COSTS, and the peer's depth is exactly
+   what makes its reads better than the desk's. A design that treated momentum
+   as something to remove would damage the party doing the work.
 2. **The trigger is a feeling.** "Do I feel done / idle / clean?" is judgment-shaped
    and under-fires. The rule that should fire (e.g. "sweep the carrier for siblings
    when a defect-class is found") fires late, by luck, not by mechanism.
@@ -227,16 +234,57 @@ literally moving them into the repo. Understand the original rationale before
 changing it — the operator flagged this explicitly, and the format file states
 it verbatim.
 
-## Strengthen the "desk" role — the momentum-independent checker (operator, 2026-09-18)
+## Strengthen the "desk" role — TWO ASYMMETRIC INFORMATION HOLDERS (operator, 2026-09-18, amended same day)
 
-The operator's sharpening, and it unifies this note: the desk works partly
-because it is a CHECK ON THE PEER SESSION'S MOMENTUM — and momentum is the
-mechanism behind this whole class. The check gets skipped under the same
-momentum that carries the work; "answerable, not felt" fails because a session
-IN FLOW feels its state instead of querying it. The peer, inside the execution
-flow, carries that momentum; the desk, OUTSIDE it, queries the peer's state
-instead of feeling it — it verifies at the artifact, grades reports against the
-persistent record, and catches what the peer's momentum hides.
+**THIS SECTION WAS REWRITTEN IN PLACE on 2026-09-18 (desk 9553b0) and its
+earlier text is in git history, not below.** It previously argued that the desk
+works because it is a CHECK ON THE PEER'S MOMENTUM. That framing is refuted and
+is not preserved here as a second standing version: an appended correction
+leaves both readings alive and the reader who stops at the first takes the
+superseded one.
+
+**What replaced it, and it came from the operator's own experience before any
+paper was read.** The desk is not the checker and the peer is not the checked.
+They are TWO PARTIES HOLDING DIFFERENT INFORMATION, each an independent signal
+to the other:
+
+- the **peer** is working on the THING. It reads the actual files, sees what is
+  really there, and goes deeper than any summary — so it very often corrects
+  the desk, and its depth is the reason it can.
+- the **desk** holds the OVERVIEW and the record, and is not inside the flow —
+  so it catches what a party deep in one thread cannot see from there.
+
+Neither direction is the mechanism alone. What makes the pair work is that each
+holds information the other cannot see while producing its own answer.
+
+**Why this is the version that survives the literature rather than a softer
+restatement of the old one.** arXiv:2603.26993 is decisive precisely on the
+old framing: role separation over *the same information* is decision-
+theoretically dominated by one centralized decision maker. A desk that only
+re-grades what the peer reports IS that dominated case. Two parties with
+genuinely different information is a different case, and it is the one the
+operator described from experience. So the correction is not "momentum was
+wrong, independence is right" — it is that independence must be REAL
+INFORMATIONAL independence, which mutual asymmetry supplies and a role label
+does not.
+
+Measured this session: the desk verified the peer's load-bearing claims at the
+artifact rather than trusting them — kernel BTF, the GPU-log ordering, the
+deploy (md5 + service-load-time), the closable state — and the peer's own
+self-corrections landed precisely because it reported into a desk that queries.
+
+**And the reverse direction is measured too, which the original text had no
+room for.** 2026-09-18, four instances in one day, running BOTH ways and
+including operator→desk: a peer corrected this desk's inverted `args.pid` /
+`pid` hypothesis by reading the two deployed `.bt` files instead of applying
+the desk's naming (had it deferred, it would have broken the surviving tracer
+to match the dead one); this desk widened that peer's own defect report from
+two observed commits to the whole surface by counting call sites; that peer
+then found a non-atomic carrier write in THIS repo, from outside it, that no
+self-review here would have found; and the operator corrected this desk's claim
+that tier explained any of it — both sessions were Opus, so that axis was never
+varied. Every one of the four was caught by a party with different information,
+none by a rule firing.
 
 Measured this session: the desk verified the peer's load-bearing claims at the
 artifact rather than trusting them — kernel BTF, the GPU-log ordering, the
@@ -246,15 +294,38 @@ The desk IS the "answerable, not felt" lever embodied as a session ROLE: it
 forces the executor's state to be QUERIED (reported and independently verified)
 rather than FELT.
 
-**Design direction:** strengthen the desk's role/DEFINITION around this — its
-job is to be the momentum-independent checker (verify at the artifact, grade
-against the persistent record), and that is WHY the desk/peer division improves
-reliability, not an incidental benefit. This makes the three threads ONE thing
-wearing three hats: a **persisted record** (state a session queries, not
-recalls), a **seam-trigger** (a check fired by a moment, not a feeling), and a
-**desk** (a party out of the flow querying an in-flow party). The research lanes
-should cover the overseer / out-of-flow-checker angle specifically — is the
-reliability gain from role SEPARATION, or from momentum INDEPENDENCE, or both?
+**Design direction:** define the desk by WHAT IT INDEPENDENTLY READS, never by
+its authority over the peer. A desk that grades the peer's prose is the
+dominated case and should be expected to underperform; a desk that reads the
+artifact itself is a second information holder and is where the gain lives.
+Corollary the old framing hid: **report-grading is a courtesy, not a desk
+duty** — and a desk's own claims are as gradeable as a peer's, which the
+one-directional reading made unaskable.
+
+This still makes the three threads ONE thing, but the third hat changed: a
+**persisted record** (state a session queries, not recalls), a **seam-trigger**
+(a check fired by a moment, not a feeling), and a **pair of parties whose
+information does not overlap** — no longer "a party out of the flow querying an
+in-flow party".
+
+**The open question, now stated so it can be MEASURED rather than argued**
+(operator, 2026-09-18): is the reliability gain one-directional checking, or
+two asymmetric information holders? This is answerable against the transcripts
+of past desk↔peer sessions, of which the operator has many. It discriminates
+cleanly: under the one-directional reading, peer→desk corrections should be
+rare and desk→peer should dominate; under the asymmetric reading, both
+directions should carry real weight. A second axis grades each correction's
+BASIS — reading the artifact versus grading the other party's prose — where the
+literature predicts artifact-reading dominates (arXiv:2606.09863: no judge
+configuration over prose exceeds AUROC 0.65, across five models, five prompt
+strategies, and a baseline given the full ground-truth spec).
+
+**Not answered by the incident that first suggested it.** The `args.pid`
+inversion was offered as evidence that a more capable desk was wrong in the
+deciding half — but both sessions were Opus (operator, 2026-09-18), so the tier
+axis was held FIXED and that incident says nothing about it. Whether desk model
+tier affects desk performance at all is a separate, unmeasured question, and
+the note should not spend the pid incident on it.
 
 ## The payoff — mechanized levers let prose RETIRE (a leaner corpus)
 
