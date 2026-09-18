@@ -92,6 +92,8 @@ dropped: lc-137 — DUPLICATE of lc-55, which closed at 90518a9 on 2026-09-15 at
 decision: drain wave 3: is the lc-120 lane CLOSED or HELD? The desk sent both answers and a later reader meets the earlier one first → HELD, not closed. The directive supersedes the earlier 'write grant over'. Grant is six paths, effective on the desk's signal once the lc-148/lc-145 and lc-146 lanes close. The lane writes nothing meanwhile and re-grounds before building. Body and the two ruled design calls: lc-120's evidence.
 decision: Should law 24 keep growing by enumerating realizing surfaces, and does the lane-reported FIFTH surface belong in it? → No to both. Restate at PREDICATE altitude, surfaces demoted to examples; the fifth is read-or-execute overlap and stays lc-139's class. Ruled by dotfiles-89. Booked as lc-152 and HELD: opus-lc120 is live, reads this law, and is building the verb it governs.
 decision: does prove-rows mutate a COPY, or does an open window become detectable and make --test answer COULD NOT VERIFY? → prove-rows mutates a COPY (the _coverage_over_copy pattern): the marker adds a refusal and a new way to be wrong, where the copy removes the hazard outright (judgment desk lifecycle-6f, 2026-09-18, on this desk's reproduction)
+decision: what is the home for a critique-pass obligation outside a dispatch? → moot (closed by lc-160)
+dropped: lc-160 — answered in the negative: the critique pass mechanism is a second party with different information, not a form, so a solo session has no equivalent to build. The mechanizable slice is already taken by red-first proof and prove-rows. Reasoning on the body.
 
 ## Archive (pre-migration)
 
