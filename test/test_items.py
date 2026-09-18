@@ -1953,3 +1953,99 @@ class ADecisionBlockerSaysWhyItIsNotDerivable(unittest.TestCase):
         code, out = run_check(refusals.FOUR_BLOCKER_ITEMS)
         self.assertNotIn("decision_not_derivable_unstated", out, out)
         self.assertNotEqual(code, exits.FINDING, out)
+
+
+class TheArchiveRegionIsReadForIDS(unittest.TestCase):
+    """lc-177 — a closure body below `## Archive (pre-migration)` was invisible.
+
+    lc-148 ONE HOME OVER, and that framing is the finding. lc-148 added the
+    compaction record as a third home because `next_ident`'s own sentence —
+    "EVERY home is read" — was false for `item compact`. The sentence was
+    false again, for a different reason, and the paragraph RECOUNTING lc-148
+    is the text that was lying: the done-home parse stops at the archive
+    heading.
+
+    BOTH ARMS, AND NEITHER IS BELIEVED WITHOUT THE OTHER. One of them is the
+    defect and the other is the verb that should have caught it: the
+    allocator must not hand out an archived id, and `move integrity` must not
+    print CLEAN over a region it never parsed.
+
+    THE BODIES STAY UNGRADED. That exclusion is why the parser stops at the
+    heading and it is correct — a repair that started shape-checking archived
+    text would trade a silent collision for a loud false finding on every
+    pre-migration carrier, which is law 11 and the worse outcome. Only IDS
+    are read.
+    """
+
+    ARCHIVED = "xx-2"
+
+    def _done_with_archived_body(self):
+        return (refusals.EMPTY_DONE
+                + refusals._blocked_block("xx-1", "DONE", "NONE")
+                + "\n" + items.ARCHIVE_HEADING + "\n\n"
+                + refusals._blocked_block(self.ARCHIVED, "DONE", "NONE"))
+
+    def _repo(self, **kw):
+        r = refusals._Repo(**kw)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def test_the_allocator_does_NOT_re_issue_an_archived_id(self):
+        r = self._repo(done=self._done_with_archived_body())
+        code, out = self._run(r, *refusals.GOOD_ADD)
+        self.assertEqual(code, exits.CLEAN, out)
+        carrier = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        self.assertNotIn(f"## {self.ARCHIVED}\n", carrier,
+                         "the allocator re-issued an id that is in the "
+                         f"archive:\n{out}")
+
+    def test_move_integrity_does_NOT_print_CLEAN_over_the_archive(self):
+        """The second arm, and the one that should bother us more: a verb
+        reporting CLEAN over a region it never parsed. Its denominator was
+        the tell — `1 live, 1 done` counted only what the parser reached."""
+        live = ("schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+                + refusals._blocked_block(self.ARCHIVED, "READY", "NONE"))
+        r = self._repo(items=live, done=self._done_with_archived_body())
+        _code, out = self._run(r, "item", "check")
+        self.assertIn("duplicate_id", out,
+                      f"an id in the live carrier AND in an archived body "
+                      f"read as no duplicate at all.\n{out}")
+        self.assertNotIn("move integrity: CLEAN", out, out)
+
+    def test_the_CLEAN_line_states_the_archived_count(self):
+        """lc-172's rule at the site it did not reach: an absence claim names
+        what proves its instrument was live. `no id in both homes` over a
+        done home whose archive was never read is a clean line about a
+        population the verb never saw."""
+        r = self._repo(done=self._done_with_archived_body())
+        _code, out = self._run(r, "item", "check")
+        self.assertIn("move integrity: CLEAN", out, out)
+        self.assertIn("1 archived", out,
+                      f"the clean line hides the region it compared.\n{out}")
+
+    def test_the_archive_BODIES_are_still_not_shape_checked(self):
+        """MUST-NOT-MOVE. A malformed body below the heading stays ungraded —
+        ids out, bodies untouched."""
+        malformed = (refusals.EMPTY_DONE
+                     + refusals._blocked_block("xx-1", "DONE", "NONE")
+                     + "\n" + items.ARCHIVE_HEADING + "\n\n"
+                     + "## xx-9\nthis body has no slots at all\nand wraps\n")
+        code, out = run_done_check(malformed)
+        self.assertNotEqual(code, exits.FINDING,
+                            f"an archived body was shape-checked.\n{out}")
+        self.assertNotIn("xx-9", out, out)

@@ -246,11 +246,18 @@ MUTATIONS = [
      "    if False:",
      "`item amend`'s requirement that some slot actually be named"),
 
+    # RE-POINTED BY lc-177, which widened the done side to include the
+    # archive region's ids. The old anchor quoted the comprehension over
+    # `done_parsed.items` alone and stopped matching the moment that line
+    # moved — caught by `test_every_recorded_anchor_is_a_whole_line_run`,
+    # which is the staleness half of the anchor rule working: an arrangement
+    # whose source moved under it is a finding about THIS file, never a row
+    # that stopped discriminating.
     ("duplicate_id_cross_home", "items.py",
-     "    both = [(d.ident, live[d.ident], d.line)\n"
-     "            for d in done_parsed.items if d.ident in live]",
+     "    both = [(ident, live[ident], line)\n"
+     "            for ident, line in done_side if ident in live]",
      "    both = []",
-     "the cross-home id intersection"),
+     "the cross-home id intersection, over the done home AND its archive"),
 
     # BOTH sign rows anchor on the same branch, with OPPOSITE replacements:
     # each sends its OWN case down the wrong side. Disabling the branch

@@ -368,6 +368,25 @@ class Parsed:
     #: conservation COUNTS it while the shape check skips it — two different
     #: questions over the same bytes, and only one of them is about shape.
     archive_text: str = ""
+    #: `(ident, line)` for every `## <id>` heading in the ARCHIVE region —
+    #: ids ONLY, bodies untouched (lc-177).
+    #:
+    #: THE ARCHIVE IS SKIPPED FOR A GOOD REASON AND THAT REASON IS ABOUT
+    #: SHAPE. Pre-migration bodies are held verbatim and are not graded, so
+    #: the parser stops at the heading. But two questions were riding on that
+    #: one stop, and only one of them is about shape: WHICH IDS EXIST is a
+    #: different question from IS THIS BODY WELL-FORMED, and the archive
+    #: answers the first perfectly well. Measured here before the repair: a
+    #: closure body below the heading was invisible to `next_ident`, which
+    #: re-issued its id, and `item check` then printed `move integrity:
+    #: CLEAN — no id in both homes (1 live, 1 done)` while the id sat in both
+    #: files on disk.
+    #:
+    #: CONSERVATIVE BY CONSTRUCTION. A `## <id>` line inside quoted archive
+    #: text would be read as an id in use; the cost of that is an id the
+    #: allocator skips, which harms nothing, against the cost of the other
+    #: direction, which is the collision above.
+    archive_idents: list = field(default_factory=list)
     #: Set when the file is stamped above the floor: nothing below the head
     #: was parsed, and no count from this object means anything.
     refused: bool = False
@@ -494,6 +513,15 @@ def parse(text: str) -> Parsed:
                 current = None
             out.archive_lines = len(lines) - i
             out.archive_text = "\n".join(lines[i:])
+            # IDS ONLY, and nothing else about these lines is read (lc-177).
+            # The bodies stay ungraded — that exclusion is correct and is why
+            # the parser stops here at all — while the ids they carry stop
+            # being invisible to the allocator and to move integrity.
+            for off, arch in enumerate(lines[i:]):
+                am = _BLOCK_HEADING.match(arch)
+                if am:
+                    out.archive_idents.append(
+                        (am.group(1).strip(), i + off + 1))
             break
 
         m = _BLOCK_HEADING.match(raw)
@@ -1004,6 +1032,22 @@ def next_ident(prefix: str, *parsed) -> tuple[str | None, str | None]:
     caller that passes only the carriers gets exactly the old behaviour, which
     is why the omission is invisible and why all three call sites moved in one
     change rather than one by one.
+
+    AND IT WAS FALSE AGAIN, IN THIS FUNCTION'S OWN RETELLING OF THAT (lc-177).
+    The paragraph above recounted lc-148 while "EVERY home is read" stayed
+    wrong for a different reason: the done-home parse STOPS at
+    `## Archive (pre-migration)`, so a closure body below that heading was in
+    no home this function could see. Found in operation at a peer carrier —
+    the allocator re-issued an id and `item add` wrote a second body under it
+    — and reproduced here before the repair. The archive's ids are now read
+    (`Parsed.archive_idents`) while its bodies stay ungraded, which is the
+    only part of that exclusion anything ever needed.
+
+    THE FALSE ASSURANCE WAS HALF THE DEFECT. A claim in prose beside a
+    mechanism is held by nothing and inherits the mechanism's authority to
+    every reader, so a sentence like "EVERY home is read" is what stops the
+    next person looking. It is corrected here rather than left to be noticed
+    a third time (law 26).
     """
     if not prefix:
         return None, ("no `id-prefix` in the declaration, so an id cannot be "
@@ -1015,6 +1059,14 @@ def next_ident(prefix: str, *parsed) -> tuple[str | None, str | None]:
             continue
         for it in p.items:
             n = grammar.id_number(prefix, it.ident)
+            if n is not None:
+                used.add(n)
+        # THE ARCHIVE REGION, ids only (lc-177). Without this the sentence
+        # above is false in a fourth place: a closure body below the archive
+        # heading is in no parsed home, so the allocator re-issues its id and
+        # `item add` writes a second body under it into the live carrier.
+        for ident, _line in getattr(p, "archive_idents", ()):
+            n = grammar.id_number(prefix, ident)
             if n is not None:
                 used.add(n)
     n = 1
@@ -1203,8 +1255,17 @@ def check_move_integrity(items_parsed: Parsed, done_parsed: Parsed | None,
             f"present in both homes would not be seen. {done_unreadable or ''}")
         return exits.COULD_NOT_VERIFY
     live = {it.ident: it.line for it in items_parsed.items}
-    both = [(d.ident, live[d.ident], d.line)
-            for d in done_parsed.items if d.ident in live]
+    # THE ARCHIVE REGION COUNTS HERE TOO (lc-177). This check read
+    # `done_parsed.items`, which stops at the archive heading — so an id in
+    # the live carrier AND in an archived body printed
+    # `move integrity: CLEAN — no id in both homes`, a clean line over a
+    # region the verb never parsed. That is lc-172's rule at a site lc-172
+    # did not reach, which is why the CLEAN line below now states the
+    # archived count rather than implying the done count is the whole file.
+    done_side = ([(d.ident, d.line) for d in done_parsed.items]
+                 + list(getattr(done_parsed, "archive_idents", ())))
+    both = [(ident, live[ident], line)
+            for ident, line in done_side if ident in live]
     for ident, live_line, done_line in both:
         out(f"FINDING [duplicate_id] id {ident!r} is in BOTH homes — live at "
             f"line {live_line}, done at line {done_line}. This is DUPLICATE "
@@ -1214,8 +1275,13 @@ def check_move_integrity(items_parsed: Parsed, done_parsed: Parsed | None,
             "the done copy is confirmed complete — not to pick one at random.")
     if both:
         return exits.FINDING
+    n_arch = len(getattr(done_parsed, "archive_idents", ()))
     out(f"move integrity: CLEAN — no id in both homes ({len(live)} live, "
-        f"{len(done_parsed.items)} done).")
+        f"{len(done_parsed.items)} done"
+        + (f", {n_arch} archived" if n_arch else "")
+        + "). Every id in the done home was compared, the archive region "
+          "included — its bodies are held verbatim and ungraded, and its IDS "
+          "are read.")
     return exits.CLEAN
 
 
