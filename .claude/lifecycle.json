@@ -326,6 +326,21 @@
         "detail": "NOT MOVED WHILE LIVE, and the reason is measured rather than stylistic: on 2026-09-18 four citations of `docs/answerable-not-felt.md` stood in THREE artifacts outside this repo's write boundary — a peer's arc investigation record under XDG state, a dotfiles directive, and a CachyOS-Setup directive — every one by repo-relative path. Relocating a live note breaks each of them silently, which is the citation-rot class lc-155 exists to catch. So the home claims the note where it already sits, and the move waits for the closure that re-roots its citations."
       },
       "growth": "bounded-by-exit — one note per design arc, and each leaves by the graduation above when its item closes. The flow control is that a note cannot be born without an item to carry it."
+    },
+    "begehung findings": {
+      "home": "docs/begehung-findings-*.tsv",
+      "writer": "session",
+      "reader": [
+        "session",
+        "verb:retire"
+      ],
+      "staleness": "change-coupling — a findings file whose cited artifact lines have moved past the citation no longer measures anything current. Its ROUND is closed once and never re-opened, so the file is historical from its close; what ages is the artifact it cites, not the reading.",
+      "exit": {
+        "action": "never",
+        "recording-act": "none is taken: append-only historical, one file per closed round. A later round that re-walks the same axis cites the earlier file rather than superseding it — the MAP's axis row carries the current yield, the findings file carries how it was reached.",
+        "detail": "REGISTERED BECAUSE THE SWEEP CAUGHT IT, 2026-09-18: the file was tracked and resolved to no kind, so `kind sweep` exited 2 and the declared verify block was red for every writer in the repo until this landed. Worth keeping as the reason: a robustness review's own OUTPUT is exactly the kind of persisted thing this plugin exists to give a home, and the review tripped the invariant it was reviewing for. The alternatives were lc-76's declared-custom disposition (wrong shape — that is for a one-off file, this is a recurring class, one per round) and leaving it untracked (which loses the round's deliverable; the skill names the findings file as exactly that)."
+      },
+      "growth": "unbounded-with-reason — one file per closed round, and a round happens only when a walk is run. The flow control is that a round cannot close without its findings file, and cannot open while another is open."
     }
   }
 }
