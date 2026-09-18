@@ -627,8 +627,34 @@ time. Mechanism 2 makes that a byproduct instead of a chore.
 
 ### BEFORE BUILDING: the baseline, and what would KILL this
 
-**Record the baseline first, because "watch it in action" concludes nothing
-without a before-number.** Measured 2026-09-18, this repo's carrier:
+**THE NUMBERS BELOW ARE POST-TREATMENT, NOT A CLEAN BASELINE** (operator,
+2026-09-18, correcting this desk). Every one was measured on repos ALREADY
+GOVERNED by lifecycle — the 55% amendment rate comes from lifecycle's OWN
+carrier, the most governed on the machine. It is not raw drift; it is the
+RESIDUAL drift after the item carrier's discipline, and this desk recorded it
+as the thing to improve on without saying so.
+
+**The same confound runs through both of today's studies and was never
+stratified.** Of the catch study's 9 sessions, 7 are from lifecycle-governed
+repos (dotfiles, CachyOS-Setup, cache-fix, statiker, lifecycle) and 2 are
+ungoverned (wan2gp, the B-Plan work) — checked by the presence of
+`.claude/lifecycle.json`. The capture study's journal is dotfiles', also
+governed. Both measured WHAT FAILS DESPITE GOVERNANCE, while the design was
+written as though the baseline were ungoverned.
+
+**Two consequences, and the second could sink a mechanism.** The labels are
+wrong and are corrected here. And if the most governed carrier on the machine
+still drifts at 55%, then either governance does not address drift or drift is
+substantially irreducible — either way mechanism 5's expected yield is LOWER
+than this note implied, and gate 2 must be read against that rather than
+against zero.
+
+**The comparison that would settle it is available and UNRUN:** the catch
+study's findings can be re-read split by governance, from the lanes' existing
+reports, with no new dispatch. That is the control arm this desk said did not
+exist — it did, one column over.
+
+Measured 2026-09-18 on this repo's carrier, and read as post-treatment:
 
 - 55% of 88 COMPLETED items had their scope amended between booking and close
 - by slot: evidence 39%, done-criterion 19%, write-set 17%, requirement 5%
