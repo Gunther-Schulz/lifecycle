@@ -204,6 +204,25 @@ journal pointer is where the incident lives.
     predicate with near-zero false fires, the computable slice precipitates and
     the remainder stays prose (law 11 still binds, and a guard firing on
     legitimate work still stops the lane). (J27)
+    **AND ONE QUESTION COMES BEFORE THE WRITING QUESTION: CAN THE DEFAULT MAKE
+    THE WRITING UNNECESSARY?** Operator direction, 2026-09-18, and it BOUNDS
+    this law rather than extending it — law 26 asked unbounded generates ever
+    more required writing, which is the over-constraint it exists to avoid.
+    Ask first what route the next writer takes without thinking: the nearest
+    pattern, the file already open, the shortest expression that parses. Where
+    that route produces the correct behaviour — the value DEFAULTED, the
+    dangerous character folded or refused at the constructor, the third answer
+    returned by the parser rather than by each caller — nothing needs
+    remembering and no absence needs computing. Where it does not, the design
+    is paying enforcement to fight its own shape, and a guard that keeps firing
+    on honest work is usually THIS defect wearing an enforcement gap's costume:
+    the repair moves the default, never the guard (law 11 from the other side).
+    Neither half is minted here — the global corpus carries the pit of success
+    under Calibration and the laziest-route question under skill-craft. What is
+    local is the measured fact that this repo builds the correct predicate and
+    then does not reach for it: three instances in one day, each a site where
+    the right thing already existed one import away and the nearest thing won.
+    (J28)
 
 ---
 

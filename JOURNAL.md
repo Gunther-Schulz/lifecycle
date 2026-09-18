@@ -608,3 +608,77 @@ a retrieval seam, because it is a claim about what solutions exist made from
 memory — is ONE instance, unprobed, and is recorded in the design note as a
 candidate rather than booked. One occurrence is not a class, which is the same
 grade J26's new half carries.
+
+### J28 — cited by law 26 (the default comes before the writing question)
+
+**2026-09-18. THREE SITES IN ONE DAY WHERE THE CORRECT PREDICATE ALREADY
+EXISTED IN THIS REPO AND THE NEAREST ONE WON.** Not three defects of one
+author's carelessness — three instances of a route being shorter than the
+right thing, which is a property of the design and not of the writer.
+
+**1. `lane new` against `desk state`.** Both turn a caller-supplied string
+into a filename. `desk.py:69` folds it — `_UNSAFE_FOR_FILENAME.sub('_',
+desk_id)` — and `desk.py:56-58` names the hazard in its own words: *"a `/`
+in it would otherwise let a caller's id escape this directory."*
+`lanes.py:cmd_lane_new` writes `lanes_dir / f"{door}.md"` raw. Executed,
+control first: `goodlane` → `lanes/goodlane.md`, exit 0; `../escape` →
+the repo ROOT, the literal string appended to the declaration's lane list,
+**exit 0 CLEAN**; `bad/door` → uncaught `FileNotFoundError`, **exit 1**,
+the code `exits.py:10` reserves so a traceback is never read as a verdict.
+The hazard was understood, written down, and defended at one of the two
+sites that has it.
+
+**2. `migrate`'s writer against `carrier_schema`.** The reader partitions
+on the first colon and strips (`declaration.py:1567`); the writer tests
+`raw.strip().startswith("schema:")` (`migrate.py:2003`) — a cheap retype
+of a predicate the package already owned. **THE TWO DISAGREE ON TWO AXES,
+AND ONLY ONE WAS FOUND FIRST.** Spelling: any whitespace between `schema`
+and the colon splits them (space and tab measured; leading whitespace does
+not, both strip). WHICH LINE: the reader inspects only the first
+non-comment line and gives up there; the writer scans EVERY line and
+rewrites the first match. They coincide only while the head is spelled the
+writer's way.
+
+**The cost is data corruption on the branch law 25 licenses.** Measured,
+fresh repo, all XDG roots redirected, exit read without a pipe: `ITEMS.md`
+line 1 `schema : 1`, line 6 `schema: 9` in a body. After `migrate
+--schema-from 1 --apply` — line 1 UNCHANGED, **line 6 rewritten to
+`schema: 2`**, output `written: ITEMS.md (schema 1 -> 2)` and `APPLIED — 1
+declaration change(s), 3 carrier line(s)`, exit 0. A body line silently
+rewritten, the version line untouched, and a clean report over both. A dry
+run cannot see any of it: the dry run exercises the READER. Found by
+reading the two sites side by side to design the fix — neither the
+enumeration lane nor the desk's own reproduction reached it.
+
+**3. `ledger.read` against its own contract.** Its signature returns
+`(parsed, why)` — the reason channel EXISTS. Four bodies through the real
+parser: no head → `lines=0, why=None`; head only → `0, None`; head + a
+well-formed line → `1, None`; **head + unrecognised content → `0, None`**.
+Content the parser declined to recognise is reported as zero with no
+reason given, so the third answer is never returned and every caller reads
+a clean zero. `migration_ledger_nonzero` is the caller that matters: a
+REGISTERED, GREEN row carrying a prove-rows arrangement that PROVES it,
+whose refusal text claims the criterion is *"checked at the ARTIFACT"* —
+and at the artifact, unrecognised content counts as zero. The arrangement
+fires on a well-formed line, so the proof exercises exactly the half that
+works.
+
+**WHY THIS IS ONE ENTRY AND NOT THREE.** Each site had the right thing one
+import away. Each took the shorter route, and each shorter route parsed,
+ran, and reported success. No guard fired at any of them, because there is
+nothing for a guard to key on: a correct-looking expression in the correct
+place. Law 26 asks what must be WRITTEN whose absence is computable; these
+three teach that the question BEFORE it is whether the default can make
+the writing unnecessary — the character folded at the constructor, the
+head identified once and consumed, the third answer returned by the parser
+rather than re-derived by each caller. Where the lazy route is correct,
+nothing needs remembering and no absence needs computing.
+
+**The grade on the third member, recorded because it is my own.** The
+mechanism first booked for it — *"reads one of parse's three answers"* —
+was wrong: `migrate.py:2633` handles the `None` case explicitly and all
+four consuming sites do. That sentence was relayed and I was one edit from
+writing it into this file as earned law, on a reading I had not executed.
+The parser table above is what replaced it, and running it is what found
+the better defect. (JOURNAL's own attachment costume, on the entry about
+taking the shorter route.)
