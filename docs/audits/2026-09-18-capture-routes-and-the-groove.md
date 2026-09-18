@@ -49,7 +49,47 @@ seen happening in the record.
 |---|---|---|
 | lane 1 | 07-18 → 07-26 | PERSON 23, MECHANICAL 10, SELF 3, UNCLEAR 4 (40 events). **No trajectory** — mechanical present from day one, ratio flat across 9 days. |
 | lane 2 | 07-26 → 08-07 | PERSON 8, SELF 5, UNCLEAR 1, MECHANICAL as sole route **0**. Instrument-mediated catches **cluster late**. |
-| lane 3 | 08-07 → 09-18 | ~90 consecutive entries **near-totally PERSON**; then a sharp diversification from 09-13. |
+| lane 3 | 08-07 → 09-18 | ~90 consecutive entries **near-totally PERSON**; then a sharp diversification from 09-13. **Superseded at event grain — see below.** |
+
+### AMENDED 2026-09-18, same day: lane 3 re-ran at EVENT grain and the margin narrowed
+
+Lane 3's first pass classified its 15 headed entries (10 PERSON / 3 SELF / 2
+MECHANICAL = 67% PERSON) and characterised the rest in aggregate. Re-run as a
+systematic sample — every 7th of all 191 entries, 27 sampled, evenly spread
+rather than front-loaded, compound entries split into events — it returned
+**~54 events: PERSON ~29 (54%), MECHANICAL ~19 (35%), SELF ~6 (11%),
+UNCLEAR 0.**
+
+**The entry-level tally OVERSTATED person-dominance, and the mechanism is
+worth keeping:** *"compound entries hide mechanical sub-events (a battery run,
+a guard firing, an ablation result) underneath an operator-driven umbrella
+heading."* An entry opens with an operator question and gets tagged PERSON
+while the battery run and guard firing inside it disappear. So the corrected
+margin is roughly **5:3 over MECHANICAL, not 10:2**.
+
+The registered prediction still holds — PERSON > MECHANICAL > SELF in every
+range — but the mechanical share is materially larger than this audit's first
+version implied, which means the pipeline is further along than stated.
+
+**Lane 3's own caveat, carried rather than smoothed:** 27 of 191 is 14%, a
+sample and not a census, and the entries are lumpy (one contributed ~9 events,
+another ~10). **Treat the RATIO DIRECTION as the finding and the percentages
+as illustrative.**
+
+**The dominant single event type, and it reframes the design's target:**
+*an operator asks a direct question or states doubt* — ~18-20 of ~54 events,
+by far the largest category. Not correcting an error, not spotting a bug:
+ASKING. Roughly a third of everything this corpus learned entered through an
+operator question. That pairs with the same day's separate measurement that
+across ~30h of one arc the assistant asked the reporter what the symptom
+looked like ZERO times, and that the rule minted from that incident did not
+move the rate (0.27 → 0.19 per 1000 turns). **The dominant capture route is a
+question being asked, and sessions systematically do not ask them.**
+
+**Saturation re-confirmed at event-type grain:** no new type appeared after
+roughly the 18th sampled entry; the remaining ~9 re-instantiated existing
+categories. Lane 3 stopped there and stated it as a population property
+rather than as a reason to stop.
 
 **The inflection is real and recent.** Lane 3's last week carries: a guard
 blocking a push and the session then RETRACTING ITS OWN DIAGNOSIS after
