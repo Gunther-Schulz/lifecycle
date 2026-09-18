@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 187
+added: 188
 compacted: 0
 
 ## lc-3
@@ -1007,4 +1007,13 @@ goal: enforce-the-invariants
 write-set: tools/prove-rows.py,test/test_prove_rows.py
 done-criterion: the startup provenance check covers every file the run COPIES, not only the files it mutates. RED-FIRST, the lane own arrangement: an uncommitted edit to refusals.py must refuse the run, where today it proceeds and prints PROVEN. MUST-NOT-MOVE: a clean tree still starts, the refusal message keeps naming the offending file and its two shas, and the check stays sha-based rather than git-status-based for the reason the docstring already records.
 evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs and RUN by them: refusals.py uncommitted with a row ident renamed produced no refusal, PROVEN, 92 of 110, exit 0. DERIVED: this is the same class as the docstring-versus-branch finding in the other lane — an assurance whose reach is narrower than its subject — and here the subject is the whole copied package while the assurance covers the mutation list.
+blocked-by: NONE
+
+## lc-196
+grade: READY
+requirement: THE BASELINE IS PRINTED AND NEVER GRADED, AND THE ROW NAME IS ONLY CHECKED FOR FINDINGS. prove-rows never reads row.expect, so a row already BROKEN at HEAD earns PROVEN — the repo own laws file says a baseline assumed green is an unverified premise in a verification costume, and that is exactly what the tool does. Latent today because all 110 baselines agree at the pin, which is the reason to grade it now rather than after it bites. SECOND HALF, same function: the row-name assertion is gated on expect equals FINDING, so four could-not-verify rows fire without naming themselves and are graded on exit 3 ALONE — a code those verbs return for several causes. The laws file already says codes alone do not discriminate here; that sentence covers the finding case and the could-not-verify case escaped it.
+goal: enforce-the-invariants
+write-set: tools/prove-rows.py,test/test_prove_rows.py
+done-criterion: the baseline is GRADED against each row declared expectation before any mutation is judged, and a row whose baseline already disagrees is reported as a finding about the ROSTER rather than folded into a proof about the mutation. AND the row-name assertion covers could-not-verify rows: a row is named in its own output whatever its expected code, so no row is graded on an exit code alone. RED-FIRST: plant a row whose baseline disagrees with its declared expect and the run must not print PROVEN for it; strip a could-not-verify row own name from its message and the run must notice, where today it cannot. MUST-NOT-MOVE: all 110 rows keep their current verdicts at this pin, since every baseline agrees today — a change that flipped any of them would mean the grading is wrong rather than newly present.
+evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs, with the four rows named: laws_absent_could_not_verify, unknown_grade_read, cost_test_unverified, conservation_unverified. DERIVED: both halves are one omission — the tool compares signatures without ever consulting what each row DECLARED it would do, so the declaration is decorative on both axes. MEASURED at this desk today, and it is why this matters beyond the latent case: the same tool granted PROVEN to a crashed arm until an hour ago, so its verdicts are the thing currently least entitled to be trusted on their own word.
 blocked-by: NONE
