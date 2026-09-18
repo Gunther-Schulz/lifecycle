@@ -131,6 +131,35 @@ literally moving them into the repo. Understand the original rationale before
 changing it — the operator flagged this explicitly, and the format file states
 it verbatim.
 
+## Strengthen the "desk" role — the momentum-independent checker (operator, 2026-09-18)
+
+The operator's sharpening, and it unifies this note: the desk works partly
+because it is a CHECK ON THE PEER SESSION'S MOMENTUM — and momentum is the
+mechanism behind this whole class. The check gets skipped under the same
+momentum that carries the work; "answerable, not felt" fails because a session
+IN FLOW feels its state instead of querying it. The peer, inside the execution
+flow, carries that momentum; the desk, OUTSIDE it, queries the peer's state
+instead of feeling it — it verifies at the artifact, grades reports against the
+persistent record, and catches what the peer's momentum hides.
+
+Measured this session: the desk verified the peer's load-bearing claims at the
+artifact rather than trusting them — kernel BTF, the GPU-log ordering, the
+deploy (md5 + service-load-time), the closable state — and the peer's own
+self-corrections landed precisely because it reported into a desk that queries.
+The desk IS the "answerable, not felt" lever embodied as a session ROLE: it
+forces the executor's state to be QUERIED (reported and independently verified)
+rather than FELT.
+
+**Design direction:** strengthen the desk's role/DEFINITION around this — its
+job is to be the momentum-independent checker (verify at the artifact, grade
+against the persistent record), and that is WHY the desk/peer division improves
+reliability, not an incidental benefit. This makes the three threads ONE thing
+wearing three hats: a **persisted record** (state a session queries, not
+recalls), a **seam-trigger** (a check fired by a moment, not a feeling), and a
+**desk** (a party out of the flow querying an in-flow party). The research lanes
+should cover the overseer / out-of-flow-checker angle specifically — is the
+reliability gain from role SEPARATION, or from momentum INDEPENDENCE, or both?
+
 ## Next session — scout the external landscape IN PARALLEL (operator direction)
 
 The operator's framing (2026-09-18): persistence + the right triggers + the
