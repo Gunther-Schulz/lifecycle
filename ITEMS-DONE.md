@@ -1140,5 +1140,17 @@ amended-evidence: 2026-09-12 verified here at cf92ad9: grep '"--goal"' cli.py re
 closed-reason: 2026-09-18 shipped as `item ready --goal`: the listing, plus the distinction that carries it — an UNDECLARED goal is COULD NOT VERIFY while a declared goal holding nothing prints an explicit zero. Red-first recorded: with the filter predicate disabled three arms go red and the discriminating one is the NEGATIVE assertion ('xx-2' unexpectedly found), since a filter that ignores its flag satisfies every positive assertion. Roster row goal_query_undeclared proven at its real anchor and FAILED at an inert one (lc-142 pair). Scope held at this criterion's size: item check/ratio stay unfiltered, and the ratio half is booked at lc-162 with a named absence — its capture side has no per-goal flow figure and choosing one may change the schema.
 closed-ref: bfe5854
 
+## lc-163
+grade: DONE
+requirement: prove-rows mutates the LIVE package in place, so while it runs the checkout is deliberately wrong and its wrongness is shaped exactly like a regression in whatever landed last. Two desks share this working copy: the judgment desk read the tree mid-run, saw two roster rows FAIL, and reported a regression against a commit that is deterministically CLEAN — record: reproduced from the recorded arrangements, 2026-09-18
+goal: every-refusal-red-first
+write-set: UNKNOWN
+done-criterion: a reader of the checkout cannot mistake a prove-rows window for a real red: either prove-rows mutates a COPY and the live tree is never inconsistent, or an open window is detectable and `--test` answers COULD NOT VERIFY under it. Red-first: a roster run issued DURING a window must not report a passing row as FAILED
+evidence: MEASURED 2026-09-18. --test at 99e998c, clean tree, 3 runs: 104/104 CLEAN. Under migration_unclassified's recorded mutation (which replaces the emission TEXT, so migrate still exits FINDING while the row NAME is absent): 102 passed/2 failed, both lines reading 'the plant fired, but nothing in its output names row'. Under migration_ambiguous_closure's (closure-word scan folded): 103/1 — the peer desk's exact count. The reported red straddled the two, consistent with a read crossing prove-rows' step between arrangements. tools/prove-rows.py already refuses to START on a dirty target; the symmetric hazard to READERS has no marker at all. _coverage_over_copy in refusals.py is the copy pattern already in this repo
+blocked-by: NONE
+blocker-moot: does prove-rows mutate a COPY, or does an open window become detectable and make --test answer COULD NOT VERIFY? (answered in the ledger before this item closed)
+closed-reason: 2026-09-18 prove-rows now mutates a COPY; the live checkout is never written. Evidence is a pair over the same sampler and arrangements, 64 samples each: OLD 3 files diverging (15/16/16 samples), NEW 0, with 3 PROVEN either way and 86 PROVEN on the full walk. The regression arm samples from INSIDE the window via the verdict stub and goes red against the pre-lc-163 tool on its own assertion. The startup refusal stays; its stated reason was rewritten because the old one became false once nothing is written live — provenance, not clobbering.
+closed-ref: f4db0ec
+
 ## Archive (pre-migration)
 
