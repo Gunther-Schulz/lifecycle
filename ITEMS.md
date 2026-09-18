@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 163
+added: 164
 compacted: 0
 
 ## lc-3
@@ -860,4 +860,13 @@ goal: enforce-the-invariants
 write-set: .claude/lifecycle.json,plugin/cli/lifecycle_core/declaration.py,test/test_declaration.py
 done-criterion: desk state resolves to a registered kind with all six stages, on the pattern lc-166 established and the fire log set before it: an XDG home declared as a per-repo kind, files never moved into any tree. The WRITER is verb:desk state, so its trigger is implicit in the act — which makes it one of the self-administering kinds and worth saying so in the declaration. RED-FIRST: with desk-state files present and the kind undeclared, the lc-166 check (records_kind_undeclared, or its sibling) must fire; declaring it takes the walk to 0 with the sweep still clean. MUST-NOT-MOVE: the verb ALWAYS OVERWRITES and keeps no history by design, so the staleness stage says the state is current-by-construction and the exit is not a compaction.
 evidence: Measured at the artifact 2026-09-18: ~/.local/state/lifecycle/desk-state/ exists; a scan of the 24 declared kinds for a desk-state home returns none. desk.py own docstring states the design (one current state per desk, no history, XDG rather than .claude/ because a config-directory write costs a permission dialog). Found in the same survey that found lc-170, prompted by the build desk structural finding on lc-166: kind sweep walks tracked files while invariant 1 says every persisted thing, so XDG-homed kinds are invisible to it and their absence from the declaration is invisible to every other check too.
+blocked-by: NONE
+
+## lc-172
+grade: READY
+requirement: AN ABSENCE CLAIM MUST NAME WHAT PROVES ITS INSTRUMENT WAS LIVE, and this plugin does it in most places and not all. A zero-hit search, a clean scan, a "nothing found" each return exactly what a DEAD INSTRUMENT returns. Measured over this package CLEAN-claiming outputs: most already carry a denominator (all N tracked files, N record(s), all N registered commands, all N emitted row names) which is the mechanism working; at least four do NOT — including one reading "the home holds nothing, so nothing has" which is the explicit 0/0 shape the repo three-answer rule exists to refuse. This is the highest-value member of the required-slot candidate list (docs/required-slots-as-an-autonomy-lever.md) because it is the most-fired failure measured anywhere today.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/roster.py,plugin/cli/lifecycle_core/refusals.py,test/test_retire.py
+done-criterion: every output that CLAIMS AN ABSENCE carries the denominator that proves its instrument was live, and a denominator of ZERO is COULD NOT VERIFY rather than CLEAN. OUTCOME FIRST, sites second: the observable is that no verb can report clean over a population it never examined. RED-FIRST: point a sweep at an empty or unreadable population and it must answer could-not-verify, never clean — the current "the home holds nothing, so nothing has" line is the firing input. MUST-NOT-MOVE: a genuine zero over a REAL examined population stays CLEAN with its denominator shown (all 85 tracked files resolve is correct and must not become could-not-verify), so the discriminator is whether the instrument SAW anything, never whether it FOUND anything.
+evidence: FOUR INSTANCES MEASURED AT THIS DESK IN ONE DAY, every one a zero believed without a known positive, and every one against a rule this desk had loaded and had quoted to three dispatch lanes: an extractor returning 0 items for a FULL carrier (caught only because the full file obviously could not be empty); a journal enumeration returning 45 where 344 existed, keyed to the one form the first entries happened to carry; a sweep for commit sites that missed ledger.py because the pattern was keyed to the names already in hand; and a roster read as RED that was a prove-rows mutation window. Survey of this package CLEAN outputs 2026-09-18 shows the mechanism already present in most and absent in at least four. Candidate list and the general pattern: docs/required-slots-as-an-autonomy-lever.md, operator-agreed 2026-09-18.
 blocked-by: NONE
