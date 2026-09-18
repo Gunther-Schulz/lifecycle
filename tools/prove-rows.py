@@ -148,26 +148,25 @@ MUTATIONS = [
      "    if False:",
      "the typed-blocker test in `_check_blocker`"),
 
-    # THE ANCHOR IS THE GATE, NOT THE PARSE BRANCH INSIDE IT, and the reason
-    # is that the narrower mutation darkens NOTHING: the plant's predicate is
-    # prose, so neutralising the `sh -n` test only lets it fall through to the
-    # probe, which exits 2 on the same syntax error and emits the same row.
-    # A mutation whose row keeps firing proves the row, not the mutation.
-    # THE SECOND LINE RUNS TO ITS OWN END, not to a convenient stop inside
-    # it. `    if kind == "evidence":` occurs twice in this file, so the
-    # comment line is what disambiguates — but cut mid-line it was a PREFIX
-    # match, satisfied by any longer line starting the same way, which is the
-    # failure `anchor_hits` rejects at the far end.
+    # THE ANCHOR WAS THE GATE UNTIL lc-164, and why it MOVED is the whole
+    # lesson. This row has two firing inputs decided at two branches, so no
+    # branch-level mutation darkened it — neutralising the `sh -n` test only
+    # let prose fall through to the probe, which exits 2 on the same syntax
+    # error and emitted the same row (measured twice, once at lc-164's
+    # pickup). The gate outside the lint was the only anchor that worked, and
+    # it worked only while the lint held ONE refusal. lc-164 put a second
+    # refusal behind that gate; the gate mutation then darkened both and
+    # proved neither — lc-30's class, caught by re-running this arrangement
+    # before claiming the new row green, exactly as that rule requires.
+    # The repair was in the CODE, not here: the two inputs now compose one
+    # `broken` verdict tested at one condition, which is what a row-per-
+    # decision registry asks the code to look like anyway.
     ("blocker_predicate_broken", "verbs.py",
-     "    if kind == \"evidence\":\n"
-     "        # THE THIRD DOOR IS WHY IT IS HERE. `item amend --blocked-by` "
-     "reaches",
-     "    if False:\n"
-     "        # THE THIRD DOOR IS WHY IT IS HERE. `item amend --blocked-by` "
-     "reaches",
-     "the mint-time lint's gate on an `evidence` blocker — removed, prose "
-     "booked into a shell slot is admitted and the item waits in nobody's "
-     "court"),
+     "    if broken is not None:",
+     "    if False:",
+     "the mint-time lint's ONE broken-verdict test, over both its firing "
+     "inputs — removed, prose booked into a shell slot is admitted and the "
+     "item waits in nobody's court"),
 
     # SCOPED TO ITS OWN BRANCH, which is lc-30's rule and not caution. This
     # row and `blocker_predicate_broken` are decided off ONE probe run, so a
@@ -176,7 +175,7 @@ MUTATIONS = [
     # this row reads; the BROKEN branch above it keeps reading real input,
     # which is what makes the sibling's proof survive this row's arrival.
     ("blocker_predicate_satisfied_at_booking", "verbs.py",
-     "    if t.state == lanes.FIRE:",
+     "    if t is not None and t.state == lanes.FIRE:",
      "    if False:",
      "the mint-time grade of the booking run's exit code — removed, a "
      "predicate that cannot fail is admitted and the item reads UNBLOCKED "

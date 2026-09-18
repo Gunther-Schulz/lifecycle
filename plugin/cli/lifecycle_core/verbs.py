@@ -858,30 +858,55 @@ def _predicate_lint(detail: str, ctx: Ctx, out) -> int:
             f"be parse-checked ({exc!r}). An unchecked predicate and a good "
             "one are not the same answer, and neither is a refusal.")
         return exits.COULD_NOT_VERIFY
+    # ONE DECIDING CONDITION PER REFUSAL, and lc-164 is what forced it. This
+    # refusal has TWO firing inputs — prose that does not parse, and a program
+    # that parses and answers BROKEN — and each used to `return` from its own
+    # branch. That was provable while this lint held ONE refusal: the only
+    # mutation that darkened the row was the GATE outside it, because
+    # neutralising the parse branch alone just lets prose fall through to the
+    # probe, which exits 2 on the same syntax error and emits the same row
+    # (measured, twice: by the session that recorded the gate anchor, and
+    # again at lc-164's pickup). The moment a SECOND refusal moved in behind
+    # that gate, the gate mutation darkened both and proved neither — lc-30's
+    # class, and the repair it names is scoping rather than a fallback.
+    #
+    # So the two inputs compose one verdict and the verdict is tested once.
+    # `broken` carries the message rather than a flag: the two inputs deserve
+    # different sentences (one is prose in a shell slot, the other a program
+    # that runs and answers wrong) and folding them into one text would tell
+    # the author the wrong thing about their own predicate.
+    broken = None
+    t = None
     if p.returncode != 0:
         tail = (p.stderr or p.stdout or "").strip().replace("\n", " ")[:200]
-        out(f"FINDING [blocker_predicate_broken] the evidence predicate "
-            f"({detail!r}) is not a shell program: `sh -n` exited "
-            f"{p.returncode}. {tail} An `evidence` blocker is EXECUTED — "
-            "§3.1 has it evaluated like a trigger — so prose booked into "
-            "this slot never parses, reports BROKEN on every `item ready` "
-            "pass, and leaves the item waiting in nobody's court until a "
-            "reader happens to open the board. If what the item waits for is "
-            "a judgment rather than a fact a command can settle, it is a "
-            "`decision <question>` blocker and belongs in the operator's "
-            "court; if it is a fact, write the command that decides it.")
+        broken = (f"the evidence predicate ({detail!r}) is not a shell "
+                  f"program: `sh -n` exited {p.returncode}. {tail} An "
+                  "`evidence` blocker is EXECUTED — §3.1 has it evaluated "
+                  "like a trigger — so prose booked into this slot never "
+                  "parses, reports BROKEN on every `item ready` pass, and "
+                  "leaves the item waiting in nobody's court until a reader "
+                  "happens to open the board. If what the item waits for is "
+                  "a judgment rather than a fact a command can settle, it is "
+                  "a `decision <question>` blocker and belongs in the "
+                  "operator's court; if it is a fact, write the command that "
+                  "decides it.")
+    else:
+        # THE PROBE STILL RUNS ONLY BEHIND A CLEAN PARSE — `TheProbeOrdering`
+        # pins that with a marker file, and the `else` is what keeps it true.
+        t = lanes.evaluate_trigger(detail, cwd=ctx.repo)
+        if t.state == lanes.BROKEN:
+            exited = (f"exited {t.code}, which §3.3 RESERVES for broken"
+                      if t.code is not None else "did not answer at all")
+            broken = (f"the evidence predicate ({detail!r}) PARSES but is "
+                      f"BROKEN on one probe run: it {exited}. {t.detail} "
+                      "`item ready` reads that same code through the same "
+                      "evaluator, so this blocker would report BROKEN on "
+                      "every pass — a wait that can only expire, never "
+                      "clear.")
+    if broken is not None:
+        out(f"FINDING [blocker_predicate_broken] {broken}")
         return exits.FINDING
-    t = lanes.evaluate_trigger(detail, cwd=ctx.repo)
-    if t.state == lanes.BROKEN:
-        exited = (f"exited {t.code}, which §3.3 RESERVES for broken"
-                  if t.code is not None else "did not answer at all")
-        out(f"FINDING [blocker_predicate_broken] the evidence predicate "
-            f"({detail!r}) PARSES but is BROKEN on one probe run: it "
-            f"{exited}. {t.detail} `item ready` reads that same code through "
-            "the same evaluator, so this blocker would report BROKEN on "
-            "every pass — a wait that can only expire, never clear.")
-        return exits.FINDING
-    if t.state == lanes.FIRE:
+    if t is not None and t.state == lanes.FIRE:
         out(f"FINDING [blocker_predicate_satisfied_at_booking] the evidence "
             f"predicate ({detail!r}) PARSES and EXITS 0 on its booking run, "
             "which the blocker mapping reads as `the evidence ARRIVED`. So "
