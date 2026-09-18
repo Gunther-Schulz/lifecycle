@@ -215,3 +215,60 @@ one nobody thought to ask — stays the operator's, is not a gap, and enters
 the pipeline the first time it is asked. Always-on additions from the drain
 wait on lc-222's result (addendum 1). M5's mining half is discovery and may
 run parallel to any wave; its booking rides wave A with the other mints.
+
+## Addendum 3 — wave C close and the SUCCESSOR QUEUE (driving desk, 2026-09-19)
+
+Waves A and C-partial are CLOSED and pushed (origin/main `31f8572`,
+verified by fetch at the driving desk). The executing desk `cachyos-setup-be`
+is closed. Suite state at close: 6 of 6 registered checks executed —
+4 clean, 2 pre-existing could-not-verifies (prove-rows rc=3, audit rc=3),
+both identical at the eb69b02 baseline, neither wave work. The one real
+red (roster kind unregistered) is FIXED (`2a154ea`).
+
+**The successor desk picks up HERE, none of it done:**
+
+1. Grooming remainder: merge lc-150/lc-208 into one entry with TWO
+   red-first arms (same site, two defects); do NOT merge lc-180/190/203
+   or lc-151/187 (distinct defects/sites — bundle by write-set at join
+   time); regrade lc-3/lc-7 (grade NEW over PARKED text, both slots
+   UNKNOWN, `blocked-by: evidence false` where the predicate is the
+   literal string "false"); demote the five UNKNOWN-slot READY items
+   (an unknown boundary parks).
+2. Book the verify.py defect — **ONE arm only**: a wrapped command's
+   rc=3 (this CLI's own could-not-verify) renders as RAN-FAILED — the
+   three-answer collapse inside the enforcement instrument. The
+   exit-contract arm was KILLED by the executing desk's own re-run
+   (its earlier rc=0 was zsh pipe-status, tail's exit not the verb's);
+   do not book it.
+3. Mint the ARC KIND item (born blocked on its design decision), design
+   inputs: the four walk findings, live-working-state + kill test,
+   belief vocabulary with reopen-and-propagate (all in
+   `docs/directives/2026-09-19-arc-walk-synthesis.md` §Additional
+   inputs, and this directive's message history is NOT the carrier —
+   the doc is).
+4. Amend lc-226 (add the grounded-first fill beside goal-advance),
+   lc-228 (intervention-taxonomy hypotheses + derivable-fraction
+   metric), lc-229 (first target: the narrowing).
+5. Fix the-loop.md's O3 row (roster now exists AND is a registered
+   kind — date the cell) and its O4 row if the digest hook lands.
+6. Compose the head-rule proposal for the driving desk/operator:
+   datum from close — `item ratio` 221:106 = 2.08:1 CLEAN under the
+   3:1 tripwire, so the argument stands on schedule-size (106 READY)
+   alone, not drainage. Two independent routes reached this question
+   (carrier size; the arc walk's multi-arc scheduling).
+7. Wave B, gated on nothing now: lc-222 FIRST (erosion probe — its
+   result gates further always-on mechanism admission), lc-218 alone
+   in its act (schema bump), then lc-174, lc-176, lc-193, lc-175+lc-179
+   bundled (shared write-set).
+8. Two routed findings for the design round: the declaration's ref
+   vocabulary cannot express a harness hook in another repo (the
+   roster kind's `reader` names `session` as the nearest true value);
+   and the attribution hook's "unmarked" line cannot distinguish
+   no-trailer from recorder-never-saw-it (`git commit -q` delivers no
+   gitOperation) — the same three-answer shape as item 2.
+9. Standing observation: the stale detached worktree
+   (`…/scratchpad/wt-old`, detached 2c65b8d) — report-not-prune,
+   ownership unverified, operator's call.
+
+Known-unmarked commit: 4a4ad6e (trailer env unset for one call;
+reported, visible to the hook, deliberately not rebased).

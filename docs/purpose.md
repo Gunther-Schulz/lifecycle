@@ -32,7 +32,9 @@ operator is only what investigation genuinely cannot settle: intent,
 preference, authority over the irreversible, and each novel question once.
 A proposal arrives pre-collided with reality; a GO is never spent on a plan
 that dies at first contact (the measured class: evidence rots between
-booking and pickup — 55% of completed items amended, evidence slot 39%; a
+booking and pickup — 55% of completed items amended, evidence slot 39%
+(machine-computed, this carrier's own audit 2026-09-18, post-treatment on
+governed repos); a
 proposal built on an unread world wastes a plan cycle and an operator
 round).
 
@@ -72,7 +74,8 @@ by construction an input from outside it). Daneel was born from the second.
   loading: the record may grow unboundedly while the per-moment slice stays
   lean (this is the containment for corpus-erosion risk). Basis: the
   governance-decay measurement (a rule absent from context: violations
-  0% → 30-59%); retrieval fails at MOMENTS OF APPLICATION, not at storage.
+  0% → 30-59%, external, lane-verified not desk-opened); retrieval fails
+  at MOMENTS OF APPLICATION, not at storage.
 - **DEMAND** — the seam asks, and cannot be passed unanswered. Canonical
   carrier: `docs/required-slots-as-an-autonomy-lever.md` — do not ask an
   agent to decide well; require it to WRITE at the moment of deciding. The
@@ -81,7 +84,9 @@ by construction an input from outside it). Daneel was born from the second.
   adherence split: rules loaded the whole session, inert in 5 of 6
   corrections); a demand converts "should engage" into "cannot proceed
   without engaging". Self-questioning is excluded by evidence (intrinsic
-  self-correction degrades); the demand is the environment's, deterministic.
+  self-correction degrades); the demand is the environment's,
+  deterministic. (Adherence split: measured, dotfiles journal; "5 of 6"
+  is that measurement's figure, one session's sample.)
 - **INDEPENDENT FEEDBACK** — every verdict the work rests on comes from
   something that cannot see or influence the answer while it is produced: a
   referee, an executed check, a second information holder reading the
@@ -106,7 +111,9 @@ Taste, scope, naming, which arc matters, the carve-outs (irreversible and
 outward acts), and each genuinely novel question — once, after which it
 enters the question pipeline and never needs asking twice. This half is
 the operator DESIGNING the system, not a gap. Roughly half of historical
-capture events were this kind; not one was a defect.
+capture events were this kind; not one was a defect (measured: 19 YES /
+19 NO at event grain, capture-routes audit 2026-09-18 — one lane's range,
+machine-computed).
 
 ## The felt acceptance test
 
