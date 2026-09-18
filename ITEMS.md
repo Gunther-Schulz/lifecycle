@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 217
+added: 218
 compacted: 0
 
 ## lc-3
@@ -1262,4 +1262,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/records.py,test/test_records.py
 done-criterion: The record carries per-round yield and the record check prints the series where the next round composer reads it, with a zero-yield round rendering as an explicit zero rather than as silence. Three answers reachable, red-first per arm. FIRST DECISION OF THE ITEM, named as a design question and not pre-decided: whether the home is investigation-record slots plus record check (the likely home, and the write-set above assumes it), a prose form, or a desk convention. If the decision moves the home, the write-set is amended before building. MUST-NOT-BUILD: no round counter whose value is derived from the composing session own memory; the count comes from the record.
 evidence: DERIVED from the operator corpus re-entry-seam convention: a repeated cycle carries two method-shaped questions, is another round owed and is the FORM failing, and the session running the rounds cannot see the series. MEASURED 2026-09-18, relayed from the driving desk and carried as theirs: in the CachyOS freeze arc, keep playing was recommended over an unchanged instrument while the data that would have answered sat on disk, and the operator was the only party who saw the series. DERIVED from docs/the-loop.md I5: the one gap solved here was solved by a COUNT at close rather than by a better duty, which is the transferable move. DERIVED: the operator line by now something should have materialized is this question arriving late, from outside.
+blocked-by: NONE
+
+## lc-226
+grade: READY
+requirement: AN OPERATOR-FACING RECOMMENDATION CAN ADVANCE NOTHING AND READ AS PROGRESS. Require the recommendation to carry a filled slot: what this advances toward the arc GOAL, or why holding position IS the recommendation. Required-slot pattern per docs/required-slots-as-an-autonomy-lever.md: presence computable, fill quality judgment, and the fill cannot be written without reading the goal. This is an eighth candidate beside the seven that document lists.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/records.py,test/test_records.py
+done-criterion: A recommendation without the goal-advance fill is visibly absent at a glance, and the check fires on the absence rather than grading the prose. Red-first on the specimen below, which must FAIL, and green on a filled recommendation. FIRST DECISION OF THE ITEM, named as a design question and not pre-decided: the enforcement home, record check or a prose form or a desk convention. The write-set above assumes record check and is amended before building if the decision moves it. MUST-NOT-BUILD: nothing that grades the CONTENT of the fill, per that document own boundary, a slot filled with nonsense passes and what is bought is that the thinking happened and its absence is visible.
+evidence: DERIVED from docs/required-slots-as-an-autonomy-lever.md: do not ask an agent to decide well, require it to WRITE something at the moment of deciding; the trigger is a computable predicate with near-zero false fires, so a duty under-firing while loaded does not apply. MEASURED 2026-09-18 in that same document: the operator corpus carries 27 Convention statements and roughly 5 carry a token; the tokened ones fire and the rest are duties. SPECIMEN, relayed from the driving desk and carried as theirs: the recommendation keep playing, the rig is healthy, 2026-09-18, retracted by its own author as advancing nothing. DERIVED: this is the eighth candidate; that document lists seven existing prose rules whose firing moment is known and whose slot does not exist.
 blocked-by: NONE
