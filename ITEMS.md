@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 186
+added: 187
 compacted: 0
 
 ## lc-3
@@ -998,4 +998,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/verify.py,plugin/cli/lifecycle_core/refusals.py,test/test_lanes.py,test/test_verify.py
 done-criterion: every site where this stack takes a verdict from a shell is ENUMERATED, and each one either stops trusting the last-stage code or declares in its own output that it cannot discriminate. THE ENUMERATION IS THE DELIVERABLE, not the two known repairs: the sweep is keyed on the invariant every member carries — a subprocess whose returncode becomes a verdict — never on the idiom the two found instances happen to share. RED-FIRST, both measured by the lanes: a pipeline whose FIRST stage is broken must not read QUIET as a trigger nor RAN-clean as a verify; the bare and and-chained spellings keep their current answers exactly. MUST-NOT-MOVE: a legitimate pipeline predicate that WORKS keeps firing and staying quiet as it does today — the repair cannot be to forbid pipelines, which would fire on every legitimate lane using one.
 evidence: RELAYED from two independent review lanes via lifecycle-6f, carried as theirs and as the strongest grade available here because the lanes varied the axis that matters: lane 1 found it in lanes.py Trigger evaluation by reasoning, lane 2 RAN it against verify.py with four spellings and reported which two diverge. DERIVED, and it is why this is one item rather than two: both are the same mechanism — a shell reports the last process status — so repairing the two sites and not sweeping for the rest would leave the class intact at every site neither lane happened to read.
+blocked-by: NONE
+
+## lc-195
+grade: READY
+requirement: THE PROVENANCE REFUSAL COVERS 12 OF 21 CORE MODULES. prove-rows refuses to start when a file it would mutate already differs from HEAD, and dirty_targets compares only the files the MUTATIONS table names — while the work copy is taken from the working tree over ALL of the package. So refusals.py, which holds every plant, control and expectation, plus exits.py and seven others, are never compared. A lane RAN it: with refusals.py uncommitted and a row ident renamed, no refusal fired, the run printed PROVEN and 92 of 110, exit 0. The precondition this tool own docstring calls the one it cannot run without is checked over a narrower set than the one it copies.
+goal: enforce-the-invariants
+write-set: tools/prove-rows.py,test/test_prove_rows.py
+done-criterion: the startup provenance check covers every file the run COPIES, not only the files it mutates. RED-FIRST, the lane own arrangement: an uncommitted edit to refusals.py must refuse the run, where today it proceeds and prints PROVEN. MUST-NOT-MOVE: a clean tree still starts, the refusal message keeps naming the offending file and its two shas, and the check stays sha-based rather than git-status-based for the reason the docstring already records.
+evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs and RUN by them: refusals.py uncommitted with a row ident renamed produced no refusal, PROVEN, 92 of 110, exit 0. DERIVED: this is the same class as the docstring-versus-branch finding in the other lane — an assurance whose reach is narrower than its subject — and here the subject is the whole copied package while the assurance covers the mutation list.
 blocked-by: NONE
