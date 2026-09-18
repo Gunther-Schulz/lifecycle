@@ -896,6 +896,36 @@ per kind), and records actually being read (the retrieval measurement already
 has a method — 13,735 queries over 230 sessions is the baseline). This gate
 asks only whether the machinery RUNS.
 
+**GATE 1'S WRITE HALF IS NOW MEASURED** —
+`docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md`, four lanes, same
+day. Read it before grading anything here; three of its results bear directly
+on this section.
+**(a)** The rubric this design implied was WRONG. Splitting writes into
+operator-prompted and self-initiated is the wrong cut in a desk/peer
+architecture — being told by a PEER is still being told. The measured split is
+four-way, and in the governed peer-rich population it runs operator 25.2% /
+peer-content 45.0% / automated ping 10.6% / **unprompted 19.3%** (write grain;
+14.8% at the episode grain). Peer-prompting is real causation, not
+co-occurrence: 19 of 20 sampled episodes had the peer message naming the exact
+artifact written.
+**(b)** The unprompted rate TRACKS PEER DENSITY, NOT GOVERNANCE — dotfiles
+(41% peer-dense) 18%, dispatch-guards (27%) 52%, cache-fix 54%. Governance is
+not visibly moving this number. The comparison is confounded across many axes
+at once and CANNOT grade governance; that is a limit, not a result.
+**(c)** THE PRE-TREATMENT BASELINE THIS SECTION WANTS DOES NOT EXIST AND CANNOT
+BE BUILT FROM TRANSCRIPTS. Only 3 of 1360 candidate writes in the pre-toolchain
+repo invoke the toolchain at all, all inside its build window: adoption moved
+the WORK to another repo's sessions rather than showing up as a before/after in
+one place. The operator's correction that the 55% was measured on
+already-governed sessions was right, and the honest consequence is that no
+uncontaminated before-arm is available here. Any future before/after must be
+designed PROSPECTIVELY, from a marker laid down now.
+**What survives for this design, stated at its real width:** 75-83% of carrier
+writes in governed repos happen with no operator message in the window. That is
+the operator-attention claim, measured. **It is not the claim that the system
+writes by itself**, and the two must not be swapped — which is this arc's own
+paraphrase-drift class pointed at its own result.
+
 **GATE 2 — EFFECT: does it alleviate the operator's problems?** Fewer
 interruptions, less re-derivation, a shorter path to a project's groove.
 
