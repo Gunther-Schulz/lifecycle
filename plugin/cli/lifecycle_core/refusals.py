@@ -1084,13 +1084,51 @@ VERB_ROWS = [
             "(measure then cut: the timing rule; the next review is the "
             "consumer"]),
         # THE SAME VERB, THE SAME BLOCKER TYPE, a predicate that parses and
-        # exits 0: the arms differ in the predicate alone, so neither `item
+        # WAITS: the arms differ in the predicate alone, so neither `item
         # add` nor the `evidence` type is what separates them. A control
         # using a `decision` blocker would have scored a lint that refuses
         # every evidence predicate identically.
-        control=lambda: _cli(GOOD_ADD + ["--blocked-by",
-                                         "evidence test -f /etc/hostname"]),
+        #
+        # RE-SPELLED FOR lc-164, and the old spelling is why this note is
+        # here. The control read `evidence test -f /etc/hostname` — a
+        # predicate that parses and exits 0 — chosen when 0 and 1 were the
+        # same answer to this lint. lc-164 made 0 a refusal of its own, so
+        # that control would have gone red and read as THIS row breaking.
+        # The exit-1 spelling keeps the property the control was chosen for
+        # (parses, is not refused) under a predicate the sibling row does
+        # not claim.
+        control=lambda: _cli(GOOD_ADD + [
+            "--blocked-by", "evidence test -f /nonexistent-lifecycle-probe"]),
         stage="wave 1, stage 4 (lc-130)",
+    ),
+    Row(
+        ident="blocker_predicate_satisfied_at_booking",
+        refusal="an `evidence` blocker whose predicate EXITS 0 on its booking "
+                "run — the blocker mapping reads that as evidence ARRIVED, so "
+                "the item is blocked by nothing. Either it is schedulable "
+                "today and the blocker is noise, or the predicate cannot fail "
+                "and the item reads UNBLOCKED forever while what it waits for "
+                "has not happened. Both are reported because the mint cannot "
+                "tell them apart, and neither is detectable later: `item "
+                "ready` sees the same 0 on every pass (lc-164)",
+        firing_input="`item add --blocked-by 'evidence <a clause true for "
+                     "every input>'` — the measured incident piped a `pgrep` "
+                     "through `head -0`, which emits nothing, so `test -z` "
+                     "held whatever was running",
+        expect=exits.FINDING,
+        fire=lambda: _cli(GOOD_ADD + [
+            "--blocked-by",
+            "evidence test -z \"$(printf 'a-process' | head -0)\""]),
+        # THE SAME VERB, THE SAME BLOCKER TYPE, the same `head -0` SHAPE —
+        # and the pipeline's output is NOT discarded, so the predicate can
+        # answer either way and answers 1 here. The arms differ in the one
+        # thing the refusal is about: whether the booking run could have come
+        # back anything but 0. A control spelled with an unrelated predicate
+        # would have scored a lint that refuses every evidence blocker.
+        control=lambda: _cli(GOOD_ADD + [
+            "--blocked-by",
+            "evidence test -z \"$(printf 'a-process' | head -1)\""]),
+        stage="wave 1, stage 4 (lc-164)",
     ),
     Row(
         ident="closed_ref_unresolvable",

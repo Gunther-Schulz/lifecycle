@@ -169,6 +169,19 @@ MUTATIONS = [
      "booked into a shell slot is admitted and the item waits in nobody's "
      "court"),
 
+    # SCOPED TO ITS OWN BRANCH, which is lc-30's rule and not caution. This
+    # row and `blocker_predicate_broken` are decided off ONE probe run, so a
+    # mutation on the RUN (`t = lanes.evaluate_trigger(...)`) would empty both
+    # verdicts and prove neither. The `FIRE` test is the one condition only
+    # this row reads; the BROKEN branch above it keeps reading real input,
+    # which is what makes the sibling's proof survive this row's arrival.
+    ("blocker_predicate_satisfied_at_booking", "verbs.py",
+     "    if t.state == lanes.FIRE:",
+     "    if False:",
+     "the mint-time grade of the booking run's exit code — removed, a "
+     "predicate that cannot fail is admitted and the item reads UNBLOCKED "
+     "forever"),
+
     ("dangling_reference_item", "verbs.py",
      "    if detail not in known:",
      "    if False:",

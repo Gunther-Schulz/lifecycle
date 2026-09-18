@@ -1346,8 +1346,12 @@ class TheMintTimePredicateLint(unittest.TestCase):
     #: exits 2 on the unbalanced parenthesis, before anything is executed.
     PROSE = ("an operating interval has passed since the burst (measure then "
              "cut: the timing rule; the next review is the consumer")
-    #: Parses, and exits 0 — the design's own must-not-move control.
-    MINTS = "test -f /etc/hostname"
+    #: Parses, and exits 0 — refused since lc-164, which is what this
+    #: constant's old name (`MINTS`) asserted and its arm now denies. Spelled
+    #: as the measured incident's SHAPE rather than as a bare `true`: a test
+    #: over a command whose output was discarded, which is how an
+    #: unfalsifiable clause reaches a carrier looking like a real check.
+    CANNOT_FAIL = "test -z \"$(printf 'a-process' | head -0)\""
 
     def _run(self, repo, *argv):
         import io, os
@@ -1422,16 +1426,82 @@ class TheMintTimePredicateLint(unittest.TestCase):
             self.assertIn("exit 7", out,
                           f"the refusal does not quote the predicate.\n{out}")
 
-    def test_a_predicate_exiting_0_MINTS(self):
+    def test_a_predicate_exiting_0_IS_REFUSED(self):
+        """lc-164 — and this arm asserted the OPPOSITE until today.
+
+        IT WAS `test_a_predicate_exiting_0_MINTS`, reading "a working
+        predicate was refused — a guard that fires on legitimate work stops
+        the lane (R11)". The sentence is right and its instance was wrong:
+        lc-130 asked whether a predicate WORKS and treated 0 and 1 as one
+        answer, so an exit-0 predicate stood here as the must-not-move
+        control for the parse lint. It is not legitimate work. An evidence
+        blocker whose predicate is TRUE at booking blocks nothing — the item
+        is schedulable today, or the predicate cannot fail — and the measured
+        incident is the second: a `pgrep` piped through `head -0` made the
+        clause true for every input, and the item read UNBLOCKED while what
+        it waited for had not happened.
+
+        R11's OWN CONTROL DID NOT MOVE: `test_a_predicate_exiting_1_MINTS`
+        below is the arm proving this lint does not refuse every evidence
+        predicate, and exit 1 — the evidence has not arrived yet — is what
+        every legitimate blocker answers at its booking.
+        """
         with refusals._Repo() as r:
-            code, out = self._add(r, self.MINTS)
+            before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+            code, out = self._add(r, self.CANNOT_FAIL)
             self.assertEqual(
-                code, exits.CLEAN,
-                f"a working predicate was refused — a guard that fires on "
-                f"legitimate work stops the lane (R11).\n{out}")
-            self.assertIn(f"evidence {self.MINTS}",
-                          (r.dir / "ITEMS.md").read_text(encoding="utf-8"),
-                          "the blocker did not reach the carrier")
+                code, exits.FINDING,
+                f"a predicate that cannot fail was admitted.\n{out}")
+            self.assertIn("blocker_predicate_satisfied_at_booking", out,
+                          f"the refusal names no registry row.\n{out}")
+            # QUOTED AS THE VERB QUOTES IT (`{detail!r}`), which the sibling
+            # arm above could assert as a bare substring only because its
+            # fixture carries no quote characters. This predicate does — the
+            # incident's shape needs them — so the assertion reads the form
+            # the author actually sees rather than one repr never emits.
+            self.assertIn(
+                repr(self.CANNOT_FAIL), out,
+                "the refusal does not QUOTE the predicate — the author "
+                f"cannot see which text was refused.\n{out}")
+            self.assertEqual(
+                (r.dir / "ITEMS.md").read_text(encoding="utf-8"), before,
+                "the carrier was written despite the refusal")
+
+    def test_the_refusal_names_BOTH_readings_because_one_run_cannot_split_them(self):
+        """The message is the whole deliverable here, so it is asserted.
+
+        A run exiting 0 is consistent with an item already unblocked AND
+        with a predicate that cannot fail, and the repairs differ — drop the
+        blocker, or rewrite the predicate. An operator told only "this exits
+        0" cannot tell which is owed, which is the same failure the route-set
+        pair was split to avoid.
+        """
+        with refusals._Repo() as r:
+            _code, out = self._add(r, self.CANNOT_FAIL)
+            self.assertIn("schedulable today", out,
+                          f"the already-unblocked reading is missing.\n{out}")
+            self.assertIn("CANNOT FAIL", out,
+                          f"the unfalsifiable reading is missing.\n{out}")
+
+    def test_the_exit_0_refusal_reaches_park_and_amend_too(self):
+        """The three doors, as lc-130's own arms established them.
+
+        Free because the grade sits at the shared function — but free is not
+        proven, and a later repair keyed to `item add` alone would pass every
+        arm above.
+        """
+        for argv in (["item", "park", "xx-3"], ["item", "amend", "xx-3",
+                                                "--reason", "retyped"]):
+            with refusals._Repo(items=refusals.FOUR_BLOCKER_ITEMS) as r:
+                before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+                code, out = self._run(r, *(argv + [
+                    "--blocked-by", f"evidence {self.CANNOT_FAIL}"]))
+                self.assertEqual(code, exits.FINDING,
+                                 f"{argv[1]} admitted it.\n{out}")
+                self.assertIn("blocker_predicate_satisfied_at_booking", out, out)
+                self.assertEqual(
+                    (r.dir / "ITEMS.md").read_text(encoding="utf-8"), before,
+                    f"{argv[1]} wrote over a predicate that cannot fail")
 
     def test_a_predicate_exiting_1_MINTS(self):
         """QUIET is the ordinary state of an evidence blocker — the evidence
@@ -1490,10 +1560,19 @@ class TheProbeOrdering(unittest.TestCase):
     def test_a_PARSING_predicate_is_probed_and_a_BROKEN_one_never_runs(self):
         with refusals._Repo() as r:
             positive = r.dir / "marker-probe-ran"
-            # KNOWN POSITIVE: it parses, it exits 0, and running it leaves the
+            # KNOWN POSITIVE: it parses, it runs, and running it leaves the
             # marker. Without this arm the negative below is equally
             # consistent with a probe that never runs at all.
-            code, out = self._add(r, f"touch {positive}")
+            #
+            # THE `exit 1` IS lc-164 AND NOT DECORATION. This arm's subject is
+            # ORDERING — parse before probe — and it says so through the mint's
+            # verdict plus the marker. A bare `touch` exits 0, which lc-164
+            # now refuses, so leaving it would have turned an ordering arm into
+            # a second reading of that refusal and lost the CLEAN assertion
+            # that makes the marker mean "probed and admitted". The predicate
+            # still parses and still runs; only its ANSWER moved, to the one
+            # this lint calls ordinary waiting.
+            code, out = self._add(r, f"touch {positive}; exit 1")
             self.assertEqual(code, exits.CLEAN, out)
             self.assertTrue(
                 positive.exists(),

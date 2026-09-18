@@ -798,7 +798,24 @@ _PARSE_TIMEOUT_S = 10
 
 
 def _predicate_lint(detail: str, ctx: Ctx, out) -> int:
-    """Refuse an `evidence` blocker whose predicate cannot work (lc-130).
+    """Refuse an `evidence` blocker whose predicate cannot work (lc-130) or
+    cannot FAIL (lc-164).
+
+    TWO REFUSALS, ONE PROBE RUN, and the second is why the first's name is
+    not the whole story. lc-130 graded whether the predicate WORKS — parses,
+    and does not answer BROKEN. It let the two ANSWERS through
+    undifferentiated, so a predicate exiting 0 at the mint minted, and an
+    unfalsifiable one (a clause true for every input) is exactly that case:
+    it reads UNBLOCKED from the moment it is booked and nothing later can
+    tell it from an item whose evidence really did arrive. So the booking
+    run's exit code is GRADED here rather than merely survived — 1 is the
+    ordinary waiting state and mints, 0 is refused with both readings named,
+    `>=2` is BROKEN as before.
+
+    THE RUN IS THE SAME ONE, which the item's own MUST-NOT-MOVE demands: a
+    predicate that is slow or has side effects is not run twice, so this
+    grades the `t` that lc-130's probe already produced and adds no second
+    execution.
 
     THE DEFECT: prose booked into a shell slot. `item ready` reads it, the
     evaluator reports BROKEN, and until somebody reads that board the item
@@ -863,6 +880,25 @@ def _predicate_lint(detail: str, ctx: Ctx, out) -> int:
             f"{exited}. {t.detail} `item ready` reads that same code through "
             "the same evaluator, so this blocker would report BROKEN on "
             "every pass — a wait that can only expire, never clear.")
+        return exits.FINDING
+    if t.state == lanes.FIRE:
+        out(f"FINDING [blocker_predicate_satisfied_at_booking] the evidence "
+            f"predicate ({detail!r}) PARSES and EXITS 0 on its booking run, "
+            "which the blocker mapping reads as `the evidence ARRIVED`. So "
+            "this item is not blocked by it — now, or ever. TWO READINGS "
+            "AND THE MINT CANNOT TELL THEM APART, which is why both are "
+            "reported rather than one guessed at: either the evidence is "
+            "genuinely already in, and the item takes `--blocked-by NONE` "
+            "and is schedulable today; or the predicate CANNOT FAIL — a "
+            "clause that is true for every input, such as a test over a "
+            "command whose output was discarded — and the item would read "
+            "UNBLOCKED forever while the thing it waits for had not "
+            "happened. NOTHING DOWNSTREAM CAN SEPARATE THEM LATER: `item "
+            "ready` sees the same 0 on every pass and reports the item "
+            "schedulable, so the last moment either state is visible is "
+            "this one, with the author still holding the text. A predicate "
+            "that discriminates exits 1 here — the evidence has not arrived "
+            "yet — and 0 once it has.")
         return exits.FINDING
     return exits.CLEAN
 
