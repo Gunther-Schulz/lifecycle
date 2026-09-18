@@ -50,8 +50,14 @@ absorption question needs no control arm (a stall is observable as elapsed
 time without progress, the entry's own words), and a fresh sample buys
 nothing the question needs. Record and unblock.
 
-**D3 — lc-157 umbrella disposition.** Record on the entry (amend, keep NEW →
-regrade as its design decision now made): mechanism #1
+**D3 — lc-157 umbrella disposition.** [RULED 2026-09-19, driving desk, on
+the executing desk's critique: the earlier parenthesis here carried two
+opposite verbs ("keep NEW → regrade"); the correct disposition is CLOSE at
+wave A close — lc-157's done-criterion ("the design decision is made … and
+each chosen one is split into its own item") is satisfied once wave A's six
+mints land. The #3–#5 holds and their re-open events are recorded as LEDGER
+DECISION LINES before the close, so they survive in a live, tool-read home
+rather than inside a closed body.] Record on the entry: mechanism #1
 (verify-the-verifiers) is BUILT (`lifecycle verify`, test_verify.py);
 narrowed #2 (blocked-by evidence predicate graded at booking) is BUILT
 (lc-164 made the booking run a graded fact). Candidate #0 —
@@ -67,7 +73,10 @@ defect-class tag; #4 when lc-156's checker has a fire record; #5 is
 hypothesis — mechanism bar unmet (same-class is judgment-shaped), re-opens
 only on a computable class marker.
 
-**D4 — four mints** (wave A; the executing desk crafts conforming entries —
+**D4 — mints M1–M4** (wave A mints SIX in total: M1–M4 below, M5 in
+addendum 2, and D3's #0 — a wave A close counts BY ID against those six,
+never against any heading's number; the executing desk crafts conforming
+entries —
 slot text below is the settled DESIGN, not final slot wording; the intake
 join and refusal contract govern final form):
 
