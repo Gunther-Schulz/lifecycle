@@ -981,7 +981,7 @@ def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out,
         # THE DERIVABILITY DEMAND (lc-169). MEASURED at this desk, two of six:
         # of six items blocked on operator decisions, lc-166's answer sat one
         # kind over in this repo's own declaration (the fire log already
-        # declares a machine-wide XDG path as a per-repo kind with all six
+        # declares a machine-wide XDG path as a per-repo kind with all seven
         # stages) and lc-158's sat in an audit the same desk had written and
         # pushed. Both waited until the operator said to decide what could be
         # decided. Operator attention neither scales nor parallelizes, so a

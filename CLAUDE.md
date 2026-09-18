@@ -3,9 +3,9 @@
 A Claude Code plugin: lifecycle management for everything a repo
 persists. The primitive is the KIND, not the item — every kind of
 thing a repo keeps is registered in that repo's
-`.claude/lifecycle.json` with six declared stages (home, writer,
-reader, staleness, exit, **growth**), and a kind with an undeclared stage
-is a checker finding.
+`.claude/lifecycle.json` with seven declared stages (home, writer,
+reader, staleness, exit, **growth**, **trigger**), and a kind with an
+undeclared stage is a checker finding.
 
 **Growth is controlled by FLOW, never by size (R22).** The sixth stage takes
 one of `bounded-by-exit` / `compacted` / `unbounded-with-reason`, and the

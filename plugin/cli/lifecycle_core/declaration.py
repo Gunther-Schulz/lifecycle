@@ -1,9 +1,9 @@
 """The kind registry: `.claude/lifecycle.json`, its schema, and its reader.
 
 THE PRIMITIVE IS THE KIND, NOT THE ITEM (design §3.0). Every kind of thing a
-repo persists is registered with six declared stages:
+repo persists is registered with seven declared stages:
 
-    home · writer · reader · staleness · exit · growth
+    home · writer · reader · staleness · exit · growth · trigger
 
 and a kind with an UNDECLARED STAGE is a checker finding. The sixth stage was
 `bound` until the schema wave and is `growth` now — not a rename but a
@@ -83,7 +83,7 @@ EXIT_ACTIONS = ("move", "compact", "delete", "never")
 #: small one never draining is not.
 GROWTH_MODES = ("bounded-by-exit", "compacted", "unbounded-with-reason")
 
-#: The six stages, closed. `kind_stage_undeclared` is a finding for any kind
+#: The seven stages, closed. `kind_stage_undeclared` is a finding for any kind
 #: missing any of them, which is why this tuple is the single source and no
 #: check below restates it.
 KIND_STAGES = ("home", "writer", "reader", "staleness", "exit", "growth",
@@ -971,7 +971,7 @@ def check_records_kind_declared(repo, doc, res: Result) -> None:
               "the tree by design, so `kind sweep` cannot reach them — it "
               "walks tracked files — and their absence from the declaration "
               "is therefore invisible to every other check. Register the "
-              "kind with all six stages; the home is a pattern under "
+              "kind with all seven stages; the home is a pattern under "
               f"`{RECORDS_HOME_MARK}`, the files are never moved into any "
               "tree, and `the fire log` is the precedent for an XDG home "
               "declared as a per-repo kind.")
@@ -1041,7 +1041,7 @@ def check_desk_state_kind_declared(repo, doc, res: Result) -> None:
             "everywhere except the file it writes about the desk. They sit "
             "OUTSIDE the tree by design — an XDG home costs no permission "
             "dialog and dirties no repo — so `kind sweep` cannot reach them: "
-            "it walks tracked files. Register the kind with all six stages. "
+            "it walks tracked files. Register the kind with all seven stages. "
             "Its answers are not the investigation record's: the verb ALWAYS "
             "OVERWRITES and keeps no history, so staleness is "
             "current-by-construction and the exit is not a compaction. `the "

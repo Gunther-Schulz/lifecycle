@@ -562,7 +562,7 @@ def sweep(repo: Path, doc: dict, out) -> int:
     out("Each is one of three things and no fourth (design §4, the file "
         "sweep): an instance of an existing registered kind whose home does "
         "not yet claim it; a REPO-SPECIFIC kind that belongs in "
-        "`.claude/lifecycle.json` with its own six stages; or removed, with a "
+        "`.claude/lifecycle.json` with its own seven stages; or removed, with a "
         "ledger line naming the commit. A file whose NAME wears a kind's "
         "costume is the tell.")
     return exits.FINDING
