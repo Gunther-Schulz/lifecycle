@@ -1884,6 +1884,151 @@ def add_lane(repo: Path, name: str) -> tuple[bool, str | None]:
 
 # --- rendering ---------------------------------------------------------------
 
+def render_digest(doc: dict, repo: Path) -> list[str]:
+    """One line per kind — the MAP a session holds, not the files (lc-219).
+
+    Twenty of this repo's twenty-five kinds declare `reader: session` and no
+    command fires those reads. The session-start injection fires ONCE, before
+    a session knows what it will need, and nothing fires at the moment of
+    APPLICATION — which is where retrieval actually fails: a desk dispatched
+    four research lanes past a document it had already handled 17 times.
+
+    WHY MEMBER COUNTS RATHER THAN A BARE MAP, which is the whole mechanism: a
+    map naming `docs/audits/` would have told that desk where audits live and
+    it would still have dispatched. A line naming the NEWEST member puts the
+    document itself in front of the session. It also answers the wallpaper
+    risk — a block that never changes stops being read, and counts move as
+    work happens.
+
+    IT SHARES `expand_home` WITH THE RETIRE WALK AND DELIBERATELY NOT
+    `list_home`. That function counts what an INSTANCE of a kind is, parsing
+    a carrier's fixed-slot blocks; this asks a different question on purpose —
+    FILES — because the digest is a POINTER SURFACE and never an authority on
+    content. Parsing per-kind entry structure here would be a second body for
+    what the owning verbs already read.
+
+    WHAT IT DOES NOT DO, so a later reader does not over-read it: it says what
+    kinds EXIST, never what is IN them, and it does not replace `kind sweep` —
+    this reports what is DECLARED, the sweep reports what is on disk and
+    unaccounted for. Only the sweep catches what nobody declared.
+    """
+    from . import retire as retire_mod
+
+    # WHAT THE REPO KEEPS, per git — the same instrument `kind sweep` asks.
+    # Without it the newest member of `cli source` came back as a
+    # `__pycache__/*.pyc`: true of the filesystem, useless as a pointer, and
+    # actively misleading in a block a session is meant to trust. An untracked
+    # build artifact is not a member of a source kind. Asked ONCE for the
+    # whole repo rather than per kind; a repo git cannot answer for falls back
+    # to the filesystem, which is the honest degrade — out-of-tree homes
+    # (XDG state) have no git listing by construction and are counted there.
+    tracked = None
+    try:
+        import subprocess
+        p = subprocess.run(["git", "-C", str(repo), "ls-files"],
+                           capture_output=True, text=True, timeout=10)
+        if p.returncode == 0:
+            tracked = {(repo / line).resolve()
+                       for line in p.stdout.split("\n") if line.strip()}
+    except (OSError, subprocess.SubprocessError):
+        tracked = None
+
+    def keep(paths):
+        """In-tree members filtered to what git tracks; out-of-tree kept."""
+        if tracked is None:
+            return list(paths)
+        out_ = []
+        for q in paths:
+            rq = q.resolve()
+            inside = str(rq).startswith(str(repo.resolve()) + "/")
+            if not inside or rq in tracked:
+                out_.append(q)
+        return out_
+
+    kinds = doc.get("kinds")
+    if not isinstance(kinds, dict) or not kinds:
+        return ["kinds: NONE DECLARED — a repo that persists something "
+                "registers it; this declaration registers nothing."]
+
+    lines = ["THE REGISTRY — what this repo keeps, and where. "
+             "`[session-read]` marks a kind no verb reads for you."]
+    for name in kinds:
+        body = kinds[name] if isinstance(kinds[name], dict) else {}
+        home = body.get("home")
+        reader = body.get("reader")
+        reads = reader if isinstance(reader, list) else [reader or ""]
+        marker = "  [session-read]" if any(
+            "session" in str(r) for r in reads) else ""
+
+        if not isinstance(home, str) or not home.strip():
+            lines.append(f"  {name:<22} COULD NOT VERIFY: no home declared, "
+                         f"so there is nothing to point at.{marker}")
+            continue
+
+        resolved = retire_mod.expand_home(home)
+        if retire_mod._UNEXPANDED.search(resolved):
+            # THE THIRD ANSWER, and it is the easiest thing to get wrong here:
+            # a zero and an unreadable home are the SAME STRING to a reader,
+            # and this block is trusted at a glance. Never `0 file(s)`.
+            lines.append(
+                f"  {name:<22} {home}"
+                f"\n      COULD NOT VERIFY: carries a variable this cannot "
+                f"resolve, so no member was examined — not a count of "
+                f"zero.{marker}")
+            continue
+
+        path = repo / resolved
+        try:
+            if "*" in resolved:
+                # THE BRANCH KEYS ON ABSOLUTE, NOT ON base.is_dir(), and the
+                # first version got that wrong: an in-repo glob was globbed
+                # from the matched directory, so `docs/audits/*.md` searched
+                # `docs/audits/docs/audits/*.md` and reported 0 file(s) over a
+                # directory holding several. A false zero in the one block
+                # that exists to be trusted at a glance.
+                if Path(resolved).is_absolute():
+                    stem = resolved.split("*", 1)[0]
+                    base = Path(stem if stem.endswith("/")
+                                else str(Path(stem).parent))
+                    pattern = resolved[len(str(base)):].lstrip("/")
+                    hits = base.glob(pattern) if base.is_dir() else []
+                else:
+                    hits = repo.glob(resolved)
+                hits = sorted(keep(p for p in hits if p.is_file()))
+            elif path.is_dir():
+                hits = sorted(keep(p for p in path.rglob("*")
+                                   if p.is_file()))
+            elif path.is_file():
+                stamp = _mtime_date(path)
+                lines.append(f"  {name:<22} {home}   ({stamp}){marker}")
+                continue
+            else:
+                lines.append(f"  {name:<22} {home}   not present{marker}")
+                continue
+        except OSError as exc:
+            lines.append(f"  {name:<22} {home}"
+                         f"\n      COULD NOT VERIFY: {exc!r}{marker}")
+            continue
+
+        if not hits:
+            lines.append(f"  {name:<22} {home}   0 file(s){marker}")
+            continue
+        newest = max(hits, key=lambda p: p.stat().st_mtime)
+        try:
+            shown = newest.relative_to(repo)
+        except ValueError:
+            shown = newest
+        lines.append(f"  {name:<22} {home}   {len(hits)} file(s), "
+                     f"newest: {shown}{marker}")
+    return lines
+
+
+def _mtime_date(path: Path) -> str:
+    import datetime
+    return datetime.date.fromtimestamp(
+        path.stat().st_mtime).isoformat()
+
+
 def render_kinds(doc: dict) -> list[str]:
     """Every kind, every stage, LONGHAND.
 

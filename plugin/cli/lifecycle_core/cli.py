@@ -131,6 +131,19 @@ def cmd_kind(args, out) -> int:
         return exits.CLEAN
 
     d = res.declaration
+
+    # THE DIGEST IS THE WHOLE OUTPUT, not a section of the wall form (lc-219).
+    # It exists to be INJECTED in front of a session, and the header above —
+    # schema, goals, lanes, the leak-scan paragraph — is exactly the bulk that
+    # makes a block stop being read. One line per kind and nothing else.
+    if getattr(args, "digest", False):
+        for line in decl.render_digest(d, repo):
+            out(line)
+        if res.findings or res.unverified:
+            out("")
+            _report(res, out)
+        return res.code
+
     out(f"repo: {repo}")
     out(f"declaration: {res.path}")
     out(f"schema: {d.get('schema')}   id-prefix: {d.get('id-prefix')}   "
@@ -423,7 +436,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     k = sub.add_parser("kind", help="the kind registry")
     ks = k.add_subparsers(dest="kind_action")
-    ks.add_parser("list", help="every registered kind, every stage, longhand")
+    kl = ks.add_parser("list",
+                       help="every registered kind, every stage, longhand")
+    kl.add_argument("--digest", action="store_true",
+                    help="ONE LINE PER KIND — the map a session holds: home, "
+                         "member count, newest member, and `[session-read]` "
+                         "on kinds no verb reads for you. A pointer surface, "
+                         "never an authority on content (lc-219)")
     ks.add_parser("check", help="validate the declaration")
     ks.add_parser("sweep", help="invariant 1: every tracked file resolves to "
                                 "a registered kind")

@@ -3,8 +3,12 @@
 import _isolation  # noqa: F401  # lc-183: before any verb runs
 
 import json
+import os
+import shutil
 import subprocess
 import sys
+import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -181,3 +185,84 @@ class DeskStateIsScopedToTheRepoThatWroteIt(unittest.TestCase):
         self.assertIn('"repo": str(repo)', src,
                       "the desk-state writer no longer records its repo, so "
                       "nothing can scope a machine-wide kind to one repo")
+
+
+class TheRegistryDigest(unittest.TestCase):
+    """lc-219: the MAP a session holds — one line per kind.
+
+    Twenty of twenty-five kinds declare `reader: session` and no command fires
+    those reads, so the registry goes in front of the session instead. These
+    three arms are the ones the ruling named, and the second is the one that
+    matters: a home that cannot be RESOLVED must render COULD NOT VERIFY with
+    its reason and never `0 file(s)`, because a zero and an unreadable home
+    are the same string to a reader and this block is trusted at a glance.
+    """
+
+    def _repo(self, kinds):
+        d = Path(tempfile.mkdtemp(prefix="lc219-"))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        doc = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        doc["kinds"] = kinds
+        (d / ".claude").mkdir()
+        (d / ".claude" / "lifecycle.json").write_text(json.dumps(doc),
+                                                      encoding="utf-8")
+        return d, doc
+
+    @staticmethod
+    def _kind(home, reader):
+        return {"home": home, "writer": "session", "reader": reader,
+                "staleness": "none, declared why: fixture",
+                "exit": {"action": "never", "recording-act": "fixture"},
+                "growth": "unbounded-with-reason — fixture",
+                "trigger": "none, declared why: fixture"}
+
+    def test_a_planted_member_moves_the_count_AND_the_newest_name(self):
+        """The counts are what make it bite. A bare map would name the
+        directory and a session would still not reach the document."""
+        d, doc = self._repo({"notes": self._kind("notes/*.md", ["session"])})
+        (d / "notes").mkdir()
+        (d / "notes" / "older.md").write_text("a", encoding="utf-8")
+        before = "\n".join(decl.render_digest(doc, d))
+        self.assertIn("1 file(s)", before)
+        self.assertIn("older.md", before)
+
+        newer = d / "notes" / "newer.md"
+        newer.write_text("b", encoding="utf-8")
+        os.utime(newer, (time.time() + 10, time.time() + 10))
+        after = "\n".join(decl.render_digest(doc, d))
+        self.assertIn("2 file(s)", after)
+        self.assertIn("newest: notes/newer.md", after,
+                      "the newest member must move with the plant — a count "
+                      "that grows while the pointer stays put sends a session "
+                      "to the wrong document")
+
+    def test_an_UNRESOLVABLE_home_is_could_not_verify_and_never_a_zero(self):
+        """THE ASSERTION IS ON WHAT MUST NOT APPEAR.
+
+        `0 file(s)` over a home nothing examined is an absence claim with no
+        instrument behind it, and it reads exactly like a true zero. The
+        boundary is the retire walk's own: an UNRESOLVABLE home (an unknown
+        variable) is the dead instrument, while an in-tree home that is simply
+        absent is an observation and stays a number.
+        """
+        d, doc = self._repo(
+            {"nowhere": self._kind("$LC219_NOT_A_REAL_VAR/x/*.md", ["session"])})
+        text = "\n".join(decl.render_digest(doc, d))
+        self.assertIn("COULD NOT VERIFY", text)
+        self.assertNotIn("0 file(s)", text,
+                         "a population no instrument examined must not be "
+                         "reported as a count of zero")
+
+    def test_the_session_marker_discriminates_rather_than_decorating(self):
+        """The control. Without it, a marker on every line says nothing."""
+        d, doc = self._repo({
+            "read by a verb": self._kind("a.md", ["verb:item ready"]),
+            "read by nobody": self._kind("b.md", ["session"]),
+        })
+        (d / "a.md").write_text("a", encoding="utf-8")
+        (d / "b.md").write_text("b", encoding="utf-8")
+        lines = decl.render_digest(doc, d)
+        by_verb = next(ln for ln in lines if "read by a verb" in ln)
+        by_none = next(ln for ln in lines if "read by nobody" in ln)
+        self.assertNotIn("[session-read]", by_verb)
+        self.assertIn("[session-read]", by_none)
