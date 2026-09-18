@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 202
+added: 203
 compacted: 0
 
 ## lc-3
@@ -1158,4 +1158,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: Either the sentence becomes a mechanism — a non-zero untyped or NONE actually produces a finding — or the rows are reported as could-not-verify arithmetic and the sentence is deleted rather than left standing beside them. Law 22: a check no input can falsify is DELETED, not registered. THREE SMALLER THINGS IN THE SAME SITE, each fixed or explicitly declined: the sentence prints the SUM of two counts under the words 'are both', so if they ever diverged it would be wrong about each; migration_blocker's 767-769 branch is dead given slots_incomplete hardcoded True at 887; and the internal contrast is the model to copy — _ledger_storable's docstring at 711-716 reasons about this exact class correctly and says R22 means such a check is not registered. The same author applied the law in one place and not the other, which is the strongest argument that the fix is the law and not this site.
 evidence: RELAYED from the lc-192 lane, its exhaustive enumeration pasted and NOT re-run here: the distinct blockers build_items can emit are four literal strings classifying to exactly {decision, evidence}. DERIVED from that: item-id, NONE and untyped are unreachable, so the table's green is arithmetic rather than a result. RELAYED: bt's only consumers are the two print loops; slots_incomplete is hardcoded True at 887, making 767-769 dead. MEASURED at this desk: nothing in this item — it is booked wholly on the lane's read and its first build step is to re-run the branch enumeration, because an unfalsifiability claim that is itself unverified is the same error one level up.
+blocked-by: NONE
+
+## lc-211
+grade: READY
+requirement: THE --repo FLAG-ORDER ERROR TELLS A CALLER THEIR REPO PATH IS BAD WHEN THE FAULT IS ARGUMENT ORDER. 'lifecycle kind check --repo X' exits 3 on an argparse usage error. The exit code is RIGHT — could-not-verify, per the tool's own contract — and the MESSAGE is wrong: it reads as a bad repo path and sends the caller to check a path that is fine. A misleading true verdict costs more than a missing one, because it spends the reader's attention in the wrong place and they leave believing they checked something. argparse can see a --repo token sitting after the subcommand.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,test/test_refusals.py
+done-criterion: A --repo appearing AFTER the subcommand produces a message naming FLAG ORDER as the fault and showing the correct spelling, rather than one a reader takes as a bad path. The exit code stays 3 — the contract is already right and is not touched. RED-FIRST: 'lifecycle kind check --repo <a path that exists>' currently exits 3 with a path-shaped message; after the change the message names the order and the path is not implicated. CONTROL that must stay green: '--repo <bad path>' BEFORE the subcommand still reports a bad path, because that is the case where the path really is the fault — and that arm is what proves the new message discriminates rather than replacing one blanket wording with another.
+evidence: RELAYED from the verb-io-surface audit (docs/audits/2026-09-18-verb-io-surface.md, commit 9600455, lower-ranked cells) and from lifecycle-6f, who REVERSED their own not-item-shaped call on it and asked for it to be booked — carried as their judgment, which I agree with. DERIVED: the audit's own framing is that the contract is right and the message misleads. MEASURED at this desk: nothing yet — the first build step is to run the invocation and read the message, since the wrongness claim here is about message TEXT and I have not opened it.
 blocked-by: NONE
