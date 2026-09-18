@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 149
+added: 150
 compacted: 0
 
 ## lc-3
@@ -751,3 +751,12 @@ write-set: docs/answerable-not-felt.md (design carrier, landed); each chosen mec
 done-criterion: the design decision is made — which of the 5 ranked mechanisms to build, plus the plugin-boundary question for the investigation-record feature — and each chosen one is split into its own item. The 5 candidates, ranked how-real: (1) verify-the-verifiers — the verify block asserts how many checks EXECUTED, a could-not-run or quiet-pass is a FAIL; (2) booking-time done-criterion dry-run — exercise a booking's criterion against data in hand AT WRITE TIME (red-first-at-booking as a mechanism; catches cs-45's unsatisfiable-by-construction class); (3) idle-is-answerable — a query "has a defect-class find closed without its carrier swept?" fires the owed sweep at the FIND not by luck; (4) per-write record lint — widen lc-156 to fire per-write not only at close; (5) class-recurrence counter over the corrections carrier (hypothesis). Boundary: prose claims about runtime behaviour stay MANUAL, operator-backstop — mechanize the answerable half only.
 evidence: docs/answerable-not-felt.md evidence section (>=9 instances, session 2026-09-17/18: miscounted armed watches, twice-asserted false-idle, unquoted-$t verify loop where 8/9 never ran, mode-644 verify entry, pgrep GAME-UP false positive, cs-45 unsatisfiable premise, 558-vs-3 transfer-test failure, cs-54 missing exit marker, coverage-span probe inversion); operator messages 2026-09-18 ("real levers going forward"; persisting the process has a guiding function by mere existence); the close-ceremony discussion — the ceremony catches these by re-EXECUTING and re-ENUMERATING, and the levers pull that forward into the session
 blocked-by: the design decision (which mechanisms, plugin boundary) — operator/desk, next session
+
+## lc-158
+grade: READY
+requirement: WIDEN THE JUDGMENT REGISTER TO CARRY CORPUS RULES, making this plugin the retirement gate for corpus prose (lc-157's payoff section). judgment.py already has the three properties that gate needs — it emits FINDINGS never refusals, its correction path is a ledger line, and it records fired/legitimate/overridden, printing UNOBSERVED for a rule with no use-evidence rather than a clean line. Today its six rules are all SITED IN THIS PLUGIN'S OWN CODE; carrying corpus prose rules is a different act at the responsibility boundary.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/judgment.py
+done-criterion: UNKNOWN — the widening's shape depends on the blocked decision
+evidence: judgment.py:29-60 (the three properties). docs/answerable-not-felt.md payoff section. WHY BLOCKED: the research lanes refuted the note's one-directional checker/checked reading — arXiv:2603.26993, role separation over the SAME information is decision-theoretically dominated by one centralized decision maker — and the operator's 2026-09-18 correction reframes desk/peer as two ASYMMETRIC information holders, each exogenous to the other, with momentum a cost of depth rather than a defect. Building the retirement gate on the pre-correction framing would bake the refuted reading into the mechanism. Operator GO 2026-09-18 given in the same message that paused the framing.
+blocked-by: decision is desk/peer one-directional checking or two asymmetric information holders?
