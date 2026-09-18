@@ -28,7 +28,7 @@ asking a direct question was the single largest capture event type, ~18-20 of
 | L1 | `-home-g-dev-Gunther-Schulz-lifecycle` | high | **VOID — wrong population, see below** |
 | L2 | dotfiles + dispatch-guards | high | **REPORTED (parts 1-2 of 3)** |
 | L3 | wan2gp | none (by that repo's own declaration) | **REPORTED** |
-| L4 | claude-code-cache-fix, before/after the item toolchain | mixed | PENDING |
+| L4 | claude-code-cache-fix (independent replication of L1) | mixed | **COULD NOT VERIFY — refused by the environment mid-run** |
 
 ## L1 — VOID, and the void is itself the finding
 
@@ -197,6 +197,34 @@ differ on many axes at once — peer density, era, repo purpose, session length,
 who was driving. This is not a controlled comparison and it cannot grade
 governance. Two measurements only compare where they share a coordinate, and
 these share few.
+
+## L4 — COULD NOT VERIFY, and it is booked as backpressure rather than as a result
+
+A fourth lane was dispatched over L1's own population as an INDEPENDENT
+REPLICATION — two independently built measurements of one quantity being the
+cheap reach detector, where a lone instrument's green is indistinguishable from
+its blind spot. It was **refused by the environment mid-run**: an API safeguard
+flagged the lane's own message while it was re-tallying, and it stopped after
+delivering only its coverage-and-method part.
+
+**This is recorded as COULD NOT VERIFY, never as a failed measurement.** A
+refusal produced no result and says nothing about the work; booking it as
+failure is the exact collapse this audit's own subject matter is about. No
+retry was attempted: the flag fell on the lane's content, and once flagged
+material is in a context the cure is a fresh start rather than a rephrase — and
+the replication was a corroboration bonus rather than a load-bearing arm.
+
+**THE CONSEQUENCE, stated because it is a real limit on what follows:** the
+cache-fix arm rests on ONE instrument with no divergence check. Its numbers
+below are reported as L1 produced them and are NOT corroborated. Agreement
+between L1 and L4 would have certified nothing about an axis neither varied;
+its absence certifies less still.
+
+**One thing the refusal did right:** the notice carried its failure reason
+rather than reporting plain idleness. Had it said only "idle", a lane that
+stopped mid-tally would have been indistinguishable from one that finished —
+the same shape as every other finding in this arc, avoided here because the
+mechanism announced its own stop.
 
 ## Arm detail: L1 — claude-code-cache-fix
 
