@@ -144,9 +144,34 @@ lines, the single declared repo intact.**
 isolation set must be checked against the enumeration of globals the
 exercised path CONSUMES, never the ones the test happens to touch (global
 corpus, the partial override) — and here nothing publishes that
-enumeration. Lifecycle writes user-global state under at least two
-distinct XDG variables, and a caller isolating it for a probe has no way
-to learn the set but to be bitten by it. Booked.
+enumeration. A caller isolating lifecycle for a probe has no way to learn
+the set but to be bitten by it. Booked as lc-204.
+
+**THE NUMBER, EXECUTED RATHER THAN ESTIMATED, AND IT SPLITS IN TWO.**
+References across `plugin/cli/`: `XDG_STATE_HOME` 30, `XDG_CONFIG_HOME`
+8, `XDG_DATA_HOME` 1, `XDG_CACHE_HOME` 1, over six files
+(`XDG_RUNTIME_DIR` returns 0 — the sweep discriminates rather than
+matching anything XDG-shaped). But the two singletons are the same two
+lines, `retire.py:160` and `:162`, and they appear nowhere else: they are
+entries in the resolution table for a home a REPO MAY DECLARE, not paths
+this tool writes. **What lifecycle itself writes under is TWO** —
+`XDG_STATE_HOME` (fire log, desk state) and `XDG_CONFIG_HOME`
+(`lanes.py:133`, the roster). The brief isolated one of two.
+
+So lc-204's published set must derive over CONSUMPTION SITES and keep the
+two questions apart — written-by-the-tool versus resolvable-as-a-declared-home.
+An enumeration of all four would tell a probe author to isolate two roots
+that do not matter, which is an assurance wider than its predicate
+shipped by the mechanism built to prevent exactly that.
+
+**And the knowledge was already in the repo, one file from the author who
+needed it.** `refusals.py:1657-1670` isolates `XDG_CONFIG_HOME` by hand
+in `_lane_cli`, and `refusals.py:2952` documents doing it "the same way
+`_lane_cli` isolates `XDG_CONFIG_HOME` above". The test harness knew the
+roster escapes state-only isolation. That is the same shape as
+`desk.py:56` knowing about the path escape `lane new` does not defend —
+twice in one audit, the lesson written beside one mechanism and never
+swept to its sibling.
 
 **One unexplained fire-log line** carries the lane's scratchpad UUID with
 a `sweepprobe` directory it says it never created. The fire log records
