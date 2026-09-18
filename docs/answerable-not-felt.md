@@ -642,7 +642,28 @@ If the build happens first and the measurement after, there is no honest
 comparison and the verdict is an impression — which is the thing this whole
 arc exists to replace.
 
-**WHAT WOULD KILL THIS, named so the approach is falsifiable** (the NOW slot's
+**TWO GATES, IN ORDER, AND THE ORDER IS LOAD-BEARING** (operator,
+2026-09-18). The kill conditions below are not a flat list — they are two
+sequential gates, and grading the second before the first passes produces a
+result that cannot be read.
+
+**GATE 1 — MECHANICAL: are things getting written and read as expected?**
+Countable, no judgment needed: writes occurring as work happens (per session,
+per kind), and records actually being read (the retrieval measurement already
+has a method — 13,735 queries over 230 sessions is the baseline). This gate
+asks only whether the machinery RUNS.
+
+**GATE 2 — EFFECT: does it alleviate the operator's problems?** Fewer
+interruptions, less re-derivation, a shorter path to a project's groove.
+
+**WHY THE ORDER CANNOT BE REVERSED, and it is this arc's own signature class:**
+if gate 1 fails and gate 2 is measured anyway, a null result says nothing
+about the design — it says the design was not running. A mechanism that never
+fired and a mechanism that fired and did not help produce IDENTICAL evidence.
+Grading effect over an unfired mechanism is the wrong answer shaped exactly
+like the right one, one level up from where this arc found it.
+
+**WHAT WOULD KILL THIS AT EACH GATE, named so the approach is falsifiable** (the NOW slot's
 own discipline: if nothing could kill the current approach, that is the
 finding):
 
