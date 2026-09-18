@@ -541,6 +541,45 @@ mechanism 1. **Gate 1 already encodes this and it was not an accident** — the
 operator's own wording is *"are things getting written AND READ as we expect
 them to"*, and today answers: written yes, read no.
 
+**AND THE THIRD INSTANCE KILLS THE SESSION-RESTART READING OF ALL THIS**
+(operator, 2026-09-18, on being handed a mechanism design: *"didn't we not too
+long ago find a solution for this class? I feel like we did"* — they had). Asked
+to make a judgment-shaped duty computable, this desk decided the duty could only
+be a printed readout, because detecting a course change is not computable. The
+first half is true. The conclusion does not follow, and the answer was
+`docs/required-slots-as-an-autonomy-lever.md` — **written the same morning, by
+this same session, at this same operator's direction**, whose stated pattern is
+exactly the escape: *do not ask an agent to decide well; require it to WRITE
+something at the moment of deciding* — the slot's presence computable, the
+fill's quality judgment.
+
+**Three instances in one day, one class, and the third one settles its scope:**
+
+| # | what was not retrieved | where it already sat |
+|---|---|---|
+| 1 | the verb-written / session-written discriminator | a tracked file, since yesterday |
+| 2 | mechanism 2 is a pattern proven on 4 of 22 kinds | the repo's own declaration |
+| 3 | required slots are the answer for uncomputable triggers | a doc this session wrote 6h earlier |
+
+**So retrieval does not fail at session boundaries. It fails at MOMENTS OF
+APPLICATION**, and the session boundary is merely the most visible of them. A
+mechanism scoped to session start — lc-174 as booked — is necessary and NOT
+sufficient: it would have caught instances 1 and 2 and would have sailed past
+instance 3, where the document was authored inside the same context that then
+failed to reach for it. The awkward part is the useful part: this session held
+the document, wrote the document, and still answered from reasoning rather than
+from the record, which means the failure is not ignorance of the carrier's
+existence and cannot be fixed by announcing it harder.
+
+**What the third instance implies about the mechanism, stated as a candidate
+rather than a finding:** the retrieval seam is the moment a session declares a
+thing UNCOMPUTABLE, UNDECIDABLE, or NOT MECHANIZABLE — which is a claim about
+what solutions exist, made from memory, at the exact moment the stack's own
+catalogue of solved classes would refute it. That moment is observable and
+self-declarable in a way a general "should I check the record?" prompt is not.
+Unprobed; recorded here rather than booked, because the mechanism bar is not yet
+met and the honest next step is watching whether the moment recurs.
+
 ### 2. Sessions maintain a NARROWING as they work — THE REAL GAP
 
 **IT IS NOT A LOG. It is a live picture of what is still open and what has
