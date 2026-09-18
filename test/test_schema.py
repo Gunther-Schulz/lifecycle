@@ -420,5 +420,121 @@ class SchemaFloorSingleSourced(unittest.TestCase):
         self.assertEqual(ledger.SCHEMA_FLOOR, decl.SCHEMA_FLOOR)
 
 
+class TheApplyRewritesTheLineTheReaderFound(unittest.TestCase):
+    """lc-205: the plan and the write must not be two predicates.
+
+    The dry run resolved a carrier head through `carrier_schema` — skip
+    comments, partition on the first colon, compare `head.strip()` — while the
+    apply matched `raw.strip().startswith("schema:")` over every line. They
+    agree exactly while the head is spelled the writer's way, and law 25 makes
+    the dry run the thing that licenses applying across every declared repo,
+    so the disagreement is invisible to the check that authorises the act: the
+    dry run exercises the reader and never the writer.
+
+    FOUR ARMS, AND THE THIRD IS NOT A VARIANT OF THE FIRST. A head the reader
+    accepts and the writer did not match was not merely left alone — the
+    writer, having missed it, CARRIED ON SCANNING and rewrote the first BODY
+    line beginning `schema:`, leaving the real version line untouched and
+    printing `written:` at exit 0. Measured before the fix: line 1 stayed
+    `schema : 1` while a body `schema: 9` became `schema: 2`. That is a silent
+    content corruption on the apply branch, not a missed write, and a fix that
+    only widened the writer's match would have satisfied the first two arms
+    and left it whole.
+
+    The fourth arm is the CONTROL and it bounds the repair: both predicates
+    strip leading whitespace, so a head indented by accident is a GOOD case
+    and must keep migrating. Without it, "reject anything unusual" passes the
+    other three.
+    """
+
+    HEADS = {
+        "internal space": "schema : 1",
+        "internal tab": "schema\t: 1",
+        "leading space (CONTROL — a good head)": "  schema: 1",
+    }
+
+    def _repo(self, head, body_extra=""):
+        items_text = SEED_ITEMS.replace("schema: 2\n", head + "\n", 1)
+        if body_extra:
+            items_text = items_text + body_extra
+        d = build(items_text=items_text, ledger_text="schema: 1\n",
+                  done_text=EMPTY_DONE.replace("schema: 2", "schema: 1", 1))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        doc = json.loads((d / ".claude" / "lifecycle.json")
+                         .read_text(encoding="utf-8"))
+        doc["schema"] = 1
+        (d / ".claude" / "lifecycle.json").write_text(json.dumps(doc),
+                                                      encoding="utf-8")
+        return d
+
+    def test_every_head_the_reader_accepts_is_actually_rewritten(self):
+        """The written: line must not report a write that did not happen."""
+        for name, head in self.HEADS.items():
+            with self.subTest(head=name):
+                d = self._repo(head)
+                before = (d / "ITEMS.md").read_text(encoding="utf-8")
+                code, out = run_cli(d, "migrate", "--schema-from", "1",
+                                    "--apply")
+                after = (d / "ITEMS.md").read_text(encoding="utf-8")
+                if "written: ITEMS.md" in out:
+                    self.assertNotEqual(
+                        before, after,
+                        f"{name}: the run printed `written: ITEMS.md` and the "
+                        f"carrier came back byte-identical. exit={code}")
+                    self.assertEqual(
+                        after.split("\n")[0], "schema: 2",
+                        f"{name}: the head is what must carry the new version")
+                else:
+                    self.assertNotEqual(
+                        code, exits.CLEAN,
+                        f"{name}: no write was reported, so the run must not "
+                        f"report CLEAN")
+
+    def test_a_missed_head_does_not_rewrite_a_body_line(self):
+        """THE CORRUPTION ARM. The writer must not go looking past the head.
+
+        A body line beginning `schema:` is the discriminating input: before the
+        fix the writer reached it, rewrote it, and reported a clean carrier
+        bump. It asserts on what must NOT have changed, which is what catches
+        this degrading rather than only breaking.
+        """
+        d = self._repo("schema : 1", body_extra="schema: 9\n")
+        code, out = run_cli(d, "migrate", "--schema-from", "1", "--apply")
+        lines = (d / "ITEMS.md").read_text(encoding="utf-8").split("\n")
+        self.assertIn("schema: 9", lines,
+                      f"a BODY line was rewritten by the schema migration — "
+                      f"the head is the only line it may touch. exit={code}\n"
+                      f"{out}")
+
+    def test_the_reader_and_the_writer_resolve_through_one_body(self):
+        """The structural half, so a future second search is visible.
+
+        `schema_head` returns the POSITION as well as the number, and
+        `carrier_schema` is a thin wrapper over it. A caller that rewrites the
+        head uses that index; one that searches for itself re-creates the
+        defect, and the assertion on the absent search is what would say so.
+        """
+        for head in ("schema: 1", "schema : 1", "schema\t: 1", "  schema: 1"):
+            with self.subTest(head=head):
+                i, n, why = decl.schema_head(head + "\n\nbody\n", "c")
+                self.assertEqual((i, n, why), (0, 1, None))
+        src = (Path(__file__).resolve().parents[1] / "plugin" / "cli"
+               / "lifecycle_core" / "migrate.py").read_text(encoding="utf-8")
+        self.assertIn("decl.schema_head(", src,
+                      "migrate.py must locate the head through the reader's "
+                      "own body, not a search of its own")
+        # COMMENTS ARE STRIPPED BEFORE THIS SCAN, and the first draft of this
+        # assertion is why: it matched the explanatory comment ABOVE the fix
+        # describing the old predicate, so it reported the defect present in
+        # the file that had just removed it — a substring test over rendered
+        # text standing in for a comparison of code.
+        code_only = "\n".join(
+            ln for ln in src.split("\n") if not ln.strip().startswith("#"))
+        self.assertNotIn('startswith("schema:")', code_only,
+                         "migrate.py searches for the schema head with its "
+                         "own predicate again — that is the lc-205 defect "
+                         "restored; it must consume `decl.schema_head`")
+
+
 if __name__ == "__main__":
     unittest.main()

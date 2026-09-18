@@ -1999,10 +1999,24 @@ def run_schema(args, out, ctx) -> int:
         try:
             text = p.read_text(encoding="utf-8")
             lines = text.split("\n")
-            for i, raw in enumerate(lines):
-                if raw.strip().startswith("schema:"):
-                    lines[i] = f"schema: {m}"
-                    break
+            # THE HEAD IS LOCATED BY THE READER'S OWN BODY, NOT BY A SECOND
+            # SEARCH HERE (lc-205). This loop used to match
+            # `raw.strip().startswith("schema:")` over every line, which is a
+            # different predicate from the one that built the plan: it skipped
+            # a head spelled `schema : 1`, carried on into the BODY, and
+            # rewrote the first line there beginning `schema:` — corrupting
+            # content while printing the `written:` line below. Re-deriving the
+            # index from the text just read also closes the gap between plan
+            # and write, where the file may have changed underneath.
+            i, _cur, why = decl.schema_head(text, home)
+            if i is None:
+                out(f"COULD NOT VERIFY: {home} was planned for a schema bump "
+                    f"and its head could not be located when the write came "
+                    f"to make it: {why}. Nothing was written to it. The "
+                    f"declaration is already at the new schema, so this repo "
+                    f"is now MID-MIGRATION and `schema_mismatch` will say so.")
+                return exits.COULD_NOT_VERIFY
+            lines[i] = f"schema: {m}"
             p.write_text("\n".join(lines), encoding="utf-8")
         except (OSError, UnicodeDecodeError) as exc:
             out(f"COULD NOT VERIFY: {home} could not be rewritten ({exc!r}). "

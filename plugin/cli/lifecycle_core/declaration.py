@@ -1545,13 +1545,59 @@ def carrier_homes(doc: dict) -> dict:
     return out
 
 
-def carrier_schema(path: Path):
-    """`(n, why-not)` — the `schema:` a carrier head declares.
+def schema_head(text: str, name: str = "the carrier"):
+    """`(index, n, why-not)` — WHICH line carries the `schema:` head, and what
+    it says.
+
+    ONE BODY DECIDES BOTH HALVES, AND THE SECOND HALF IS WHY THIS FUNCTION
+    EXISTS (lc-205). A reader that answers only "what version" leaves every
+    writer to find the line for itself, and a writer that goes looking does
+    not agree with this loop for free. It did not: `migrate --schema-from
+    --apply` matched `raw.strip().startswith("schema:")` over EVERY line,
+    while this loop inspects only the first non-comment line and stops. Those
+    coincide exactly while the head is spelled the writer's way. Where it was
+    not — `schema : 1`, a space before the colon, which this loop accepts
+    because it strips around the partition — the writer skipped the head,
+    kept scanning, and rewrote the first BODY line beginning `schema:`,
+    leaving the real version line untouched and printing `written:` at exit
+    0. Measured: a body line `schema: 9` became `schema: 2` while line 1
+    stayed `schema : 1`.
+
+    So the position is returned, not just the number, and a caller that
+    REWRITES the head rewrites `index` rather than searching. Two predicates
+    cannot disagree about spelling or position when there is one.
 
     Comment lines before the schema line are SKIPPED rather than refused
     (§3.8c): a public `LEDGER.md` must be able to say what it is for, and a
     parser that demanded the version on line 1 forced a carrier in a public
-    tree to be exactly `schema: 1` and nothing else.
+    tree to be exactly `schema: 1` and nothing else. That leniency is
+    load-bearing in production rather than hypothetical — this repo's own
+    heads sit at ITEMS.md:1, ITEMS-DONE.md:6 and LEDGER.md:21.
+
+    `index` is returned alongside a REFUSED value too (a non-integer), so a
+    caller can name the offending line rather than the file.
+    """
+    for i, raw in enumerate(text.split("\n")):
+        s = raw.strip()
+        if not s or s.startswith("#") or s.startswith("<!--"):
+            continue
+        head, colon, val = s.partition(":")
+        if colon and head.strip() == "schema":
+            try:
+                return i, int(val.strip()), None
+            except ValueError:
+                return i, None, (f"{name}'s `schema:` value {val.strip()!r} "
+                                 "is not an integer")
+        return None, None, f"{name} carries no `schema:` head line"
+    return None, None, f"{name} carries no `schema:` head line"
+
+
+def carrier_schema(path: Path):
+    """`(n, why-not)` — the `schema:` a carrier head declares.
+
+    The head is located by `schema_head`, which is the ONE body deciding
+    which line that is; this wrapper adds only the file read. A caller that
+    must WRITE the head calls `schema_head` directly and uses its index.
     """
     if not path.is_file():
         return None, f"{path.name} is not present"
@@ -1559,19 +1605,8 @@ def carrier_schema(path: Path):
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         return None, f"{path.name} could not be read ({exc!r})"
-    for raw in text.split("\n"):
-        s = raw.strip()
-        if not s or s.startswith("#") or s.startswith("<!--"):
-            continue
-        head, colon, val = s.partition(":")
-        if colon and head.strip() == "schema":
-            try:
-                return int(val.strip()), None
-            except ValueError:
-                return None, (f"{path.name}'s `schema:` value {val.strip()!r} "
-                              "is not an integer")
-        return None, f"{path.name} carries no `schema:` head line"
-    return None, f"{path.name} carries no `schema:` head line"
+    _index, n, why = schema_head(text, path.name)
+    return n, why
 
 
 def check_schema_agreement(repo: Path, doc: dict, res: Result) -> None:
