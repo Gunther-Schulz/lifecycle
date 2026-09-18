@@ -168,16 +168,19 @@ MUTATIONS = [
      "the record already answers is booked to the operator's court and waits "
      "there until somebody happens to look"),
 
-    # THE SCOPE TEST, NOT THE EXISTENCE TEST (lc-182). The withdrawn first
-    # cut of this check asked only whether desk-state files existed; the
-    # condition that makes the refusal correct is the one that keeps it to
-    # files THIS repo wrote, so that is what the mutation removes. With it
-    # gone the check reports every desk-state file on the machine as this
-    # repo's — the over-fire that took the roster to 22 could-not-verify.
+    # ANCHORED ON THE VERDICT, NOT ON THE SCOPE, and the first spelling here
+    # is worth keeping as a note because it FAILED honestly. It mutated the
+    # repo-scope test (`rec.get("repo") == here`), which is the condition
+    # lc-182 exists for — and prove-rows answered `rows changed: NONE`,
+    # correctly: removing the scope makes the check fire MORE, so the row's
+    # own plant still fires and its verdict never moves. A row's pair proves
+    # the refusal's axis; REACH is proven by the arm that must stay silent
+    # (`test_ANOTHER_repos_desk_state_does_NOT_fire_here`), which is exactly
+    # the division the withdrawn first cut got wrong.
     ("desk_state_kind_undeclared", "declaration.py",
-     "        if isinstance(rec, dict) and rec.get(\"repo\") == here:",
-     "        if isinstance(rec, dict):",
-     "the repo scope on a machine-wide kind's files"),
+     "    if not mine or _home_is_declared(doc, DESK_STATE_HOME_MARK):",
+     "    if True:",
+     "the test that this repo wrote desk state and no kind names its home"),
 
     ("blocker_predicate_broken", "verbs.py",
      "    if broken is not None:",
