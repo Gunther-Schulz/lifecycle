@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 157
+added: 158
 compacted: 0
 
 ## lc-3
@@ -813,3 +813,12 @@ write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py
 done-criterion: the carrier RENDERS the current effective value distinctly from its history, so the body a reader reaches first is the one that is TRUE. The item slots verb already resolves amendments and is the precedent; the gap is the RAW block, which is what a human and every non-tool reader actually opens. RED-FIRST: cs-48 shape (a live requirement contradicted by its own later amendment) is the firing input, and a reader of the rendered entry must reach the amended value before the superseded one. MUST-NOT-MOVE: the amendment HISTORY stays readable, because law 8 says both reads exist since neither is sufficient, and a rendering that hides what was superseded trades one wrong story for another.
 evidence: Peer desk cachyos-setup-33, 2026-09-18, from eight amendments in operation: cs-35 four amendments in about 90 minutes; cs-48 with its live requirement contradicted by its own later amendment. THIS DESK OWN INSTANCES THE SAME DAY: lc-158, lc-159 and lc-161 were each amended after booking, and lc-159 amendment reversed the scope fivefold, its original done-criterion reading as a cross-repo schema migration that the amendment kills. Law 8 two-reads rule is both the precedent and the boundary.
 blocked-by: NONE
+
+## lc-166
+grade: READY
+requirement: THE INVESTIGATION RECORD IS GOVERNED BY NO KIND, WHILE A SHIPPED VERB GRADES IT. Checked across all 22 registered kind names: none contains investigat or record. The record lives in XDG state outside every repo by deliberate design (tool state, no repo dirtied, no permission dialog), so it has no home stage, no staleness stage, no exit stage and no growth control here. Meanwhile lifecycle record check, shipped 2026-09-18, reads and grades it. A checker grading an UNREGISTERED kind is the seam the operator asked about: one carrier ends and none picks up. Found by begehung round 2 over the lc-157 design, axis A10.
+goal: enforce-the-invariants
+write-set: UNKNOWN, and that is the item question: the kind must be declared SOMEWHERE, and the candidates differ in what they imply. .claude/lifecycle.json declares per-repo kinds while the record home is machine-wide and cross-repo
+done-criterion: UNKNOWN pending the decision below, but the shape is known: the investigation record resolves to a registered kind with all six stages declared, WITHOUT moving the files into any repo tree. The three benefits the format file names are must-not-move: no repo dirtied, no permission dialog from the .claude-shape protection, survives across repo states and branches.
+evidence: begehung round 2, 2026-09-18, docs/begehung-findings-2026-09-18-r1.tsv, lens carriers: executed scan of the 22 declared kind names for investigat/record returning none, against the shipped record check verb reading the XDG investigations home. The same round measured the wider pattern this sits in: the declaration writer field shows 4 verb-written kinds that stay current against 17 session-written kinds that drift, so the record is both ungoverned AND in the drifting class. dotfiles claude/investigation-record-format.md carries the three benefits that constrain any fix.
+blocked-by: decision where does a machine-wide cross-repo kind get declared?
