@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 156
+added: 157
 compacted: 0
 
 ## lc-3
@@ -803,4 +803,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
 done-criterion: an evidence blocker is EXECUTED at booking time and its exit code recorded on the entry. A predicate returning 0 AT BOOKING is either an item already unblocked or a predicate that cannot fail, and both are reported — neither is detectable later. RED-FIRST: the head -0 predicate above is the firing input and must be refused or flagged; a predicate that genuinely discriminates (exit 1 at booking, exit 0 once its condition holds) passes. MUST-NOT-MOVE: a predicate whose execution is slow or has side effects is not run twice, and an unrunnable one is COULD NOT VERIFY rather than accepted silently.
 evidence: Peer desk cachyos-setup-33, 2026-09-18, in operation: the predicate above was booked and ACCEPTED by this carrier; sh -n passes it. Their proposed mechanism, adopted as this criterion, with their own reasoning that it clears the mechanism bar because running a predicate is computable and its exit code is a fact rather than a judgment. THEY ALSO NAMED A SECOND HALF worth having: the three blockers they retyped by hand today each got a live-exit / constructed-positive / constructed-negative exercise, and NOTHING IN THE CARRIER KNOWS THEY DID THAT — a slot for the exercise record would make its ABSENCE visible, which is the only thing that makes a discipline hold.
+blocked-by: NONE
+
+## lc-165
+grade: READY
+requirement: AN AMENDED ENTRY HEAD KEEPS THE SUPERSEDED VALUE AND A READER WHO STOPS EARLY GETS THE WRONG STORY. Amendments stack below the original, so the body a reader REACHES FIRST is the one no longer true. Measured in operation today by a peer desk: cs-35 took four amendments in about 90 minutes (requirement wrong, then evidence, then the blocker twice) and now carries superseded lines above the true state; cs-48 carries two amend-reason and two amended-evidence pairs while its LIVE requirement line still describes a design a later amendment says is not buildable. This is the label-over-body class inside one entry, and the dispatch discipline already names it from the outside: a re-grade written as an adjacent record while the original head keeps its live grade, measured twice, each time costing a lane.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,test/test_items.py
+done-criterion: the carrier RENDERS the current effective value distinctly from its history, so the body a reader reaches first is the one that is TRUE. The item slots verb already resolves amendments and is the precedent; the gap is the RAW block, which is what a human and every non-tool reader actually opens. RED-FIRST: cs-48 shape (a live requirement contradicted by its own later amendment) is the firing input, and a reader of the rendered entry must reach the amended value before the superseded one. MUST-NOT-MOVE: the amendment HISTORY stays readable, because law 8 says both reads exist since neither is sufficient, and a rendering that hides what was superseded trades one wrong story for another.
+evidence: Peer desk cachyos-setup-33, 2026-09-18, from eight amendments in operation: cs-35 four amendments in about 90 minutes; cs-48 with its live requirement contradicted by its own later amendment. THIS DESK OWN INSTANCES THE SAME DAY: lc-158, lc-159 and lc-161 were each amended after booking, and lc-159 amendment reversed the scope fivefold, its original done-criterion reading as a cross-repo schema migration that the amendment kills. Law 8 two-reads rule is both the precedent and the boundary.
 blocked-by: NONE
