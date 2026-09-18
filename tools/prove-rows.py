@@ -876,6 +876,17 @@ MUTATIONS = [
      "        if want not in declared:",
      "        if False:",
      "the test that a queried goal is one the repo declares"),
+
+    # lc-16 follow-up. THE DID-NOT-RUN TEST, which is also the ORDER clause:
+    # with it folded, a run whose registered command never started falls
+    # through to the failure test, counts zero failures, and reports CLEAN —
+    # a pass with fewer checks, which is the one thing this verb exists to
+    # refuse. `verify_check_failed`'s plant (a command that RUNS and returns
+    # non-zero) is untouched by this, so the two rows stay separable.
+    ("verify_check_did_not_run", "verify.py",
+     "    if never:",
+     "    if False:",
+     "the test that every registered verify command actually EXECUTED"),
 ]
 
 

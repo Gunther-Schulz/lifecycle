@@ -61,6 +61,17 @@ CORE = Path(__file__).resolve().parent
 #: data. Cheaper to reword than to exempt this file, and an exemption here
 #: would have blinded the scan to the one finding this module really emits.
 _LITERAL = re.compile(r"FINDING \[([a-z_][a-z0-9_]*)\]")
+#: A REFUSAL IS A REFUSAL WHICHEVER EXIT CODE CARRIES IT (lc-16 follow-up,
+#: ruled 2026-09-18). This scan matched `FINDING [` alone, so a refusal
+#: emitted as COULD NOT VERIFY was invisible to it — and `verify` shipped
+#: with `verify_check_did_not_run` unregistered and unprovable while this
+#: check reported CLEAN over it. That is the defect class this whole plugin
+#: is built against, inside the instrument built to catch it: a check
+#: reporting clean because it cannot see what it does not match. The
+#: three-answer contract makes could-not-verify a FIRST-CLASS verdict, so a
+#: roster blind to it proves two thirds of the contract and says nothing
+#: about the third.
+_LITERAL_CNV = re.compile(r"COULD NOT VERIFY \[([a-z_][a-z0-9_]*)\]")
 _RESULT_ADD = re.compile(r"\.add\(\s*\n?\s*[\"']([a-z_][a-z0-9_]*)[\"']")
 _PROBLEM = re.compile(r"problems\.append\(\(\s*\n?\s*[\"']([a-z_][a-z0-9_]*)[\"']")
 #: A site that RELAYS a row name computed elsewhere. Counted and named, never
@@ -70,7 +81,18 @@ _RELAY = re.compile(r"FINDING \[\{")
 
 
 def emit_sites(root: Path = CORE) -> dict:
-    """`{ident: [file:line, …]}` for every finding-emitting site in the CLI."""
+    """`{ident: [file:line, …]}` for every REFUSAL-emitting site in the CLI.
+
+    BOTH VERDICT WORDS, since lc-16's follow-up: the finding word and the
+    could-not-verify word, each followed by a bracketed row name. A row's
+    ident is its name whichever code carries it, and scanning one word alone
+    left the other half of the three-answer contract unproven.
+
+    Worded WITHOUT the literal forms, like the patterns above and for the
+    same measured reason: this scan reads the package's own source, so a
+    docstring spelling a pattern out is data the scan finds — the widening
+    commit's first run reported a row called `x` from these very lines.
+    """
     found: dict = {}
     for path in sorted(root.glob("*.py")):
         if path.name == "refusals.py":
@@ -81,7 +103,7 @@ def emit_sites(root: Path = CORE) -> dict:
             # it grades.
             continue
         text = path.read_text(encoding="utf-8")
-        for pat in (_LITERAL, _RESULT_ADD, _PROBLEM):
+        for pat in (_LITERAL, _LITERAL_CNV, _RESULT_ADD, _PROBLEM):
             for m in pat.finditer(text):
                 line = text.count("\n", 0, m.start()) + 1
                 found.setdefault(m.group(1), []).append(f"{path.name}:{line}")
@@ -115,14 +137,18 @@ def check_coverage(out, root: Path = CORE) -> int:
 
     out("")
     out("EMIT-SITE COVERAGE (assigned item B) — every site in the code that "
-        "emits a FINDING maps to a registered row, or this fails.")
-    out(f"    finding-emitting row names found in the source: {len(sites)}")
+        "emits a REFUSAL maps to a registered row, or this fails. BOTH "
+        "verdict words are scanned, the finding word and the "
+        "could-not-verify word. Scanning only the first is how one of "
+        "`verify`'s two refusals shipped unregistered and unprovable while "
+        "this check reported CLEAN over it.")
+    out(f"    refusal-emitting row names found in the source: {len(sites)}")
     out(f"    registered rows (roster `finding_row` values): {len(registered)}")
     out(f"    relay sites (a row name computed elsewhere, printed here): "
         f"{len(relays)}"
         + (f" — {', '.join(relays)}" if relays else ""))
     out("    LIMIT, stated rather than left to be discovered: this check "
-        "reads the SOURCE, so it catches a finding the code emits under no "
+        "reads the SOURCE, so it catches a refusal the code emits under no "
         "registered row. It CANNOT catch a refusal the PROSE requires and "
         "the code LACKS — that site does not exist, so no scan finds it. "
         "That remainder is found only by an end-to-end walk of design §3.9, "

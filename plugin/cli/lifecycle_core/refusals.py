@@ -2038,7 +2038,7 @@ LANE_ROWS = [
 ]
 
 
-def _coverage_over_copy(*, plant: bool) -> Fired:
+def _coverage_over_copy(*, plant: bool, word: str = "FINDING") -> Fired:
     """Run the emit-site coverage check over a COPY of this package.
 
     A copy rather than the live tree: the check's own red must not depend on
@@ -2053,10 +2053,15 @@ def _coverage_over_copy(*, plant: bool) -> Fired:
             shutil.copy2(f, d / f.name)
         if plant:
             target = d / "exits.py"
+            # THE VERDICT WORD IS A PARAMETER because the scan now watches
+            # two of them. Composed rather than written literally: this file
+            # is excluded from the scan, but a literal here would still be
+            # one more copy of a pattern the scan's own history says to keep
+            # out of the source it reads.
             target.write_text(
                 target.read_text(encoding="utf-8")
                 + '\n\ndef _planted(out):\n'
-                  '    out("FINDING [not_a_registered_row] planted")\n',
+                  f'    out("{word} [not_a_registered_row] planted")\n',
                 encoding="utf-8")
         buf = []
         code = roster_mod.check_coverage(buf.append, root=d)
@@ -3450,6 +3455,41 @@ def _ready_goal_run(goal: str) -> Fired:
 
 
 GOAL_ROWS = [
+    Row(
+        ident="verify_check_did_not_run",
+        refusal="a registered verify command that never EXECUTED — reported "
+                "COULD NOT VERIFY, never as a pass with fewer checks",
+        firing_input="a laws file whose `## Verify` block names a command "
+                     "that does not exist (shell exit 127), beside one that "
+                     "runs",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _verify_run("true\nlc16_no_such_command_anywhere"),
+        # The SAME block with that command REPLACED BY ONE THAT EXISTS — so
+        # the arms differ in whether a registered command could start, and in
+        # nothing else. A control with a FAILING command would exit FINDING,
+        # which differs from the plant for the wrong reason and would prove
+        # nothing about the did-not-run half.
+        control=lambda: _verify_run("true\ntrue"),
+        stage="lc-16 follow-up",
+    ),
+    Row(
+        ident="emit_site_unregistered_could_not_verify",
+        finding_row="emit_site_unregistered",
+        refusal="the COULD-NOT-VERIFY half of the coverage check's reach: a "
+                "site emitting a refusal under that verdict word with no "
+                "registered row. Unwatched until 2026-09-18, which is how "
+                "`verify`'s did-not-run refusal shipped unprovable",
+        firing_input="a planted could-not-verify emission naming an "
+                     "unregistered row, in a copy of the package, scanned",
+        expect=exits.FINDING,
+        fire=lambda: _coverage_over_copy(plant=True, word="COULD NOT VERIFY"),
+        # The same copy, same verdict word, no planted line: the arms differ
+        # in the emission alone. Sharing the FINDING half's control would
+        # have compared two different plants against one baseline and proved
+        # neither half on its own.
+        control=lambda: _coverage_over_copy(plant=False, word="COULD NOT VERIFY"),
+        stage="lc-16 follow-up",
+    ),
     Row(
         ident="goal_query_undeclared",
         refusal="a goal filter naming a goal the repo does not declare — "
