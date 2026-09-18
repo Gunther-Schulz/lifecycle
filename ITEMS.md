@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 193
+added: 194
 compacted: 0
 
 ## lc-3
@@ -1071,4 +1071,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/refusals.py,test/test_retire.py
 done-criterion: The sweep's could-not-verify arm NAMES git worktree registrations as a population it does not examine, or a check reports them. MUST-NOT-BUILD: nothing REMOVES or prunes a worktree. What a party is standing in is not moved under them, a live session may hold this one, and its directory still exists so prune would not touch the entry anyway. The deliverable is that the registration stops being invisible, never that it stops existing. RED-FIRST: with a worktree registered the check names it; with none registered the check says so rather than reporting clean by silence.
 evidence: MEASURED at this desk, executed: git worktree list returns two entries, the second under a foreign session's scratchpad at a detached head. RELAYED from lifecycle-6f, carried as theirs and unverified here: session 55c5d05e is the writer-reservation lock holder this repo has reported all evening and may be live; ls confirms the directory exists, so git worktree prune would not clear the entry — prune only clears entries whose path is gone. DERIVED, not executed: that the sweep cannot see .git/worktrees/ follows from its reading tracked files; the arm that would report the absence has not been run against a registered worktree.
+blocked-by: NONE
+
+## lc-202
+grade: READY
+requirement: lane new DOES NOT VALIDATE ITS ONE POSITIONAL ARGUMENT, AND THE SYSTEM ALREADY HOLDS THE CONCEPT IT LACKS. Audit docs/audits/2026-09-18-verb-io-surface.md section 1, commit 9600455, re-run at the judgment desk in a scratch clone with all three XDG roots redirected, control first. lanes.py cmd_lane_new builds lanes_dir / door.md from unchecked input: goodlane writes lanes/goodlane.md exit 0; ../escape writes to the repo ROOT, declares the literal ../escape, and exits 0 CLEAN; bad/door raises an uncaught FileNotFoundError and exits 1; the empty string writes lanes/.md and declares the empty string. Exit 1 is outside this tool's contract and exits.py:10 says 1 is deliberately unused so a traceback is never mistaken for a verdict of ours — this is that sentence's first live counter-example.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/refusals.py,test/test_lane_new.py
+done-criterion: lane new REFUSES an unsafe door rather than folding it, reusing desk.py's _UNSAFE_FOR_FILENAME as the PREDICATE and not as the transform, and the refusal is a registry row per law 2. THE FOLD-VS-REFUSE CHOICE IS DECIDED AND IS NOT A DETAIL: desk state folds because a desk id is an identity it must not lose, while a lane door is a NAME the declaration carries and lane list resolves later, so folding silently renames the caller's lane where refusing costs one retry. RED-FIRST, TWO SEPARATE ARMS BECAUSE THEY TAKE DIFFERENT BRANCHES: proven red on ../escape (currently exit 0 CLEAN) and independently on bad/door (currently an uncaught traceback at exit 1) — one arm cannot certify the other. The empty string is a third input and gets its own assertion. No exit 1 survives on any arm.
+evidence: MEASURED by the judgment desk in a scratch clone, control first, and read by me at the audit file rather than from its summary message (law 17). FIX PLACEMENT read at this desk, executed: desk.py carries _UNSAFE_FOR_FILENAME and its comment at desk.py:56-58 names the exact hazard — a slash in it would otherwise let a caller's id escape this directory. So the hazard was understood, written down, and defended at ONE of the two sites carrying the shape. This is the members question at a defect-class find (global corpus, dependents-or-members): the artifact carrying the found instance is the first population to sweep and the found instance is the sweep's own positive control. Nobody swept. DERIVED, not executed here: that these are the only two sites with the shape — the sweep this item also owes.
 blocked-by: NONE
