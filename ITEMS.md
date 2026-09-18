@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 201
+added: 202
 compacted: 0
 
 ## lc-3
@@ -1149,4 +1149,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
 done-criterion: An unreadable routing home is the THIRD answer in that section — could-not-verify with its reason — never the empty table. The section's framing paragraph gains that third reading, since it currently enumerates two and the enumeration is what makes the omission invisible. RED-FIRST, the pair: a readable ITEMS.md citing the report renders its row and '1 finding(s) routed'; the same repo with ITEMS.md made undecodable must NOT render 'None yet' and CLEAN.
 evidence: RELAYED from the lc-192 lane with its executed pair pasted, NOT reproduced here: control renders the lc-1 row and '1 finding(s) routed'; probe with an invalid-UTF-8 ITEMS.md renders 'None yet. On the FIRST run of a migration this is expected' at CLEAN exit 0. DERIVED from the lane's read: the swallow is at 2776-2779 and the two-reading framing at 3230. MEASURED at this desk: nothing — this one is booked entirely on relayed evidence and its first build step is to reproduce the pair.
+blocked-by: NONE
+
+## lc-210
+grade: READY
+requirement: THE BLOCKER-TYPE TABLE IS A CHECK NO INPUT CAN FALSIFY, PRINTED AS A STATISTIC, WITH A FINDING-CLAIM BESIDE IT HELD BY NOTHING. Console 2576-2579 and report 2962-2971 print five rows including the sentence 'untyped and NONE are both N, and either being non-zero is a finding rather than a statistic.' But e.blocker is set only by build_items from migration_blocker's literal returns, and the lane's exhaustive run over every reachable branch emitted exactly two classes, decision and evidence — so item-id, NONE and untyped are 0 BY CONSTRUCTION (law 22). AND NOTHING CONVERTS A NON-ZERO INTO A FINDING ANYWAY: bt is consumed only by the two print loops at 2579 and 2965, so the sentence is law 26's second clause exactly — a claim in prose beside a mechanism, held by nothing, degrading in the SILENT direction.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: Either the sentence becomes a mechanism — a non-zero untyped or NONE actually produces a finding — or the rows are reported as could-not-verify arithmetic and the sentence is deleted rather than left standing beside them. Law 22: a check no input can falsify is DELETED, not registered. THREE SMALLER THINGS IN THE SAME SITE, each fixed or explicitly declined: the sentence prints the SUM of two counts under the words 'are both', so if they ever diverged it would be wrong about each; migration_blocker's 767-769 branch is dead given slots_incomplete hardcoded True at 887; and the internal contrast is the model to copy — _ledger_storable's docstring at 711-716 reasons about this exact class correctly and says R22 means such a check is not registered. The same author applied the law in one place and not the other, which is the strongest argument that the fix is the law and not this site.
+evidence: RELAYED from the lc-192 lane, its exhaustive enumeration pasted and NOT re-run here: the distinct blockers build_items can emit are four literal strings classifying to exactly {decision, evidence}. DERIVED from that: item-id, NONE and untyped are unreachable, so the table's green is arithmetic rather than a result. RELAYED: bt's only consumers are the two print loops; slots_incomplete is hardcoded True at 887, making 767-769 dead. MEASURED at this desk: nothing in this item — it is booked wholly on the lane's read and its first build step is to re-run the branch enumeration, because an unfalsifiability claim that is itself unverified is the same error one level up.
 blocked-by: NONE
