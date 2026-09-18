@@ -3510,6 +3510,54 @@ def _kind_check(repo_obj, out) -> int:
     return code
 
 
+def _list_home_run(home: str) -> Fired:
+    """The walk's own answer for one declared home, built from its own body.
+
+    FIRES `list_home` AND `unresolvable_line` DIRECTLY, which is the pattern
+    `check_growth`'s rows already use here, and for the same reason: the
+    walk's overall exit code is COULD NOT VERIFY by construction — the
+    staleness predicate has no pass history — so a row over the whole verb
+    would read 3 for both arms and separate nothing. The mapping below is the
+    walk's, not a paraphrase of it: `instances is None` is exactly what the
+    walk routes to could-not-verify, and the sentence comes from the one
+    function that builds it.
+    """
+    from . import retire as retire_mod
+
+    d = Path(tempfile.mkdtemp(prefix="lifecycle-home-"))
+    try:
+        (d / "ITEMS.md").write_text(GOOD_ITEMS, encoding="utf-8")
+        instances, note = retire_mod.list_home(d, home)
+        if instances is None:
+            return Fired(exits.COULD_NOT_VERIFY,
+                         retire_mod.unresolvable_line(note))
+        return Fired(exits.CLEAN,
+                     f"count: {len(instances)}   ({note})")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+HOME_ROWS = [
+    Row(
+        ident="home_unresolvable",
+        refusal="a declared home this walk never resolved — counted as 0 and "
+                "reported CLEAN, which is an absence claim over a population "
+                "no instrument ever saw",
+        firing_input="a home carrying an unexpanded `$XDG_STATE_HOME`, the "
+                     "shape the fire log declares",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _list_home_run("$XDG_STATE_HOME/lifecycle/fire.jsonl"),
+        # A RESOLVABLE IN-TREE HOME THAT IS ALSO PRESENT: the arms differ in
+        # whether the walk could resolve the home at all. Deliberately NOT an
+        # absent in-tree home — that one is CLEAN by design (the walk looked
+        # and there is no file), so using it as the control would have proven
+        # the wrong boundary and pinned a behaviour lc-172 does not change.
+        control=lambda: _list_home_run("ITEMS.md"),
+        stage="lc-172",
+    ),
+]
+
+
 RECORDS_KIND_ROWS = [
     Row(
         ident="records_kind_undeclared",
@@ -3588,7 +3636,7 @@ GOAL_ROWS = [
 
 ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
         + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS + GOAL_ROWS
-        + RECORDS_KIND_ROWS)
+        + RECORDS_KIND_ROWS + HOME_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #

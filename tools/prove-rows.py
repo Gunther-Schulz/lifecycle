@@ -895,6 +895,15 @@ MUTATIONS = [
     # decision, and anchoring the kind-scan would leave the finding firing
     # for every repo that has no records at all — a guard over legitimate
     # work, which is a different defect from an unproven row.
+    # lc-172. THE UNRESOLVABLE TEST ITSELF. Folded, a home carrying an
+    # unexpanded variable falls through to the glob branch, matches nothing,
+    # and returns an empty list — the false CLEAN this row exists to refuse,
+    # which is exactly how a 133MB fire log read as a kind that had not grown.
+    ("home_unresolvable", "retire.py",
+     "    if _UNEXPANDED.search(home):",
+     "    if False:",
+     "the test that a declared home was resolvable at all"),
+
     ("records_kind_undeclared", "declaration.py",
      "    if not found:\n        return",
      "    if True:\n        return",

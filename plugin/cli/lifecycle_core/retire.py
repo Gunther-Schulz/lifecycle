@@ -122,6 +122,22 @@ def fire_log_readable() -> bool:
 
 # --- listing a kind's real home ----------------------------------------------
 
+#: A home still carrying a shell-style variable. This walk does not expand
+#: them, so such a home was never resolved and anything counted under it is
+#: a count of nothing rather than a count of zero.
+_UNEXPANDED = re.compile(r"\$\w|\$\{")
+
+
+def unresolvable_line(note: str) -> str:
+    """The walk's answer for a home it could not examine, as ONE body.
+
+    The walk prints it and the roster row that proves it builds it, so the
+    ident and the sentence cannot drift apart into two spellings of one
+    refusal.
+    """
+    return f"COULD NOT VERIFY [home_unresolvable] {note}"
+
+
 def list_home(repo: Path, home: str) -> tuple:
     """`(instances, note)` for one kind's declared home, RE-LISTED now.
 
@@ -130,14 +146,54 @@ def list_home(repo: Path, home: str) -> tuple:
     plain file counts as one. The note says which notion was used, because a
     number without its notion is the figure two readers disagree about.
     """
+    # lc-172: AN ABSENCE CLAIM NAMES WHAT PROVES ITS INSTRUMENT WAS LIVE, and
+    # the three returns below are where this walk's instrument can be dead.
+    # An unexamined home yields an empty list, an empty home yields an empty
+    # list, and until now both printed "the home holds nothing, so nothing has
+    # grown" — CLEAN. MEASURED 2026-09-18: the fire log's declared home is
+    # `$XDG_STATE_HOME/lifecycle/fire.jsonl`, this walk does not expand the
+    # variable, so it looked for a literal `$XDG_STATE_HOME/…`, found nothing,
+    # counted 0 and reported the kind CLEAN — while the file held 133,087,757
+    # bytes across 1,173,626 lines. The alarm R22 specifies was unreachable
+    # for every XDG-homed kind, silently, and the sentence saying so was the
+    # most reassuring line in the output.
+    #
+    # `None` is COULD NOT VERIFY here — both callers already route it that way
+    # — so the repair is to answer it wherever the population was never seen.
+    if _UNEXPANDED.search(home):
+        return None, (f"{home!r} carries an unexpanded variable and this walk "
+                      "does not resolve it, so NOTHING was examined. A count "
+                      "of 0 here would be an absence claim over a population "
+                      "no instrument ever saw.")
     if "*" in home:
-        base = repo
-        hits = sorted(base.glob(home))
+        stem = home.split("*", 1)[0]
+        base = repo / (stem if stem.endswith("/") else str(Path(stem).parent))
+        if not base.is_dir():
+            # IN-TREE AND ABSENT IS AN OBSERVATION, not a dead instrument:
+            # the walk resolved the path in this repo's terms and the
+            # directory is not there, which is a fact about the repo. The
+            # denominator says so, so a reader can tell this zero from one
+            # measured over files that exist.
+            return [], (f"glob {home!r}: 0 instance(s) — the directory "
+                        f"{str(base.relative_to(repo)) if base != repo else '.'!r} "
+                        "does not exist in this repo, so there was nothing to "
+                        "match rather than nothing matching.")
+        hits = sorted(repo.glob(home))
         return [str(p.relative_to(repo)) for p in hits if p.is_file()], \
-            f"glob {home!r}: one instance per file"
+            f"glob {home!r}: one instance per file, searched under {stem or './'}"
     path = repo / home
     if not path.exists():
-        return [], f"{home!r} is not present"
+        # DELIBERATELY NOT COULD-NOT-VERIFY, and the boundary is lc-172's own:
+        # the discriminator is whether the instrument SAW anything, never
+        # whether it FOUND anything. An in-tree home is resolvable, so its
+        # absence is data about the repo — the walk looked and there is no
+        # file. Only an UNRESOLVABLE home (above) is the dead instrument, and
+        # that is the case the fire log measured. An earlier item pins this
+        # branch CLEAN as MUST-NOT-MOVE, and applying lc-172 to both cases
+        # would have moved it on a reading its own incident does not support.
+        return [], (f"{home!r} is not present: 0 instance(s), and the path "
+                    "WAS resolved — an absent in-tree home is an observation, "
+                    "not an unexamined population.")
     if path.is_dir():
         hits = sorted(p for p in path.rglob("*") if p.is_file())
         return [str(p.relative_to(repo)) for p in hits], \
@@ -206,10 +262,16 @@ def check_growth(name, mode, action, count, log, log_present, out):
         # NOT THE SAME CLEAN. A kind whose home holds nothing has not grown,
         # and saying "the exit has fired" about it asserts an event that never
         # happened — the verdict is the same and the sentence is not.
-        out("    growth check: CLEAN — the home holds nothing, so nothing has "
-            "grown. NOT the same answer as 'the exit has fired'.")
+        out("    growth check: CLEAN — the home WAS examined and holds 0 "
+            "instance(s), so nothing has grown. NOT the same answer as 'the "
+            "exit has fired', and not the same as a home this walk could not "
+            "read — that one is COULD NOT VERIFY and says what it could not "
+            "see (lc-172).")
         return exits.CLEAN, "clean"
-    out("    growth check: CLEAN — the exit has fired for this kind.")
+    out(f"    growth check: CLEAN — the exit has fired for this kind: "
+        f"{len(events)} recorded event(s) over {count} instance(s). Both "
+        "numbers are the denominator this verdict rests on: an exit that "
+        "fired is a FLOW, and zero events over any count is the alarm.")
     return exits.CLEAN, "clean"
 
 
@@ -300,7 +362,7 @@ def walk(repo: Path, doc: dict, out, *, acting: bool) -> int:
 
         instances, note = list_home(repo, home)
         if instances is None:
-            out(f"    COULD NOT VERIFY: {note}")
+            out("    " + unresolvable_line(note))
             code = exits.worst([code, exits.COULD_NOT_VERIFY])
             out("")
             continue
@@ -578,8 +640,16 @@ def laws_scope_audit(repo: Path, laws_rel: str, out) -> int:
         + "; ".join(f"{n} ({w})" for n, _p, w in MARKERS))
 
     if not hits:
-        out(f"    scope: CLEAN — no line outside the law list carries another "
-            "kind's marker.")
+        # lc-172: THE DENOMINATOR IS THE CLAIM'S EVIDENCE. "No line carries a
+        # marker" and "this audit examined no lines" print the same sentence
+        # and mean opposite things, so the examined population is named here
+        # rather than left on an earlier line a reader may not reach.
+        examined = sum(1 for i, raw in enumerate(lines, start=1)
+                       if i not in law_lines and raw.strip())
+        out(f"    scope: CLEAN — 0 of {examined} line(s) outside the law list "
+            f"carry another kind's marker, over {len(MARKERS)} marker(s) "
+            "looked for. Both numbers are the proof this audit was live: a "
+            "zero over 0 examined lines is what a dead pattern returns.")
         out("    PROSE-REST: whether each line inside the law list IS a law "
             "is the review's judgment and no predicate here answers it "
             "(invariant 9). This run checked SCOPE MARKERS and says so rather "

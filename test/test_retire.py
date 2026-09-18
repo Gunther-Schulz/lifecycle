@@ -643,7 +643,18 @@ class TheWalkAsksACompactedKindAboutItsExit(unittest.TestCase):
         code, out = run_cli(d, "audit")
         block = self._block(out, "done bodies")
         self.assertIn("count:  0", block)
-        self.assertIn("growth check: CLEAN — the home holds nothing", block)
+        # THE PHRASE MOVED UNDER lc-172, THE VERDICT DID NOT. This branch must
+        # still answer CLEAN and must still refuse to claim a fire — both
+        # pinned below and unchanged. What lc-172 required is that the line
+        # carry the DENOMINATOR proving the instrument was live, so the
+        # sentence now says the home WAS examined and holds 0. The arm follows
+        # the wording rather than the wording following the arm, because the
+        # behaviour under test is the verdict and the refusal, not the prose.
+        self.assertIn("growth check: CLEAN — the home WAS examined and holds "
+                      "0 instance(s)", block)
+        # AND THE DENOMINATOR IS PART OF THE CONTRACT NOW: a clean line here
+        # that did not say what it examined is the shape lc-172 removes.
+        self.assertIn("the path WAS resolved", block)
         # THE VERDICT LINE, not the phrase: the sentence this branch prints
         # NAMES the answer it is not giving, so a bare search for those words
         # matches the very message that refuses to claim them.
@@ -691,3 +702,59 @@ class TheWalkAsksACompactedKindAboutItsExit(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AnAbsenceClaimNamesWhatProvesTheInstrumentWasLive(unittest.TestCase):
+    """lc-172 — a zero from a dead instrument and a zero from a live one.
+
+    MEASURED, and it is why this exists: the fire log's declared home is
+    `$XDG_STATE_HOME/lifecycle/fire.jsonl`; the walk does not expand the
+    variable, so it searched for a literal `$XDG_STATE_HOME/…`, found
+    nothing, counted 0 and reported the kind CLEAN — while the file held
+    133,087,757 bytes across 1,173,626 lines. Every XDG-homed kind was
+    exempt from R22's alarm, silently, and the line saying so was the most
+    reassuring in the output.
+
+    THE BOUNDARY IS DELIBERATE AND NARROW: the discriminator is whether the
+    instrument SAW anything, never whether it FOUND anything. An in-tree home
+    that is simply absent stays CLEAN — the walk resolved it and there is no
+    file, which is data about the repo.
+    """
+
+    def _tmp(self):
+        d = Path(tempfile.mkdtemp(prefix="lc172-"))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        return d
+
+    def test_an_unexpanded_variable_home_is_could_not_verify(self):
+        d = self._tmp()
+        instances, note = retire.list_home(d, "$XDG_STATE_HOME/lifecycle/fire.jsonl")
+        self.assertIsNone(instances, note)
+        self.assertIn("NOTHING was examined", note)
+        self.assertIn("home_unresolvable", retire.unresolvable_line(note))
+
+    def test_the_braced_spelling_is_caught_too(self):
+        """`${VAR}` is the same unresolved home in a different costume."""
+        instances, _ = retire.list_home(self._tmp(), "${XDG_STATE_HOME}/x.jsonl")
+        self.assertIsNone(instances)
+
+    def test_an_absent_in_tree_home_stays_clean_and_says_it_resolved(self):
+        """MUST-NOT-MOVE from the earlier item, and lc-172 does not move it."""
+        instances, note = retire.list_home(self._tmp(), "ITEMS-DONE.md")
+        self.assertEqual(instances, [])
+        self.assertIn("the path WAS resolved", note)
+
+    def test_a_real_population_is_counted_with_its_notion(self):
+        d = self._tmp()
+        (d / "ITEMS.md").write_text("schema: 2\nbaseline: 0\n", encoding="utf-8")
+        instances, note = retire.list_home(d, "ITEMS.md")
+        self.assertIsNotNone(instances)
+        self.assertTrue(note)
+
+    def test_a_glob_over_a_missing_directory_reports_what_it_searched(self):
+        """Also CLEAN — an in-tree directory's absence is an observation —
+        but the denominator must say there was nothing to match, or the zero
+        is indistinguishable from a pattern that matched nothing."""
+        instances, note = retire.list_home(self._tmp(), "docs/nowhere/*.md")
+        self.assertEqual(instances, [])
+        self.assertIn("does not exist in this repo", note)
