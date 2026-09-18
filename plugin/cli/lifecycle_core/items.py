@@ -1366,18 +1366,77 @@ def check_blocker_targets(items_parsed: Parsed, done_parsed: Parsed | None,
         raw = (it.slots.get("blocked-by") or "").strip()
         if not raw or raw == BLOCKER_NONE:
             continue
+        if not prefix:
+            # NO PREFIX IS ITS OWN ANSWER AND IT IS GRADE-BLIND. Without a
+            # declared prefix nothing can be typed at all — not here and not
+            # in `check_parked_blockers`, which needs the same prefix — so
+            # every blocked block is unresolved and the verb has formed no
+            # verdict. Collected before the classify below, because
+            # classifying against a prefix that does not exist is the
+            # question this branch exists to refuse.
+            untypeable.append((it, raw))
+            continue
         kind, detail = classify_blocker(raw, prefix)
         if kind == "item":
             typed.append((it, detail))
-        elif not prefix:
-            untypeable.append(it)
+        elif kind is None and it.grade != "PARKED":
+            # UNTYPEABLE, AND IT USED TO BE DROPPED (lc-186). This arm read
+            # `elif not prefix`, so a value the vocabulary does not recognise
+            # was collected ONLY when no prefix was declared — with one
+            # present it matched neither arm and was counted nowhere. Measured
+            # by a review lane: a READY item blocked by a mistyped id printed
+            # `blocker targets: CLEAN — 4 item-id blocker(s)` with the fifth
+            # in neither the count nor the output, while the well-formed
+            # spelling of the same blocker correctly found `dangling_reference`.
+            #
+            # `check_parked_blockers` covers PARKED only, so a READY item
+            # carrying one had nothing at all — which is precisely the
+            # permanent silent park this function's own docstring is about.
+            #
+            # AND PARKED IS EXCLUDED HERE FOR THE SAME REASON, which is this
+            # item's own must-not-move rather than caution: `parked_without_
+            # typed_blocker` already reports exactly this input on a PARKED
+            # block, and a second finding for one defect tells the reader
+            # there are two. Measured the moment this arm first ran: a fixture
+            # with two PARKED prose blockers went from 2 finding lines to 4.
+            # The gap was never PARKED — it was every OTHER grade.
+            untypeable.append((it, raw))
 
-    if untypeable:
+    if not prefix and untypeable:
+        # NO PREFIX IS A DIFFERENT ANSWER FROM A BAD VALUE, and the split is
+        # the point: without a declared prefix the tool cannot TELL an id from
+        # prose, so it has formed no verdict about these blocks. That is
+        # could-not-verify. With a prefix it can tell, and a value it cannot
+        # type is a finding about the value.
         out("COULD NOT VERIFY: no `id-prefix` in the declaration, so an "
             f"item-id blocker on {len(untypeable)} block(s) cannot be told "
             "from prose that resembles one, and none was resolved.")
         return exits.COULD_NOT_VERIFY
+    for it, raw in untypeable:
+        # THE EXISTING ROW, not a new one: this is the same refusal the write
+        # path emits for the same input (`verbs._check_blocker`), reached by
+        # the other door. A second row for one refusal would need its own
+        # plant and control to say anything the first does not.
+        out(f"FINDING [blocker_untyped] line {it.line}: block {it.ident!r} is "
+            f"blocked by {raw!r}, which is not one of the closed edge types "
+            f"(`{prefix}-<n>`, `decision <question>`, `evidence <predicate>`, "
+            "or NONE). The write path refuses this at `item add`, `item park` "
+            "and `item amend`, so a value in this shape reached the file by a "
+            "path that did not pass it — a merge, a hand edit, or a target "
+            "renamed after the fact. It is a permanent silent park either "
+            "way: the block reads as blocked and never surfaces in `item "
+            "ready`, and nothing resolves a wait nobody can type.")
+    if untypeable:
+        return exits.FINDING
     if not typed:
+        # A VERDICT WITH NO OUTPUT IS NOT READABLE AS A VERDICT (lc-186, and
+        # lc-172's rule at a site it did not reach). This returned CLEAN and
+        # printed NOTHING, so a carrier with no item-id blockers was
+        # indistinguishable in the report from a check that never ran.
+        out(f"blocker targets: CLEAN — 0 item-id blocker(s) among "
+            f"{len(items_parsed.items)} block(s) examined, so there was no id "
+            "to resolve. A zero here is a measurement over a population that "
+            "was read, not an absence of checking.")
         return exits.CLEAN
     if done_parsed is None:
         out(f"COULD NOT VERIFY: {len(typed)} item-id blocker(s) name an id, "

@@ -693,10 +693,26 @@ class BlockerTargets(unittest.TestCase):
         self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         self.assertIn("id-prefix", out)
 
-    def test_a_carrier_with_no_blockers_says_nothing(self):
+    def test_a_carrier_with_no_blockers_STATES_WHAT_IT_EXAMINED(self):
+        """lc-186 — and this arm asserted SILENCE until today.
+
+        It was `test_a_carrier_with_no_blockers_says_nothing`, pinning
+        `self.assertEqual(out, "")`. The silence was deliberate once: with no
+        item-id blockers there is nothing to resolve, so the verb said
+        nothing. But a verdict with no output is not readable AS a verdict —
+        a carrier with no blockers and a check that never ran produce the
+        same empty report, which is the absence claim lc-172 removed
+        everywhere else and did not reach here.
+
+        The verdict is unchanged: CLEAN, and zero is still zero. What moved
+        is that the zero now carries the population it was measured over.
+        """
         code, out = self._run(GOOD_ITEMS)
         self.assertEqual(code, exits.CLEAN, out)
-        self.assertEqual(out, "")
+        self.assertIn("0 item-id blocker(s)", out)
+        self.assertIn("block(s) examined", out,
+                      "the clean line claims an absence without naming the "
+                      "population it read")
 
 
 def _done_home_holding(ident, grade):
