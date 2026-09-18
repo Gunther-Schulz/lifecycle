@@ -1243,6 +1243,40 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
     lead = decl.head_lead_goal(ctx.declaration.get("head-rule"))
     ready = [it for it in parsed.items if it.grade == "READY"]
 
+    # lc-16: THE GOAL FILTER, and the undeclared-goal answer is the point of
+    # it. A repo can declare a closed goal set and set a goal per item, then
+    # have no way to read the carrier back by it — which breaks the consumer
+    # story for any carrier serving more than one audience (reported by the
+    # dotfiles desk, whose fire-rate review reads corpus entries out of a
+    # carrier that also holds machine and deploy work).
+    #
+    # AN UNDECLARED GOAL IS COULD NOT VERIFY, NEVER AN EMPTY LISTING. Both
+    # return no rows, and they are different answers: one says this repo has
+    # no such goal, the other says this goal has no ready work. Folding them
+    # together prints a zero that reads exactly like a measurement — the
+    # false zero this repo exists to remove — and a typo'd query is the
+    # commonest way to produce one.
+    want = getattr(args, "goal", None)
+    if want:
+        declared = decl.effective_goals(ctx.declaration)
+        if want not in declared:
+            out(f"COULD NOT VERIFY [goal_query_undeclared] {want!r} is not a "
+                f"goal this repo declares ({', '.join(declared)}). Nothing "
+                "was listed, and that is not the same answer as a declared "
+                "goal holding no ready work — which prints an explicit zero.")
+            return exits.COULD_NOT_VERIFY
+        kept = [it for it in ready
+                if (it.slots.get("goal") or "").strip() == want]
+        out(f"FILTERED to goal={want}: {len(kept)} of {len(ready)} READY "
+            "item(s). This is a VIEW over the head and not the head — a "
+            "filtered listing read as the whole is the partial view standing "
+            "in for its own body.")
+        if not kept:
+            out(f"zero: {want!r} is declared and carries no READY item. An "
+                "explicit zero, measured over "
+                f"{len(ready)} READY item(s) — not an absent listing.")
+        ready = kept
+
     out(f"head-rule: lead-goal {lead!r}"
         + ("" if lead and lead != "none" else
            " — no lead goal declared, so the head is source order"))

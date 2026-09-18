@@ -1592,3 +1592,110 @@ class ForwardPointerShape(unittest.TestCase):
         self.assertIsNone(items.closure_pointer_problem(value),
                           "the renderer produced a value its own reader "
                           "refuses")
+
+
+class GoalFilteredListing(unittest.TestCase):
+    """lc-16 — `item ready --goal`, and the two ways of returning nothing.
+
+    A repo can declare a closed goal set and set a goal per item, then have
+    no way to read the carrier back by it. The fix is a listing; the SUBSTANCE
+    is that an UNDECLARED goal and a declared goal holding no ready work both
+    return no rows and are different answers. Folding them together prints a
+    zero shaped exactly like a measurement, which is the false zero this repo
+    exists to remove — and a typo is the commonest way to make one.
+
+    THE LOAD-BEARING ASSERTION IS THE NEGATIVE. "The wanted ident appears"
+    passes for a filter that filters nothing; only "the OTHER goal's ident is
+    ABSENT" separates a working filter from a listing that ignored the flag.
+    """
+
+    TWO_GOALS = """schema: 2
+baseline: 0
+
+## xx-1
+grade: READY
+requirement: the verify-goal entry — record: LEDGER.md
+goal: verify
+write-set: tools/a.py
+done-criterion: it goes red on the real defect
+evidence: measured here
+blocked-by: NONE
+
+## xx-2
+grade: READY
+requirement: the mitigate-goal entry — record: LEDGER.md
+goal: mitigate
+write-set: tools/b.py
+done-criterion: it goes red on the real defect
+evidence: measured here
+blocked-by: NONE
+"""
+
+    def _run(self, *argv, items_text=None):
+        import io
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        r = refusals._Repo(items=items_text or self.TWO_GOALS)
+        self.addCleanup(r.close)
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(r.dir)] + list(argv))
+        except SystemExit as exc:
+            code = exc.code
+        return code, buf.getvalue()
+
+    def test_filter_returns_only_that_goal(self):
+        code, out = self._run("item", "ready", "--goal", "verify")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("xx-1", out)
+        # THE ARM THAT MEANS SOMETHING: a filter that ignored its flag lists
+        # both and passes every positive assertion above.
+        self.assertNotIn("xx-2", out,
+                         "the other goal's entry appears — the flag was "
+                         "accepted and not applied")
+        self.assertIn("FILTERED to goal=verify: 1 of 2", out)
+
+    def test_the_unfiltered_head_still_lists_both(self):
+        """The control: what differs between the arms is the FILTER alone."""
+        code, out = self._run("item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("xx-1", out)
+        self.assertIn("xx-2", out)
+        self.assertNotIn("FILTERED", out)
+
+    def test_undeclared_goal_is_could_not_verify_not_an_empty_listing(self):
+        code, out = self._run("item", "ready", "--goal", "mitigat")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("goal_query_undeclared", out)
+        self.assertNotIn("xx-1", out)
+        self.assertNotIn("xx-2", out)
+
+    def test_declared_goal_with_no_ready_work_is_an_explicit_zero(self):
+        """The other half of the pair, and it must NOT be could-not-verify.
+
+        `retire` is declared and carries nothing here. That is a measurement
+        — zero, over a named population — and reporting it as could-not-verify
+        would throw away the very distinction this verb exists to draw.
+        """
+        code, out = self._run("item", "ready", "--goal", "retire")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("zero:", out)
+        self.assertIn("FILTERED to goal=retire: 0 of 2", out)
+        self.assertNotIn("goal_query_undeclared", out)
+
+    def test_an_ident_and_a_goal_together_are_refused(self):
+        code, out = self._run("item", "ready", "xx-1", "--goal", "verify")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("names one item AND a filter over many", out)
+
+    def test_the_reserved_meta_goal_is_queryable(self):
+        """`tend` is added by the plugin to every repo and declared by none.
+
+        A filter validating against the declaration's own `goals` list alone
+        would refuse the one goal every repo is guaranteed to have.
+        """
+        code, out = self._run("item", "ready", "--goal", "tend")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("FILTERED to goal=tend: 0 of 2", out)
+        self.assertNotIn("goal_query_undeclared", out)

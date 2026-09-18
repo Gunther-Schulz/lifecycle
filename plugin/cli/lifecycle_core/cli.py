@@ -498,6 +498,13 @@ def build_parser() -> argparse.ArgumentParser:
     ready.add_argument("--head", action="store_true",
                        help="the DERIVED head: every READY item, ordered by "
                             "the declared head-rule. No cap (R22).")
+    ready.add_argument("--goal",
+                       help="restrict the listing to entries carrying this "
+                            "goal (lc-16). A goal the declaration does not "
+                            "carry is COULD NOT VERIFY, never an empty "
+                            "listing: an undeclared goal and a declared one "
+                            "nobody has used both return nothing, and they "
+                            "are different answers")
 
     waves = its.add_parser("waves", help="the item→lane JOIN over the "
                                          "schedulable READY set: write-set "
@@ -959,7 +966,17 @@ def _carrier_verb(args, out) -> int:
     if args.item_action == "promote":
         return verbs.cmd_item_promote(args, out, ctx)
     if args.item_action == "ready":
-        if getattr(args, "head", False):
+        # A GOAL FILTER OVER ONE NAMED ITEM ANSWERS A QUESTION NOBODY ASKED,
+        # and the two readings of it disagree: "show me this item if it
+        # carries that goal" and "show me that goal's items, starting here".
+        # Refusing is the only answer that cannot be the wrong one — the same
+        # reasoning as the id-less run below.
+        if args.ident and getattr(args, "goal", None):
+            out("COULD NOT VERIFY: `item ready <ident> --goal` names one item "
+                "AND a filter over many. Drop the id for the goal's listing, "
+                "or drop --goal for that one item.")
+            return exits.COULD_NOT_VERIFY
+        if getattr(args, "head", False) or getattr(args, "goal", None):
             return verbs.cmd_item_head(args, out, ctx)
         if not args.ident:
             out("COULD NOT VERIFY: `item ready` needs an item id, or `--head` "

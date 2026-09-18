@@ -865,6 +865,17 @@ MUTATIONS = [
      "        if not slots[CLOSED_SLOT]:",
      "        if False:",
      "the closure gate's pointer test"),
+
+    # lc-16. THE DECLARED-GOAL TEST, not the filter below it. With this
+    # folded, an undeclared goal falls through to the filter, matches no
+    # entry, and returns a CLEAN empty listing — which is precisely the
+    # conflation the row exists to forbid, so the row goes from
+    # COULD-NOT-VERIFY to CLEAN and darkens. Folding the FILTER instead would
+    # leave the undeclared goal still refused and prove nothing about it.
+    ("goal_query_undeclared", "verbs.py",
+     "        if want not in declared:",
+     "        if False:",
+     "the test that a queried goal is one the repo declares"),
 ]
 
 

@@ -3402,8 +3402,76 @@ RECORD_ROWS = [
 ]
 
 
+# --- lc-16: reading the carrier BY GOAL -------------------------------------
+
+_TWO_GOAL_ITEMS = """schema: 2
+baseline: 0
+
+## xx-1
+grade: READY
+requirement: the verify-goal entry — record: LEDGER.md
+goal: verify
+write-set: tools/a.py
+done-criterion: it goes red on the real defect
+evidence: measured here
+blocked-by: NONE
+
+## xx-2
+grade: READY
+requirement: the mitigate-goal entry — record: LEDGER.md
+goal: mitigate
+write-set: tools/b.py
+done-criterion: it goes red on the real defect
+evidence: measured here
+blocked-by: NONE
+"""
+
+
+def _ready_goal_run(goal: str) -> Fired:
+    """`item ready --goal <goal>` over a carrier holding TWO goals.
+
+    Two goals and not one: over a single-goal carrier a filter that ignored
+    its flag returns the same rows as one that applied it, so the fixture
+    itself would be unable to tell them apart.
+    """
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    r = _Repo(items=_TWO_GOAL_ITEMS)
+    try:
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli_mod.main(["--repo", str(r.dir), "item", "ready",
+                                 "--goal", goal])
+        return Fired(code, buf.getvalue())
+    finally:
+        r.close()
+
+
+GOAL_ROWS = [
+    Row(
+        ident="goal_query_undeclared",
+        refusal="a goal filter naming a goal the repo does not declare — "
+                "answered COULD NOT VERIFY, never as an empty listing",
+        firing_input="`item ready --goal mitigat`, one character off a "
+                     "declared goal, over a carrier holding two goals",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _ready_goal_run("mitigat"),
+        # THE CONTROL IS A DECLARED GOAL THAT HOLDS NOTHING, not one that
+        # holds rows: `retire` returns zero entries here exactly as the typo
+        # does, so the arms differ in whether the goal is DECLARED and in
+        # nothing else. A control returning rows would pass for a build that
+        # answered could-not-verify to every empty result — the very conflation
+        # this row exists to forbid.
+        control=lambda: _ready_goal_run("retire"),
+        stage="lc-16",
+    ),
+]
+
+
 ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
-        + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS)
+        + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS + GOAL_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #
