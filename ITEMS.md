@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 190
+added: 191
 compacted: 0
 
 ## lc-3
@@ -1035,3 +1035,12 @@ write-set: test/test_verbs.py,tools/verify-suite.py,CLAUDE.md
 done-criterion: a SKIPPED arm is visible in the verdict rather than folded into a pass: the suite reports skips as their own count and a run whose skips include a reach arm does not read as a clean run. THE COUNT COMES OFF THE RESULT OBJECT, never the -v rendering, per law 17 — res.skipped and t.id(), which is how the lane measured it. RED-FIRST: rename the sibling checkout and the suite must stop reading as clean where today it exits 0 with one arm gone. MUST-NOT-MOVE: an arm that legitimately cannot run somewhere is still allowed to skip — the repair is that the skip is REPORTED, never that the arm is forced to run or deleted; and the arms that do run keep their verdicts unchanged.
 evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs and read off the RESULT OBJECT rather than console output, which is the discrimination law 17 demands: the arm is premised on ../dotfiles and disappears without it. DERIVED: the repo declared verify set reads exit codes, so a vanished arm is invisible to the one instrument anyone runs before trusting the package.
 blocked-by: NONE
+
+## lc-199
+grade: PARKED
+requirement: THE ROLE LINES CONTRADICT A MEASUREMENT RECORDED SIX LINES AWAY. CLAUDE.md role section says the absence-scan copies in tools/ and test/ are byte-identical to the sibling repo and are NOT EDITED HERE, while the same file records commit 7fe9e68 repairing that very test locally — the commit that fixed the scope guard which had made the UUID scan never run. A role line stating a property the file itself refutes is the label-over-body class in the laws file own words, and it is the second instance found in that file today.
+goal: tend
+write-set: CLAUDE.md
+done-criterion: the tools/ and test/ role lines state what is TRUE of those copies now — which parts are byte-identical, which were repaired here, and what that means for the next reader who assumes they can sync from the sibling. RED-FIRST: the current wording is the firing input and is quoted in the change. MUST-NOT-MOVE: the de-duplication decision is unchanged — two copies for one wave stays the deliberate cost — and nothing about the scanner behaviour moves.
+evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs and graded by them as wording. MEASURED at this desk earlier today while correcting the same file node-bite paragraph: 7fe9e68 repaired test/absence-scan.test.mjs in THIS repo by deriving the guard roots from git ls-files, which is a local edit to a file the role line says is not edited here. DERIVED: the role line and the commit record cannot both be true, and the commit is the artifact.
+blocked-by: evidence false  # the judgment desk holds CLAUDE.md in this shared copy
