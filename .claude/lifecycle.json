@@ -249,13 +249,13 @@
         "session",
         "verb:record check"
       ],
-      "staleness": "change-coupling \u2014 a record whose NOW no longer composes its ESTABLISHED lines toward GOAL is stale by the format's own slot discipline and is rewritten before the next probe is chosen. The ESTABLISHED lines themselves age like any cited basis: a line whose command, file or output has moved past the citation no longer establishes what it claims.",
+      "staleness": "change-coupling — a record whose NOW no longer composes its ESTABLISHED lines toward GOAL is stale by the format's own slot discipline and is rewritten before the next probe is chosen. The ESTABLISHED lines themselves age like any cited basis: a line whose command, file or output has moved past the citation no longer establishes what it claims.",
       "exit": {
         "action": "never",
-        "recording-act": "a `## CLOSED` heading whose body carries the graduation pointers \u2014 ESTABLISHED lines to the ledger or docs of the repo they describe, OPEN lines to the item carrier or a recorded one-line disposition. `lifecycle record check` refuses a closure that is undrained or unpointed.",
-        "detail": "THE FILE NEVER MOVES INTO ANY TREE, and that is the stage rather than an omission. Closure here is GRADUATION of the record's CONTENT, never relocation of the file: the body goes to the carrier that will be re-read, and the record stays in XDG state as history. The three benefits the format file names are what the home protects \u2014 no repo is dirtied, no permission dialog fires from the `.claude`-shape protection, and the record survives across repo states and branches, which is exactly what a multi-session arc needs. `the fire log` is the precedent: a machine-wide XDG path declared as a per-repo kind with all six stages."
+        "recording-act": "a `## CLOSED` heading whose body carries the graduation pointers — ESTABLISHED lines to the ledger or docs of the repo they describe, OPEN lines to the item carrier or a recorded one-line disposition. `lifecycle record check` refuses a closure that is undrained or unpointed.",
+        "detail": "THE FILE NEVER MOVES INTO ANY TREE, and that is the stage rather than an omission. Closure here is GRADUATION of the record's CONTENT, never relocation of the file: the body goes to the carrier that will be re-read, and the record stays in XDG state as history. The three benefits the format file names are what the home protects — no repo is dirtied, no permission dialog fires from the `.claude`-shape protection, and the record survives across repo states and branches, which is exactly what a multi-session arc needs. `the fire log` is the precedent: a machine-wide XDG path declared as a per-repo kind with all six stages."
       },
-      "growth": "unbounded-with-reason \u2014 one file per project+arc, and an arc opens only when work turns diagnosis-shaped or passes a skip-gauge no. The flow control is the closure gate rather than a count: a record cannot close with undrained slots, so an arc that ends leaves its lines in the carriers that consume them instead of accumulating here. A cap would bound the LABEL and be escaped by opening a second arc (R22)."
+      "growth": "unbounded-with-reason — one file per project+arc, and an arc opens only when work turns diagnosis-shaped or passes a skip-gauge no. The flow control is the closure gate rather than a count: a record cannot close with undrained slots, so an arc that ends leaves its lines in the carriers that consume them instead of accumulating here. A cap would bound the LABEL and be escaped by opening a second arc (R22)."
     },
     "the fire log": {
       "home": "$XDG_STATE_HOME/lifecycle/fire.jsonl",
@@ -356,6 +356,21 @@
         "detail": "REGISTERED BECAUSE THE SWEEP CAUGHT IT, 2026-09-18: the file was tracked and resolved to no kind, so `kind sweep` exited 2 and the declared verify block was red for every writer in the repo until this landed. Worth keeping as the reason: a robustness review's own OUTPUT is exactly the kind of persisted thing this plugin exists to give a home, and the review tripped the invariant it was reviewing for. The alternatives were lc-76's declared-custom disposition (wrong shape — that is for a one-off file, this is a recurring class, one per round) and leaving it untracked (which loses the round's deliverable; the skill names the findings file as exactly that)."
       },
       "growth": "unbounded-with-reason — one file per closed round, and a round happens only when a walk is run. The flow control is that a round cannot close without its findings file, and cannot open while another is open."
+    },
+    "desk state": {
+      "home": "$XDG_STATE_HOME/lifecycle/desk-state/*.json",
+      "writer": "verb:desk state",
+      "reader": [
+        "verb:desk state",
+        "session"
+      ],
+      "staleness": "none, declared why: the verb ALWAYS OVERWRITES and keeps no history, so a desk's state is current by construction — there is no older value for a newer one to be stale against. What CAN go stale is a file whose desk no longer exists, and that is residue for the exit rather than staleness of a live fact.",
+      "exit": {
+        "action": "delete",
+        "recording-act": "a ledger decision line naming the desk ids whose state was removed and why each was judged gone",
+        "detail": "DECLARED, NOT IMPLEMENTED (law 15 permits the state and law 22 forbids pretending otherwise): no verb removes a dead desk's state today. It is not a compaction — there is nothing to fold, since each file holds one desk's current state and no history — and it is not `never`, because a desk that no longer exists leaves a file nothing will ever read again."
+      },
+      "growth": "unbounded-with-reason — one file per DESK ID, overwritten in place, so the count tracks desks that have ever stored state and never activity: a desk writing a thousand times leaves one file. The flow this kind would be controlled by is therefore the desk population, which is not a rate this plugin produces. Declared unbounded rather than `bounded-by-exit` because the latter would assert a control the delete exit does not yet perform — the assurance wider than its predicate, in the stage that describes the control."
     }
   }
 }

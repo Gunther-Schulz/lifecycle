@@ -830,6 +830,30 @@ def _validate_template_bindings(tb: dict, res: Result) -> None:
 #: what identifies the kind is the directory the records actually live in.
 RECORDS_HOME_MARK = "claude/investigations"
 
+#: THE XDG HOMES THIS PLUGIN ITSELF WRITES, each with the row that fires when
+#: its files exist and no kind names them (lc-171, generalising lc-166).
+#:
+#: WHY A TABLE AND NOT A SECOND COPY OF THE CHECK. lc-166 built this for the
+#: investigation record and the next instance arrived one directory over
+#: within a day — desk state, written by a shipped verb and governed by no
+#: kind. A second hand-written check would have been a second implementation
+#: of a concept this file already had, and a third home would have needed a
+#: third. The population is CLOSED and knowable: it is the set of XDG homes
+#: the plugin's own modules write, so it is listed here beside the check that
+#: consumes it rather than rediscovered per home.
+#:
+#: SEPARATE ROWS, NOT ONE. The two refusals name different kinds with
+#: different stage answers — a record's exit is `never` because closure is
+#: graduation of its CONTENT, while desk state is overwritten in place and
+#: keeps no history — so an operator told only "an XDG kind is undeclared"
+#: would get the same sentence for two different declarations to write.
+#: `records_kind_undeclared` also keeps its own proof this way, which a
+#: rename would have retired.
+TOOL_STATE_HOMES = (
+    ("records_kind_undeclared", RECORDS_HOME_MARK, "investigation record"),
+    ("desk_state_kind_undeclared", "lifecycle/desk-state", "desk state"),
+)
+
 
 def check_records_kind_declared(repo, doc, res: Result) -> None:
     """A repo whose investigation records EXIST must register the kind.
@@ -878,6 +902,45 @@ def check_records_kind_declared(repo, doc, res: Result) -> None:
               f"`{RECORDS_HOME_MARK}`, the files are never moved into any "
               "tree, and `the fire log` is the precedent for an XDG home "
               "declared as a per-repo kind.")
+
+
+def _home_is_declared(doc, mark: str) -> bool:
+    """Does any registered kind name a home under `mark`?"""
+    kinds = doc.get("kinds")
+    if not isinstance(kinds, dict):
+        return False
+    for body in kinds.values():
+        home = isinstance(body, dict) and body.get("home")
+        if isinstance(home, str) and mark in home:
+            return True
+    return False
+
+
+#: NOT A CHECK, AND THE MEASUREMENT IS WHY (lc-171). A first cut of
+#: `check_desk_state_kind_declared` mirrored the records check and fired
+#: `desk_state_kind_undeclared` wherever desk-state files existed and no kind
+#: named them. It over-fired immediately and the roster caught it: 22 rows
+#: went COULD NOT VERIFY in one run, because every one of them runs `kind
+#: check` over a SCRATCH repo and the check was reading the MACHINE's
+#: desk-state home.
+#:
+#: THE CAUSE IS THE KIND'S OWN SHAPE, not the check's spelling. The records
+#: check scopes by the repo's name — records are `<repo>--*.md` — so a scratch
+#: repo can never match another repo's records. A desk-state file is keyed by
+#: SESSION ID and carries no repo at all (measured: its keys are value,
+#: argument, at, desk, desk_source). So a per-repo declaration check over a
+#: machine-wide kind demands that EVERY repo declare it because SOME OTHER
+#: repo's session once wrote one — a guard firing on legitimate work, which
+#: law 11 says stops the lane.
+#:
+#: TWO REPAIRS EXIST AND BOTH ARE BIGGER THAN THIS ITEM: make `desk state`
+#: record the repo it was written in, which makes the kind genuinely
+#: per-repo and scopable exactly as records are; or check machine-wide state
+#: at a machine-wide level rather than from inside one repo's declaration
+#: check. Booked rather than guessed at — the declaration itself is correct
+#: and lands here regardless, since the kind being REGISTERED is what closes
+#: the invariant-1 gap; what is missing is the automatic detector for the
+#: NEXT undeclared XDG kind.
 
 
 def _validate_kind(name: str, body, res: Result, world) -> None:
