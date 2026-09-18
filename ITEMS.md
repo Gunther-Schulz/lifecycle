@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 154
+added: 155
 compacted: 0
 
 ## lc-3
@@ -786,3 +786,12 @@ write-set: UNKNOWN
 done-criterion: `item ratio --goal <g>` reports capture-vs-drain for that goal alone, with lc-16's undeclared-goal answer (COULD NOT VERIFY, never an empty result); red-first against a carrier whose aggregate ratio is healthy while one goal's is not
 evidence: MEASURED at bfe5854 while attempting to build it: capture is a single carrier-wide head counter ('added: <n>', read in cmd_item_ratio) and no per-goal flow figure exists; drain is already per-goal (closed bodies keep their goal slot in ITEMS-DONE.md). The three candidate sources differ in cost: head counters are a SCHEMA change, so law 25 makes them a migration dry-run over every declared repo; cumulative live(g)+done(g) is a flow only once the 8 baseline entries predating the counter are declared in or out; the fire log carries admission events already. cmd_item_ratio's own docstring rules out the easy substitute: 'a count of live items is a STOCK and would answer a different question'
 blocked-by: decision which source supplies per-goal CAPTURE: head counters, cumulative live+done, or the fire log?
+
+## lc-163
+grade: NEW
+requirement: prove-rows mutates the LIVE package in place, so while it runs the checkout is deliberately wrong and its wrongness is shaped exactly like a regression in whatever landed last. Two desks share this working copy: the judgment desk read the tree mid-run, saw two roster rows FAIL, and reported a regression against a commit that is deterministically CLEAN — record: reproduced from the recorded arrangements, 2026-09-18
+goal: every-refusal-red-first
+write-set: UNKNOWN
+done-criterion: a reader of the checkout cannot mistake a prove-rows window for a real red: either prove-rows mutates a COPY and the live tree is never inconsistent, or an open window is detectable and `--test` answers COULD NOT VERIFY under it. Red-first: a roster run issued DURING a window must not report a passing row as FAILED
+evidence: MEASURED 2026-09-18. --test at 99e998c, clean tree, 3 runs: 104/104 CLEAN. Under migration_unclassified's recorded mutation (which replaces the emission TEXT, so migrate still exits FINDING while the row NAME is absent): 102 passed/2 failed, both lines reading 'the plant fired, but nothing in its output names row'. Under migration_ambiguous_closure's (closure-word scan folded): 103/1 — the peer desk's exact count. The reported red straddled the two, consistent with a read crossing prove-rows' step between arrangements. tools/prove-rows.py already refuses to START on a dirty target; the symmetric hazard to READERS has no marker at all. _coverage_over_copy in refusals.py is the copy pattern already in this repo
+blocked-by: decision does prove-rows mutate a COPY, or does an open window become detectable and make --test answer COULD NOT VERIFY?
