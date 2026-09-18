@@ -625,6 +625,46 @@ system whose evidence stays live. The 44% of OPEN items already carrying
 amendments are scopes being kept current by hand, one retirement pass at a
 time. Mechanism 2 makes that a byproduct instead of a chore.
 
+### BEFORE BUILDING: the baseline, and what would KILL this
+
+**Record the baseline first, because "watch it in action" concludes nothing
+without a before-number.** Measured 2026-09-18, this repo's carrier:
+
+- 55% of 88 COMPLETED items had their scope amended between booking and close
+- by slot: evidence 39%, done-criterion 19%, write-set 17%, requirement 5%
+- 44% of OPEN items already carry an amendment
+- the declaration's writer field: 4 verb-written kinds, 17 `writer: session`
+- 13,735 record queries across 230 sessions (retrieval already works)
+- one corpus rule measured at 0.27 -> 0.19 fires per 1000 turns across its own
+  mint (a duty that did not fire)
+
+If the build happens first and the measurement after, there is no honest
+comparison and the verdict is an impression — which is the thing this whole
+arc exists to replace.
+
+**WHAT WOULD KILL THIS, named so the approach is falsifiable** (the NOW slot's
+own discipline: if nothing could kill the current approach, that is the
+finding):
+
+- **drift rate unchanged** after verbs own more of the writing. Mechanism 2's
+  central claim is that the writer field predicts drift; if session-written
+  kinds keep drifting once a verb writes them, the correlation was not causal.
+- **records written but never read.** Retrieval is measured working TODAY, but
+  on records humans chose to write. A machine-written record nobody opens is a
+  log, which is what mechanism 2 was corrected away from.
+- **THE WORST CASE, and the one to watch hardest: records written, read, and
+  the work still needing the operator at the same rate.** That would mean the
+  bottleneck was never capture — that what the operator supplies is judgment
+  and direction rather than knowledge — and the whole plan would be aimed at
+  the wrong half. The catch study already hints at this: the dominant capture
+  event is the operator ASKING A QUESTION, and no record answers a question
+  nobody thought to ask.
+
+**The cheapest live probe, costing nothing to set up because both populations
+already exist:** some repos on this machine carry the session-start hook and
+some do not. That is the hook/no-hook comparison for mechanism 1's central
+claim, runnable now.
+
 ### What the plan does NOT solve, stated so it is not assumed
 
 - **The unmechanizable half** (19 YES / 19 NO at event grain): taste, naming,
