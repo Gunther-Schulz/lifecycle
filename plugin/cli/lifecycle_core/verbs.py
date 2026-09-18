@@ -572,6 +572,63 @@ def attribution_block(env=None) -> tuple[str, str]:
     return raw, ""
 
 
+def conservation_guard(ctx: Ctx, paths, out) -> int:
+    """Refuse to COMMIT a carrier whose stored identity has gone SHORT (lc-159).
+
+    THE DANGEROUS CASE IS NOT READING A TRUNCATED CARRIER, IT IS WRITING ONE
+    BACK. A cut carrier parses `refused=False` with fewer items and no
+    problems, so a verb reads it, edits what it sees, and writes the short
+    body back over the good one — converting a recoverable truncation (the
+    bodies are still in git) into the carrier's new truth. This guard sits at
+    the one place every carrier write already passes through.
+
+    IT NEEDS NO CARRIER-FORMAT CHANGE, which is why this is not a schema
+    migration. The count a terminator would have added is ALREADY in the head
+    — `baseline`, `added`, `compacted` — and the head sits at the TOP of the
+    file, so it survives a truncation that takes the bodies. Measured on this
+    repo's own carrier: cut to 400 bytes the head is intact and the parse
+    returns 1 item; `conservation()` returns ok=False there and ok=True on the
+    full 74-item file. The detector existed and discriminated; only its
+    PLACEMENT was missing.
+
+    SHORT ONLY, NEVER SURPLUS, and this is the whole of the law-11 care here.
+    The two signs are two diagnoses: SHORT means a body left by a path that is
+    not a closure, which is this defect. SURPLUS means the homes hold more
+    than was admitted, whose ordinary cause is an INTERRUPTED CLOSE — the move
+    appends to the done home before deleting from the carrier, so the window
+    between those two writes legitimately holds both copies. A guard failing
+    on surplus would fire on the design working as designed, and worse, would
+    block the very commit that finishes the interrupted move.
+    """
+    if not any(Path(p) == ctx.items_path for p in paths):
+        return exits.CLEAN
+    try:
+        ip = items_mod.parse(ctx.items_path.read_text(encoding="utf-8"))
+        dp = (items_mod.parse(ctx.done_path.read_text(encoding="utf-8"))
+              if ctx.done_path.exists() else None)
+    except OSError:
+        # An unreadable carrier is not this guard's finding to make: the
+        # caller that could not read it will say so in its own voice, and
+        # inventing a second message here would put two diagnoses on one
+        # fault.
+        return exits.CLEAN
+    c = items_mod.conservation(ip, dp)
+    if c["ok"] is not False:
+        return exits.CLEAN
+    delta = c["actual"] - c["expected"]
+    if delta >= 0:
+        return exits.CLEAN
+    out(f"FINDING [conservation_short] REFUSING TO COMMIT: the carrier's "
+        f"identity is SHORT by {-delta} (items {c['items']} + done "
+        f"{c['done']} = {c['actual']}, but baseline {c['baseline']} + added "
+        f"{c['added']} − compacted {c['compacted']} = {c['expected']}). "
+        "Bodies are missing from the files, and committing would make that "
+        "the carrier's recorded truth. The write is on disk and NOT "
+        "committed, so `git diff` shows exactly what would have landed and "
+        "the previous carrier is still at HEAD.")
+    return exits.FINDING
+
+
 def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False,
                  what: str = "the move") -> int:
     """Commit exactly the files this act wrote, BY PATHSPEC, never the index.
@@ -591,6 +648,9 @@ def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False,
             "but the set is durable together only once committed. A caller "
             "batching writes owns that commit.")
         return exits.CLEAN
+    code = conservation_guard(ctx, paths, out)
+    if code != exits.CLEAN:
+        return code
     rel = [str(p.relative_to(ctx.repo)) for p in paths]
     block, warning = attribution_block()
     if warning:
