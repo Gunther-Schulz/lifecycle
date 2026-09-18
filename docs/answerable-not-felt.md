@@ -362,6 +362,96 @@ axis was held FIXED and that incident says nothing about it. Whether desk model
 tier affects desk performance at all is a separate, unmeasured question, and
 the note should not spend the pid incident on it.
 
+## THE GROOVE — what this is all actually for (operator, 2026-09-18)
+
+The operator's own framing, and it supersedes "answerable, not felt" as the
+arc's statement of purpose. That phrase names a defect class; this names the
+goal.
+
+**A project finds a GROOVE.** wan2gp found one after a rough start; the Marvel
+Rivals arc found one after the operator complained. In the groove, guidance,
+rules, learnings and state are persisted AND get read at the right moments,
+and they shape the work. **The problem is that the groove is currently earned
+by attrition** — ten sessions of the operator being irritated into producing
+it. It should be self-building, self-finding, self-refining.
+
+**The thesis, in one line:** *make sure the judgment has the right inputs in
+front of it at the moment it is exercised, and do not spend its attention on
+self-policing. Trust the capability, feed it properly.*
+
+That is why this is enablement and not more rules. We are NOT encoding
+judgment — that is the patching approach, and it has a measured ceiling
+(skill-craft: a strong model steered too tightly performs BELOW its own
+default). For MEANING we rely on the model's capability, deliberately. The
+environment's job is narrower and mechanical: put the right inputs in front
+of it, and get out of the way.
+
+### "Self-learning" means the ENVIRONMENT learns, never the model
+
+Stated because the phrase invites the wrong reading. The weights are frozen
+and identical in every session. What differs between session 1 and session 20
+of wan2gp is what the REPO HOLDS. The learning is real; it is stored outside
+the head.
+
+Three parts, and only one is broken:
+
+- **CAPTURE** — a lesson gets written when it is learned. **THE WEAK LINK.**
+- **RETRIEVAL** — it gets read at the moment it matters. **Measured working:**
+  13,735 record queries across 230 sessions (2026-09-18; per-100-turn rates
+  4-13, with 85-97% of sessions querying at least once in the
+  rich-persistence repos).
+- **REFINEMENT** — wrong or stale entries get corrected and retired. This is
+  what lifecycle already IS: staleness and exit stages per kind.
+
+**Why capture is the weak link, measured rather than assumed:** it depends on
+someone NOTICING a lesson and choosing to write it. That is a remember-to
+duty, and remember-to duties under-fire even while loaded — the corpus's
+course-correction capture rule was built for exactly this moment and filled 2
+of 308 entries. The step that must happen for learning to accumulate is the
+one least likely to happen.
+
+### What statiker and daneel already do, and what they do NOT do
+
+**They capture IN-FLIGHT, and recording is a STEP rather than a reminder.**
+daneel's verification map with its `[VERIFIED]` marks; statiker's recorded
+decisions before implementation. The protocol does not ask anyone to remember
+— it does not proceed until the record exists. That is the pit of success,
+and it is why capture fires there and nowhere else. What they capture is rich
+and judged: what was found, what was decided and why, what turned out to be a
+DEAD END, what mechanism is now understood, what mistake not to repeat.
+
+**What they do not do is outlive their own arc.** The record lives while the
+protocol runs, then the arc ends. A naked session has no cycle at all, so
+nothing captures, nothing accumulates, and session 11 re-derives what session
+3 knew.
+
+**So lifecycle's job is to be what they write INTO** — so the capture survives
+the protocol, gets a home and a staleness rule, does not rot into a
+confidently-wrong artifact, and is readable by the next session whether or
+not it runs statiker, daneel, or nothing at all. That is the fluency: not a
+smarter protocol, but the layer underneath that carries each arc's learnings
+to the next without the operator ferrying them.
+
+### DEAD ENDS are the category nobody captures, and the most valuable one
+
+"We tried X, it fails because Y" is exactly what stops a future session
+burning a day re-deriving it — and it is the first thing lost, because a dead
+end FEELS like nothing happened. Everything a carrier holds is framed as
+progress; a failed approach produces no commit, no closure, no artifact. It
+is pure loss unless something deliberately writes it. No kind currently
+claims it.
+
+### The boundary, unchanged from everywhere else in this note
+
+**The EVENT is computable; the MEANING is not.** "This guard fired 6 times
+this week on legitimate work" is detectable. "Therefore the predicate is wrong
+and here is the right one" is judgment. The mechanism captures the signal and
+surfaces it; a mind reads it. Environment carries the FLOOR, intelligence
+provides the CEILING — and the capture-by-construction slice already exists in
+miniature: `firelog.py` records guard fires, and the judgment register records
+fired / legitimate / overridden. The lever is widening what gets captured by
+construction, not inventing a new mechanism.
+
 ## The payoff — mechanized levers let prose RETIRE (a leaner corpus)
 
 Beyond catching more gaps, each lever has a second payoff that ties directly to
