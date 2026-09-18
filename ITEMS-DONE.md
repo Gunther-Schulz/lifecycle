@@ -1127,5 +1127,18 @@ blocked-by: NONE
 closed-reason: 2026-09-18 shipped as `lifecycle record check`: 11 roster rows (plant+control), 9 prove-rows arrangements each proven red at its real anchor AND failed at an inert one (lc-142 pair), 22 test arms. Graded against investigation-record-format.md at HEAD, not against this entry: the route token postdates the booking and is in scope. Known positive run over the 4 live records — its deviations named to the judgment desk, not silently exempted.
 closed-ref: 5a18fc9
 
+## lc-16
+grade: DONE
+requirement: No verb reads the carrier BY goal. '--goal' occurs exactly once in the whole parser (cli.py:279, on 'item add'); 'item ready' takes only [--head] [ident] and 'item check'/'item ratio' take no arguments. So a repo can declare a closed goal set and set a goal per item, then never query by it — which breaks the consumer story for any carrier shared by more than one audience. Reported by the dotfiles desk, whose fire-rate review must read corpus entries out of a carrier that also holds machine and deploy work
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/verbs.py,test/test_items.py
+done-criterion: a goal-filtered listing exists and returns only entries carrying that goal, red-first against a carrier holding at least two goals
+evidence: verified here at cf92ad9: grep '"--goal"' cli.py returns one line, :279. Peer measured it at :262 on 6badd58; the line moved, the substance holds
+blocked-by: NONE
+amend-reason: 2026-09-12 retirement pass 2026-09-12: lc-57 is a duplicate of this entry, found later by the wave-5 T walk. Merged into the existing entry rather than left as a sibling, per the backlog doctrine's merge rule; lc-57 is dropped in the same pass.
+amended-evidence: 2026-09-12 verified here at cf92ad9: grep '"--goal"' cli.py returns one line, :279. Peer measured it at :262 on 6badd58; the line moved, the substance holds. RE-CONFIRMED 2026-09-12 (retirement pass, executed at f09e32d): item ready --help lists only [--head] [ident], and the item verb surface {check,add,ready,amend,promote,park,close,ratio,statusline} carries no goal-scoped query. MERGED IN lc-57 (wave-5 T walk 2026-08-28), the later sibling booking of this same gap, dropped as a duplicate — its own body named lc-16 as its source. Its contribution, kept here: the red-first shape — item ready --goal is rejected at argparse, which is a usage error and not the defect, so the red is the missing OUTPUT on a form the CLI accepts.
+closed-reason: 2026-09-18 shipped as `item ready --goal`: the listing, plus the distinction that carries it — an UNDECLARED goal is COULD NOT VERIFY while a declared goal holding nothing prints an explicit zero. Red-first recorded: with the filter predicate disabled three arms go red and the discriminating one is the NEGATIVE assertion ('xx-2' unexpectedly found), since a filter that ignores its flag satisfies every positive assertion. Roster row goal_query_undeclared proven at its real anchor and FAILED at an inert one (lc-142 pair). Scope held at this criterion's size: item check/ratio stay unfiltered, and the ratio half is booked at lc-162 with a named absence — its capture side has no per-goal flow figure and choosing one may change the schema.
+closed-ref: bfe5854
+
 ## Archive (pre-migration)
 
