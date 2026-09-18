@@ -820,6 +820,8 @@ amended-done-criterion: 2026-09-18 a kind declares a SEVENTH stage, the TRIGGER:
 amended-blocked-by: 2026-09-18 NONE
 amend-reason: 2026-09-18 the ordering edge lives here, pointing the correct way: migrate.py is 3,263 unreviewed lines that emit conservation verdicts of their own, and it is this migration own file. lc-192 is that read. Previously the edge sat on lc-192 pointing at this item, which inverted the intended order and made the read unschedulable until the migration was done.
 amended-blocked-by: 2026-09-18 lc-192
+amend-reason: 2026-09-18 lc-192's read landed and produced an executed blocker, reproduced at this desk. migrate --schema-from --apply can report 'written:' and APPLIED at exit 0 while leaving the carrier byte-identical and advancing the declaration alone, and law 25's dry run cannot see the class BY CONSTRUCTION because it exercises the reader's predicate and never the writer's. lc-168 ships its migration under law 25; running that migration across every declared repo on a dry run that cannot see this would be the exact blast radius lc-192 existed to check for. Blocker moved from lc-192 (whose read is now done) to lc-205.
+amended-blocked-by: 2026-09-18 lc-205
 
 ## lc-173
 grade: READY
