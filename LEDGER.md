@@ -94,6 +94,7 @@ decision: Should law 24 keep growing by enumerating realizing surfaces, and does
 decision: does prove-rows mutate a COPY, or does an open window become detectable and make --test answer COULD NOT VERIFY? → prove-rows mutates a COPY (the _coverage_over_copy pattern): the marker adds a refusal and a new way to be wrong, where the copy removes the hazard outright (judgment desk lifecycle-6f, 2026-09-18, on this desk's reproduction)
 decision: what is the home for a critique-pass obligation outside a dispatch? → moot (closed by lc-160)
 dropped: lc-160 — answered in the negative: the critique pass mechanism is a second party with different information, not a form, so a solo session has no equivalent to build. The mechanizable slice is already taken by red-first proof and prove-rows. Reasoning on the body.
+decision: is desk/peer one-directional checking or two asymmetric information holders? → TWO ASYMMETRIC INFORMATION HOLDERS. Operator ratified first-hand 2026-09-19 (directive D1). Basis: docs/audits/2026-09-18-desk-peer-catch-study.md, 103 events over 9 sessions, cross catches 8:1 peer-to-desk, 21:4 artifact over prose; counts are FLOORS, no scorer positive control. Unblocks lc-158.
 
 ## Archive (pre-migration)
 
