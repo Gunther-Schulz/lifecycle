@@ -56,6 +56,18 @@ ground good enough that intelligence can just work. Same family as daneel
 (investigation state held externally and QUERIED, not carried in the head) and
 statiker — build the ground, do not shackle the worker.
 
+The SPLIT (right corpus content vs. patch-to-retire) is not new — it is the
+corpus's own `ethic vs lens` test (the maintenance doctrine's abstraction probe:
+broad stances that inform every task STAY; situational "when X watch Y" patches
+go to project/lens/hooks). What enable-vs-constrain ADDS is a COMPLEMENTARY AXIS
+at that gate: the ethic/lens test sorts by SCOPE (general vs situational), while
+enable/constrain sorts by EFFECT (frees the intelligence vs over-steers it below
+its default). They are not the same — a rule can read as a general "ethic" and
+STILL over-constrain, which the scope test alone misses. Candidate for a next
+corpus pass: fold enable/constrain in as an explicit second criterion beside the
+abstraction probe, so a general-but-suppressing rule is a retirement candidate on
+its EFFECT even when its scope looks fine.
+
 ## The class
 
 An agent asserts a STATE OF ITS OWN WORK from memory or feeling instead of
