@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from . import exits, judgment, lanes, ledger, retire
+from . import atomic, exits, judgment, lanes, ledger, retire
 from . import declaration as decl
 from . import grammar
 from . import items as items_mod
@@ -453,15 +453,15 @@ def move_to_done(ctx: Ctx, ident: str, closing_grade: str, note: str,
         body = body.rstrip("\n") + f"\n{note}\n"
 
     if not ctx.done_path.exists():
-        ctx.done_path.write_text(f"schema: {items_mod.SCHEMA_FLOOR}\n",
+        atomic.write_text(ctx.done_path, f"schema: {items_mod.SCHEMA_FLOOR}\n",
                                  encoding="utf-8")
     done_text = ctx.done_path.read_text(encoding="utf-8")
 
     # 1. APPEND to the done home — before the tree ever holds one copy fewer.
     done_new = _insert_before_archive(done_text, body)
-    ctx.done_path.write_text(done_new, encoding="utf-8")
+    atomic.write_text(ctx.done_path, done_new, encoding="utf-8")
     # 2. DELETE from the carrier.
-    ctx.items_path.write_text(kept.rstrip("\n") + "\n", encoding="utf-8")
+    atomic.write_text(ctx.items_path, kept.rstrip("\n") + "\n", encoding="utf-8")
     out(f"moved {ident} → {ctx.done_path.name} (grade {closing_grade})")
     # 3. COMMIT is the CALLER's, because the act's file set is the caller's:
     # a supersede writes three files and a drop writes three, and committing
@@ -1068,7 +1068,7 @@ def _append_item(ctx: Ctx, ident: str, slots: dict, out) -> int:
             "identity. The head is written by the tool; a carrier missing it "
             "was created by something else.")
         return exits.FINDING
-    ctx.items_path.write_text(text, encoding="utf-8")
+    atomic.write_text(ctx.items_path, text, encoding="utf-8")
     out(f"added {ident} [{slots['grade']}] → {ctx.items_path.name}")
     for slot in items_mod.SLOTS:
         out(f"    {slot}: {slots[slot]}")
@@ -1663,7 +1663,7 @@ def cmd_item_park(args, out, ctx: Ctx) -> int:
                 "`--reason` is not ceremony here: it is the record of why the "
                 "earlier blocker stopped being the right one.")
             return exits.FINDING
-        ctx.items_path.write_text(new, encoding="utf-8")
+        atomic.write_text(ctx.items_path, new, encoding="utf-8")
     out(f"{args.ident} → PARKED, blocked-by: {value}")
     args.fire_detail = f"park {args.ident}"
     return exits.CLEAN
@@ -1770,7 +1770,7 @@ def cmd_item_promote(args, out, ctx: Ctx) -> int:
             out(f"FINDING [unknown_item] no live block {args.ident!r} in "
                 f"{ctx.items_path.name}.")
             return exits.FINDING
-        ctx.items_path.write_text(new, encoding="utf-8")
+        atomic.write_text(ctx.items_path, new, encoding="utf-8")
     out(f"{args.ident} → READY, judged by {by} on {date}.")
     for line in items_mod.render_promotion(date, by, reason):
         out(f"    {line}")
@@ -1895,7 +1895,7 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
             out(f"FINDING [unknown_item] no live block {args.ident!r} in "
                 f"{ctx.items_path.name}.")
             return exits.FINDING
-        ctx.items_path.write_text(new, encoding="utf-8")
+        atomic.write_text(ctx.items_path, new, encoding="utf-8")
         out(f"amended {args.ident} — {len(updates)} slot(s), dated {date}. The "
             "earlier line(s) are RETAINED; the new one supersedes.")
         for line in items_mod.render_amendment(date, reason, updates):
@@ -2574,7 +2574,7 @@ def cmd_item_supersede_closure(args, out, ctx: Ctx) -> int:
                 f"{ctx.items_path.name} is corrected with `item amend`, which "
                 "supersedes a slot in place of pointing past it.")
             return exits.FINDING
-        ctx.done_path.write_text(new, encoding="utf-8")
+        atomic.write_text(ctx.done_path, new, encoding="utf-8")
         out(f"{args.ident}: forward pointer appended to {ctx.done_path.name}. "
             "NOTHING existing was rewritten — the closure record still says "
             "what it said.")

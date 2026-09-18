@@ -107,7 +107,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
-from . import exits
+from . import atomic, exits
 from . import declaration as decl
 from . import grammar
 from . import items as items_mod
@@ -2455,7 +2455,7 @@ def run(args, out, ctx) -> int:
         else:
             if written or residue:
                 live_new = append_blocks(live_new, written + residue)
-            ctx.items_path.write_text(live_new, encoding="utf-8")
+            atomic.write_text(ctx.items_path, live_new, encoding="utf-8")
             if ctx.done_path.exists():
                 # THE ARCHIVE HEADING IS WHERE THE APPEND HAS TO LAND, and a
                 # done home that has never been migrated into does not carry
@@ -2472,25 +2472,25 @@ def run(args, out, ctx) -> int:
                         ln.strip() for ln in done_old.split("\n")]:
                     done_old = (done_old.rstrip("\n") + "\n\n"
                                 + items_mod.ARCHIVE_HEADING + "\n")
-                ctx.done_path.write_text(
+                atomic.write_text(ctx.done_path, 
                     done_old.rstrip("\n") + "\n" + done_text + closure_text,
                     encoding="utf-8")
             else:
-                ctx.done_path.write_text(
+                atomic.write_text(ctx.done_path, 
                     archive_note + f"schema: {items_mod.SCHEMA_FLOOR}\n\n"
                     + f"{items_mod.ARCHIVE_HEADING}\n\n" + done_text
                     + closure_text, encoding="utf-8")
     elif not report_only:
-        ctx.items_path.write_text(head + "\n" + "\n".join(written + residue),
+        atomic.write_text(ctx.items_path, head + "\n" + "\n".join(written + residue),
                                   encoding="utf-8")
-        ctx.done_path.write_text(
+        atomic.write_text(ctx.done_path, 
             archive_note + f"schema: {items_mod.SCHEMA_FLOOR}\n\n"
             + f"{items_mod.ARCHIVE_HEADING}\n\n" + done_text + closure_text,
             encoding="utf-8")
 
     # --- the ledger: NOTHING migrates into it (§3.6, §4 row 1)
     if not ctx.ledger_path.exists():
-        ctx.ledger_path.write_text(ledger_mod.head_text(), encoding="utf-8")
+        atomic.write_text(ctx.ledger_path, ledger_mod.head_text(), encoding="utf-8")
     lparsed, lwhy = ledger_mod.read(ctx.ledger_path)
     ledger_count = None if lparsed is None else len(lparsed.lines)
 

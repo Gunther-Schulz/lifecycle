@@ -28,7 +28,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
-from lifecycle_core import cli, exits, items, verbs  # noqa: E402
+from lifecycle_core import atomic, cli, exits, items, verbs  # noqa: E402
 from lifecycle_core.refusals import (  # noqa: E402
     EMPTY_DONE, GOOD_FULL_DECLARATION, SEED_ITEMS)
 
@@ -150,17 +150,33 @@ class InterruptedMove(unittest.TestCase):
         ctx, code = verbs.context(d, GOOD_FULL_DECLARATION, lambda s: None)
         self.assertEqual(code, exits.CLEAN)
 
-        real_write = Path.write_text
+        # RE-ANCHORED 2026-09-18 (lc-159). This injection point was
+        # `Path.write_text`, and the carrier write no longer goes through it:
+        # every carrier write is `atomic.write_text` now. The mock stopped
+        # firing, the OSError stopped being raised, and the test went red
+        # having silently stopped exercising the crash window at all.
+        #
+        # THE RED WAS THE ANCHOR RULE WORKING, not a behaviour change. What
+        # this test asserts — a crash in step 2 leaves a DUPLICATE and never a
+        # loss — is unchanged and every assertion below is untouched; only the
+        # place the crash is injected moved with the code. An anchor pinned to
+        # an implementation detail the code is free to change is exactly the
+        # premise the corpus says a check must pin INSIDE itself, and the
+        # quiet direction of that failure is this one: still green, exercising
+        # less than it claims. Here it happened to go loud because the
+        # assertRaises made the vanished injection visible — which is the
+        # argument for asserting on what must NOT happen.
+        real_write = atomic.write_text
 
-        def crash_on_the_carrier(self, *a, **kw):
+        def crash_on_the_carrier(path, *a, **kw):
             # The carrier's write is step 2. Raising here leaves step 1 done
             # and step 3 unreached — exactly the window the design names.
-            if self.name == "ITEMS.md":
+            if Path(path).name == "ITEMS.md":
                 raise OSError("simulated crash between the append and the "
                               "delete")
-            return real_write(self, *a, **kw)
+            return real_write(path, *a, **kw)
 
-        with mock.patch.object(Path, "write_text", crash_on_the_carrier):
+        with mock.patch.object(atomic, "write_text", crash_on_the_carrier):
             with self.assertRaises(OSError):
                 verbs.move_to_done(ctx, "xx-1", "DONE", "", lambda s: None)
 

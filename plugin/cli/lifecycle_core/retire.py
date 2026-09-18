@@ -31,7 +31,7 @@ kinds it serves was reporting the absence of a reader that was there.
 import re
 from pathlib import Path
 
-from . import exits, firelog, judgment
+from . import atomic, exits, firelog, judgment
 from . import declaration as decl
 from . import grammar
 from . import items as items_mod
@@ -927,8 +927,8 @@ def cmd_item_compact(args, out, ctx) -> int:
                                                               ref)})
         out(f"ledger: {line}")
         # 2. THE BODY LEAVES. 3. THE COUNT RISES.
-        ctx.done_path.write_text(kept.rstrip("\n") + "\n", encoding="utf-8")
-        ctx.items_path.write_text(new_items, encoding="utf-8")
+        atomic.write_text(ctx.done_path, kept.rstrip("\n") + "\n", encoding="utf-8")
+        atomic.write_text(ctx.items_path, new_items, encoding="utf-8")
         out(f"compacted {ident}: {len(body)} character(s) left {done_rel}; "
             f"the body resolves at blob {blob}")
         if ref == NO_CLOSED_REF:

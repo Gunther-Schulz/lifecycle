@@ -31,6 +31,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import atomic
 from . import exits
 from . import declaration as decl
 from . import grammar
@@ -157,7 +158,7 @@ def append(path: Path, kind: str, slots: dict) -> str:
     """
     line = render(kind, slots)
     if not path.exists():
-        path.write_text(head_text() + "\n" + line + "\n", encoding="utf-8")
+        atomic.write_text(path, head_text() + "\n" + line + "\n")
         return line
     text = path.read_text(encoding="utf-8")
     lines = text.split("\n")
@@ -165,7 +166,7 @@ def append(path: Path, kind: str, slots: dict) -> str:
         if raw.strip() == ARCHIVE_HEADING:
             head = "\n".join(lines[:i]).rstrip("\n")
             tail = "\n".join(lines[i:])
-            path.write_text(f"{head}\n{line}\n\n{tail}", encoding="utf-8")
+            atomic.write_text(path, f"{head}\n{line}\n\n{tail}")
             return line
     with open(path, "a", encoding="utf-8") as fh:
         fh.write(line + "\n")
