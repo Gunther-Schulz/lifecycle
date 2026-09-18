@@ -253,7 +253,7 @@ class TheSiblingVerbIsUNCHANGED(unittest.TestCase):
            "--requirement", "the serving config is read from defaults — x.md",
            "--goal", "verify", "--write-set", "tools/replay.mjs",
            "--done-criterion", "the gate reads what is serving",
-           "--evidence", "none yet", "--hunks", "4",
+           "--evidence", "MEASURED none yet", "--hunks", "4",
            "--absence", "the decision belongs to a desk this session is not")
 
     def test_item_add_still_commits_its_own_write_by_pathspec(self):

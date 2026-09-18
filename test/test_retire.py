@@ -52,7 +52,7 @@ ADD = ("item", "add",
        "--requirement", "the serving config is read from defaults — x.md",
        "--goal", "verify", "--write-set", "tools/replay.mjs",
        "--done-criterion", "the gate reads what is serving",
-       "--evidence", "none yet", "--hunks", "4",
+       "--evidence", "MEASURED none yet", "--hunks", "4",
        "--absence", "the decision belongs to a desk this session is not")
 
 

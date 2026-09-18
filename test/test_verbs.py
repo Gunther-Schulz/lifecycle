@@ -241,7 +241,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
         wrong."""
         r = self._repo()
         code, out = self._run(r, "item", "amend", "xx-1",
-                              "--evidence", "the wave-4 measurement",
+                              "--evidence", "MEASURED in the wave-4 pass",
                               "--reason", "the desk corrected the evidence")
         self.assertEqual(code, exits.CLEAN, out)
         code, out = self._run(r, "item", "close", "xx-1",

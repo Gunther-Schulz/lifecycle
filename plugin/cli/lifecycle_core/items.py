@@ -169,6 +169,83 @@ UNKNOWN = "UNKNOWN"
 #: typed or NONE.
 UNKNOWNABLE_SLOTS = ("goal", "write-set", "done-criterion", "evidence")
 
+#: EVIDENCE MARKS (lc-167) — the closed vocabulary separating evidence a
+#: session RAN from evidence it CONCLUDED.
+#:
+#: WHY THE CARRIER NEEDS IT: measured over one desk's full day of booking,
+#: every item booked from measured evidence held up, and the one booked from
+#: a just-formed conclusion — a plausible code path read but not the one that
+#: actually runs — was wrong within the hour and would have sent a lane to
+#: make a no-op change. Read from this repo's other end the same day: over 88
+#: closed items, `amended-evidence` is the most-amended slot at 39%, which is
+#: the same fact seen as an entry whose evidence moved after booking. The
+#: slot took both kinds and marked neither.
+#:
+#: THE WORDS ARE NOT INVENTED HERE. The corpus already sorts a finding's
+#: sentences into OBSERVED, RECALLED and DERIVED, and separately requires
+#: another party's claim to be relayed AS that party's. Those are the four.
+#: `MEASURED` rather than the corpus's `OBSERVED` for the executed one, on
+#: the one-spelling-per-concept rule: this repo already spells that route
+#: `measure` in the investigation record's own vocabulary (`records.ROUTES`),
+#: and a concept taught under two names in one repo mints entries that read
+#: green to their author under either.
+#:
+#: WHAT THE PREDICATE ESTABLISHES, and it is narrower than the rule: that a
+#: mark is PRESENT, never that it is true. This is the form the corpus names
+#: for a duty whose firing moment is an event — a fixed, named token whose
+#: absence is readable at a glance without grading content; grading the fill
+#: is a second and cheaper step, run only over tokens that exist. A checker
+#: that tried to decide whether a sentence really was measured would be
+#: grading prose, which is the guard that fires on legitimate work (law 11).
+EVIDENCE_MARKS = ("MEASURED", "DERIVED", "RECALLED", "RELAYED")
+
+_EVIDENCE_MARK = re.compile(r"\b(" + "|".join(EVIDENCE_MARKS) + r")\b")
+
+#: What each mark claims, quoted back to the author at the refusal. Kept
+#: beside the vocabulary rather than in the message: the refusal text and the
+#: accepted set are one fact, and two bodies for it drift the day a mark is
+#: added.
+EVIDENCE_MARK_GLOSS = {
+    "MEASURED": "a command this session ran, a file it read, a count it took",
+    "DERIVED": "a cause, a meaning, an absence, a survivor — reasoned from "
+               "something else rather than seen",
+    "RECALLED": "held in memory, not re-read at the artifact",
+    "RELAYED": "another party's report, carried as theirs",
+}
+
+
+def evidence_mark_problem(value: str) -> str | None:
+    """Why this evidence value cannot be WRITTEN, or None (lc-167).
+
+    AT THE WRITE DOORS ONLY, never at the parser. Every entry booked before
+    this rule carries an unmarked slot, and a check over the carrier would
+    fire on all of them at once — the guard firing on legitimate work, which
+    trains the override reflex that kills it. The distinction is cheap
+    exactly at booking, where the author still knows which half is which, and
+    unreconstructable afterwards, which is the whole reason the mark exists
+    rather than a later pass.
+    """
+    v = "" if value is None else str(value).strip()
+    if not v or v.upper() == UNKNOWN:
+        # Empty is `slot_value_problem`'s finding, not this one; UNKNOWN is
+        # the migration's declared transitional value — an entry recording
+        # that nobody has written evidence yet has nothing to mark.
+        return None
+    if _EVIDENCE_MARK.search(v):
+        return None
+    return ("the evidence slot carries no mark, so nothing in it says which "
+            "sentences this session RAN and which it CONCLUDED. Mark each "
+            "claim with one of: "
+            + "; ".join(f"{m} ({EVIDENCE_MARK_GLOSS[m]})"
+                        for m in EVIDENCE_MARKS)
+            + ". A MIXED slot is the ordinary case and stays legal — most "
+              "real evidence is part executed and part inferred, and the "
+              "mark is per claim rather than per entry. What this refuses is "
+              "a slot with no mark at all, because an unrun inference stated "
+              "as fact then reads exactly like an executed command, and the "
+              "entry that was wrong within the hour read exactly like the "
+              "ones that held.")
+
 #: THE AMENDMENT LINES (lc-27). Until this wave no verb edited a block, so
 #: every correction to a booked item was either a second item or a hand edit
 #: — a law-8 violation with no other way out. An amendment is APPEND-ONLY:

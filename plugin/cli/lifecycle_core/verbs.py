@@ -786,6 +786,11 @@ def _collect_slots(args, ctx: Ctx, out):
         if problem:
             out(f"FINDING [item_shape] {problem}")
             return None, exits.FINDING
+
+    problem = items_mod.evidence_mark_problem(slots.get("evidence"))
+    if problem:
+        out(f"FINDING [evidence_unmarked] {problem}")
+        return None, exits.FINDING
     return slots, exits.CLEAN
 
 
@@ -2006,6 +2011,17 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
         problem = items_mod.slot_value_problem(slot, value)
         if problem:
             out(f"FINDING [item_shape] {problem}")
+            return exits.FINDING
+
+    # THE SECOND DOOR, and it is the one that matters most for this rule:
+    # `amended-evidence` is the most-amended slot in this carrier, so the
+    # evidence a lane actually reads is often the amended value rather than
+    # the booked one. A mark demanded at `add` and not here would leave the
+    # read-most value unmarked.
+    if "evidence" in updates:
+        problem = items_mod.evidence_mark_problem(updates["evidence"])
+        if problem:
+            out(f"FINDING [evidence_unmarked] {problem}")
             return exits.FINDING
 
     # The SAME declared-goal check `item add` applies. A goal that was

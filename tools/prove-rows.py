@@ -174,6 +174,19 @@ MUTATIONS = [
     # verdicts and prove neither. The `FIRE` test is the one condition only
     # this row reads; the BROKEN branch above it keeps reading real input,
     # which is what makes the sibling's proof survive this row's arrival.
+    # ANCHORED IN THE PREDICATE, NOT AT EITHER DOOR, and for the reason the
+    # row above had to be repaired for: this refusal is emitted at TWO sites
+    # (`item add` and `item amend`), so a mutation at one leaves the other
+    # reading real input and the row keeps firing. The single place the
+    # verdict is DECIDED is the mark search itself — one condition, one row,
+    # no neighbour behind it.
+    ("evidence_unmarked", "items.py",
+     "    if _EVIDENCE_MARK.search(v):",
+     "    if True:",
+     "the mark search over a written evidence slot — removed, an unrun "
+     "inference stated as fact is booked reading exactly like an executed "
+     "command"),
+
     ("blocker_predicate_satisfied_at_booking", "verbs.py",
      "    if t is not None and t.state == lanes.FIRE:",
      "    if False:",

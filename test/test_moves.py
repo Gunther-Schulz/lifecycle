@@ -102,7 +102,7 @@ class Conservation(unittest.TestCase):
             "--requirement", "the serving config is read from defaults — x.md",
             "--goal", "verify", "--write-set", "tools/replay.mjs",
             "--done-criterion", "the gate reads what is serving",
-            "--evidence", "none yet", "--hunks", "4",
+            "--evidence", "MEASURED none yet", "--hunks", "4",
             "--absence", "the decision belongs to a desk this session is not")
         self.assertEqual(code, exits.CLEAN, out)
 
@@ -267,7 +267,7 @@ class LedgerGate(unittest.TestCase):
             d, "item", "add",
             "--requirement", "the harvest timer fires twice per window",
             "--goal", "mitigate", "--write-set", "tools/harvest.mjs",
-            "--done-criterion", "one fire", "--evidence", "none",
+            "--done-criterion", "one fire", "--evidence", "MEASURED none",
             "--hunks", "4", "--absence", "x")
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("[join_undisposed]", out)
@@ -298,7 +298,7 @@ class EveryJoinAnswersTheCommitQuestion(unittest.TestCase):
            "--requirement", "the serving config is read from defaults — x.md",
            "--goal", "verify", "--write-set", "tools/replay.mjs",
            "--done-criterion", "the gate reads what is serving",
-           "--evidence", "none yet", "--hunks", "4",
+           "--evidence", "MEASURED none yet", "--hunks", "4",
            "--absence", "the decision belongs to a desk this session is not")
 
     def test_join_new_commits_its_own_write_and_leaves_the_tree_clean(self):
@@ -350,7 +350,7 @@ class EveryJoinAnswersTheCommitQuestion(unittest.TestCase):
             "--requirement", "the harvest timer double-fires on a rotated "
                              "capture again — LEDGER.md",
             "--goal", "mitigate", "--write-set", "tools/harvest.mjs",
-            "--done-criterion", "one fire per window", "--evidence", "none yet",
+            "--done-criterion", "one fire per window", "--evidence", "MEASURED none yet",
             "--hunks", "4", "--join", "merge-into xx-1")
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("NOT COMMITTED", out)
@@ -366,7 +366,7 @@ class EveryJoinAnswersTheCommitQuestion(unittest.TestCase):
                                   "rotated capture again — LEDGER.md",
                  "--goal", "mitigate", "--write-set", "tools/harvest.mjs",
                  "--done-criterion", "one fire per window",
-                 "--evidence", "none yet", "--hunks", "4",
+                 "--evidence", "MEASURED none yet", "--hunks", "4",
                  "--join", "merge-into xx-1"],
                 list(self.ADD) + ["--join", "supersede xx-1",
                                   "--reason", "the rotated capture is the "
@@ -542,7 +542,7 @@ class ForwardPointer(unittest.TestCase):
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         code, out = run_cli(d, "item", "amend", "xx-9",
                             "--reason", "the leak-scan premise was false",
-                            "--evidence", "measured at the desk")
+                            "--evidence", "MEASURED at the desk")
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("[unknown_item]", out)
         self.assertIn("A CLOSED body is not amendable", out)

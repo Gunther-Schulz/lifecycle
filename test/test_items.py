@@ -874,7 +874,7 @@ class TheCostTestsThirdConjunct(unittest.TestCase):
             "--goal", "verify",
             "--write-set", write_set or self.FOREIGN_FILE,
             "--done-criterion", "the roster is declared, not hand-checked",
-            "--evidence", "measured at the drainage desk",
+            "--evidence", "MEASURED at the drainage desk",
             "--absence", "the realizing write is another desk's",
         ]
         if hunks is not None:
@@ -1699,3 +1699,139 @@ blocked-by: NONE
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("FILTERED to goal=tend: 0 of 2", out)
         self.assertNotIn("goal_query_undeclared", out)
+
+
+class EvidenceCarriesItsMark(unittest.TestCase):
+    """lc-167 — an entry says which evidence it RAN and which it CONCLUDED.
+
+    THE PREDICATE IS PRESENCE, NEVER TRUTH, and these arms are written to
+    that boundary rather than past it: a checker deciding whether a sentence
+    really was measured would be grading prose, which is the guard that fires
+    on legitimate work. What is computable is whether the author marked
+    anything at all, and that is what the refusal claims.
+
+    THE OVER-FIRE ARM IS THE LOAD-BEARING ONE. Every entry booked before this
+    rule carries an unmarked slot — 174 of them across the two homes here —
+    so a check that reached the PARSER would fire on the whole carrier at
+    once and train the override reflex that kills it. The rule lives at the
+    WRITE doors, and the arm below is what pins that.
+    """
+
+    UNMARKED = ("the deploy path re-reads the config on every start, so the "
+                "gate is looking at the wrong file")
+    MARKED = "DERIVED " + UNMARKED
+
+    def _repo(self, **kw):
+        r = refusals._Repo(**kw)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _add(self, evidence):
+        return [a if a != refusals.GOOD_ADD[refusals.GOOD_ADD.index(
+            "--evidence") + 1] else evidence for a in refusals.GOOD_ADD]
+
+    # --- the predicate ---------------------------------------------------
+
+    def test_an_unmarked_value_is_a_problem_and_each_mark_clears_it(self):
+        self.assertIsNotNone(items.evidence_mark_problem(self.UNMARKED))
+        for mark in items.EVIDENCE_MARKS:
+            self.assertIsNone(
+                items.evidence_mark_problem(f"{mark} {self.UNMARKED}"),
+                f"{mark} is in the vocabulary and did not clear the check")
+
+    def test_the_mark_is_a_TOKEN_and_not_the_ordinary_word(self):
+        """Lower-case `measured` is prose; `MEASURED` is a mark.
+
+        Matching case-insensitively would pass on almost every evidence slot
+        ever written — the word appears constantly in ordinary sentences — so
+        the check would read green over exactly the unmarked entries it
+        exists to catch. That is the assurance-wider-than-its-predicate
+        shape, and the capital is what keeps the token deliberate.
+        """
+        self.assertIsNotNone(
+            items.evidence_mark_problem("measured at the desk last week"))
+        self.assertIsNone(items.evidence_mark_problem("MEASURED at the desk"))
+
+    def test_a_MIXED_slot_is_legal_because_most_real_evidence_is_mixed(self):
+        """The item's own MUST-NOT-MOVE: the mark is per claim, not per
+        entry. A rule admitting only single-kind slots would push authors to
+        split one evidence body across two entries to satisfy a checker."""
+        self.assertIsNone(items.evidence_mark_problem(
+            "MEASURED the walk over 86 tracked files returned 0 findings; "
+            "DERIVED that the XDG homes are outside its reach"))
+
+    def test_UNKNOWN_and_empty_are_not_this_check_s_business(self):
+        """UNKNOWN is the migration's declared transitional value — an entry
+        recording that nobody has written evidence has nothing to mark. Empty
+        is `slot_value_problem`'s finding, and two refusals over one input
+        would tell the author two different things about one mistake."""
+        self.assertIsNone(items.evidence_mark_problem(items.UNKNOWN))
+        self.assertIsNone(items.evidence_mark_problem(""))
+        self.assertIsNone(items.evidence_mark_problem(None))
+
+    # --- the doors -------------------------------------------------------
+
+    def test_item_add_refuses_an_unmarked_slot_and_writes_nothing(self):
+        r = self._repo()
+        before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = self._run(r, *self._add(self.UNMARKED))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("evidence_unmarked", out, out)
+        self.assertEqual((r.dir / "ITEMS.md").read_text(encoding="utf-8"),
+                         before, "the carrier was written despite the refusal")
+
+    def test_the_same_add_MINTS_once_the_claim_is_marked(self):
+        r = self._repo()
+        code, out = self._run(r, *self._add(self.MARKED))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn(self.MARKED,
+                      (r.dir / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_the_AMEND_door_is_covered_and_it_is_the_one_that_matters(self):
+        """`amended-evidence` is the most-amended slot in this carrier (39%
+        of 88 closed items), so the value a lane actually reads is often the
+        amended one. A mark demanded at `add` alone would leave the
+        read-most value unmarked."""
+        r = self._repo(items=refusals.FOUR_BLOCKER_ITEMS)
+        before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = self._run(r, "item", "amend", "xx-3",
+                              "--reason", "the evidence was re-read",
+                              "--evidence", self.UNMARKED)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("evidence_unmarked", out, out)
+        self.assertEqual((r.dir / "ITEMS.md").read_text(encoding="utf-8"),
+                         before, "the amendment was appended despite it")
+        code, out = self._run(r, "item", "amend", "xx-3",
+                              "--reason", "the evidence was re-read",
+                              "--evidence", self.MARKED)
+        self.assertEqual(code, exits.CLEAN, out)
+
+    # --- the over-fire boundary ------------------------------------------
+
+    def test_a_carrier_full_of_UNMARKED_legacy_entries_stays_CLEAN(self):
+        """THE ARM THIS RULE LIVES OR DIES ON.
+
+        `GOOD_ITEMS` carries `evidence: none yet` — an unmarked slot, the
+        shape every entry booked before today has. `item check` must read it
+        clean: the rule is about what gets WRITTEN from now on, and a checker
+        that graded the existing carrier would report 174 findings on its
+        first run, which is a guard firing on legitimate work (law 11).
+        """
+        code, out = run_check(refusals.GOOD_ITEMS)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("evidence_unmarked", out, out)

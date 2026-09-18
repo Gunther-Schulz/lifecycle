@@ -879,7 +879,13 @@ GOOD_ADD = [
     "--goal", "verify",
     "--write-set", "tools/replay.mjs",
     "--done-criterion", "the gate reads what is serving",
-    "--evidence", "none yet",
+    # MARKED, since lc-167: the shared plant books a real item through the
+    # real door, so it carries what every real booking now carries. `none
+    # yet` would have been exempt (it reads as no evidence at all) and would
+    # have made this fixture the one add in the repo that never exercises the
+    # mark — a plant that dodges a rule it should be holding.
+    "--evidence", "MEASURED the serving gate read its default config on "
+                  "three runs; DERIVED that the deploy path never re-reads it",
     "--hunks", "4",
     "--absence", "the decision belongs to a desk this session is not",
 ]
@@ -1018,6 +1024,34 @@ VERB_ROWS = [
         # and finds nothing, so the refusal is the MATCH and not the join.
         control=lambda: _cli(GOOD_ADD, items=SEED_ITEMS),
         stage="wave 1, stage 4",
+    ),
+    Row(
+        ident="evidence_unmarked",
+        refusal="an evidence slot written with no mark saying which of its "
+                "claims this session RAN and which it CONCLUDED. Measured "
+                "over a desk's full day of booking: every item booked from "
+                "measured evidence held up, and the one booked from a "
+                "just-formed conclusion was wrong within the hour and would "
+                "have sent a lane to make a no-op change. Refused at the "
+                "WRITE DOORS only — every entry booked before the rule "
+                "carries an unmarked slot, and a check over the carrier "
+                "would fire on all of them at once (lc-167)",
+        firing_input="`item add --evidence <prose carrying none of "
+                     "MEASURED / DERIVED / RECALLED / RELAYED>`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(_mutate_add(
+            "--evidence", "the deploy path re-reads the config on every "
+                          "start, so the gate is looking at the wrong file")),
+        # THE SAME ADD, THE SAME SENTENCE, one word longer: the claim is now
+        # marked as the inference it is. The arms differ in the mark alone,
+        # so neither `item add` nor the sentence's content is what separates
+        # them — which is the whole predicate, since this check grades
+        # PRESENCE and never truth.
+        control=lambda: _cli(_mutate_add(
+            "--evidence", "DERIVED the deploy path re-reads the config on "
+                          "every start, so the gate is looking at the wrong "
+                          "file")),
+        stage="wave 1, stage 4 (lc-167)",
     ),
     Row(
         ident="new_without_absence",
