@@ -526,9 +526,34 @@ whether a rule is right, whether it is ethic or lens, stays the operator's.
 
 ### 5. RE-GROUND THE SCOPE AT PICKUP — the scoping answer
 
+**"SCOPE" IS TWO DIFFERENT THINGS AND THE WORD HIDES IT** (operator,
+2026-09-18, and this is the framing sentence for everything below):
+
+- **the scope of WHAT WE WANT** — the requirement, the goal. This is a
+  DECISION. It is made once and it holds.
+- **the scope of THE WORK THAT NEEDS DOING** — where it lands, what counts as
+  done, what facts it rests on. This is an ESTIMATE. It is a claim about a
+  world that keeps moving.
+
+The measurement below is that distinction, in numbers: the decision half is
+amended 5% of the time, the estimate half 17-39%.
+
+**AND THE CARRIER ALREADY SEPARATES THEM INTO DIFFERENT SLOTS, THEN GRADES
+THEM UNDER ONE WORD.** `READY` means decision-complete and is applied equally
+to `requirement` and to `write-set` / `done-criterion` / `evidence`. So an
+ESTIMATE is being graded as a DECISION, and the surprise when it rots is
+built in. That is the 55%, explained.
+
+What does NOT follow: that entries should be booked vaguely and sorted out
+later. 45% of completed items needed no amendment at all, the READY grade's
+refusals were right every time they fired, and a scope that is permanently
+provisional is not a scope. Both halves hold at once — book it
+decision-complete anyway, AND re-ground the estimate half at pickup.
+
 **The operator's opening question this session was how to make work
-well-scoped and complete BEFORE building. Measured against this repo's own
-carrier, that is the wrong target.**
+well-scoped and complete BEFORE building. Read with that distinction, the
+answer is: the WANT half already is; the WORK half cannot be, and the record
+is what keeps it current.**
 
 Of 88 COMPLETED items, **55% had their scope amended between booking and
 closing**, and the slot pattern says what moved:
