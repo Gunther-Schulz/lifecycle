@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 180
+added: 181
 compacted: 0
 
 ## lc-3
@@ -944,4 +944,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/records.py,plugin/cli/lifecycle_core/refusals.py,test/test_records.py
 done-criterion: record check prints the number of lines it graded, and a record with ZERO graded lines answers COULD NOT VERIFY rather than CLEAN. RED-FIRST: a record file whose body carries no gradeable line reads CLEAN today and must answer could-not-verify after, naming that it graded nothing. MUST-NOT-MOVE: a record with real graded lines keeps its current verdict and its findings unchanged, and the denominator appears on the CLEAN path too — a count printed only when something is wrong is a count nobody reads.
 evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs: records.py 332-335, the clean return with no denominator, graded by them as real. MEASURED at this desk while building lc-156: the checker greps logical lines for tags and reports per-finding, so a body with no candidate lines produces an empty finding list, which is the same value a sound record produces. DERIVED: this is lc-172 remedy at a site lc-172 did not reach — an absence claim naming what proves its instrument was live.
+blocked-by: NONE
+
+## lc-189
+grade: READY
+requirement: THE PRODUCER ROUTE IS UNFALSIFIABLE IN ONE DIRECTION. declaration.py builds the producer pool by scanning every kind WRITER, then resolves producer: references against that same set — so a producer named in a writer can NEVER dangle, while the identical reference in a reader correctly FINDS. An expectation derived from the artifact it grades moves with the mutant and stays green on the corruption it exists to catch. It matters more than its size because the route-set check counts producer as a WATCHED route, so both the roster green and the route-set green hold over the hole.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/declaration.py,test/test_declaration.py
+done-criterion: a producer: reference that names nothing is a finding WHEREVER it appears, including in a writer — the pool a reference is checked against is not built from the same field the reference sits in. RED-FIRST: a declaration whose writer names a producer that exists nowhere else reads CLEAN today and must be a finding after; the reader-side spelling keeps finding it exactly as it does now. MUST-NOT-MOVE: a legitimate writer naming a real producer stays clean, and the route-set check keeps counting producer as watched, since after this it will be watched in both directions rather than one.
+evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs: declaration.py 1184-1198 and 1258-1271, the pool built from writers and the references resolved against it, graded real but narrow. DERIVED: this is the same-parentage rule in the corpus, an expectation read off the body it grades, and the route-set green is what hides it — the roster can be green and the coverage complete while one direction of the route can never fail.
 blocked-by: NONE
