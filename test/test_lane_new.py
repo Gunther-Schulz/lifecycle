@@ -70,6 +70,7 @@ class ScratchGitRepo:
                     "staleness": "none, declared why: test fixture",
                     "exit": {"action": "move", "recording-act": "test"},
                     "growth": "bounded-by-exit — test fixture",
+                    "trigger": "verb item add",
                 },
             },
         }

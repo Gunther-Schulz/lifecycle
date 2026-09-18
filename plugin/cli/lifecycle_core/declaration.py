@@ -86,7 +86,50 @@ GROWTH_MODES = ("bounded-by-exit", "compacted", "unbounded-with-reason")
 #: The six stages, closed. `kind_stage_undeclared` is a finding for any kind
 #: missing any of them, which is why this tuple is the single source and no
 #: check below restates it.
-KIND_STAGES = ("home", "writer", "reader", "staleness", "exit", "growth")
+KIND_STAGES = ("home", "writer", "reader", "staleness", "exit", "growth",
+               "trigger")
+
+#: THE SEVENTH STAGE IS **WHEN** (lc-168). The other six say what a kind is,
+#: where it lives, who writes and reads it, when it goes stale and how its
+#: growth is controlled — and none of them says when the write FIRES. For the
+#: four verb-written kinds the answer was always implicit in the act: `item
+#: close` writes a closure because the verb ran, and nobody has to remember
+#: anything. For the seventeen `writer: session` kinds there was no WHEN at
+#: all, which is the whole distance between a kind that administers itself and
+#: one that waits for a person to notice it.
+#:
+#: The vocabulary is closed and has exactly two members, because there are
+#: exactly two ways a write can be occasioned: an ACT that carries it, or a
+#: CONDITION somebody must evaluate.
+#:
+#:   verb <name>        the trigger is implicit in the act — the write happens
+#:                      because that verb ran. `<name>` must be a real command
+#:                      path, checked against the PARSER rather than a list
+#:                      restated here: a restated list cannot age loudly, and a
+#:                      trigger naming a verb that does not exist is a kind
+#:                      nothing will ever fire.
+#:   predicate <cmd>    a condition, evaluated by `lanes.evaluate_trigger` —
+#:                      the ONE evaluator, whose exit mapping is total, so a
+#:                      predicate that cannot run is BROKEN and never quiet.
+#:   none, declared why: <reason>
+#:                      the kind genuinely has no button, and says so. NOT a
+#:                      loophole and not invented here: the design of record's
+#:                      own test is "every kind reaches a verb, OR DECLARES WHY
+#:                      IT CANNOT", and this repo already spells that escape
+#:                      twice — `staleness: "none, declared why: ..."` and
+#:                      `growth: "unbounded-with-reason — ..."`. The word
+#:                      carries the obligation: without the reason it is a
+#:                      shrug, which is what the stage exists to stop being.
+#:                      What it buys is that seventeen buttonless kinds stop
+#:                      being INVISIBLE and become COUNTABLE — a kind that
+#:                      declares no trigger is a finding, one that declares
+#:                      `none` is a known member of a population somebody can
+#:                      read off the registry.
+#:
+#: What is deliberately NOT a member: a time, a cadence, a "periodically". A
+#: schedule is a thing that must be remembered by whatever holds the clock,
+#: and this system owns no clock — the tick is the verb.
+TRIGGER_MODES = ("verb", "predicate", "none")
 
 #: §3.8c — the TYPED reference vocabulary for `reader` and `writer`. Closed:
 #: prose in the slot is a finding, because prose cannot be RESOLVED, and an
@@ -977,11 +1020,48 @@ def check_desk_state_kind_declared(repo, doc, res: Result) -> None:
             "XDG home declared as a per-repo kind.")
 
 
+def _verb_exists(spelled: str) -> bool:
+    """Is `spelled` a real command path, per the PARSER?
+
+    DERIVED, NEVER RESTATED (law 24's worked example, and lc-204's rule one
+    stage over). A hardcoded verb list beside the parser it mirrors cannot age
+    loudly: the parser gains a subcommand, the list stays green, and the two
+    part company with no symptom. So this walks the live parser's subactions —
+    the same source `--test` derives its surface size from.
+
+    The import is deferred because `cli` imports this module; the same lazy
+    form `refusals.py` already uses for its own CLI drives. A parser that
+    cannot be built at all answers TRUE rather than false: this predicate
+    exists to catch a MISSPELLED verb, and a broken parser is a different and
+    much louder failure that every other verb would report first — answering
+    false there would turn one defect into a finding on every declared kind.
+    """
+    import argparse
+    try:
+        from . import cli as cli_mod
+        parser = cli_mod.build_parser()
+    except Exception:
+        return True
+
+    want = tuple(spelled.split())
+
+    def paths(p, prefix=()):
+        found = {prefix} if prefix else set()
+        for action in getattr(p, "_actions", ()):
+            if isinstance(action, argparse._SubParsersAction):
+                for verb, sub in action.choices.items():
+                    found |= paths(sub, prefix + (verb,))
+        return found
+
+    return want in paths(parser)
+
+
 def _validate_kind(name: str, body, res: Result, world) -> None:
     if not isinstance(body, dict):
         res.add("kind_stage_undeclared",
                 f"kind {name!r} is {type(body).__name__}, not an object, so "
-                f"all six stages ({', '.join(KIND_STAGES)}) are undeclared.")
+                f"all {len(KIND_STAGES)} stages "
+                f"({', '.join(KIND_STAGES)}) are undeclared.")
         return
 
     absent = [s for s in KIND_STAGES if s not in body]
@@ -1056,6 +1136,57 @@ def _validate_kind(name: str, body, res: Result, world) -> None:
                         "An exit nobody records is a deletion that leaves no "
                         "trace, which is the loss this carrier exists to "
                         "prevent.")
+
+    trigger = body.get("trigger")
+    if "trigger" in body:
+        if not isinstance(trigger, str) or not trigger.strip():
+            res.add("declaration_malformed",
+                    f"kind {name!r}: `trigger` must BEGIN with one of "
+                    f"{', '.join(TRIGGER_MODES)}.")
+        else:
+            spelled = trigger.strip()
+            mode = spelled.split()[0].strip(":,—-").lower()
+            rest = spelled[len(spelled.split()[0]):].strip(" :,—-")
+            # THE VALUE IS `<mode> <value> — <reason>`, which is the shape
+            # `growth` already uses ("bounded-by-exit — every item leaves…").
+            # Splitting on the em dash is what separates the verb NAME from
+            # the sentence explaining it: without this the existence check
+            # received the whole reason as a command path and refused every
+            # verb that carried one.
+            rest = rest.split("—")[0].strip(" :,-")
+            if mode not in TRIGGER_MODES:
+                res.add("declaration_malformed",
+                        f"kind {name!r}: `trigger` must BEGIN with one of "
+                        f"{', '.join(TRIGGER_MODES)}, got {trigger!r}. The "
+                        "vocabulary is closed: a write is occasioned by an ACT "
+                        "that carries it or by a CONDITION somebody "
+                        "evaluates, and a cadence is neither — this system "
+                        "owns no clock, so the tick is the verb.")
+            elif mode == "none":
+                if _needs_why(spelled, "none"):
+                    res.add("kind_stage_undeclared",
+                            f"kind {name!r}: `trigger` says \"none\" and "
+                            "states no reason. The word carries the "
+                            "obligation — spelled `none, declared why: "
+                            "<reason>`, the same shape `staleness` and "
+                            "`growth` already use. A bare \"none\" is the "
+                            "undeclared stage wearing a plausible face, "
+                            "which is what this stage exists to stop.")
+            elif not rest:
+                res.add("kind_stage_undeclared",
+                        f"kind {name!r}: `trigger` says {mode!r} and names "
+                        f"nothing. The word carries the obligation: "
+                        f"{'a verb with no name fires on nothing' if mode == 'verb' else 'a predicate with no command has no state, and no state is not quiet'}.")
+            elif mode == "verb" and not _verb_exists(rest):
+                res.add("trigger_verb_unknown",
+                        f"kind {name!r}: `trigger` names the verb {rest!r}, "
+                        f"which this build does not have. Checked against the "
+                        f"PARSER, not a list restated here, so this cannot go "
+                        f"stale silently as the verb set moves. A trigger "
+                        f"naming a verb that does not exist is a kind nothing "
+                        f"will ever fire — the WHEN is declared and "
+                        f"unreachable, which reads exactly like a kind that "
+                        f"is simply quiet.")
 
     growth = body.get("growth")
     if "growth" in body:

@@ -1840,7 +1840,67 @@ def _growth_from_bound(value: str):
                   f"{', '.join(decl.GROWTH_MODES)}")
 
 
-def _plan_schema(repo, doc, from_n: int, to_n: int):
+def _trigger_from_writer(writer):
+    """`(trigger, why)` — lc-168's seventh stage, DERIVED or refused.
+
+    NOTHING IS GUESSED HERE EITHER, and the bar is higher than it looks. A
+    trigger is derivable only where the writer names EXACTLY ONE verb and
+    nothing else: then the write fires because that verb ran, and the stage
+    states a fact already in the declaration rather than a new decision.
+
+    Everything else is UNCLASSIFIED, including two shapes that look
+    derivable and are not:
+
+      * SEVERAL verbs — `items` is written by `item add`, `item park` and
+        `item close`, and which of them is "when the write fires" is a
+        reading of the kind, not arithmetic over the list. Picking the first
+        would be a design decision taken by a migration.
+      * a verb MIXED with `session` — the kind has a button AND a path that
+        bypasses it, and whether the trigger is the button or the judgment is
+        exactly the question this stage was added to make someone answer.
+
+    A `writer: session` kind derives nothing by construction: it is the
+    seventeen-kind population lc-168 exists to make countable, and the reason
+    it has no button is a sentence only a person can write.
+    """
+    values = writer if isinstance(writer, list) else \
+        ([writer] if isinstance(writer, str) else [])
+    parsed = list(decl.parse_refs(values))
+    verbs = [t for typ, t in parsed if typ == "verb"]
+    # NAME THE TYPE, NOT THE TARGET. `parse_refs` returns ("session", "") —
+    # the type carries the name and the target is empty — so joining targets
+    # here rendered "mixes a verb with , so this kind…", a sentence with a
+    # hole where its subject belongs. Caught in the first real dry run, which
+    # is the only place this string is ever read.
+    others = [typ or t for typ, t in parsed if typ != "verb"]
+
+    if len(verbs) == 1 and not others:
+        return (f"verb {verbs[0]}",
+                f"the writer names exactly one verb, so the write fires "
+                f"because `{verbs[0]}` ran — the trigger was already implicit "
+                f"in the declaration and this states it")
+    if len(verbs) > 1:
+        return (None,
+                f"the writer names {len(verbs)} verbs "
+                f"({', '.join(verbs[:4])}) and which one is WHEN THE WRITE "
+                f"FIRES is a reading of this kind, not arithmetic over the "
+                f"list. Declare it: `verb <name>`, or `none, declared why: "
+                f"<reason>` if the kind genuinely has no single button.")
+    if verbs and others:
+        return (None,
+                f"the writer mixes a verb with {', '.join(others[:3])}, so "
+                f"this kind has a button AND a path around it. Whether the "
+                f"trigger is the verb or the judgment is the question this "
+                f"stage exists to make someone answer.")
+    return (None,
+            "the writer names no verb, so this kind has no button at all — "
+            "the population lc-168 exists to make countable. It declares "
+            "`none, declared why: <reason>`, and the reason is a sentence "
+            "only a person can write; a migration inventing one would write "
+            "a declaration nobody made.")
+
+
+def _plan_schema(repo, doc, from_n, to_n):
     """`(changes, unclassified)` — what a schema bump would do, per key.
 
     NOTHING IS GUESSED. A transformation the design states is a CHANGE; one
@@ -1885,6 +1945,13 @@ def _plan_schema(repo, doc, from_n: int, to_n: int):
                 else:
                     changes.append((f"kinds.{name}.bound -> growth", new[:70],
                                     why))
+            if "trigger" not in body:
+                derived, why = _trigger_from_writer(body.get("writer"))
+                if derived is None:
+                    unclassified.append((f"kinds.{name}.trigger", why))
+                else:
+                    changes.append((f"kinds.{name}.trigger", derived, why))
+
             for stage in ("reader", "writer"):
                 value = body.get(stage)
                 values = value if isinstance(value, list) else \
@@ -1980,10 +2047,24 @@ def run_schema(args, out, ctx) -> int:
         if key == "bound":
             continue
         new_doc.pop(key, None)
+    derived_triggers = {}
     for name, body in (new_doc.get("kinds") or {}).items():
         if isinstance(body, dict) and "bound" in body:
             growth, _why = _growth_from_bound(body.pop("bound"))
             body["growth"] = growth
+        # THE PLAN AND THE APPLY MUST BOTH DO IT (lc-168). This block is here
+        # because its absence was the first thing the read-back should have
+        # caught and did not: `_plan_schema` reported two derived triggers,
+        # nothing wrote them, and the run printed `APPLIED — 2 declaration
+        # change(s)` over a declaration that gained neither. A planned change
+        # with no writing half is lc-205's shape one level up — a report of
+        # work not done — and it was found by reading the file afterwards,
+        # never by the run.
+        if isinstance(body, dict) and "trigger" not in body:
+            derived, _why = _trigger_from_writer(body.get("writer"))
+            if derived is not None:
+                body["trigger"] = derived
+                derived_triggers[name] = derived
     path = repo / decl.DECLARATION_REL
     try:
         path.write_text(json.dumps(new_doc, indent=2, ensure_ascii=False)
@@ -2025,8 +2106,66 @@ def run_schema(args, out, ctx) -> int:
             return exits.COULD_NOT_VERIFY
         out(f"written: {home} (schema {n} -> {m})")
 
+    # THE READ-BACK (law 25, lc-168). Every line above is what this process
+    # BELIEVES it wrote; the writing command's exit says the write happened,
+    # never that what arrived is what was meant. lc-205 was exactly that gap —
+    # three `written:` lines over a run that changed nothing, and a body line
+    # rewritten instead of the head — and no dry run could have seen it,
+    # because a dry run exercises the READER. So the artifact is re-opened
+    # here and asked what it now says. This catches that class and every
+    # unfound sibling of it without knowing the class in advance, which is why
+    # it is the general instrument rather than that defect's cleanup.
+    disagreed = []
+    for home, _n, m in carrier_changes:
+        got, why = decl.carrier_schema(repo / home)
+        if got is None:
+            disagreed.append((home, f"could not be re-read: {why}"))
+        elif got != m:
+            disagreed.append((home, f"reads schema {got}, expected {m}"))
+        else:
+            out(f"read-back: {home} reads schema {got}")
+    try:
+        now = json.loads((repo / decl.DECLARATION_REL)
+                         .read_text(encoding="utf-8"))
+        if now.get("schema") != to_n:
+            disagreed.append((decl.DECLARATION_REL,
+                              f"reads schema {now.get('schema')!r}, "
+                              f"expected {to_n}"))
+        else:
+            out(f"read-back: {decl.DECLARATION_REL} reads schema {to_n}")
+        # AND THE CHANGES, NOT ONLY THE VERSION. Checking the schema number
+        # alone let this very run report two derived triggers and write
+        # neither: the number was already correct before the write, so the
+        # read-back confirmed a fact that had never been in question. An
+        # instrument that re-reads the artifact and asks it the wrong
+        # question is an assurance wider than its predicate — the class this
+        # read-back exists to close, in the read-back itself.
+        for name, expected in derived_triggers.items():
+            got = (now.get("kinds") or {}).get(name, {}).get("trigger")
+            if got != expected:
+                disagreed.append(
+                    (f"{decl.DECLARATION_REL} kinds.{name}.trigger",
+                     f"reads {got!r}, expected {expected!r}"))
+            else:
+                out(f"read-back: kinds.{name}.trigger reads as planned")
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        disagreed.append((decl.DECLARATION_REL, f"could not be re-read ({exc!r})"))
+
+    if disagreed:
+        for home, what in disagreed:
+            out(f"    {home}: {what}")
+        out("FINDING [migration_readback_disagrees] the run wrote the targets "
+            "above and the ARTIFACT does not agree with what it reported. "
+            "APPLIED is NOT claimed: a `written:` line is this process's own "
+            "account of its write, and law 25 says a dry run licenses only "
+            "what it exercises — so the state is read from the file before "
+            "the act is called done. This repo is now MID-MIGRATION and "
+            "`kind check` will say so.")
+        return exits.FINDING
+
     out(f"migrate --schema-from: APPLIED — {len(changes)} declaration "
-        f"change(s), {len(carrier_changes)} carrier line(s).")
+        f"change(s), {len(carrier_changes)} carrier line(s), "
+        f"{len(carrier_changes) + 1} target(s) read back from the artifact.")
     return exits.CLEAN
 
 

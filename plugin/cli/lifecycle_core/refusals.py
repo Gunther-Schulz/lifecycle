@@ -62,6 +62,10 @@ GOOD_DECLARATION = {
                      "recording-act": "the item close fire-log line"},
             "growth": "bounded-by-exit — every item leaves by a recorded "
                       "closure or a recorded drop",
+            # lc-168's seventh stage. `items` is one of the four kinds whose
+            # trigger was always implicit: the write happens because the verb
+            # ran, which is why nobody ever had to remember it.
+            "trigger": "verb item add",
         },
     },
 }
@@ -293,6 +297,64 @@ def _kind_missing_exit() -> dict:
     return d
 
 
+def _schema_apply_run(*, items_head: str, split: bool) -> Fired:
+    """A `migrate --schema-from --apply` over a scratch repo (lc-168).
+
+    THE FIRING INPUT HERE IS A DEFECTIVE WRITER, NOT REPO CONTENT, and that is
+    stated rather than disguised. Once the plan and the write resolve the head
+    through ONE body (lc-205), no carrier this repo can hold makes them
+    disagree — which is the fix working. The read-back exists to catch the
+    CODE going wrong again, so the only faithful plant is a writer that
+    targets the wrong line.
+
+    `schema_head` is patched to report the correct NUMBER at a WRONG INDEX.
+    That is lc-205's actual shape rather than an invented one: the reader
+    found the head, the plan was right, and the write landed somewhere else —
+    which is why the run printed `written:` over a carrier it had not changed.
+    The number stays correct so the PLAN is untouched and the arms differ in
+    the write alone.
+    """
+    from . import declaration as decl_mod
+    from . import migrate as migrate_mod
+
+    doc = json.loads(json.dumps(GOOD_FULL_DECLARATION))
+    doc["schema"] = 1
+
+    real = decl_mod.schema_head
+
+    def wrong_index(text, name="the carrier"):
+        i, n, why = real(text, name)
+        if i is None:
+            return i, n, why
+        # The head is REPORTED correctly and TARGETED wrongly — the plan is
+        # untouched and only the write lands elsewhere.
+        return len(text.split("\n")) - 1, n, why
+
+    if split:
+        migrate_mod.decl.schema_head = wrong_index
+    try:
+        return _cli(["migrate", "--schema-from", "1", "--apply"],
+                    declaration=doc,
+                    items=items_head + "\n\n## xx-1\nrequirement: a body\n",
+                    done="schema: 1\n",
+                    ledger_text="schema: 1\n")
+    finally:
+        migrate_mod.decl.schema_head = real
+
+
+def _kind_trigger_unknown_verb() -> dict:
+    """A trigger naming a verb this build does not have (lc-168).
+
+    `item clsoe` is a plausible misspelling rather than nonsense, because that
+    is the shape this refusal is for: a declaration whose WHEN is stated and
+    unreachable reads exactly like one that is simply quiet, and the
+    misspelling is how it happens.
+    """
+    d = json.loads(json.dumps(GOOD_DECLARATION))
+    d["kinds"]["items"]["trigger"] = "verb item clsoe"
+    return d
+
+
 def _decl_with_binding(binding: dict) -> dict:
     d = json.loads(json.dumps(GOOD_DECLARATION))
     d["template-bindings"] = binding
@@ -422,6 +484,31 @@ ROWS = [
         firing_input="a registry row missing `exit`",
         expect=exits.FINDING,
         fire=lambda: _decl_run(declaration=_kind_missing_exit(),
+                               gitignore="", laws_lines=10),
+        control=lambda: _decl_run(**_GOOD_KW),
+    ),
+    Row(
+        ident="migration_readback_disagrees",
+        refusal="a schema apply whose ARTIFACT disagrees with what it reported",
+        firing_input="a carrier head the writer leaves unchanged while the run "
+                     "prints `written:` for it — lc-205's own shape",
+        expect=exits.FINDING,
+        fire=lambda: _schema_apply_run(items_head="schema : 1", split=True),
+        # The control is the SAME apply over the SAME repo with the writer
+        # WHOLE: the head is rewritten, the read-back agrees, APPLIED is
+        # claimed. What separates the two is whether the write landed — not
+        # whether a write was attempted, which both arms do.
+        control=lambda: _schema_apply_run(items_head="schema: 1", split=False),
+    ),
+    Row(
+        ident="trigger_verb_unknown",
+        refusal="a kind whose trigger names a verb this build does not have",
+        firing_input="`trigger: verb item clsoe` — a misspelled command path",
+        expect=exits.FINDING,
+        # The control is the SAME kind with the SAME stage present and
+        # correctly spelled, so what separates the two is the verb's existence
+        # and nothing else — not the stage being declared, which both share.
+        fire=lambda: _decl_run(declaration=_kind_trigger_unknown_verb(),
                                gitignore="", laws_lines=10),
         control=lambda: _decl_run(**_GOOD_KW),
     ),
@@ -679,6 +766,7 @@ GOOD_FULL_DECLARATION = {
                      "recording-act": "the item close fire-log line"},
             "growth": "bounded-by-exit — every item leaves by a recorded "
                       "closure or a recorded drop",
+            "trigger": "verb item add",
         },
         "done bodies": {
             "home": "ITEMS-DONE.md",
@@ -688,6 +776,7 @@ GOOD_FULL_DECLARATION = {
             "exit": {"action": "compact",
                      "recording-act": "a ledger decision line naming the range"},
             "growth": "compacted — done bodies fold on the retire lane's rule",
+            "trigger": "verb item close",
         },
         "ledger lines": {
             "home": "LEDGER.md",
@@ -697,6 +786,7 @@ GOOD_FULL_DECLARATION = {
             "exit": {"action": "never", "recording-act": "compaction only"},
             "growth": "unbounded-with-reason — one line per decision event and "
                       "no bodies; the decision rate is the control",
+            "trigger": "verb ledger add",
         },
         # THE LAWS FILE IS A KIND. Registered here rather than left implicit:
         # `kind sweep` asks the world whether anything sits outside the
@@ -715,6 +805,7 @@ GOOD_FULL_DECLARATION = {
             "growth": "unbounded-with-reason — no cap (R22); the control is "
                       "SCOPE, checked by the laws scope audit, and the size "
                       "is reported as a number",
+            "trigger": "none, declared why: a law is minted by a session when an incident earns it, and no predicate detects an unwritten law — the reason this kind is buttonless is that the judgment IS the trigger",
         },
     },
 }
@@ -3582,6 +3673,10 @@ def _records_kind_run(*, declare: bool) -> Fired:
             "exit": {"action": "never",
                      "recording-act": "a `## CLOSED` heading with pointers"},
             "growth": "unbounded-with-reason — one file per arc",
+            # writer: session, so there is no button. Declared rather than
+            # invented: a record opens when work turns diagnosis-shaped,
+            # which is a judgment no predicate makes.
+            "trigger": "none, declared why: a record opens when work turns diagnosis-shaped, and that reading is the session's own",
         }
     state = Path(tempfile.mkdtemp(prefix="lifecycle-xdg-"))
     r = _Repo(declaration=d)
@@ -3632,6 +3727,7 @@ def _desk_state_kind_run(*, declare: bool, mine: bool = True) -> Fired:
             "exit": {"action": "delete",
                      "recording-act": "a ledger line naming the desks removed"},
             "growth": "unbounded-with-reason — one file per desk id",
+            "trigger": "verb desk state",
         }
     state = Path(tempfile.mkdtemp(prefix="lifecycle-xdg-"))
     r = _Repo(declaration=d)

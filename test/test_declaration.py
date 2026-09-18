@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # the SAME arrangement the row runs rather than a second spelling of it.
 sys.path.insert(0, str(ROOT / "plugin" / "cli"))
 
-from lifecycle_core import exits, refusals  # noqa: E402
+from lifecycle_core import declaration as decl, exits, refusals  # noqa: E402
 
 
 class DeclaredHomesSweep(unittest.TestCase):
@@ -30,14 +30,13 @@ class DeclaredHomesSweep(unittest.TestCase):
         self.assertEqual(kinds["directives"]["home"], "docs/directives/*.md")
         self.assertEqual(kinds["workflow definitions"]["home"],
                          "plugin/workflows")
-        self.assertEqual(
-            set(kinds["directives"]),
-            {"home", "writer", "reader", "staleness", "exit", "growth"},
-        )
-        self.assertEqual(
-            set(kinds["workflow definitions"]),
-            {"home", "writer", "reader", "staleness", "exit", "growth"},
-        )
+        # DERIVED FROM THE VOCABULARY, NOT RESTATED BESIDE IT. These read
+        # as a literal six-member set until the seventh stage arrives, and
+        # then they are two more places that must be found by hand. The
+        # module owns the list; this asserts the kind carries all of it.
+        self.assertEqual(set(kinds["directives"]), set(decl.KIND_STAGES))
+        self.assertEqual(set(kinds["workflow definitions"]),
+                         set(decl.KIND_STAGES))
 
         run = subprocess.run(
             ["python3", "plugin/cli/lifecycle", "kind", "sweep"],
@@ -119,13 +118,11 @@ class InvestigationRecordsAreARegisteredKind(unittest.TestCase):
         self.assertEqual(
             self._check(self._tmp(), declare=False, write_record=False), [])
 
-    def test_this_repo_declares_it_with_all_six_stages(self):
+    def test_this_repo_declares_every_stage(self):
         declaration = json.loads(
             (ROOT / ".claude" / "lifecycle.json").read_text(encoding="utf-8"))
         kind = declaration["kinds"]["investigation records"]
-        self.assertEqual(sorted(kind),
-                         ["exit", "growth", "home", "reader", "staleness",
-                          "writer"])
+        self.assertEqual(sorted(kind), sorted(decl.KIND_STAGES))
         self.assertIn("claude/investigations", kind["home"])
         # THE FILES NEVER MOVE INTO ANY TREE — the exit is graduation of the
         # record's CONTENT, and a `move` here would undo the three benefits

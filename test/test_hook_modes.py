@@ -36,6 +36,7 @@ import _isolation  # noqa: F401  # lc-183: before any verb runs
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -390,31 +391,57 @@ class TheRepoSOwnRecordedInstance(_NeedsThisRepo, unittest.TestCase):
                          "the two refs no longer carry the SAME blob, so the "
                          "pair stopped isolating the mode")
 
+    def _finding_idents(self, ref):
+        """The SET of row names today's checker emits over that tree."""
+        work = Path(tempfile.mkdtemp(prefix=f"lc103-{ref}-"))
+        try:
+            self._clone_at(ref, work / "repo")
+            p = subprocess.run(
+                [sys.executable,
+                 str(REPO_ROOT / "plugin" / "cli" / "lifecycle"),
+                 "--repo", str(work / "repo"), "kind", "check"],
+                capture_output=True, text=True)
+            return set(re.findall(r"FINDING \[([a-z_][a-z0-9_]*)\]",
+                                  p.stdout)), p.stdout
+        finally:
+            shutil.rmtree(work, ignore_errors=True)
+
     def test_the_guard_fires_at_the_defect_and_is_clean_at_the_fix(self):
-        for ref, mode in self.REFS.items():
-            with self.subTest(ref=ref, mode=mode):
-                work = Path(tempfile.mkdtemp(prefix=f"lc103-{ref}-"))
-                try:
-                    self._clone_at(ref, work / "repo")
-                    p = subprocess.run(
-                        [sys.executable,
-                         str(REPO_ROOT / "plugin" / "cli" / "lifecycle"),
-                         "--repo", str(work / "repo"), "kind", "check"],
-                        capture_output=True, text=True)
-                    fired = "[hook_not_executable]" in p.stdout
-                    if mode == "100644":
-                        self.assertTrue(fired, p.stdout)
-                        self.assertEqual(p.returncode, exits.FINDING, p.stdout)
-                        # The ONLY finding, so nothing else could have moved
-                        # the exit code — the pair would otherwise separate
-                        # something other than the mode.
-                        self.assertEqual(p.stdout.count("FINDING ["), 1,
-                                         p.stdout)
-                    else:
-                        self.assertFalse(fired, p.stdout)
-                        self.assertEqual(p.returncode, exits.CLEAN, p.stdout)
-                finally:
-                    shutil.rmtree(work, ignore_errors=True)
+        """The guard's OWN finding is the only difference between the pair.
+
+        REPAIRED 2026-09-18 (lc-168), and recorded as a repair with its
+        reason rather than a fix. This asserted a TOTAL FINDING COUNT over a
+        2026-08 tree — `count("FINDING [") == 1` — plus a CLEAN exit on the
+        fixed ref. Both anchor to a live quantity: every refusal anyone ever
+        adds to the checker moves the total, and a historical declaration
+        cannot satisfy a checker that has grown since. So the assertion was
+        decaying into a false alarm from the day it was written, and the
+        seventh stage (lc-168) is simply the first refusal that moved it.
+
+        THIS IS NOT A SILENCED RED, and the discriminator is whether the
+        repair could hide a future defect in the GUARD. The old assertion
+        could: any count change reads the same, so a guard that stopped
+        firing while an unrelated refusal appeared would have kept the total
+        at 1. This one cannot — it names the guard's own ident, and it is
+        STRICTLY STRONGER than what it replaces: the two trees differ in one
+        file's MODE and nothing else, so the guard's finding must be the ONLY
+        difference between their finding sets. That pins the substance the
+        count was standing in for (nothing but the mode separates the pair)
+        without pinning a number that was never the guard's business.
+        """
+        broken, broken_out = self._finding_idents("0cbd1ad")   # 100644
+        fixed, fixed_out = self._finding_idents("d8c3934")     # 100755
+
+        self.assertIn("hook_not_executable", broken, broken_out)
+        self.assertNotIn("hook_not_executable", fixed, fixed_out)
+        # The pair separates the MODE and nothing else. Any other divergence
+        # means these two trees differ in something this proof does not
+        # control, and the demonstration is no longer about the mode.
+        self.assertEqual(
+            broken ^ fixed, {"hook_not_executable"},
+            f"the pair differs in more than the guard's own finding:\n"
+            f"  only at 100644: {sorted(broken - fixed)}\n"
+            f"  only at 100755: {sorted(fixed - broken)}")
 
 
 class TheSkipDoesNotSwallowTheProof(unittest.TestCase):
