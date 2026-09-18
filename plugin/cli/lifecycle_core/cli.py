@@ -21,6 +21,7 @@ from . import items as items_mod
 from . import migrate as migrate_mod
 from . import retire as retire_mod
 from . import verbs
+from . import verify as verify_mod
 from . import workflows as workflows_mod
 
 #: Verbs the design names that this build does not carry yet. Listed rather
@@ -698,6 +699,15 @@ def build_parser() -> argparse.ArgumentParser:
                                  "three-answer result, the laws scope audit, "
                                  "the judgment register's fire-rate")
 
+    ver = sub.add_parser("verify", help="run the laws file's declared `## "
+                                        "Verify` block and assert how many "
+                                        "commands EXECUTED vs registered")
+    ver.add_argument("--list", action="store_true",
+                     help="print the registered commands without running them")
+    ver.add_argument("--timeout", type=int, default=900,
+                     help="per-command timeout in seconds (default 900); a "
+                          "timeout is DID NOT RUN, never a failure")
+
     mig = sub.add_parser("migrate", help="the old carrier → ITEMS.md, "
                                          "ITEMS-DONE.md and a report; or a "
                                          "SCHEMA bump. DRY RUN by default")
@@ -808,6 +818,9 @@ def main(argv=None) -> int:
     elif args.verb in ("retire", "audit"):
         path = args.verb
         code = _walk_verb(args, out)
+    elif args.verb == "verify":
+        path = "verify"
+        code = _verify_verb(args, out)
     elif args.verb == "ledger":
         if not args.ledger_action:
             out("COULD NOT VERIFY: `ledger` needs an action: check, add, "
@@ -952,6 +965,27 @@ def _carrier_verb(args, out) -> int:
         "not act on a guess about which verb was meant, and the guess this "
         "function used to make was `close` — a two-file move.")
     return exits.COULD_NOT_VERIFY
+
+
+def _verify_verb(args, out) -> int:
+    """`verify` — the declared block, run and COUNTED (lc-157 mechanism #1).
+
+    Resolution is the walk verbs' own, deliberately: a verb that resolved the
+    repo differently would answer about a different repo under the same name,
+    which is the class this plugin exists to refuse.
+    """
+    repo, why = resolve_repo(args.repo)
+    if repo is None:
+        out(f"COULD NOT VERIFY: {why}")
+        return exits.COULD_NOT_VERIFY
+    args.resolved_repo = str(repo)
+    res = decl.read(repo)
+    if res.declaration is None:
+        _report(res, out)
+        out("verify: no readable declaration, so the laws file could not be "
+            "resolved. Nothing ran, and that is not a clean verify.")
+        return res.code
+    return verify_mod.cmd_verify(args, out, repo, res.declaration)
 
 
 def _walk_verb(args, out) -> int:

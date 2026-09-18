@@ -307,7 +307,46 @@ def _kind_lane_nope() -> dict:
 
 _GOOD_KW = dict(declaration=GOOD_DECLARATION, gitignore="", laws_lines=10)
 
+def _verify_run(commands: str) -> Fired:
+    """Run `lifecycle verify` over a scratch repo whose laws file declares
+    `commands` as its verify block, and render the verdict as the CLI would.
+
+    THE LAWS FILE IS `LAWS.md` HERE, not CLAUDE.md, because that is what
+    `GOOD_DECLARATION` names — the verb resolves the laws file THROUGH the
+    declaration, so a row hardcoding a filename would test a path the verb
+    does not use.
+    """
+    from . import verify as verify_mod
+
+    class _Args:
+        list = False
+        timeout = 30
+
+    with _Scratch(declaration=GOOD_DECLARATION, gitignore="") as s:
+        (s.dir / "LAWS.md").write_text(
+            "# laws\n\n## Verify\n\n```bash\n" + commands + "\n```\n",
+            encoding="utf-8")
+        said = []
+        code = verify_mod.cmd_verify(_Args(), said.append, s.dir,
+                                     GOOD_DECLARATION)
+        return Fired(code, "\n".join(said))
+
+
 ROWS = [
+    Row(
+        ident="verify_check_failed",
+        refusal="a registered verify command RAN and returned non-zero",
+        firing_input="a laws file whose `## Verify` block names a command "
+                     "that exits non-zero (`false`), beside one that passes",
+        expect=exits.FINDING,
+        fire=lambda: _verify_run("true\nfalse"),
+        # The control differs in the ONE line under test — the failing
+        # command becomes a passing one — not in whether a verify block
+        # exists at all. A control with no block would answer COULD NOT
+        # VERIFY, which differs from the plant for the wrong reason and
+        # proves nothing about this row.
+        control=lambda: _verify_run("true\ntrue"),
+    ),
     Row(
         ident="declaration_absent",
         refusal="public undeclared — a repo with no declaration",
