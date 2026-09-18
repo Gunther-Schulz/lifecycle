@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 181
+added: 182
 compacted: 0
 
 ## lc-3
@@ -953,4 +953,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/declaration.py,test/test_declaration.py
 done-criterion: a producer: reference that names nothing is a finding WHEREVER it appears, including in a writer — the pool a reference is checked against is not built from the same field the reference sits in. RED-FIRST: a declaration whose writer names a producer that exists nowhere else reads CLEAN today and must be a finding after; the reader-side spelling keeps finding it exactly as it does now. MUST-NOT-MOVE: a legitimate writer naming a real producer stays clean, and the route-set check keeps counting producer as watched, since after this it will be watched in both directions rather than one.
 evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs: declaration.py 1184-1198 and 1258-1271, the pool built from writers and the references resolved against it, graded real but narrow. DERIVED: this is the same-parentage rule in the corpus, an expectation read off the body it grades, and the route-set green is what hides it — the roster can be green and the coverage complete while one direction of the route can never fail.
+blocked-by: NONE
+
+## lc-190
+grade: READY
+requirement: THE CONSERVATION SENTENCE CLAIMS MORE THAN THE SUM ESTABLISHES. The identity items plus done equals baseline plus added minus compacted is arithmetic and is correct; the line printed beside it says nothing left the carrier by a path that is not a closure, which a SUM cannot establish. A hand-deleted live block plus an unrelated appended done body leaves the total unmoved, and check_move_integrity sees no shared id, so both verbs report CLEAN. Compensating errors are inherent to a count identity — the defect is the WORDING, and a claim in prose beside a mechanism inherits the mechanism authority to every reader while no check grades it.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: the conservation verdict states what the identity PROVES — that the totals reconcile — and no longer asserts the absence of non-closure paths, which no sum can show. RED-FIRST: the current sentence is the firing input and is quoted in the arm, so a later edit that widens it again fails. MUST-NOT-MOVE, and it is the whole boundary: THE IDENTITY AND ITS ARITHMETIC DO NOT CHANGE, the two sign rows keep their exact current meanings and messages, and the SHORT and OVER diagnoses stay two rows — this is a wording repair and any code change beyond the message is out of scope.
+evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs and graded by them as wording rather than math, with the explicit instruction not to touch the identity: items.py 1184 and 1198. DERIVED: this is law 26 second clause on the repo own output — an assurance wider than its predicate, in the sentence a reader trusts most because a number stands beside it.
 blocked-by: NONE
