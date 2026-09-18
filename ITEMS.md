@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 150
+added: 151
 compacted: 0
 
 ## lc-3
@@ -760,3 +760,12 @@ write-set: plugin/cli/lifecycle_core/judgment.py
 done-criterion: UNKNOWN — the widening's shape depends on the blocked decision
 evidence: judgment.py:29-60 (the three properties). docs/answerable-not-felt.md payoff section. WHY BLOCKED: the research lanes refuted the note's one-directional checker/checked reading — arXiv:2603.26993, role separation over the SAME information is decision-theoretically dominated by one centralized decision maker — and the operator's 2026-09-18 correction reframes desk/peer as two ASYMMETRIC information holders, each exogenous to the other, with momentum a cost of depth rather than a defect. Building the retirement gate on the pre-correction framing would bake the refuted reading into the mechanism. Operator GO 2026-09-18 given in the same message that paused the framing.
 blocked-by: decision is desk/peer one-directional checking or two asymmetric information holders?
+
+## lc-159
+grade: READY
+requirement: EVERY CARRIER WRITE IS NON-ATOMIC AND A TRUNCATED CARRIER PARSES CLEAN — the tool's own worst instance of the class lc-157 is about. 16 carrier write sites (items_path/done_path/ledger_path) use Path.write_text, which truncates then writes; no atomic helper exists in the package (the sole os.replace is a docstring at declaration.py:1290). An interrupt between truncate and flush leaves the carrier SHORT, and the parse contract keys on the head, so the short file returns refused=False with FEWER items and NO problems. Every downstream consumer then gets a confident, clean, WRONG answer over a smaller carrier — the tool's deliberate third answer (unknown/refuse) is routed around entirely.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/ledger.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
+done-criterion: one atomic-write helper (sibling tmp in the same directory then os.replace, which is atomic on a same-filesystem rename) is the ONLY carrier write path, and all 16 sites use it; a reader sees the old carrier or the new one, never a half. RED-FIRST: a write interrupted between truncate and flush leaves the carrier intact at its previous content, proven by a fixture that kills mid-write; and the current code must FAIL that same arm. SECOND HALF, separately gradeable: truncation is made LOUD rather than quiet — a terminator or an entry count the parse checks against what it actually found — so a short carrier returns the third answer instead of a smaller clean one.
+evidence: MEASURED at this desk 2026-09-18 on this repo's own ITEMS.md (223483 bytes, 71 items): truncated to 400 bytes the parse returns refused=False, 1 item, 0 problems; to 2000 bytes 2 items 0 problems; to 20000 bytes 8 items 0 problems. Zero problems at every block-boundary cut, so truncation is invisible to the parser. Positive control: the full carrier parses to 71 items with lc-158 present — an earlier probe returning 0 items for the FULL file was a dead instrument, corrected before any zero was believed. Reported from outside this repo by peer session cachyos-setup-33, reads only, who measured the downstream consequence on CachyOS-Setup's capture-retention guard: full carrier -> ('cited','cs-42'); first 2000 bytes -> ('not-cited', None), exit 0, DELETE — a guard whose purpose is protecting irreplaceable captures reporting a clean run while destroying one. THAT consequence is peer testimony, not re-run here; the parser measurements above are this desk's own.
+blocked-by: NONE
