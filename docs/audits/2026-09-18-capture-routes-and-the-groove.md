@@ -185,6 +185,29 @@ the act. **Test: the close should find nothing left to do.**
 
 ### Part 2 — watch for the unplanted red
 
+**EXTEND THREE EXISTING INSTRUMENTS RATHER THAN INVENT AN OBSERVATION
+CHANNEL** (lane 3's design-relevant secondary finding). The mechanical capture
+events do not scatter — they cluster hard around three things this corpus
+ALREADY has working habits of running:
+
+1. **battery / test green-red comparisons** — before-and-after counts used as
+   the verification instrument
+2. **independently-built-instrument divergence** — two measurements of one
+   quantity returning different answers
+3. **red-first and positive-control discipline on new guards** — including a
+   guard firing on its own author's next legitimate edit, and a predicate
+   invalidated by a harness change that only re-testing caught
+
+So the cheapest path to a larger mechanical share is widening what these three
+already produce into something captured, not building a new detector class.
+
+**And the dominant capture shape is sharper than "a person noticed".** Lane 3,
+verbatim: *"it's the OPERATOR asking one direct question (often just 'why',
+'is this booked?', 'can this be improved?') that surfaces a gap the loaded
+rule/mechanism should have caught but didn't."* Category A alone is ~35-40% of
+all events. The rule was loaded. The mechanism existed. A one-line question
+found what both missed.
+
 Not "a guard fired" (high-volume, near-informationless). The computable set,
 drawn from the lanes' merged event list:
 
