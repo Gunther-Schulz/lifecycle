@@ -182,6 +182,38 @@ journal pointer is where the incident lives.
     (J20, J22, J25, J26)
 25. **Every schema change ships its migration, dry-run first, over every
     declared repo, before it is applied anywhere.** (J21)
+    **A DRY RUN LICENSES ONLY WHAT IT EXERCISES, AND IT EXERCISES THE READER.**
+    Measured 2026-09-18: the apply resolved a carrier head with a DIFFERENT
+    predicate than the plan read it with, so it reported three carriers written
+    while changing none — and where a body line below the head resembled one, it
+    rewrote THAT instead. Both are invisible to any number of clean dry runs, by
+    construction. So THE APPLY READS BACK FROM THE ARTIFACT and asserts the new
+    state arrived, per target, BEFORE it reports applied — never the printed
+    `written:` line, which is precisely what lied. The writing command's exit
+    says the write happened, never that what arrived is what was meant. A
+    read-back catches this class and every unfound sibling of it WITHOUT KNOWING
+    THE CLASS IN ADVANCE, which is why it is the general instrument and not this
+    defect's cleanup. (J28)
+    **AND AFTER A MIGRATION, ONLY THE NEW STATE EXISTS.** Operator decision,
+    2026-09-18: the old carrier does not survive as a courtesy copy, and the
+    stated basis is that git holds every prior state — retiring the source
+    destroys nothing, so the reversible test passes at the REPO and not merely
+    at the desk. This is law 9 at carrier scale: a move is append, delete,
+    commit, and one that never deletes is not a move but a duplication.
+    THE MECHANISM IS POLARITY, NOT FORCE, and that distinction is the rule.
+    `--retire-source`'s four preconditions gate the ACT and are not softened —
+    deleting past them would be a destructive step sized to intent rather than
+    to the object's current state. What changes is the SILENCE: retiring is
+    opt-in today, so two coexisting states are the default outcome and nothing
+    anywhere calls that wrong. A completed migration whose source still exists
+    is a FINDING naming the source and the exit it has not taken. An operator
+    who wants both states keeps them, and now has to say so.
+    Law 26's default question at its first case: the lazy path currently ends
+    with legacy files lying around, so the repair moves the DEFAULT rather than
+    adding a rule telling anyone to remember. This repo is its own first case
+    and already took the exit correctly — `BACKLOG.md` was DELETED at migration
+    with its citations pinned to the deleting commit's parent, which the ruling
+    now makes general rather than exemplary.
 26. **A DESIGN ANSWERS WHAT MUST BE WRITTEN BEFORE IT ANSWERS WHAT MUST BE
     REMEMBERED, NOTICED OR DECIDED WELL.** Operator direction, 2026-09-18, as
     the guiding principle for everything designed here. The question comes
