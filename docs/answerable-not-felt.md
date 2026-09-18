@@ -172,6 +172,34 @@ recalls), a **seam-trigger** (a check fired by a moment, not a feeling), and a
 should cover the overseer / out-of-flow-checker angle specifically — is the
 reliability gain from role SEPARATION, or from momentum INDEPENDENCE, or both?
 
+## The payoff — mechanized levers let prose RETIRE (a leaner corpus)
+
+Beyond catching more gaps, each lever has a second payoff that ties directly to
+the north-star's EFFICIENCY half and to the operator's multi-session
+corpus-improvement thread. The corpus already grades rules by FIRE RATE (the
+maintenance doctrine's fire-rate review; the adherence split — a duty with a
+VISIBLE OUTPUT fires, a REMEMBER-TO duty under-fires even while loaded, measured,
+and re-measured tonight: 5 of 6 corrections against a rule loaded the whole time
+and inert). A remember-to prose rule that under-fires is a RETIREMENT candidate
+the moment a mechanism enforces its duty by construction (the pit-of-success:
+compute or default what the duty asked, so the lazy path is the correct path).
+
+So building a lever here does double work: it makes the guarantee mechanical AND
+lets the prose it absorbs LEAVE the corpus. "Verify the verifiers" absorbs "read
+what was done off the object, not memory"; the record lint absorbs the record's
+prose conventions; each retirement is a paragraph the always-loaded corpus stops
+re-billing every turn. That is dependability (mechanism over prose-hope) and
+efficiency (less context per turn) moving together, not traded — a leaner corpus
+that keeps its teeth.
+
+**The retirement GATE, honestly:** a rule retires only when its duty is GENUINELY
+mechanized — fires by construction, near-zero false fires — never merely because
+a mechanism exists nearby, and never the judgment-remainder (which stays prose,
+operator as backstop). The fire-rate review is that gate; the levers feed it
+candidates. Net direction: the corpus gets SMALLER as the answerable half
+precipitates into mechanism, and what remains is the judgment that genuinely
+needs a mind.
+
 ## Next session — scout the external landscape IN PARALLEL (operator direction)
 
 The operator's framing (2026-09-18): persistence + the right triggers + the
