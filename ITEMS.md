@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 218
+added: 219
 compacted: 0
 
 ## lc-3
@@ -1271,4 +1271,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/records.py,test/test_records.py
 done-criterion: A recommendation without the goal-advance fill is visibly absent at a glance, and the check fires on the absence rather than grading the prose. Red-first on the specimen below, which must FAIL, and green on a filled recommendation. FIRST DECISION OF THE ITEM, named as a design question and not pre-decided: the enforcement home, record check or a prose form or a desk convention. The write-set above assumes record check and is amended before building if the decision moves it. MUST-NOT-BUILD: nothing that grades the CONTENT of the fill, per that document own boundary, a slot filled with nonsense passes and what is bought is that the thinking happened and its absence is visible.
 evidence: DERIVED from docs/required-slots-as-an-autonomy-lever.md: do not ask an agent to decide well, require it to WRITE something at the moment of deciding; the trigger is a computable predicate with near-zero false fires, so a duty under-firing while loaded does not apply. MEASURED 2026-09-18 in that same document: the operator corpus carries 27 Convention statements and roughly 5 carry a token; the tokened ones fire and the rest are duties. SPECIMEN, relayed from the driving desk and carried as theirs: the recommendation keep playing, the rig is healthy, 2026-09-18, retracted by its own author as advancing nothing. DERIVED: this is the eighth candidate; that document lists seven existing prose rules whose firing moment is known and whose slot does not exist.
+blocked-by: NONE
+
+## lc-227
+grade: READY
+requirement: BOOKING AND LEDGERING FIRE FROM MEMORY. docs/the-loop.md I3 and I4: the verbs are excellent, the records are right, the checks work, and what fires them is a session remembering to, so a session that booked nothing reads exactly like a session with nothing to book. Fix by the route that already worked at I5: a COUNT at close, items booked and ledger lines written against the session finds and decisions, which makes a zero ANSWERABLE instead of silent. Not a better duty.
+goal: enforce-the-invariants
+write-set: plugin/skills,plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/ledger.py,test/test_items.py,test/test_ledger.py
+done-criterion: The close renders a count of items booked and ledger lines written for the session, and a ZERO renders as an explicit zero with its own line rather than as an absent line, since an absent line is not readable as a verdict. Red-first: a session that booked nothing must produce a visible zero, and a run over no data must render could-not-verify rather than a pass-shaped 0. CROSS-REFERENCE lc-97, DO NOT DUPLICATE IT: lc-97 ships the close-session skill into the plugin payload and this item adds the count to that ceremony. The write-set overlaps lc-97 at plugin/skills, so the wave join will serialize them and that is correct; the count lands after or inside lc-97 shipped skill, never as a second close ceremony.
+evidence: DERIVED from docs/the-loop.md I3 and I4, ranked third of the six gaps, with its own line: the same gap and the cheapest one to misjudge, observer is memory, GAP. DERIVED from the same file I5, the one place this was solved, and the solution was not a better duty, it was a COUNT at close which makes a zero answerable instead of silent, marked PARTIAL rather than GAP as a result. DERIVED from the operator corpus: an obligation with no output leaves no visible absence, which is why the count and not the duty is the mechanism. MEASURED at this desk 2026-09-19 from lc-97 own slots: its write-set is plugin/skills and plugin/.claude-plugin, so the overlap named above is real and not assumed.
 blocked-by: NONE
