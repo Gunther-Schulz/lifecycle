@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 182
+added: 183
 compacted: 0
 
 ## lc-3
@@ -962,4 +962,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
 done-criterion: the conservation verdict states what the identity PROVES — that the totals reconcile — and no longer asserts the absence of non-closure paths, which no sum can show. RED-FIRST: the current sentence is the firing input and is quoted in the arm, so a later edit that widens it again fails. MUST-NOT-MOVE, and it is the whole boundary: THE IDENTITY AND ITS ARITHMETIC DO NOT CHANGE, the two sign rows keep their exact current meanings and messages, and the SHORT and OVER diagnoses stay two rows — this is a wording repair and any code change beyond the message is out of scope.
 evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs and graded by them as wording rather than math, with the explicit instruction not to touch the identity: items.py 1184 and 1198. DERIVED: this is law 26 second clause on the repo own output — an assurance wider than its predicate, in the sentence a reader trusts most because a number stands beside it.
+blocked-by: NONE
+
+## lc-191
+grade: READY
+requirement: THE EMIT-SITE SCAN STATES A LIMIT NARROWER THAN ITS PREDICATE. The check prints a LIMIT paragraph naming one boundary — it cannot catch a refusal the PROSE requires and the CODE lacks — and its reach is narrower than that: it matches row names at literal emit sites and at the patterns it knows, so a row name RELAYED into an emitted string by another route is outside it. The review lane grepped and found NO such site at this sha, which is exactly why the repair is the SENTENCE and not a pattern: building a matcher for a site that does not exist is a mechanism minted without an incident, and the repo own doctrine refuses that.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/roster.py,test/test_refusals.py
+done-criterion: the coverage check LIMIT paragraph states the reach its predicate actually has, naming the relayed-name case beside the prose-requires-code-lacks case it already names. NO NEW PATTERN AND NO NEW MATCHING — the check behaviour is unchanged. RED-FIRST: the current paragraph is the firing input, quoted in an arm, so a later edit that lets the statement drift wider than the predicate fails. MUST-NOT-BUILD, stated so a later reader does not helpfully add it: no matcher for a relayed row name until a real site exists, because a check built for an absent site is unfalsifiable and would report clean forever.
+evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs and graded by them as HYPOTHESIS rather than finding, with their grep returning no such site at this sha and their explicit instruction not to build the pattern. MEASURED at this desk 2026-09-18 while widening that same scan for lc-172: the patterns are literal and the check reads SOURCE, so any construction that assembles a row name elsewhere is outside its reach by construction. DERIVED: the honest act on a hypothesis with no instance is to make the stated limit match the predicate and stop, which is what the assurance rule asks and what the mechanism bar forbids exceeding.
 blocked-by: NONE
