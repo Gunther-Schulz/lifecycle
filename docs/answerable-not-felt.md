@@ -665,6 +665,22 @@ ungoverned domains are ones where the operator MUST evaluate personally
 operator-catch rate follows from the domain alone. Operator presence differs
 too: 263 messages mean ungoverned against 162 governed.
 
+**THAT LAST POINT DOES NOT EXEMPT THOSE DOMAINS FROM GOVERNANCE, and this desk
+implied it did** (operator's correction, 2026-09-18). Two claims were run
+together: that the comparison cannot isolate governance (true), and that
+domains where the operator must evaluate therefore do not need a lifecycle
+system (false, and smuggled in). The must-evaluate fact explains a higher
+CATCH RATE; it says nothing about whether the repo's knowledge needs
+governing. Subjective visual quality is one KIND of judgment that stays with
+the operator — what was tried, what was decided, what failed and what is still
+open is identical work in any domain.
+
+**wan2gp refutes the exemption outright.** It is ungoverned by lifecycle and
+carries a 608KB backlog, a 553-line CLAUDE.md and 57 docs, while running
+thousands of turns at ~4 operator interjections per 100. It has the knowledge
+layer and built it BY HAND. That is evidence the need is strongest where
+governance is absent, not that the domain is exempt.
+
 **Verdict: COULD NOT VERIFY, not a finding.** Two measurements only compare
 where they share a coordinate, and these do not. Recorded because the desk has
 now been wrong about this control arm TWICE in one session — first claiming
