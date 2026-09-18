@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 216
+added: 217
 compacted: 0
 
 ## lc-3
@@ -1254,3 +1254,12 @@ write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/la
 done-criterion: The reader stage carries a trigger on the closed vocabulary, evaluated by lanes.evaluate_trigger and nothing else, with all three answers reachable and a red-first proof for each. MUST-NOT-BUILD: not bundled with lc-218 own bump. An eighth stage is a schema-shape change and lc-218 MUST-NOT-BUILD forbids two schema changes in one act, so this lands AFTER lc-218 SCHEMA_FLOOR is 3, as its own numbered bump if it adds a stage. FIRST DECISION OF THE ITEM, not pre-decided here: whether the WHEN is a sub-field of the existing reader stage (no schema-shape change) or an eighth stage (a bump). The directive names both readings and they differ in cost.
 evidence: DERIVED from docs/the-loop.md O6, the ranked-first gap: the schema has a reader stage naming a party and no stage naming a moment. MEASURED at this desk 2026-09-19 against .claude/lifecycle.json: 25 kinds declared, 20 of them carry session in their reader list, and all 25 already declare the seventh (trigger) stage, so the writer half is complete and the reader half is the remainder. MEASURED, relayed from the driving desk 2026-09-18 and carried as theirs: a document handled 17 times went unread at the moment it was needed and four discovery lanes were dispatched to re-derive what it held. LANE-VERIFIED and NOT opened at any desk here: arXiv:2606.22528, a rule surviving in the corpus while absent from context moves violation 0 percent to 30-59 percent. DERIVED: the one worked instance of a read-trigger anywhere here is the runbook EVENT LANE, entered because something fired and found through an always-loaded router.
 blocked-by: lc-218
+
+## lc-225
+grade: READY
+requirement: AN INVESTIGATION ROUND SERIES IS VISIBLE TO NOBODY WHO IS IN IT. Instrument rounds never present as a cycle to the session running them, so the question is another round owed and is the FORM failing never gets asked from inside. Make the series persisted, printed state: round 5; rounds 2-4 returned nothing new, surfaced where the session composing the next round sees it. Pattern is lc I5 count-at-close applied to rounds: a count makes a zero answerable.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/records.py,test/test_records.py
+done-criterion: The record carries per-round yield and the record check prints the series where the next round composer reads it, with a zero-yield round rendering as an explicit zero rather than as silence. Three answers reachable, red-first per arm. FIRST DECISION OF THE ITEM, named as a design question and not pre-decided: whether the home is investigation-record slots plus record check (the likely home, and the write-set above assumes it), a prose form, or a desk convention. If the decision moves the home, the write-set is amended before building. MUST-NOT-BUILD: no round counter whose value is derived from the composing session own memory; the count comes from the record.
+evidence: DERIVED from the operator corpus re-entry-seam convention: a repeated cycle carries two method-shaped questions, is another round owed and is the FORM failing, and the session running the rounds cannot see the series. MEASURED 2026-09-18, relayed from the driving desk and carried as theirs: in the CachyOS freeze arc, keep playing was recommended over an unchanged instrument while the data that would have answered sat on disk, and the operator was the only party who saw the series. DERIVED from docs/the-loop.md I5: the one gap solved here was solved by a COUNT at close rather than by a better duty, which is the transferable move. DERIVED: the operator line by now something should have materialized is this question arriving late, from outside.
+blocked-by: NONE
