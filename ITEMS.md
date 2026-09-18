@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 200
+added: 201
 compacted: 0
 
 ## lc-3
@@ -1140,4 +1140,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/refusals.py,test/test_migrate.py
 done-criterion: The ledger count consumes all THREE of ledger.parse's answers: an unreadable line is could-not-verify with its reason, never folded into a zero that reads as clean. AND THE SECOND DIRECTION IS SETTLED IN THE SAME CHANGE OR EXPLICITLY DEFERRED TO lc-150: the row as written can never be a true positive, because migrate writes no ledger LINE anywhere — so a nonzero count is ALWAYS pre-existing content, which makes the claim about a DELTA while the predicate is an ABSOLUTE count. Any repo following the corpus's LEDGER.md discipline gets exit 2 out of its own migration. RED-FIRST, the pair: one well-formed superseded: line gives FINDING migration_ledger_nonzero at exit 2; one unclassifiable line in the same position must NOT give 'ledger lines: 0' and CLEAN.
 evidence: RELAYED from the lc-192 lane with its executed pair pasted, and NOT reproduced at this desk: control, one well-formed superseded: line gives 'ledger lines: 1' and FINDING at exit 2; probe, one unclassifiable decision: line in the same position gives 'ledger lines: 0' and CLEAN at exit 0, while ledger.parse on that same file returns lines 0, unreadable 1, problems []. The arm that must differ differed. RELAYED, the second direction and marked as the lane's completed argument rather than my measurement: migrate writes no ledger line anywhere — 2492-2493 writes head_text() only when the file is absent, and dispose_source writes the LAWS file, not the ledger. MEASURED at this desk: this repo's own LEDGER.md parses to a nonzero line count, so the over-fire is reachable here and not hypothetical. DERIVED: law 11's discount reflex and law 22's unfalsifiable predicate meet in one row — it fires on legitimate work AND can never be a true positive.
+blocked-by: NONE
+
+## lc-209
+grade: READY
+requirement: THE MIGRATION REPORT RENDERS AN UNREADABLE ITEMS.md AS 'None yet ... expected'. routed_items (migrate.py:2776-2779) swallows OSError and UnicodeDecodeError and returns an empty list; the render at 3234-3238 then prints the empty-table paragraph. That paragraph's own framing at 3230 names exactly TWO readings of an empty table — that the routing has not happened rather than that there was nothing to route — and misses the third, which is that the carrier could not be read at all. Reachable on --report-only without --merge, the one path that never opens ITEMS.md earlier; under --merge an unreadable home is correctly caught at 2277.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: An unreadable routing home is the THIRD answer in that section — could-not-verify with its reason — never the empty table. The section's framing paragraph gains that third reading, since it currently enumerates two and the enumeration is what makes the omission invisible. RED-FIRST, the pair: a readable ITEMS.md citing the report renders its row and '1 finding(s) routed'; the same repo with ITEMS.md made undecodable must NOT render 'None yet' and CLEAN.
+evidence: RELAYED from the lc-192 lane with its executed pair pasted, NOT reproduced here: control renders the lc-1 row and '1 finding(s) routed'; probe with an invalid-UTF-8 ITEMS.md renders 'None yet. On the FIRST run of a migration this is expected' at CLEAN exit 0. DERIVED from the lane's read: the swallow is at 2776-2779 and the two-reading framing at 3230. MEASURED at this desk: nothing — this one is booked entirely on relayed evidence and its first build step is to reproduce the pair.
 blocked-by: NONE
