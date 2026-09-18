@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 178
+added: 179
 compacted: 0
 
 ## lc-3
@@ -926,4 +926,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
 done-criterion: an untypeable blocker on an item of ANY grade is reported rather than dropped, and the verb never returns a verdict with no output. RED-FIRST: the mistyped-id input above, on a READY item, must produce a finding naming that item; the well-formed spelling keeps producing dangling_reference unchanged. SECOND HALF, same repair: with no typed blockers at all the verb returns CLEAN having PRINTED NOTHING — an absent line is not readable as a verdict, so the clean path states what it examined, which is lc-172 at a site lc-172 did not reach. MUST-NOT-MOVE: a correctly typed blocker of each of the three kinds keeps its current verdict, and PARKED items keep being covered by check_parked_blockers rather than being reported twice.
 evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs and graded by them as the highest of the remainder: the mistyped-id input, the CLEAN-with-4 output, and the well-formed control that finds dangling_reference. DERIVED from their report: the drop happens because an unrecognised value matches neither the item-id arm nor the prose arm, so it is invisible to a count that only sums what it recognised. MEASURED at this desk before booking: items.py check_blocker_targets is the function they name and check_parked_blockers is PARKED-only, so no other check covers a READY item carrying one.
+blocked-by: NONE
+
+## lc-187
+grade: READY
+requirement: TWO BODIES BEHIND ONE CONTRACT DISAGREE ABOUT THE CASE THAT DECIDES A CLEAN BOARD. growth_verdict (retire.py) still carries the defect walk had repaired: a kind with no declared home and a kind whose home is UNRESOLVABLE are both continued SILENTLY, so the function can return CLEAN having examined nothing — while walk routes both to COULD NOT VERIFY with a printed reason. This is the same one-evaluator rule the laws file states for lane list and item ready, sitting inside the growth check. Bounded today because growth_verdict is reached by a roster row and never by the CLI, and the lc-170 lesson has exactly one home while this is the other.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/retire.py,test/test_retire.py
+done-criterion: growth_verdict and walk give the SAME answer for a kind with no home and for a kind whose home cannot be resolved: could-not-verify with a printed reason, never a silent continue. RED-FIRST: a declaration carrying one kind with no home and one with an unresolvable home makes growth_verdict return CLEAN today and must not after. MUST-NOT-MOVE: a kind whose home resolves keeps its exact current verdict and wording, and the two functions stay two functions — the repair is one shared answer for the unexaminable case, not a merge that would lose the acting-versus-reporting split.
+evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs: retire.py 364-380 against 426-439, the two branches and their disagreement. DERIVED: a silent continue over an unexaminable kind is the absence-claim class lc-172 removed from the walk, so this is that same repair at the sibling body rather than a new judgment. MEASURED at this desk: growth_verdict has no CLI caller today, which bounds the blast radius and decides nothing about whether the bodies should agree.
 blocked-by: NONE
