@@ -588,6 +588,39 @@ transcripts — a write following an operator message on that topic is prompted;
 one arising from the work itself is not. Otherwise we would measure wan2gp's
 success and call it self-management.
 
+### 2c. THE SHAPE IS THE CORPUS'S OWN TRANSITION TABLE, APPLIED TO KINDS
+
+**Operator, 2026-09-18, and it names what all of this has been converging
+on.** Accountability, triggers and tracking are not three mechanisms — they
+are one shape that already exists in the corpus, prescribed for DESIGNS and
+never applied to KINDS:
+
+> arrow → verb → record written → check that proves it → OBSERVER: what
+> notices the arrow's moment arriving
+
+Map it onto a registered kind and the correspondence is exact: **accountability
+is `writer`. Tracking is `home` plus `reader`. Lifetime is
+`staleness`/`exit`/`growth`. And the TRIGGER is the OBSERVER — the thing that
+notices the moment — which is precisely the stage a kind does not declare
+(lc-168).**
+
+**A kind with all seven carries itself forward:** the seam fires, a verb runs,
+the write happens as a byproduct, a check proves it, and nobody remembered
+anything. That is why the 4 verb-written kinds self-administer and the 17
+`writer: session` kinds do not — the first group has observers, the second has
+stages without arrows.
+
+**AND JUDGMENT SITS BETWEEN THE SEAMS** (the operator's completion of the
+shape, and the reason this is enablement rather than constraint). The
+mechanized steps carry the transitions; the SPANS between them are where the
+intelligence judges and carries decisions freely. Nothing in the table tells
+the agent what to conclude — it tells the environment when to ask and what to
+record. The corpus's own words for the same split: the environment carries the
+FLOOR, the intelligence provides the CEILING.
+
+**So the plan's five mechanisms are one mechanism at five seams**, and the
+work is completing the table for kinds rather than inventing anything.
+
 ### 3. Watch for SURPRISES, not for guards firing
 
 A guard firing is usually an old lesson working correctly — enforcement, not
