@@ -543,6 +543,7 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
 
     if repo is not None:
         check_records_kind_declared(repo, doc, res)
+        check_desk_state_kind_declared(repo, doc, res)
     if repo is not None and isinstance(doc.get("laws"), str) and doc["laws"].strip():
         check_laws_present(repo, doc["laws"], res)
     if repo is not None:
@@ -916,31 +917,64 @@ def _home_is_declared(doc, mark: str) -> bool:
     return False
 
 
-#: NOT A CHECK, AND THE MEASUREMENT IS WHY (lc-171). A first cut of
-#: `check_desk_state_kind_declared` mirrored the records check and fired
-#: `desk_state_kind_undeclared` wherever desk-state files existed and no kind
-#: named them. It over-fired immediately and the roster caught it: 22 rows
-#: went COULD NOT VERIFY in one run, because every one of them runs `kind
-#: check` over a SCRATCH repo and the check was reading the MACHINE's
-#: desk-state home.
-#:
-#: THE CAUSE IS THE KIND'S OWN SHAPE, not the check's spelling. The records
-#: check scopes by the repo's name — records are `<repo>--*.md` — so a scratch
-#: repo can never match another repo's records. A desk-state file is keyed by
-#: SESSION ID and carries no repo at all (measured: its keys are value,
-#: argument, at, desk, desk_source). So a per-repo declaration check over a
-#: machine-wide kind demands that EVERY repo declare it because SOME OTHER
-#: repo's session once wrote one — a guard firing on legitimate work, which
-#: law 11 says stops the lane.
-#:
-#: TWO REPAIRS EXIST AND BOTH ARE BIGGER THAN THIS ITEM: make `desk state`
-#: record the repo it was written in, which makes the kind genuinely
-#: per-repo and scopable exactly as records are; or check machine-wide state
-#: at a machine-wide level rather than from inside one repo's declaration
-#: check. Booked rather than guessed at — the declaration itself is correct
-#: and lands here regardless, since the kind being REGISTERED is what closes
-#: the invariant-1 gap; what is missing is the automatic detector for the
-#: NEXT undeclared XDG kind.
+DESK_STATE_HOME_MARK = "lifecycle/desk-state"
+
+
+def check_desk_state_kind_declared(repo, doc, res: Result) -> None:
+    """Desk state written BY THIS REPO exists and no kind names it (lc-182).
+
+    THIS CHECK WAS WITHDRAWN ONCE, and the withdrawal is why it is spelled
+    this way. lc-171's first cut mirrored the records check and asked only
+    whether desk-state files EXIST — and desk state is machine-wide, so it
+    demanded that every repo declare the kind because some other repo's
+    session had written a file. Measured: the roster went from CLEAN to 22
+    rows COULD NOT VERIFY in one run, every one of them a declaration row
+    running `kind check` over a scratch repo. That is law 11's guard firing
+    on legitimate work, and the repair was not a softer predicate but a
+    SCOPE the kind did not yet have.
+
+    SO THE WRITER RECORDS THE REPO (`desk.cmd_desk_state`), on the fire log's
+    own idiom, and this reads only files that name THIS one. Records are
+    scoped by the repo name in their filename and that is why the same shape
+    transferred there and not here — a desk-state file is keyed by session id
+    and carried no repo at all.
+
+    A FILE WITHOUT THE KEY BELONGS TO NOBODY, deliberately: state written
+    before lc-182 cannot be attributed, and attributing it by guess would
+    re-create the over-fire one layer in. Such files age out as each desk
+    overwrites its own.
+    """
+    from . import desk as desk_mod
+
+    try:
+        files = sorted(desk_mod.state_dir().glob("*.json"))
+    except OSError:
+        return
+    here = str(Path(repo).resolve())
+    mine = []
+    for f in files:
+        try:
+            rec = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(rec, dict) and rec.get("repo") == here:
+            mine.append(f)
+    if not mine or _home_is_declared(doc, DESK_STATE_HOME_MARK):
+        return
+
+    res.add("desk_state_kind_undeclared",
+            f"{len(mine)} desk-state file(s) written IN THIS REPO exist and "
+            "no registered kind names their home. `lifecycle desk state` "
+            "writes them, so this is the plugin governing its own state "
+            "everywhere except the file it writes about the desk. They sit "
+            "OUTSIDE the tree by design — an XDG home costs no permission "
+            "dialog and dirties no repo — so `kind sweep` cannot reach them: "
+            "it walks tracked files. Register the kind with all six stages. "
+            "Its answers are not the investigation record's: the verb ALWAYS "
+            "OVERWRITES and keeps no history, so staleness is "
+            "current-by-construction and the exit is not a compaction. `the "
+            "fire log` and `investigation records` are both precedents for an "
+            "XDG home declared as a per-repo kind.")
 
 
 def _validate_kind(name: str, body, res: Result, world) -> None:

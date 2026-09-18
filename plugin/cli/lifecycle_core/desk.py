@@ -162,6 +162,21 @@ def cmd_desk_state(args, out, repo) -> int:
         "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "desk": desk_id,
         "desk_source": source,
+        # THE REPO THIS STATE WAS WRITTEN IN (lc-182), and it is what makes
+        # the kind checkable at all. Desk state is MACHINE-WIDE and was keyed
+        # by session id alone, so nothing tied a file to the repo whose
+        # declaration ought to govern it. A detector built without this fires
+        # in every repo because SOME OTHER repo's session once wrote a file —
+        # measured at lc-171, where a first cut took the roster from CLEAN to
+        # 22 rows could-not-verify in one run, which is law 11's guard firing
+        # on legitimate work.
+        #
+        # `str(repo)` IS THE FIRE LOG'S OWN IDIOM, not a new convention:
+        # `read_fire_log` filters records with `rec.get("repo") != str(repo)`,
+        # so this is the same key, written the same way, read the same way.
+        # A repo NAME would collide across two checkouts of one project on
+        # one machine, which is the population this file lives in.
+        "repo": str(repo),
     }
     if value == WAITING_ON:
         rec["horizon"] = horizon

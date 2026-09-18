@@ -2,11 +2,19 @@
 
 import json
 import subprocess
+import sys
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
+
+# THE PACKAGE, IMPORTED HERE SINCE lc-182. This module used to read the
+# declaration as JSON and shell out, so it needed no import; the desk-state
+# scope arms drive the roster helper directly, which is what lets them run
+# the SAME arrangement the row runs rather than a second spelling of it.
+sys.path.insert(0, str(ROOT / "plugin" / "cli"))
+
+from lifecycle_core import exits, refusals  # noqa: E402
 
 
 class DeclaredHomesSweep(unittest.TestCase):
@@ -121,3 +129,56 @@ class InvestigationRecordsAreARegisteredKind(unittest.TestCase):
         # record's CONTENT, and a `move` here would undo the three benefits
         # the home exists for.
         self.assertEqual(kind["exit"]["action"], "never")
+
+
+class DeskStateIsScopedToTheRepoThatWroteIt(unittest.TestCase):
+    """lc-182 — the detector lc-171 could not have, and the arm it failed.
+
+    THE WITHDRAWN CUT ASKED ONLY WHETHER FILES EXIST. Desk state is
+    machine-wide, so that check demanded every repo declare the kind because
+    SOME OTHER repo's session had written a file: the roster went from CLEAN
+    to 22 rows COULD NOT VERIFY in one run, every one a declaration row
+    running `kind check` over a scratch repo. Law 11's guard firing on
+    legitimate work, and the repair was a SCOPE rather than a softer
+    predicate — the writer now records its repo, on the fire log's own idiom.
+
+    THE SECOND ARM IS THE POINT. A row carries one pair, and that pair proves
+    the refusal's own axis (declared or not); this class carries the REACH
+    arm, which is the one that was wrong before and which no green row would
+    have caught.
+    """
+
+    def _run(self, *, declare, mine):
+        return refusals._desk_state_kind_run(declare=declare, mine=mine)
+
+    def test_a_repo_that_wrote_desk_state_and_declares_no_kind_FIRES(self):
+        fired = self._run(declare=False, mine=True)
+        self.assertEqual(fired.code, exits.FINDING, fired.output)
+        self.assertIn("desk_state_kind_undeclared", fired.output)
+
+    def test_declaring_the_kind_clears_it(self):
+        fired = self._run(declare=True, mine=True)
+        self.assertEqual(fired.code, exits.CLEAN, fired.output)
+
+    def test_ANOTHER_repos_desk_state_does_NOT_fire_here(self):
+        """THE ARM THE FIRST CUT FAILED, and the whole reason lc-182 exists.
+
+        The file is present, the kind is undeclared, and this repo wrote
+        none of it — so the check must stay silent. A detector that fired
+        here would report a finding in every repo on the machine the moment
+        any one desk stored state.
+        """
+        fired = self._run(declare=False, mine=False)
+        self.assertEqual(fired.code, exits.CLEAN, fired.output)
+        self.assertNotIn("desk_state_kind_undeclared", fired.output)
+
+    def test_the_writer_records_the_repo_so_the_scope_exists_at_all(self):
+        """The half in `desk.py`: without this key the scope above is not
+        computable, and the check would have to guess — which is how the
+        withdrawn cut over-fired."""
+        import inspect
+        from lifecycle_core import desk as desk_mod
+        src = inspect.getsource(desk_mod.cmd_desk_state)
+        self.assertIn('"repo": str(repo)', src,
+                      "the desk-state writer no longer records its repo, so "
+                      "nothing can scope a machine-wide kind to one repo")

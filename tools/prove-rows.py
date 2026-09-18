@@ -168,6 +168,17 @@ MUTATIONS = [
      "the record already answers is booked to the operator's court and waits "
      "there until somebody happens to look"),
 
+    # THE SCOPE TEST, NOT THE EXISTENCE TEST (lc-182). The withdrawn first
+    # cut of this check asked only whether desk-state files existed; the
+    # condition that makes the refusal correct is the one that keeps it to
+    # files THIS repo wrote, so that is what the mutation removes. With it
+    # gone the check reports every desk-state file on the machine as this
+    # repo's — the over-fire that took the roster to 22 could-not-verify.
+    ("desk_state_kind_undeclared", "declaration.py",
+     "        if isinstance(rec, dict) and rec.get(\"repo\") == here:",
+     "        if isinstance(rec, dict):",
+     "the repo scope on a machine-wide kind's files"),
+
     ("blocker_predicate_broken", "verbs.py",
      "    if broken is not None:",
      "    if False:",

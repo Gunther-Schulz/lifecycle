@@ -3607,6 +3607,55 @@ def _records_kind_run(*, declare: bool) -> Fired:
         shutil.rmtree(state, ignore_errors=True)
 
 
+def _desk_state_kind_run(*, declare: bool, mine: bool = True) -> Fired:
+    """`kind check` over a repo with a desk-state file (lc-182).
+
+    `mine` IS THE ARM THE WITHDRAWN FIRST CUT FAILED. With it False the file
+    on disk names a DIFFERENT repo, and the check must stay silent: desk
+    state is machine-wide, so a check that only asked whether files EXIST
+    demanded every repo declare the kind because some other repo's session
+    wrote one — measured at lc-171 as 22 rows could-not-verify in a single
+    run.
+
+    THE HOME IS REDIRECTED THROUGH `XDG_STATE_HOME`, as the records row does
+    and for the same reason: an arm reading the machine's own home would
+    grade whatever it held that day, and the plant would mean writing into
+    state another desk owns.
+    """
+    d = json.loads(json.dumps(GOOD_FULL_DECLARATION))
+    if declare:
+        d["kinds"]["desk state"] = {
+            "home": "$XDG_STATE_HOME/lifecycle/desk-state/*.json",
+            "writer": "verb:desk state",
+            "reader": ["verb:desk state"],
+            "staleness": "none, declared why: overwritten in place",
+            "exit": {"action": "delete",
+                     "recording-act": "a ledger line naming the desks removed"},
+            "growth": "unbounded-with-reason — one file per desk id",
+        }
+    state = Path(tempfile.mkdtemp(prefix="lifecycle-xdg-"))
+    r = _Repo(declaration=d)
+    old = os.environ.get("XDG_STATE_HOME")
+    try:
+        home = state / "lifecycle" / "desk-state"
+        home.mkdir(parents=True)
+        owner = str(Path(r.dir).resolve()) if mine else str(state / "elsewhere")
+        (home / "a-desk.json").write_text(
+            json.dumps({"value": "READY", "desk": "a-desk", "repo": owner}),
+            encoding="utf-8")
+        os.environ["XDG_STATE_HOME"] = str(state)
+        buf = []
+        code = _kind_check(r, buf.append)
+        return Fired(code, "\n".join(buf))
+    finally:
+        if old is None:
+            os.environ.pop("XDG_STATE_HOME", None)
+        else:
+            os.environ["XDG_STATE_HOME"] = old
+        r.close()
+        shutil.rmtree(state, ignore_errors=True)
+
+
 def _kind_check(repo_obj, out) -> int:
     from . import cli as cli_mod
     import io
@@ -3691,6 +3740,28 @@ RECORDS_KIND_ROWS = [
         # says nothing about whether the check reads the declaration.
         control=lambda: _records_kind_run(declare=True),
         stage="lc-166",
+    ),
+    Row(
+        ident="desk_state_kind_undeclared",
+        refusal="desk-state files WRITTEN IN THIS REPO exist and no registered "
+                "kind names their home — the plugin governing its own state "
+                "everywhere except the file a shipped verb writes about the "
+                "desk. An XDG home is invisible to `kind sweep`, which walks "
+                "TRACKED files, so its absence from the declaration is "
+                "invisible to every other check too (lc-171, lc-182)",
+        firing_input="`kind check` in a repo that has written desk state, "
+                     "with no kind naming its home",
+        expect=exits.FINDING,
+        fire=lambda: _desk_state_kind_run(declare=False),
+        # The SAME repo with the SAME file present and the kind declared: the
+        # arms differ in the declaration alone. A control with no file would
+        # come back clean because there was nothing to govern, which says
+        # nothing about whether the check reads the declaration. The SCOPE
+        # arm — another repo's file, this repo silent — is the one the
+        # withdrawn first cut failed and it is a test arm, because a row
+        # carries one pair and this pair is about the refusal's own axis.
+        control=lambda: _desk_state_kind_run(declare=True),
+        stage="lc-182",
     ),
 ]
 
