@@ -121,12 +121,56 @@ the agreeing direction.**
 **So every number below is reported THREE ways** — operator-prompted,
 peer/automated-prompted, and genuinely unprompted — and they are never averaged.
 
-| arm | population | operator | peer/auto | unprompted | n |
-|---|---|---|---|---|---|
-| L1 | claude-code-cache-fix | 17% | 26% | 54% | 76 confirmed |
-| L2 | dotfiles | 24.8% | 57% | 18% | 625 |
-| L2 | dispatch-guards | 40% | 8% | 52% | 25 |
-| L3 | wan2gp | \~54% / 42% | (two-way rubric only) | \~44% / 42% | 182 / 24 |
+**L2 then split the bucket again, and was right to:** an idle notification or
+task-notification carries NO content asking for anything. It is a status ping,
+structurally closer to *nobody said anything* than to *a peer told me to*. So
+the final rubric is FOUR-way, and the conservative reading folds AUTOMATED-ONLY
+into UNPROMPTED rather than into PROMPTED.
+
+| arm | population | operator | peer-content | automated-only | unprompted | n |
+|---|---|---|---|---|---|---|
+| L1 | claude-code-cache-fix | 17% | 26% (not split) | — | 54% | 76 confirmed |
+| L2 | dotfiles | 24.6% | 46.4% | 11.0% | 18.0% | 629 |
+| L2 | dispatch-guards | 40.0% | 8.0% | 0 | 52.0% | 25 |
+| L2 | combined | 25.2% | 45.0% | 10.6% | 19.3% | 654 |
+| L3 | wan2gp | \~54% / 42% | (two-way rubric only) | — | \~44% / 42% | 182 / 24 |
+
+**At the EPISODE grain** (L2, combined n=223), which is the more meaningful unit
+because consecutive edits with no intervening text are one decision:
+OPERATOR 22.4% · PEER-CONTENT 54.3% · AUTOMATED-ONLY 8.5% · UNPROMPTED 14.8%.
+dispatch-guards alone reaches UNPROMPTED 66.7%, on n=9 — too small to carry
+weight, and reported rather than dropped.
+
+**Conservative framing, carried because the lane refused to collapse it into a
+headline:** folding automated-only into unprompted gives 29.8% combined at the
+write grain. Both framings stand; neither is the number.
+
+**PEER DENSITY, measured so the arms are not compared on an axis they do not
+share:** share of sampled sessions carrying any cross-session or teammate
+traffic at all — dotfiles 41.2%, dispatch-guards 27.3%, combined 37.8%. This
+population is genuinely peer-rich and its unprompted rate must not be set
+against a population without that architecture as though the quantity were the
+same.
+
+**AND THE PEER-CONTENT BUCKET IS REAL CAUSATION, NOT CO-OCCURRENCE** — the
+check that decides whether it belongs with PROMPTED at all. Spot-check of 20 of
+121 dotfiles peer-content episodes (~17%, every 12th, not cherry-picked):
+**19 of 20 were genuinely on-topic** — the peer message names or reports on the
+exact artifact the write records (*"REPORT 2/3 — bite proofs"* → edits to the
+two files that report is about; *"lc-89 corroboration: my ebb0133 push emitted
+the identical symptom"* → `item amend lc-89`; *"df-25 ANSWER… df-204 DESIGN
+QUESTION"* → edits to the exact modules under discussion). One of 20 was
+tangential: a peer relaying an unrelated usage-limit notice while separate
+already-in-progress work continued.
+Structurally this is expected — these are tight episodes with no intervening
+text, so the peer message is usually the immediately prior turn being acted on.
+**The lane's own grade, carried as an impression and not a measurement:** the
+tangential fraction is plausibly 5-15%, not enough to move peer-content's
+plurality at either grain; 101 episodes went unread.
+
+**One live-file artifact, isolated by the lane rather than smoothed:**
+re-deriving moved the count 650→654 because one sampled session is still being
+actively written — this one. It does not move UNPROMPTED.
 
 (L3 ran before the rubric was repaired; its population carries almost no peer
 traffic, so its "self-initiated" is close to "unprompted" — but it is NOT the
