@@ -600,6 +600,8 @@ write-set: plugin (slot parser continuation handling; close verb ref resolution)
 done-criterion: a slot line after a wrapped value is credited (red case: the df-196 shape, blocker-moot last); close --ref HEAD stores the sha (red case: symbolic arg, stored value compared to rev-parse); battery green
 evidence: dotfiles ITEMS-DONE.md df-196 block (live reproduction), item check output 2026-09-13; the HEAD-symbol close and its hand repair 40f7d3a
 blocked-by: NONE
+amend-reason: 2026-09-18 2026-09-18 write-set repaired to PATHS ONLY. The slot carried a real path with a parenthetical glued to it, which does not parse as a path and made item waves exit COULD NOT VERIFY for the whole carrier. The doctrine demote-to-parked clause is for a boundary genuinely UNKNOWN; this was the inverse, a known path made unparseable by commentary. The commentary is not lost: it restates what the requirement already says. Found by the build desk, ruled by this desk.
+amended-write-set: 2026-09-18 plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,test/
 
 ## lc-127
 grade: READY
