@@ -734,6 +734,8 @@ write-set: lifecycle plugin checker code beside the existing shape/conservation 
 done-criterion: a lifecycle check resolves each entry's cited file:line and named artifacts against the working tree and reports THREE answers per citation (resolves-and-matches / resolves-but-diverged / gone) — "matches" checkable only for citations carrying a content anchor (a quoted fragment beside the pointer), entries without anchors reported as UNANCHORED rather than passed; red-first on fixtures reconstructed from the measured cs-36/cs-37/cs-39 instances; the companion convention (a citation carries a quoted fragment beside its line number — the dispatch-brief content-anchor rule generalized to carrier entries) stated in the plugin docs
 evidence: CachyOS-Setup freeze-arc wave close 2026-09-17, desk session 04c231 digest; peer desk measurement message with per-instance bases at 43305a3; dispatch skill section 1 content-anchor clause (the same rule at brief grain)
 blocked-by: NONE
+amend-reason: 2026-09-18 2026-09-18 write-set repaired to PATHS ONLY. The slot carried a real path with a parenthetical glued to it, which does not parse as a path and made item waves exit COULD NOT VERIFY for the whole carrier. The doctrine demote-to-parked clause is for a boundary genuinely UNKNOWN; this was the inverse, a known path made unparseable by commentary. The commentary is not lost: it restates what the requirement already says. Found by the build desk, ruled by this desk.
+amended-write-set: 2026-09-18 plugin/cli/lifecycle_core,test/
 
 ## lc-157
 grade: NEW
