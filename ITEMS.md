@@ -428,6 +428,8 @@ write-set: plugin git-hooks (the guard adopted from dotfiles git/hooks pre-push,
 done-criterion: the guard ships in the plugin's git-hooks with carrier paths resolved from the repo's lifecycle.json declarations rather than hardcoded; a repo without lifecycle.json is untouched; the dotfiles-local copy retires in favor of the shipped one at the operator's seam; battery covers fires-on-unbooked and silent-on-booked (both controls)
 evidence: operator second-look ask 2026-09-13 (statiker session); the guard's real fire same date (statiker push blocked until LEDGER line 7639b61 landed); df-171 lane's fact that lifecycle plugin.json declares git-hooks; the lc-93 ledger-coupling precedent
 blocked-by: NONE
+amend-reason: 2026-09-18 2026-09-18 write-set repaired to PATHS ONLY. The slot carried a real path with a parenthetical glued to it, which does not parse as a path and made item waves exit COULD NOT VERIFY for the whole carrier. The doctrine demote-to-parked clause is for a boundary genuinely UNKNOWN; this was the inverse, a known path made unparseable by commentary. The commentary is not lost: it restates what the requirement already says. Found by the build desk, ruled by this desk.
+amended-write-set: 2026-09-18 plugin/hooks,plugin/.claude-plugin
 
 ## lc-99
 grade: READY
