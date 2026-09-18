@@ -396,10 +396,28 @@ the head.
 Three parts, and only one is broken:
 
 - **CAPTURE** — a lesson gets written when it is learned. **THE WEAK LINK.**
-- **RETRIEVAL** — it gets read at the moment it matters. **Measured working:**
-  13,735 record queries across 230 sessions (2026-09-18; per-100-turn rates
-  4-13, with 85-97% of sessions querying at least once in the
-  rich-persistence repos).
+- **RETRIEVAL** — it gets read at the moment it matters. **THIS WAS GRADED
+  "measured working" AND THAT GRADE IS WITHDRAWN.** The measurement — 13,735
+  record queries across 230 sessions (2026-09-18; per-100-turn rates 4-13,
+  85-97% of sessions querying at least once in the rich-persistence repos) —
+  is real and is not in dispute. **What it measures is query VOLUME, and the
+  claim it was used to support is that records get read AT THE MOMENT THEY
+  MATTER. Those are different quantities, and a high query rate is fully
+  consistent with failing at every moment that counted.** The metric cannot
+  see the failure, which is this arc's own signature class applied to its own
+  evidence: an instrument reporting clean over a question it never examined.
+  **Measured the same day, four times, all after this line was written:** a
+  structural fact re-derived across an afternoon while sitting in a tracked
+  file; a design re-inventing a pattern proven on 4 of 22 kinds; a document
+  this session wrote six hours earlier and did not reach for; and a laws-file
+  paragraph that trained its readers for a month to discount the one alarm it
+  was written to protect. **So retrieval is a WEAK LINK too, and the honest
+  state is TWO weak links rather than one** — see the moments-of-application
+  section below, which is where this was worked out and which contradicted
+  this line until now. Retrieval's real measurement does not yet exist: it
+  would have to ask whether the record that would have answered a question was
+  read before the question was answered some other way, and nothing counts
+  that.
 - **REFINEMENT** — wrong or stale entries get corrected and retired. This is
   what lifecycle already IS: staleness and exit stages per kind.
 
@@ -1020,7 +1038,10 @@ Measured 2026-09-18 on this repo's carrier, and read as post-treatment:
 - by slot: evidence 39%, done-criterion 19%, write-set 17%, requirement 5%
 - 44% of OPEN items already carry an amendment
 - the declaration's writer field: 4 verb-written kinds, 17 `writer: session`
-- 13,735 record queries across 230 sessions (retrieval already works)
+- 13,735 record queries across 230 sessions — a VOLUME figure. The gloss it
+  carried, "retrieval already works", is WITHDRAWN: volume is not
+  read-at-the-moment-it-mattered, and the same day measured four failures of
+  the second while the first stayed true. See the three-parts section.
 - one corpus rule measured at 0.27 -> 0.19 fires per 1000 turns across its own
   mint (a duty that did not fire)
 
