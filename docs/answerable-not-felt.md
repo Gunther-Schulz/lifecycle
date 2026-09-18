@@ -649,10 +649,29 @@ substantially irreducible — either way mechanism 5's expected yield is LOWER
 than this note implied, and gate 2 must be read against that rather than
 against zero.
 
-**The comparison that would settle it is available and UNRUN:** the catch
-study's findings can be re-read split by governance, from the lanes' existing
-reports, with no new dispatch. That is the control arm this desk said did not
-exist — it did, one column over.
+**THE COMPARISON WAS RUN AND IT DOES NOT DISCRIMINATE.** Re-split of the
+catch study by governance (presence of `.claude/lifecycle.json`, checked at
+the artifact): governed 73 events / 2 escaped = 2.7%, ungoverned 30 events / 9
+escaped = 30%, an 11x ratio; excluding lane 1, whose scanner was measurably
+blind to the ESCAPED bucket, 8.0% against 30%, still 3.8x. A large apparent
+signal that governance reduces operator-caught errors.
+
+**It is not readable as one, because the two groups share no coordinate.**
+GOVERNED here is software tooling plus system debugging; UNGOVERNED is video
+generation and German planning-office work. Zero domain overlap — so "governed"
+and "is a software repo" are the SAME VARIABLE in this sample. Worse, both
+ungoverned domains are ones where the operator MUST evaluate personally
+(subjective visual quality; real-world planning consequences), so a higher
+operator-catch rate follows from the domain alone. Operator presence differs
+too: 263 messages mean ungoverned against 162 governed.
+
+**Verdict: COULD NOT VERIFY, not a finding.** Two measurements only compare
+where they share a coordinate, and these do not. Recorded because the desk has
+now been wrong about this control arm TWICE in one session — first claiming
+none existed without looking, then claiming one existed "one column over"
+without checking whether it discriminated. The second error is the one this
+corpus names: a comparison whose groups differ on the axis of interest AND on
+three others certifies nothing about any of them.
 
 Measured 2026-09-18 on this repo's carrier, and read as post-treatment:
 
