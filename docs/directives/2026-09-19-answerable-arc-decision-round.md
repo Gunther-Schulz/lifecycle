@@ -163,3 +163,14 @@ correct act is doing the fix instead of booking it.
 Driving desk arms a recurring ~30 min horizon per active wave; the executing
 desk's ack of the operator's first-hand confirmation is the event that
 authorizes wave A — no wave starts before it.
+
+## Addendum, 2026-09-19 (driving desk, pre-activation)
+
+**lc-222 rides wave B, scheduled FIRST beside lc-218 (disjoint sets).** The
+driving desk's plan prose said "probe the erosion counter-evidence early —
+it bounds how much more always-on mechanism is safe to add"; the numbered
+round did not carry it and the wave plan above scheduled it nowhere
+(caught by the operator's audit question). lc-222 is READY and needs no new
+decision. Its RESULT returns to the driving desk before any further
+mechanism admission beyond this directive's scope — that is the "bounds"
+consequence made operational.
