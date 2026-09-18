@@ -311,6 +311,21 @@
         "recording-act": "a dependents search over every declaring repo's workflow bindings FIRST, then a ledger line naming the retired workflow and the repos that had bound it"
       },
       "growth": "unbounded-with-reason — the directory placeholder declares EMPTY until a workflow exists; then one file per SHARED procedure enters only once two or more lanes use it, so the sharing threshold is the control"
+    },
+    "design notes": {
+      "home": "docs/*.md",
+      "writer": "session",
+      "reader": [
+        "verb:retire",
+        "session"
+      ],
+      "staleness": "change-coupling — a design note is stale once the item it carries closes, or once a framing it states is superseded by evidence. MEASURED INSTANCE, which is why this stage reads this way: answerable-not-felt.md states momentum-independence as the desk/peer mechanism, and three research lanes refuted it in favour of INDEPENDENCE (arXiv:2603.26993) — the note's own text was stale the day after it was written, while resolving and reading as current.",
+      "exit": {
+        "action": "move",
+        "recording-act": "at its item's closure the note's ESTABLISHED claims graduate to the laws file or the ledger and the note moves to docs/directives/ as the arc's persisted design record; the closing ledger line names the commit. Closure by graduation, never deletion.",
+        "detail": "NOT MOVED WHILE LIVE, and the reason is measured rather than stylistic: on 2026-09-18 four citations of `docs/answerable-not-felt.md` stood in THREE artifacts outside this repo's write boundary — a peer's arc investigation record under XDG state, a dotfiles directive, and a CachyOS-Setup directive — every one by repo-relative path. Relocating a live note breaks each of them silently, which is the citation-rot class lc-155 exists to catch. So the home claims the note where it already sits, and the move waits for the closure that re-roots its citations."
+      },
+      "growth": "bounded-by-exit — one note per design arc, and each leaves by the graduation above when its item closes. The flow control is that a note cannot be born without an item to carry it."
     }
   }
 }
