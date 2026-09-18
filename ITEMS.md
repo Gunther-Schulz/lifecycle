@@ -475,6 +475,8 @@ write-set: plugin/cli/lifecycle_core (repo resolution + verb output), test/
 done-criterion: both mechanisms landed with red-first proof: the prefix-mismatch refusal shown RED on a cross-repo fixture (an ident carrying one declared prefix against a repo declaring another) and green on a matching pair; the resolved-repo output line asserted present in the verb battery, with the absent case as control
 evidence: incident 2026-09-13: a session operating across several repos of this stack had its cwd moved mid-turn (its own cd for an unrelated scan; the harness also moves cwd on its own) and an ident-taking amend ran against a neighboring repo's carrier — refused as unknown_item only because that ident did not exist there. A prefix-less ledger write minutes earlier would have committed silently into the wrong carrier under identical conditions
 blocked-by: NONE
+amend-reason: 2026-09-18 2026-09-18 write-set repaired to PATHS ONLY. The slot carried a real path with a parenthetical glued to it, which does not parse as a path and made item waves exit COULD NOT VERIFY for the whole carrier. The doctrine demote-to-parked clause is for a boundary genuinely UNKNOWN; this was the inverse, a known path made unparseable by commentary. The commentary is not lost: it restates what the requirement already says. Found by the build desk, ruled by this desk.
+amended-write-set: 2026-09-18 plugin/cli/lifecycle_core,test/
 
 ## lc-105
 grade: READY
