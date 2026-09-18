@@ -95,6 +95,7 @@ decision: does prove-rows mutate a COPY, or does an open window become detectabl
 decision: what is the home for a critique-pass obligation outside a dispatch? → moot (closed by lc-160)
 dropped: lc-160 — answered in the negative: the critique pass mechanism is a second party with different information, not a form, so a solo session has no equivalent to build. The mechanizable slice is already taken by red-first proof and prove-rows. Reasoning on the body.
 decision: is desk/peer one-directional checking or two asymmetric information holders? → TWO ASYMMETRIC INFORMATION HOLDERS. Operator ratified first-hand 2026-09-19 (directive D1). Basis: docs/audits/2026-09-18-desk-peer-catch-study.md, 103 events over 9 sessions, cross catches 8:1 peer-to-desk, 21:4 artifact over prose; counts are FLOORS, no scorer positive control. Unblocks lc-158.
+decision: should the lc-161 absorption pass run over the same sample as the catch study or a fresh one? → SAME 9-session sample as the catch study, not a fresh one. Operator ratified first-hand 2026-09-19 (directive D2). Basis: the extractor exists and is positive-controlled, the sample is already characterized, and absorption needs no control arm since a stall is observable. Unblocks lc-161.
 
 ## Archive (pre-migration)
 
