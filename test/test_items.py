@@ -893,7 +893,8 @@ class TheCostTestsThirdConjunct(unittest.TestCase):
         """
         r = self._repo()
         code, out = self._run(r, *self._add(
-            "--blocked-by", self.DECISION_BLOCKER, hunks=1))
+            "--blocked-by", self.DECISION_BLOCKER,
+            "--not-derivable", "a preference with no precedent in the ledger — constitutively the operator's", hunks=1))
         self.assertNotIn("[cost_test_veto]", out)
         self.assertEqual(code, exits.CLEAN, out)
 
@@ -934,7 +935,8 @@ class TheCostTestsThirdConjunct(unittest.TestCase):
         """
         r = self._repo()
         code, out = self._run(r, *self._add(
-            "--blocked-by", self.DECISION_BLOCKER, "--grade", "PARKED"))
+            "--blocked-by", self.DECISION_BLOCKER,
+            "--not-derivable", "the judgment desk's schedule is not in any record here", "--grade", "PARKED"))
         self.assertEqual(code, exits.CLEAN, out)
         carrier = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
         self.assertIn("grade: PARKED", carrier)
@@ -1835,3 +1837,119 @@ class EvidenceCarriesItsMark(unittest.TestCase):
         code, out = run_check(refusals.GOOD_ITEMS)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertNotIn("evidence_unmarked", out, out)
+
+
+class ADecisionBlockerSaysWhyItIsNotDerivable(unittest.TestCase):
+    """lc-169 — the question travels to the operator only after someone asked.
+
+    MEASURED, TWO OF SIX: of six items one desk had blocked on operator
+    decisions, lc-166's answer sat one kind over in this repo's own
+    declaration and lc-158's in an audit the same desk had written and
+    pushed. Both waited until the operator said to decide what could be
+    decided. Neither author was careless — nothing asked.
+
+    THE DEMAND IS FOR THE STATEMENT, NEVER THE ANSWER, and the arms below are
+    written to exactly that line. A question that is constitutively the
+    operator's — intent, preference, authority over the irreversible — passes
+    on one line. A checker grading whether the reason is GOOD would be
+    deciding the kind split by predicate, which is the judgment this rule
+    must not take over.
+    """
+
+    QUESTION = "decision which retention window is canonical"
+    UNDECIDABLE = ("a preference with no precedent in the ledger — "
+                   "constitutively the operator's")
+
+    def _repo(self, **kw):
+        r = refusals._Repo(**kw)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    # --- the three doors --------------------------------------------------
+
+    def test_item_add_refuses_it_and_writes_nothing(self):
+        r = self._repo()
+        before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = self._run(r, *(refusals.GOOD_ADD
+                                   + ["--blocked-by", self.QUESTION]))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("decision_not_derivable_unstated", out, out)
+        self.assertEqual((r.dir / "ITEMS.md").read_text(encoding="utf-8"),
+                         before, "the carrier was written despite the refusal")
+
+    def test_item_park_and_item_amend_are_covered_too(self):
+        """The three doors reach one function, which is what makes this free
+        — but free is not proven, and a per-verb repair would have covered
+        exactly the verbs somebody remembered."""
+        for argv in (["item", "park", "xx-1"],
+                     ["item", "amend", "xx-1", "--reason", "retyped"]):
+            r = self._repo(items=refusals.SEED_ITEMS)
+            code, out = self._run(r, *(argv + ["--blocked-by",
+                                               self.QUESTION]))
+            self.assertEqual(code, exits.FINDING, f"{argv[1]}:\n{out}")
+            self.assertIn("decision_not_derivable_unstated", out, out)
+
+    def test_the_same_booking_passes_once_the_statement_is_there(self):
+        r = self._repo()
+        code, out = self._run(r, *(refusals.GOOD_ADD + [
+            "--blocked-by", self.QUESTION,
+            "--not-derivable", self.UNDECIDABLE]))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn(f"blocked-by: {self.QUESTION}",
+                      (r.dir / "ITEMS.md").read_text(encoding="utf-8"))
+
+    # --- the boundary -----------------------------------------------------
+
+    def test_a_CONSTITUTIVELY_OPERATOR_question_passes_on_one_line(self):
+        """The item's MUST-NOT-MOVE. The statement here says the question
+        cannot be derived BECAUSE it is a preference — and that is a complete
+        answer. A rule that demanded a derivation attempt for every question
+        would push the desk to decide what is constitutively the operator's,
+        which is the opposite of what this repairs."""
+        r = self._repo()
+        code, _out = self._run(r, *(refusals.GOOD_ADD + [
+            "--blocked-by", "decision whether to publish the marketplace entry",
+            "--not-derivable", "an outward act under the operator's accounts — "
+                               "theirs by the carve-out floor"]))
+        self.assertEqual(code, exits.CLEAN)
+
+    def test_the_demand_does_NOT_reach_the_other_blocker_TYPES(self):
+        """Scope. An `evidence` blocker is a predicate and an item-id blocker
+        resolves mechanically; neither is a question anybody could derive an
+        answer to, and a demand over them would fire on every legitimate one.
+        """
+        r = self._repo(items=refusals.FOUR_BLOCKER_ITEMS)
+        code, out = self._run(r, *(refusals.GOOD_ADD + [
+            "--blocked-by", "evidence test -f /nonexistent-lifecycle-probe"]))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("decision_not_derivable_unstated", out, out)
+
+        r2 = self._repo(items=refusals.FOUR_BLOCKER_ITEMS)
+        code, out = self._run(r2, *(refusals.GOOD_ADD
+                                    + ["--blocked-by", "xx-1"]))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("decision_not_derivable_unstated", out, out)
+
+    def test_a_carrier_full_of_LEGACY_decision_blockers_stays_CLEAN(self):
+        """The over-fire boundary, same shape as lc-167's. Every decision
+        blocker booked before this rule was booked without a statement — the
+        demand is at the WRITE doors, and `item check` must read the existing
+        carrier clean."""
+        code, out = run_check(refusals.FOUR_BLOCKER_ITEMS)
+        self.assertNotIn("decision_not_derivable_unstated", out, out)
+        self.assertNotEqual(code, exits.FINDING, out)

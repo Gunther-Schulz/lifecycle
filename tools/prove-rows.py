@@ -161,6 +161,13 @@ MUTATIONS = [
     # The repair was in the CODE, not here: the two inputs now compose one
     # `broken` verdict tested at one condition, which is what a row-per-
     # decision registry asks the code to look like anyway.
+    ("decision_not_derivable_unstated", "verbs.py",
+     "        if not (not_derivable or \"\").strip():",
+     "        if False:",
+     "the derivability demand on a `decision` blocker — removed, a question "
+     "the record already answers is booked to the operator's court and waits "
+     "there until somebody happens to look"),
+
     ("blocker_predicate_broken", "verbs.py",
      "    if broken is not None:",
      "    if False:",

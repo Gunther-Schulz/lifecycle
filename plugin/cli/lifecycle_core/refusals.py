@@ -1026,6 +1026,34 @@ VERB_ROWS = [
         stage="wave 1, stage 4",
     ),
     Row(
+        ident="decision_not_derivable_unstated",
+        refusal="a `decision` blocker booked without saying why the question "
+                "is NOT DERIVABLE from the record. Measured at this desk, two "
+                "of six: lc-166's answer sat one kind over in this repo's own "
+                "declaration, lc-158's in an audit the same desk had written "
+                "and pushed, and both waited on the operator until they were "
+                "told to decide what could be decided. The demand is for the "
+                "STATEMENT, never the answer — a question that is "
+                "constitutively the operator's passes on one line, the way "
+                "`--join new` passes on a named absence (lc-169)",
+        firing_input="`item add --blocked-by 'decision <question>'` with no "
+                     "`--not-derivable`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(GOOD_ADD + ["--blocked-by",
+                                      "decision which window is canonical"]),
+        # THE SAME ADD, THE SAME QUESTION, the statement supplied: the arms
+        # differ in the statement alone, so neither `item add` nor the
+        # `decision` type is what separates them. Its CONTENT is deliberately
+        # the undecidable case — this row must pass on exactly the question
+        # that belongs to the operator, or the refusal would be deciding the
+        # kind split by predicate.
+        control=lambda: _cli(GOOD_ADD + [
+            "--blocked-by", "decision which window is canonical",
+            "--not-derivable", "a preference with no precedent in the "
+                               "ledger — constitutively the operator's"]),
+        stage="wave 1, stage 4 (lc-169)",
+    ),
+    Row(
         ident="evidence_unmarked",
         refusal="an evidence slot written with no mark saying which of its "
                 "claims this session RAN and which it CONCLUDED. Measured "
@@ -1098,7 +1126,10 @@ VERB_ROWS = [
         fire=lambda: _cli(GOOD_ADD + ["--blocked-by",
                                       "we should think about it"]),
         control=lambda: _cli(GOOD_ADD + ["--blocked-by",
-                                         "decision which window is canonical"]),
+                                         "decision which window is canonical",
+                                         "--not-derivable",
+                                         "a preference with no ledger "
+                                         "precedent"]),
         stage="wave 1, stage 4",
     ),
     Row(
@@ -1291,7 +1322,8 @@ VERB_ROWS = [
         # about storability.
         control=lambda: _cli(GOOD_ADD + [
             "--blocked-by",
-            "decision does the desk accept X or does it not"]),
+            "decision does the desk accept X or does it not",
+            "--not-derivable", "a preference with no ledger precedent"]),
         stage="wave 1, stage 4",
     ),
     Row(
@@ -1362,7 +1394,8 @@ VERB_ROWS = [
         fire=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
                            "we should think about it"], items=SEED_ITEMS),
         control=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
-                              "decision which window is canonical"],
+                              "decision which window is canonical",
+                              "--not-derivable", "a preference with no ledger precedent"],
                              items=SEED_ITEMS),
         stage="wave 1, stage 5",
     ),
@@ -1378,13 +1411,15 @@ VERB_ROWS = [
                      "carrying a superseding `amended-blocked-by:` line",
         expect=exits.FINDING,
         fire=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
-                           "decision which window is canonical"],
+                           "decision which window is canonical",
+                           "--not-derivable", "a preference with no ledger precedent"],
                           items=PARK_AMENDED_ITEMS),
         # The SAME park of the SAME block, the amendment group ALONE removed:
         # the arms differ in the superseding line and in nothing else, so the
         # refusal is the supersession and not the park path.
         control=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
-                              "decision which window is canonical"],
+                              "decision which window is canonical",
+                              "--not-derivable", "a preference with no ledger precedent"],
                              items=PARK_UNAMENDED_ITEMS),
         stage="wave 5 (lc-112)",
     ),
@@ -1762,7 +1797,9 @@ LANE_ROWS = [
         # The SAME incomplete add WITH a typed blocker: the arms differ in
         # the blocker alone, not in slot completeness.
         control=lambda: _cli(_mutate_add("--write-set", "UNKNOWN")
-                             + ["--blocked-by", "decision which window"]),
+                             + ["--blocked-by", "decision which window",
+                                "--not-derivable",
+                                "a preference with no ledger precedent"]),
         stage="wave 1, stage 8 (found by the emit-site coverage check)",
     ),
     Row(

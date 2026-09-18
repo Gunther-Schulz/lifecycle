@@ -695,7 +695,8 @@ def cmd_item_add(args, out, ctx: Ctx) -> int:
     done_parsed, done_why = _load(ctx.done_path)
 
     code = _check_blocker(slots["blocked-by"], ctx, parsed, done_parsed,
-                          done_why, out)
+                          done_why, out,
+                          not_derivable=getattr(args, "not_derivable", None))
     if code != exits.CLEAN:
         return code
 
@@ -933,9 +934,10 @@ def _predicate_lint(detail: str, ctx: Ctx, out) -> int:
     return exits.CLEAN
 
 
-def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out) -> int:
-    """Typed, LEDGER-STORABLE if it is a decision, and — for an item-id
-    blocker — pointing at an item that IS.
+def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out,
+                   not_derivable: str | None = None) -> int:
+    """Typed, LEDGER-STORABLE if it is a decision, NOT-DERIVABLE if it is one,
+    and — for an item-id blocker — pointing at an item that IS.
 
     THE STORABILITY HALF IS lc-49, and the three doors are why it lives here:
     `item add`, `item park` and `item amend` all reach this one function, so a
@@ -975,6 +977,48 @@ def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out) -> 
                 "QUESTION here, at the mint — this is not escaped or "
                 "normalised on your behalf, because an escaped spelling puts "
                 "two forms of every value in the file.")
+            return exits.FINDING
+        # THE DERIVABILITY DEMAND (lc-169). MEASURED at this desk, two of six:
+        # of six items blocked on operator decisions, lc-166's answer sat one
+        # kind over in this repo's own declaration (the fire log already
+        # declares a machine-wide XDG path as a per-repo kind with all six
+        # stages) and lc-158's sat in an audit the same desk had written and
+        # pushed. Both waited until the operator said to decide what could be
+        # decided. Operator attention neither scales nor parallelizes, so a
+        # derivable question routed operator-ward spends the one resource
+        # that cannot be replaced.
+        #
+        # THE PRECEDENT IS `--absence` AND SO IS THE FORM. That demand is a
+        # door demand whose product is PRINTED, not persisted, and it works:
+        # a peer desk reported the absence slot forced them to write why the
+        # work could not be done now, the true answer turned out to be
+        # substantive, and they state they would not have written it
+        # unprompted. What the required statement buys is the ASKING, at the
+        # moment the author still has the record open.
+        #
+        # THE DEMAND IS FOR THE STATEMENT, NEVER FOR THE ANSWER, which is the
+        # boundary that keeps this off the operator's own ground: intent,
+        # preference and authority over the irreversible are constitutively
+        # theirs, and a question that is genuinely one of those says so in
+        # one line and passes. A check grading whether the reason is GOOD
+        # would be deciding the kind split by predicate, which is judgment.
+        if not (not_derivable or "").strip():
+            out("FINDING [decision_not_derivable_unstated] a `decision` "
+                "blocker is booked without saying why the question is NOT "
+                "DERIVABLE from the record. Pass `--not-derivable \"<why>\"`: "
+                "which precedent, ledger entry, audit or declaration you "
+                "looked for and did not find — or, where the question is "
+                "constitutively the operator's (intent, preference, "
+                "authority over an irreversible or outward act), that it is, "
+                "in one line. MEASURED HERE, TWO OF SIX: two questions this "
+                "desk routed to the operator were answerable from artifacts "
+                "the desk already held — one from a precedent one kind over "
+                "in the same declaration file, one from an audit the same "
+                "desk had written and pushed. Neither author was careless; "
+                "nothing asked. The demand is for the STATEMENT and never "
+                "for the answer — a genuinely undecidable question passes on "
+                "one line, the same way `--join new` passes on a named "
+                "absence.")
             return exits.FINDING
     if kind == "evidence":
         # THE THIRD DOOR IS WHY IT IS HERE. `item amend --blocked-by` reaches
@@ -1785,7 +1829,8 @@ def cmd_item_park(args, out, ctx: Ctx) -> int:
         out(f"COULD NOT VERIFY: {why}")
         return exits.COULD_NOT_VERIFY
     done_parsed, done_why = _load(ctx.done_path)
-    code = _check_blocker(value, ctx, parsed, done_parsed, done_why, out)
+    code = _check_blocker(value, ctx, parsed, done_parsed, done_why, out,
+                          not_derivable=getattr(args, "not_derivable", None))
     if code != exits.CLEAN:
         return code
 
@@ -2052,8 +2097,10 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
     # nobody's court by a third door.
     if "blocked-by" in updates:
         done_parsed, done_why = _load(ctx.done_path)
-        code = _check_blocker(updates["blocked-by"], ctx, parsed, done_parsed,
-                              done_why, out)
+        code = _check_blocker(updates["blocked-by"], ctx, parsed,
+                              done_parsed, done_why, out,
+                              not_derivable=getattr(args, "not_derivable",
+                                                    None))
         if code != exits.CLEAN:
             return code
 

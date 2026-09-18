@@ -559,16 +559,25 @@ class LedgerStorableBlocker(unittest.TestCase):
     #: from its plant in the separator alone.
     DF_135_REPHRASED = DF_135.replace(" — ", "; ")
 
+    #: lc-169 DEMANDS THE STATEMENT AT ALL THREE DOORS, so all three
+    #: helpers carry one. It is supplied in the helper rather than per arm
+    #: because this class's subject is the SEPARATOR, and an arm differing in
+    #: two things at once would separate nothing.
+    NOT_DERIVABLE = "lc-38's anchor decision is in no record this desk holds"
+
     def _add(self, blocker):
-        return refusals._cli(refusals.GOOD_ADD + ["--blocked-by", blocker])
+        return refusals._cli(refusals.GOOD_ADD + [
+            "--blocked-by", blocker, "--not-derivable", self.NOT_DERIVABLE])
 
     def _park(self, blocker):
-        return refusals._cli(["item", "park", "xx-1", "--blocked-by", blocker],
+        return refusals._cli(["item", "park", "xx-1", "--blocked-by", blocker,
+                              "--not-derivable", self.NOT_DERIVABLE],
                              items=refusals.SEED_ITEMS)
 
     def _amend(self, blocker):
         return refusals._cli(
             ["item", "amend", "xx-1", "--blocked-by", blocker,
+             "--not-derivable", self.NOT_DERIVABLE,
              "--reason", "the desk retyped the blocker"],
             items=refusals.SEED_ITEMS)
 
@@ -755,7 +764,8 @@ class OneGrammarFindsAndEndsABlock(unittest.TestCase):
                 with redirect_stdout(io.StringIO()):
                     code = cli_mod.main([
                         "--repo", str(r.dir), "item", "park", "xx-1",
-                        "--blocked-by", "decision which window is canonical"])
+                        "--blocked-by", "decision which window is canonical",
+                        "--not-derivable", "a preference with no precedent in the ledger — constitutively the operator's",])
             finally:
                 os.chdir(here)
             self.assertEqual(code, exits.CLEAN)
@@ -781,7 +791,8 @@ class OneGrammarFindsAndEndsABlock(unittest.TestCase):
                 with redirect_stdout(io.StringIO()):
                     cli_mod.main([
                         "--repo", str(r.dir), "item", "park", "xx-1",
-                        "--blocked-by", "decision which window is canonical"])
+                        "--blocked-by", "decision which window is canonical",
+                        "--not-derivable", "a preference with no precedent in the ledger — constitutively the operator's",])
             finally:
                 os.chdir(here)
             text = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
@@ -1518,7 +1529,8 @@ class TheMintTimePredicateLint(unittest.TestCase):
         every legitimate one of both kinds."""
         with refusals._Repo(items=refusals.FOUR_BLOCKER_ITEMS) as r:
             code, out = self._run(r, *(refusals.GOOD_ADD + [
-                "--blocked-by", f"decision {self.PROSE}"]))
+                "--blocked-by", f"decision {self.PROSE}",
+                "--not-derivable", "a preference with no precedent in the ledger — constitutively the operator's",]))
             self.assertEqual(
                 code, exits.CLEAN,
                 f"the lint reached a `decision` blocker.\n{out}")

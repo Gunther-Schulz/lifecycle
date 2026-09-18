@@ -487,6 +487,7 @@ def build_parser() -> argparse.ArgumentParser:
                                     "`supersede <id>`, or `new`")
     add.add_argument("--absence", help="what the build needs that is not "
                                        "here NOW; required for `new`")
+    add.add_argument("--not-derivable", dest="not_derivable", help="why the question is NOT DERIVABLE from the record — required with a `decision` blocker (lc-169): which precedent, ledger entry, audit or declaration you looked for and did not find, or that the question is constitutively the operator's")
     add.add_argument("--reason", help="the SESSION's prose for a ledger line")
     add.add_argument("--no-commit", dest="no_commit", action="store_true",
                      help="skip the move's third step (a batching caller "
@@ -529,6 +530,7 @@ def build_parser() -> argparse.ArgumentParser:
     for _slot, _attr in verbs.AMEND_FLAGS.items():
         amend.add_argument(f"--{_slot}", dest=_attr,
                            help=f"the value that supersedes `{_slot}:`")
+    amend.add_argument("--not-derivable", dest="not_derivable", help="why the question is NOT DERIVABLE from the record — required with a `decision` blocker (lc-169): which precedent, ledger entry, audit or declaration you looked for and did not find, or that the question is constitutively the operator's")
     amend.add_argument("--reason", help="the SESSION's prose: why the earlier "
                                         "value was wrong. REQUIRED")
     amend.add_argument("--no-commit", dest="no_commit", action="store_true",
@@ -552,6 +554,7 @@ def build_parser() -> argparse.ArgumentParser:
     park = its.add_parser("park", help="PARKED, with a typed blocker")
     park.add_argument("ident")
     park.add_argument("--blocked-by", dest="blocked_by", help="TYPED; required")
+    park.add_argument("--not-derivable", dest="not_derivable", help="why the question is NOT DERIVABLE from the record — required with a `decision` blocker (lc-169): which precedent, ledger entry, audit or declaration you looked for and did not find, or that the question is constitutively the operator's")
 
     close = its.add_parser("close", help="the MOVE: append, delete, commit")
     close.add_argument("ident")
