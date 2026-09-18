@@ -1203,6 +1203,8 @@ def main(argv) -> int:
         print(f"    {ident:<34} {code}")
 
     failures = []
+
+    raised = []
     stale = []
     for ident, fname, anchor, replacement, what in rows:
         path = WORK_CORE / fname
@@ -1232,7 +1234,35 @@ def main(argv) -> int:
         strays = [k for k in changed if siblings.get(k, k) != refusal]
         ok_named = ident in changed
         ok_alone = not strays
-        verdict = "PROVEN" if (ok_named and ok_alone) else "FAILED"
+
+        # A CRASH IS NOT A RED, AND THIS TOOL WAS COUNTING IT AS ONE.
+        # `verdicts()` renders an exception as its own signature, so a
+        # mutation that makes the arm THROW produces a value different from
+        # the baseline — which satisfied "the row changed" and printed
+        # PROVEN. Measured here before the repair: `capture_dominated`'s
+        # arrangement (`if closed == 0:` -> `if False:`) divides by zero one
+        # line later, and this tool answered
+        #
+        #     [capture_dominated] PROVEN
+        #         verdict 2/named -> RAISED: ZeroDivisionError
+        #
+        # exit 0. That is law 4 with the sign reversed — "a red from a
+        # module-load or import error is not a discriminating red" is written
+        # in the laws file and was not implemented in the instrument that
+        # certifies every other row. A row whose arm dies tells us the
+        # mutation broke something; it does not tell us the row was READING
+        # the condition the arrangement names, which is the only claim
+        # PROVEN makes.
+        #
+        # THE BASELINE SIDE COUNTS TOO: an arm already raising at HEAD is a
+        # finding about the roster, not a proof about this row, so both sides
+        # are examined and named.
+        raised_base = str(base.get(ident, "")).startswith("RAISED:")
+        raised_after = str(after.get(ident, "")).startswith("RAISED:")
+        if raised_base or raised_after:
+            verdict = "COULD NOT VERIFY"
+        else:
+            verdict = "PROVEN" if (ok_named and ok_alone) else "FAILED"
         print(f"\n[{ident}] {verdict}")
         print(f"    disabled: {what}")
         print(f"    {fname}: {anchor.splitlines()[0][:66]}…")
@@ -1250,7 +1280,17 @@ def main(argv) -> int:
             print(f"    -> row(s) proving ANOTHER refusal changed: "
                   f"{', '.join(strays)}. This mutation removed adjacent "
                   "machinery, so it proves nothing about any one row.")
-        if verdict == "FAILED":
+        if verdict == "COULD NOT VERIFY":
+            side = ("at HEAD, before the mutation" if raised_base
+                    else "under the mutation")
+            print(f"    -> the arm RAISED {side}. A crash is not a red: it "
+                  "says the mutation broke something, never that this row "
+                  "was reading the condition the arrangement names. Law 4, "
+                  "which this tool states in its own header and did not "
+                  "implement. Repair the arrangement so the arm RUNS and "
+                  "answers, or the row stays unproven.")
+            raised.append(ident)
+        elif verdict == "FAILED":
             failures.append(ident)
 
     shutil.rmtree(backup, ignore_errors=True)
@@ -1262,6 +1302,11 @@ def main(argv) -> int:
               "all — listed, never omitted):")
         for ident in unproven:
             print(f"    {ident}")
+    if raised:
+        print(f"\nCOULD NOT VERIFY: {', '.join(raised)} — the arm crashed "
+              "rather than answering, so nothing here says whether the row "
+              "discriminates.")
+        return COULD_NOT_VERIFY
     if stale:
         return COULD_NOT_VERIFY
     if failures:
