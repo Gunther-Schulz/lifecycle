@@ -19,6 +19,7 @@ from . import declaration as decl
 from . import init as init_mod
 from . import items as items_mod
 from . import migrate as migrate_mod
+from . import records as records_mod
 from . import retire as retire_mod
 from . import verbs
 from . import verify as verify_mod
@@ -708,6 +709,20 @@ def build_parser() -> argparse.ArgumentParser:
                      help="per-command timeout in seconds (default 900); a "
                           "timeout is DID NOT RUN, never a failure")
 
+    rec = sub.add_parser("record", help="the investigation record's FORM "
+                                        "(lc-156) — slots, line shape, route "
+                                        "vocabulary, and the closure gate")
+    rec_sub = rec.add_subparsers(dest="record_action")
+    rchk = rec_sub.add_parser("check", help="grade every record at the "
+                                            "investigation home; an "
+                                            "unreadable record is COULD NOT "
+                                            "VERIFY, never clean")
+    rchk.add_argument("--dir", dest="dir",
+                      help="grade this directory instead of the XDG home — "
+                           "the seam fixtures and the roster's plants run "
+                           "through, so the check is exercisable without "
+                           "writing to the machine's live records")
+
     mig = sub.add_parser("migrate", help="the old carrier → ITEMS.md, "
                                          "ITEMS-DONE.md and a report; or a "
                                          "SCHEMA bump. DRY RUN by default")
@@ -821,6 +836,12 @@ def main(argv=None) -> int:
     elif args.verb == "verify":
         path = "verify"
         code = _verify_verb(args, out)
+    elif args.verb == "record":
+        if not args.record_action:
+            out("COULD NOT VERIFY: `record` needs an action: check.")
+            return exits.COULD_NOT_VERIFY
+        path = f"record {args.record_action}"
+        code = records_mod.cmd_record_check(args, out)
     elif args.verb == "ledger":
         if not args.ledger_action:
             out("COULD NOT VERIFY: `ledger` needs an action: check, add, "

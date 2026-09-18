@@ -3172,8 +3172,238 @@ COMPACT_ROWS = [
     ),
 ]
 
+# --- lc-156: the investigation record's form ---------------------------------
+#
+# THE CONTROL IS ONE CONFORMANT RECORD, and every plant below differs from it
+# in exactly the line it plants. It is written HERE from the format file's
+# template rather than copied out of a live record: an expectation derived
+# from the artifact it grades moves with that artifact and stays green on the
+# drift it exists to catch.
+
+_GOOD_RECORD = """# proj — arc    (opened 2026-09-18; sessions: aaaaaa)
+
+## GOAL
+close the thing the requester asked for, in their words
+
+## NOW
+current approach: read the carrier first — killed if the carrier is stale
+
+## ESTABLISHED
+[VERIFIED] the fold works — test_records.py::test_fold, green
+
+## OPEN
+[PENDING] does the gate fire — route: measure — probe: plant a closed record; red = it fires, green = it is blind
+
+## MOVES
+2026-09-18 opened — cc: none
+"""
+
+
+def _record_run(text: str) -> Fired:
+    """`record check` over a throwaway home holding exactly this one record.
+
+    THE HOME IS A SCRATCH DIRECTORY, never the machine's. A row that read the
+    live investigation home would grade whatever that home happened to hold
+    on the day it ran — a fixture the environment is free to change, which is
+    the premise-drift class this plugin's own anchor rule forbids — and a
+    plant would mean writing into records another session owns.
+    """
+    from . import records as records_mod
+
+    d = Path(tempfile.mkdtemp(prefix="lifecycle-rec-row-"))
+    try:
+        (d / "record.md").write_text(text, encoding="utf-8")
+
+        class _Args:
+            dir = str(d)
+
+        said = []
+        code = records_mod.cmd_record_check(_Args(), said.append)
+        return Fired(code, "\n".join(said))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def _watched_record_routes() -> set:
+    """Which route words the CHECKER actually admits.
+
+    DERIVED FROM THE SOURCE of `records.py`, never from the tuple imported
+    out of it: importing the module and reading `records.ROUTES` would
+    compare the row's claim against the very object the row exists to grade,
+    which is a claim compared against itself. The route SET beside it is
+    written from the FORMAT FILE's own sentence, so the two sides have
+    different parents.
+    """
+    from . import records as records_mod
+
+    src = Path(records_mod.__file__).read_text(encoding="utf-8")
+    m = re.search(r'^ROUTES = \((?P<body>[^)]*)\)', src, re.M)
+    if not m:
+        raise AssertionError("records.py declares no ROUTES tuple")
+    return set(re.findall(r'"([a-z]+)"', m.group("body")))
+
+
+RECORD_ROWS = [
+    Row(
+        ident="record_slot_missing",
+        refusal="a record missing one of the five declared slots",
+        firing_input="a record whose `## MOVES` heading is renamed, so the "
+                     "slot is absent rather than empty",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(_GOOD_RECORD.replace("## MOVES", "## NOTES")),
+        control=lambda: _record_run(_GOOD_RECORD),
+        stage="lc-156",
+    ),
+    Row(
+        ident="record_now_empty",
+        refusal="NOW present and empty — the anti-blinders slot saying "
+                "nothing",
+        firing_input="a record whose NOW heading stands with no line under it",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(_GOOD_RECORD.replace(
+            "current approach: read the carrier first — killed if the "
+            "carrier is stale\n", "")),
+        control=lambda: _record_run(_GOOD_RECORD),
+        stage="lc-156",
+    ),
+    Row(
+        ident="record_line_untagged",
+        refusal="prose under the right heading — a line in ESTABLISHED or "
+                "OPEN carrying no `[TAG]`, which passes every check written "
+                "over tagged lines BY HAVING NONE",
+        firing_input="a record whose ESTABLISHED line is a bullet instead of "
+                     "a tagged line (two of the four live records are this "
+                     "shape throughout)",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(_GOOD_RECORD.replace(
+            "[VERIFIED] the fold works — test_records.py::test_fold, green",
+            "- the fold works, we checked")),
+        control=lambda: _record_run(_GOOD_RECORD),
+        stage="lc-156",
+    ),
+    Row(
+        ident="record_tag_unknown",
+        refusal="a tag outside the closed set — counted by nothing, draining "
+                "through every gate",
+        firing_input="`[CONFIRMED]`, a plausible word the vocabulary does "
+                     "not carry",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(_GOOD_RECORD.replace("[VERIFIED] the fold",
+                                                      "[CONFIRMED] the fold")),
+        control=lambda: _record_run(_GOOD_RECORD),
+        stage="lc-156",
+    ),
+    Row(
+        ident="record_line_unbasised",
+        refusal="a tagged claim with no basis after the em dash — the label "
+                "standing where the evidence should be",
+        firing_input="a `[VERIFIED]` line whose basis is deleted, the rest "
+                     "of the record untouched",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(_GOOD_RECORD.replace(
+            "[VERIFIED] the fold works — test_records.py::test_fold, green",
+            "[VERIFIED] the fold works")),
+        control=lambda: _record_run(_GOOD_RECORD),
+        stage="lc-156",
+    ),
+    Row(
+        ident="record_line_unbasised_hyphen",
+        finding_row="record_line_unbasised",
+        refusal="the SEPARATOR half of the same refusal: a hyphen is a "
+                "different character from an em dash, and admitting both "
+                "would put two spellings of one slot in every record",
+        firing_input="the same line with its em dash replaced by a hyphen — "
+                     "a basis that is present and not machine-findable",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(_GOOD_RECORD.replace(
+            "works — test_records.py", "works - test_records.py")),
+        control=lambda: _record_run(_GOOD_RECORD),
+        stage="lc-156",
+    ),
+    Row(
+        ident="record_route_invalid",
+        refusal="a PENDING line that names no route, or names one outside "
+                "the closed set — \"I don't know\" left as a terminal state "
+                "instead of a claim about what would make it known",
+        firing_input="a PENDING line with its `route:` token removed",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(_GOOD_RECORD.replace(" — route: measure", "")),
+        control=lambda: _record_run(_GOOD_RECORD),
+        stage="lc-156",
+    ),
+    Row(
+        ident="record_route_outside_set",
+        finding_row="record_route_invalid",
+        refusal="the VOCABULARY half of the same refusal: a fourth word "
+                "routes the question nowhere, the three carrying different "
+                "costs and different failure modes",
+        firing_input="`route: think`, a word outside ask / measure / query",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(_GOOD_RECORD.replace("route: measure",
+                                                      "route: think")),
+        control=lambda: _record_run(_GOOD_RECORD),
+        stage="lc-156",
+    ),
+    Row(
+        ident="record_probe_missing",
+        refusal="a PENDING line naming no probe — a question nobody but its "
+                "author can settle",
+        firing_input="a PENDING line with its `probe:` clause removed, the "
+                     "route left in place",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(_GOOD_RECORD.replace(
+            " — probe: plant a closed record; red = it fires, green = it is "
+            "blind", "")),
+        control=lambda: _record_run(_GOOD_RECORD),
+        stage="lc-156",
+    ),
+    Row(
+        ident="record_closed_undrained",
+        refusal="a record marked closed over undrained [PENDING] lines — "
+                "closure is GRADUATION, never deletion and never silence",
+        firing_input="a `## CLOSED` heading with pointers, added to a record "
+                     "whose OPEN slot still holds a PENDING line",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(
+            _GOOD_RECORD + "\n## CLOSED\nESTABLISHED → LEDGER.md; OPEN → lc-99\n"),
+        # The SAME closure, with the PENDING line graduated to a terminal
+        # tag — so the arms differ in whether anything was left undrained,
+        # and not in whether the record is closed at all. A control without
+        # the CLOSED heading would come back clean for the wrong reason.
+        control=lambda: _record_run(
+            _GOOD_RECORD.replace(
+                "[PENDING] does the gate fire — route: measure — probe: plant "
+                "a closed record; red = it fires, green = it is blind",
+                "[VERIFIED] the gate fires — prove-rows, red then green")
+            + "\n## CLOSED\nESTABLISHED → LEDGER.md; OPEN → lc-99\n"),
+        stage="lc-156",
+    ),
+    Row(
+        ident="record_closed_unpointed",
+        refusal="a closure with no pointer to where anything went — the same "
+                "loss as deleting the graduated lines, minus the honesty",
+        firing_input="a `## CLOSED` heading standing empty over a fully "
+                     "drained record",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(
+            _GOOD_RECORD.replace(
+                "[PENDING] does the gate fire — route: measure — probe: plant "
+                "a closed record; red = it fires, green = it is blind",
+                "[VERIFIED] the gate fires — prove-rows, red then green")
+            + "\n## CLOSED\n"),
+        control=lambda: _record_run(
+            _GOOD_RECORD.replace(
+                "[PENDING] does the gate fire — route: measure — probe: plant "
+                "a closed record; red = it fires, green = it is blind",
+                "[VERIFIED] the gate fires — prove-rows, red then green")
+            + "\n## CLOSED\nESTABLISHED → LEDGER.md; OPEN → lc-99\n"),
+        stage="lc-156",
+    ),
+]
+
+
 ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
-        + HOOK_ROWS + COMPACT_ROWS)
+        + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #
@@ -3189,4 +3419,12 @@ for _row in ROWS:
     elif _row.ident == "schema_above_floor":
         _row.route_set = ("declaration", "items", "done", "ledger")
         _row.routes_watched = _watched_schema_carriers
+    elif _row.ident == "record_route_invalid":
+        # THE SET IS THE FORMAT FILE'S SENTENCE — `route: ask|measure|query`,
+        # dotfiles claude/investigation-record-format.md — written out here
+        # by hand, while the watched half is parsed from records.py's source.
+        # Two parents, which is the only thing that makes the comparison mean
+        # anything.
+        _row.route_set = ("ask", "measure", "query")
+        _row.routes_watched = _watched_record_routes
 del _row

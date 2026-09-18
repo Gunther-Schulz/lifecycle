@@ -810,6 +810,61 @@ MUTATIONS = [
      "the repeated-`--from` count's own test — a caller then names two "
      "sources in one invocation, argparse keeps the second alone, and the "
      "run reports a migration from a carrier it never opened"),
+
+    # lc-156. EACH ANCHOR IS THE `if <bucket>:` THAT DECIDES ONE CLASS, never
+    # the loop that fills the buckets. Folding the loop would empty every
+    # bucket at once and darken nine rows, which proves nothing about any one
+    # of them — the adjacent-machinery failure this tool reports rather than
+    # accepts. The two SIBLING rows (`record_line_unbasised_hyphen`,
+    # `record_route_outside_set`) are proven by their family's anchor: they
+    # are second firing inputs of one refusal, so the assertion that changes
+    # is "every row that changed proves the same refusal".
+    ("record_slot_missing", "records.py",
+     "    missing = [s for s in SLOTS if s not in slots]",
+     "    missing = []",
+     "the comparison of the five declared slots against the headings present"),
+
+    ("record_now_empty", "records.py",
+     '    if "NOW" in slots and not slots["NOW"]:',
+     "    if False:",
+     "the emptiness test on the anti-blinders slot"),
+
+    ("record_line_untagged", "records.py",
+     "    if untagged:",
+     "    if False:",
+     "the report of lines carrying no tag — the class that otherwise passes "
+     "by having no tagged line to fault"),
+
+    ("record_tag_unknown", "records.py",
+     "    if bad_tag:",
+     "    if False:",
+     "the closed tag vocabulary's verdict"),
+
+    ("record_line_unbasised", "records.py",
+     "    if unbasised:",
+     "    if False:",
+     "the basis requirement on a tagged line (both spellings — the missing "
+     "basis and the hyphen — are decided here, and they are one refusal)"),
+
+    ("record_route_invalid", "records.py",
+     "    if unrouted:",
+     "    if False:",
+     "the requirement that a PENDING line name a route at all"),
+
+    ("record_probe_missing", "records.py",
+     "    if unprobed:",
+     "    if False:",
+     "the requirement that a PENDING line name its probe"),
+
+    ("record_closed_undrained", "records.py",
+     "        if undrained:",
+     "        if False:",
+     "the closure gate's undrained-PENDING test"),
+
+    ("record_closed_unpointed", "records.py",
+     "        if not slots[CLOSED_SLOT]:",
+     "        if False:",
+     "the closure gate's pointer test"),
 ]
 
 
