@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 206
+added: 207
 compacted: 0
 
 ## lc-3
@@ -1197,4 +1197,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate_residue.py
 done-criterion: The idempotence test matches a ROW — this path AND this blob in the same record — rather than two independent substring hits anywhere in the file. The disposition line says what actually happened rather than asserting a record was appended when the already-branch skipped it. RED-FIRST, and the discriminating input is NOT constructed but drawn from a realistic laws file: a file already holding a deletion record for the same path at an EARLIER blob, with this run's blob cited anywhere else in the same file. Today already is True, no record is written, and the unlink still runs. MUST-NOT-BUILD: nothing changes about WHEN the delete happens; this is about what the idempotence test establishes and what the disposition line claims.
 evidence: RELAYED from the lc-192 lane, explicitly DERIVED-only on its side too — it read 1295-1296 and 1306 and 1313-1318 and did NOT exercise the --retire-source delete path. MEASURED at this desk: nothing. So this entry is two levels from an execution and is booked at that grade deliberately. FIRST BUILD STEP: exercise the delete path against the discriminating laws file, because a wrongness claim on an IRREVERSIBLE branch that has never been run is exactly the one that must not be repaired from reading alone.
+blocked-by: NONE
+
+## lc-215
+grade: READY
+requirement: run_schema's 'in every carrier' MEANS EXACTLY THREE KINDS, AND BOTH SIDES OF ITS AGREEMENT CHECK SHARE THAT BLIND SPOT. declaration.carrier_homes covers items, done bodies and ledger lines only, with ledger lines defaulting to LEDGER.md UNCONDITIONALLY. Two consequences: (a) a declaring repo that registers no ledger-lines kind and has no LEDGER.md at root gets COULD NOT VERIFY at migrate.py:1937 and the whole schema migration refuses BEFORE printing any plan; (b) the CLEAN at 1973-1975 says the repo is 'already at schema N in the declaration and in every carrier' over those three kinds only. check_schema_agreement resolves through the SAME function, so both sides of that comparison share the blind spot — an expectation derived from the artifact it grades.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/declaration.py,test/test_schema.py
+done-criterion: The CLEAN sentence's scope matches what it examined — it names the kinds it checked rather than claiming 'every carrier' — and a repo whose declared kinds include a schema-bearing carrier outside those three is either covered or told it is not. The unconditional LEDGER.md default is decided: either it is justified in the code's own words or a repo without that kind stops being refused for lacking a file it never declared. MUST-NOT-BUILD: this is not a licence to widen carrier_homes silently — widening it changes what every caller resolves, and the dependents question is part of the work. RED-FIRST: a declaring repo with no ledger-lines kind and no LEDGER.md currently cannot run a schema migration at all; after, it either migrates or is told precisely why not.
+evidence: RELAYED from the lc-192 lane, DERIVED on its side and NOT constructed: it read carrier_homes and run_schema and explicitly said it did not build the repo population that would exercise (a). MEASURED at this desk and it is the reason this is not hypothetical: my own lc-205 reproduction hit consequence (a) twice — a scratch repo with no ITEMS-DONE.md refused with 'COULD NOT VERIFY: the done bodies carrier could not be read for its schema line', and with no schema head on LEDGER.md refused again with the ledger-lines equivalent, both BEFORE any plan printed. I built those fixtures to reproduce a different defect and was stopped by this one, which is the strongest evidence available that the population is reachable rather than theoretical. DERIVED: this is the audit's finding-4 shape one level out — both sides of a comparison resolving through one function cannot detect that function's omission.
 blocked-by: NONE
