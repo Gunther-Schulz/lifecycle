@@ -231,6 +231,17 @@ contract while READING the second. A `lane list` run that finds a
 broken predicate exits `2` because it found something — not because
 it saw a `2`.
 
+**WHAT A RUN HOLDING BOTH ANSWERS REPORTS IS DECIDED, AND NOT HERE.**
+`exits.worst()` is the single home: could-not-verify OUTRANKS finding,
+which outranks clean, and its docstring carries the argument — the caller
+most at risk reads `2` as "here is the complete list of what is wrong"
+and acts on the list, so `3` withdraws the promise of COMPLETENESS while
+every finding still prints in full. Nothing is hidden by the code; only
+the claim that the list is whole. This paragraph POINTS rather than
+restates, because a second body of that rule is the drift the rule is
+about. Read it at the function, and add nothing here that the function
+does not say.
+
 ## Discipline
 
 - **A checker has THREE answers**: verified clean, verified broken,
