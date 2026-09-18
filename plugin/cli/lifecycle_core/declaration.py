@@ -111,6 +111,35 @@ KIND_STAGES = ("home", "writer", "reader", "staleness", "exit", "growth",
 #:   predicate <cmd>    a condition, evaluated by `lanes.evaluate_trigger` —
 #:                      the ONE evaluator, whose exit mapping is total, so a
 #:                      predicate that cannot run is BROKEN and never quiet.
+#:
+#: WRITING A PREDICATE: PROVE THREE ARMS BEFORE THE VALUE LANDS — fire, quiet,
+#: and BROKEN, the last being the one nothing else will ever exercise. A
+#: predicate accepted on its fire-and-quiet pair is an unproven instrument in a
+#: declaration's costume, and it is WORSE than `none`: none-with-a-reason is
+#: honest prose, while a false-firing predicate is a lane that reads alarming
+#: forever and trains the override reflex that kills the guard. This is law 2's
+#: red-first applied to a declared VALUE rather than a registry row, and the
+#: argument is the same — a value nobody has fired is not known to discriminate.
+#:
+#: THE SHAPE RULE HAS TWO HALVES AND BOTH ARE NEEDED. Measured on two
+#: predicates, 2026-09-18:
+#:   * DO NOT WRAP A COMMAND WHOSE OWN EXIT ALREADY CARRIES THREE STATES. A
+#:     bare `grep -q PATTERN FILE` is 0 found / 1 not-found / 2 file-unreadable
+#:     — the contract, free. Wrapping it in `test "$(...)" -ne "$(...)"`
+#:     destroys it: `test` answers 0 or 1 only, so BROKEN has nowhere to land
+#:     and the dead instrument renders as a FIRING lane rather than a quiet
+#:     one — the mirror of the failure the mapping exists to prevent, and the
+#:     worse direction, because a permanent alarm is overridden rather than
+#:     investigated.
+#:   * WHERE NO BARE COMMAND CARRIES THE THREE STATES, the predicate needs
+#:     INPUT GUARDS to give BROKEN somewhere to land — and that makes it a
+#:     SCRIPT in the repo's tools, not a longer one-liner. A script is also the
+#:     answer to a second hazard: shell inside a quoted JSON payload is two
+#:     transforming layers between author and executor, and a backticked word
+#:     in such a payload is command-substituted away, leaving a value that
+#:     parses and reads like prose with a word missing. A file has one reader.
+#: The first half prevents the defect; the second catches it where prevention
+#: is not available.
 #:   none, declared why: <reason>
 #:                      the kind genuinely has no button, and says so. NOT a
 #:                      loophole and not invented here: the design of record's
