@@ -5,6 +5,50 @@ CachyOS-Setup marvel-rivals freeze arc; peer desk 9a744c). Booked as **lc-157**.
 Not a spec yet — the point is to dig deeper next session. This note is the
 carrier; the ranked mechanisms below are the candidate features.
 
+> **READ `answerable-not-felt-research.md` (this directory) BEFORE ACTING ON
+> THIS NOTE.** The three research lanes this note's last section calls for were
+> dispatched and returned on 2026-09-18 (desk 79ce75). Their result is a
+> **correction to this note's central framing, not a confirmation of it**, so
+> anything built from the text below without reading it will be built on the
+> wrong variable.
+>
+> The short form: this note offers *momentum independence* and *role
+> separation* as the two candidate explanations for the desk/peer gain. Neither
+> is the variable. Role separation over the **same information** is
+> decision-theoretically dominated by a single centralized decision maker
+> (arXiv:2603.26993, verbatim from the raw abstract) — so a desk that grades its
+> peer's *reports* should be expected to underperform no split at all. What does
+> the work is an **independent signal the generating party cannot see or
+> influence while producing its answer**. The desk's whole value is its
+> independent reads of the artifact.
+>
+> Consequence for the design below: this note states **timing** ("triggered at
+> the seam") as the load-bearing property. It is not — **independence** is, and
+> timing only answers *when to fire*. A seam-triggered LLM self-reflection
+> inherits the identical failure mode as continuous self-monitoring, merely
+> fired less often. The five ranked mechanisms all happen to sit on the right
+> side of this, because they are deterministic rather than reflective — but that
+> is currently good taste, not a stated criterion, and it should become one.
+>
+> **Open decisions as of 2026-09-18**, none of them made: (1) which mechanisms
+> to build — the desk's recommendation on the evidence is #1 (verify-the-
+> verifiers) plus a narrowed #2 that runs the *already-executable* `blocked-by:
+> evidence` predicate at BOOKING rather than only at read time, with #3-#5 held;
+> (2) whether to admit the two candidates the research adds — independent-
+> observer verification as #0, and admission control at the world-boundary,
+> which maps onto the corpus's existing irreversible/outward gate; (3) the
+> plugin-boundary question, which the note's own reasoning arguably settles
+> already (lifecycle owns per-project attribution, files stay out of the repo
+> tree). A corpus mint needs the operator's GO, asked first-hand.
+>
+> **Downstream and deliberately not started:** the dotfiles mint round over the
+> unharvested `~/.local/state/claude/course-corrections.md` lines. Order is
+> lifecycle first — a mechanized lever makes the prose rule it absorbs a
+> retirement candidate, so minting ahead of these decisions risks work in the
+> wrong direction. Scope measured at
+> `dotfiles/docs/directives/2026-09-18-corpus-arc-handoff.md` (superseded as a
+> handoff; its §Scope and §"Day one" survive).
+
 **Provenance / lookup.** The two sessions' full transcript UUIDs are deliberately
 NOT written here: this repo's pre-push leak scan treats a session UUID as a
 capture identifier and blocks it (it blocked this arc's earlier lifecycle push
