@@ -16,6 +16,18 @@ filenames are recorded in the arc's local (unscanned) investigation record,
 (MOVES, 2026-09-18) — so the JSON is findable without leaking the ids into
 public history.
 
+## North star (operator, 2026-09-18)
+
+The goal is to improve the operator↔LLM interaction so work becomes more
+**DEPENDABLE, EFFICIENT, and AUTONOMOUS** — and this serves BOTH sides: the
+operator gets reliable output with less babysitting, the agent gets to run
+further end-to-end instead of stalling at every check. The three are not a
+tradeoff but a sequence — **dependability is what earns autonomy** (an agent can
+be given more rope only once its output can be trusted, which is exactly what
+querying-instead-of-feeling buys). Everything below is means to this end, and it
+is the pruning test: a mechanism that does not move dependability, efficiency, or
+autonomy does not belong here.
+
 ## The class
 
 An agent asserts a STATE OF ITS OWN WORK from memory or feeling instead of
