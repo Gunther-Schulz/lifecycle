@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 159
+added: 160
 compacted: 0
 
 ## lc-3
@@ -836,3 +836,12 @@ write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals
 done-criterion: an entry distinguishes evidence it RAN from evidence it CONCLUDED, cheaply enough that the distinction is made at booking rather than reconstructed. The cheap form is a per-line mark in the evidence slot rather than a new slot, since the corpus already marks claims this way in prose. RED-FIRST: cs-35 shape (an entry whose evidence is an unrun inference stated as fact) must be distinguishable from an entry citing an executed command; MUST-NOT-MOVE: a mixed evidence slot carrying both kinds stays legal, since most real entries are mixed, and the mark is per claim rather than per entry.
 evidence: Peer desk cachyos-setup-33, 2026-09-18, their own closing observation after several adds, about eight amends and closures in one day, offered as the place they would spend a cheap slot. CORROBORATED BY THIS DESK THE SAME DAY, independently: the amendment measurement over this repo 88 closed items found amended-evidence the single most-amended slot at 39 percent, which is the same fact seen from the other end, an entry whose evidence moved after booking. And this desk own lc-159 half 2 was booked from a conclusion (a schema migration was needed) that measurement killed at pickup, fivefold scope reduction.
 blocked-by: NONE
+
+## lc-168
+grade: READY
+requirement: A KIND DECLARES WHAT, WHERE, WHO, FOR WHOM AND HOW LONG — AND NOT WHEN. Checked at the schema: home, writer, reader, staleness, exit, growth. The missing stage is the TRIGGER, and it is exactly what separates a self-administering kind from one that needs a person. For the 4 verb-written kinds the trigger is IMPLICIT — item close writes a closure because the verb ran, so nobody remembers anything. For the 17 writer:session kinds there is no WHEN at all, which is why the operator decides it is time. The writer field was first read as predicting DRIFT; the sharper reading is that it predicts SELF-ADMINISTRATION and drift is the symptom. Operator, 2026-09-18: self-administering means the system decides where, when and what, not a person deciding each time.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/refusals.py,test/test_declaration.py
+done-criterion: UNKNOWN pending the decision below, but the shape is known and the MECHANISM ALREADY EXISTS: lanes.evaluate_trigger runs a predicate and maps its exit to fire/quiet/broken, total on purpose so nothing falls into silence, and it is already the single evaluator shared by lane triggers and item ready evidence blockers. A seventh stage is that proven evaluator applied to a question the schema does not ask. MUST-NOT-MOVE: a kind whose trigger is genuinely implicit in a verb declares that rather than inventing a predicate, and an undeclared trigger is a FINDING the way an undeclared stage already is.
+evidence: Measured at the schema 2026-09-18: a kind declares exactly home, writer, reader, staleness, exit, growth. Grouped by writer across 22 kinds: 4 verb-written (items, done bodies, ledger lines, the fire log) against 17 writer:session and 1 producer. The verb-written set is the self-administering set. Design of record docs/answerable-not-felt.md section 2b. Counter-case that makes it sharp: wan2gp carries a large heavily-READ knowledge layer (608KB backlog, 553-line CLAUDE.md, 57 docs) at about 4 operator interjections per 100 turns, and it is ad-hoc on where, when and what — knowledge without a system, working because the operator was the writer-of-last-resort.
+blocked-by: decision is the trigger a seventh declared stage or a property derived from the writer field?
