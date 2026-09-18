@@ -174,3 +174,35 @@ round did not carry it and the wave plan above scheduled it nowhere
 decision. Its RESULT returns to the driving desk before any further
 mechanism admission beyond this directive's scope — that is the "bounds"
 consequence made operational.
+
+## Addendum 2, 2026-09-19 (driving desk; operator intent stated first-hand:
+## "that's one of the pillars of lifecycle I want to solve")
+
+**M5 — the operator-question pipeline (fifth mint, wave A).** The dominant
+capture route (~a third of all learning, capture audit) is a one-line
+operator question, and sessions measurably do not ask these of themselves —
+nor should they try: intrinsic self-questioning degrades (research doc,
+arXiv:2310.01798), so the asking party must be independent, and a check must
+key on ARTIFACT state, never prose (the AUROC 0.65 judge ceiling). The
+solvable formulation: NO OPERATOR QUESTION NEEDS ASKING TWICE. Two halves:
+
+- **MINE:** a discovery pass over this machine's transcripts enumerating
+  operator questions that changed a session's course, classified into a
+  taxonomy. Feasibility basis: the capture audit's event types SATURATED
+  (~18 types, nothing new after the 18th sampled entry) — the classes are
+  finite. Instrument: the catch study's extractor (exists); going forward,
+  the course-corrections carrier is the capture seam (a course change
+  following an operator question carries the question verbatim).
+- **DRAIN:** each recurring class gets a recorded disposition — a required
+  slot at its firing moment (M3 is the first instance: "do you know what
+  we're here for" → goal-advance slot; the required-slots doc lists seven
+  more conventions awaiting theirs), a deterministic artifact-keyed check
+  ("is this booked?" → M4's close-count; "by now something should have
+  materialized" → M2's readout), or HELD with a named re-open event. A
+  disposition is an exit; a class with none is the carrier's alarm.
+
+Boundary, recorded so the pillar is not over-claimed: the NOVEL question —
+one nobody thought to ask — stays the operator's, is not a gap, and enters
+the pipeline the first time it is asked. Always-on additions from the drain
+wait on lc-222's result (addendum 1). M5's mining half is discovery and may
+run parallel to any wave; its booking rides wave A with the other mints.
