@@ -304,12 +304,27 @@ it saw a `2`.
   files. Its placement outside every operational load path is
   load-bearing and does not move.
 - `tools/` — repo-owned checks. `absence-scan.mjs` and `tmpdir.mjs`
-  are byte-identical copies of claude-code-cache-fix's; they are not
-  edited here. That repo keeps its own copy and its own wiring, and
-  the de-duplication is a later wave's act with the hook rewiring in
+  ORIGINATED as copies of claude-code-cache-fix's and ARE edited here:
+  measured, `absence-scan.mjs` carries 6 commits in this repo and
+  `tmpdir.mjs` one. Byte-identity with that repo's copies still holds
+  for `absence-scan.mjs` — the copies have been kept in step by hand,
+  which is a fact about diligence and not a property of the files.
+  The de-duplication is a later wave's act with the hook rewiring in
   the same change. Two copies for one wave is the deliberate cost.
-- `test/` — `absence-scan.test.mjs` and its fixture are byte-identical
-  copies too; the `test_*.py` files are this repo's own.
+- `test/` — `absence-scan.test.mjs` ALSO originated as a copy AND HAS
+  DIVERGED: 4 commits here, and `cmp` against cache-fix's copy differs
+  today. `7fe9e68` is one of them — it repaired a scope guard that
+  described another repo, so the UUID bite had never run. THE
+  CONSEQUENCE IS THE POINT AND IS WHY THIS IS NOT BOOKKEEPING: a fix
+  landing in one copy no longer reaches the other, silently, and
+  neither side has a check that would say so. The `test_*.py` files
+  are this repo's own.
+  **These two lines previously read "byte-identical copies … not
+  edited here", which was false in both directions at once** — the
+  files ARE edited here, and the test copy is no longer identical. A
+  role line asserting a property of files nothing measures is the
+  label-over-body class in the section that tells a reader what to
+  trust.
 - `plugin/cli/` — the `lifecycle` entry point and its package.
 
 ## The two carrier invariants a reader must not conflate
