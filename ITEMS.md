@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 162
+added: 163
 compacted: 0
 
 ## lc-3
@@ -851,4 +851,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/firelog.py,plugin/cli/lifecycle_core/refusals.py,test/test_retire.py
 done-criterion: the compaction exit exists and fires on a declared window, and the retire walk reports a kind whose declared exit has never been taken AGAINST THE ARTIFACT rather than against the declaration. RED-FIRST: the fire log at its current 1.17M lines is the firing input — a walk that reads the declaration and reports the growth stage as satisfied is the defect. MUST-NOT-MOVE: the control stays FLOW not SIZE per R22, so the finding is never "this file is large" but "this kind declares an exit that has never been taken"; and the recording-act the stage already names (a ledger decision line with the compacted window and per-verb totals) is what closes each compaction.
 evidence: Measured at the artifact 2026-09-18 during a survey prompted by a peer desk structural finding on lc-166: du reports 127M, wc reports 1173396 lines. The declaration text quoted above is from .claude/lifecycle.json. THE STRUCTURAL REASON NOTHING CAUGHT IT, which is the peer own finding generalized: kind sweep walks TRACKED FILES and invariant 1 says EVERY PERSISTED THING — tracked is a subset of persisted, so the sweep assurance is narrower than the invariant it serves and XDG-homed kinds are structurally invisible to it. The same blindness hid the investigation record until lc-166.
+blocked-by: NONE
+
+## lc-171
+grade: READY
+requirement: DESK STATE IS WRITTEN BY A LIFECYCLE VERB AND GOVERNED BY NO KIND. $XDG_STATE_HOME/lifecycle/desk-state/ exists and is written by `lifecycle desk state`; no registered kind names its home. Exactly the gap lc-166 just closed for investigation records, one directory over, and found by the same survey. It has no home stage, no writer stage, no reader, no staleness, no exit and no growth control, while a shipped verb writes it — the plugin governing its own state everywhere except here.
+goal: enforce-the-invariants
+write-set: .claude/lifecycle.json,plugin/cli/lifecycle_core/declaration.py,test/test_declaration.py
+done-criterion: desk state resolves to a registered kind with all six stages, on the pattern lc-166 established and the fire log set before it: an XDG home declared as a per-repo kind, files never moved into any tree. The WRITER is verb:desk state, so its trigger is implicit in the act — which makes it one of the self-administering kinds and worth saying so in the declaration. RED-FIRST: with desk-state files present and the kind undeclared, the lc-166 check (records_kind_undeclared, or its sibling) must fire; declaring it takes the walk to 0 with the sweep still clean. MUST-NOT-MOVE: the verb ALWAYS OVERWRITES and keeps no history by design, so the staleness stage says the state is current-by-construction and the exit is not a compaction.
+evidence: Measured at the artifact 2026-09-18: ~/.local/state/lifecycle/desk-state/ exists; a scan of the 24 declared kinds for a desk-state home returns none. desk.py own docstring states the design (one current state per desk, no history, XDG rather than .claude/ because a config-directory write costs a permission dialog). Found in the same survey that found lc-170, prompted by the build desk structural finding on lc-166: kind sweep walks tracked files while invariant 1 says every persisted thing, so XDG-homed kinds are invisible to it and their absence from the declaration is invisible to every other check too.
 blocked-by: NONE
