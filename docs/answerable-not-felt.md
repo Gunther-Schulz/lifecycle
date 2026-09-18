@@ -1,0 +1,117 @@
+# Answerable, not felt — the assert-vs-query class and the persist-and-query lever
+
+**Status:** design direction for pickup, opened 2026-09-18 (desk session 04c231,
+CachyOS-Setup marvel-rivals freeze arc; peer desk 9a744c). Booked as **lc-157**.
+Not a spec yet — the point is to dig deeper next session. This note is the
+carrier; the ranked mechanisms below are the candidate features.
+
+**Provenance / lookup.** The two sessions' full transcript UUIDs are deliberately
+NOT written here: this repo's pre-push leak scan treats a session UUID as a
+capture identifier and blocks it (it blocked this arc's earlier lifecycle push
+over exactly that). Short refs — desk `04c231`, peer `9a744c`. The `.jsonl`
+transcripts live locally under
+`~/.claude/projects/-home-g-dev-Gunther-Schulz-CachyOS-Setup/`, and the exact
+filenames are recorded in the arc's local (unscanned) investigation record,
+`~/.local/state/claude/investigations/CachyOS-Setup--marvel-rivals-freeze-rootcause.md`
+(MOVES, 2026-09-18) — so the JSON is findable without leaking the ids into
+public history.
+
+## The class
+
+An agent asserts a STATE OF ITS OWN WORK from memory or feeling instead of
+QUERYING it, and — the load-bearing part — **the wrong answer is shaped exactly
+like the right one.** A clean-looking green, a "nothing owed", a "verify passed",
+a false absence. Because success and failure are indistinguishable at the point
+of assertion, nothing prompts a second look, and the error is caught by a
+person, a peer, or an accident — never by the thing that should catch it.
+
+The corpus already NAMES this (Fixing: "one's own past output ... checked there
+before it is asserted"; the COUNT and the NEGATIVE are the under-served halves,
+because a tally feels like recollection). What is missing is not a rule — it is
+a MECHANISM that makes the felt state answerable at the moment it is asserted.
+
+### Evidence — one session, 2026-09-17→18 (the pile the operator and peer mapped)
+
+- miscounted armed watches asserted inside a closable verdict ("both retired" — a third was still armed)
+- "nothing owed / idle" asserted twice before the check that showed a members-sweep was owed
+- an unquoted `$t` verify loop: 8 of 9 checks never ran, failure shaped like a pass (grep for FAILED finds none)
+- freeze-chain-class.py mode 644: a registered verify entry that could never execute
+- a `pgrep -f` "GAME UP" false positive on a closed game (desk, this session)
+- cs-45's booked premise "recoverable offline" — unsatisfiable by construction, survived unexamined until executed
+- a defect's 558-vs-3 ratio carried from another session as a fixed property (transfer-test failure)
+- cs-54: the census "COVERAGE ENDED" marker missing on clean quits, so the exit witness cannot discriminate crash from quit
+- a coverage-span probe reading each file's last line as a timestamp — well-formed files (with the marker) read as malformed
+
+All one shape: a state assumed rather than queried, its failure indistinguishable from success.
+
+## Why it recurs (so the fix targets the cause)
+
+1. **Momentum.** The intake/verify check is skipped under the same momentum that
+   carries the work — the observed condition under which the gauge gets skipped.
+2. **The trigger is a feeling.** "Do I feel done / idle / clean?" is judgment-shaped
+   and under-fires. The rule that should fire (e.g. "sweep the carrier for siblings
+   when a defect-class is found") fires late, by luck, not by mechanism.
+3. **Failure looks like success**, so there is no red to notice.
+
+## The lever
+
+**Convert the felt judgment into a mechanical, answerable query against PERSISTED
+state, triggered at the seam.** Each felt state has a queryable proxy:
+
+- "Am I idle?" → "has any defect-class find closed since the last sweep of its carrier?" (yes/no)
+- "Did verify pass?" → "did N registered checks actually EXECUTE?" (count vs registered, not absence-of-red)
+- "Is this booking complete?" → "does its done-criterion dry-run pass against data already in hand?" (exercise, not read)
+
+### The deeper insight — persistence has a GUIDING function by mere existence
+
+The investigation record helps not because it stores data but because it keeps
+"where we are" IN FRONT OF THE MODEL'S EYES at the moment of the decision, so the
+decision QUERIES the record instead of RECALLING from brittle memory. That is the
+corpus's "a form whose absence is visible binds; an obligation with no output
+under-fires" — the persisted record IS the form. Measured this session: the
+record's OPEN/NOW slots kept the GPU question alive across hours and turns and
+made its result read as PIVOTAL rather than lost in noise (it had a hand in the
+finding), while every felt-state assertion above went wrong. General form:
+**persist the state that judgment would otherwise hold in memory, in a shape
+re-read at the decision point.** The operator's instinct — that persisting the
+process itself guides — is this, generalized.
+
+## Candidate mechanisms, ranked by how REAL vs hopeful
+
+1. **Verify-the-verifiers** (most real, general, mechanical). A repo's declared
+   verify block asserts how many checks EXECUTED (count vs registered); a
+   could-not-run or a suspiciously-quiet pass is a FAILURE, not a pass. Run at
+   session-start and on-commit. Catches the mode-644 + unquoted-loop class. The
+   lifecycle plugin already knows the registered checks — natural owner.
+2. **Booking-time done-criterion dry-run** (the one to defend on ceremony cost).
+   Exercise a booking's done-criterion against cases in hand AT BOOKING — the
+   corpus's red-first-at-booking as a mechanism. Catches cs-45's
+   unsatisfiable-by-construction class at write time, which nothing but
+   EXECUTING the criterion would show.
+3. **"Idle is answerable."** A query — "has a defect-class find closed without
+   its carrier being swept?" — fires the owed sweep at the FIND, not by a lucky
+   quiet moment. Catches the false-idle / late-sweep class.
+4. **Per-write record lint.** Widen lc-156 (the investigation-record checker) to
+   fire per-WRITE, not only at close — a basis-less claim, a NOW without a
+   kill-condition, an OPEN whose probe is not two-way, caught as it is written.
+5. **During-session class-recurrence counter** (hypothesis). Count same-class
+   corrections over the corrections carrier as they happen ("3rd today"), since a
+   class two mistakes share is invisible from inside either one. This session:
+   the single-sample-for-a-population class recurred ~5×, surfaced only at the
+   close harvest.
+
+## The honest boundary
+
+The class that stays MANUAL: prose claims about runtime behaviour going stale
+(a bound, an "armed on request" line). No cheap general mechanism — operator as
+backstop. Precipitate the computable slice; leave the judgment remainder as
+prose. This note is "mechanize the answerable half", never "mechanize everything".
+
+## Companion question (#1 from the operator)
+
+The investigation-record feature currently lives as a CORPUS discipline
+(calibration module + dotfiles format file). lc-156 already books its mechanical
+CHECKER into this plugin — so the mechanism is migrating to lifecycle regardless.
+Open question for next session: should the whole FEATURE (not just its checker)
+have its home in the lifecycle plugin, given it is the same persist-and-query
+family as everything above? Decide against the plugin's boundary, not by default.
