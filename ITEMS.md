@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 189
+added: 190
 compacted: 0
 
 ## lc-3
@@ -1025,4 +1025,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,tools/prove-rows.py,test/test_items.py
 done-criterion: capture_dominated has ONE deciding condition that a mutation can disable without crashing, and prove-rows answers PROVEN for it at a real anchor and FAILED at an inert one. RED-FIRST: today the recorded arrangement yields RAISED ZeroDivisionError and the row reads COULD NOT VERIFY. MUST-NOT-MOVE: both firing inputs keep their OWN messages — a carrier that never drains and one past the tripwire are different things to be told — and the zero-drain path still never divides. The ratio arithmetic and the tripwire value do not change.
 evidence: MEASURED at this desk 2026-09-18 immediately after repairing the crash-reads-as-proof defect: a full prove-rows walk returned exactly ONE could-not-verify row, capture_dominated, so this is the entire residue of that repair. DERIVED: any mutation of the zero guard reaches the division on the next line, so no anchor on that condition can both darken the row and let the arm answer — the split has to happen in the code. RELAYED from review lane 2 via lifecycle-6f, carried as theirs: they found the crash and graded it critical.
+blocked-by: NONE
+
+## lc-198
+grade: READY
+requirement: A SILENTLY SKIPPED ARM IS A REACH ARM DELETED, AND THE SUITE STILL EXITS 0. One arm in test_verbs is premised on a sibling dotfiles checkout and vanishes anywhere that checkout is absent — a fresh clone, another machine, a CI runner — while unittest discover still exits 0 and the repo verify section reads only the exit code. That arm is blocker_unstorable REACH case, so where it vanishes the roster still reads 110 green while one refusal is graded by nothing. A skip that removes a reach arm and leaves a green is the third answer collapsing into the first, in the suite this repo trusts most.
+goal: enforce-the-invariants
+write-set: test/test_verbs.py,tools/verify-suite.py,CLAUDE.md
+done-criterion: a SKIPPED arm is visible in the verdict rather than folded into a pass: the suite reports skips as their own count and a run whose skips include a reach arm does not read as a clean run. THE COUNT COMES OFF THE RESULT OBJECT, never the -v rendering, per law 17 — res.skipped and t.id(), which is how the lane measured it. RED-FIRST: rename the sibling checkout and the suite must stop reading as clean where today it exits 0 with one arm gone. MUST-NOT-MOVE: an arm that legitimately cannot run somewhere is still allowed to skip — the repair is that the skip is REPORTED, never that the arm is forced to run or deleted; and the arms that do run keep their verdicts unchanged.
+evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs and read off the RESULT OBJECT rather than console output, which is the discrimination law 17 demands: the arm is premised on ../dotfiles and disappears without it. DERIVED: the repo declared verify set reads exit codes, so a vanished arm is invisible to the one instrument anyone runs before trusting the package.
 blocked-by: NONE
