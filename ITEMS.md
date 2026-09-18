@@ -589,6 +589,8 @@ write-set: plugin (items parser / next_ident / check duplicate lane) + battery
 done-criterion: a body past the archive heading still blocks its id from reissue AND surfaces in the duplicate lane; red-first on the planted post-archive body; battery green
 evidence: dotfiles df-193 diagnosis (closed body in its ITEMS-DONE.md) and repair 53a692c; the double-allocation commits d96fc32/2c2f4ee
 blocked-by: NONE
+amend-reason: 2026-09-18 2026-09-18 write-set repaired to PATHS ONLY. The slot carried a real path with a parenthetical glued to it, which does not parse as a path and made item waves exit COULD NOT VERIFY for the whole carrier. The doctrine demote-to-parked clause is for a boundary genuinely UNKNOWN; this was the inverse, a known path made unparseable by commentary. The commentary is not lost: it restates what the requirement already says. Found by the build desk, ruled by this desk.
+amended-write-set: 2026-09-18 plugin/cli/lifecycle_core/items.py,test/
 
 ## lc-122
 grade: READY
