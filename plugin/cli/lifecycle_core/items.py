@@ -773,6 +773,26 @@ def _resolve_amendments(out: Parsed, item: Item, seen_order: list) -> None:
     # ORDER: the group follows the fixed slots. A superseding line ABOVE the
     # value it supersedes reads, to a human, as the value being superseded —
     # the diff would show the correction where the original belongs.
+    #
+    # THAT SENTENCE IS TRUE ONLY ABOUT THE LAYOUT IT ARGUES AGAINST, and
+    # measurement found the opposite failure in the layout it defends
+    # (lc-165, 2026-09-18). Readers of this order take the line in the SLOT'S
+    # POSITION as current and get the superseded value: cs-48's live
+    # requirement contradicted its own later amendment, cs-35 took four
+    # amendments in ninety minutes with superseded lines standing above the
+    # true state, and in none of those cases did anyone read the top line as
+    # the superseded one.
+    #
+    # NEITHER ORDER IS THE DEFECT, which is why this check is NOT inverted
+    # and the order below still stands: whichever value sits in the slot's
+    # position, a reader infers currency from WHERE THE LINE SITS, and in an
+    # append-only block two values of one slot both legitimately exist.
+    # Re-ordering moves the ambiguity to the other line. The repair is
+    # EXPLICIT MARKING — a tool-written head line naming which slots carry an
+    # amendment, with a check that it matches the amendments present — and it
+    # is a new line in the block, so law 25 binds it to the schema wave. Left
+    # standing here rather than silently corrected: the next reader would
+    # otherwise re-derive this whole conflict from the comment alone.
     fixed_at = [i for i, s in enumerate(seen_order) if s in SLOTS]
     amend_at = [i for i, s in enumerate(seen_order) if _is_amend_line(s)]
     if fixed_at and amend_at and min(amend_at) < max(fixed_at):

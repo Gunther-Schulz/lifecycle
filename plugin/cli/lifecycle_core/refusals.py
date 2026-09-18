@@ -3655,7 +3655,15 @@ HOME_ROWS = [
         firing_input="a home carrying an unexpanded `$XDG_STATE_HOME`, the "
                      "shape the fire log declares",
         expect=exits.COULD_NOT_VERIFY,
-        fire=lambda: _list_home_run("$XDG_STATE_HOME/lifecycle/fire.jsonl"),
+        # RE-INSTANCED BY lc-170 AND THE ROW'S CLAIM DID NOT MOVE. This fired
+        # on `$XDG_STATE_HOME/lifecycle/fire.jsonl` while the walk expanded
+        # nothing; that item made the four XDG bases resolve, which is the end
+        # state lc-172's could-not-verify was the honest waypoint to. What is
+        # unresolvable now is a variable that is unset AND has no spec default,
+        # so that is what the plant uses — the refusal is unchanged, the world
+        # under its old example moved.
+        fire=lambda: _list_home_run(
+            "$LIFECYCLE_NO_SUCH_BASE_DIR/lifecycle/fire.jsonl"),
         # A RESOLVABLE IN-TREE HOME THAT IS ALSO PRESENT: the arms differ in
         # whether the walk could resolve the home at all. Deliberately NOT an
         # absent in-tree home — that one is CLEAN by design (the walk looked

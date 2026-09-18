@@ -938,10 +938,13 @@ MUTATIONS = [
     # unexpanded variable falls through to the glob branch, matches nothing,
     # and returns an empty list — the false CLEAN this row exists to refuse,
     # which is exactly how a 133MB fire log read as a kind that had not grown.
+    # RE-POINTED BY lc-170: the test now runs over the EXPANDED home, since
+    # a home carrying `$XDG_STATE_HOME` is resolvable and only a variable
+    # with no value and no spec default survives expansion.
     ("home_unresolvable", "retire.py",
-     "    if _UNEXPANDED.search(home):",
+     "    if _UNEXPANDED.search(resolved):",
      "    if False:",
-     "the test that a declared home was resolvable at all"),
+     "the test that a declared home was resolvable at all, after expansion"),
 
     ("records_kind_undeclared", "declaration.py",
      "    if not found:\n        return",

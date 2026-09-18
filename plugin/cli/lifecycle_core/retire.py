@@ -28,6 +28,7 @@ line like any other, and a walk that went on answering NOT CHECKED for the
 kinds it serves was reporting the absence of a reader that was there.
 """
 
+import os
 import re
 from pathlib import Path
 
@@ -122,9 +123,13 @@ def fire_log_readable() -> bool:
 
 # --- listing a kind's real home ----------------------------------------------
 
-#: A home still carrying a shell-style variable. This walk does not expand
-#: them, so such a home was never resolved and anything counted under it is
-#: a count of nothing rather than a count of zero.
+#: A home still carrying a shell-style variable AFTER `expand_home` has run
+#: (lc-170). Before that it meant "this walk does not expand variables",
+#: which stopped being true in the same change — the docstring is corrected
+#: with the behaviour rather than left recounting the old one (law 26). What
+#: reaches this now is a variable that is unset AND has no spec default, so
+#: the home was never resolved and anything counted under it would be a count
+#: of nothing rather than a count of zero.
 _UNEXPANDED = re.compile(r"\$\w|\$\{")
 
 
@@ -136,6 +141,64 @@ def unresolvable_line(note: str) -> str:
     refusal.
     """
     return f"COULD NOT VERIFY [home_unresolvable] {note}"
+
+
+#: The XDG base directories this walk knows how to default, and NOTHING ELSE
+#: (lc-170). Each maps to the spec's own fallback, derived from the running
+#: user's home at call time — law 6 forbids a hardcoded machine path or XDG
+#: root in this tree, and `records.records_dir` already resolves one variable
+#: exactly this way. This is that idiom generalised rather than a second
+#: spelling of it.
+#:
+#: A VARIABLE NOT IN THIS TABLE AND NOT IN THE ENVIRONMENT STAYS UNRESOLVED,
+#: which keeps `home_unresolvable` reachable: guessing a default for an
+#: arbitrary name would turn "I could not see this population" into a
+#: confident reading of the wrong directory, which is the failure lc-172
+#: removed rather than one to reintroduce one layer down.
+_XDG_DEFAULTS = {
+    "XDG_STATE_HOME": (".local", "state"),
+    "XDG_DATA_HOME": (".local", "share"),
+    "XDG_CONFIG_HOME": (".config",),
+    "XDG_CACHE_HOME": (".cache",),
+}
+
+_VAR = re.compile(r"\$\{(\w+)\}|\$(\w+)")
+
+
+def expand_home(home: str) -> str:
+    """`home` with environment and XDG-default substitutions applied.
+
+    WHY THE WALK RESOLVES THESE AT ALL (lc-170). lc-172 made an unexpanded
+    home answer COULD NOT VERIFY instead of reporting CLEAN over a population
+    nothing had examined — the honest answer, and still the wrong END STATE:
+    every XDG-homed kind then sits permanently outside R22's alarm, saying so
+    loudly instead of quietly. The fire log is the case that proves it
+    matters, and `kind sweep` cannot cover these kinds either, since it walks
+    TRACKED files and these live outside every tree by design.
+
+    Unresolved variables are LEFT STANDING rather than dropped, so the caller
+    can still tell an unresolvable home from a resolved one.
+    """
+    def sub(m):
+        name = m.group(1) or m.group(2)
+        val = os.environ.get(name)
+        if val:
+            return val
+        parts = _XDG_DEFAULTS.get(name)
+        if parts:
+            return str(Path.home().joinpath(*parts))
+        return m.group(0)
+    return os.path.expanduser(_VAR.sub(sub, home))
+
+
+def _shown(path: Path, repo: Path) -> str:
+    """A path as a reader should see it: repo-relative in the tree, else its
+    own absolute spelling. A `relative_to` over an out-of-tree home raises,
+    and an out-of-tree home is exactly what lc-170 made reachable."""
+    try:
+        return str(path.relative_to(repo))
+    except ValueError:
+        return str(path)
 
 
 def list_home(repo: Path, home: str) -> tuple:
@@ -160,13 +223,20 @@ def list_home(repo: Path, home: str) -> tuple:
     #
     # `None` is COULD NOT VERIFY here — both callers already route it that way
     # — so the repair is to answer it wherever the population was never seen.
-    if _UNEXPANDED.search(home):
-        return None, (f"{home!r} carries an unexpanded variable and this walk "
-                      "does not resolve it, so NOTHING was examined. A count "
-                      "of 0 here would be an absence claim over a population "
-                      "no instrument ever saw.")
-    if "*" in home:
-        stem = home.split("*", 1)[0]
+    # RESOLVED FIRST (lc-170), then judged. What survives expansion with a
+    # `$` still in it is genuinely unresolvable — an unknown variable, unset
+    # and with no spec default — and THAT is the dead instrument lc-172
+    # named. A home this walk can resolve is a home it must examine, or the
+    # XDG-homed kinds stay outside R22's alarm while saying so politely.
+    resolved = expand_home(home)
+    if _UNEXPANDED.search(resolved):
+        return None, (f"{home!r} carries a variable this walk cannot resolve "
+                      f"(unset, and not one of "
+                      f"{', '.join(sorted(_XDG_DEFAULTS))}), so NOTHING was "
+                      "examined. A count of 0 here would be an absence claim "
+                      "over a population no instrument ever saw.")
+    if "*" in resolved:
+        stem = resolved.split("*", 1)[0]
         base = repo / (stem if stem.endswith("/") else str(Path(stem).parent))
         if not base.is_dir():
             # IN-TREE AND ABSENT IS AN OBSERVATION, not a dead instrument:
@@ -175,13 +245,14 @@ def list_home(repo: Path, home: str) -> tuple:
             # denominator says so, so a reader can tell this zero from one
             # measured over files that exist.
             return [], (f"glob {home!r}: 0 instance(s) — the directory "
-                        f"{str(base.relative_to(repo)) if base != repo else '.'!r} "
-                        "does not exist in this repo, so there was nothing to "
+                        f"{(_shown(base, repo) if base != repo else '.')!r} "
+                        "does not exist, so there was nothing to "
                         "match rather than nothing matching.")
-        hits = sorted(repo.glob(home))
-        return [str(p.relative_to(repo)) for p in hits if p.is_file()], \
+        hits = sorted(base.glob(resolved.split(str(base), 1)[-1].lstrip("/"))
+                      if Path(resolved).is_absolute() else repo.glob(resolved))
+        return [_shown(p, repo) for p in hits if p.is_file()], \
             f"glob {home!r}: one instance per file, searched under {stem or './'}"
-    path = repo / home
+    path = repo / resolved
     if not path.exists():
         # DELIBERATELY NOT COULD-NOT-VERIFY, and the boundary is lc-172's own:
         # the discriminator is whether the instrument SAW anything, never
@@ -196,7 +267,7 @@ def list_home(repo: Path, home: str) -> tuple:
                     "not an unexamined population.")
     if path.is_dir():
         hits = sorted(p for p in path.rglob("*") if p.is_file())
-        return [str(p.relative_to(repo)) for p in hits], \
+        return [_shown(p, repo) for p in hits], \
             f"directory {home!r}: one instance per file"
     try:
         text = path.read_text(encoding="utf-8")

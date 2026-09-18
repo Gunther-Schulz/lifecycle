@@ -708,12 +708,22 @@ class AnAbsenceClaimNamesWhatProvesTheInstrumentWasLive(unittest.TestCase):
     """lc-172 — a zero from a dead instrument and a zero from a live one.
 
     MEASURED, and it is why this exists: the fire log's declared home is
-    `$XDG_STATE_HOME/lifecycle/fire.jsonl`; the walk does not expand the
+    `$XDG_STATE_HOME/lifecycle/fire.jsonl`; the walk did not expand the
     variable, so it searched for a literal `$XDG_STATE_HOME/…`, found
     nothing, counted 0 and reported the kind CLEAN — while the file held
     133,087,757 bytes across 1,173,626 lines. Every XDG-homed kind was
     exempt from R22's alarm, silently, and the line saying so was the most
     reassuring in the output.
+
+    THE FIXTURE MOVED IN lc-170 AND THE CLAIM DID NOT. That item made the
+    walk RESOLVE `$XDG_STATE_HOME` and the other XDG bases, which is the end
+    state lc-172's could-not-verify was only the honest waypoint to — so the
+    original spelling of this arm stopped being an unresolvable home and
+    started being a resolvable one. What is unresolvable now is a variable
+    that is unset AND has no spec default, and that is what these arms use.
+    The claim under test — an unexamined population answers could-not-verify
+    rather than clean — is untouched; only the instance that exercises it
+    moved, because the world moved under the fixture.
 
     THE BOUNDARY IS DELIBERATE AND NARROW: the discriminator is whether the
     instrument SAW anything, never whether it FOUND anything. An in-tree home
@@ -726,16 +736,23 @@ class AnAbsenceClaimNamesWhatProvesTheInstrumentWasLive(unittest.TestCase):
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         return d
 
+    #: Unset, and not one of the four XDG bases the walk defaults — so it
+    #: survives expansion with its `$` intact, which is exactly the dead
+    #: instrument this class is about.
+    UNRESOLVABLE = "$LIFECYCLE_NO_SUCH_BASE_DIR"
+
     def test_an_unexpanded_variable_home_is_could_not_verify(self):
         d = self._tmp()
-        instances, note = retire.list_home(d, "$XDG_STATE_HOME/lifecycle/fire.jsonl")
+        instances, note = retire.list_home(
+            d, self.UNRESOLVABLE + "/lifecycle/fire.jsonl")
         self.assertIsNone(instances, note)
         self.assertIn("NOTHING was examined", note)
         self.assertIn("home_unresolvable", retire.unresolvable_line(note))
 
     def test_the_braced_spelling_is_caught_too(self):
         """`${VAR}` is the same unresolved home in a different costume."""
-        instances, _ = retire.list_home(self._tmp(), "${XDG_STATE_HOME}/x.jsonl")
+        instances, _ = retire.list_home(
+            self._tmp(), "${LIFECYCLE_NO_SUCH_BASE_DIR}/x.jsonl")
         self.assertIsNone(instances)
 
     def test_an_absent_in_tree_home_stays_clean_and_says_it_resolved(self):
@@ -757,4 +774,9 @@ class AnAbsenceClaimNamesWhatProvesTheInstrumentWasLive(unittest.TestCase):
         is indistinguishable from a pattern that matched nothing."""
         instances, note = retire.list_home(self._tmp(), "docs/nowhere/*.md")
         self.assertEqual(instances, [])
-        self.assertIn("does not exist in this repo", note)
+        # PHRASE UPDATED BY lc-170, substance untouched: the note used to say
+        # "in this repo" and a resolved home can now be OUTSIDE the tree, so
+        # the claim that survives is that the note names the directory it
+        # searched and did not find.
+        self.assertIn("does not exist", note)
+        self.assertIn("docs/nowhere", note)
