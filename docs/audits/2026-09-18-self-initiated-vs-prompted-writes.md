@@ -26,7 +26,7 @@ asking a direct question was the single largest capture event type, ~18-20 of
 | arm | population | governance | status |
 |---|---|---|---|
 | L1 | `-home-g-dev-Gunther-Schulz-lifecycle` | high | **VOID — wrong population, see below** |
-| L2 | dotfiles + dispatch-guards | high | PENDING |
+| L2 | dotfiles + dispatch-guards | high | **REPORTED (parts 1-2 of 3)** |
 | L3 | wan2gp | none (by that repo's own declaration) | **REPORTED** |
 | L4 | claude-code-cache-fix, before/after the item toolchain | mixed | PENDING |
 
@@ -101,6 +101,108 @@ moderate-trust. Mechanical counts verified twice independently; the
 prompted/self split rests on ~30 individually-read hits extrapolated by
 pattern, and could shift ±10 points on a full manual read, though the lane
 judges the near-even headline unlikely to overturn.
+
+## THE RUBRIC WAS WRONG, AND BOTH LANES CAUGHT IT INDEPENDENTLY
+
+**The brief defined PROMPTED as an operator message in the window. In a
+desk/peer architecture that is the wrong cut — being told by a PEER is still
+being told**, and the question gate 1 asks is whether a session writes without
+being prompted BY ANYONE.
+
+L2 flagged it unprompted (*"if your design question actually cares about
+externally triggered vs spontaneous rather than specifically human vs the agent
+itself, the 359 peer/automated-context writes are a materially different bucket
+from the 126 true no-context ones"*) and L1 flagged the same fork in its own
+words, from a different population, in the same hour. The desk had just sent L2
+a correction saying so; the messages crossed. **Two lanes and the desk reached
+one finding from three directions, which is the divergence detector working in
+the agreeing direction.**
+
+**So every number below is reported THREE ways** — operator-prompted,
+peer/automated-prompted, and genuinely unprompted — and they are never averaged.
+
+| arm | population | operator | peer/auto | unprompted | n |
+|---|---|---|---|---|---|
+| L1 | claude-code-cache-fix | 17% | 26% | 54% | 76 confirmed |
+| L2 | dotfiles | 24.8% | 57% | 18% | 625 |
+| L2 | dispatch-guards | 40% | 8% | 52% | 25 |
+| L3 | wan2gp | \~54% / 42% | (two-way rubric only) | \~44% / 42% | 182 / 24 |
+
+(L3 ran before the rubric was repaired; its population carries almost no peer
+traffic, so its "self-initiated" is close to "unprompted" — but it is NOT the
+same quantity and the two are not compared here as though it were.)
+
+## THE PATTERN, AND IT IS NOT THE ONE THE DESIGN PREDICTED
+
+**Unprompted-write rate tracks PEER DENSITY, not governance.** The peer-rich
+governed population (dotfiles, 18%) sits far below the peer-poor governed one
+(dispatch-guards, 52%) and below the peer-moderate one (cache-fix, 54%). The
+ungoverned population sits in between. **Governance is not visibly doing
+anything to this number; the presence of a peer to be told by is.**
+
+**That is not a failure — it may be the architecture working.** In a driven
+desk/peer setup, being driven BY A PEER is the intended mode, and the design's
+actual claim is about OPERATOR attention, which neither scales nor
+parallelizes. Read that way the governed populations say: **17-25% of carrier
+writes follow an operator message; 75-83% happen without one.** That is the
+autonomy claim, measured, and it is the one result here that supports the
+design.
+
+**WHAT CANNOT BE CONCLUDED, and it is the larger half:** these populations
+differ on many axes at once — peer density, era, repo purpose, session length,
+who was driving. This is not a controlled comparison and it cannot grade
+governance. Two measurements only compare where they share a coordinate, and
+these share few.
+
+## Arm detail: L1 — claude-code-cache-fix
+
+Mechanical detection over all 130 files (100%, a ~1s script), 1360 candidates
+after **two rounds of false-positive repair caught by planted positive and
+negative controls**. Manual classification of 79 sampled systematically across
+the full 2026-08-05→28 range, during which **3 further false positives surfaced
+that no regex could have caught** — heredocs authoring a script into scratch,
+where the real write happens in a later separate call. 76 confirmed.
+
+**The era split was requested and came back NOT MEANINGFUL, which is itself the
+finding:** only 3 of 1360 candidates invoke `lifecycle item`/`ledger` at all,
+all dated Aug 26-28, the tool's own build window. 99.8% of writes are
+pre-toolchain `BACKLOG.md`/`JOURNAL.md`/docs edits, and this repo's September
+sessions are the same tiny single-turn compliance-ping shape as the lifecycle
+repo's stubs. **The toolchain's adoption moved the WORK to another repo's
+sessions rather than showing up in this repo's transcripts** — the same
+CWD-scatter finding that voided L1's first run, confirmed from the other side.
+
+So there is **no before/after arm available on this machine.** The pre-treatment
+baseline the operator's correction asked for cannot be constructed from
+transcripts, because the population that would carry it does not exist as a
+population.
+
+## Arm detail: L2 — dotfiles + dispatch-guards
+
+45 sessions (dotfiles 34/166, dispatch-guards 11/33), 650 writes, 222 episodes.
+Parsed raw JSONL directly **including `queue-operation` records**, which the
+session-search tool's own declared scope excludes — so operator mid-turn
+interjections were visible to this instrument where they would not have been to
+that one.
+
+**Bug found and fixed mid-run:** the first pass matched any file under
+`claude/` regardless of extension, counting `hooks/*.py` rewrites as carrier
+writes. Numbers are post-fix. 159 ordinary source edits and **440 Bash
+reads-only excluded — a carrier NAMED is not a carrier WRITTEN**, which is
+where a sibling lane's instrument failed before catching itself.
+
+**Its own caveats, carried rather than smoothed, and both bias the same way:**
+a Bash heredoc editing `manifest.py` matched because the script's own string
+literals mention `JOURNAL.md` (confirmed one instance, not exhaustively
+corrected); and two episodes cite an operator GO that occurred MORE than 10
+assistant turns earlier, outside the lookback, scored as no-context though the
+write's own text asserts a prior prompt. **So the unprompted bucket is a soft
+OVERESTIMATE and the true operator share is a few points higher than 25.4%.**
+Read it as "roughly a quarter, plausibly somewhat higher", never as a point
+estimate.
+
+**Its strongest control:** a full manual read of all 9 dispatch-guards episodes
+matched the automated output exactly, zero discrepancies.
 
 ## What L3 does to the registered prediction
 
