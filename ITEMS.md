@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 164
+added: 165
 compacted: 0
 
 ## lc-3
@@ -870,3 +870,12 @@ write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/declara
 done-criterion: every output that CLAIMS AN ABSENCE carries the denominator that proves its instrument was live, and a denominator of ZERO is COULD NOT VERIFY rather than CLEAN. OUTCOME FIRST, sites second: the observable is that no verb can report clean over a population it never examined. RED-FIRST: point a sweep at an empty or unreadable population and it must answer could-not-verify, never clean — the current "the home holds nothing, so nothing has" line is the firing input. MUST-NOT-MOVE: a genuine zero over a REAL examined population stays CLEAN with its denominator shown (all 85 tracked files resolve is correct and must not become could-not-verify), so the discriminator is whether the instrument SAW anything, never whether it FOUND anything.
 evidence: FOUR INSTANCES MEASURED AT THIS DESK IN ONE DAY, every one a zero believed without a known positive, and every one against a rule this desk had loaded and had quoted to three dispatch lanes: an extractor returning 0 items for a FULL carrier (caught only because the full file obviously could not be empty); a journal enumeration returning 45 where 344 existed, keyed to the one form the first entries happened to carry; a sweep for commit sites that missed ledger.py because the pattern was keyed to the names already in hand; and a roster read as RED that was a prove-rows mutation window. Survey of this package CLEAN outputs 2026-09-18 shows the mechanism already present in most and absent in at least four. Candidate list and the general pattern: docs/required-slots-as-an-autonomy-lever.md, operator-agreed 2026-09-18.
 blocked-by: NONE
+
+## lc-173
+grade: READY
+requirement: refusals.py IS A STRUCTURAL SERIALIZER AND IT IS LAW 2 THAT MAKES IT ONE. Measured 2026-09-18 over the eight items then open: refusals.py appears in SIX of the eight write-sets, items.py in four, verbs.py and declaration.py in three each. The cause is not booking grain — it is law 2 itself, "every refusal is a registry row", so EVERY item that emits a finding must edit the one file. The consequence is that no amount of parallel dispatch buys elapsed time on finding-emitting work: worktree lanes would each add rows to refusals.py and collide at integration. The law that makes checks provable is the same law that makes the work serial, and that tradeoff is currently invisible — the join reports the collision without naming its cause, so each desk re-derives it.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/roster.py
+done-criterion: UNKNOWN pending the decision below. The shape of a fix, if one is wanted: rows live in per-area modules that the roster imports, so two items adding rows to different areas do not touch one file. The shape of NOT fixing it: the join names the cause when refusals.py is the shared member, so a desk reads "this is law 2 serializing you" rather than re-deriving it. MUST-NOT-MOVE either way: the registry stays ONE SOURCE for its two consumers (the acceptance test and --test), which is law 3, and a split that produced two rosters would trade a scheduling cost for a correctness one.
+evidence: Measured at this desk 2026-09-18 while assessing whether the open set could be parallelized: refusals.py in 6 of 8 write-sets (lc-164, 167, 168, 169, 170, 172), items.py in 4, verbs.py and declaration.py in 3. Peer desk throughput on the same day, from commit timestamps: four items in about 85 minutes, roughly 21 minutes each, all serial. The peer independently routed the batch inline and serially and named the join as its basis, so two desks reached the same conclusion from the same artifact. Law 2 text: every refusal is a registry row with the input that fires it, proven red first.
+blocked-by: decision is the serializer worth removing, or worth naming in the join output?
