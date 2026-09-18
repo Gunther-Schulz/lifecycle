@@ -482,6 +482,65 @@ into chat because the carrier announced itself first. **This is the half that
 carries the AWARENESS — "this system exists and I am meant to use it" — which
 the operator identifies as carrying the bulk.**
 
+**AND THE HALF IT DOES NOT ANNOUNCE COST THIS SESSION ITS CENTRAL DERIVATION**
+(operator question, 2026-09-18, at the close: *"i just wonder if we wasted time
+along the axis that we are trying to fix today with better lifecycle"*).
+MEASURED, at yesterday's HEAD rather than from recollection: `9a1eded`'s
+`.claude/lifecycle.json` already declared 21 kinds split **4 verb-written / 16
+`writer: session` / 1 producer** — the exact discriminator this session spent
+the day arriving at and wrote up as §2b. One query against a file that was
+already in the tree. The banner announces **STATE** — open items, ledger tail,
+ready set, gate — and not **STRUCTURE**, so the declaration's own contents were
+never in front of the session, and the session went looking only after the
+begehung's second round forced the question (round 2's recorded class: *the
+design re-invents what the repo already does*).
+
+**The split is the design's own, turned on the session that wrote it.** The
+DERIVATION half was shortenable: a structural fact sitting in a tracked file
+was re-derived from reasoning. The DECISION half was not — the transition-table
+mapping, judgment-between-the-seams, enable-over-constrain, the gate ordering,
+the post-treatment baseline catch, and the category-exemption correction all
+arrived first-hand from the operator, and no announcement could have supplied
+them. This is not a session that ran long; it is a session whose derivable half
+ran long, which is exactly the cost mechanism 1 exists to remove and the reason
+its remaining gap is worth closing rather than declaring MOSTLY BUILT and
+moving on.
+
+**So the mechanism's scope widens, and this is the one amendment the question
+earns:** the announcement covers what the repo HOLDS (the carriers' state) and
+must also cover what the repo IS (the declaration's kinds, their stages, and
+which stages are undeclared). Booked: lc-174.
+
+**AND THE OPERATOR'S OWN READING OF IT MOVES THE ARC'S TARGET** (2026-09-18,
+first-hand, on being told the above): *"i was picking up from yesterday on what
+was persisted. i was deliberately leaving that old session open because of fear
+of us not being able to pick up on the full knowledge properly — i think all got
+persisted but maybe there was a gap in how we restarted from what was
+persisted."*
+
+**They were right, and the measurement says which half failed.** The persistence
+was COMPLETE: the discriminator was in a tracked file at yesterday's HEAD,
+committed, pushed, and readable. Nothing was lost on the WRITE side. What failed
+was the READ — the restart did not put the persisted structure in front of the
+session, so a complete record and an absent one produced the same session.
+
+**This arc has been optimizing CAPTURE, and today's measured loss was
+RETRIEVAL.** Every mechanism in this plan except the first is a write-side
+mechanism: sessions maintain a narrowing, state-advancing acts write, dead ends
+get a home, kinds declare their trigger. They are all correct and none of them
+would have saved today, because today's fact was already written. **A record
+that is written and never read is indistinguishable from one that was never
+written — and it is worse, because it is trusted.**
+
+That is also why the operator's instinct was to keep the old session OPEN rather
+than to trust the carriers: a live context is a retrieval mechanism that works,
+at the cost of paying the prefix forever. The carriers only become the cheaper
+option once the restart reads them as reliably as the session remembered them,
+which makes retrieval the arc's real second half rather than a detail of
+mechanism 1. **Gate 1 already encodes this and it was not an accident** — the
+operator's own wording is *"are things getting written AND READ as we expect
+them to"*, and today answers: written yes, read no.
+
 ### 2. Sessions maintain a NARROWING as they work — THE REAL GAP
 
 **IT IS NOT A LOG. It is a live picture of what is still open and what has
