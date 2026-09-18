@@ -5,6 +5,16 @@ work.** The observation is theirs: that this is mechanizable is interesting on
 its own, and it looks like a path to more autonomy across a multitude of
 areas rather than one fix.
 
+> **WIDENED 2026-09-19: this is a PILLAR, not a clever trick.** `docs/purpose.md`
+> names three legs the environment supplies — PRESENCE, DEMAND, and INDEPENDENT
+> FEEDBACK — and this document is the canonical carrier of the DEMAND leg. The
+> reason it is load-bearing rather than merely useful: presence alone measurably
+> under-fires (the adherence split — rules loaded the whole session and inert in
+> 5 of 6 corrections), so putting the right state in view does not by itself make
+> it engage. A required slot converts "should engage" into "cannot proceed
+> without engaging", which is the only conversion that survives momentum. Read
+> this file as one third of the creed, with `docs/purpose.md` as the north star.
+
 ## The pattern
 
 **Do not ask an agent to decide well. Require it to WRITE something at the
