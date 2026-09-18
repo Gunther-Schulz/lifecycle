@@ -33,7 +33,7 @@ Status vocabulary, and it is deliberately not a grade of quality:
 | O1 | nothing → a session exists | — | — | — | SessionStart hooks | MECHANIZED |
 | O2 | session → holds standing state | — | — | — | `session-scan.py` injects ledger tail, item census, ready items, gate status | MECHANIZED |
 | O3 | session → holds the repo's reading roster | — | `.claude/required-reading.json` | roster gate | `required-reading-inject.py` | **GAP — this repo declares no roster at all** |
-| O4 | session → holds the registry map | `kind list --digest` | — | — | a SessionStart hook | **GAP — booked, not built** |
+| O4 | session → holds the registry map | `kind list --digest` | — | its own three arms | a SessionStart hook | **PARTIAL — the verb SHIPPED 2026-09-18 (lc-219); the hook that runs it is not built** |
 | O5 | session → picks work | `item ready` | — | `item check` | the injected ready list | MECHANIZED |
 | O6 | **session needs a kind's CONTENT at the moment it matters** | — | — | — | — | **GAP — the central one; see below** |
 | O7 | context dies by compaction → memory replaced by a summary | — | `compactions.jsonl` | — | `postcompact-log.py`, and `compact-reground.py` re-injects the working set | PARTIAL |
@@ -147,7 +147,21 @@ not yet designed; that is the honest state.
 4. **I10 — a silenced red is indistinguishable from an understood one.**
 5. **O8 — nothing fires a close.** The ceremony is good; its trigger is a
    person remembering.
-6. **O3/O4 — no reading roster, no registry digest.** Both small, both booked.
+6. **O3 — no reading roster.** Small, booked. **O4's verb SHIPPED the day
+   this file was written**; the hook that puts its output in front of a
+   session has not.
+
+**This file is edited in place as its rows move, and that is not
+housekeeping.** A map whose rows go stale while its author watches is the
+label-over-body class aimed at the one artifact written to make absences
+visible — and it would go stale in the QUIET direction, reading as more
+broken than the system is, which is how a reader learns to discount it.
+Convention, and it starts now rather than retroactively: a status cell that
+MOVES carries the date it moved. O4 is the first and currently the only one —
+the rest are as-written on 2026-09-18, which the file's own date already says.
+(This sentence replaced one claiming every row carried such a date. It did
+not, and a rule stated beside a mechanism that does not hold it is worse than
+no rule: it inherits the mechanism's authority while nothing grades it.)
 
 **Three gaps this file deliberately does NOT claim to have closed**, because
 they were open before it and remain so: direction drift has no mechanism and
