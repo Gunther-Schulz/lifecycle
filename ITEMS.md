@@ -1,6 +1,6 @@
 schema: 2
 baseline: 8
-added: 158
+added: 159
 compacted: 0
 
 ## lc-3
@@ -822,3 +822,12 @@ write-set: UNKNOWN, and that is the item question: the kind must be declared SOM
 done-criterion: UNKNOWN pending the decision below, but the shape is known: the investigation record resolves to a registered kind with all six stages declared, WITHOUT moving the files into any repo tree. The three benefits the format file names are must-not-move: no repo dirtied, no permission dialog from the .claude-shape protection, survives across repo states and branches.
 evidence: begehung round 2, 2026-09-18, docs/begehung-findings-2026-09-18-r1.tsv, lens carriers: executed scan of the 22 declared kind names for investigat/record returning none, against the shipped record check verb reading the XDG investigations home. The same round measured the wider pattern this sits in: the declaration writer field shows 4 verb-written kinds that stay current against 17 session-written kinds that drift, so the record is both ungoverned AND in the drifting class. dotfiles claude/investigation-record-format.md carries the three benefits that constrain any fix.
 blocked-by: decision where does a machine-wide cross-repo kind get declared?
+
+## lc-167
+grade: READY
+requirement: THE CARRIER CANNOT TELL A MEASURED ENTRY FROM A CONCLUDED ONE, AND THE DIFFERENCE PREDICTS WHETHER IT SURVIVES. Peer desk, 2026-09-18, from a full day of booking: every item booked from MEASURED evidence held up, and the one booked from a just-formed conclusion (cs-35, a plausible code path read but not the one that actually runs) was wrong within the hour and would have sent a lane to make a no-op change. The evidence slot takes both kinds and marks neither. This is the corpus observed-versus-derived rule, which the corpus states for delivered findings and no carrier field carries.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: an entry distinguishes evidence it RAN from evidence it CONCLUDED, cheaply enough that the distinction is made at booking rather than reconstructed. The cheap form is a per-line mark in the evidence slot rather than a new slot, since the corpus already marks claims this way in prose. RED-FIRST: cs-35 shape (an entry whose evidence is an unrun inference stated as fact) must be distinguishable from an entry citing an executed command; MUST-NOT-MOVE: a mixed evidence slot carrying both kinds stays legal, since most real entries are mixed, and the mark is per claim rather than per entry.
+evidence: Peer desk cachyos-setup-33, 2026-09-18, their own closing observation after several adds, about eight amends and closures in one day, offered as the place they would spend a cheap slot. CORROBORATED BY THIS DESK THE SAME DAY, independently: the amendment measurement over this repo 88 closed items found amended-evidence the single most-amended slot at 39 percent, which is the same fact seen from the other end, an entry whose evidence moved after booking. And this desk own lc-159 half 2 was booked from a conclusion (a schema migration was needed) that measurement killed at pickup, fivefold scope reduction.
+blocked-by: NONE
