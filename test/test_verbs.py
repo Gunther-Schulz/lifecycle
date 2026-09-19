@@ -1915,3 +1915,200 @@ class TheCommitAttributionTrailer(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConditionalSlotsReachAllThreeDoors(unittest.TestCase):
+    """The conditional blocker slots are written by every door that DEMANDS
+    them — `item add`, `item park`, `item amend`.
+
+    THE DEFECT THIS PINS, measured at the effect site 2026-09-19 and found by
+    the slot's own first real consumer rather than by review: `_check_blocker`
+    is reached by all three doors and all three demand the value; only `item
+    add` persisted it. `item park` validated the statement and DROPPED it;
+    `item amend` refused outright, because the slots were absent from
+    `AMENDABLE_SLOTS`.
+
+    THE MECHANISM IS THE DOCSTRING OF THE FUNCTION ITS AUTHOR WAS EDITING.
+    `_check_blocker` says the CHECK lives there because "a per-verb check
+    would have covered exactly the verbs somebody remembered" — and the
+    persistence was then written per-verb, covering exactly the verb its
+    author remembered.
+
+    RED-FIRST PER DOOR, never one arm for the class: a single arm would
+    certify the door that fired and not its variants, which is the same
+    reach defect one level up — and it is the defect this case exists to
+    repair, so committing it here would be the test inheriting the bug.
+    """
+
+    WHY = "constitutively the operator's — a preference about scope"
+    ARMS = "positive `true` 0 | negative `false` 1"
+    DQ = "decision which instrument the arc adopts"
+    EQ = "evidence test -f /tmp/definitely-not-there"
+
+    def _repo(self, **kw):
+        r = refusals._Repo(items=refusals.SEED_ITEMS, **kw)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io, os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _slot(self, repo, ident, slot):
+        text = (repo.dir / "ITEMS.md").read_text(encoding="utf-8")
+        it = next((i for i in items.parse(text).items if i.ident == ident),
+                  None)
+        self.assertIsNotNone(it, f"{ident} is not in the carrier")
+        return it.slots.get(slot)
+
+    def _ident(self, out):
+        import re
+        m = re.search(r"added (\S+) \[", out)
+        self.assertIsNotNone(m, f"no id in add output:\n{out}")
+        return m.group(1)
+
+    # --- door 1: add (this one already worked; it is the CONTROL) ----------
+
+    def test_ADD_persists_both_slots(self):
+        """The control arm. It passed before this repair and must keep
+        passing — a fix that moved the working door while repairing the
+        broken ones would be indistinguishable from a fix that worked."""
+        r = self._repo()
+        code, out = self._run(r, "item", "add", "--requirement",
+                              "the add door control for slot reach",
+                              "--goal", "mitigate", "--write-set",
+                              "tools/a.py,tools/b.py", "--done-criterion",
+                              "red then green", "--evidence",
+                              "MEASURED: at the desk", "--blocked-by", self.DQ,
+                              "--not-derivable", self.WHY, "--grade", "PARKED",
+                              "--join", "new", "--absence", "probe")
+        self.assertEqual(code, exits.CLEAN, out)
+        got = self._slot(r, self._ident(out), "not-derivable")
+        self.assertIsNotNone(got, f"the add door dropped the statement\n{out}")
+        self.assertIn(self.WHY, got)
+
+    # --- door 2: park -----------------------------------------------------
+
+    def test_PARK_persists_the_derivability_statement(self):
+        r = self._repo()
+        code, out = self._run(r, "item", "add", "--requirement",
+                              "the park door reach case", "--goal", "mitigate",
+                              "--write-set", "tools/a.py,tools/b.py",
+                              "--done-criterion", "red then green",
+                              "--evidence", "MEASURED: at the desk",
+                              "--blocked-by", "NONE", "--grade", "NEW",
+                              "--join", "new", "--absence", "probe")
+        self.assertEqual(code, exits.CLEAN, out)
+        ident = self._ident(out)
+        code, out = self._run(r, "item", "park", ident, "--blocked-by",
+                              self.DQ, "--not-derivable", self.WHY)
+        self.assertEqual(code, exits.CLEAN, out)
+        got = self._slot(r, ident, "not-derivable")
+        self.assertIsNotNone(
+            got, f"PARK demanded the statement and dropped it.\n{out}")
+        self.assertIn(self.WHY, got)
+
+    def test_PARK_persists_the_exercise_record(self):
+        r = self._repo()
+        code, out = self._run(r, "item", "add", "--requirement",
+                              "the park door exercise case", "--goal",
+                              "mitigate", "--write-set",
+                              "tools/a.py,tools/b.py", "--done-criterion",
+                              "red then green", "--evidence",
+                              "MEASURED: at the desk", "--blocked-by", "NONE",
+                              "--grade", "NEW", "--join", "new", "--absence",
+                              "probe")
+        self.assertEqual(code, exits.CLEAN, out)
+        ident = self._ident(out)
+        code, out = self._run(r, "item", "park", ident, "--blocked-by",
+                              self.EQ, "--blocker-exercise", self.ARMS)
+        self.assertEqual(code, exits.CLEAN, out)
+        got = self._slot(r, ident, "blocker-exercise")
+        self.assertIsNotNone(
+            got, f"PARK dropped the exercise record.\n{out}")
+        self.assertIn("negative", got)
+
+    def test_PARK_writes_NOTHING_where_the_blocker_type_does_not_match(self):
+        """CONTROL for the park door: the misplacement refusals must stay
+        unreachable THROUGH THE VERBS. A door that wrote the slot beside the
+        wrong blocker would mint a finding the author could not have caused."""
+        r = self._repo()
+        code, out = self._run(r, "item", "add", "--requirement",
+                              "the park door control case", "--goal",
+                              "mitigate", "--write-set",
+                              "tools/a.py,tools/b.py", "--done-criterion",
+                              "red then green", "--evidence",
+                              "MEASURED: at the desk", "--blocked-by", "NONE",
+                              "--grade", "NEW", "--join", "new", "--absence",
+                              "probe")
+        ident = self._ident(out)
+        # A DECISION blocker with an EXERCISE record offered: wrong pairing.
+        code, out = self._run(r, "item", "park", ident, "--blocked-by",
+                              self.DQ, "--not-derivable", self.WHY,
+                              "--blocker-exercise", self.ARMS)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIsNone(
+            self._slot(r, ident, "blocker-exercise"),
+            "park wrote an exercise record beside a decision blocker")
+        self.assertIsNotNone(self._slot(r, ident, "not-derivable"))
+
+    # --- door 3: amend ----------------------------------------------------
+
+    def test_AMEND_can_write_the_derivability_statement(self):
+        r = self._repo()
+        code, out = self._run(r, "item", "add", "--requirement",
+                              "the amend door reach case", "--goal",
+                              "mitigate", "--write-set",
+                              "tools/a.py,tools/b.py", "--done-criterion",
+                              "red then green", "--evidence",
+                              "MEASURED: at the desk", "--blocked-by", self.DQ,
+                              "--not-derivable", "the original statement",
+                              "--grade", "PARKED", "--join", "new",
+                              "--absence", "probe")
+        self.assertEqual(code, exits.CLEAN, out)
+        ident = self._ident(out)
+        code, out = self._run(r, "item", "amend", ident, "--reason",
+                              "the statement was wrong and is corrected",
+                              "--not-derivable", self.WHY)
+        self.assertEqual(
+            code, exits.CLEAN,
+            f"AMEND refused to write a slot it demands.\n{out}")
+        text = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        self.assertIn(self.WHY, text, "the amended statement is not on disk")
+
+    def test_AMEND_can_ADD_the_slot_to_a_block_that_never_had_it(self):
+        """The insertion half, and the case lc-52 actually is: a block parked
+        before the slot existed carries no line to rewrite. `_set_slots`
+        rewrites existing lines ONLY, so without an insert this door repairs
+        nothing for exactly the population that needs repairing."""
+        r = self._repo()
+        code, out = self._run(r, "item", "add", "--requirement",
+                              "the amend insertion case", "--goal",
+                              "mitigate", "--write-set",
+                              "tools/a.py,tools/b.py", "--done-criterion",
+                              "red then green", "--evidence",
+                              "MEASURED: at the desk", "--blocked-by", "NONE",
+                              "--grade", "NEW", "--join", "new", "--absence",
+                              "probe")
+        ident = self._ident(out)
+        code, out = self._run(r, "item", "amend", ident, "--reason",
+                              "retype the blocker and state its derivability",
+                              "--blocked-by", self.DQ,
+                              "--not-derivable", self.WHY)
+        self.assertEqual(code, exits.CLEAN, out)
+        text = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        self.assertIn(self.WHY, text,
+                      "amend could not ADD the slot to a block lacking it")
+        code, out = self._run(r, "item", "check")
+        self.assertNotIn("item_shape", out,
+                         f"the inserted slot broke the block's shape\n{out}")

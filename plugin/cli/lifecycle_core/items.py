@@ -354,7 +354,22 @@ def evidence_mark_problem(value: str) -> str | None:
 #: `grade` IS NOT AMENDABLE. A grade moves by judgment through `item park`,
 #: `item close` and the desk's own re-grade; an amendment path to it would be
 #: a second, quieter writer of the one slot READY-is-judged depends on.
-AMENDABLE_SLOTS = tuple(s for s in SLOTS if s != "grade")
+#: THE CONDITIONAL SLOTS ARE AMENDABLE TOO, and leaving them out was a reach
+#: defect rather than a decision. `_check_blocker` is reached by `item add`,
+#: `item park` AND `item amend`, and all three DEMAND these values; only `add`
+#: persisted one. `amend` refused outright — `amend_nothing_to_amend`, because
+#: the slots were not in this tuple — and `park` validated the value and
+#: dropped it. Measured at the effect site 2026-09-19, found by the slot's own
+#: first real consumer within the hour it shipped.
+#:
+#: AMENDMENT IS THE RIGHT DOOR FOR THEM, not an in-place rewrite: a
+#: derivability statement that turns out wrong is a CORRECTION, and this
+#: carrier's whole ethic is that the superseded text stays readable. The
+#: resolver puts an `amended-<slot>:` value in force even where the block
+#: carries no base line at all, which is exactly the population needing
+#: repair — every decision blocker booked before lc-179 existed.
+AMENDABLE_SLOTS = (tuple(s for s in SLOTS if s != "grade")
+                   + BLOCKER_ONLY_SLOTS)
 AMEND_PREFIX = "amended-"
 AMEND_REASON = "amend-reason"
 

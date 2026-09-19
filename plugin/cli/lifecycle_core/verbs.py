@@ -1911,15 +1911,31 @@ def cmd_item_park(args, out, ctx: Ctx) -> int:
         out(f"COULD NOT VERIFY: {why}")
         return exits.COULD_NOT_VERIFY
     done_parsed, done_why = _load(ctx.done_path)
+    observed: dict = {}
     code = _check_blocker(value, ctx, parsed, done_parsed, done_why, out,
-                          not_derivable=getattr(args, "not_derivable", None))
+                          not_derivable=getattr(args, "not_derivable", None),
+                          observed=observed)
     if code != exits.CLEAN:
         return code
+
+    # THE CONDITIONAL SLOTS REACH THIS DOOR TOO (the three-doors repair). This
+    # verb DEMANDS them through `_check_blocker` above, so dropping them here
+    # made the tool refuse a value and then discard it — and park is the
+    # COMMON path for a blocker added after booking, so the mechanism was
+    # blind on the route most likely to carry one. Composed by the same two
+    # helpers the add door uses, never by a second spelling here.
+    conditional = {
+        items_mod.BLOCKER_EXERCISE: _exercise_record(args, value, ctx,
+                                                     observed),
+        items_mod.NOT_DERIVABLE: _derivability_record(args, value, ctx),
+    }
+    conditional = {k: v for k, v in conditional.items() if v}
 
     with items_mod.carrier_lock(ctx.items_path):
         text = ctx.items_path.read_text(encoding="utf-8")
         new, ok = _set_slots(text, args.ident, {"grade": "PARKED",
-                                                "blocked-by": value})
+                                                "blocked-by": value},
+                             insert=conditional)
         if not ok:
             out(f"FINDING [unknown_item] no live block {args.ident!r} in "
                 f"{ctx.items_path.name}.")
@@ -2076,6 +2092,10 @@ def cmd_item_promote(args, out, ctx: Ctx) -> int:
 #: read by BOTH the argparse wiring and the verb: a second list in `cli.py`
 #: would be a slot the parser accepts and the verb never reads, which is
 #: silent by construction.
+#: THE FLAGS THIS DOOR TURNS INTO AMENDMENTS. Derived for the conditional
+#: slots rather than restated, so a third conditional slot cannot be added to
+#: `BLOCKER_SLOT_RULES` and silently miss this door — which is the exact
+#: defect this mapping is being repaired for.
 AMEND_FLAGS = {
     "requirement": "requirement",
     "goal": "goal",
@@ -2083,6 +2103,8 @@ AMEND_FLAGS = {
     "done-criterion": "done_criterion",
     "evidence": "evidence",
     "blocked-by": "blocked_by",
+    **{slot: slot.replace("-", "_")
+       for slot in items_mod.BLOCKER_ONLY_SLOTS},
 }
 
 
@@ -2186,9 +2208,47 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
         if code != exits.CLEAN:
             return code
 
+    # A FIRST VALUE IS AN ADDITION, NOT AN AMENDMENT — the carrier says so
+    # itself: `amended-<slot>:` over a slot the block does not carry is a
+    # finding, "an addition wearing a correction's clothes". That refusal is
+    # right and is not being worked around. The conditional slots are exactly
+    # the population it bites: a block parked before the slot existed carries
+    # no line to supersede, and that is the population most needing repair.
+    #
+    # SO THEY SPLIT BY WHAT THE BLOCK ALREADY HAS: present, the value is a
+    # genuine correction and travels as an amendment, superseded text
+    # retained; absent, the base line is INSERTED and no amendment is written,
+    # because there is nothing yet to correct. The split is computed from the
+    # block on disk, never from the caller's intent.
+    present = {it.ident: it.slots for it in parsed.items}.get(args.ident, {})
+    additions = {s: updates.pop(s) for s in list(updates)
+                 if s in items_mod.BLOCKER_ONLY_SLOTS and s not in present}
+    if not updates and not additions:
+        out("FINDING [amend_nothing_to_amend] `item amend` names no slot to "
+            "amend.")
+        return exits.FINDING
+
     date = _today()
     with items_mod.carrier_lock(ctx.items_path):
         text = ctx.items_path.read_text(encoding="utf-8")
+        if additions:
+            text, ok = _set_slots(text, args.ident, {}, insert=additions)
+            if not ok:
+                out(f"FINDING [unknown_item] no live block {args.ident!r} in "
+                    f"{ctx.items_path.name}.")
+                return exits.FINDING
+        if not updates:
+            atomic.write_text(ctx.items_path, text, encoding="utf-8")
+            out(f"amended {args.ident} — {len(additions)} slot(s) ADDED, "
+                "dated by their own value. No amendment line: a slot the "
+                "block did not carry has nothing to supersede.")
+            for slot, value in additions.items():
+                out(f"    {slot}: {value}")
+            code = commit_paths(ctx, (ctx.items_path,),
+                                f"lifecycle: amend {args.ident}", out,
+                                skip=args.no_commit, what="the amendment")
+            args.fire_detail = f"amend {args.ident} {','.join(sorted(additions))}"
+            return code
         new, ok = items_mod.append_amendment(text, args.ident, date, reason,
                                              updates)
         if not ok:
@@ -2213,8 +2273,16 @@ def _today() -> str:
     return date.today().isoformat()
 
 
-def _set_slots(text: str, ident: str, updates: dict):
+def _set_slots(text: str, ident: str, updates: dict, insert: dict | None = None):
     """Rewrite named slots of one block IN PLACE. `(text, found)`.
+
+    `insert` IS FOR SLOTS THAT MAY NOT EXIST YET — the conditional blocker
+    slots, which a block acquires only when its blocker gains the matching
+    type. `updates` cannot serve them: it rewrites lines that are ALREADY
+    there, so a block without the line kept its value silently dropped, which
+    is the defect this parameter repairs. Present, the line is rewritten in
+    place; absent, it is inserted directly after the fixed run, which is where
+    `items.render_block` puts it — one layout, whichever door wrote it.
 
     In place, and only the named slots: rendering the whole block from a
     parsed dict would rewrite every slot the tool did not mean to touch, and
@@ -2248,11 +2316,27 @@ def _set_slots(text: str, ident: str, updates: dict):
     if start is None:
         return text, False
     i = start + 1
+    pending = dict(insert or {})
+    last_fixed = None
     while i < len(lines) and not grammar.ends_block(lines[i]):
         for slot, value in updates.items():
             if grammar.is_slot(lines[i], slot):
                 lines[i] = grammar.render_slot(slot, value)
+        for slot in list(pending):
+            if grammar.is_slot(lines[i], slot):
+                lines[i] = grammar.render_slot(slot, pending.pop(slot))
+        # THE ANCHOR IS THE LAST FIXED-RUN LINE, never "the end of the block":
+        # a block's tail can already carry amendment, promotion and closure
+        # lines, and an insert after those would put a base slot BELOW its own
+        # amendments — which `_resolve_amendments` reports as an amendment
+        # among the fixed slots, a finding manufactured by the writer.
+        if any(grammar.is_slot(lines[i], s) for s in items_mod.SLOTS):
+            last_fixed = i
         i += 1
+    if pending and last_fixed is not None:
+        for offset, (slot, value) in enumerate(pending.items()):
+            lines.insert(last_fixed + 1 + offset,
+                         grammar.render_slot(slot, value))
     return "\n".join(lines), True
 
 
