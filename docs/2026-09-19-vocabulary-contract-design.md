@@ -54,7 +54,15 @@ OOV consequence stated (N11): `census()` gains an explicit
 docstring protects, printed on its own; `item ready` renders an OOV-graded
 item as unschedulable-with-reason; the move refuses it (a grade must be a
 real member at close). Roster row: OOV value through each registration's
-proof path, output distinct from every member (V6/AV1). **Write-set also
+proof path, output distinct from every member (V6/AV1).
+**SUPERSEDED AT BUILD, 2026-09-19 (LEDGER.md:123, ruled at cachyos-setup-43;
+built as lc-241 P1c).** That row is NOT admissible under law 22: its fire arm
+needs a constructed registry object, and no repo input can produce one — an
+unfalsifiable check is deleted rather than registered. The invariant stays at
+the unit layer, where it is tested. What ships in its place is a
+MALFORMED-ARM row: it fires on an undated `cannot-express` grade and controls
+on the well-formed one, which is a firing input a carrier can actually
+carry. **Write-set also
 carries verbs.py (N11-new-defect: the `item ready` unschedulable-with-reason
 rendering realizes in cmd_item_ready — the repair's own added claim gets
 law 24's resolution).**

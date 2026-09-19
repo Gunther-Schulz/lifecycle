@@ -138,6 +138,12 @@ Type `external <event>`: evaluated by nothing, cleared by hand or desk with
 the event named. Six recorded specimens (the four cache-fix waits, lc-235,
 lc-236) clear D-3's own widening bar — recorded instances, never guessed
 members. Specimens re-typed at the contract's build.
+**COUNT SUPERSEDED AT BUILD, 2026-09-19 (lc-241 P4, close block in
+ITEMS-DONE.md).** The population was DERIVED BY COMMAND at the build rather
+than carried from this sentence, and it returned EIGHT, not six — of which
+three were not `external` at all and were left alone, so FIVE were re-typed.
+The direction this decision sets is untouched; what moved is a count written
+before anyone enumerated it, which is why the build derived its own.
 
 ## D-9 — lc-52's default: the plugin supplies its own
 

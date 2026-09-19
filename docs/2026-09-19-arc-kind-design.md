@@ -129,6 +129,14 @@ moves with it: **plugin/hooks/pre-commit hardcodes the three carrier
 kinds and rejects glob homes — it is IN the write-set (astra-a6), and the
 staged arc shape check is part of the reach act's red-first.**
 
+**SUPERSEDED AT BUILD, 2026-09-19 (LEDGER.md:124, ruled at cachyos-setup-43).**
+The hook half does NOT ship with the reach act. It moves WHOLE to lc-231,
+together with the arc-shape checker it routes to and the staged-arc-shape
+red-first that proves it — a hook and the checker it calls are one act, and
+splitting them would land a router pointing at a parser that did not exist
+yet. lc-242 is the SCHEMA reach act and is complete without it; both shipped
+that way (lc-242 at 3275177, the hook at lc-231e f32bf00).
+
 ## Stage exits, conduct, outward (unchanged from v2 except timing already
 ## repaired there): operator-judged = the `none, declared why` spelling,
 ## LOCKED; outward stages force it, STOP renders at entry.
@@ -189,7 +197,8 @@ arcs.py (new, incl. the arc renderer + `arc status`), items.py (shared
 slot machinery — N1), cli.py, verbs.py, declaration.py (kinds +
 carrier_homes reach), refusals.py, firelog.py (arc events), retire.py
 (growth reader, astra-a7), migrate.py, plugin/hooks/pre-commit
-(astra-a6), test_arcs.py, test_verbs.py (the derived table),
+(astra-a6 — and per LEDGER.md:124 this entry carries the hook WHOLE, out of
+lc-242's set rather than shared with it), test_arcs.py, test_verbs.py (the derived table),
 test_declaration.py, .claude/lifecycle.json, arcs/INDEX (created by
 first open). Collisions: the JOIN orders file-granular lanes; the
 cross-repo hazard above is the desk's (N7). **The banner CALL to `arc

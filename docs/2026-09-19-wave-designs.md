@@ -58,8 +58,15 @@ enumeration `kind list` uses), so every legal home shape has defined
 behaviour (B5/astra-w1: plugin/hooks'
 members are extensionless BY CONSTRUCTION, so any extension-keyed
 predicate returns a true-absence-shaped zero over that whole kind; both
-arms proved the eighth site survives a `*.py` glob). The acceptance check
-uses the ACTUAL pre-commit relay site (plugin/hooks/pre-commit:154), not
+arms proved the eighth site survives a `*.py` glob — MEASURED AT BUILD, the
+count is NINE not eight: the hook carries two relay lines, and the widened
+reach gained FOUR files in all, three of them extensionless and reachable
+only by the shebang arm, which is stronger evidence for that arm than this
+sentence had). The acceptance check
+uses the ACTUAL pre-commit relay site (plugin/hooks/pre-commit:154 — the
+LINE has since drifted and the acceptance arm pins the SITE, not the number;
+measured at build, the hook carries TWO relay lines, so the seven-relay
+baseline was seven of NINE rather than seven of eight), not
 a planted file.** Pattern facts stated exactly (verified by both arms):
 five regexes, two scanners, three verdict-keyed, two call-shaped. No
 no-yield disposition and why (B8's completeness): W3 is a correctness
