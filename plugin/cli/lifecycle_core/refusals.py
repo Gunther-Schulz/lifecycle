@@ -740,6 +740,49 @@ ROWS = [
         fire=lambda: _items_run(GOOD_ITEMS.replace("grade: READY", "grade: FOO")),
         control=lambda: _items_run(GOOD_ITEMS),
     ),
+    Row(
+        ident="grade_arm_malformed",
+        finding_row="unknown_grade_read",
+        # A SECOND FIRING INPUT OF ONE REFUSAL, not a second refusal — the
+        # census's third answer reached by the other road. `unknown_grade_read`
+        # fires on a word nobody registered; this fires on a word that CLAIMS
+        # the registered out-of-vocabulary arm and gets its form wrong.
+        #
+        # WHY THIS ROW AND NOT THE ONE THE DESIGN NAMED. The locked design
+        # asked for a row proving each registration's OOV value renders apart
+        # from its members. That row's firing input would have to be a
+        # constructed registry object, and no carrier, declaration or file a
+        # repo can write produces one — so its green would assert a property
+        # of this package's own source, which law 22 says to delete rather
+        # than register (the shape V12 already found once in this part). The
+        # rendering invariant lives in the unit layer instead, where its own
+        # control is that a member does NOT render apart from itself.
+        # Superseded on the record, ledger 2026-09-19, before this was built.
+        #
+        # WHAT MAKES THIS ONE ADMISSIBLE: `grade: cannot-express` with no date
+        # is repo-writable data. It is also the failure that matters, because
+        # it is the one an AUTHOR reaches for — the arm is the door somebody
+        # opens deliberately, and an instance that lands undated can never be
+        # aged, so the drain could never watch the count reach zero while the
+        # carrier showed a recorded state.
+        refusal="a grade CLAIMING the out-of-vocabulary arm whose form is "
+                "malformed — neither a member nor a well-formed instance, so "
+                "it is read as the census's third answer rather than counted "
+                "as a recorded cannot-express",
+        firing_input="a file line with `grade: cannot-express` (no date, no "
+                     "reason)",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _items_run(
+            GOOD_ITEMS.replace("grade: READY", "grade: cannot-express")),
+        # THE CONTROL IS THE WELL-FORMED ARM, never a plain member. Against a
+        # member this row would pass on a build that had no arm at all; the
+        # claim is specifically that the WELL-FORMED arm is accepted while the
+        # malformed one is not, and only this pair separates those.
+        control=lambda: _items_run(GOOD_ITEMS.replace(
+            "grade: READY",
+            "grade: cannot-express(2026-09-19): no member names a wait on "
+            "another repo's release")),
+    ),
 ]
 
 #: Rows the design names that THIS build cannot fire, each with why. Labelled,
