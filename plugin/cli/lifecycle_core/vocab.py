@@ -180,9 +180,17 @@ def registry() -> tuple:
             name="evidence marks",
             members=items_mod.EVIDENCE_MARKS,
             oov_form=OOV_FORM,
-            consumer="items.evidence_mark_problem",
+            consumer=("items.evidence_mark_problem / "
+                      "items.perishable_grammar_problem"),
             proof_path=("written into an evidence slot at the admission door "
-                        "and graded by `items.evidence_mark_problem`"),
+                        "and graded by `items.evidence_mark_problem`, which "
+                        "is PRESENCE-only; `PERISHABLE` is the one member "
+                        "carrying arguments, so its FORM is graded beside it "
+                        "by `items.perishable_grammar_problem` at both write "
+                        "doors — named here because a proof path that "
+                        "stopped at the presence check would be an assurance "
+                        "wider than what it establishes, over the one member "
+                        "presence cannot check (lc-244)"),
         ),
     )
 

@@ -299,9 +299,39 @@ UNKNOWN_LEGAL_SLOTS = UNKNOWNABLE_SLOTS + BLOCKER_ONLY_SLOTS
 #: is a second and cheaper step, run only over tokens that exist. A checker
 #: that tried to decide whether a sentence really was measured would be
 #: grading prose, which is the guard that fires on legitimate work (law 11).
-EVIDENCE_MARKS = ("MEASURED", "DERIVED", "RECALLED", "RELAYED")
+#: `PERISHABLE` IS A FIFTH MEMBER AND NOT A SLOT MARKER (lc-244, W2; the
+#: round's E10 form correction supersedes D-5's original slot-marker
+#: wording). It joins the set the admission door already checks, so its
+#: PRESENCE enforces for free through the same predicate — a marker in a new
+#: place would have needed a new enforcement path and would have been
+#: enforced nowhere until someone built one.
+#:
+#: IT IS THE ONE MEMBER THAT TAKES ARGUMENTS, and both are load-bearing.
+#: The DATE meets law 26 at the base-slot case: the FIRST mark anyone writes
+#: has no comparison input, so a form without its own date has no computable
+#: absence at exactly the case the rule exists for (B7). The COMMAND is what
+#: makes the staleness answerable rather than felt — a flag saying "this may
+#: be stale" and nothing more hands its reader the work of rediscovering how
+#: the claim was taken in the first place.
+PERISHABLE = "PERISHABLE"
+PERISHABLE_FORM = "PERISHABLE(<date>, re-derive: <command>)"
+
+EVIDENCE_MARKS = ("MEASURED", "DERIVED", "RECALLED", "RELAYED", PERISHABLE)
 
 _EVIDENCE_MARK = re.compile(r"\b(" + "|".join(EVIDENCE_MARKS) + r")\b")
+
+#: The WELL-FORMED spelling. Anchored on the closing paren rather than run to
+#: end-of-line: an evidence slot is prose and the mark sits inside it, so a
+#: greedy tail would swallow the sentence that follows the mark into the
+#: `re-derive` command and then report a command nobody wrote.
+_PERISHABLE_OK = re.compile(
+    r"\bPERISHABLE\(\s*(\d{4}-\d{2}-\d{2})\s*,\s*re-derive:\s*([^)]+?)\s*\)")
+
+#: The mark's NAME wherever it appears — well-formed or not. The pair is the
+#: whole grammar check: a token matching this and not the form above is a
+#: PERISHABLE somebody meant and misspelled, which is a different answer from
+#: a slot that never claimed to carry one.
+_PERISHABLE_ANY = re.compile(r"\bPERISHABLE\b")
 
 #: What each mark claims, quoted back to the author at the refusal. Kept
 #: beside the vocabulary rather than in the message: the refusal text and the
@@ -313,7 +343,153 @@ EVIDENCE_MARK_GLOSS = {
                "something else rather than seen",
     "RECALLED": "held in memory, not re-read at the artifact",
     "RELAYED": "another party's report, carried as theirs",
+    PERISHABLE: ("a claim that ROTS — true when taken and not thereafter; "
+                 "spelled " + PERISHABLE_FORM + ", carrying the date it was "
+                 "taken and the command that re-takes it"),
 }
+
+
+def perishable_marks(value: str) -> list:
+    """Every WELL-FORMED `PERISHABLE(...)` in one evidence value.
+
+    Returns `(date, command)` pairs in the order they appear. A slot may
+    carry several: evidence is per claim, and two claims can rot on
+    different clocks for different reasons.
+    """
+    return [(m.group(1), m.group(2).strip())
+            for m in _PERISHABLE_OK.finditer(value or "")]
+
+
+def perishable_grammar_problem(value: str) -> str | None:
+    """Why a `PERISHABLE` token in this value is malformed, or None (W-9).
+
+    WHY THIS IS A SECOND PREDICATE AND NOT A WIDENING OF THE FIRST.
+    `evidence_mark_problem` is presence-only BY DESIGN and says so: it asks
+    whether ANY mark is there, never whether a sentence really was measured.
+    That is the right predicate for four members whose whole content is the
+    word. `PERISHABLE` is the one member carrying ARGUMENTS, and arguments
+    can be wrong in ways a presence test cannot see.
+
+    AND THE MIXED SLOT IS WHY IT MATTERS, which is the case the attack found
+    (W-9). A slot reading `MEASURED ... PERISHABLE(no date here) ...` passes
+    the presence predicate outright — a valid sibling satisfies it — so the
+    malformed mark ships, the freshness read never matches it, and the claim
+    is silently exempt from the staleness it declared. An entirely unmarked
+    slot is NOT a control for that case: it fails the first predicate for a
+    different reason.
+    """
+    v = "" if value is None else str(value)
+    if not _PERISHABLE_ANY.search(v):
+        return None
+    if _PERISHABLE_OK.search(v):
+        return None
+    return ("the evidence slot names PERISHABLE and does not spell it. The "
+            "form is " + PERISHABLE_FORM + " — the DATE because the first "
+            "mark anyone writes has no comparison input, so a form without "
+            "its own date has no computable absence at exactly the case the "
+            "mark exists for; the COMMAND because a flag that says a claim "
+            "may be stale and stops there hands its reader the work of "
+            "rediscovering how the claim was taken. A MIXED slot does not "
+            "excuse it: a valid mark beside this one satisfies the "
+            "presence check and leaves this mark unreadable, so the claim "
+            "ends up exempt from the very staleness it declared.")
+
+
+#: One flagged claim: which item, the mark's own date and command, and the
+#: line that introduced it.
+@dataclass(frozen=True)
+class PerishableFlag:
+    ident: str
+    date: str
+    command: str
+    line: int
+
+
+def evidence_events(item) -> list:
+    """Every evidence write in one block, `(line, date, text)`, IN FILE ORDER.
+
+    ONE BODY FOR TWO READERS, and that is not tidiness — it is the defect
+    this function was extracted after. The freshness check walked the
+    ORIGINAL value and the count beside it read `slots`, which on an amended
+    item is the LAST amendment's text; the two disagreed exactly where it
+    mattered, and the symptom was a flagged claim whose report line vanished
+    the moment the item was amended for an unrelated reason. A count and a
+    verdict over the same population must come from one walk or they will
+    part company without a symptom.
+
+    THE ORIGINAL, NOT THE VALUE IN FORCE. `slots` resolves amendments; this
+    wants the sequence. A mark written at booking on an item amended later —
+    the common case, since evidence is the most-amended slot at 39% — lives
+    only in `originals`.
+    """
+    events = []
+    base = item.originals.get("evidence", item.slots.get("evidence"))
+    if base:
+        events.append((item.line, None, str(base)))
+    for name, raw, lineno in item.amendments:
+        if name != AMEND_PREFIX + "evidence":
+            continue
+        m = _AMEND_VALUE.match(raw)
+        if not m:
+            # A malformed amendment is `item_shape`'s finding, already
+            # reported there. Skipping it here rather than guessing a date
+            # keeps one defect to one report.
+            continue
+        events.append((lineno, m.group(1), m.group(2)))
+    return events
+
+
+def perishable_never_rederived(item, today: str) -> list:
+    """Flagged claims in one block — `PERISHABLE` with no later re-derivation.
+
+    THE RULE, and it is falsifiable rather than a feeling. A mark fires if
+    and only if NO evidence write sequenced after the mark's own introducing
+    line names that mark's command — and the mark's day has passed.
+
+    SEQUENCE, NOT DATE ARITHMETIC, and that is the whole of the same-day
+    case (T-c3). Amendments are appended, so the carrier's own order IS the
+    total order over evidence writes; an amendment sitting after the mark
+    counts as later even when it carries the same date. Resolving same-day
+    by comparing dates would deem a NORMAL IMMEDIATE REPAIR stale until
+    tomorrow — an author who marks a claim perishable and re-derives it an
+    hour later would be flagged for doing exactly the right thing, which is
+    a guard firing on legitimate work (law 11).
+
+    THE CLOCK APPEARS ONCE, and only where sequence cannot answer: has the
+    mark's day PASSED. A mark written today has not yet had the day in which
+    its re-derivation could arrive, so firing on it would again fire before
+    the opportunity existed. It decides nothing about ordering — the
+    must-not-build forbids a freshness rule that reads the clock instead of
+    the carrier's order, and this reads the carrier's order and then asks
+    one question the order cannot answer.
+
+    WHAT IS NOT GRADED, deliberately: the re-derivation's RESULT. This asks
+    only whether the command was NAMED in a later evidence write. Grading
+    whether the re-derivation actually held would be a checker deciding
+    whether a sentence is true, which is the thing the mark vocabulary
+    exists to avoid doing.
+    """
+    events = evidence_events(item)
+    flags = []
+    for i, (lineno, _date, text) in enumerate(events):
+        for mark_date, command in perishable_marks(text):
+            want = " ".join(command.split())
+            rederived = False
+            for j in range(i + 1, len(events)):
+                _ln, jdate, jtext = events[j]
+                if jdate is not None and jdate < mark_date:
+                    # OUT-OF-ORDER CARRIER. Appends are chronological, so
+                    # this means the file was hand-edited; an earlier-dated
+                    # write is not evidence of a LATER re-derivation and is
+                    # not counted as one.
+                    continue
+                if want and want in " ".join(jtext.split()):
+                    rederived = True
+                    break
+            if not rederived and mark_date < today:
+                flags.append(PerishableFlag(item.ident, mark_date, command,
+                                            lineno))
+    return flags
 
 
 def evidence_mark_problem(value: str) -> str | None:
@@ -468,6 +644,19 @@ class Item:
     #: reader that wanted only the current value would otherwise have to know
     #: the resolution rule to get it right.
     amendments: list = field(default_factory=list)
+    #: The value each amended slot held BEFORE any amendment resolved it —
+    #: `slot -> original value`, set only for slots an amendment superseded.
+    #:
+    #: THE MISSING HALF OF `amendments` (lc-244). That field keeps the record
+    #: of how a value got here and `slots` keeps the value in force, and
+    #: between them the ORIGINAL was the one thing no reader could recover:
+    #: `_resolve_amendments` overwrote it in place. It did not matter while
+    #: every reader wanted the current value — and the first reader that
+    #: wants the whole SEQUENCE is the perishable freshness check, whose
+    #: whole subject is a mark written at booking and an amendment that may
+    #: or may not have re-derived it. Reconstructing that from the file
+    #: bytes at the reader would be a second parser for one fact.
+    originals: dict = field(default_factory=dict)
     #: `(name, raw-value, lineno)` for every promotion line, IN FILE ORDER.
     #: Its OWN list rather than a share of `amendments`: these resolve NO
     #: slot — the grade they record moved in place — so folding them in would
@@ -1018,6 +1207,11 @@ def _resolve_amendments(out: Parsed, item: Item, seen_order: list) -> None:
         if problem:
             out.problems.append(("item_shape", lineno, problem))
             continue
+        # FIRST WRITE WINS for the original: with two amendments to one slot
+        # the value being superseded the second time is the FIRST
+        # amendment's, which is already on `amendments`. What is unrecoverable
+        # anywhere else is the booked value, and that is this one.
+        item.originals.setdefault(slot, item.slots.get(slot))
         item.slots[slot] = value
 
 
@@ -2140,6 +2334,44 @@ def check_file(path: Path, out, prefix: str | None = None, *,
             "predicate can say NOT YET and cannot prove it ever says "
             "ARRIVED. The THIRD count is not a quieter spelling of the "
             "second: only OWED is work this carrier can ask anyone for.")
+
+    # THE PERISHABLE FLAG (lc-244, W2). A REPORT LINE, never a finding: a
+    # claim whose re-derivation is owed is not a defect in the carrier, and
+    # a refusal here would fire on entries whose authors did exactly the
+    # right thing by marking the rot in the first place — which would teach
+    # the lesson "do not mark it" (law 11).
+    #
+    # BOTH NUMBERS AGAIN, for the reason the blockers line gives: a bare
+    # "0 flagged" over a carrier carrying no perishable marks at all reads
+    # exactly like a carrier whose every perishable claim is fresh, and only
+    # the second number tells those apart.
+    from datetime import date as _date
+    today = _date.today().isoformat()
+    marked, flagged = 0, []
+    for it in parsed.items:
+        # THE SAME WALK the flag uses. Counted any other way, the
+        # denominator and the verdict answer about different populations.
+        marked += sum(len(perishable_marks(text))
+                      for _ln, _date, text in evidence_events(it))
+        flagged.extend(perishable_never_rederived(it, today))
+    if marked:
+        if flagged:
+            out(f"perishable evidence: {marked} mark(s), {len(flagged)} "
+                "NEVER RE-DERIVED — "
+                + "; ".join(f"{f.ident} ({f.date}, re-derive: {f.command})"
+                            for f in flagged[:8])
+                + ("" if len(flagged) <= 8 else
+                   f"; and {len(flagged) - 8} more")
+                + ". Each names the command that re-takes it, so the repair "
+                  "is one run and one `item amend --evidence` carrying the "
+                  "dated result — a demand that writes nothing at the "
+                  "consuming moment is a demand measured at zero (W-8).")
+        else:
+            out(f"perishable evidence: {marked} mark(s), 0 never "
+                "re-derived — every perishable claim has a later evidence "
+                "write naming its own command. The first number is the "
+                "denominator this verdict rests on: zero flagged over zero "
+                "marks would print the same and mean nothing.")
 
     # THE DERIVABILITY COUNT (lc-179), the same move one slot over. lc-169
     # demands the statement at the door and persists nothing, so today every

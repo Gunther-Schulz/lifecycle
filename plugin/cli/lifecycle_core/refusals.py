@@ -4353,6 +4353,43 @@ GOAL_ROWS = [
 # could not answer (the repair is out in the world), MALFORMED is a `when`
 # nobody could ever have executed (the repair is one line in the
 # declaration). One row would hand a reader one word for two repairs.
+# --- the PERISHABLE mark's grammar (lc-244 W2) -------------------------------
+MARK_ROWS = [
+    Row(
+        ident="evidence_mark_malformed",
+        refusal="an evidence slot that NAMES `PERISHABLE` and does not "
+                "spell it — the mark's date and re-derivation command are "
+                "what make the staleness answerable, and a mark missing "
+                "them is unreadable by the freshness check it was written "
+                "to arm",
+        firing_input="`item add --evidence <a valid MEASURED claim BESIDE a "
+                     "malformed PERISHABLE>` — the mixed slot, because the "
+                     "existing mark predicate is presence-only and a valid "
+                     "sibling satisfies it outright (W-9)",
+        expect=exits.FINDING,
+        # THE PLANT CARRIES A VALID SIBLING ON PURPOSE, and that is the
+        # attack's whole finding rather than a flourish. A slot carrying ONLY
+        # a malformed PERISHABLE is caught by `evidence_unmarked` — no mark
+        # matched, so the presence check fires and this row would be proven
+        # by a refusal that is not its own. With `MEASURED` beside it the
+        # presence check passes, and this row is the only thing left looking.
+        fire=lambda: _cli(_mutate_add(
+            "--evidence", "MEASURED the pool held 41 rows at 09:00. "
+                          "PERISHABLE, this drifts — re-check it later")),
+        # THE SAME SLOT WITH THE MARK SPELLED. Both arms carry the valid
+        # MEASURED sibling and both name PERISHABLE, so the arms differ in
+        # the FORM alone — a control with no PERISHABLE at all would differ
+        # in two properties and would pass over a check that had stopped
+        # reading the form entirely.
+        control=lambda: _cli(_mutate_add(
+            "--evidence", "MEASURED the pool held 41 rows at 09:00. "
+                          "PERISHABLE(2026-09-19, re-derive: "
+                          "tools/pool-count.py) — it drifts with intake")),
+        stage="lc-244",
+    ),
+]
+
+
 MOMENT_ROWS = [
     Row(
         ident="reader_moment_broken",
@@ -4398,7 +4435,8 @@ MOMENT_ROWS = [
 
 ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
         + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS + GOAL_ROWS
-        + RECORDS_KIND_ROWS + HOME_ROWS + MOMENT_ROWS)
+        + RECORDS_KIND_ROWS + HOME_ROWS + MOMENT_ROWS
+        + MARK_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #

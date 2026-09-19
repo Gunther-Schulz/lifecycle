@@ -2370,3 +2370,223 @@ class DecisionBlockerDerivabilityIsPersisted(unittest.TestCase):
         self.assertIn("decision_not_derivable_unstated",
                       [r.ident for r in refusals.ROWS],
                       "lc-169's door refusal left the registry")
+
+
+class PerishableFreshnessTest(unittest.TestCase):
+    """`PERISHABLE, never re-derived` (lc-244, W2).
+
+    THE RULE IS FALSIFIABLE AND THESE ARMS ARE WHAT MAKE IT SO. The flag
+    fires iff no evidence write SEQUENCED AFTER the mark names that mark's
+    command, and the mark's day has passed. Every arm below varies exactly
+    one of those, because the failure this design was attacked for is a
+    warning that gets RENDERED while nothing was ever refreshed — a flag
+    that fires on everything and a flag that fires on nothing are both
+    consistent with "a warning appeared".
+    """
+
+    HEAD = "schema: 6\nbaseline: 0\n\n"
+
+    def _block(self, evidence, amendments=()):
+        lines = [
+            "## xx-1", "grade: READY",
+            "requirement: a control block — record: LEDGER.md",
+            "goal: mitigate", "write-set: tools/thing.py",
+            "done-criterion: the check goes red then green",
+            f"evidence: {evidence}", "blocked-by: NONE",
+        ]
+        lines += list(amendments)
+        return items.parse(self.HEAD + "\n".join(lines) + "\n").items[0]
+
+    @staticmethod
+    def _day(offset):
+        from datetime import date, timedelta
+        return (date.today() + timedelta(days=offset)).isoformat()
+
+    TODAY = property(lambda self: self._day(0))
+
+    def _flags(self, item):
+        return items.perishable_never_rederived(item, self._day(0))
+
+    def test_a_PAST_mark_with_no_amendments_FIRES(self):
+        it = self._block(
+            f"MEASURED 41 rows. PERISHABLE({self._day(-9)}, "
+            "re-derive: tools/pool-count.py)")
+        flags = self._flags(it)
+        self.assertEqual(len(flags), 1, flags)
+        self.assertEqual(flags[0].command, "tools/pool-count.py")
+
+    def test_a_LATER_amendment_NAMING_the_command_clears_it(self):
+        it = self._block(
+            f"MEASURED 41 rows. PERISHABLE({self._day(-9)}, "
+            "re-derive: tools/pool-count.py)",
+            [f"amended-evidence: {self._day(-1)} MEASURED re-ran "
+             "tools/pool-count.py — 44 rows",
+             "amend-reason: 2026-09-19 re-derived the perishable claim"])
+        self.assertEqual(self._flags(it), [])
+
+    def test_a_LATER_amendment_naming_SOMETHING_ELSE_still_FIRES(self):
+        """The control for the arm above. Without it, a check that cleared
+        on ANY later amendment would pass that test — and would report
+        every perishable claim fresh the moment its item was touched for an
+        unrelated reason, which is the rendered-warning failure exactly."""
+        it = self._block(
+            f"MEASURED 41 rows. PERISHABLE({self._day(-9)}, "
+            "re-derive: tools/pool-count.py)",
+            [f"amended-evidence: {self._day(-1)} DERIVED the queue is "
+             "probably the cause",
+             "amend-reason: 2026-09-19 an unrelated amendment"])
+        self.assertEqual(len(self._flags(it)), 1)
+
+    def test_SAME_DAY_resolves_by_POSITION_not_by_date_arithmetic(self):
+        """T-c3: an author who marks a claim perishable and re-derives it an
+        hour later did exactly the right thing. A date-only rule would deem
+        that stale until tomorrow — a guard firing on legitimate work."""
+        it = self._block(
+            f"MEASURED 41 rows. PERISHABLE({self._day(-3)}, "
+            "re-derive: tools/pool-count.py)",
+            [f"amended-evidence: {self._day(-3)} MEASURED re-ran "
+             "tools/pool-count.py the same day — 41 rows, unchanged",
+             "amend-reason: 2026-09-19 same-day re-derivation"])
+        self.assertEqual(self._flags(it), [])
+
+    def test_a_mark_dated_TODAY_does_not_fire_yet(self):
+        """The day in which its re-derivation could arrive has not passed.
+        Firing here would fire before the opportunity existed."""
+        it = self._block(
+            f"MEASURED 41 rows. PERISHABLE({self._day(0)}, "
+            "re-derive: tools/pool-count.py)")
+        self.assertEqual(self._flags(it), [])
+
+    def test_an_EARLIER_dated_amendment_does_not_count_as_a_re_derivation(self):
+        """Appends are chronological, so an earlier-dated write after the
+        mark means the carrier was hand-edited. It is not evidence of a
+        LATER re-derivation and is not read as one."""
+        it = self._block(
+            f"MEASURED 41 rows. PERISHABLE({self._day(-2)}, "
+            "re-derive: tools/pool-count.py)",
+            [f"amended-evidence: {self._day(-30)} MEASURED ran "
+             "tools/pool-count.py long ago",
+             "amend-reason: 2026-09-19 an out-of-order line"])
+        self.assertEqual(len(self._flags(it)), 1)
+
+    def test_a_mark_introduced_BY_an_amendment_is_read_from_that_line(self):
+        """The mark's introducing line is wherever it is, not the base
+        slot: evidence is amended in 39% of completed items, so the
+        amended value is where most marks will actually live."""
+        it = self._block(
+            "MEASURED 41 rows at booking",
+            [f"amended-evidence: {self._day(-5)} MEASURED 44 rows. "
+             f"PERISHABLE({self._day(-5)}, re-derive: tools/pool-count.py)",
+             "amend-reason: 2026-09-19 re-measured and marked it perishable"])
+        self.assertEqual(len(self._flags(it)), 1)
+
+    def test_TWO_marks_on_one_claim_are_tracked_APART(self):
+        """Evidence is per claim, and two claims can rot on different
+        clocks. Clearing one must not clear the other."""
+        it = self._block(
+            f"MEASURED 41 rows. PERISHABLE({self._day(-9)}, "
+            "re-derive: tools/pool-count.py) "
+            f"MEASURED 3 lanes. PERISHABLE({self._day(-9)}, "
+            "re-derive: tools/lane-count.py)",
+            [f"amended-evidence: {self._day(-1)} MEASURED re-ran "
+             "tools/pool-count.py — 44 rows",
+             "amend-reason: 2026-09-19 cleared one of the two"])
+        flags = self._flags(it)
+        self.assertEqual(len(flags), 1, flags)
+        self.assertEqual(flags[0].command, "tools/lane-count.py")
+
+
+class PerishableGrammarTest(unittest.TestCase):
+    """The mark's FORM (W-9) — the half a presence-only predicate cannot see."""
+
+    def test_a_well_formed_mark_is_accepted(self):
+        self.assertIsNone(items.perishable_grammar_problem(
+            "MEASURED 41 rows. PERISHABLE(2026-09-19, re-derive: tools/x.py)"))
+
+    def test_a_slot_that_never_names_PERISHABLE_is_not_this_check(self):
+        self.assertIsNone(items.perishable_grammar_problem("MEASURED 41 rows"))
+
+    def test_a_malformed_mark_BESIDE_A_VALID_SIBLING_is_caught(self):
+        """The attack's case. The presence predicate passes this outright —
+        MEASURED satisfies it — so this is the only check still looking."""
+        value = "MEASURED 41 rows. PERISHABLE, this drifts, re-check later"
+        self.assertIsNone(items.evidence_mark_problem(value),
+                          "the presence predicate should PASS this slot — "
+                          "if it fails, this row is proven by the wrong "
+                          "refusal and the mixed case is untested")
+        self.assertIsNotNone(items.perishable_grammar_problem(value))
+
+    def test_a_mark_with_a_date_and_no_command_is_malformed(self):
+        self.assertIsNotNone(items.perishable_grammar_problem(
+            "MEASURED 41 rows. PERISHABLE(2026-09-19)"))
+
+    def test_a_mark_with_a_command_and_no_date_is_malformed(self):
+        self.assertIsNotNone(items.perishable_grammar_problem(
+            "MEASURED 41 rows. PERISHABLE(re-derive: tools/x.py)"))
+
+    def test_the_command_does_not_swallow_the_sentence_after_it(self):
+        """The mark sits inside prose. A greedy tail would report a command
+        nobody wrote, and the freshness check would then look for it."""
+        marks = items.perishable_marks(
+            "PERISHABLE(2026-09-19, re-derive: tools/x.py) and then the "
+            "queue drains, which is a separate claim entirely")
+        self.assertEqual(marks, [("2026-09-19", "tools/x.py")])
+
+
+class PerishableCountAgreesWithFlagTest(unittest.TestCase):
+    """The count and the verdict come from ONE walk (lc-244).
+
+    FOUND BY EXERCISE, NOT BY REVIEW, and it is the defect this whole item
+    was attacked for: the freshness check walked the ORIGINAL evidence while
+    the count beside it read `slots`, which on an amended item is the LAST
+    amendment's text. The symptom was a flagged claim whose report line
+    VANISHED the moment its item was amended for an unrelated reason —
+    the warning stopped being rendered while nothing had been refreshed.
+    """
+
+    def _report(self, text):
+        buf = []
+        with tempfile.TemporaryDirectory(prefix="lifecycle-perish-") as td:
+            p = Path(td) / "ITEMS.md"
+            p.write_text(text, encoding="utf-8")
+            items.check_file(p, buf.append, prefix="xx")
+        return "\n".join(buf)
+
+    @staticmethod
+    def _day(offset):
+        from datetime import date, timedelta
+        return (date.today() + timedelta(days=offset)).isoformat()
+
+    def _carrier(self, amendments):
+        return ("schema: 6\nbaseline: 0\n\n"
+                "## xx-1\ngrade: READY\n"
+                "requirement: a control block — record: LEDGER.md\n"
+                "goal: mitigate\nwrite-set: tools/thing.py\n"
+                "done-criterion: the check goes red then green\n"
+                f"evidence: MEASURED 41 rows. PERISHABLE({self._day(-9)}, "
+                "re-derive: tools/pool-count.py)\n"
+                "blocked-by: NONE\n" + amendments)
+
+    def test_the_line_SURVIVES_an_unrelated_amendment(self):
+        """The regression. An amendment that re-derives nothing must leave
+        both the count and the flag exactly where they were."""
+        before = self._report(self._carrier(""))
+        self.assertIn("1 mark(s), 1 NEVER RE-DERIVED", before)
+        after = self._report(self._carrier(
+            f"amended-evidence: {self._day(-1)} DERIVED the queue is "
+            "probably the cause\n"
+            "amend-reason: 2026-09-19 an unrelated amendment\n"))
+        self.assertIn("1 mark(s), 1 NEVER RE-DERIVED", after,
+                      "the mark was written at BOOKING and an unrelated "
+                      "amendment hid it — count and flag are reading "
+                      "different populations again")
+
+    def test_the_DENOMINATOR_holds_after_a_real_re_derivation(self):
+        """Clearing the flag must not also clear the count: `0 flagged` over
+        `0 marks` and `0 flagged` over `1 mark` are different facts, and
+        only the second one says the mechanism ran."""
+        after = self._report(self._carrier(
+            f"amended-evidence: {self._day(-1)} MEASURED re-ran "
+            "tools/pool-count.py — 44 rows\n"
+            "amend-reason: 2026-09-19 re-derived it\n"))
+        self.assertIn("1 mark(s), 0 never re-derived", after)

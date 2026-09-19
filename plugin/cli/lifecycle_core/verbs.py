@@ -846,6 +846,14 @@ def _collect_slots(args, ctx: Ctx, out):
     if problem:
         out(f"FINDING [evidence_unmarked] {problem}")
         return None, exits.FINDING
+    # THE GRAMMAR CHECK RUNS AFTER THE PRESENCE CHECK AND SEPARATELY (W-9).
+    # A slot carrying a valid mark beside a malformed PERISHABLE passes the
+    # presence test outright, so this is the only place the malformed one is
+    # visible at all.
+    problem = items_mod.perishable_grammar_problem(slots.get("evidence"))
+    if problem:
+        out(f"FINDING [evidence_mark_malformed] {problem}")
+        return None, exits.FINDING
     return slots, exits.CLEAN
 
 
@@ -2311,6 +2319,15 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
         problem = items_mod.evidence_mark_problem(updates["evidence"])
         if problem:
             out(f"FINDING [evidence_unmarked] {problem}")
+            return exits.FINDING
+        # AND AT THIS DOOR TOO, for the reason the block above gives: the
+        # amended value is the one a lane actually reads, and the
+        # re-derivation that clears a flag is itself written here — so a
+        # malformed mark introduced BY a re-derivation would be the one
+        # nobody could ever clear.
+        problem = items_mod.perishable_grammar_problem(updates["evidence"])
+        if problem:
+            out(f"FINDING [evidence_mark_malformed] {problem}")
             return exits.FINDING
 
     # The SAME declared-goal check `item add` applies. A goal that was
