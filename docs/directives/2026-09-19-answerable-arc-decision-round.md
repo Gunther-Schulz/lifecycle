@@ -880,3 +880,69 @@ carrier rather than from a conversation that dies with its session.
    admission yields a smaller MORE durable store (encoding competition,
    verified). The last one is the direct counter to the reflex that a
    record's value grows with its size.
+
+## Addendum 7 — the desk gap: rewrite, landings, and the bundle handoff (2026-09-19, driving desk cachyos-setup-b3)
+
+**Executing desk for the remainder:** `cachyos-setup-c8` (opus, opened by
+the operator), succeeding `cachyos-setup-36`, which closed at its seam on
+this desk's verified verdict. **Authority:** inert until the operator
+states the delegation first-hand in that session; the ack authorizes work.
+**REPORT-CHANNEL: SendMessage cachyos-setup-b3** — per item close,
+blockers and decision rounds immediately.
+
+**THE GAP'S ACTS, recorded.** (1) THE REWRITE: two filter passes over
+unpushed history removed forbidden bytes before publication — lc-239's
+original write-set paths and lc-238's evidence line naming the home root
+(the second found by using the leak scanner itself as the oracle after a
+trailing-slash grep missed it — the chosen-mark class, at this desk).
+35/35 commit pairs verified content-identical outside the one ITEMS.md
+line each; authorship, messages and trailers byte-identical;
+`absence-scan --git-range origin/main..HEAD` CLEAN. Six closure refs
+(lc-224, lc-193, lc-174) re-pointed at the final SHAs in one recorded
+hand edit of ITEMS-DONE.md, shape checkers green. CONSEQUENCE, the third
+unmarked class: rewritten lane commits read UNMARKED to the recorder
+(their marks key on pre-rewrite SHAs) — three distinct causes now render
+as one word (trailer-env unset; `git commit -q`; SHA rewritten), which is
+finding (b)'s shape and rides beside it in the round. (2) LANDINGS: the
+two remaining scout reports are in the repo —
+`docs/audits/2026-09-19-missing-layer-scout.md` and
+`docs/audits/2026-09-19-governed-persistence-scout.md` — beside the
+process-framework mapping; the QUEUED-FOR-ADDENDUM-7 block above is
+DISCHARGED: grounded autonomy and the both-minds framing are written into
+`docs/purpose.md` (its own statement-mirror-correction charter); the
+goal/waypoint/proposal vocabulary, the stop/yield admission lens, the
+MAST corroboration note, the CLI-memory natural experiment and the
+divider note stand in the block above as round inputs, each already
+marked; lc-240 is booked and parked (confirmed in the predecessor's
+closing report).
+
+**Post-rewrite verification, reproducing the predecessor's recorded
+baseline:** suite 799 pass / 0 fail / 0 skip; `--test` 114 rows CLEAN;
+node bites 62 pass / 0 fail; prove-rows 94 of 114 proven, unproven list
+at its baseline 20, one pre-existing could-not-verify
+(`capture_dominated`, lc-197); `item check` + conservation CLEAN (240);
+`kind check` CLEAN at 26; `item ratio` CLEAN.
+
+**THE BUNDLE, the successor's whole scope:** lc-175 and lc-179 — READY,
+identical 7-file write-sets, one lane, two items, per-item commits.
+Both PROVEN to need a schema bump (by execution with a control, recorded
+on the entries): floor 4→5→6, TWO separate acts per lc-218's
+MUST-NOT-BUILD, each with its own ten-repo dry-run and a dotfiles apply
+that is the DRIVING desk's boundary act (the lc-218/lc-224 pattern:
+halt with dry-run evidence, this desk applies, reads back, pushes, you
+close). Both entries carry their recorded dead-premise amendments.
+`item slots` at pickup, never directive prose. Wave close afterward:
+final BUILD count with the rulings-vs-drift split, prove-rows re-run,
+and the wave-close report. The predecessor's three load-bearing notes
+(its closing report, on this channel's record and repeated here):
+prove-rows MUTATES source files — never run it while a lane holds the
+copy, and a mutation anchored on a decision that is also a loop's only
+exit HANGS rather than darkens; the tool's parser resolves amendments
+while a hand grep reads stale base values (J23 — violated twice today
+by careful parties); a mid-flight steer to a live lane travels by
+ARTIFACT, never by mailbox. Known friction for the successor: `item
+park` does not auto-commit (finding (k)) — the grade change needs a hand
+commit until repaired.
+
+**Horizons:** this desk arms a recurring ~30 min artifact watch; no work
+before the operator-confirmation ack.

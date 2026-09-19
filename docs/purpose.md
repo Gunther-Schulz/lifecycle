@@ -94,6 +94,16 @@ by construction an input from outside it). Daneel was born from the second.
   reading state works. A player loop survives harsh, delayed, even unfair
   feedback; it cannot survive FALSE feedback.
 
+**The operator's name for this whole division (2026-09-19, first-hand):
+GROUNDED AUTONOMY** — guidance concentrated at the seams (when to think,
+about what, with which state in view, and that an answer must be written),
+freedom absolute in the spans (what to conclude). Dependability earns
+autonomy — a sequence, not a trade. And the layer serves BOTH minds
+(operator, same day): operator and session share the same limit — neither
+holds all threads at once — and today each fills the other's gaps by hand;
+the environment is the shared, unblinking third that takes only the
+vigilance, while the roles stay asymmetric.
+
 ## The living record (what makes wrong beliefs safe)
 
 The record distinguishes FACTS-OF-RECORD (what was done/observed —
