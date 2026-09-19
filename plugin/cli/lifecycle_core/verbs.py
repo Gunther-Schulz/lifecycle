@@ -38,6 +38,7 @@ from . import atomic, exits, judgment, lanes, ledger, retire
 from . import declaration as decl
 from . import grammar
 from . import items as items_mod
+from . import vocab
 
 #: A candidate needs this many shared requirement tokens. ONE would match
 #: nearly every pair of items in a repo whose vocabulary is its own domain,
@@ -761,12 +762,41 @@ def _collect_slots(args, ctx: Ctx, out):
 
     if args.grade:
         grade = args.grade
-        if grade not in items_mod.GRADES:
-            out(f"FINDING [unknown_grade_write] `--grade {grade}` is not one "
-                f"of the five grades ({', '.join(items_mod.GRADES)}). The "
-                "vocabulary is CLOSED on write: a word the counter does not "
-                "know is folded into neither open nor closed, and the drain "
-                "triggers read exactly those numbers.")
+        # THE ARM IS PART OF THE VOCABULARY, so the door admits it (D-3). A
+        # closed vocabulary whose OOV value cannot be WRITTEN has not gained
+        # an arm at all — the state stays inexpressible and the author does
+        # the only thing left, which is to pick the nearest member. That is
+        # the neighbour-folding this contract exists to end, and it would
+        # happen at the one site that could have recorded the reason.
+        #
+        # THE MALFORMED CLAIM IS STILL REFUSED, and that is not a detail: an
+        # undated instance can never be aged, so it could never become the
+        # oldest and the drain could never watch the count reach zero. It
+        # would sit in the carrier looking like a recorded state while being
+        # unreadable by the mechanism that consumes recorded states.
+        if grade not in items_mod.GRADES and not vocab.is_oov(grade):
+            if vocab.looks_oov(grade):
+                out(f"FINDING [unknown_grade_write] `--grade {grade}` claims "
+                    f"the out-of-vocabulary arm but is malformed. The form is "
+                    f"`{vocab.OOV_FORM}` — both parts required. The DATE is "
+                    "what lets the instance be aged, and the count of these "
+                    "is the dispositions-owed figure whose OLDEST entry the "
+                    "drain reads; an undated one could never become the "
+                    "oldest, so it would sit recorded and uncountable. The "
+                    "REASON is what a widening is minted FROM — without it "
+                    "the instance is a silent park wearing this mechanism's "
+                    "own label.")
+            else:
+                out(f"FINDING [unknown_grade_write] `--grade {grade}` is not "
+                    f"one of the five grades "
+                    f"({', '.join(items_mod.GRADES)}), and is not the "
+                    f"out-of-vocabulary arm (`{vocab.OOV_FORM}`). The "
+                    "vocabulary is CLOSED on write: a word the counter does "
+                    "not know is folded into neither open nor closed, and "
+                    "the drain triggers read exactly those numbers. If this "
+                    "is a state the five grades genuinely cannot say, record "
+                    "it AS one — dated, with its reason — rather than "
+                    "inventing a sixth word nothing consumes.")
             return None, exits.FINDING
     else:
         grade = "READY" if complete else "NEW"
@@ -1403,6 +1433,23 @@ def cmd_item_ready(args, out, ctx: Ctx) -> int:
     elif it.grade == "READY":
         out("READY but blocked — decision-complete, not schedulable. The "
             "grade is the desk's judgment and is unaffected by the blocker.")
+    elif vocab.is_oov(it.grade):
+        # THE ARM, RENDERED WITH ITS REASON (D-3). "grade is <arm>, not
+        # READY" would be true and useless: it reports the value as a word
+        # the verb does not recognise, which is precisely the reading the
+        # arm exists to prevent. The REASON is the payload — it is what a
+        # widening gets minted from — so a rendering that printed only the
+        # count would leave a number with no content behind it.
+        oov = vocab.parse_oov(it.grade)
+        out(f"NOT SCHEDULABLE — this item's grade is the out-of-vocabulary "
+            f"arm, recorded {oov.date}: {oov.reason}")
+        out("That is a RECORDED state, not a broken one: the five grades "
+            "could not say what this item is, and somebody wrote down what "
+            "they could not say instead of filing it under the nearest "
+            "word. It leaves the count by being amended away — re-typed to "
+            "a real member once one exists, or to a corrected slot — and "
+            "the reason above is what a new member would be minted FROM. "
+            "`item check` prints how many are owed and which is oldest.")
     else:
         out(f"grade is {it.grade}, not READY. THIS VERB PROMOTES NOTHING: "
             "READY is a judgment the desk makes — a fresh context could "
@@ -1686,7 +1733,24 @@ def cmd_item_statusline(args, out, ctx: Ctx) -> int:
                 head_id = cur_id
         elif cur_grade == "PARKED":
             parked += 1
-        elif cur_grade not in _STATUSLINE_KNOWN_GRADES:
+        elif (cur_grade not in _STATUSLINE_KNOWN_GRADES
+                and not vocab.is_oov(cur_grade)):
+            # THE ARM IS NOT AN UNKNOWN WORD (D-3). This counter means
+            # "words this carrier's closed vocabulary does not know" — a
+            # reading failure somebody must repair — and it renders as a
+            # trailing `!<n>?` on a line the operator sees at every prompt.
+            # An arm grade is the opposite state: one the vocabulary
+            # knowingly cannot say, recorded on purpose with its date and
+            # reason. Counting it here would raise a repair flag on the
+            # mechanism WORKING, which is the guard-fires-on-legitimate-work
+            # shape (law 11) at the most-rendered line in the system.
+            #
+            # IT GAINS NO COUNTER OF ITS OWN, deliberately: this line is
+            # always-on, and the dispositions-owed figure already has a home
+            # at `item check`, which prints the count and the oldest date.
+            # A second home for it here would be an always-on addition
+            # owing an inventory row, to say something the operator can
+            # already ask for.
             unknown += 1
 
     for raw in text.splitlines():
@@ -2714,6 +2778,39 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
         if not ctx.items_path.exists():
             out(f"COULD NOT VERIFY: no carrier at {ctx.items_path}.")
             return exits.COULD_NOT_VERIFY
+
+        # A GRADE MUST BE A REAL MEMBER AT CLOSE (D-3), and this is read
+        # BEFORE anything is written, for the same reason the forward-carrier
+        # clause below is: a refusal arriving after the move would be a
+        # verdict about a body already sitting where nothing can amend it.
+        #
+        # WHY THE MOVE IS THE ONE DOOR THAT REFUSES THE ARM. Everywhere else
+        # the arm is the honest answer — the state could not be said, and
+        # saying so beats picking a neighbour. At CLOSE the opposite holds:
+        # closing files the body under DONE or DROPPED in a home nobody
+        # re-reads, so an item whose own grade says "we could not express
+        # what this is" would be archived as a settled outcome. That is the
+        # neighbour-folding this contract exists to end, performed at the
+        # last door before the record stops being looked at.
+        close_parsed, close_why = _load(ctx.items_path)
+        if close_parsed is None:
+            out(f"COULD NOT VERIFY: {close_why}")
+            return exits.COULD_NOT_VERIFY
+        subject = next((i for i in close_parsed.items
+                        if i.ident == args.ident), None)
+        if subject is not None and vocab.is_oov(subject.grade):
+            oov = vocab.parse_oov(subject.grade)
+            out(f"FINDING [unknown_grade_write] {args.ident} is graded with "
+                f"the out-of-vocabulary arm, recorded {oov.date}: "
+                f"{oov.reason}")
+            out("A grade must be a REAL MEMBER at close. The arm records "
+                "that the vocabulary could not say what this item is, and "
+                "closing it would file exactly that unsaid state under "
+                f"{grade} — in the home nobody re-reads. Dispose of it "
+                "first: `item amend` it to a real member if one now fits, "
+                "or mint the member its reason asks for and re-type it. "
+                "Nothing was moved.")
+            return exits.FINDING
 
         # THE FORWARD-CARRIER CLAUSE IS READ FIRST, BEFORE ANYTHING IS
         # WRITTEN (lc-22). Its verdict can be a refusal, and a refusal

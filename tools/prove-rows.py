@@ -113,9 +113,9 @@ MUTATIONS = [
      "the `--no-index` flag that lets check-ignore see a TRACKED path"),
 
     ("unknown_grade_write", "verbs.py",
-     "        if grade not in items_mod.GRADES:",
+     "        if grade not in items_mod.GRADES and not vocab.is_oov(grade):",
      "        if False:",
-     "the closed grade vocabulary's test on write"),
+     "the closed grade vocabulary's test on write, arm included"),
 
     ("foreign_origin_item", "verbs.py",
      "    if here != ctx.repo.resolve():",

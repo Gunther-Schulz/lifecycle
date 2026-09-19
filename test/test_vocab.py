@@ -157,5 +157,169 @@ class CensusDisposition(unittest.TestCase):
         self.assertEqual(sum(got["unknown"].values()), 1)
 
 
+class GradeArmAtItsThreeVerbSites(unittest.TestCase):
+    """The proof path, walked. Door, reader, move.
+
+    THIS IS THE PART THAT MAKES THE REGISTRATION MORE THAN A DATA FIELD. A
+    registry entry asserting `oov_form` is set proves nothing about whether
+    the operational path ever reaches the renderer — the finding astra
+    recorded against the first design. So each case below drives a real verb
+    over a real carrier and reads what the verb printed.
+    """
+
+    def _repo(self, items_text=None):
+        from lifecycle_core import refusals
+        r = refusals._Repo(items=items_text or refusals.SEED_ITEMS)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    OOV = "cannot-express(2026-09-19): the round has not settled a word for a wait on another repo's release"
+
+    def _carrier_with_oov(self):
+        """SEED_ITEMS plus an arm-graded body — and the HEAD COUNTER moved
+
+        with it. A second body under `baseline: 1` is two bodies against one
+        admission, which conservation correctly calls OVER; the first version
+        of this fixture did exactly that and reddened the close CONTROL, not
+        the case under test. The premise a fixture does not pin is one the
+        checker is free to catch, and here it did.
+        """
+        from lifecycle_core import refusals
+        seed = refusals.SEED_ITEMS.replace("baseline: 1", "baseline: 2", 1)
+        self.assertIn("baseline: 2", seed, "the head counter did not move")
+        return seed + (
+            f"\n## xx-2\ngrade: {self.OOV}\nrequirement: r\ngoal: mitigate\n"
+            "write-set: tools/a.mjs\ndone-criterion: d\n"
+            "evidence: MEASURED e\nblocked-by: NONE\n")
+
+    def test_the_door_accepts_the_arm(self):
+        """An arm the door refuses is an arm nobody can record, and a
+
+        vocabulary whose OOV value cannot be WRITTEN has not gained one."""
+        repo = self._repo()
+        code, outp = self._run(
+            repo, "item", "add", "--requirement", "a thing", "--goal",
+            "mitigate", "--write-set", "tools/a.mjs,tools/b.mjs",
+            "--done-criterion", "d", "--evidence", "MEASURED e",
+            "--blocked-by", "NONE", "--grade", self.OOV,
+            "--join", "new", "--absence", "the word does not exist yet")
+        self.assertEqual(code, 0, outp)
+        self.assertIn(self.OOV,
+                      (repo.dir / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_the_door_still_refuses_a_word_that_is_not_a_member(self):
+        """The control. Opening the door to the arm must not open it to
+
+        anything — an unrecognised word would be folded into neither open nor
+        closed, and the drain triggers read exactly those numbers."""
+        repo = self._repo()
+        code, outp = self._run(
+            repo, "item", "add", "--requirement", "a thing", "--goal",
+            "mitigate", "--write-set", "tools/a.mjs,tools/b.mjs",
+            "--done-criterion", "d", "--evidence", "MEASURED e",
+            "--blocked-by", "NONE", "--grade", "SORTOFDONE",
+            "--join", "new", "--absence", "x")
+        self.assertEqual(code, 2, outp)
+        self.assertIn("unknown_grade_write", outp)
+
+    def test_the_door_refuses_a_malformed_arm(self):
+        """Undated: it would enter the carrier and never be ageable, so the
+
+        drain could never watch it reach zero."""
+        repo = self._repo()
+        code, outp = self._run(
+            repo, "item", "add", "--requirement", "a thing", "--goal",
+            "mitigate", "--write-set", "tools/a.mjs,tools/b.mjs",
+            "--done-criterion", "d", "--evidence", "MEASURED e",
+            "--blocked-by", "NONE", "--grade", "cannot-express: undated",
+            "--join", "new", "--absence", "x")
+        self.assertEqual(code, 2, outp)
+
+    def test_ready_renders_it_unschedulable_WITH_ITS_REASON(self):
+        """Not "grade is X, not READY". The reason is the payload: it is what
+
+        a widening gets minted from, and a rendering that dropped it would
+        leave the count as the only signal — a number with no content."""
+        repo = self._repo(self._carrier_with_oov())
+        _code, outp = self._run(repo, "item", "ready", "xx-2")
+        self.assertIn("not schedulable", outp.lower())
+        self.assertIn("the round has not settled a word", outp)
+        self.assertIn("2026-09-19", outp)
+
+    def test_ready_still_says_schedulable_for_a_real_member(self):
+        """The control: if the new branch caught everything, every item would
+
+        read unschedulable and the case above would prove nothing."""
+        repo = self._repo(self._carrier_with_oov())
+        _code, outp = self._run(repo, "item", "ready", "xx-1")
+        self.assertIn("schedulable now", outp)
+
+    def test_the_move_refuses_to_close_an_arm_graded_body(self):
+        """A grade must be a real member at close. Closing one would file an
+
+        inexpressible state under DONE — the neighbour-folding this contract
+        exists to prevent, at the one door after which nobody looks again."""
+        repo = self._repo(self._carrier_with_oov())
+        code, outp = self._run(repo, "item", "close", "xx-2",
+                               "--reason", "closing it anyway")
+        self.assertEqual(code, 2, outp)
+        self.assertIn("xx-2",
+                      (repo.dir / "ITEMS.md").read_text(encoding="utf-8"))
+
+    def test_the_statusline_does_not_call_the_arm_an_unknown_word(self):
+        """The fourth site that classifies a grade, found by sweeping for
+
+        GRADES references rather than by listing the sites already in hand.
+        The statusline's `!n?` counter means "words this carrier's closed
+        vocabulary does not know" — a reading failure somebody must repair.
+        An arm grade is the opposite: a state the vocabulary knowingly
+        cannot say, recorded on purpose. Counting it there would raise a
+        repair flag on the mechanism working.
+
+        NO ALWAYS-ON DELTA: this REMOVES a false count rather than adding a
+        line, so the wave's inventory gains no row from it.
+        """
+        repo = self._repo(self._carrier_with_oov())
+        _code, outp = self._run(repo, "item", "statusline")
+        self.assertNotIn("!1?", outp)
+
+    def test_the_statusline_still_flags_a_genuinely_unknown_word(self):
+        """The control: without it the counter could have been disabled
+
+        outright and the case above would read identically."""
+        from lifecycle_core import refusals
+        seed = refusals.SEED_ITEMS.replace("baseline: 1", "baseline: 2", 1)
+        repo = self._repo(seed + (
+            "\n## xx-3\ngrade: SORTOFDONE\nrequirement: r\ngoal: mitigate\n"
+            "write-set: tools/a.mjs\ndone-criterion: d\n"
+            "evidence: MEASURED e\nblocked-by: NONE\n"))
+        _code, outp = self._run(repo, "item", "statusline")
+        self.assertIn("!1?", outp)
+
+    def test_the_move_still_closes_a_real_member(self):
+        """The control for the refusal: a close that refused everything would
+
+        pass the case above while breaking the verb."""
+        repo = self._repo(self._carrier_with_oov())
+        code, outp = self._run(repo, "item", "close", "xx-1",
+                               "--reason", "done")
+        self.assertEqual(code, 0, outp)
+
+
 if __name__ == "__main__":
     unittest.main()
