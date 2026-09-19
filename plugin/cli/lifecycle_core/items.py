@@ -1484,6 +1484,208 @@ def check_blocker_targets(items_parsed: Parsed, done_parsed: Parsed | None,
     return exits.CLEAN
 
 
+#: A trailing shell `# comment` on an evidence predicate, stripped the SAME
+#: way `verify.py`'s own RUN-line parser already strips one from a Verify
+#: block's command (`verify.py`, `parse_block`, `re.sub(r'\s+#.*$', '', ...)`)
+#: — the same idiom, read and reused rather than a second one invented beside
+#: it. A shell already treats `#` this way when it RUNS the predicate
+#: (`lanes.evaluate_trigger`), so this only makes the TEXT comparison agree
+#: with what the shell would actually execute.
+_TRAILING_SHELL_COMMENT = re.compile(r"\s+#.*$")
+
+
+def _is_unclearable_evidence(predicate: str) -> bool:
+    """Is this evidence predicate PROVABLY unable to ever clear (lc-193).
+
+    NARROW ON PURPOSE, and the narrowness is the whole point. §3.1's
+    MUST-NOT-MOVE is that an evidence predicate simply not true YET is not a
+    softlock — `lanes.evaluate_trigger`'s QUIET (exit 1) is the ordinary,
+    expected, everyday state of a wait that has not resolved, and lc-164
+    already grades those at booking; this function must not re-judge them.
+    The one case this repo can PROVE without running anything, and the one
+    the entry's own measurement found eight live instances of, is the
+    literal shell command `false` — POSIX-guaranteed to exit 1
+    UNCONDITIONALLY, every time, forever, by definition of the builtin
+    rather than by anything the world does. That is categorically different
+    from "the check has not gone green yet": no future state of the
+    filesystem, the network, or another repo can ever flip it. Nothing else
+    is treated as unclearable — not `exit 1`, not `/bin/false`, not `true &&
+    false` — because proving those would need more than a text comparison,
+    and a check that reached for that reach would be reasoning about the
+    world rather than reading a closed, deliberately narrow vocabulary.
+    """
+    command = _TRAILING_SHELL_COMMENT.sub("", predicate).strip()
+    return command == "false"
+
+
+def check_blocker_graph(items_parsed: Parsed, out, prefix: str | None) -> int:
+    """Traverse the item-id blocker GRAPH, not just its edges (lc-193).
+
+    `check_blocker_targets` above, and the write path's `_check_blocker`,
+    both ask a per-EDGE question: does the id an item-id blocker names
+    exist, and is it buried. Neither asks whether the GRAPH those edges
+    form can ever drain. So `xx-A blocked-by xx-B` and `xx-B blocked-by
+    xx-A` both resolve, neither is dangling, neither is dropped, and both
+    items wait forever while `item ready` renders each as ordinary BLOCKED
+    work and `item check` reports CLEAN — the operator's player-loop frame
+    names this a SOFTLOCK: a state reached legitimately from which no
+    progress is possible, and the game does not say so. This is lc-14's own
+    "permanent silent park" (quoted in `check_blocker_targets`'s docstring)
+    reached by a different route: that check was built to watch the edge it
+    came in on, never the condition it names.
+
+    THE COMPUTABLE SLICE IS EXACTLY TWO SHAPES AND NO MORE, per the entry's
+    own scope, and this function does not extend it:
+
+    1. a CYCLE among item-id blockers — any ring, not only a length-2 one;
+    2. a CHAIN of item-id blockers terminating in a member whose OWN
+       blocker is the literal, provably-unclearable `evidence false`
+       (`_is_unclearable_evidence`) — chain length ONE is the base case: an
+       item can name itself with no item-id links at all.
+
+    THE THREE MUST-NOT-MOVE RULES, each a way this could become the R11
+    guard that fires on legitimate work: (1) a DECISION blocker is waiting
+    on a party, which is the system working, and is never reported; (2) an
+    EVIDENCE predicate that is simply not true YET is not re-judged — only
+    the literal, provable idiom is; (3) this function REPORTS and never
+    unblocks anything — breaking a cycle is a judgment about which item was
+    booked wrong, which stays the desk's.
+
+    EDGES ARE `classify_blocker`'s THIRD BRANCH, THE SAME CLOSED VOCABULARY
+    `check_blocker_targets` reads — a second reading would disagree with the
+    first exactly where it matters. A blocker this function cannot type
+    (`kind is None`) or that names an id no LIVE item holds (closed,
+    dropped, or never existed) is `blocker_untyped` / `dangling_reference`'s
+    business, reported there and not duplicated here: reaching such a
+    target simply LEAVES this function's graph, which is not itself a
+    finding — a chain into a DONE target has already been answered, exactly
+    as `_blocker_state`'s own DONE branch reads it.
+
+    REACH, STATED RATHER THAN LEFT TO BE DISCOVERED: item-id EDGES need the
+    declared `id-prefix` to be told apart from prose at all (the same
+    dependency `classify_blocker` itself has), so without one this function
+    sees no edges and therefore no cycle and no multi-hop chain — but a
+    length-ONE unclearable terminal needs no prefix, because `evidence` and
+    `NONE` and `decision` are recognised by their own fixed leading words
+    regardless. So this does NOT fall back to COULD NOT VERIFY on a missing
+    prefix the way `check_blocker_targets` does: the narrower shape stays
+    fully checkable, and only the graph's reach beyond one hop is reduced.
+    A future caller wiring this beside `check_blocker_targets` in `item
+    check`'s pipeline (cli.py, outside this change's write-set) should say
+    so alongside it if that limit matters to the reader.
+    """
+    by_id = {it.ident: it for it in items_parsed.items}
+    edges: dict[str, str] = {}
+    terminals: dict[str, tuple] = {}
+    for it in items_parsed.items:
+        kind, detail = classify_blocker(it.slots.get("blocked-by", ""), prefix)
+        if kind == "item":
+            edges[it.ident] = detail
+        elif kind is not None:
+            terminals[it.ident] = (kind, detail)
+        # kind is None: untyped prose, `blocker_untyped`'s finding already
+        # covers it, and it forms no edge and no terminal here.
+
+    # --- shape 1: CYCLES among item-id blockers -----------------------------
+    # A FUNCTIONAL graph — every node has out-degree at most one, since a
+    # block carries a single `blocked-by` value — so a walk from any node
+    # either leaves `edges` (terminal or a target outside the live carrier)
+    # or re-enters a node already on the CURRENT walk, which is the ring.
+    UNSEEN, IN_PROGRESS, DONE = 0, 1, 2
+    status: dict[str, int] = {}
+    cycles: list = []
+    for start in edges:
+        if status.get(start, UNSEEN) != UNSEEN:
+            continue
+        path: list = []
+        node = start
+        while True:
+            if node not in edges:
+                for n in path:
+                    status[n] = DONE
+                break
+            st = status.get(node, UNSEEN)
+            if st == IN_PROGRESS:
+                i = path.index(node)
+                ring = tuple(path[i:])
+                cycles.append(ring)
+                for n in path:
+                    status[n] = DONE
+                break
+            if st == DONE:
+                for n in path:
+                    status[n] = DONE
+                break
+            status[node] = IN_PROGRESS
+            path.append(node)
+            node = edges[node]
+
+    # --- shape 2: CHAINS terminating in a member that can NEVER CLEAR ------
+    # Reversed once, so every ancestor of an unclearable terminal is found in
+    # one walk rather than re-walking the same suffix once per ancestor.
+    rev: dict[str, list] = {}
+    for src, dst in edges.items():
+        rev.setdefault(dst, []).append(src)
+
+    def _ancestors(root: str) -> list:
+        members = [root]
+        seen = {root}
+        frontier = [root]
+        while frontier:
+            nxt = []
+            for n in frontier:
+                for anc in rev.get(n, ()):
+                    if anc not in seen:
+                        seen.add(anc)
+                        members.append(anc)
+                        nxt.append(anc)
+            frontier = nxt
+        return members
+
+    chains: list = []
+    for ident, (kind, detail) in terminals.items():
+        if kind == "evidence" and _is_unclearable_evidence(detail):
+            chains.append((ident, sorted(_ancestors(ident))))
+
+    n_findings = len(cycles) + len(chains)
+    if not n_findings:
+        out(f"blocker graph: CLEAN — {len(edges)} item-id blocker edge(s) "
+            "traversed, no cycle and no chain terminating in a member that "
+            "can never clear.")
+        return exits.CLEAN
+
+    for ring in sorted(cycles):
+        out(f"FINDING [blocker_softlock] a CYCLE among item-id blockers: "
+            + " -> ".join(ring) + f" -> {ring[0]}. Every member waits on "
+            "another member of this same ring, so none of them can ever "
+            "become schedulable — the ring's own resolution is what each "
+            "member is waiting for, and nothing outside the ring can supply "
+            "it. `item ready` renders each as ordinary BLOCKED work and "
+            "`item check` reports CLEAN on the edges alone: this is the "
+            "softlock the player-loop frame names, a state reached "
+            "legitimately from which no progress is possible. This reports "
+            "the ring; breaking it is a judgment about which item was "
+            "booked wrong, and stays the desk's.")
+    for terminal, members in sorted(chains):
+        _kind, detail = terminals[terminal]
+        others = [m for m in members if m != terminal]
+        chain_desc = (f"{terminal} directly" if not others
+                      else f"{', '.join(others)} -> {terminal}")
+        out(f"FINDING [blocker_softlock] a CHAIN terminating in a member "
+            f"that can NEVER CLEAR: {chain_desc}. {terminal!r}'s evidence "
+            f"predicate ({detail!r}) is the literal command `false`, which "
+            "exits 1 unconditionally and forever by construction — not "
+            "evidence that has simply not arrived yet, which this check "
+            "does not and must not re-judge (lc-164 already grades that at "
+            "booking). Every member named here waits, directly or through "
+            "another member, on a predicate that can never fire, and "
+            "`item ready` renders each as ordinary machine-court waiting.")
+    out(f"blocker graph: FINDING — {len(cycles)} cycle(s), {len(chains)} "
+        f"unclearable chain(s), over {len(edges)} item-id blocker edge(s) "
+        "traversed.")
+    return exits.FINDING
+
+
 # --- the census: three answers -----------------------------------------------
 
 def census(parsed: Parsed) -> dict:

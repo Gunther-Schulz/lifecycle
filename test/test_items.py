@@ -17,7 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
 from lifecycle_core import exits, items, refusals  # noqa: E402
 from lifecycle_core.refusals import (  # noqa: E402
-    DONE_BLOCK, EMPTY_DONE, FOUR_BLOCKER_ITEMS, GOOD_ITEMS)
+    BLOCKER_TARGET_LIVE_ITEMS, CYCLE_ITEMS, DONE_BLOCK, EMPTY_DONE,
+    FOUR_BLOCKER_ITEMS, GOOD_ITEMS, UNCLEARABLE_CHAIN_ITEMS)
 
 
 def run_check(text=None, prefix="xx"):
@@ -818,6 +819,148 @@ class BlockerTargetDropped(BlockerTargets):
             "blocked-by: xx-9999", "blocked-by: xx-5000"), done=done)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertNotIn("FINDING", out)
+
+
+class BlockerGraph(unittest.TestCase):
+    """lc-193 — the blocker GRAPH traversed, not just its edges.
+
+    `BlockerTargets` above proves the per-EDGE question (does an id-blocker's
+    target exist, is it buried). Every carrier there scores CLEAN or FINDING
+    on that question alone, whether or not the graph those edges form can
+    ever drain — which is exactly why a cycle needs its own proof: two items
+    blocking each other by id are neither dangling nor DROPPED, so
+    `check_blocker_targets` reads that carrier CLEAN.
+    """
+
+    def _run(self, text, prefix="xx"):
+        live = items.parse(text)
+        buf = []
+        code = items.check_blocker_graph(live, buf.append, prefix=prefix)
+        return code, "\n".join(buf)
+
+    # --- shape 1: cycles -----------------------------------------------
+
+    def test_two_items_blocking_each_other_is_a_cycle(self):
+        """RED-FIRST AT THE DEFECT: `check_blocker_targets` reads this exact
+        carrier CLEAN (proven in `BlockerTargets`'s sibling assertions on
+        the other three forms) — the whole reason this is a different
+        check."""
+        code, out = self._run(CYCLE_ITEMS)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [blocker_softlock]", out)
+        self.assertIn("CYCLE", out)
+        self.assertIn("xx-1", out)
+        self.assertIn("xx-2", out)
+
+    def test_it_goes_clean_once_the_ring_is_broken(self):
+        """The control: the SAME carrier, the ring's own CLOSING edge alone
+        changed to NONE. The arms differ in that one edge — xx-1 still
+        names xx-2 in both."""
+        code, out = self._run(
+            CYCLE_ITEMS.replace("blocked-by: xx-1\n", "blocked-by: NONE\n"))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("blocker graph: CLEAN", out)
+
+    def test_a_dangling_or_closed_target_does_not_read_as_a_cycle(self):
+        """MUST-NOT-MOVE-adjacent: `check_blocker_targets`'s own dangling
+        and DROPPED forms leave this graph rather than looping back into
+        it — reported by that check, not duplicated here."""
+        code, out = self._run(FOUR_BLOCKER_ITEMS)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("FINDING", out)
+
+    # --- shape 2: chains terminating in a member that can never clear ---
+
+    def test_a_chain_into_a_literal_false_names_BOTH_members(self):
+        """xx-1 is blocked-by xx-2, xx-2 is blocked-by the literal, provably
+        dead `evidence false`. xx-1 is exactly as unschedulable as xx-2 and
+        the finding must name it too, not only the item carrying the
+        predicate."""
+        code, out = self._run(UNCLEARABLE_CHAIN_ITEMS)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [blocker_softlock]", out)
+        self.assertIn("NEVER CLEAR", out)
+        self.assertIn("xx-1", out)
+        self.assertIn("xx-2", out)
+
+    def test_chain_length_one_is_the_base_case(self):
+        """No item-id link at all: the item names the unclearable predicate
+        directly. This is the shape the entry's own measurement found eight
+        live instances of."""
+        code, out = self._run(
+            f"schema: {items.SCHEMA_FLOOR}\nbaseline: 1\nadded: 0\n"
+            "compacted: 0\n" + refusals._blocked_block(
+                "xx-1", "PARKED", "evidence false"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [blocker_softlock]", out)
+        self.assertIn("xx-1", out)
+
+    def test_it_goes_clean_once_the_predicate_is_not_the_literal_false(self):
+        """The control: the SAME chain, the terminal's predicate alone
+        changed to one that is merely QUIET today rather than provably
+        dead forever. Must-not-move (2) — the entry's own text."""
+        code, out = self._run(UNCLEARABLE_CHAIN_ITEMS.replace(
+            "evidence false", "evidence test -f /nonexistent"))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("blocker graph: CLEAN", out)
+
+    def test_a_trailing_comment_on_the_literal_false_still_fires(self):
+        """Every real specimen in this repo's own ITEMS.md carries a
+        trailing `# comment` on `evidence false` — the idiom is never bare.
+        A check blind to the comment would never fire on the real carrier
+        it was built for."""
+        code, out = self._run(UNCLEARABLE_CHAIN_ITEMS.replace(
+            "evidence false",
+            "evidence false  # the named missing evidence"))
+        self.assertEqual(code, exits.FINDING, out)
+
+    # --- must-not-move (1) and (2), and the drainable control ------------
+
+    def test_a_decision_blocker_is_never_reported_as_a_softlock(self):
+        """Must-not-move (1) — the entry's own text: waiting on a party is
+        the system working, never a softlock. Reused from `BlockerTargets`'
+        own fixture, which parks xx-2 on a `decision` alone."""
+        code, out = self._run(FOUR_BLOCKER_ITEMS)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("decision", out)
+
+    def test_an_ordinary_chain_that_CAN_drain_stays_clean(self):
+        """THE CONTROL THAT MATTERS MOST (the brief's own words): xx-1
+        blocked-by xx-2, xx-2 blocked-by NONE — live, ordinary
+        serialization, not a plant built to look unclearable. No live
+        example of this shape currently sits anywhere in this repo's own
+        ITEMS.md (every live item-id blocker there resolves either to an
+        already-DONE target or to lc-66's own `evidence false`), so this
+        reuses the existing `BLOCKER_TARGET_LIVE_ITEMS` fixture — built for
+        `check_blocker_targets`'s own live-target arm — rather than a
+        fixture invented for this test alone."""
+        code, out = self._run(BLOCKER_TARGET_LIVE_ITEMS)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("blocker graph: CLEAN", out)
+
+    # --- reach, stated as a boundary rather than left to be discovered ---
+
+    def test_no_prefix_still_catches_the_length_one_case(self):
+        """`evidence` and `NONE` and `decision` are recognised by their own
+        fixed leading words regardless of a declared id-prefix — only the
+        item-id branch needs one. So the length-one shape, which needs no
+        item-id edge at all, stays fully checkable without one."""
+        code, out = self._run(
+            f"schema: {items.SCHEMA_FLOOR}\nbaseline: 1\nadded: 0\n"
+            "compacted: 0\n" + refusals._blocked_block(
+                "xx-1", "PARKED", "evidence false"),
+            prefix=None)
+        self.assertEqual(code, exits.FINDING, out)
+
+    def test_no_prefix_cannot_see_the_cycle(self):
+        """THE STATED LIMIT, proven rather than merely claimed: without a
+        declared id-prefix an item-id blocker cannot be told from prose at
+        all (the same dependency `classify_blocker` itself has), so this
+        carrier's ring is invisible and the check under-reports to CLEAN —
+        never to a wrong FINDING, which is the direction that would matter
+        for law 11."""
+        code, out = self._run(CYCLE_ITEMS, prefix=None)
+        self.assertEqual(code, exits.CLEAN, out)
 
 
 if __name__ == "__main__":

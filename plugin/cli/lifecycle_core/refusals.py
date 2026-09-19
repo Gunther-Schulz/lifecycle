@@ -253,6 +253,18 @@ def _items_run(items_text: str, prefix: str = "xx") -> Fired:
         return Fired(code, "\n".join(buf))
 
 
+def _blocker_graph_run(items_text: str, prefix: str = "xx") -> Fired:
+    """`check_blocker_graph` over a scratch carrier — no done home needed,
+
+    the same reason `_items_run` needs none: the two computable shapes
+    (a cycle, a chain terminating in a literal `evidence false`) are both
+    properties of the LIVE carrier alone."""
+    parsed = items_mod.parse(items_text)
+    buf = []
+    code = items_mod.check_blocker_graph(parsed, buf.append, prefix=prefix)
+    return Fired(code, "\n".join(buf))
+
+
 def _done_run(done_text: str, prefix: str = "xx") -> Fired:
     """The DONE HOME's own shape check, over a scratch closure home."""
     with _Scratch() as s:
@@ -931,6 +943,29 @@ BLOCKER_TARGET_CLOSED_ITEMS = (
 )
 BLOCKER_TARGET_CLOSED_DONE = EMPTY_DONE + _blocked_block("xx-2", "DONE", "NONE")
 
+#: lc-193's RING: `xx-1` and `xx-2` block each other by id. Neither is
+#: dangling and neither is DROPPED, so `check_blocker_targets` reads this
+#: carrier CLEAN — the whole reason a GRAPH traversal is a different check
+#: from an EDGE one.
+CYCLE_ITEMS = (
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 2\nadded: 0\ncompacted: 0\n")
+    + _blocked_block("xx-1", "PARKED", "xx-2")
+    + _blocked_block("xx-2", "PARKED", "xx-1")
+)
+
+#: lc-193's UNCLEARABLE CHAIN: `xx-1` blocked-by `xx-2`, `xx-2` blocked-by
+#: the literal, provably-dead `evidence false`. `xx-1` is the ANCESTOR this
+#: check must also name — it is exactly as unschedulable as `xx-2`, and
+#: naming only `xx-2` would under-report the members the entry's own
+#: done-criterion demands.
+UNCLEARABLE_CHAIN_ITEMS = (
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 2\nadded: 0\ncompacted: 0\n")
+    + _blocked_block("xx-1", "PARKED", "xx-2")
+    + _blocked_block("xx-2", "PARKED", "evidence false")
+)
+
 
 def _clause_block(ident: str, requirement: str) -> str:
     """A valid block whose REQUIREMENT is the caller's, every other slot fixed.
@@ -1511,6 +1546,33 @@ VERB_ROWS = [
                                            "blocked-by: xx-9999",
                                            "blocked-by: xx-4")),
         stage="wave 3 (lc-28, superseding lc-15)",
+    ),
+    Row(
+        ident="blocker_softlock",
+        refusal="the blocker GRAPH traversed, never just its edges (lc-193) "
+                "— a CYCLE among item-id blockers, or a CHAIN of them "
+                "terminating in a member whose evidence predicate is the "
+                "literal command `false` (POSIX-guaranteed to exit 1 "
+                "forever, never merely not-true-yet). Either shape is a set "
+                "of items that can NEVER become schedulable while `item "
+                "ready` renders each as ordinary BLOCKED work and "
+                "`check_blocker_targets` above reports the edges CLEAN — "
+                "the operator's player-loop frame's SOFTLOCK, lc-14's "
+                "'permanent silent park' reached by a different route",
+        firing_input="`check_blocker_graph` over a carrier where two items "
+                     "block each other by id (`xx-1` blocked-by `xx-2`, "
+                     "`xx-2` blocked-by `xx-1`) — CYCLE_ITEMS",
+        expect=exits.FINDING,
+        fire=lambda: _blocker_graph_run(CYCLE_ITEMS),
+        # THE RING'S OWN CLOSING EDGE ALONE differs: `xx-2` no longer points
+        # back at `xx-1`, so the two blocks are ordinary serialization (one
+        # item waiting on another that can still close) rather than a ring
+        # with nothing outside it to supply either member's clearance. An
+        # arm that also changed which id `xx-1` names would be red for a
+        # neighbouring reason and would prove nothing about the cycle.
+        control=lambda: _blocker_graph_run(
+            CYCLE_ITEMS.replace("blocked-by: xx-1\n", "blocked-by: NONE\n")),
+        stage="lc-193",
     ),
     Row(
         ident="parked_without_typed_blocker",
