@@ -569,6 +569,7 @@ def build_parser() -> argparse.ArgumentParser:
     add.add_argument("--absence", help="what the build needs that is not "
                                        "here NOW; required for `new`")
     add.add_argument("--not-derivable", dest="not_derivable", help="why the question is NOT DERIVABLE from the record — required with a `decision` blocker (lc-169): which precedent, ledger entry, audit or declaration you looked for and did not find, or that the question is constitutively the operator's")
+    add.add_argument("--blocker-exercise", dest="blocker_exercise", help="the exercise record for an `evidence` blocker (lc-175): the TWO CONSTRUCTED ARMS showing the predicate answers both ways — a case it must accept and one it must refuse. The live booking exit is added by the tool, which ran it; the arms are yours, because a verb that synthesised one would be grading its own plant")
     add.add_argument("--reason", help="the SESSION's prose for a ledger line")
     add.add_argument("--no-commit", dest="no_commit", action="store_true",
                      help="skip the move's third step (a batching caller "
@@ -612,6 +613,7 @@ def build_parser() -> argparse.ArgumentParser:
         amend.add_argument(f"--{_slot}", dest=_attr,
                            help=f"the value that supersedes `{_slot}:`")
     amend.add_argument("--not-derivable", dest="not_derivable", help="why the question is NOT DERIVABLE from the record — required with a `decision` blocker (lc-169): which precedent, ledger entry, audit or declaration you looked for and did not find, or that the question is constitutively the operator's")
+    amend.add_argument("--blocker-exercise", dest="blocker_exercise", help="the exercise record for an `evidence` blocker (lc-175): the TWO CONSTRUCTED ARMS showing the predicate answers both ways — a case it must accept and one it must refuse. The live booking exit is added by the tool, which ran it; the arms are yours, because a verb that synthesised one would be grading its own plant")
     amend.add_argument("--reason", help="the SESSION's prose: why the earlier "
                                         "value was wrong. REQUIRED")
     amend.add_argument("--no-commit", dest="no_commit", action="store_true",
@@ -636,6 +638,7 @@ def build_parser() -> argparse.ArgumentParser:
     park.add_argument("ident")
     park.add_argument("--blocked-by", dest="blocked_by", help="TYPED; required")
     park.add_argument("--not-derivable", dest="not_derivable", help="why the question is NOT DERIVABLE from the record — required with a `decision` blocker (lc-169): which precedent, ledger entry, audit or declaration you looked for and did not find, or that the question is constitutively the operator's")
+    park.add_argument("--blocker-exercise", dest="blocker_exercise", help="the exercise record for an `evidence` blocker (lc-175): the TWO CONSTRUCTED ARMS showing the predicate answers both ways — a case it must accept and one it must refuse. The live booking exit is added by the tool, which ran it; the arms are yours, because a verb that synthesised one would be grading its own plant")
 
     close = its.add_parser("close", help="the MOVE: append, delete, commit")
     close.add_argument("ident")

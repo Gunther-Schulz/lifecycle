@@ -694,11 +694,15 @@ def cmd_item_add(args, out, ctx: Ctx) -> int:
         return exits.COULD_NOT_VERIFY
     done_parsed, done_why = _load(ctx.done_path)
 
+    observed: dict = {}
     code = _check_blocker(slots["blocked-by"], ctx, parsed, done_parsed,
                           done_why, out,
-                          not_derivable=getattr(args, "not_derivable", None))
+                          not_derivable=getattr(args, "not_derivable", None),
+                          observed=observed)
     if code != exits.CLEAN:
         return code
+    slots[items_mod.BLOCKER_EXERCISE] = _exercise_record(
+        args, slots["blocked-by"], ctx, observed)
 
     found = candidates(parsed, slots["requirement"], slots["write-set"])
     join = args.join
@@ -803,7 +807,7 @@ def _collect_slots(args, ctx: Ctx, out):
 _PARSE_TIMEOUT_S = 10
 
 
-def _predicate_lint(detail: str, ctx: Ctx, out) -> int:
+def _predicate_lint(detail: str, ctx: Ctx, out, observed: dict | None = None) -> int:
     """Refuse an `evidence` blocker whose predicate cannot work (lc-130) or
     cannot FAIL (lc-164).
 
@@ -909,6 +913,18 @@ def _predicate_lint(detail: str, ctx: Ctx, out) -> int:
                       "evaluator, so this blocker would report BROKEN on "
                       "every pass — a wait that can only expire, never "
                       "clear.")
+    # THE BOOKING RUN'S EXIT IS HANDED BACK, NOT RE-DERIVED (lc-175). The
+    # exercise record's first third is this live exit, and the caller must not
+    # run the predicate a second time to learn it — the MUST-NOT-MOVE above
+    # ("a predicate that is slow or has side effects is not run twice") binds
+    # the record exactly as it binds the lint.
+    #
+    # NOT HARDCODED AS 1, though lc-164's grading makes 1 the only exit a
+    # CLEAN mint can reach today. A literal here would be a restated constant
+    # that keeps reading `live 1` on a day the grading changes — the record
+    # would then assert an observation nobody made.
+    if observed is not None and t is not None:
+        observed["code"] = t.code
     if broken is not None:
         out(f"FINDING [blocker_predicate_broken] {broken}")
         return exits.FINDING
@@ -934,8 +950,42 @@ def _predicate_lint(detail: str, ctx: Ctx, out) -> int:
     return exits.CLEAN
 
 
+def _exercise_record(args, blocker: str, ctx: Ctx, observed: dict) -> str:
+    """The `blocker-exercise:` value this add writes, or `""` (lc-175).
+
+    THREE PARTS AND TWO AUTHORS, which is the whole design. The LIVE EXIT is
+    the tool's own — it ran the predicate a moment ago and is reporting what
+    it saw. The TWO CONSTRUCTED ARMS are the author's, supplied through
+    `--blocker-exercise`, and the tool never synthesises them: a verb that
+    manufactured a positive would be grading its own plant, which is the
+    same-parentage defect law 2 exists against, and it is this item's
+    MUST-NOT-MOVE in one sentence.
+
+    NO DOOR REFUSAL HERE, deliberately, and the boundary is lc-179's: lc-169
+    demands its statement AT THE DOOR and that demand stays exactly as it is.
+    This slot's done-criterion asks that an unexercised blocker be VISIBLE,
+    which the carrier-wide count answers. Adding a second gate would make
+    every new evidence blocker unbookable until its author had constructed two
+    arms — a guard firing on legitimate work, which trains the override reflex
+    that kills it (law 11).
+
+    EMPTY WHERE THE BLOCKER IS NOT `evidence`: the slot is refused there, so
+    composing one would write a block this build's own checker rejects.
+    """
+    kind, _detail = items_mod.classify_blocker(blocker, ctx.prefix)
+    if kind != "evidence":
+        return ""
+    arms = (getattr(args, "blocker_exercise", None) or "").strip()
+    if not arms:
+        return ""
+    code = observed.get("code")
+    live = f"live {code}" if code is not None else "live not-observed"
+    return f"{_today()} {live} | {arms}"
+
+
 def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out,
-                   not_derivable: str | None = None) -> int:
+                   not_derivable: str | None = None,
+                   observed: dict | None = None) -> int:
     """Typed, LEDGER-STORABLE if it is a decision, NOT-DERIVABLE if it is one,
     and — for an item-id blocker — pointing at an item that IS.
 
@@ -1025,7 +1075,7 @@ def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out,
         # this function too, and it is the door the design's own table does
         # not name — the same reason the storability half above sits here
         # rather than in the verbs somebody remembered.
-        code = _predicate_lint(detail, ctx, out)
+        code = _predicate_lint(detail, ctx, out, observed)
         if code != exits.CLEAN:
             return code
     if kind != "item":

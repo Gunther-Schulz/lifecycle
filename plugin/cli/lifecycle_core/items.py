@@ -127,6 +127,45 @@ CLOSURE_SUPERSEDED_BY = "closure-superseded-by"
 DONE_ONLY_SLOTS = ("superseded-by", "blocker-moot", CLOSED_REASON, CLOSED_REF,
                    CLOSURE_SUPERSEDED_BY)
 
+#: THE EXERCISE RECORD FOR AN `evidence` BLOCKER (lc-175). lc-164 made the
+#: BOOKING run the predicate and refused exit 0, so every evidence blocker in
+#: a carrier answered 1 at its mint by construction. That proves the predicate
+#: can say NOT YET; it does not prove it can ever say ARRIVED, and one run
+#: cannot. A peer desk exercised three blockers by hand on 2026-09-18 — live
+#: exit, a constructed positive, a constructed negative — and NOTHING IN THE
+#: CARRIER RECORDED THAT THEY DID: an exercise nobody can see is a discipline
+#: that holds only while the person who held it is in the room.
+#:
+#: CONDITIONAL, NOT A MEMBER OF `SLOTS`, and the shape was decided by
+#: MEASUREMENT rather than by symmetry with the fixed run. Measured on this
+#: carrier 2026-09-19: 8 evidence blockers, 3 of them READY; 25 decision
+#: blockers, 16 of them READY. A member of `SLOTS` is written into every block
+#: by the migration, and the value it would carry is UNKNOWN — which
+#: `ready_with_unknown_slot` turns into a finding. That would have made 3 items
+#: findings the day this shipped, and this item's MUST-NOT-MOVE forbids
+#: exactly that. So it follows `DONE_ONLY_SLOTS`: optional, legal only where
+#: its blocker type makes it MEAN something, and deliberately absent from
+#: `UNKNOWNABLE_SLOTS` so the transitional value cannot un-READY a live item.
+#:
+#: THE ABSENCE IS REPORTED, NEVER RAISED. The done-criterion asks that an
+#: unexercised blocker be "visible as such rather than silently unexercised" —
+#: which a COUNT satisfies and a finding over-satisfies. This is I5's move
+#: (the-loop.md): the fix for an invisible absence was never a better duty, it
+#: was a count at close that makes a zero answerable.
+#:
+#: THE CONSTRUCTED ARMS ARE THE AUTHOR'S ACT, NEVER THE TOOL'S (MUST-NOT-MOVE).
+#: A verb that synthesised a positive would be grading its own plant — the
+#: same-parentage defect law 2 exists against. So this slot is a FORM whose
+#: absence is readable, not a predicate the tool computes.
+BLOCKER_EXERCISE = "blocker-exercise"
+
+#: Slots legal only beside a `blocked-by` of a particular TYPE. The mapping is
+#: the check: a slot present where its type is not is a finding, in the same
+#: direction as `done_slot_on_live_item` — a slot legal everywhere is an
+#: annotation, not a slot.
+BLOCKER_SLOT_FOR_TYPE = {BLOCKER_EXERCISE: "evidence"}
+BLOCKER_ONLY_SLOTS = tuple(BLOCKER_SLOT_FOR_TYPE)
+
 #: `<date> <ledger-ref> <one line>`, the three parts the design names. Checked
 #: as ONE predicate with ONE home because two consumers read it: the parser
 #: grades what is on disk and the verb grades what it is about to write, and a
@@ -168,6 +207,22 @@ UNKNOWN = "UNKNOWN"
 #: `blocked-by` may not: a grade is always one of the five, and a blocker is
 #: typed or NONE.
 UNKNOWNABLE_SLOTS = ("goal", "write-set", "done-criterion", "evidence")
+
+#: TWO QUESTIONS THAT WERE ONE TUPLE UNTIL lc-175, and they came apart the
+#: moment a slot needed different answers to them:
+#:   (1) MAY this slot hold UNKNOWN at all, or is UNKNOWN there a value
+#:       nothing can ever fill in (`unknown_slot_misplaced`)?
+#:   (2) does UNKNOWN here REFUSE the item READY (`ready_with_unknown_slot`)?
+#: `UNKNOWNABLE_SLOTS` answered both while every slot's answers agreed, which
+#: is why the conflation was invisible rather than wrong. `blocker-exercise`
+#: answers YES to (1) — UNKNOWN is precisely its migration value — and NO to
+#: (2), because 3 of this carrier's 8 evidence blockers sit on READY items and
+#: converting them was forbidden by that item's MUST-NOT-MOVE.
+#:
+#: FOUND BY THE RED-FIRST RUN, not by reading: the new slot's UNKNOWN arm came
+#: back `unknown_slot_misplaced` — a true finding from an instrument aimed at
+#: a distinction the code did not yet draw.
+UNKNOWN_LEGAL_SLOTS = UNKNOWNABLE_SLOTS + BLOCKER_ONLY_SLOTS
 
 #: EVIDENCE MARKS (lc-167) — the closed vocabulary separating evidence a
 #: session RAN from evidence it CONCLUDED.
@@ -602,6 +657,7 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
     missing = [s for s in SLOTS if s not in item.slots]
     unknown = [s for s in seen_order
                if s not in SLOTS and s not in DONE_ONLY_SLOTS
+               and s not in BLOCKER_ONLY_SLOTS
                and not _is_amend_line(s) and s not in PROMOTION_LINES]
     if missing:
         out.problems.append((
@@ -631,6 +687,33 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
               "made a decision moot; on a live item each claims an act that "
               "has not happened, and the annotation is what a later reader "
               "would resolve through."))
+
+    # THE BLOCKER-TYPED SLOTS ARE LEGAL ONLY BESIDE THEIR TYPE (lc-175). A
+    # slot legal everywhere is an annotation rather than a slot, which is the
+    # direction `done_slot_on_live_item` above already sets. An exercise
+    # record beside a blocker that runs no predicate records an act that
+    # cannot have happened.
+    #
+    # PREFIX IS NOT NEEDED AND NOT PASSED: this asks only whether the blocker
+    # IS the slot's type, and every non-match — item id, decision, NONE,
+    # untyped prose — is equally not-evidence. Threading a prefix here to
+    # sharpen a distinction the check does not make would be a second reader
+    # of the blocker value with its own chance to disagree.
+    for slot_, want in BLOCKER_SLOT_FOR_TYPE.items():
+        if slot_ not in item.slots:
+            continue
+        kind_, _detail = classify_blocker(item.slots.get("blocked-by", ""),
+                                          None)
+        if kind_ != want:
+            out.problems.append((
+                "blocker_exercise_misplaced", item.line,
+                f"block {item.ident!r} carries `{slot_}:` beside a "
+                f"`blocked-by` that is not an `{want}` blocker "
+                f"({kind_ or 'untyped'}). The slot records that a PREDICATE "
+                "was exercised — its live exit and the two constructed arms "
+                f"that show it answering both ways — and only an `{want}` "
+                "blocker has one. Beside any other type it records an act "
+                "that cannot have happened."))
 
     # THE CLOSURE REASON CARRIES ITS DATE, checked on the same half the
     # amendment and promotion lines are checked on and for the same reason: a
@@ -896,6 +979,13 @@ def render_block(ident: str, slots: dict) -> str:
     out = [grammar.render_heading(ident)]
     for slot in SLOTS:
         out.append(grammar.render_slot(slot, slots[slot]))
+    # THE CONDITIONAL SLOTS FOLLOW THE FIXED RUN, present-only (lc-175). They
+    # are rendered HERE rather than by the caller for the reason this function
+    # exists at all: one place spells the on-disk shape, so a verb that
+    # composed the line itself could write a block its own checker refuses.
+    for slot in BLOCKER_ONLY_SLOTS:
+        if slots.get(slot):
+            out.append(grammar.render_slot(slot, slots[slot]))
     return "\n".join(out) + "\n"
 
 
@@ -1851,6 +1941,27 @@ def check_file(path: Path, out, prefix: str | None = None, *,
             + f" — across {sum(1 for it in parsed.items if unknown_slots_of(it))}"
               " item(s).")
 
+    # THE UNEXERCISED EVIDENCE BLOCKERS ARE COUNTED, NOT RAISED (lc-175).
+    # The done-criterion asks that a blocker without an exercise record be
+    # "visible as such rather than silently unexercised", and a COUNT is what
+    # satisfies that without making every pre-existing blocker a finding the
+    # day the slot ships (MUST-NOT-MOVE). It is I5's move from the-loop.md:
+    # the repair for an invisible absence was never a better duty, it was a
+    # count that makes a zero answerable.
+    #
+    # BOTH NUMBERS, because one of them alone is a label over a body: the
+    # exercised count is what proves the line can ever move, and a bare
+    # "0 unexercised" over a carrier holding no evidence blockers at all
+    # reads exactly like a carrier whose blockers are all exercised.
+    exercised, unexercised = exercise_census(parsed)
+    if exercised or unexercised:
+        out(f"evidence blockers: {exercised} exercised, {unexercised} "
+            f"UNEXERCISED (no `{BLOCKER_EXERCISE}:` record). An exercise "
+            "nobody can see is a discipline that holds only while the person "
+            "who held it is in the room; lc-164's booking run proves the "
+            "predicate can say NOT YET and cannot prove it ever says "
+            "ARRIVED.")
+
     c = census(parsed)
     out(f"census: open {c['open']}  closed {c['closed']}  "
         f"unknown {sum(c['unknown'].values())}  (total {c['total']})")
@@ -1917,11 +2028,18 @@ def cmd_item_slots(args, out, path: Path) -> int:
             f"{path.name}.")
         return exits.FINDING
 
-    slots = {slot: item.slots.get(slot, "") for slot in SLOTS}
+    # THE CONDITIONAL SLOTS ARE PRINTED WHERE THEY ARE PRESENT (lc-175). This
+    # verb is the pickup instrument — the entries' own rule is "`item slots`
+    # at pickup, never directive prose" — so a slot this reader cannot see is
+    # a slot the desk picking the item up does not know exists. Present-only,
+    # never padded with a blank: an empty line for a slot that is not legal on
+    # this block would report an absence where there is no slot to be absent.
+    shown = list(SLOTS) + [s for s in BLOCKER_ONLY_SLOTS if s in item.slots]
+    slots = {slot: item.slots.get(slot, "") for slot in shown}
     if args.json:
         out(json.dumps({"ident": item.ident, "slots": slots}, ensure_ascii=False))
     else:
-        for slot in SLOTS:
+        for slot in shown:
             out(f"{slot}: {slots[slot]}")
     return exits.CLEAN
 
@@ -1948,11 +2066,38 @@ def unknown_slots(parsed: Parsed):
         for slot, value in it.slots.items():
             if (value or "").strip().upper() != UNKNOWN:
                 continue
-            if slot in UNKNOWNABLE_SLOTS:
+            if slot in UNKNOWN_LEGAL_SLOTS:
                 counts[slot] = counts.get(slot, 0) + 1
             else:
                 misplaced.append((it.ident, it.line, slot))
     return counts, misplaced
+
+
+def exercise_census(parsed: Parsed, prefix: str | None = None):
+    """`(exercised, unexercised)` evidence blockers in `parsed` (lc-175).
+
+    THE POPULATION IS EVIDENCE BLOCKERS, never all items: an item with no
+    predicate has nothing to exercise, and folding it into the denominator
+    would make the number fall every time an unrelated item is booked — a
+    metric that moves for reasons its subject did not.
+
+    UNKNOWN COUNTS AS UNEXERCISED, and that is the migration's whole point:
+    the transitional value means nobody ever recorded one, which is exactly
+    what the unexercised bucket is for. It is NOT in `UNKNOWNABLE_SLOTS`, so
+    it reaches this count without reaching `ready_with_unknown_slot`.
+    """
+    exercised = unexercised = 0
+    for it in parsed.items:
+        kind, _detail = classify_blocker(it.slots.get("blocked-by", ""),
+                                         prefix)
+        if kind != "evidence":
+            continue
+        v = (it.slots.get(BLOCKER_EXERCISE) or "").strip()
+        if v and v.upper() != UNKNOWN:
+            exercised += 1
+        else:
+            unexercised += 1
+    return exercised, unexercised
 
 
 def unknown_slots_of(item: Item) -> list:

@@ -2211,3 +2211,81 @@ class TheArchiveRegionIsReadForIDS(unittest.TestCase):
         self.assertNotEqual(code, exits.FINDING,
                             f"an archived body was shape-checked.\n{out}")
         self.assertNotIn("xx-9", out, out)
+
+
+class EvidenceBlockerExerciseIsRecorded(unittest.TestCase):
+    """lc-175 — an evidence blocker carries the record of its exercise.
+
+    RED-FIRST, and the red is the measured defect itself: today the three
+    blockers a peer desk exercised by hand on 2026-09-18 are indistinguishable
+    in the carrier from three nobody touched. `item check` has no line that
+    separates them, and a carrier reader has no slot to look in.
+
+    THE SLOT IS CONDITIONAL, not a member of the fixed run, and the shape was
+    decided by MEASUREMENT rather than taste: the live carrier holds 8 evidence
+    blockers of which 3 are READY, and 25 decision blockers of which 16 are
+    READY. A slot in `SLOTS` filled with UNKNOWN by the migration would make
+    every one of those READY items a `ready_with_unknown_slot` finding on day
+    one — which is exactly what this item's MUST-NOT-MOVE forbids. So it
+    follows the `DONE_ONLY_SLOTS` precedent: optional, legal only where its
+    blocker type makes it meaningful, and its absence REPORTED as a count
+    rather than raised as a finding.
+    """
+
+    SLOT = "blocker-exercise"
+    PRED = "test -f /tmp/nope"
+
+    def _block(self, blocker, exercise=None):
+        body = (f"## xx-1\ngrade: READY\n"
+                "requirement: the control block — record: LEDGER.md\n"
+                "goal: mitigate\nwrite-set: tools/thing.py\n"
+                "done-criterion: red on the real defect, green after\n"
+                "evidence: none yet\n"
+                f"blocked-by: {blocker}\n")
+        if exercise is not None:
+            body += f"{self.SLOT}: {exercise}\n"
+        return f"schema: {items.SCHEMA_FLOOR}\nbaseline: 0\n\n{body}"
+
+    WELL_FORMED = ("2026-09-19 live 1 | positive `true` 0 | negative "
+                   "`false` 1 — the predicate answers both ways")
+
+    def test_BASELINE_the_control_block_is_clean(self):
+        """The positive control. A mutate-and-revert proof over an
+        already-red baseline is indistinguishable from a check that is always
+        red, so the unmutated case runs first and its result is stated."""
+        code, out = run_check(GOOD_ITEMS)
+        self.assertEqual(code, exits.CLEAN, f"baseline is not green.\n{out}")
+
+    def test_an_exercised_evidence_blocker_is_clean(self):
+        code, out = run_check(self._block(f"evidence {self.PRED}",
+                                          self.WELL_FORMED))
+        self.assertEqual(code, exits.CLEAN,
+                         f"a recorded exercise is refused.\n{out}")
+
+    def test_an_unexercised_evidence_blocker_is_VISIBLE(self):
+        """The done-criterion's whole demand: absent, it is visible AS absent
+        rather than silently unexercised — and NOT a finding, per
+        MUST-NOT-MOVE."""
+        code, out = run_check(self._block(f"evidence {self.PRED}"))
+        self.assertIn("unexercised", out.lower(),
+                      f"an unexercised blocker is invisible.\n{out}")
+        self.assertNotEqual(
+            code, exits.FINDING,
+            f"an existing blocker became a finding overnight.\n{out}")
+
+    def test_the_slot_is_REFUSED_where_the_blocker_is_not_evidence(self):
+        """The discriminating arm. A slot legal everywhere is an annotation,
+        not a slot — the direction `done_slot_on_live_item` already sets."""
+        code, out = run_check(self._block("NONE", self.WELL_FORMED))
+        self.assertEqual(code, exits.FINDING,
+                         f"the slot was accepted on a NONE blocker.\n{out}")
+        self.assertIn("blocker_exercise_misplaced", out, out)
+
+    def test_UNKNOWN_does_not_un_READY_a_migrated_item(self):
+        """MUST-NOT-MOVE, measured: 3 READY items carry an evidence blocker.
+        The migration's transitional value must not convert them."""
+        code, out = run_check(self._block(f"evidence {self.PRED}",
+                                          items.UNKNOWN))
+        self.assertNotIn("ready_with_unknown_slot", out,
+                         f"the migration value un-READYs a live item.\n{out}")
+        self.assertNotEqual(code, exits.FINDING, out)

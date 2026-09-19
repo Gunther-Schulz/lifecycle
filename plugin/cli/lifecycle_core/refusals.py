@@ -90,6 +90,14 @@ blocked-by: NONE
 """
 
 
+#: The exercise record both arms of `blocker_exercise_misplaced` carry (lc-175).
+#: SPELLED ONCE because the pair's whole discriminating power is that the two
+#: arms differ in the BLOCKER and in nothing else; two spellings of this line
+#: would let the arms drift apart and the row would stop proving what it says.
+_EXERCISE_LINE = ("blocker-exercise: 2026-09-19 live 1 | positive `true` 0 | "
+                  "negative `false` 1 — the predicate answers both ways")
+
+
 @dataclass
 class Fired:
     code: int
@@ -3028,6 +3036,30 @@ SCHEMA_ROWS = [
             GOOD_ITEMS.replace("blocked-by: NONE", "blocked-by: UNKNOWN")),
         control=lambda: _items_run(GOOD_ITEMS),
         stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="blocker_exercise_misplaced",
+        refusal="`blocker-exercise:` beside a `blocked-by` that runs no "
+                "predicate — the slot records a PREDICATE's live exit and its "
+                "two constructed arms, and only an `evidence` blocker has "
+                "one, so anywhere else it records an act that cannot have "
+                "happened",
+        firing_input="a block carrying `blocker-exercise:` with "
+                     "`blocked-by: NONE`",
+        expect=exits.FINDING,
+        # THE ARMS DIFFER IN THE BLOCKER, NOT IN THE SLOT — which is what
+        # makes this discriminating. Both carry an identical, well-formed
+        # exercise record; only the `blocked-by` moves. An arm pair that
+        # differed by REMOVING the slot would prove the parser notices a slot,
+        # never that it notices a MISPLACED one, and could-not-verify would
+        # pass as verified-wrong.
+        fire=lambda: _items_run(
+            GOOD_ITEMS.rstrip("\n") + "\n" + _EXERCISE_LINE + "\n"),
+        control=lambda: _items_run(
+            GOOD_ITEMS.rstrip("\n").replace(
+                "blocked-by: NONE", "blocked-by: evidence test -f /tmp/nope")
+            + "\n" + _EXERCISE_LINE + "\n"),
+        stage="wave B, lc-175",
     ),
     Row(
         ident="ready_with_unknown_slot",

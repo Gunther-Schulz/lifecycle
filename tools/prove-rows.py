@@ -645,7 +645,7 @@ MUTATIONS = [
      "then claims an act no closure performed"),
 
     ("unknown_slot_misplaced", "items.py",
-     "            if slot in UNKNOWNABLE_SLOTS:",
+     "            if slot in UNKNOWN_LEGAL_SLOTS:",
      "            if True:",
      "the separation between a slot UNKNOWN may fill and one it may not — "
      "`blocked-by: UNKNOWN` is then counted as an ordinary migration marker, "
