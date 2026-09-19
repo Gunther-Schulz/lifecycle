@@ -48,6 +48,47 @@ from . import exits, refusals
 
 CORE = Path(__file__).resolve().parent
 
+#: The repo this package lives in — `plugin/cli/lifecycle_core` up three.
+#: Used to resolve the REACH POPULATION from the declaration's registered
+#: kinds rather than from a directory glob (lc-245, W3).
+PACKAGE_REPO = CORE.parent.parent.parent
+
+#: THE CLASSIFIER, and it is the whole of W3's reach contract. A file is in
+#: the scan's population if it IS executable Python — never if it is merely
+#: NAMED like it.
+#:
+#: WHY THE NAME ALONE WAS THE DEFECT. `emit_sites` and `relay_sites` globbed
+#: `lifecycle_core/*.py`, so `plugin/hooks/pre-commit` — which relays row
+#: names on two live lines — was invisible, and the roster reported a clean
+#: sweep over a population it had never visited. That is a check reporting
+#: CLEAN over what it did not examine, which is the false feedback this
+#: whole plugin exists to refuse.
+#:
+#: AND A WIDER GLOB CANNOT REPAIR IT. The `git hooks` kind's members are
+#: EXTENSIONLESS BY CONSTRUCTION — a hook must be named `pre-commit` and
+#: nothing else — so any extension-keyed predicate returns, over that entire
+#: kind, a zero shaped exactly like a true absence. The second arm is what
+#: makes the contract keyed on what a file IS.
+_PY_SHEBANG = re.compile(r"^#!.*python")
+
+#: KINDS THE REACH DECLARES OUT, with the reason, because a reach that
+#: reads its own grading apparatus is not wider — it is wrong.
+#:
+#: `tests` is the roster's own instrument. Its members PLANT strings shaped
+#: like emit sites in order to red-prove that this very scan fires on one,
+#: so scanning them reports the planted fixtures as real unregistered
+#: refusals — measured the moment W3 widened the reach: two fixtures in
+#: `test_refusals.py` surfaced as findings about the product. That is the
+#: same-parentage defect `emit_sites` already names for `refusals.py`: an
+#: expectation read off the artifact that defines it.
+#:
+#: DECLARED RATHER THAN PATTERN-MATCHED, and VERIFIED below. A guard firing
+#: on legitimate work is repaired by naming the legitimate case in data the
+#: guard checks, never by softening the predicate — and `reach_paths`
+#: RAISES if a name here is not a registered kind, so a rename fails loudly
+#: instead of silently restoring the whole population.
+REACH_EXCLUDED_KINDS = ("tests",)
+
 #: Every way a row ident reaches a caller's eyes. Derived from the SOURCE, so
 #: a site added tomorrow is found without anyone updating a list here.
 #:
@@ -77,10 +118,113 @@ _PROBLEM = re.compile(r"problems\.append\(\(\s*\n?\s*[\"']([a-z_][a-z0-9_]*)[\"'
 #: A site that RELAYS a row name computed elsewhere. Counted and named, never
 #: silently treated as covered: the name it prints comes from one of the
 #: three patterns above, which is what makes this honest rather than a hole.
-_RELAY = re.compile(r"FINDING \[\{")
+#:
+#: VERDICT-AGNOSTIC SINCE lc-245, and it is the same repair `_LITERAL_CNV`
+#: made for the literal side: this matched the finding word alone, so a
+#: refusal RELAYED as could-not-verify was invisible to the scan that exists
+#: to count relays. The verdict vocabulary is CLOSED at two members —
+#: measured over the package in the r1 corpus, 119 of one and 3 of the other
+#: and nothing else — so agnostic here means BOTH, never a widening.
+_RELAY = re.compile(r"(?:FINDING|COULD NOT VERIFY) \[\{")
 
 
-def emit_sites(root: Path = CORE) -> dict:
+def is_executable_python(path: Path) -> bool:
+    """Is this file executable Python — by what it IS, not what it is called?
+
+    TWO ARMS, and the second is the one W3 exists for: a `.py` name, OR a
+    first line naming a python interpreter. An unreadable or binary file is
+    NOT python here — a file this classifier cannot read is a file the scan
+    cannot scan, and answering True would hand the scanner bytes it will
+    fail on rather than excluding them honestly.
+    """
+    if path.suffix == ".py":
+        return True
+    try:
+        with open(path, "r", encoding="utf-8", errors="strict") as fh:
+            first = fh.readline()
+    except (OSError, UnicodeDecodeError):
+        return False
+    return bool(_PY_SHEBANG.match(first))
+
+
+def reach_paths(root: Path | None = None, repo: Path | None = None,
+                doc: dict | None = None) -> list:
+    """The files the refusal scanners READ — the reach contract's population.
+
+    TWO MODES, and they are not two policies: the CLASSIFIER is the same in
+    both, and only the enumeration differs.
+
+    THE REGISTERED-KIND MODE (`repo` + `doc`) is the production one. The
+    population is every member of every registered kind that is executable
+    Python, enumerated by the kind machinery's OWN member listing — the same
+    `retire.list_home` that `kind list` and the retire walk use, so every
+    legal home shape (a plain file, a glob, a carrier) has DEFINED behaviour
+    here. A home shape this scan handled differently from the walk would be
+    a second enumeration of one fact, and the shape nobody thought about
+    would return a true-absence-shaped zero, which is the exact defect W3
+    was booked for one level down.
+
+    THE DIRECTORY MODE (`root`) is the RED-PROOF one, and it is not a
+    fallback for production: the coverage check is proven by planting an
+    unregistered emit site in a COPY of this package, and a copy has no
+    declaration to enumerate from. It walks that directory with the SAME
+    classifier — never a `*.py` glob, which would put an extension-keyed
+    predicate back in the reach by the back door.
+    """
+    if repo is not None and doc is not None:
+        from . import retire as retire_mod
+        kinds = doc.get("kinds") or {}
+        # THE EXEMPTION IS CHECKED AGAINST THE DECLARATION, not assumed. A
+        # name that no longer registers a kind means the exemption is
+        # silently covering nothing and the excluded population has quietly
+        # rejoined the scan — the failure mode a hand-list always has, made
+        # loud here rather than left to be discovered.
+        missing = [k for k in REACH_EXCLUDED_KINDS if k not in kinds]
+        if missing:
+            raise ValueError(
+                "reach_paths: REACH_EXCLUDED_KINDS names "
+                f"{', '.join(repr(m) for m in missing)}, which this "
+                "declaration does not register. The exemption is stale: "
+                "either the kind was renamed and this list must follow, or "
+                "it was retired and this entry must go. Left alone, the "
+                "excluded files rejoin the scan without a word.")
+        found = []
+        for _name, body in kinds.items():
+            if _name in REACH_EXCLUDED_KINDS:
+                continue
+            home = (body or {}).get("home")
+            if not isinstance(home, str) or not home:
+                continue
+            instances, _note = retire_mod.list_home(repo, home)
+            if instances is None:
+                # COULD NOT VERIFY at the walk is COULD NOT VERIFY here too:
+                # an unresolvable home contributes no files, and pretending
+                # it contributed zero would be the absence-as-clean read.
+                continue
+            for inst in instances:
+                p = Path(inst) if not isinstance(inst, Path) else inst
+                if p.is_file() and is_executable_python(p):
+                    found.append(p.resolve())
+        return sorted(set(found))
+
+    base = root if root is not None else CORE
+    out = []
+    for p in sorted(base.rglob("*")):
+        if any(part in _SCAN_SKIP for part in p.parts):
+            continue
+        if p.is_file() and is_executable_python(p):
+            out.append(p)
+    return out
+
+
+#: Directories the directory-mode walk never descends into. Named rather than
+#: pattern-guessed, for `retire.SWEEP_SKIP_DIRS`' own reason: a walk that
+#: skipped something by accident would report a clean board over exactly the
+#: file nobody scanned.
+_SCAN_SKIP = ("__pycache__", ".git", "node_modules", ".pytest_cache")
+
+
+def emit_sites(root: Path = CORE, *, paths: list | None = None) -> dict:
     """`{ident: [file:line, …]}` for every REFUSAL-emitting site in the CLI.
 
     BOTH VERDICT WORDS, since lc-16's follow-up: the finding word and the
@@ -94,7 +238,7 @@ def emit_sites(root: Path = CORE) -> dict:
     commit's first run reported a row called `x` from these very lines.
     """
     found: dict = {}
-    for path in sorted(root.glob("*.py")):
+    for path in (paths if paths is not None else sorted(root.glob("*.py"))):
         if path.name == "refusals.py":
             # The roster's own file quotes row idents as DATA — the design's
             # firing inputs and the plants' expected output. Scanning it
@@ -102,7 +246,10 @@ def emit_sites(root: Path = CORE) -> dict:
             # same-parentage defect: an expectation derived from the artifact
             # it grades.
             continue
-        text = path.read_text(encoding="utf-8")
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
         for pat in (_LITERAL, _LITERAL_CNV, _RESULT_ADD, _PROBLEM):
             for m in pat.finditer(text):
                 line = text.count("\n", 0, m.start()) + 1
@@ -110,18 +257,24 @@ def emit_sites(root: Path = CORE) -> dict:
     return found
 
 
-def relay_sites(root: Path = CORE) -> list:
+def relay_sites(root: Path = CORE, *, paths: list | None = None) -> list:
+    """`[file:line, …]` for every site that prints a row name computed
+    elsewhere — over the REACH POPULATION, not over a name pattern (lc-245).
+    """
     out = []
-    for path in sorted(root.glob("*.py")):
+    for path in (paths if paths is not None else sorted(root.glob("*.py"))):
         if path.name == "refusals.py":
             continue
-        text = path.read_text(encoding="utf-8")
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
         for m in _RELAY.finditer(text):
             out.append(f"{path.name}:{text.count(chr(10), 0, m.start()) + 1}")
     return out
 
 
-def check_coverage(out, root: Path = CORE) -> int:
+def check_coverage(out, root: Path = CORE, reach: list | None = None) -> int:
     """ASSIGNED ITEM B. Every emit site maps to a registered row, or this
     fails with "finding emitted with no registered row".
 
@@ -131,8 +284,12 @@ def check_coverage(out, root: Path = CORE) -> int:
     same clean-forever report it exists to catch.
     """
     registered = {r.expected_finding_row for r in refusals.ROWS}
-    sites = emit_sites(root)
-    relays = relay_sites(root)
+    # THE REACH, RESOLVED ONCE AND SHARED. Both scanners read the SAME
+    # population, so a file one sees and the other does not is impossible by
+    # construction — the relay count and the emit count are about one set.
+    paths = reach if reach is not None else reach_paths(root=root)
+    sites = emit_sites(paths=paths)
+    relays = relay_sites(paths=paths)
     uncovered = {k: v for k, v in sites.items() if k not in registered}
 
     out("")
@@ -142,6 +299,20 @@ def check_coverage(out, root: Path = CORE) -> int:
         "could-not-verify word. Scanning only the first is how one of "
         "`verify`'s two refusals shipped unregistered and unprovable while "
         "this check reported CLEAN over it.")
+    if reach is None:
+        out("    REACH: COULD NOT VERIFY — the registered kinds could not be "
+            "read, so this scan fell back to walking this package's own "
+            f"directory ({len(paths)} file(s)). Sites outside it — the "
+            "commit-time hooks above all — were NOT examined, and a clean "
+            "result below says nothing about them.")
+    else:
+        out(f"    REACH: {len(paths)} executable-Python file(s), enumerated "
+            "from the REGISTERED KINDS by the kind machinery's own member "
+            "listing and classified by what each file IS (a `.py` name OR a "
+            "python shebang) — never by name alone. The `git hooks` kind's "
+            "members are extensionless by construction, so an "
+            "extension-keyed reach returned a true-absence-shaped zero over "
+            "that whole kind (lc-245).")
     out(f"    refusal-emitting row names found in the source: {len(sites)}")
     out(f"    registered rows (roster `finding_row` values): {len(registered)}")
     out(f"    relay sites (a row name computed elsewhere, printed here): "
@@ -400,7 +571,22 @@ def cmd_test(out, list_only: bool = False) -> int:
         out(f"    PROSE-REST  {name}")
         out(f"                {why}")
 
-    code = check_coverage(out)
+    # THE PRODUCTION REACH comes from the REGISTERED KINDS, not from this
+    # package's directory (lc-245). Falling back to the directory walk when
+    # the declaration cannot be read is deliberate and is REPORTED by
+    # `check_coverage` itself: a scan that silently narrowed its own
+    # population would be the clean-over-unexamined report this check exists
+    # to refuse.
+    reach = None
+    try:
+        from . import declaration as decl_mod
+        res = decl_mod.read(PACKAGE_REPO)
+        if res.declaration is not None:
+            reach = reach_paths(repo=PACKAGE_REPO, doc=res.declaration)
+    except Exception:  # noqa: BLE001 — a broken declaration must not kill
+        reach = None   # the roster; the narrowed reach is reported below.
+
+    code = check_coverage(out, reach=reach)
     code = exits.worst([code, check_routes(out)])
 
     out("")

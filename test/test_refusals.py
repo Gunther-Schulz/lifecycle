@@ -383,7 +383,8 @@ class AContaminatedControlIsCouldNotVerify(unittest.TestCase):
         buf = []
         with mock.patch.object(refusals, "ROWS", [row]), \
                 mock.patch.object(roster, "check_coverage",
-                                  lambda out, root=None: exits.CLEAN), \
+                                  lambda out, root=None, reach=None:
+                                  exits.CLEAN), \
                 mock.patch.object(roster, "check_routes",
                                   lambda out: exits.CLEAN):
             code = roster.cmd_test(buf.append)
