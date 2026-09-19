@@ -436,3 +436,55 @@ real cases instead of against taste.
    lives (the waves verb's output, or the route-line convention), and
    its relation to lc-173 and finding (f).
 5. **The unifying question above.**
+
+## Addendum 6 — wave B successor desk (2026-09-19, driving desk cachyos-setup-b3)
+
+**Executing desk:** `cachyos-setup-36` (opus, opened by the operator),
+succeeding `lifecycle-38`, which closed at `0a3a12b` on this desk's
+verified closable verdict. **Driving desk unchanged:** `cachyos-setup-b3`
+(fable; judgment, operator interface, release gate). **Authority:** inert
+until the operator states the delegation first-hand in the receiving
+session; the receiving desk's ack of that confirmation authorizes work.
+
+**REPORT-CHANNEL: SendMessage cachyos-setup-b3** — one message per item
+close (batching adjacent items is fine), decision rounds and blockers
+immediately; final terminal text reaches no one.
+
+**Run declaration: BUILD** (closes ≥ opens, counted by id at the wave
+close). **Scope: wave B's remainder ONLY, in the derived join's order:**
+`lc-224`, then `lc-174` ∥ `lc-176`, then `lc-193`, then `lc-175`+`lc-179`
+(one lane, two items, per-item commits). Everything else — the design
+round, the Begehung, the three round-blocked items — is out of scope and
+returns here. `item slots <id>` at pickup, never directive prose; the
+reading-roster gate arms on first write, read the roster first.
+
+**Base commit: `0a3a12b`** (read at compose time; tree clean, remote
+settled). Arrival check, three reads: `git merge-base --is-ancestor
+0a3a12b HEAD`; `git log --oneline 0a3a12b..HEAD`; `git status
+--porcelain`. This addendum's own commit on top is expected and clean;
+anything else HALTS and reports.
+
+**lc-224's boundary note:** its first decision (reader-WHEN as sub-field
+vs eighth stage) is the item's own. An eighth stage is a schema-shape
+change: its OWN numbered bump per lc-218's MUST-NOT-BUILD, law 25's
+dry-run over BOTH declared repos (dotfiles is at schema 3 since
+`db3b485`), and a dotfiles write is outside this desk's boundary — a
+boundary halt to the driving desk, the lc-218 pattern.
+
+**Three load-bearing notes from the outgoing desk** (its closing report;
+each would otherwise be re-derived): (1) `prove-rows` accepts a single
+ident, and running one ident in a detached worktree at an older commit
+is how a pre-existing crash is told from a caused one (so ran on
+`capture_dominated`, whose rc=3 crash predates the schema bump — booked
+as lc-197, do not re-book). (2) The suite's fixtures DERIVE schema from
+`decl.SCHEMA_FLOOR` — a new fixture restating the literal is the defect
+that cost 42 tests. (3) The session cwd MOVES under any `cd` into
+another repo: absolute paths and `git -C` throughout.
+
+**Commit discipline, from the arc's two unmarked-commit classes:** no
+`git commit -q` (the recorder sees no gitOperation), and the ledger
+verb's auto-commit needs its trailer env set — two different failures,
+both reported rather than rebased when they happen.
+
+**Horizon:** the driving desk arms a recurring ~30 min artifact watch;
+no item starts before the operator-confirmation ack.
