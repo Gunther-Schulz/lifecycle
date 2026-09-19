@@ -268,6 +268,42 @@ def _items_run(items_text: str, prefix: str = "xx") -> Fired:
         return Fired(code, "\n".join(buf))
 
 
+def _arc_body_run(text: str, slug: str = "freeze") -> Fired:
+    """`arcs.parse_arc` over one body's text — no scratch repo needed.
+
+    THE PARSER IS THE WHOLE SUBJECT HERE, as `_items_run`'s is: an arc body's
+    shape is a property of its own text, and standing a repo up around it
+    would add failure modes the row is not about. The exit code is derived
+    the way every other verb derives one — problems mean FINDING — rather
+    than asserted, so this row reads the same contract the verb will.
+    """
+    from . import arcs as arcs_mod
+    _arc, problems = arcs_mod.parse_arc(text, slug)
+    out = "\n".join(f"FINDING [{row}] {msg}" for row, _line, msg in problems)
+    return Fired(exits.FINDING if problems else exits.CLEAN, out)
+
+
+#: A well-formed arc body, used as this family's CONTROL and as the base every
+#: plant mutates. Spelled once: two spellings of "a good body" drift, and the
+#: drift would land in the control, which is the arm that decides whether a
+#: plant proved anything.
+_GOOD_ARC_SLOTS = {
+    "goal": "find the freeze root cause",
+    "stage": "narrowing the thread chain",
+    "narrowing": "eliminative — three candidates left",
+    "premises": "the tracer fires on every frame",
+    "beliefs": "b1: RHIThread blocks first (basis: 11 captures)",
+    "yield": "0",
+}
+
+
+def _good_arc_body(**over) -> str:
+    from . import arcs as arcs_mod
+    slots = dict(_GOOD_ARC_SLOTS)
+    slots.update(over)
+    return arcs_mod.render_arc("freeze", slots, items_mod.SCHEMA_FLOOR)
+
+
 def _blocker_graph_run(items_text: str, prefix: str = "xx") -> Fired:
     """`check_blocker_graph` over a scratch carrier — no done home needed,
 
@@ -739,6 +775,24 @@ ROWS = [
         expect=exits.COULD_NOT_VERIFY,
         fire=lambda: _items_run(GOOD_ITEMS.replace("grade: READY", "grade: FOO")),
         control=lambda: _items_run(GOOD_ITEMS),
+    ),
+    Row(
+        ident="arc_shape",
+        refusal="an arc body whose shape is broken — a slot missing, a slot "
+                "written twice, or a narrowing whose FORM is not one the "
+                "vocabulary declares",
+        firing_input="an arc body with no `yield:` line",
+        expect=exits.FINDING,
+        # THE PLANT DROPS A SLOT rather than mangling one, because a missing
+        # slot is the shape this carrier's own discipline is about: a blank
+        # is the undeclared-stage failure at arc scale, a plausible face on a
+        # gap. The narrowing-form arm is a SECOND firing input of the same
+        # refusal and is proven in test_arcs; this row takes the one an
+        # author reaches by accident.
+        fire=lambda: _arc_body_run("\n".join(
+            ln for ln in _good_arc_body().splitlines()
+            if not ln.startswith("yield:"))),
+        control=lambda: _arc_body_run(_good_arc_body()),
     ),
     Row(
         ident="grade_arm_malformed",
