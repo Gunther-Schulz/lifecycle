@@ -2238,6 +2238,64 @@ def add_lane(repo: Path, name: str) -> tuple[bool, str | None]:
     return True, None
 
 
+def remove_lane(repo: Path, name: str) -> tuple[bool, str | None]:
+    """Drop `name` from a repo's declared `lanes` list. `(removed, why-not)`.
+
+    THE MISSING HALF OF `add_lane`, and its absence had a consequence rather
+    than being an asymmetry on paper: a GENERATED lane — one a deadline
+    creates as its observer — outlives the thing that generated it unless
+    something takes the row back out. An arc closes, its deadline stops
+    meaning anything, and the row keeps the door on the board forever. The
+    body would be deletable by hand; the ROW was not removable at all.
+
+    THE SAME THREE-ANSWER SHAPE its counterpart keeps, for the same reason:
+    `(False, None)` is "was not declared" — a fact, not a failure, and the
+    ordinary case when a retirement runs twice — while `(False, <why>)` is
+    "could not", which a caller must never report CLEAN over. One boolean
+    would collapse them, and a no-op would read as a write.
+
+    IT NEVER INVENTS OR NORMALISES THE LIST. An absent, unreadable or
+    non-list `lanes` is returned as a reason: rewriting a key this function
+    could not parse would discard whatever was there, which is the one
+    failure mode a deregistration must not have.
+
+    BYTE FIDELITY MIRRORS `add_lane` EXACTLY — `ensure_ascii=False`, two-space
+    indent, one trailing newline — so a removal shows as exactly one dropped
+    name rather than arriving buried in 217 lines of re-escaped punctuation.
+    """
+    path = repo / DECLARATION_REL
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return False, (f"{DECLARATION_REL} could not be read ({exc!r}), so "
+                       f"{name!r} was not deregistered.")
+    try:
+        doc = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        return False, (f"{DECLARATION_REL} is not valid JSON ({exc.msg}, line "
+                       f"{exc.lineno}), so {name!r} was not deregistered.")
+    if not isinstance(doc, dict):
+        return False, (f"{DECLARATION_REL} parses to {type(doc).__name__}, not "
+                       f"an object, so {name!r} was not deregistered.")
+    lanes = doc.get("lanes")
+    if not isinstance(lanes, list) or not all(
+            isinstance(x, str) for x in lanes):
+        return False, (f"the declaration's `lanes` is {lanes!r}, not a list of "
+                       f"names, so {name!r} was not removed from it. "
+                       "Repairing the key is a separate act, and guessing "
+                       "what the value meant would discard it.")
+    if name not in lanes:
+        return False, None
+    doc["lanes"] = [x for x in lanes if x != name]
+    try:
+        path.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n",
+                        encoding="utf-8")
+    except OSError as exc:
+        return False, (f"{DECLARATION_REL} could not be written ({exc!r}), so "
+                       f"{name!r} was not deregistered.")
+    return True, None
+
+
 # --- rendering ---------------------------------------------------------------
 
 def render_digest(doc: dict, repo: Path) -> list[str]:

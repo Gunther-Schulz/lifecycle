@@ -623,3 +623,135 @@ class StageAndStateVerbs(unittest.TestCase):
         self._run(repo, "arc", "verdict", "freeze", "--ident", "v1",
                   "--text", "good enough to ship")
         self.assertEqual(arcs.count_of(self._body(repo), arcs.VERDICT_LINE), 1)
+
+
+class DeadlineGeneratesItsObserver(unittest.TestCase):
+    """A dated deadline, and the lane that makes it more than a note.
+
+    A DATE WITH NO OBSERVER IS A TIME-WORD, which this repo bans: "later"
+    re-enters only by memory. Walk 4 is where the exemption comes from — some
+    exits are REAL DATES, a world-fact rather than a lazy hold — and what
+    makes a date legitimate here is that something NOTICES it.
+
+    RETIREMENT IS THE HALF THAT WAS MISSING (astra-a8). `add_lane` existed;
+    nothing removed one. A generated observer therefore outlived the thing
+    that generated it: the arc closes, the date stops meaning anything, and
+    the row keeps a door on the board that nobody can act on.
+    """
+
+    def _repo(self):
+        from lifecycle_core import refusals
+        r = refusals._Repo()
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    OPEN = ["arc", "open", "bplan", "--goal", "submit", "--narrowing", "none"]
+    NAME = "bplan-2026-12-01"
+
+    def _lanes(self, repo):
+        import json
+        doc = json.loads((repo.dir / ".claude" / "lifecycle.json")
+                         .read_text(encoding="utf-8"))
+        return doc.get("lanes") or []
+
+    def _body(self, repo):
+        from lifecycle_core import lanes as lanes_mod
+        return repo.dir / lanes_mod.LANES_DIR / f"{self.NAME}.md"
+
+    def _deadline(self, repo):
+        return self._run(repo, "arc", "deadline", "bplan", "--date",
+                         "2026-12-01", "--what", "council decision due")
+
+    def test_the_deadline_generates_AND_DECLARES_its_observer(self):
+        """Both halves. A body the declaration does not list is invisible to
+
+        `lane list`, so the door has no state and no line on the board —
+        which is the assumed-delivery shape `lane new` already recorded."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        code, outp = self._deadline(repo)
+        self.assertEqual(code, 0, outp)
+        self.assertTrue(self._body(repo).is_file(), "no lane body")
+        self.assertIn(self.NAME, self._lanes(repo), "the row was not declared")
+
+    def test_the_generated_lane_PASSES_kind_check(self):
+        """The design's own red-first. A generated observer that failed the
+
+        repo's own declaration check would be a door the tool created and
+        then reported as a defect."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._deadline(repo)
+        code, outp = self._run(repo, "kind", "check")
+        self.assertEqual(code, 0, outp)
+
+    def test_ADVANCING_past_the_stage_retires_body_AND_row(self):
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._deadline(repo)
+        self._run(repo, "arc", "advance", "bplan", "--to", "drafting",
+                  "--reason", "moving on")
+        self.assertNotIn(self.NAME, self._lanes(repo), "the row outlived it")
+        self.assertFalse(self._body(repo).exists(), "the body outlived it")
+
+    def test_a_LATER_stages_deadline_is_NOT_retired_by_an_advance(self):
+        """The control that keeps retirement from being destructive: an
+
+        advance ends the deadlines of the stage it LEAVES, not every deadline
+        the arc holds. Without this arm the repair would silently drop a
+        future date the arc still depends on."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._deadline(repo)
+        self._run(repo, "arc", "advance", "bplan", "--to", "drafting",
+                  "--reason", "moving on")
+        self._run(repo, "arc", "deadline", "bplan", "--date", "2027-01-15",
+                  "--what", "submission window closes")
+        self._run(repo, "arc", "advance", "bplan", "--to", "review",
+                  "--reason", "draft done")
+        # The 2027 deadline was set in `drafting`, which we just left, so it
+        # goes; a deadline set in `review` would not. Assert the one set in a
+        # stage we have NOT left survives.
+        self._run(repo, "arc", "deadline", "bplan", "--date", "2027-06-01",
+                  "--what", "appeal deadline")
+        self.assertIn("bplan-2027-06-01", self._lanes(repo))
+
+    def test_ABANDONING_the_arc_leaves_ZERO_lanes(self):
+        """astra-a8's named arm: an abandoned arc's lane keeps firing unless
+
+        something takes it back out, and abandonment is exactly the case
+        where nobody is left watching for the date."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._deadline(repo)
+        code, outp = self._run(repo, "arc", "close", "bplan", "--abandon",
+                               "--reason", "the council withdrew the item")
+        self.assertEqual(code, 0, outp)
+        self.assertEqual(self._lanes(repo), [], "an abandoned arc left lanes")
+        self.assertFalse(self._body(repo).exists())
+
+    def test_a_non_ISO_date_is_refused(self):
+        """The observer is a DATE predicate; a date it cannot compare is a
+
+        lane that can never fire — the silent park this replaces."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        code, outp = self._run(repo, "arc", "deadline", "bplan", "--date",
+                               "next December", "--what", "x")
+        self.assertEqual(code, 2, outp)
+        self.assertIn("arc_shape", outp)

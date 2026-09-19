@@ -84,13 +84,14 @@ BELIEF_LINE = "belief"
 PREMISE_LINE = "premise"
 REDERIVE_LINE = "re-derive"
 DISPOSITION_LINE = "disposition"
+DEADLINE_LINE = "deadline"
 ADVANCED_LINE = "advanced"
 NARROWED_LINE = "narrowed"
 VERDICT_LINE = "verdict"
 YIELD_LINE = "yielded"
 APPENDED_LINE_KINDS = (BELIEF_LINE, PREMISE_LINE, REDERIVE_LINE,
-                       DISPOSITION_LINE, ADVANCED_LINE, NARROWED_LINE,
-                       VERDICT_LINE, YIELD_LINE)
+                       DISPOSITION_LINE, DEADLINE_LINE, ADVANCED_LINE,
+                       NARROWED_LINE, VERDICT_LINE, YIELD_LINE)
 
 #: The mark an OUTWARD stage carries (requirement 8). Outward stages wire the
 #: carve-out floor into STRUCTURE rather than into anybody's memory: an act
@@ -369,6 +370,37 @@ def render_arc(slug: str, slots: dict, schema: int) -> str:
     for slot in ARC_SLOTS:
         out.append(grammar.render_slot(slot, slots[slot]))
     return "\n".join(out) + "\n"
+
+
+def lane_name(slug: str, date: str) -> str:
+    """The generated observer's name: `<arc-slug>-<date>`.
+
+    DERIVED FROM BOTH, because either alone collides: one arc may hold
+    several deadlines, and several arcs may share a date. A collision would
+    put two observers on one row and retiring either would take the other's
+    door off the board.
+    """
+    return f"{slug}-{date}"
+
+
+def deadline_lanes(text: str, *, stage: str | None = None) -> list:
+    """The generated lane names this arc owns, optionally for ONE stage.
+
+    A DEADLINE BELONGS TO THE STAGE THAT SET IT, which is what makes
+    retirement-on-advance correct rather than destructive: leaving a stage
+    ends the deadlines that stage was keeping, and a lane that outlived its
+    stage would keep firing about a date nothing is waiting for any more.
+    Close and abandon take the remainder, whatever stage set it.
+    """
+    out = []
+    for rec in appended_lines(text):
+        if rec.kind != DEADLINE_LINE:
+            continue
+        parts = rec.text.split(None, 1)
+        rec_stage = parts[0] if parts else ""
+        if stage is None or rec_stage == stage:
+            out.append(rec.ident)
+    return sorted(set(out))
 
 
 def set_slot(text: str, slot: str, value: str) -> str:

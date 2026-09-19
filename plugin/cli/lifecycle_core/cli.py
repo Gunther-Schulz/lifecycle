@@ -528,6 +528,17 @@ def build_parser() -> argparse.ArgumentParser:
     ac = asub.add_parser("close", help="the MOVE: append to the closed home, "
                                        "count it, delete the live body")
     ac.add_argument("slug")
+    ac.add_argument("--abandon", action="store_true",
+                    help="close having concluded NOTHING — the same move and "
+                         "the same counters, recorded so the body does not "
+                         "read as an arc that finished")
+    ac.add_argument("--reason", help="why it was abandoned")
+    adl = asub.add_parser("deadline", help="a dated deadline AND the "
+                                           "date-predicate lane that "
+                                           "observes it")
+    adl.add_argument("slug")
+    adl.add_argument("--date", required=True, help="ISO, YYYY-MM-DD")
+    adl.add_argument("--what", required=True, help="what falls due")
     ap = asub.add_parser("premise", help="record a premise the arc RESTS ON "
                                          "— taken from elsewhere, and dying "
                                          "when that elsewhere moves")
@@ -999,6 +1010,8 @@ def main(argv=None) -> int:
                 code = verbs.cmd_arc_verdict(args, out, ctx)
             elif args.arc_action == "yield":
                 code = verbs.cmd_arc_yield(args, out, ctx)
+            elif args.arc_action == "deadline":
+                code = verbs.cmd_arc_deadline(args, out, ctx)
             else:
                 code = verbs.cmd_arc_close(args, out, ctx)
     elif args.verb == "kind":

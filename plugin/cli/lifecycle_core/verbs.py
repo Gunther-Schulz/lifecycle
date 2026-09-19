@@ -3423,6 +3423,20 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
         return exits.COULD_NOT_VERIFY
 
     body = live.read_text(encoding="utf-8")
+    if args.abandon:
+        # ABANDON IS A CLOSE WITH A DIFFERENT REASON, not a third path. The
+        # bodies move the same way and conservation counts them the same way;
+        # what differs is that nothing was concluded, and a record that did
+        # not say so would read as an arc that finished.
+        body = body.rstrip("\n") + (
+            f"\nabandoned: {slug} {_today()} {args.reason.strip()}\n"
+            if args.reason else f"\nabandoned: {slug} {_today()} "
+                                "no reason recorded\n")
+    # EVERY REMAINING OBSERVER GOES, whatever stage set it (astra-a8). A
+    # closed arc's deadline lane is the clearest case of a door nobody can
+    # act on: the thing it was watching for cannot matter any more, and the
+    # abandoned-arc arm is the same act with a different reason.
+    _retire_arc_lanes(ctx, slug, body, arcs.deadline_lanes(body), out)
     closed.parent.mkdir(parents=True, exist_ok=True)
     # 1. APPEND — before the tree ever holds one copy fewer.
     atomic.write_text(closed, body, encoding="utf-8")
@@ -3434,7 +3448,8 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
                       encoding="utf-8")
     # 3. DELETE the live body.
     live.unlink()
-    out(f"closed arc {slug} → {closed.relative_to(ctx.repo)} "
+    out(f"{'abandoned' if args.abandon else 'closed'} arc {slug} → "
+        f"{closed.relative_to(ctx.repo)} "
         f"(opened {counters['opened']}, closed {counters['closed']})")
 
     cons = arcs.conservation(ctx.repo)
@@ -3599,6 +3614,13 @@ def cmd_arc_advance(args, out, ctx: Ctx) -> int:
         return exits.FINDING
 
     to = args.to.strip()
+    # THE LEAVING STAGE'S DEADLINES END WITH IT (astra-a8). A deadline belongs
+    # to the stage that set it; one that outlived its stage keeps firing about
+    # a date nothing is waiting for, and a board carrying doors nobody can act
+    # on is how a reader learns to skim the board.
+    leaving = (arcs.parse_arc(text, slug)[0].slots.get("stage") or "").strip()
+    _retire_arc_lanes(ctx, slug, text,
+                      arcs.deadline_lanes(text, stage=leaving), out)
     mark = f" | {arcs.OUTWARD_MARK}" if args.outward else ""
     line = (f"{arcs.ADVANCED_LINE}: {to} {_today()} {args.reason.strip()}"
             f"{mark}")
@@ -3699,3 +3721,115 @@ def cmd_arc_yield(args, out, ctx: Ctx) -> int:
     out(line)
     return commit_paths(ctx, [live], f"arcs: yield {args.ident} on {slug}",
                         out, what="the arc yield", stage_new=True)
+
+
+def _retire_arc_lanes(ctx: Ctx, slug: str, text: str, names, out) -> list:
+    """Remove generated observer lanes — BODY and ROW — and say which.
+
+    BOTH HALVES OR NEITHER IS NOT AVAILABLE, so the order puts the residue on
+    the loud side: the ROW goes first, because a declared row whose body is
+    gone is a `kind check` finding that names itself, while a body whose row
+    is gone is invisible to `lane list` and to everything else. If this dies
+    between the two, the repo says so.
+    """
+    removed = []
+    for name in names:
+        ok, why = decl.remove_lane(ctx.repo, name)
+        if why:
+            out(f"COULD NOT VERIFY: lane {name!r} was not deregistered "
+                f"({why}), so its row may outlive the arc that generated it.")
+            continue
+        body = ctx.repo / lanes.LANES_DIR / f"{name}.md"
+        if body.exists():
+            body.unlink()
+        removed.append(name)
+    if removed:
+        out(f"retired {len(removed)} generated observer lane(s): "
+            + ", ".join(removed)
+            + " — a deadline's lane belongs to the stage that set it, and one "
+              "that outlived its stage keeps firing about a date nothing is "
+              "waiting for.")
+    return removed
+
+
+def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
+    """A dated deadline, and the OBSERVER that makes it more than a note.
+
+    A DATE WITH NO OBSERVER IS A TIME-WORD, which this repo's own convention
+    bans: "later" re-enters only by memory, and memory is what the carrier
+    exists to replace. Walk 4 is where the exemption comes from — some exits
+    are REAL DATES, a world-fact rather than a lazy hold — and the thing that
+    makes a date legitimate here is that something NOTICES it. So the verb
+    generates a date-predicate LANE, which is the mechanism this repo already
+    owns for "something fires when a condition holds".
+
+    IT REGISTERS ITS OWN OUTPUT, for the reason `lane new` records: a body
+    the declaration does not list is invisible to `lane list`, so the door
+    has no state, no trigger evaluation and no line on the board. Writing the
+    body and declaring the door were two acts with one verb once, and the
+    hand step left behind was delivered by nobody.
+    """
+    slug = args.slug.strip()
+    live, _closed = _arc_paths(ctx, slug)
+    if not live.exists():
+        out(f"FINDING [unknown_arc] no live arc {slug!r} in "
+            f"{arcs.ARCS_DIR}/.")
+        return exits.FINDING
+    date = args.date.strip()
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
+        out(f"FINDING [arc_shape] `--date {date!r}` is not an ISO date "
+            "(YYYY-MM-DD). The observer this generates is a DATE predicate, "
+            "so a date it cannot compare is a lane that can never fire — "
+            "which is the silent park this mechanism exists to replace.")
+        return exits.FINDING
+
+    text = live.read_text(encoding="utf-8")
+    arc, _problems = arcs.parse_arc(text, slug)
+    stage = (arc.slots.get("stage") or "").strip() or "unstaged"
+    name = arcs.lane_name(slug, date)
+
+    body = ctx.repo / lanes.LANES_DIR / f"{name}.md"
+    if body.exists():
+        out(f"FINDING [lane_new_exists] the observer lane {name!r} already "
+            f"exists at {body}. Two deadlines on one arc and one date would "
+            "share a door, and retiring either would take the other's row "
+            "off the board.")
+        return exits.FINDING
+
+    body.parent.mkdir(parents=True, exist_ok=True)
+    body.write_text(
+        f"# Lane: {name}\n\n"
+        f"Decides: nothing alone — this is an OBSERVER generated by `arc "
+        f"deadline` for arc {slug!r}. It reports that a date has arrived; "
+        "what to do about it is the arc's, and the disposition is the "
+        "operator's or the desk's.\n\n"
+        f"Trigger: test \"$(date +%Y-%m-%d)\" \\>= \"{date}\"  # fires on and "
+        f"after {date}\n\n"
+        "| condition | workflow |\n"
+        "|---|---|\n"
+        f"| the date has arrived | read arc {slug} and disposition the "
+        "deadline |\n\n"
+        f"Ends: the arc leaves the stage that set this deadline, or closes, "
+        "or is abandoned — each retires this lane, body and row together.\n",
+        encoding="utf-8")
+
+    added, why = decl.add_lane(ctx.repo, name)
+    if why:
+        out(f"COULD NOT VERIFY: the observer body is on disk at {body} and "
+            f"was NOT declared ({why}). An undeclared lane body is invisible "
+            "to `lane list`, so the deadline has no observer despite the "
+            "file — reporting CLEAN here would claim a door this verb did "
+            "not open.")
+        return exits.COULD_NOT_VERIFY
+
+    line = (f"{arcs.DEADLINE_LINE}: {name} {stage} {date} "
+            f"{args.what.strip()}")
+    atomic.write_text(live, text.rstrip("\n") + "\n" + line + "\n",
+                      encoding="utf-8")
+    out(line)
+    out(f"generated observer lane {name!r} and declared it — `lane list` "
+        f"reports it QUIET until {date}.")
+    return commit_paths(
+        ctx, [live, body, ctx.repo / decl.DECLARATION_REL],
+        f"arcs: deadline {date} on {slug}", out, what="the arc deadline",
+        stage_new=True)
