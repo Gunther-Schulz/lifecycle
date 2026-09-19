@@ -224,6 +224,19 @@ yet.
   and fire-rate review are exactly such constraints — but a session reading this
   document should meet the disconfirming paper before the confirming ones, and
   the probe it implies has not been run here.
+  **UPDATED 2026-09-19: the paper is no longer LANE-VERIFIED-BUT-UNREAD — it
+  was OPENED at a desk** (lc-222's own MUST-NOT-BUILD), and the summary above
+  is accurate. Title, authors and date, so the next reader need not re-fetch:
+  *Do Self-Evolving Agents Forget? Capability Degradation and Preservation in
+  Lifelong LLM Agent Adaptation*, Yu / Yuan / Jin / Liu / Yu / Wang, submitted
+  10 May 2026. **The probe is now DESIGNED and still not run:**
+  `docs/audits/2026-09-19-erosion-probe-design.md`. Read that before citing
+  this bullet as a reason to slow corpus growth — it records that the obvious
+  probe (the roster's proven FRACTION) is consistent with BOTH erosion and
+  health and would have manufactured a finding, and that the discriminating
+  quantity is per-row SURVIVAL of previously-proven rows instead. It also
+  bounds what a result may be used for: the roster channel only, silent on
+  rule-corpus effects on session behaviour.
 - **Fabrication after tool failure** (arXiv:2609.14758, LANE-VERIFIED):
   measures that naming an explicit THIRD STATE before answering cuts agent
   dishonesty 14.10% → 0.87%. That is near-experimental support for law 1 and it
