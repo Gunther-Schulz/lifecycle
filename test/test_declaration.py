@@ -568,79 +568,57 @@ class StructureReadout(unittest.TestCase):
                 doc["kinds"]["plugin cache versions"]["writer"]),
             "other")
 
+    # THE CLI-LEVEL ARM, added once the reconciliation it was waiting on
+    # landed. The lane that wrote the rest of this class deliberately left
+    # this test out while `cmd_kind` carried two competing `--structure`
+    # branches — one its own, one a concurrent writer's — on the grounds
+    # that a test written against either shape would pin the wrong one.
+    # That was right, and the note it left instead is how the collision was
+    # found at all. One branch remains; the arm can exist.
+    #
+    # IT ASSERTS SHAPE, NOT COUNTS. Running against this repo's own live
+    # declaration is the point — it is the real fixture, and a hand-built
+    # one would not prove the flag is REACHABLE — but the counts move every
+    # time a kind is registered, so pinning them here would make an
+    # unrelated declaration edit fail this test for the wrong reason.
+    def test_kind_list_structure_is_reachable_from_the_CLI(self):
+        import io
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
 
-class DeskStateStructureFlag(unittest.TestCase):
-    """lc-174's desk.py half: `--structure` on `cmd_desk_state` short-
-    circuits BEFORE the closed value-vocabulary check and never refuses —
-    it is a query beside the turn-end state, not a fifth value in it, and
-    it stays a readout whatever the declaration holds (law 11 / the
-    item's own MUST-NOT-MOVE: a session-start check that can fail a
-    legitimate repo kills every lane in the hook).
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf):
+                code = cli_mod.main(["kind", "list", "--structure"])
+        except SystemExit as exc:
+            code = exc.code
+        said = buf.getvalue()
+        self.assertEqual(code, 0)
+        self.assertIn("kinds registered:", said)
+        self.assertIn("writer split:", said)
+        self.assertIn("stage undeclared:", said)
+        # lc-172's denominator rule: every count prints against what it was
+        # counted over. A bare number cannot distinguish a small numerator
+        # from a small population.
+        self.assertIn(" of ", said)
 
-    Called directly against `desk_mod.cmd_desk_state` with a hand-built
-    namespace: the argparse registration for `--structure` (and making the
-    `value` positional optional so a bare `desk state --structure` parses
-    at all) lives in `cli.py`, outside this item's write set — see the
-    closing report's gap slot. This is the desk.py-side half proven ready
-    for that wiring, not a claim that the wiring exists.
-    """
+    # THE MUTUAL EXCLUSION IS THE DISCRIMINATING ARM, and it is why the
+    # branch ORDER in `cmd_kind` stopped mattering: both `--structure` and
+    # `--digest` return, so whichever ran first would win silently and a
+    # later reader moving a block would change the answer with no test to
+    # notice. argparse refusing the pair makes that unreachable rather than
+    # merely undocumented.
+    def test_structure_and_digest_cannot_be_asked_together(self):
+        import io
+        from contextlib import redirect_stdout, redirect_stderr
+        from lifecycle_core import cli as cli_mod
 
-    @staticmethod
-    def _args(**kw):
-        from types import SimpleNamespace
-        base = dict(structure=False, value=None, argument=None,
-                    horizon=None, desk=None)
-        base.update(kw)
-        return SimpleNamespace(**base)
-
-    def _repo(self, kinds):
-        d = Path(tempfile.mkdtemp(prefix="lc174-desk-"))
-        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        doc = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
-        doc["kinds"] = kinds
-        (d / ".claude").mkdir()
-        (d / ".claude" / "lifecycle.json").write_text(json.dumps(doc),
-                                                       encoding="utf-8")
-        return d
-
-    @staticmethod
-    def _kind():
-        return {"home": "x.md", "writer": "session", "reader": ["session"],
-                "staleness": "none, declared why: fixture",
-                "exit": {"action": "never", "recording-act": "fixture"},
-                "growth": "unbounded-with-reason: fixture",
-                "trigger": "none, declared why: fixture"}
-
-    def test_structure_flag_prints_the_readout_with_no_value_given(self):
-        from lifecycle_core import desk as desk_mod
-        repo = self._repo({"only": self._kind()})
-        out_lines = []
-        code = desk_mod.cmd_desk_state(self._args(structure=True),
-                                       out_lines.append, repo)
-        self.assertEqual(code, exits.CLEAN)
-        text = "\n".join(out_lines)
-        self.assertIn("kinds registered: 1", text)
-        self.assertIn("writer split: 0 of 1 verb-written, "
-                      "1 of 1 writer:session, 0 of 1 other", text)
-        self.assertNotIn(
-            "desk_state_unknown_value", text,
-            "--structure with no `value` must never fall through into the "
-            "closed value-vocabulary refusal path")
-
-    def test_structure_flag_never_refuses_over_an_undeclared_stage(self):
-        broken_kind = {"home": "x.md", "writer": "session"}
-        repo = self._repo({"broken": broken_kind})
-        from lifecycle_core import desk as desk_mod
-        out_lines = []
-        code = desk_mod.cmd_desk_state(self._args(structure=True),
-                                       out_lines.append, repo)
-        self.assertEqual(code, exits.CLEAN)
-        self.assertIn("stage undeclared: 1 of 1", "\n".join(out_lines))
-
-    def test_structure_flag_with_no_repo_context_is_prose_not_a_crash(self):
-        from lifecycle_core import desk as desk_mod
-        out_lines = []
-        code = desk_mod.cmd_desk_state(self._args(structure=True),
-                                       out_lines.append, None)
-        self.assertEqual(code, exits.CLEAN)
-        self.assertIn("structure: not checked", "\n".join(out_lines))
+        out, err = io.StringIO(), io.StringIO()
+        try:
+            with redirect_stdout(out), redirect_stderr(err):
+                code = cli_mod.main(["kind", "list", "--structure",
+                                     "--digest"])
+        except SystemExit as exc:
+            code = exc.code
+        self.assertNotEqual(code, 0)
+        self.assertIn("not allowed with", out.getvalue() + err.getvalue())

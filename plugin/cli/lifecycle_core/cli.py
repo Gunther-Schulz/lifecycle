@@ -144,6 +144,22 @@ def cmd_kind(args, out) -> int:
             _report(res, out)
         return res.code
 
+    # lc-174 — WHAT THE REPO IS, beside `--digest`'s what-it-holds: kind
+    # count, writer split, undeclared-stage count. Same shape as the digest
+    # branch above (a pointer/readout, findings surfaced beside it rather
+    # than swallowed) rather than a special-cased always-CLEAN exit: the
+    # counting itself never adds a finding of its own, so a repo whose
+    # declaration is otherwise clean reports CLEAN here too, and one with
+    # unrelated validation findings reports them exactly as `--digest`
+    # already does — one verb, one exit-code contract, not two.
+    if getattr(args, "structure", False):
+        for line in decl.render_structure(d):
+            out(line)
+        if res.findings or res.unverified:
+            out("")
+            _report(res, out)
+        return res.code
+
     out(f"repo: {repo}")
     out(f"declaration: {res.path}")
     out(f"schema: {d.get('schema')}   id-prefix: {d.get('id-prefix')}   "
@@ -438,11 +454,26 @@ def build_parser() -> argparse.ArgumentParser:
     ks = k.add_subparsers(dest="kind_action")
     kl = ks.add_parser("list",
                        help="every registered kind, every stage, longhand")
-    kl.add_argument("--digest", action="store_true",
+    # MUTUALLY EXCLUSIVE ON PURPOSE, and it is a dissolved question rather
+    # than a decided one. `--digest` and `--structure` answer different
+    # questions (what the repo HOLDS, one line per kind, versus what it IS,
+    # three counts), and each branch below RETURNS, so passing both would
+    # silently give whichever branch the reader happens to reach first — a
+    # precedence nobody chose, invisible in the output, and re-decided by
+    # whoever next moves a block. argparse refusing the combination means
+    # the ordering of those two branches can never become load-bearing.
+    kview = kl.add_mutually_exclusive_group()
+    kview.add_argument("--digest", action="store_true",
                     help="ONE LINE PER KIND — the map a session holds: home, "
                          "member count, newest member, and `[session-read]` "
                          "on kinds no verb reads for you. A pointer surface, "
                          "never an authority on content (lc-219)")
+    kview.add_argument("--structure", action="store_true",
+                    help="THREE COUNTS, each with its denominator — kinds "
+                         "registered, the writer split (verb-written / "
+                         "writer:session / other), and how many leave a "
+                         "stage undeclared. What the repo IS, beside "
+                         "`--digest`'s what-it-holds (lc-174)")
     ks.add_parser("check", help="validate the declaration")
     ks.add_parser("sweep", help="invariant 1: every tracked file resolves to "
                                 "a registered kind")
