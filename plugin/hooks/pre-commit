@@ -30,6 +30,7 @@ blocked commit is local and repairable; an unchecked PUSH is public and not).
     exit 1  a staged carrier breaks the shape the tool writes
 """
 
+import fnmatch
 import os
 import subprocess
 import sys
@@ -72,6 +73,7 @@ def main() -> int:
 
     sys.path.insert(0, str(CORE))
     try:
+        from lifecycle_core import arcs as arcs_mod
         from lifecycle_core import declaration as decl
         from lifecycle_core import exits
         from lifecycle_core import items as items_mod
@@ -92,10 +94,12 @@ def main() -> int:
     doc = res.declaration
     kinds = doc.get("kinds") or {}
 
-    def home(kind):
+    def home(kind, *, allow_glob=False):
         body = kinds.get(kind)
         h = body.get("home") if isinstance(body, dict) else None
-        return h if isinstance(h, str) and h.strip() and "*" not in h else None
+        if not (isinstance(h, str) and h.strip()):
+            return None
+        return h if allow_glob or "*" not in h else None
 
     watched = {}
     for kind, checker in (("items", "items"), ("done bodies", "done"),
@@ -106,7 +110,31 @@ def main() -> int:
     decl_rel = str(decl.DECLARATION_REL)
     watched[decl_rel] = "declaration"
 
-    todo = [f for f in staged_files if f in watched]
+    # GLOB-HOMED CARRIERS ARE WATCHED TOO (astra-a6, moved here from lc-242's
+    # reach act by ledger decision 2026-09-19). This hook rejected every glob
+    # home, so a carrier whose bodies are `arcs/*.md` could be committed in
+    # any shape at all while the three fixed-path carriers were guarded — the
+    # commit-time boundary stopping exactly where the newest carrier began.
+    #
+    # THE INDEX IS NOT A BODY and is excluded by the same name the carrier
+    # module excludes it by: it lives INSIDE the arc home and matches the
+    # home's own glob, so a reader that took the glob at face value would
+    # grade the counters file against the body shape and fail it forever.
+    glob_watched = []
+    arcs_home = home("arcs", allow_glob=True)
+    if arcs_home:
+        glob_watched.append((arcs_home, "arc"))
+
+    def checker_for(rel):
+        if rel in watched:
+            return watched[rel]
+        for pattern, checker in glob_watched:
+            if fnmatch.fnmatch(rel, pattern) \
+                    and Path(rel).stem != arcs_mod.INDEX_STEM:
+                return checker
+        return None
+
+    todo = [f for f in staged_files if checker_for(f) is not None]
     if not todo:
         return 0
 
@@ -130,8 +158,18 @@ def main() -> int:
             if not target.is_file():
                 continue
             buf = []
-            kind = watched[rel]
-            if kind == "items":
+            kind = checker_for(rel)
+            if kind == "arc":
+                # THE ARC BODY'S SHAPE, over the STAGED bytes. Its parser
+                # returns `(row, line, message)` triples in the same shape
+                # the item carrier's does, so this renders them without a
+                # second formatter — one spelling for a finding line.
+                _arc, problems = arcs_mod.parse_arc(
+                    target.read_text(encoding="utf-8"), Path(rel).stem)
+                for row, _line, msg in problems:
+                    buf.append(f"FINDING [{row}] {msg}")
+                code = exits.FINDING if problems else exits.CLEAN
+            elif kind == "items":
                 code = items_mod.check_file(target, buf.append, prefix=prefix)
             elif kind == "done":
                 code = items_mod.check_done_file(target, buf.append,

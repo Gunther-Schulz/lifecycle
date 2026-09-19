@@ -251,3 +251,95 @@ class ArcVerbCore(unittest.TestCase):
         code, outp = self._run(repo, "arc", "status")
         self.assertEqual(code, 0, outp)
         self.assertIn("NONE", outp)
+
+
+class ArcShapeAtTheCommitBoundary(unittest.TestCase):
+    """The pre-commit hook watches the arc home too (astra-a6).
+
+    WHY THIS ARM RUNS THE HOOK ITSELF. The consumer is a git hook, and its
+    subject is the STAGED bytes rather than the working tree — so a fixture
+    that called the parser directly would prove the parser and leave the
+    thing under test, the hook's reach, unexercised. The hook rejected every
+    GLOB home before this, which meant the commit-time boundary stopped
+    exactly where the newest carrier began: the three fixed-path carriers
+    were guarded and an arc body could be committed in any shape at all.
+
+    THE PLANT IS A HAND-MANGLED BODY, which is the case the guard exists
+    for — law 8's "a hand edit that breaks the shape fails at commit". The
+    control is a body the VERB wrote, so the pair separates "the hook sees
+    arc files" from "the hook fails arc files".
+    """
+
+    HOOK = Path(__file__).resolve().parents[1] / "plugin" / "hooks" / "pre-commit"
+
+    def _repo(self):
+        import json
+        import subprocess
+        from lifecycle_core import refusals
+        d = Path(tempfile.mkdtemp(prefix="lifecycle-archook-"))
+        run = lambda *a: subprocess.run(a, cwd=str(d), capture_output=True,  # noqa: E731
+                                        text=True)
+        run("git", "init", "-q", "-b", "main")
+        run("git", "config", "core.hooksPath", str(d / ".nohooks"))
+        run("git", "config", "user.email", "arc@lifecycle.invalid")
+        run("git", "config", "user.name", "arc fixture")
+        (d / ".claude").mkdir()
+        doc = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        doc["kinds"]["arcs"] = {
+            "home": "arcs/*.md", "writer": "verb:arc", "reader": ["session"],
+            "staleness": "beliefs by kill-condition",
+            "exit": {"action": "move", "recording-act": "arc close"},
+            "growth": "bounded-by-exit", "trigger": "verb arc"}
+        (d / ".claude" / "lifecycle.json").write_text(json.dumps(doc),
+                                                      encoding="utf-8")
+        (d / "LAWS.md").write_text("law\n", encoding="utf-8")
+        (d / "ITEMS.md").write_text(
+            "schema: 6\nbaseline: 0\nadded: 0\ncompacted: 0\n",
+            encoding="utf-8")
+        (d / "ITEMS-DONE.md").write_text("schema: 6\n", encoding="utf-8")
+        (d / "LEDGER.md").write_text("schema: 6\n", encoding="utf-8")
+        (d / "arcs").mkdir()
+        run("git", "add", "-A")
+        run("git", "commit", "-qm", "seed")
+        return d, run
+
+    def _hook(self, repo):
+        import subprocess
+        return subprocess.run([sys.executable, str(self.HOOK)], cwd=str(repo),
+                              capture_output=True, text=True)
+
+    def test_a_hand_mangled_arc_body_STOPS_the_commit(self):
+        repo, run = self._repo()
+        (repo / "arcs" / "freeze.md").write_text(
+            "schema: 6\n\n## freeze\ngoal: g\nstage: s\n", encoding="utf-8")
+        run("git", "add", "arcs/freeze.md")
+        got = self._hook(repo)
+        self.assertEqual(got.returncode, 1, got.stderr)
+        self.assertIn("arc_shape", got.stderr)
+
+    def test_a_verb_written_arc_body_passes(self):
+        """The control. Without it the arm above would pass on a hook that
+
+        failed every arc body, which would make the carrier unusable."""
+        repo, run = self._repo()
+        (repo / "arcs" / "freeze.md").write_text(
+            arcs.render_arc("freeze", {
+                "goal": "g", "stage": "s",
+                "narrowing": "eliminative — x", "premises": "p",
+                "beliefs": "b", "yield": "0"}, 6), encoding="utf-8")
+        run("git", "add", "arcs/freeze.md")
+        got = self._hook(repo)
+        self.assertEqual(got.returncode, 0, got.stderr)
+
+    def test_the_INDEX_is_not_graded_as_a_body(self):
+        """It lives inside the arc home and matches its glob, so a reader
+
+        taking the glob at face value would fail the counters file forever."""
+        repo, run = self._repo()
+        arcs.index_path(repo).parent.mkdir(parents=True, exist_ok=True)
+        arcs.index_path(repo).write_text(
+            arcs.render_index({"baseline": 0, "opened": 0, "closed": 0}, 6),
+            encoding="utf-8")
+        run("git", "add", "arcs/INDEX.md")
+        got = self._hook(repo)
+        self.assertEqual(got.returncode, 0, got.stderr)
