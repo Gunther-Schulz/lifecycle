@@ -99,6 +99,7 @@ decision: should the lc-161 absorption pass run over the same sample as the catc
 decision: lc-157 mechanism #4, per-write record lint: build it now or hold it? → HELD. Operator decision 2026-09-19 (directive D3). RE-OPEN EVENT: when lc-156 checker has a fire record. Widening it to fire per-write rather than only at close is unjustified while nothing records that the close-time form fires at all. Recorded here so the hold survives lc-157 closure.
 decision: lc-157 mechanism #5, class-recurrence counter over the corrections carrier: build it now or hold it? → HELD as a HYPOTHESIS, mechanism bar UNMET: same-class is judgment-shaped, so a mechanism would over- and under-fire and train the override reflex. Operator decision 2026-09-19 (directive D3). RE-OPEN EVENT: only on a computable class marker. Recorded here so the hold survives lc-157 closure.
 decision: lc-157 mechanism #3, idle-is-answerable: build it now or hold it? → HELD. Operator decision 2026-09-19 (directive D3). RE-OPEN EVENT, an event not a time-word: when finds carry a defect-class tag, since the query has a defect-class find closed without its carrier swept is not computable without one. Recorded here so the hold survives lc-157 closure.
+dropped: lc-208 — MERGED INTO lc-150: same refusal row migration_ledger_nonzero, identical write-set, opposite directions of one predicate. lc-150 now carries both as separately-proven red-first arms, with this body evidence and its RELAYED marks carried across verbatim.
 
 ## Archive (pre-migration)
 
