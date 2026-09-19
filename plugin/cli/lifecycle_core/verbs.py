@@ -703,6 +703,8 @@ def cmd_item_add(args, out, ctx: Ctx) -> int:
         return code
     slots[items_mod.BLOCKER_EXERCISE] = _exercise_record(
         args, slots["blocked-by"], ctx, observed)
+    slots[items_mod.NOT_DERIVABLE] = _derivability_record(
+        args, slots["blocked-by"], ctx)
 
     found = candidates(parsed, slots["requirement"], slots["write-set"])
     join = args.join
@@ -981,6 +983,36 @@ def _exercise_record(args, blocker: str, ctx: Ctx, observed: dict) -> str:
     code = observed.get("code")
     live = f"live {code}" if code is not None else "live not-observed"
     return f"{_today()} {live} | {arms}"
+
+
+def _derivability_record(args, blocker: str, ctx: Ctx) -> str:
+    """The `not-derivable:` value this write persists, or `""` (lc-179).
+
+    THE STATEMENT IS ALREADY DEMANDED AND ALREADY VALIDATED — lc-169's door
+    refusal runs in `_check_blocker` above and has already refused an empty
+    one by the time this is reached. This function does not re-ask, re-grade,
+    or reword: it takes the author's own text and gives it a home, which is
+    the entire item. Re-validating here would be a second reader of one value
+    with its own chance to disagree with the first.
+
+    NOT A SECOND GATE, which is this item's MUST-NOT-MOVE stated as code:
+    lc-169's demand keeps its current behaviour and wording, and nothing new
+    refuses. An empty return means the blocker is not a decision — the only
+    case where this slot has no meaning — never that a statement was missing,
+    because a missing one cannot reach this line.
+
+    DATED, because the statement is a claim about what the record held ON A
+    DAY. A reader checking it against the world needs to know which world:
+    "no precedent exists" is true until one is written, and an undated
+    statement silently becomes a claim about today.
+    """
+    kind, _detail = items_mod.classify_blocker(blocker, ctx.prefix)
+    if kind != "decision":
+        return ""
+    why = (getattr(args, "not_derivable", None) or "").strip()
+    if not why:
+        return ""
+    return why if items_mod.opens_with_date(why) else f"{_today()} {why}"
 
 
 def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out,

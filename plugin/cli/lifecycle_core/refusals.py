@@ -97,6 +97,13 @@ blocked-by: NONE
 _EXERCISE_LINE = ("blocker-exercise: 2026-09-19 live 1 | positive `true` 0 | "
                   "negative `false` 1 — the predicate answers both ways")
 
+#: The derivability statement both arms of `not_derivable_misplaced` carry
+#: (lc-179), spelled once for the reason above: the arms differ in the
+#: BLOCKER and in nothing else, and two spellings would let them drift.
+_NOT_DERIVABLE_LINE = ("not-derivable: 2026-09-19 constitutively the "
+                       "operator's — a preference about scope, decided by no "
+                       "precedent, ledger entry or audit")
+
 
 @dataclass
 class Fired:
@@ -3060,6 +3067,28 @@ SCHEMA_ROWS = [
                 "blocked-by: NONE", "blocked-by: evidence test -f /tmp/nope")
             + "\n" + _EXERCISE_LINE + "\n"),
         stage="wave B, lc-175",
+    ),
+    Row(
+        ident="not_derivable_misplaced",
+        refusal="`not-derivable:` beside a `blocked-by` that asks no "
+                "question — the slot records why a QUESTION is not derivable "
+                "from the record, and only a `decision` blocker has one",
+        firing_input="a block carrying `not-derivable:` with "
+                     "`blocked-by: NONE`",
+        expect=exits.FINDING,
+        # ITS OWN PLANT rather than sharing `blocker_exercise_misplaced`'s.
+        # The two misplacements share an answer class, which on §3.8c alone
+        # would merge them — but a row is proven by its plant, and one plant
+        # certifies the class that FIRED, not its variants. Merged, this
+        # message would ship having never been seen to fire.
+        fire=lambda: _items_run(
+            GOOD_ITEMS.rstrip("\n") + "\n" + _NOT_DERIVABLE_LINE + "\n"),
+        control=lambda: _items_run(
+            GOOD_ITEMS.rstrip("\n").replace(
+                "blocked-by: NONE",
+                "blocked-by: decision which instrument the arc adopts")
+            + "\n" + _NOT_DERIVABLE_LINE + "\n"),
+        stage="wave B, lc-179",
     ),
     Row(
         ident="ready_with_unknown_slot",

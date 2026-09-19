@@ -2289,3 +2289,84 @@ class EvidenceBlockerExerciseIsRecorded(unittest.TestCase):
         self.assertNotIn("ready_with_unknown_slot", out,
                          f"the migration value un-READYs a live item.\n{out}")
         self.assertNotEqual(code, exits.FINDING, out)
+
+
+class DecisionBlockerDerivabilityIsPersisted(unittest.TestCase):
+    """lc-179 — a decision blocker's derivability statement outlives the
+    terminal.
+
+    RED-FIRST, and the red is the entry's own measured defect: lc-169 DEMANDS
+    the statement at the door and then throws it away. `--not-derivable` is
+    read by `_check_blocker`, gates the mint, and is written to no carrier —
+    so every decision blocker in both homes is identical on this axis, and
+    the ones booked WITH a statement cannot be told from the ones booked
+    before lc-169 existed. lc-158's own story is the named consumer: a
+    decision blocker MIS-TYPED at booking, read as a decision and actually a
+    factual question a measurement could settle. A persisted statement is
+    what lets a later reader catch that class; a printed one cannot.
+
+    THE SLOT RIDES lc-175'S MACHINERY rather than repeating it — same
+    conditional shape, same absence-from-UNKNOWNABLE_SLOTS, same
+    present-only rendering. Measured before choosing it: 25 decision
+    blockers live, 16 of them READY, so a member of the fixed run would
+    have made 16 items findings on day one. That is the same arithmetic
+    that decided lc-175 and it is worse here, not better.
+    """
+
+    SLOT = "not-derivable"
+    Q = "decision should the arc adopt the narrower instrument"
+
+    def _block(self, blocker, statement=None):
+        body = (f"## xx-1\ngrade: READY\n"
+                "requirement: the control block — record: LEDGER.md\n"
+                "goal: mitigate\nwrite-set: tools/thing.py\n"
+                "done-criterion: red on the real defect, green after\n"
+                "evidence: none yet\n"
+                f"blocked-by: {blocker}\n")
+        if statement is not None:
+            body += f"{self.SLOT}: {statement}\n"
+        return f"schema: {items.SCHEMA_FLOOR}\nbaseline: 0\n\n{body}"
+
+    WHY = ("2026-09-19 constitutively the operator's: this is a preference "
+           "about scope, and no precedent, ledger entry or audit decides it")
+
+    def test_BASELINE_the_control_block_is_clean(self):
+        code, out = run_check(GOOD_ITEMS)
+        self.assertEqual(code, exits.CLEAN, f"baseline is not green.\n{out}")
+
+    def test_a_stated_derivability_is_clean(self):
+        code, out = run_check(self._block(self.Q, self.WHY))
+        self.assertEqual(code, exits.CLEAN,
+                         f"a persisted statement is refused.\n{out}")
+
+    def test_an_unstated_derivability_is_VISIBLE(self):
+        """The done-criterion: absent, it is visible AS absent rather than
+        indistinguishable from one whose statement scrolled away."""
+        code, out = run_check(self._block(self.Q))
+        self.assertIn("unstated", out.lower(),
+                      f"an unstated derivability is invisible.\n{out}")
+        self.assertNotEqual(
+            code, exits.FINDING,
+            f"16 READY items became findings overnight.\n{out}")
+
+    def test_the_slot_is_REFUSED_where_the_blocker_is_not_a_decision(self):
+        code, out = run_check(self._block("NONE", self.WHY))
+        self.assertEqual(code, exits.FINDING,
+                         f"the slot was accepted on a NONE blocker.\n{out}")
+        self.assertIn("not_derivable_misplaced", out, out)
+
+    def test_UNKNOWN_does_not_un_READY_a_migrated_item(self):
+        """MUST-NOT-MOVE, measured: 16 READY items carry a decision blocker."""
+        code, out = run_check(self._block(self.Q, items.UNKNOWN))
+        self.assertNotIn("ready_with_unknown_slot", out, out)
+        self.assertNotEqual(code, exits.FINDING, out)
+
+    def test_lc169s_DOOR_demand_is_not_made_a_second_gate(self):
+        """MUST-NOT-MOVE: lc-169's door demand keeps its current behaviour and
+        wording. This slot is a persisted RECORD, never a second refusal — a
+        carrier whose decision blockers predate lc-169 must not become
+        unbookable, and the door's own refusal row must still be the only
+        thing that fires at the door."""
+        self.assertIn("decision_not_derivable_unstated",
+                      [r.ident for r in refusals.ROWS],
+                      "lc-169's door refusal left the registry")

@@ -159,12 +159,50 @@ DONE_ONLY_SLOTS = ("superseded-by", "blocker-moot", CLOSED_REASON, CLOSED_REF,
 #: absence is readable, not a predicate the tool computes.
 BLOCKER_EXERCISE = "blocker-exercise"
 
-#: Slots legal only beside a `blocked-by` of a particular TYPE. The mapping is
-#: the check: a slot present where its type is not is a finding, in the same
-#: direction as `done_slot_on_live_item` — a slot legal everywhere is an
-#: annotation, not a slot.
-BLOCKER_SLOT_FOR_TYPE = {BLOCKER_EXERCISE: "evidence"}
-BLOCKER_ONLY_SLOTS = tuple(BLOCKER_SLOT_FOR_TYPE)
+#: THE DERIVABILITY STATEMENT FOR A `decision` BLOCKER (lc-179). lc-169 made
+#: the mint DEMAND why a question is not derivable from the record, and that
+#: demand works — it forces the thinking while the author still has the record
+#: open. But the demand's product is PRINTED AT THE DOOR AND PERSISTED
+#: NOWHERE, exactly as its `--absence` precedent behaves, so the statement is
+#: gone the moment the terminal scrolls and no later reader can check it
+#: against the world.
+#:
+#: THE CONSUMER IS NAMED AND REAL, which is what makes this more than
+#: symmetry: lc-158's own story is a decision blocker MIS-TYPED at booking —
+#: read as a decision, actually a factual question a measurement could settle.
+#: A persisted statement is what lets a later reader catch that class. A
+#: printed one cannot, and the carrier today cannot tell a blocker booked WITH
+#: a statement from one booked before lc-169 existed.
+#:
+#: SPELLED AS THE FLAG IS SPELLED. `--not-derivable` is the door's vocabulary
+#: and this is the same concept persisted, so it takes the same word — one
+#: spelling per concept, the rule `grammar` exists to hold.
+NOT_DERIVABLE = "not-derivable"
+
+#: Slots legal only beside a `blocked-by` of a particular TYPE, each with the
+#: refusal row its misplacement fires. A slot present where its type is not is
+#: a finding, in the same direction as `done_slot_on_live_item` — a slot legal
+#: everywhere is an annotation, not a slot.
+#:
+#: A ROW PER SLOT, and this is deliberately NOT the §3.8c reading that would
+#: merge them. The two misplacements share an ANSWER CLASS (remove the slot or
+#: correct the blocker), which on §3.8c alone argues for one row. REACH decides
+#: it the other way: a row is proven by its plant, and one plant certifies the
+#: CLASS THAT FIRED and not its variants — merged, whichever slot the single
+#: plant did not use would ship a refusal message nobody had ever seen fire.
+#: Two rows, two plants, two controls; the shared answer class is a note for
+#: the route question, never a reason to leave half the surface unproven.
+BLOCKER_SLOT_RULES = {
+    BLOCKER_EXERCISE: ("evidence", "blocker_exercise_misplaced",
+                       "records that a PREDICATE was exercised — its live "
+                       "exit and the two constructed arms that show it "
+                       "answering both ways — and only an `evidence` blocker "
+                       "has a predicate"),
+    NOT_DERIVABLE: ("decision", "not_derivable_misplaced",
+                    "records why a QUESTION is not derivable from the "
+                    "record, and only a `decision` blocker asks a question"),
+}
+BLOCKER_ONLY_SLOTS = tuple(BLOCKER_SLOT_RULES)
 
 #: `<date> <ledger-ref> <one line>`, the three parts the design names. Checked
 #: as ONE predicate with ONE home because two consumers read it: the parser
@@ -326,6 +364,18 @@ AMEND_REASON = "amend-reason"
 #: values carry them constantly (`requirement: … — record: …`). A guard that
 #: fired on the ordinary value would stop the lane (R11).
 _AMEND_VALUE = re.compile(r"^(\d{4}-\d{2}-\d{2})\s+(\S.*)$")
+
+
+def opens_with_date(value: str) -> bool:
+    """Does `value` already open with its ISO date?
+
+    PUBLIC SO THE WRITER CAN ASK THE READER (lc-179). `verbs.py` composes a
+    `not-derivable:` value and this module grades it; a second date pattern
+    over there would be the divergence `grammar` exists to prevent, with the
+    writer free to produce a shape its own reader refuses. Same reasoning as
+    `closure_pointer_problem` being one predicate for both doors.
+    """
+    return bool(_AMEND_VALUE.match(value or ""))
 
 #: THE PROMOTION LINES (lc-39). There was NO PATH FROM NEW TO READY: `grade`
 #: is written once at admission, the note above says why `item amend` refuses
@@ -699,21 +749,18 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
     # untyped prose — is equally not-evidence. Threading a prefix here to
     # sharpen a distinction the check does not make would be a second reader
     # of the blocker value with its own chance to disagree.
-    for slot_, want in BLOCKER_SLOT_FOR_TYPE.items():
+    for slot_, (want, row, what) in BLOCKER_SLOT_RULES.items():
         if slot_ not in item.slots:
             continue
         kind_, _detail = classify_blocker(item.slots.get("blocked-by", ""),
                                           None)
         if kind_ != want:
             out.problems.append((
-                "blocker_exercise_misplaced", item.line,
+                row, item.line,
                 f"block {item.ident!r} carries `{slot_}:` beside a "
-                f"`blocked-by` that is not an `{want}` blocker "
-                f"({kind_ or 'untyped'}). The slot records that a PREDICATE "
-                "was exercised — its live exit and the two constructed arms "
-                f"that show it answering both ways — and only an `{want}` "
-                "blocker has one. Beside any other type it records an act "
-                "that cannot have happened."))
+                f"`blocked-by` that is not a `{want}` blocker "
+                f"({kind_ or 'untyped'}). The slot {what}. Beside any other "
+                "type it records something that cannot have happened."))
 
     # THE CLOSURE REASON CARRIES ITS DATE, checked on the same half the
     # amendment and promotion lines are checked on and for the same reason: a
@@ -1953,7 +2000,7 @@ def check_file(path: Path, out, prefix: str | None = None, *,
     # exercised count is what proves the line can ever move, and a bare
     # "0 unexercised" over a carrier holding no evidence blockers at all
     # reads exactly like a carrier whose blockers are all exercised.
-    exercised, unexercised = exercise_census(parsed)
+    exercised, unexercised = blocker_slot_census(parsed, BLOCKER_EXERCISE)
     if exercised or unexercised:
         out(f"evidence blockers: {exercised} exercised, {unexercised} "
             f"UNEXERCISED (no `{BLOCKER_EXERCISE}:` record). An exercise "
@@ -1961,6 +2008,23 @@ def check_file(path: Path, out, prefix: str | None = None, *,
             "who held it is in the room; lc-164's booking run proves the "
             "predicate can say NOT YET and cannot prove it ever says "
             "ARRIVED.")
+
+    # THE DERIVABILITY COUNT (lc-179), the same move one slot over. lc-169
+    # demands the statement at the door and persists nothing, so today every
+    # decision blocker in both homes is identical on this axis — the ones
+    # booked WITH a statement are indistinguishable from the ones booked
+    # before that demand existed. The named consumer is lc-158: a decision
+    # blocker MIS-TYPED at booking, read as a decision and actually a factual
+    # question a measurement could settle. That class is findable from a
+    # persisted statement and unfindable from a printed one.
+    stated, unstated = blocker_slot_census(parsed, NOT_DERIVABLE)
+    if stated or unstated:
+        out(f"decision blockers: {stated} with a derivability statement, "
+            f"{unstated} UNSTATED (no `{NOT_DERIVABLE}:` record). lc-169 "
+            "demands the statement at the door; what is printed there "
+            "scrolls away, so a blocker whose reason was stated and one "
+            "whose reason never existed read the same to every later "
+            "reader.")
 
     c = census(parsed)
     out(f"census: open {c['open']}  closed {c['closed']}  "
@@ -2073,31 +2137,39 @@ def unknown_slots(parsed: Parsed):
     return counts, misplaced
 
 
-def exercise_census(parsed: Parsed, prefix: str | None = None):
-    """`(exercised, unexercised)` evidence blockers in `parsed` (lc-175).
+def blocker_slot_census(parsed: Parsed, slot: str,
+                        prefix: str | None = None):
+    """`(recorded, missing)` for one conditional blocker slot (lc-175, lc-179).
 
-    THE POPULATION IS EVIDENCE BLOCKERS, never all items: an item with no
-    predicate has nothing to exercise, and folding it into the denominator
-    would make the number fall every time an unrelated item is booked — a
-    metric that moves for reasons its subject did not.
+    THE POPULATION IS THE MATCHING BLOCKER TYPE, never all items: an item
+    with no predicate has nothing to exercise and one with no question has no
+    derivability to state, so folding them into the denominator would make
+    the number fall every time an unrelated item is booked — a metric that
+    moves for reasons its subject did not.
 
-    UNKNOWN COUNTS AS UNEXERCISED, and that is the migration's whole point:
-    the transitional value means nobody ever recorded one, which is exactly
-    what the unexercised bucket is for. It is NOT in `UNKNOWNABLE_SLOTS`, so
-    it reaches this count without reaching `ready_with_unknown_slot`.
+    UNKNOWN COUNTS AS MISSING, and that is the migration's whole point: the
+    transitional value means nobody ever recorded one, which is exactly what
+    the missing bucket is for. These slots are NOT in `UNKNOWNABLE_SLOTS`, so
+    the value reaches this count without reaching `ready_with_unknown_slot`.
+
+    ONE FUNCTION FOR BOTH SLOTS rather than a second copy: the question is
+    identical one word over, and two bodies for one question is where a
+    divergence hides — the second would be the one nobody re-reads when the
+    rule moves.
     """
-    exercised = unexercised = 0
+    want = BLOCKER_SLOT_RULES[slot][0]
+    recorded = missing = 0
     for it in parsed.items:
         kind, _detail = classify_blocker(it.slots.get("blocked-by", ""),
                                          prefix)
-        if kind != "evidence":
+        if kind != want:
             continue
-        v = (it.slots.get(BLOCKER_EXERCISE) or "").strip()
+        v = (it.slots.get(slot) or "").strip()
         if v and v.upper() != UNKNOWN:
-            exercised += 1
+            recorded += 1
         else:
-            unexercised += 1
-    return exercised, unexercised
+            missing += 1
+    return recorded, missing
 
 
 def unknown_slots_of(item: Item) -> list:
