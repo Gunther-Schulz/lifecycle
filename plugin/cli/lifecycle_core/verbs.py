@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from . import atomic, exits, judgment, lanes, ledger, retire
+from . import atomic, exits, firelog, judgment, lanes, ledger, retire
 from . import declaration as decl
 from . import grammar
 from . import items as items_mod
@@ -813,8 +813,8 @@ def _collect_slots(args, ctx: Ctx, out):
             out("FINDING [new_without_typed_blocker] slots are incomplete "
                 f"({', '.join(missing)}), so this item is NEW — and a NEW "
                 "item carries a TYPED blocker saying what it is waiting for: "
-                f"`<{ctx.prefix}-<n>>`, `decision <question>` or `evidence "
-                "<predicate>`. An incomplete item with nothing to wait for is "
+                f"{items_mod.blocker_types_rendered(ctx.prefix)}. An "
+                "incomplete item with nothing to wait for is "
                 "the entry that ages in nobody's court.")
             return None, exits.FINDING
 
@@ -1062,10 +1062,25 @@ def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out,
     """
     kind, detail = items_mod.classify_blocker(value, ctx.prefix)
     if kind is None:
+        # THE EXEMPTION BUYS SOMETHING (B9). The BLOCKER slot is the one
+        # vocabulary the contract leaves open-ended, and an exemption that
+        # bought nothing would just be an unwatched hole. A refusal here is
+        # the widening signal for this very vocabulary — somebody reached for
+        # a wait no member can express — and until now it was observable only
+        # in a desk's scrollback. Recording the ROW NAME in the log's detail
+        # field makes refusals-where-no-type-fit COUNTABLE.
+        #
+        # THE FLOOR IS STATED WHERE THE COUNT IS READ, not here: the fire log
+        # is machine-local and best-effort, so this count is a floor on one
+        # machine and never a census. A widening cites it; it is not the
+        # population.
+        judgment_detail = "blocker_untyped"
+        firelog.fire("item blocker-untyped", repo=str(ctx.repo),
+                     outcome=exits.FINDING, detail=judgment_detail)
         out(f"FINDING [blocker_untyped] `--blocked-by {value!r}` is not a "
             f"typed blocker. The edge types are closed (§3.1): "
-            f"`{ctx.prefix}-<n>`, `decision <question>`, `evidence "
-            "<predicate>`, or NONE. Prose is not an edge — an aging item is "
+            f"{items_mod.blocker_types_rendered(ctx.prefix)}, or NONE. Prose "
+            "is not an edge — an aging item is "
             "routed by whose court it sits in, and prose sits in nobody's.")
         return exits.FINDING
     if kind == "decision":
@@ -1805,6 +1820,28 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
     if kind is None:
         return ("FINDING [blocker_untyped] the blocker is prose, not a typed "
                 "edge, so nothing can re-evaluate it."), exits.FINDING, ""
+    if kind == "external":
+        # NEITHER COURT, AND SAYING SO IS THE POINT (D-8, astra-c2). The
+        # machine's court promises a predicate somebody could repair; the
+        # operator's promises a question somebody could answer. This edge
+        # promises neither — it waits on an event in the WORLD, evaluated by
+        # nothing by design — and rendering it as either sends a reader
+        # hunting for a fix that does not exist. That hunt is precisely what
+        # the old `evidence false` spelling caused.
+        #
+        # THE ENDING IS AN ACT, and it is named HERE because this is where a
+        # reader asks "so what clears it?". A predicate-typed wait answers
+        # that by being re-run; this one cannot, so the rendering carries the
+        # instruction: amend the blocker away with the arrival named. Without
+        # this sentence the type would be a permanent silent park under a
+        # new word — the exact state it was minted to replace.
+        return (f"BLOCKED — in the WORLD's court: {detail!r}. Evaluated by "
+                "nothing, by design: no predicate can say whether this has "
+                "happened, so nothing will re-run and nothing is broken. It "
+                "ENDS by an ACT — when the event arrives, `item amend "
+                "--blocked-by NONE --reason` with the arrival named and its "
+                "evidence, and the amendment is the record that it happened."
+                ), exits.CLEAN, ""
     if kind == "decision":
         # RE-DERIVED FROM THE LEDGER, never read off the stored slot (lc-26).
         # No verb ever took a decision blocker off an item — `item park` only

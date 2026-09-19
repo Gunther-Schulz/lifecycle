@@ -321,5 +321,157 @@ class GradeArmAtItsThreeVerbSites(unittest.TestCase):
         self.assertEqual(code, 0, outp)
 
 
+class ExternalBlockerAndItsEnding(unittest.TestCase):
+    """D-8's minted member, and the ENDING astra-c2 found missing (P4).
+
+    THE MEMBER IS MINTED FROM RECORDED INSTANCES, never guessed: this repo's
+    carrier already holds waits nothing here can test — another repo's
+    release, an operator's reply — and they were all typed `evidence false`,
+    a predicate that can never fire. That reads on the board as ordinary
+    machine-court waiting, which is the neighbour-fold this contract exists
+    to end.
+
+    AN ENDING IS PART OF THE TYPE. A blocker nothing evaluates needs a
+    defined way OUT or it is a permanent silent park under a new name — the
+    first design had the court print and no transition, so its red-first
+    could pass while no item ever became schedulable again. The case below
+    therefore drives a REAL TRANSITION and reads schedulability afterwards,
+    not the rendering.
+    """
+
+    def _repo(self, items_text=None):
+        from lifecycle_core import refusals
+        r = refusals._Repo(items=items_text or refusals.SEED_ITEMS)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    EVENT = "external the upstream cache-fix release lands"
+
+    def _add_external(self, repo):
+        return self._run(
+            repo, "item", "add", "--requirement", "waits on another repo",
+            "--goal", "mitigate", "--write-set", "tools/a.mjs,tools/b.mjs",
+            "--done-criterion", "d", "--evidence", "MEASURED e",
+            "--blocked-by", self.EVENT,
+            "--join", "new", "--absence", "the release has not happened")
+
+    def test_the_door_accepts_the_minted_member(self):
+        repo = self._repo()
+        code, outp = self._run(
+            repo, "item", "add", "--requirement", "waits on another repo",
+            "--goal", "mitigate", "--write-set", "tools/a.mjs,tools/b.mjs",
+            "--done-criterion", "d", "--evidence", "MEASURED e",
+            "--blocked-by", self.EVENT,
+            "--join", "new", "--absence", "the release has not happened")
+        self.assertEqual(code, 0, outp)
+
+    def test_it_is_classified_external_and_not_untyped(self):
+        from lifecycle_core import items as items_mod
+        kind, detail = items_mod.classify_blocker(self.EVENT, "xx")
+        self.assertEqual(kind, "external")
+        self.assertIn("cache-fix release", detail)
+
+    def test_an_external_blocker_names_no_court_but_the_WORLD(self):
+        """Not the machine's court and not the operator's. Both of those
+
+        promise a re-evaluation somebody could run; this one promises only
+        that an event has not happened, and saying otherwise sends a reader
+        looking for a predicate to fix or a question to answer."""
+        repo = self._repo()
+        self._add_external(repo)
+        _code, outp = self._run(repo, "item", "ready", "xx-2")
+        self.assertIn("WORLD", outp)
+        self.assertNotIn("MACHINE's court", outp)
+        self.assertNotIn("OPERATOR's court", outp)
+
+    def test_THE_REAL_TRANSITION_out_of_waiting(self):
+        """The ending, exercised rather than rendered: after the arrival is
+
+        recorded by amendment, the item is SCHEDULABLE. A court print alone
+        would pass on a design where nothing ever left the wait."""
+        repo = self._repo()
+        self._add_external(repo)
+        _c, before = self._run(repo, "item", "ready", "xx-2")
+        self.assertNotIn("schedulable now", before)
+        code, _o = self._run(
+            repo, "item", "amend", "xx-2", "--blocked-by", "NONE",
+            "--reason", "ARRIVED 2026-09-19: the cache-fix release landed, "
+                        "tag v2.1.0 fetched and verified at the remote")
+        self.assertEqual(code, 0)
+        _c2, after = self._run(repo, "item", "ready", "xx-2")
+        self.assertIn("schedulable now", after)
+
+    def test_an_unamended_external_blocker_does_NOT_become_schedulable(self):
+        """The control for the transition: without it the case above would
+
+        pass on a build that called everything schedulable."""
+        repo = self._repo()
+        self._add_external(repo)
+        _c, outp = self._run(repo, "item", "ready", "xx-2")
+        self.assertNotIn("schedulable now", outp)
+
+    def test_the_type_list_in_a_refusal_is_DERIVED_from_the_vocabulary(self):
+        """NIT2: a derived text cannot be falsified by adding a member, only
+
+        by breaking the derivation — so the claim worth asserting is that
+        every member of the closed vocabulary reaches the message. A
+        hardcoded list would pass today and silently omit the next member.
+        """
+        from lifecycle_core import items as items_mod
+        repo = self._repo()
+        _code, outp = self._run(
+            repo, "item", "add", "--requirement", "r", "--goal", "mitigate",
+            "--write-set", "tools/a.mjs,tools/b.mjs", "--done-criterion", "d",
+            "--evidence", "MEASURED e", "--blocked-by", "just some prose",
+            "--join", "new", "--absence", "x")
+        for member in items_mod.BLOCKER_TYPES:
+            if member == "item":
+                continue  # spelled as the repo's own id prefix, not the word
+            with self.subTest(member=member):
+                self.assertIn(member, outp)
+
+    def test_an_untyped_blocker_writes_a_countable_fire_log_event(self):
+        """B9: the BLOCKER slot's exemption has to BUY something. A refusal
+
+        where no type fits is the widening signal for this very vocabulary,
+        and it was observable only in a desk's scrollback — so the refusal
+        records an event carrying the row name, and the signal becomes
+        countable from the log rather than remembered.
+        """
+        import json
+        from lifecycle_core import firelog
+        repo = self._repo()
+        before = 0
+        path = firelog.log_path()
+        if path.exists():
+            before = len(path.read_text(encoding="utf-8").splitlines())
+        self._run(
+            repo, "item", "add", "--requirement", "r", "--goal", "mitigate",
+            "--write-set", "tools/a.mjs,tools/b.mjs", "--done-criterion", "d",
+            "--evidence", "MEASURED e", "--blocked-by", "just some prose",
+            "--join", "new", "--absence", "x")
+        self.assertTrue(path.exists(), "no fire log was written at all")
+        lines = path.read_text(encoding="utf-8").splitlines()[before:]
+        details = [json.loads(ln).get("detail", "") for ln in lines if ln]
+        self.assertTrue(
+            any("blocker_untyped" in d for d in details),
+            f"no event carries the row name; details seen: {details}")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -734,8 +734,10 @@ def migration_blocker(entry: Entry, slots_incomplete: bool):
 
     THE TYPE IS THE RULE. "Every migrated entry carries a blocker" is
     satisfied by prose, and prose sits in nobody's court — so each branch here
-    produces one of the three closed types and the report prints which branch
-    ran. Under the new closed goal vocabulary nearly every migrated open item
+    produces one of the closed types and the report prints which branch
+    ran. WHICH types is `items.BLOCKER_TYPES`, not a number restated here: a
+    count in prose ages the day a member is minted, and `external` was
+    minted after this sentence said "three". Under the new closed goal vocabulary nearly every migrated open item
     is slot-incomplete anyway, so the counts will LOOK like "all"; that is
     precisely why the criterion is stated per TYPE and never as a total.
     """

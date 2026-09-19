@@ -1004,7 +1004,33 @@ def check_ids(parsed: Parsed, prefix: str | None) -> list:
 #: predicate. "No other edge types" is the design's own sentence, and it is
 #: what makes a blocker MECHANICALLY resolvable — an untyped one is prose,
 #: and prose is what the aging rules cannot route to anybody's court.
-BLOCKER_TYPES = ("item", "decision", "evidence")
+BLOCKER_TYPES = ("item", "decision", "evidence", "external")
+
+#: HOW EACH MEMBER IS SPELLED in a blocker slot, DERIVED so that every
+#: message naming the closed set is one body (NIT2). Nine sites restated this
+#: list in prose before the `external` member was minted, and a restated
+#: vocabulary goes stale one site at a time: the member is added, eight
+#: messages update, the ninth keeps telling authors the old set is closed.
+#: A derived text cannot be falsified by ADDING a member — only by breaking
+#: the derivation — which is why the arrangement that proves it mutates this
+#: function rather than planting a member.
+def blocker_type_spellings(prefix: str | None) -> tuple:
+    """The spelling of each `BLOCKER_TYPES` member, in declaration order."""
+    spelled = {
+        "item": f"`{prefix or 'prefix'}-<n>`",
+        "decision": "`decision <question>`",
+        "evidence": "`evidence <predicate>`",
+        "external": "`external <event>`",
+    }
+    # KeyError rather than a silent skip if a member is added without its
+    # spelling: a message that quietly omitted the new member is exactly the
+    # drift this function exists to remove, and it would read as complete.
+    return tuple(spelled[m] for m in BLOCKER_TYPES)
+
+
+def blocker_types_rendered(prefix: str | None) -> str:
+    """The closed set as one comma-separated phrase, for a refusal's text."""
+    return ", ".join(blocker_type_spellings(prefix))
 BLOCKER_NONE = "NONE"
 
 
@@ -1024,6 +1050,21 @@ def classify_blocker(value: str, prefix: str | None):
     if v.startswith("evidence "):
         rest = v[len("evidence "):].strip()
         return ("evidence", rest) if rest else (None, "")
+    if v.startswith("external "):
+        # D-8's minted member, and it is minted from RECORDED instances
+        # rather than guessed: this carrier already held waits nothing here
+        # can test — another repo's release, an operator's reply — and every
+        # one of them was typed `evidence false`, a predicate that can never
+        # fire. On the board that reads as ordinary machine-court waiting,
+        # which is the neighbour-fold this contract exists to end.
+        #
+        # EVALUATED BY NOTHING, ON PURPOSE. The other two typed edges promise
+        # a re-evaluation somebody can run; this one promises only that an
+        # event has not happened yet. Its ENDING is therefore an ACT, not a
+        # predicate — see `_blocker_state`, which says so in the rendering
+        # rather than leaving a reader to look for a predicate to repair.
+        rest = v[len("external "):].strip()
+        return ("external", rest) if rest else (None, "")
     if prefix and grammar.id_re(prefix).match(v):
         return "item", v
     return None, ""
@@ -1571,7 +1612,7 @@ def check_blocker_targets(items_parsed: Parsed, done_parsed: Parsed | None,
         # plant and control to say anything the first does not.
         out(f"FINDING [blocker_untyped] line {it.line}: block {it.ident!r} is "
             f"blocked by {raw!r}, which is not one of the closed edge types "
-            f"(`{prefix}-<n>`, `decision <question>`, `evidence <predicate>`, "
+            f"({blocker_types_rendered(prefix)}, "
             "or NONE). The write path refuses this at `item add`, `item park` "
             "and `item amend`, so a value in this shape reached the file by a "
             "path that did not pass it — a merge, a hand edit, or a target "
@@ -2011,8 +2052,7 @@ def check_file(path: Path, out, prefix: str | None = None, *,
         finding("parked_without_typed_blocker", line,
                 f"block {ident!r} is PARKED with an untyped `blocked-by`: "
                 f"{value!r}. The types are closed — "
-                f"`<{prefix or 'prefix'}-<n>>`, `decision <question>`, "
-                "`evidence <predicate>` — because an aging item is routed "
+                f"{blocker_types_rendered(prefix)} — because an aging item is routed "
                 "by WHOSE COURT it sits in, and prose sits in nobody's. A "
                 "parked item nothing can re-evaluate is a drop waiting to "
                 "happen quietly.", ident)

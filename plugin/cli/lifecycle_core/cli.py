@@ -555,7 +555,8 @@ def build_parser() -> argparse.ArgumentParser:
     add.add_argument("--evidence")
     add.add_argument("--blocked-by", dest="blocked_by",
                      help="TYPED: `<prefix>-<n>` | `decision <q>` | "
-                          "`evidence <predicate>` | NONE")
+                          "`evidence <predicate>` | `external <event>` | "
+                          "NONE")
     add.add_argument("--grade", help="normally DERIVED from slot "
                                      "completeness; stated only to override")
     add.add_argument("--source", help=f"{verbs.SOURCE_SESSION} (default), "
