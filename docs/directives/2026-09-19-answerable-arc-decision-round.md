@@ -1201,3 +1201,60 @@ for future archaeology. The build desk after the attack round, and any
 resumed round desk, open here. (This round desk ran clean from the foreign
 cwd — absolute paths and `git -C` throughout — so this is the cheap form
 of a lesson, recorded before it has an expensive one.)
+
+## Addendum 10 — the BUILD DESK handoff (2026-09-19, the ROUND DESK's act)
+
+**The round's JUDGMENT phase is COMPLETE at v4 (`2c8c37b`):** map drawn
+and pushed; ten decisions ledgered plus three revisions on dead premises;
+three designs taken through TWO full fresh-context attack rounds (opus +
+astra each time) and a narrowed verification pass (opus per-finding
+verdicts + terra recovery), four locks, the final one verified BY
+EXECUTION where the defect class allowed (the kind objects through
+`_validate_kind`, the population command run with its dead form as
+negative control). **DESIGN-PHASE YIELD-STOP, recorded with its basis:**
+three rounds moved monotonically architecture → realization →
+repair-prose; every remaining defect class is execution-checkable, and
+the build's own instruments (per-part red-firsts, the validator, the
+join, `--test`'s emit-site and route-set checks, prove-rows' pair
+admission) are the named catchers — a fourth prose round would grade
+sentences the build grades cheaper and harder. Finding corpora:
+`docs/audits/2026-09-19-design-attack-r1.md`, `-r2-pass3.md`.
+
+**Build desk:** `cachyos-setup-fe` (opus, opened by the operator, held
+for this purpose). **Authority: inert until the operator states the
+delegation first-hand in that session; the desk's ack on its record
+authorizes work.** The round desk (this session) stays judgment holder:
+grades reports, rules escalations, runs the release gate, executes the
+dotfiles boundary acts, and closes the round (field card update
+included).
+
+**REPORT-CHANNEL: SendMessage to the round desk** — per wave close,
+blockers and decision rounds immediately; final terminal text reaches no
+one. **Base commit: `2c8c37b`** (read at compose time; tree clean, HEAD =
+origin/main; this addendum's own commit on top is expected and clean).
+Arrival check, three reads: `git merge-base --is-ancestor 2c8c37b HEAD`;
+`git log --oneline 2c8c37b..HEAD`; `git status --porcelain`; anything
+else halts and reports.
+
+**SCOPE, in order — the wave doc v4's numbered booking steps, then the
+builds:** (1) book the contract item + re-point lc-237's blocker (its
+criterion is already amended); (2) book the arc items — the
+carrier_homes REACH ACT as its own item per law 25 (dry-run population BY
+the -path find command; the dotfiles APPLY is the ROUND desk's boundary
+act — halt with dry-run evidence, the lc-218 pattern), then kinds+verbs;
+(3) book W1/W2/W3; (4) book the router-roster incompleteness finding;
+(5) run `item waves` over the booked set and build in the join's order —
+the cross-repo sequencing rule binds: the reach act lands before lc-239
+beat 1 opens any repo, or after beat 2, never during. Grounding: the
+reading roster (gate-enforced), the three v4 design docs WHOLE, the two
+audits corpora, `item slots` at every pickup. Build conduct: every new
+roster row on a PAIR (lc-142), neighbour-proof recheck (lc-30); no `git
+commit -q`; LIFECYCLE_COMMIT_TRAILER set; commits unpushed by pathspec —
+the round desk pushes after verification per wave.
+
+**Out of scope, returns to the round desk:** any write outside this
+repo (the dotfiles apply, the banner's `arc status` call, the session-env
+export booking); corpus mints; the lc-239 pilot (beat 1 fires at ROUND
+close, not wave close); anything irreversible/outward. **Horizons:** the
+round desk arms a recurring ~30 min artifact watch per active wave; no
+work before the operator-confirmation ack.
