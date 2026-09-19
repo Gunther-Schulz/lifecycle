@@ -1351,7 +1351,7 @@ evidence: ALL THREE BASES ARE MEASURED IN THIS REPO. (1) The join consumes write
 blocked-by: decision has the design round closed, settling the join vocabulary and where a route-report required token lives?
 
 ## lc-237
-grade: NEW
+grade: PARKED
 requirement: A KIND'S TRIGGER PREDICATE IS DOCUMENTED AS EVALUATED AND IS EVALUATED BY NOTHING, AND THE ONE KIND USING IT IS FIRING UNREAD. declaration.py:119 states that a kind's trigger predicate is a condition evaluated by lanes.evaluate_trigger, the ONE evaluator whose exit mapping is total so a predicate that cannot run is BROKEN and never quiet. No code does this. The seventh stage validates its vocabulary, demands a reason after none, and checks verb <name> against the parser; a predicate value is never run. So a declared predicate that has NEVER RUN and one that runs quiet are indistinguishable in the declaration, which is the same two-states-under-one-word shape the design round carries as findings (a) through (h). Routed from wave B lc-224 pickup, where the entry's plan to mirror this evaluator revealed there is no evaluation path to mirror.
 goal: enforce-the-invariants
 write-set: UNKNOWN
