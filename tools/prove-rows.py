@@ -942,6 +942,39 @@ MUTATIONS = [
      "    if False:",
      "the test that every registered verify command actually EXECUTED"),
 
+    # lc-193. THE RING DETECTION, which is where THIS ROW'S OWN PLANT is
+    # decided. The row carries two shapes under one answer class (a set of
+    # items that can never become schedulable), and its fire/control pair is
+    # a constructed CYCLE — so the mutation has to darken the cycle half or
+    # it darkens nothing the row's plant exercises.
+    # RECORDED BECAUSE IT COST A FAILED RUN AND IS THE POINT OF THE TOOL: I
+    # first anchored this on the chain half's `_is_unclearable_evidence`
+    # test, which is the shape the repo's real carrier actually exhibits.
+    # prove-rows answered `verdict 2/named -> 2/named, rows changed: NONE —
+    # the condition this mutation names is not what produces its verdict`.
+    # It was right: the plant is a cycle, the cycle path still fired, and a
+    # mutation that leaves the plant firing proves nothing whatever it
+    # disables. Folded here, a ring is never recognised, every walk falls
+    # through, and the plant goes dark.
+    # THE CHAIN HALF is proven by test/test_items.py's BlockerGraph class
+    # and by the live carrier run (nine members, including a length-two
+    # chain), not by a mutation here — one row carries one pair.
+    # THE ANCHOR IS THE RECORDING LINE AND NOT THE DECIDING ONE, which is a
+    # deviation from this file's own preference and is deliberate. The ring
+    # is DECIDED by `if st == IN_PROGRESS:` two lines above — but that test
+    # is also the walk's only EXIT from a ring, so folding it does not
+    # darken the row, it HANGS: the plant's cyclic fixture walks its own
+    # cycle forever, re-marking IN_PROGRESS on every pass. Measured, not
+    # reasoned — the run had to be killed after 600s having produced no
+    # output at all, which is worse than a failed mutation because a hang
+    # reports nothing rather than reporting wrong. A mutation must make the
+    # row go DARK; one that makes the process stop answering proves nothing
+    # and blocks every row behind it in the same run.
+    ("blocker_softlock", "items.py",
+     "                cycles.append(ring)",
+     "                pass",
+     "the recording of a detected ring, the cycle half of this refusal"),
+
     # lc-176. THE COMPARISON ITSELF, which is where this refusal is decided.
     # Anchoring the `if mismatches:` below it would grade the PRINTING, and
     # anchoring the `res`-side output would leave the comparison intact and

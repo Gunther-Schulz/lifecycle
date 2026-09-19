@@ -254,6 +254,37 @@ def cmd_item_check(args, out, err=None) -> int:
     code = exits.worst([code, items_mod.check_blocker_targets(
         items_parsed, done_parsed, out, done_why, prefix=ctx.prefix)])
 
+    # THE GRAPH, beside the EDGES above (lc-193). `check_blocker_targets`
+    # asks whether each blocker's target exists; this asks whether the graph
+    # those edges form can ever drain. Both are needed: lc-A blocked-by lc-B
+    # and lc-B blocked-by lc-A both RESOLVE, neither dangles, neither is
+    # dropped, and both wait forever while the per-edge check reports CLEAN.
+    #
+    # WIRED HERE BY THE DESK, not by the lane that built it: cli.py was
+    # outside lc-193's write set, and it surfaced the gap rather than
+    # scoping it in. An unwired check is the defect this session already
+    # booked once (lc-237 — a declared trigger predicate that nothing
+    # evaluates, firing unread), and shipping a second instance of it in the
+    # same repo on the same day would be minting the class we just recorded.
+    code = exits.worst([code, items_mod.check_blocker_graph(
+        items_parsed, out, ctx.prefix)])
+
+    # THE REACH LIMIT, PRINTED RATHER THAN LEFT IN A DOCSTRING. Item-id
+    # EDGES need the declared `id-prefix` to be told from prose at all, so
+    # without one the traversal sees no edges: no cycle and no multi-hop
+    # chain, while a length-ONE unclearable terminal still reports normally.
+    # That narrower-but-always-checkable shape is the right call — it keeps
+    # real coverage where a blanket COULD NOT VERIFY would keep none — but
+    # its silence would otherwise read as a clean graph verdict, which is a
+    # check reporting CLEAN over a population it never examined. The
+    # function's own docstring hands this to its caller; this is the caller.
+    if not ctx.prefix:
+        out("blocker graph: REACH LIMITED — this repo declares no "
+            "`id-prefix`, so item-id edges cannot be told from prose and "
+            "the traversal saw none. Cycles and multi-hop chains were NOT "
+            "checked; a length-one unclearable terminal still was. This is "
+            "a narrower answer, never a clean one.")
+
     # THE DONE HOME'S OWN SHAPE CHECK. It is a KIND with the TOOL as its
     # writer, so shape applies to it exactly as it applies to the live
     # carrier — and until this wave nothing checked it: the done home was
