@@ -115,6 +115,7 @@ decision: the map as declaration data: this arc or booked? → BOOKED, blocked-b
 decision: does blocker_slot_census gain a third bucket, against lc-175's MUST-NOT-MOVE? → YES: PREDATES-THE-MECHANISM, population computed against lc-175's build epoch as a recorded constant; the count line splits; zero new findings, so MUST-NOT-MOVE holds exactly. Basis: Begehung f4 executed evidence plus the census docstring's own three-answer insistence.
 decision: what expresses a blocker on an event this repo cannot test? → Mint the real member: type external <event>, evaluated by nothing, cleared by hand or desk with the event named. Six recorded specimens clear D-3's own widening bar (recorded instances, never guessed members). Specimens re-typed at the contract's build.
 decision: what supplies LIFECYCLE_COMMIT_TRAILER by default: a session-env export in dotfiles, or verb-side derivation from harness-supplied env → Neither whole: the plugin supplies its own default via the desk-state kind (hook writes at session start, verbs read; env var overrides; unmarked-with-warning stays the honest fallback). The plugin owning both ends is the pit-of-success form. lc-52 unparks with this direction.
+decision: lc-237 disposition after its premise died? → Evidence amended to HEAD facts (4 call sites, one in declaration.py via read_moments). The retire-the-mode repair is dead; surviving direction: never-run vs runs-quiet become distinct states, a D-3 contract instance. Re-point blocked-by to the D-3 item at its booking.
 
 ## Archive (pre-migration)
 
