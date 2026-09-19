@@ -1841,15 +1841,40 @@ def check_blocker_graph(items_parsed: Parsed, out, prefix: str | None) -> int:
 # --- the census: three answers -----------------------------------------------
 
 def census(parsed: Parsed) -> dict:
-    """open / closed / unknown-with-counts.
+    """open / closed / cannot-express / unknown-with-counts.
 
-    THREE answers, not two. An unknown grade word is neither open nor closed
-    and is never folded into either: the drain and retirement triggers read
-    these numbers, and a counter that guessed would inflate exactly the ones
-    that decide whether a repo owes a pass.
+    FOUR answers, and the fourth is new (D-3, P1). An unknown grade word is
+    neither open nor closed and is never folded into either: the drain and
+    retirement triggers read these numbers, and a counter that guessed would
+    inflate exactly the ones that decide whether a repo owes a pass.
+
+    CANNOT-EXPRESS IS NOT UNKNOWN, and that distinction is this bucket's
+    whole reason. An unknown word arrived by a merge or an older tool — it is
+    a reading failure, and `item check` answers COULD NOT VERIFY over it. A
+    `cannot-express(<date>): <reason>` grade is the vocabulary's own declared
+    arm: somebody reached a state the five grades cannot say and RECORDED
+    that, with a date and a reason. Counting it as unknown would report a
+    working mechanism as a broken carrier, and — worse in the direction that
+    matters — would inflate the very figure a reader consults to decide
+    whether the carrier is healthy.
+
+    THE COUNT IS THE DISPOSITIONS-OWED FIGURE. An instance leaves by being
+    amended away (re-typed to a real member once one exists, or its slot
+    corrected), so zero means drained, and the OLDEST date is what the drain
+    act's trigger reads. Both are returned rather than printed here: this
+    function counts, and the verb that prints decides how to say it.
+
+    A MALFORMED CLAIM COUNTS AS UNKNOWN, deliberately. `cannot-express:` with
+    no date cannot be aged, and an instance that can never become the oldest
+    is one the drain can never see reach zero — so it belongs in the bucket
+    that already means "somebody must look at this", not in the one whose
+    emptiness is a health claim.
     """
+    from . import vocab
+
     open_n = closed_n = 0
     unknown: dict = {}
+    oov_dates: list = []
     for it in parsed.items:
         g = it.grade
         if g in GRADES_OPEN:
@@ -1857,8 +1882,14 @@ def census(parsed: Parsed) -> dict:
         elif g in GRADES_CLOSED:
             closed_n += 1
         else:
-            unknown[g or "(empty)"] = unknown.get(g or "(empty)", 0) + 1
+            parsed_oov = vocab.parse_oov(g)
+            if parsed_oov is not None:
+                oov_dates.append(parsed_oov.date)
+            else:
+                unknown[g or "(empty)"] = unknown.get(g or "(empty)", 0) + 1
     return {"open": open_n, "closed": closed_n, "unknown": unknown,
+            "cannot-express": len(oov_dates),
+            "cannot-express-oldest": min(oov_dates) if oov_dates else None,
             "total": len(parsed.items)}
 
 
@@ -2047,6 +2078,19 @@ def check_file(path: Path, out, prefix: str | None = None, *,
     for word_, n in sorted(c["unknown"].items()):
         out(f"  unknown grade {word_!r}: {n} — READ, never folded into open "
             "or closed. It reached this file by a merge or an older tool.")
+    if c["cannot-express"]:
+        # THE DISPOSITIONS-OWED LINE (D-3). Printed only when nonzero: a
+        # standing "0 cannot-express" would add a line to every run of every
+        # session for a number whose whole meaning is that it is not zero,
+        # and a readout nobody reads is where the one real instance would
+        # arrive pre-discounted.
+        out(f"cannot-express: {c['cannot-express']}, oldest "
+            f"{c['cannot-express-oldest']} — states the closed vocabulary "
+            "could not say, RECORDED with their reasons rather than filed "
+            "under a neighbour. This count IS the dispositions owed: an "
+            "instance leaves by being amended away, to a real member once "
+            "one exists or to a corrected slot, and the reasons are what a "
+            "widening is minted FROM. Zero means drained.")
     if parsed.archive_lines:
         out(f"archive: {parsed.archive_lines} line(s) after "
             f"{ARCHIVE_HEADING!r}, held verbatim and not shape-checked.")
