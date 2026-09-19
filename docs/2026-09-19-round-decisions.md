@@ -120,12 +120,17 @@ plus frame point 4.
 
 ## D-7 — census third bucket: YES
 
-"PREDATES THE MECHANISM": population computed against lc-175's build epoch
-(a recorded constant, not a guess), the count line splits into three, zero
-new findings — lc-175's MUST-NOT-MOVE honoured exactly. Basis: Begehung f4's
-executed evidence (all eight blockers predate the build commit;
-blocker-exercise: reads 0 at every commit since) and the census docstring's
-own three-answer insistence. D-3's second red-first input.
+"PREDATES THE MECHANISM": the count line splits into three, zero new
+findings — lc-175's MUST-NOT-MOVE honoured exactly. Basis: Begehung f4's
+executed evidence and the census docstring's own three-answer insistence.
+D-3's second red-first input. [CORRECTED IN PLACE 2026-09-19, twice, per
+the attack rounds: the date-epoch mechanism was replaced by the
+forward-only door stamp (ledger, D-7 revision), and the "all eight
+blockers" figure this section once carried went stale the same day it was
+written — lc-52's re-park moved the population to nine ten minutes before
+the v2 lock cited eight (attack r2 B1, the persisted-count class). The
+population figure is DERIVED from `blocker_slot_census` at any consuming
+moment, never restated here or in any design.]
 
 ## D-8 — blocker type for untestable events: mint the REAL member
 

@@ -1,96 +1,89 @@
-# Design v2: the wave's small mechanisms (D-5; D-9 as re-ruled; W1-W3 repaired, W4 replaced)
+# Design v3: the wave's small mechanisms (D-5; D-9 re-ruled; W4 withdrawn)
 
-**Round desk, 2026-09-19, SECOND LOCK — v1 took 4 blocking + 4 notable
-(opus) + 3 blocking + 4 notable (astra); repairs cite findings. v1 in git
-(f8de2f0). LOCKED pending the second attack pass.**
+**Round desk, 2026-09-19, THIRD LOCK. r2 integrated; astra r2 explicitly
+cleared W4's withdrawal. Citations resolve per the contract v3 header.**
 
 ## W1 — wire the O6 evaluation half (f2)
 
-**Act 1 (ungated): the verb.** `kind moments` prints `read_moments`'
-answer longhand per kind, every kind listed (sparse renders as silence).
-Verb exit contract; **its findings emit under REGISTERED rows** (W-6):
-`reader_moment_broken` and `reader_moment_malformed` land in refusals.py
-(write-set grown), never the unbracketed-FINDING shape the coverage scan
-cannot see. **Red-first FIXTURE REPAIRED (AW1 — v1's fixture was the exact
-input P2 makes MALFORMED):** the FIRE fixture is a PREDICATE-mode moment
-(`when: predicate <cmd>` with a true command); the MALFORMED fixture is
-P2's shared-partition case, asserting the verb prints MALFORMED —
-the two designs now demand the same semantics of the same input. The
-reader-mode set is re-read at build from the shared partition (P2's
-extraction), never assumed. **Act 2 (banner line): admitted under the
-contract v2's always-on definition** — always-on CONTENT via the structure
-line, same two-part basis (probe verdict landed + delta stated), rider-2
-boundary stated; no longer gated on an unrun probe (the probe ran: HEALTH,
-lc-234 closed), and no longer pretending the gate covered banner content
-(V10/astra — the roster channel never did). No-yield disposition (astra):
-if act 2 ships and its line catches nothing in its first month of fires,
-that is recorded evidence for the line's retirement, not silence.
-Write-set: declaration.py (shared with P2), verbs.py, cli.py, refusals.py,
-test_verbs.py, test_declaration.py.
+**Act 1: the verb** `kind moments`, longhand per kind, findings under
+REGISTERED rows (`reader_moment_broken`, `reader_moment_malformed`).
+Red-first: FIRE fixture is a predicate-mode moment; MALFORMED fixture is
+the shared partition's case (P2 v3 — presence-aware, so absent-`when`
+stays UNDECLARED). **Act 2: the banner line shows the LAST VERB RUN's
+results WITH THEIR DATE — a named-stale carrier, not an evaluation
+(astra-w3: rendering current FIRE/QUIET at banner time would be always-on
+EXECUTION; v3 keeps always-on execution at zero — the banner line is
+content, its staleness printed, freshness restored by any `kind moments`
+run).** The result carrier: the verb writes its last-run summary to the
+fire log's detail (existing field); the banner line reads it back.
+No-yield disposition, owned (B8): **graded at the retirement pass the
+banner already triggers — when "pass owed" prints, the pass's ledger note
+grades this line's catches since last pass; writer = the session running
+the pass; event = the existing computable trigger.** Write-set:
+declaration.py (shared partition consumer), verbs.py, cli.py, refusals.py,
+firelog.py, test_verbs.py, test_declaration.py.
 
-## W2 — the PERISHABLE evidence mark (E10; D-5's wording superseded on the
-## ledger — W-7 repaired by recording, not by reverting)
+## W2 — the PERISHABLE evidence mark (E10)
 
-The evidence-mark vocabulary (registered under the contract) gains
-`PERISHABLE (re-derive: <command>)`. Consumers: the admission door accepts
-it; `item slots` renders every perishable claim under a RE-DERIVE banner.
-**The re-derivation WRITES (W-8 — law 26 answered): the re-grounding act
-is `item amend --evidence` appending the dated re-derived result — the
-recorded, dated artifact the v1 banner-only form lacked. The computable
-absence: `item slots` flags a perishable claim whose newest evidence
-amendment predates the claim's own date ("PERISHABLE, never re-derived").**
-What stays honest prose-rest, declared: nothing records that a PICKUP
-happened, so "re-derived at every pickup" is not asserted — the flag above
-is the computable slice, the rest is the picking session's discipline
-(named, not hidden). Grammar: the mark parser is a refusals.py ROW (W-9),
-red-first on astra's sibling case — a valid MEASURED mark beside a
-malformed PERISHABLE in one slot REFUSES (the any-mark-present predicate
-explicitly not widened silently; items.py:286's presence-only note quoted
-in the row). No-yield disposition: a quarter with zero perishable marks
-authored = the mark wasn't needed, recorded as such at review.
-Write-set: items.py, cli.py, refusals.py, vocab.py (registration),
+Mark form: **`PERISHABLE(<date>, re-derive: <command>)` — the mark carries
+its own date (B7: the base-slot case, the first anyone writes, had no
+comparison input; law 26 now met at exactly that case).** Freshness
+semantics defined (astra-w2): the flag "PERISHABLE, never re-derived"
+fires iff no evidence amendment STRICTLY LATER than the mark's date
+carries a re-derive result naming this mark's command; same-day = not
+re-derived; a claim with no amendments and a past-dated mark fires. The
+re-derivation act = `item amend --evidence` appending the dated result
+(recorded, the W-8 answer). Refusal row for the mark grammar (W-9),
+red-first on the malformed-PERISHABLE-beside-valid-MEASURED sibling.
+No-yield disposition, owned (B8): graded at the same retirement pass, same
+writer, same event. Write-set: items.py, cli.py, refusals.py, vocab.py,
 test_items.py.
 
-## W3 — the relay widening as a CONTINUING contract (f5; W-5/W-10/astra)
+## W3 — relay reach as a continuing contract (f5)
 
-`_RELAY` goes verdict-agnostic. **The population is DERIVED, not counted
-by an author: the two scanners' file-reach (globs + named exclusions)
-becomes a declared REACH constant, and a new check fails when a *.py under
-plugin/ carrying an emit shape sits outside the declared reach — which is
-what makes the pre-commit hook's relay site (the invisible eighth, W-5)
-visible from the day this lands, and keeps FUTURE files visible without a
-sweep anyone remembers.** The v1 "all four patterns" count is corrected:
-FIVE regexes across TWO scanners, of which three are verdict-keyed and two
-match call shapes (stated per-pattern in the check's own output, W-10).
-Red-first: the attack arm's four-arm copy arrangement lands as the test,
-PLUS a plant outside the declared reach going red. Write-set: roster.py,
-refusals.py (the reach row), test file.
+`_RELAY` verdict-agnostic. **The reach population derives from the
+REGISTERED KINDS whose members are executable Python — detection by
+shebang-or-extension over each kind's home (B5/astra-w1: plugin/hooks'
+members are extensionless BY CONSTRUCTION, so any extension-keyed
+predicate returns a true-absence-shaped zero over that whole kind; both
+arms proved the eighth site survives a `*.py` glob). The acceptance check
+uses the ACTUAL pre-commit relay site (plugin/hooks/pre-commit:154), not
+a planted file.** Pattern facts stated exactly (verified by both arms):
+five regexes, two scanners, three verdict-keyed, two call-shaped. No
+no-yield disposition and why (B8's completeness): W3 is a correctness
+contract, not a surfacing line — it retires only with the scanners it
+guards. Write-set: roster.py, refusals.py, test file.
 
-## W4 — REPLACED (D-9 re-ruled on the ledger; W-2/W-3/AW2/W-4)
+## W4 — WITHDRAWN (D-9 re-ruled; astra r2: "no additional finding against
+## the replacement"). The dotfiles-side export is a cross-repo booking;
+## lc-52 parked on it; lifecycle's warning fallback stands built. The
+## unmarked-commit rate reads at the pre-push hook's own output when the
+## export lands.
 
-v1's mechanism is dead at the artifact: no plugin hook surface exists (the
-manifest's own `why`), desk-state records carry neither trailer half, the
-whole-object writer would drop added fields, and candidate-uniqueness
-cannot identify the CALLER — a human, or a second session, would inherit a
-false trailer, breaching lc-52's must-not-move; the fallback also degrades
-with desk count (W-4). **v2: the trailer's truthful source is the SESSION,
-so the default is a dotfiles-side session-env export — a CROSS-REPO
-booking (df-carrier), outside this wave.** Lifecycle's side is DONE as
-built: the whole-or-nothing verb machinery and the warning fallback stand;
-lc-52 is PARKED on the export landing (carrier, 2026-09-19). Nothing in
-this repo's wave builds W4. The fire-log-metric claim (astra) dies with
-v1: the unmarked-commit rate is read at the pre-push hook's own output,
-the instrument that already names them, when the export lands.
+## THE WAVE-LEVEL ALWAYS-ON INVENTORY (B6 — one table, every addition its
+## own delta; the definition is the invariant, the carrier list
+## non-exhaustive and now including the statusline path, N2)
 
-## Wave ordering — the JOIN decides (W-1, astra-overlaps)
+| addition | kind | delta | basis |
+|---|---|---|---|
+| census line split (P3) | content | 1 line → 1 line | inventory delta |
+| external-court line (P4) | content | +1 line per external blocker in ready output | inventory delta |
+| OOV count+age line (P1) | content | +1 line when nonzero | inventory delta (v2 omitted its own line — astra-c5) |
+| arc status block (arc v3) | content | +N lines, one small fixed field-set per OPEN arc; bounded by the flow alarm, not a cap | inventory delta; the borrowed-delta error (B6) repaired by this row |
+| W1 act 2 line | content (named-stale) | +1 line | inventory delta; zero added execution (astra-w3) |
+| always-on EXECUTION added by this wave | — | **ZERO** | the instrument-bearing gate's verdict (the desk's HEALTH grading of the probe, reach = instrument-bearing only, N5) is therefore not leaned on for any execution admission |
 
-The v1 disjointness paragraph is DELETED: it was falsified by its own
-write-set lines (W1+W4 shared verbs.py/test_verbs.py; W1+W2 shared cli.py;
-P4's real renderer is verbs.py's `_blocker_state`). At booking, every wave
-item's write-set feeds `item waves`, and the JOIN's output orders the
-lanes — the desk asserts nothing the join computes. Known collisions the
-join will see, named so nobody re-discovers them: verbs.py (W1, P4, arc
-seams), cli.py (W1, W2, P4, arc), test_verbs.py (W1, P4, arc),
-declaration.py (P2, W1, arc), refusals.py (P1, P4, W1, W2, W3, arc),
-grammar.py (arc). The schema-reach act (arc design v2) precedes the arc
-verbs per law 25; P1/P2 precede W1/W2; everything else is the join's call.
+## Wave construction (r2-completed)
+
+Write-sets feed `item waves`; the join orders file-granular lanes — and
+the collisions list now includes P1's real homes (declaration.py,
+items.py — B10) and the arc lane's items.py share (N1). **The CROSS-REPO
+ordering the join cannot see is the desk's, stated: the carrier_homes
+reach act lands before lc-239 beat 1 opens any repo, or after beat 2 —
+never during (N7).** Numbered booking steps with actors (N6): (1) this
+desk books the contract item and RE-POINTS lc-237's blocker to it in the
+same act; (2) books the arc items (reach act + kinds+verbs as separate
+items per law 25's own-act rule); (3) books W1/W2/W3 items; (4) the
+router-roster incompleteness finding (arc v3) is booked; (5) the join
+runs over the booked set. Build conduct: the contract v3's N10 line binds
+every lane.

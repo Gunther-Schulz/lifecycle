@@ -1,167 +1,135 @@
-# Design v2: the ARC kinds (lc-231; D-2) — TWO kinds, write seams, persisted invalidation
+# Design v3: the ARC kinds (lc-231; D-2)
 
-**Round desk, 2026-09-19, SECOND LOCK — v1 took 4 blocking + 6 notable from
-the opus arm and 4 blocking + 3 notable from astra; every repair cites its
-finding. v1 in git (f8de2f0). Status: LOCKED pending the second attack
-pass. The item carrier pair (items + done bodies, TWO registered kinds) is
-the form template, now actually followed (A4).**
+**Round desk, 2026-09-19, THIRD LOCK. r2 findings integrated (both arms);
+zero touched the two-kind direction or the verb-seam core; the repairs
+below are contracts, boundaries, and the one remaining design judgment
+(N9, the closed-body version pin). Citations resolve per the contract v3's
+header note.**
 
-## What an arc is (unchanged)
+## The two kind declarations — AS DECLARATION OBJECTS (B3: prose failed
+## the closed vocabularies it would be validated against; the validator is
+## the author's first reader)
 
-The persisted working state of one goal-directed effort, held outside every
-head that thinks with it, written as a byproduct of the work, resumable by
-a fresh context with loss approaching zero — the KILL TEST is the
-acceptance gate, now with a defined grader and arithmetic (A8, below).
+```json
+"arcs": {
+  "home": "arcs/*.md",
+  "writer": "verb:arc",
+  "reader": "session — via the arc status block the banner carries (A6/N8: rendered by a NEW verb `arc status`, called by the banner beside the existing four; `kind list --structure` is NOT widened — its declared contract is three counts with denominators and stays so)",
+  "staleness": "beliefs by kill-condition and contradicting writes; premises re-ground at pickup",
+  "exit": {"action": "move", "detail": "arc close — moves the body to arcs/closed/, writes the INDEX counters and the fire-log event"},
+  "growth": "bounded-by-exit",
+  "trigger": "verb arc"
+}
+"closed arcs": {
+  "home": "arcs/closed/*.md",
+  "writer": "verb:arc close",
+  "reader": "session — closure archaeology",
+  "staleness": "none — closed bodies are record",
+  "exit": {"action": "compact", "detail": "declared now so the kind has no undeclared stage, not implemented — the done-bodies pattern verbatim"},
+  "growth": "unbounded-with-reason: accrues at arc-closure rate; retention is the record role, git holds every state; no bound is CLAIMED (B3's catch on v2's false one)",
+  "trigger": "none — declared why: nothing fires on a closed record (B3: the missing seventh stage)"
+}
+```
 
-## TWO kind declarations (A4; all seven stages each, law 15)
+Per-stage EXITS live inside each arc body's `stages:` slot, not in the
+kind's trigger stage (B3's third catch — the kind trigger is `verb arc`,
+in TRIGGER_MODES).
 
-**Kind `arcs`** — home `arcs/*.md`, one file per arc, each carrying its own
-`schema:` head (the version story, below). writer: the arc verbs only.
-reader: the structure line — `kind list --structure` gains the open-arcs
-block (goal, stage, narrowing head, yield line, premise count), which the
-existing banner call then carries; REALIZING FILE named: declaration.py's
-structure renderer (A6 — the v1 "banner" reader was a foreign repo's hook
-this write-set cannot reach; the repair puts the content in the verb the
-hook already calls). Always-on inventory line (the contract v2's
-definition): this is always-on CONTENT via an existing call — admitted
-under the same two-part basis as the contract's count lines, rider-2
-boundary included; it is NOT exempt by "the caller exists" (A6/V10 — the
-v1 error, named). staleness: beliefs by kill-condition and contradicting
-writes; premises re-ground at pickup. exit: `arc close` — recording-act
-DECLARED AND REALIZED: the close writes a fire-log exit event (A3;
-firelog.py in the write-set), disposition vocabulary
-(goal-met / superseded / absorbed-into:<id> / abandoned-with-reason)
-registered under the contract with its OOV arm. growth: bounded-by-exit,
-measured by FLOW — open events minus close events against live file count
-(the v1 "ten open arcs is a finding" sentence is DELETED: a count cap
-violates this repo's own R22, astra's catch of my law violation).
-trigger: per-stage exits, below.
+## Conservation — project-scoped, travels with the repo (astra-a1, a7)
 
-**Kind `closed arcs`** — home `arcs/closed/*.md`. writer: `arc close`'s
-move only. reader: closure archaeology (session-read, declared so).
-staleness: none (closed bodies are record). exit: none in v1 —
-growth: unbounded-with-reason, the reason DECLARED: closed arcs accrue at
-arc-closure rate, which the open-side flow bounds in practice; a compaction
-verb is deliberately not built until the population earns one (astra's
-closed-home question answered by declaration, not silence).
+The fire log is ADVISORY ONLY (machine-local, best-effort — astra's read).
+The authoritative history is **`arcs/INDEX.md`**: head counters
+(baseline/opened/closed), tool-written by `arc open`/`arc close` in the
+same act as the file write (law 9's one-act move discipline). Conservation:
+opened − closed = live files AND closed = closed files, signs per the
+repo's own convention (**fewer bodies than admissions = SHORT, the loss
+side; more = OVER, recoverable** — v2 had them reversed, astra-a7).
+Growth-without-exit stays a SEPARATE alarm (astra-a7: conservation is not
+a flow bound): the audit's growth check gains the arc exit event —
+**retire.py and firelog.py in the write-set** — so `kind_grew_without_exit`
+reads arc closes the way it reads item closes.
 
-**Conservation (A5):** opened (fire log) − closed (fire log) = live files;
-close events = closed files. Computed from the fire log's arc events plus
-two globs — no per-file head totals to drift. Red-first: hand-delete a
-closed body → SHORT fires naming the missing file; plant an open event
-with no file → OVER fires.
+## The version story (A1; N9 resolved — the round's one r2 design judgment)
 
-## The version story (A1, astra-schema — replaces v1's failed "no bump" claim)
+**Live arcs carry `schema:` and enter the bump machinery; closed bodies
+PIN at their closing schema as record** — the same move this repo made for
+the retired backlog's citations (a line only means anything against a
+fixed blob). `carrier_homes` reverses its glob exclusion for the LIVE arc
+home only, and the reversal names what the exclusion protected (N9: it
+kept closure records out of the rewrite path — that protection is now
+explicit in the closed kind's exemption rather than implicit in a
+parse-time guard). The reach change ships as its own law-25 act:
+**dry-run over EVERY declared repo, the population named BY COMMAND —
+`find ~/dev -name .claude/lifecycle.json` (twelve today, incl. two
+throwaway clones, reported not skipped) — never a digit (B4: v2 said
+"both"; law 25 says every; lc-239's own requirement records this exact
+class as corrected once already). Noted as its own wave finding: the
+router roster `~/.config/lifecycle/repos` lists ONE repo and is itself
+incomplete — booked at wave construction.** The commit-time boundary
+moves with it: **plugin/hooks/pre-commit hardcodes the three carrier
+kinds and rejects glob homes — it is IN the write-set (astra-a6), and the
+staged arc shape check is part of the reach act's red-first.**
 
-Each arc file carries `schema: <n>`. `carrier_homes` GROWS to return
-declared glob carrier homes (a declaration.py change with its own tests),
-`schema_above_floor`'s route set and `_watched_schema_carriers` grow with
-it, and migrate.py participates — the arc carriers enter one-schema-per-
-repo whole. **This IS schema machinery moving: it ships as its own act
-under law 25 (dry-run over both declared repos, read-back per target),
-SEQUENCED before the arc verbs land and after the round closes — the
-lc-218 pattern, applied to reach rather than to the floor number. No floor
-bump is claimed or taken; what v1 hid was the REACH change, and it is now
-the design's own first build step.**
+## Stage exits, conduct, outward (unchanged from v2 except timing already
+## repaired there): operator-judged = the `none, declared why` spelling,
+## LOCKED; outward stages force it, STOP renders at entry.
 
-## Stage exits: the trigger vocabulary, LOCKED (A2)
+## Verbs (v2's seams, plus the r2 contracts)
 
-`operator-judged: <what they judge>` is a SPELLING of the existing `none,
-declared why` arm — NO new TRIGGER_MODES member. The arc's stage-exit field
-stores `none — operator-judged: <what>` in the existing three-mode
-contract; `evaluate_trigger` is untouched. **This sentence locks the
-vocabulary lc-239's beat 1 authors against, BEFORE the round closes — the
-pilot cannot land mid-change (A2's timing hazard closed).** Outward-marked
-stages (walk 4 req 8): the exit mode of an `outward: yes` stage is FORCED
-to the operator-judged spelling — the boundary sits structurally BEFORE the
-outward act, and the STOP line renders at stage ENTRY with the conduct
-print, not at close (A4-astra: v1 printed it after the act it governs).
+open · advance · narrow · verdict · premise · belief · reopen · deadline ·
+yield · status (new — the banner's renderer, N8) · close. Additions:
+**`arc advance` and `arc close` REFUSE while undispositioned `re-derive`
+flags exist** (astra-a5: the consuming seam — a stale belief is
+re-derived, or accepted-stale-with-reason, before the arc moves past it;
+the disposition is a written line, cheap for legitimate work, law 11
+safe). Cross-arc reach: within-arc only, DECLARED (carrier items naming a
+belief id are printed and inboxed, never auto-flagged). **Deadline-lane
+retirement covers advance, close, AND abandon** (astra-a8) — and the
+representation is settled (astra-a2): generated lanes are FULL lane
+bodies at `lanes/<arc-slug>-<deadline>.md`, the existing lane form, no
+declaration-shape change; writer `arc deadline`, retirement by the three
+verbs above, red-first includes an abandoned arc leaving zero lanes.
+**Arc block rendering: its OWN renderer in arcs.py following items.py's
+idiom — `render_block` (items.py:1034, N1: v2 named grammar.py, the
+wrong-home class again) renders ITEM shape and is not a drop-in; one
+spelling per kind, and the arc shape's one spelling lives in arcs.py.**
 
-## Verbs — every load-bearing state change has a write seam (AA1)
+## Kill test (v2's definition, with its reach stated — astra-a4)
 
-`arc open` (goal REQUIRED with operator attribution line — the refusal
-establishes the LINE EXISTS; whether it is truly the operator's word stays
-theirs to dispute, stated at predicate width, A11) · `arc advance` (stage
-transition; demands the exit answer; retires the stage's deadline lanes,
-A10) · **`arc narrow`** (updates the narrowing; displaced content
-auto-appends to `established:` with belief-id form where it states a
-belief — the residue is structured, astra-AA2's tail) · **`arc verdict`**
-(palette-mode taste disposition, walk 2's capture seam — written at
-utterance, not consumed as prose) · `arc premise` (add/kill; a kill WRITES
-`status: re-derive` into every citing belief's line — PERSISTED, not
-printed, AA2) · `arc belief` (basis + kill-or-unknown required) ·
-`arc reopen <belief-id>` (persists re-derive flags on all within-arc
-citers; carrier items naming the id are printed AND listed in the arc's
-premise inbox as an open fact) · **`arc deadline`** (add/move/retire; each
-writes/updates/removes its generated date-predicate lane in the
-declaration — writer and exit for generated lanes named, A10) · `arc yield`
-(append a round outcome) · `arc close` (disposition + fire-log event + the
-move + **the REQUIRED slot lc-231's amended evidence demands and v1
-dropped (AA3): `runbook: cited <name> | minted <name> | declined
-<reason>` — presence computable, refusal on absence, fill judgment; the
-A-to-Z-includes-writing-the-map half restored**).
+Fresh-context grader; one pass gates, two total failures return to the
+operator. **Named residual: the arrangement covers inter-verb moments;
+the event-to-verb gap (a verdict heard, the session dying before `arc
+verdict`) is NOT covered and cannot be by any write seam — recording
+becomes a byproduct only where a verb IS the act. purpose.md's
+"every moment" is driven toward, not achieved by v1; the pilot watches
+this gap's real size (its kink harvest counts event-to-record latencies
+it can see).**
 
-The KILL TEST's arrangement kills BETWEEN verbs: the dice moment falls
-between any two acts above, which is exactly what AA1 said v1 could not
-survive — with the seams above, the latest elimination/verdict/premise is
-in the carrier at every inter-verb moment by construction.
+## The wave's real ordering hazard, held at the desk (N7)
 
-## Kill test, defined (A8)
+The file-granular join CANNOT see it: lc-239's write-set is all
+`other-repo:` entries. **Sequencing ruling, this desk's: the
+carrier_homes reach act (law-25, every-repo dry-run) lands BEFORE lc-239
+beat 1 opens any of the eight, or after beat 2 completes — never during.
+Stated here because no instrument computes it.**
 
-Grader: a FRESH-CONTEXT verifier (artifact + question only) — independent
-by construction, per purpose.md's third pillar. PASS = it names the current
-stage, live narrowing, open premises, and next act; the no-killed-path
-clause applies only where a killed path exists at the drawn moment. Gate:
-ONE pass required to grade v1 shipped. Failure arithmetic: a failure →
-repair → rerun; TWO total failures return the design to the operator
-(the once-vs-twice contradiction resolved: one pass needed, two failures
-terminal).
+## Red-first (v2's set, amended): conservation plants use INDEX counters
+## and the corrected signs; the consuming-seam refusal gets its own pair
+## (stale flag blocks advance; dispositioned flag passes); the pre-commit
+## arc-shape check goes red on a hand-mangled arc file. Build conduct: the
+## contract v3's N10 line binds every new row here.
 
-## Non-dated external events (A9 — the residual, named)
+## Write-set (r2-completed)
 
-Walk 4's letters/decisions land in v1 as operator/desk-noticed events
-recorded via `arc advance` under the operator-judged exit spelling; intake
-OBSERVERS for undated events are NOT built. Re-open: the pilot's first
-walk-4-shaped arc, or the D-8 external blocker type's first arc-side use.
+arcs.py (new, incl. the arc renderer + `arc status`), items.py (shared
+slot machinery — N1), cli.py, verbs.py, declaration.py (kinds +
+carrier_homes reach), refusals.py, firelog.py (arc events), retire.py
+(growth reader, astra-a7), migrate.py, plugin/hooks/pre-commit
+(astra-a6), test_arcs.py, test_verbs.py (the derived table),
+test_declaration.py, .claude/lifecycle.json, arcs/INDEX.md (created by
+first open). Collisions: the JOIN orders file-granular lanes; the
+cross-repo hazard above is the desk's (N7).
 
-## Integration rulings (carried in the CARRIER now, not only here — A7 done:
-## lc-225 blocked on lc-231, lc-226 amended, 2026-09-19)
-
-lc-225's readout home = the arc yield slot for arc-carried work; multi-arc
-ordering deferred to the computable second-arc event; lc-226's fill reads
-the arc goal where one exists.
-
-## Red-first arrangements (each asserts CARRIER state, never a print — AA2)
-
-open-without-attribution refuses / with passes. Unknown-command exit
-predicate → BROKEN. Premise kill → citing beliefs' lines carry
-`status: re-derive` ON DISK (plant: two-belief chain; control: leaf-kill
-leaves the other untouched). Close without the runbook slot → refuses;
-with `declined <reason>` → passes (the slot demands the statement).
-Conservation SHORT and OVER as above. Deadline retire → the lane row is
-GONE from the declaration (plant: advance past the stage; control: an
-unrelated lane survives). `premises: NONE RECORDED` renders on empty;
-missing section is a shape finding, distinct.
-
-## Stop/yield
-
-Arcs optional, per-arc, zero-arc repos untouched. v1 = the two kinds +
-verbs + ONE pilot arc (the lc-239 beat-1 repo, shared per that entry's
-DERIVED note). No auto-instantiation, no ordering, verdict-capture ships
-as the `arc verdict` seam but its mechanized consumption stays out. YIELD =
-the pilot's kill-test result + kink harvest + the close slot's first real
-fill. STOP = two kill-test failures (above), or the pilot's kink harvest
-returning a redesign-class finding — either returns to the operator via
-the lc-239 gate, shared.
-
-## Write-set (the build wave's boundary — completed per A12/astra)
-
-arcs.py (new), grammar.py (arc blocks reuse render_block — ONE spelling of
-the on-disk shape, A12), cli.py, verbs.py (shared seams), declaration.py
-(two kind registrations + carrier_homes reach + structure line),
-refusals.py (the rows above), firelog.py (arc events, A3), migrate.py
-(version participation), test/test_arcs.py (new), test/test_verbs.py (the
-derived dispatch table moves with the tuple), test/test_declaration.py,
-.claude/lifecycle.json (both kinds). Collisions with the contract build
-and W1 are the JOIN's to order at booking — named here, decided there
-(W-1's lesson: the join computes, the desk does not assert).
+## Stop/yield (v2's, unchanged in substance; the always-on line moved to
+## the wave doc's single inventory per B6 — the arc status block's delta
+## is stated THERE, per open arc, bounded by the flow alarm above).
