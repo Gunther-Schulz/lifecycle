@@ -1003,3 +1003,124 @@ commit until repaired.
 
 **Horizons:** this desk arms a recurring ~30 min artifact watch; no work
 before the operator-confirmation ack.
+
+## Addendum 8 — wave B close (2026-09-19, executing desk cachyos-setup-c8)
+
+**The bundle is CLOSED.** lc-175 and lc-179 both DONE, each in two acts per
+lc-218's MUST-NOT-BUILD, both declared repos carried from floor 4 to floor 6
+in two numbered bumps. Base `e188955` → `7083345`, 18 commits, all pushed,
+tree clean.
+
+**BUILD COUNT — 3 builds, and the third is the wave's own repair.**
+lc-175 (`ae164bc` + bump `370e24e`, closed `6dff400`); lc-179 (`b0cc4bc` +
+bump `bcbd2bf`, closed `aab992d`); the three-doors repair (`fa6ea7e`),
+which carries no entry of its own — the intake gate correctly refused to
+book work this session could dissolve, and the repair is recorded instead
+by forward pointers on both closed bodies (`cdc5660`, `8b6629f`) and by
+this line. Beside them: one regrade (lc-52, dead premise → residue, PARKED),
+four carrier amendments, two directive round inputs, one prove-rows
+hardening.
+
+**RULINGS vs DRIFT.** Six rulings issued by the driving desk, **one
+REVERSED — and reversed by the repo's own mechanism rather than by a
+party**: the ruling to book the repair item first met
+`new_without_absence`, whose text says an absence this session can
+dissolve is the next step in an absence's costume. The executing desk
+refused to invent one and reported back; the ruling was withdrawn. What
+that completes is worth its own line: in one day the refusal machinery has
+now corrected a sonnet lane, two opus desks, the operator's own stale
+directive clause, and a fable judgment desk's explicit ruling — every seat
+in the hierarchy out-ruled by the environment at least once, each time
+correctly, each time with the refused party agreeing on inspection. That
+is grounded autonomy's floor working against its own designers.
+**DRIFT: three dead premises found and corrected** — lc-175's and lc-179's
+shared "lc-168 is the wave that carries this slot" (that item closed
+carrying something else), and lc-52's "carrier verbs write no
+Co-Authored-By trailer" (false since `attribution_block` shipped; the
+residue is that nothing sets the var by default).
+
+**THE WAVE'S OWN BEST FINDING is a mechanism's first real consumer
+refuting it within the hour.** The authorized dogfood — persisting lc-52's
+derivability statement through the feature built two commits earlier —
+found that BOTH new slots were written at ONE door of three: `item add`
+persisted, `item park` validated and dropped, `item amend` refused.
+`_check_blocker` is reached by all three and all three DEMAND the value.
+The mechanism is the docstring of the function its author was editing:
+"a per-verb check would have covered exactly the verbs somebody
+remembered" — and the persistence was then written per-verb, by an author
+who had just read that sentence. The count's UNSTATED bucket had been
+conflating *never stated* with *stated at a door that discards it*, which
+is the exact conflation lc-179 exists to end, reintroduced one layer up
+and invisible because both render as the same number. Found at the effect
+site, before any user paid for it.
+
+**TWO MORE CORRECTIONS THE REPO MADE TO THE DESK**, both during that
+repair: `cli.py` GENERATES amend's flags from `AMEND_FLAGS`, so admitting
+the slots made the explicit registrations a duplicate-flag crash (the
+generated form is correct — a flag the parser accepts and the verb ignores
+is silent by construction); and `amended-<slot>:` over a slot the block
+does not carry is refused as "an addition wearing a correction's clothes".
+The desk had assumed the resolver would simply put an amended-only value
+in force. It does not, rightly — so the doors now split by what the block
+ALREADY HAS, computed from disk: present, a genuine correction travels as
+an amendment with the superseded text retained; absent, the base line is
+inserted and no amendment is written.
+
+**THE WAVE'S ONLY FUTURE-TENSE CLAIM WAS CASHED.** lc-175 act 2 found
+`test_the_flag_is_the_callers_claim_and_a_mismatch_refuses` riding the
+`schema_above_floor` branch while its name and docstring described the
+MISMATCH branch — passing for a reason nobody planted, for four schema
+versions. Repaired by DERIVING its number from `SCHEMA_FLOOR` on the
+explicit claim that it could not silently re-branch at the next bump.
+lc-179's 5→6 bump was that next bump: it did not move, and still exercises
+the mismatch. A restated literal would have re-branched twice in one day.
+It was not repaired back to green with a bigger literal, which would have
+converted a live finding into a silenced instrument.
+
+**Named, so they are not lost:** the lc-239 INVARIANT amendment (the floor
+is re-derived, never cited from the slot — re-treating that entry's own
+disease with a fresh digit would have been paraphrase-drift applied to its
+correction); the lc-238 done-criterion re-anchor from a pinned floor number
+to a run-time predicate, a check-that-stopped-testing caught ONE DAY after
+its pin was written; the dated derivability value, because *undated it
+silently becomes a claim about today*; finding (k) reproduced and handled
+by pathspec against the desk's own live red-first tests (lc-41's absorption
+with both roles at one desk); and the `item slots` rendering repair, found
+while building — the verb printed only the fixed run and would have hidden
+every conditional record from the pickup instrument both entries mandate.
+
+**LAW 25, both bumps, with a pre-registered criterion.** Eight of the ten
+declared repos sit at schema 2 and cannot come back clean — their
+migration is lc-239 — so a repo blocked for lc-239's reasons and one
+blocked by a bump render identically. Criterion, ratified before the first
+run: the two at-floor repos plan exactly the stamp change and read back;
+each of the eight returns its BASELINE blockage UNCHANGED. Four runs (two
+per bump), each delta EMPTY. **NO-WRITE proven at the effect site** by
+hashing every repo's working tree before and after every run — not by
+trusting the words "dry run" — which is what lc-239's live-copy
+MUST-NOT-MOVE requires. New fact recorded on that entry: **skill-craft
+also answers COULD NOT VERIFY**, not only dispatch-guards, so two of the
+eight need more than a stamp.
+
+**FINAL STATE, verified at this desk.** Suite **816** pass / 0 fail / 0
+skip (pre-wave baseline 799). Roster **116** rows, 116 passed, 0
+could-not-verify (baseline 114). prove-rows **96 of 116** with a recorded
+mutation (baseline 94), unproven list **20 — its pre-wave baseline**: the
+wave added two refusal rows and grew the unproven bucket by zero, each new
+mutation verified to darken exactly one row rather than both behind a
+shared gate. `capture_dominated` remains the one pre-existing COULD NOT
+VERIFY (lc-197), untouched. `kind check` CLEAN at 26. Conservation CLEAN
+at 240 (125 live + 115 done). `item ratio` CLEAN at 2.02:1. **`item check`
+exits 2 on the eight pre-existing `blocker_softlock` chains — identical to
+the pre-wave baseline, which is the delta this gate is read against rather
+than a green it never had** (addendum 7's "item check CLEAN" compressed a
+clean shape line into a clean verb verdict; corrected here).
+The two new counts read `0 exercised / 8 UNEXERCISED` and `1 with a
+derivability statement / 25 UNSTATED` — the second moved by the dogfood,
+which is the repair's own end-to-end proof on the real carrier.
+
+**Residue, recorded not carried:** `item close --reason` doubles the date
+when the reason text opens with one (cosmetic, pre-existing — lc-176's
+closed body shows it too); eight `blocker_softlock` chains stand unchanged;
+lc-52 is PARKED on the env-default decision, which is the round's or the
+driving desk's.
