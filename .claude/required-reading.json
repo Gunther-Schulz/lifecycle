@@ -1,11 +1,13 @@
 {
   "required": [
     "docs/the-loop.md",
-    "docs/answerable-not-felt.md"
+    "docs/answerable-not-felt.md",
+    "docs/purpose.md"
   ],
   "_why": {
     "docs/the-loop.md": "The gap map: every arrow of the session loop with what notices it. Its own closing line is that it is a persisted artifact with reader:session and no read trigger — so nothing fires it, and a context that skips it re-derives gaps already enumerated there. This roster is that fix.",
-    "docs/answerable-not-felt.md": "The design of record for the groove arc. A context that skips it re-opens decisions the note already settled, and its companion research file records that the note's most distinctive claims are unmeasured — which a reader must know before resting on them."
+    "docs/answerable-not-felt.md": "The design of record for the groove arc. A context that skips it re-opens decisions the note already settled, and its companion research file records that the note's most distinctive claims are unmeasured — which a reader must know before resting on them.",
+    "docs/purpose.md": "The north-star carrier — what lifecycle is BECOMING, as distinct from what it enforces today. Every other roster file describes a gap or a mechanism, and neither says what the gaps are gaps IN: this one carries the goal (a project with a continuous mind, held outside every head that thinks with it), the creed that divides labour between model and environment (interpretation vs presence/demand/independent feedback), the KILL TEST that makes session-independence measurable, and the named conditions that would falsify the whole design. A session that skips it optimizes the wrong quantity. The roster is the floor, and the floor now includes why the repo exists. Operator direction 2026-09-19: this basis holds anytime work happens in here, not only on design-arc work."
   },
   "_not_listed_on_purpose": {
     "CLAUDE.md": "The laws file is already injected by the harness; restating it here would be a second home for one fact.",

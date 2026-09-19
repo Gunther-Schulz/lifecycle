@@ -7,6 +7,28 @@ thing a repo keeps is registered in that repo's
 reader, staleness, exit, **growth**, **trigger**), and a kind with an
 undeclared stage is a checker finding.
 
+## Grounding — read before your first write
+
+**The floor is the reading roster** (`.claude/required-reading.json`),
+and it is ENFORCED: a gate arms on your first write in this repo, so
+this is a fact about what will happen, not a request. It carries
+`docs/the-loop.md` (the gap map), `docs/answerable-not-felt.md` (the
+design of record, whose own header block demands its research companion
+before anything is built on it), and `docs/purpose.md` (the north star —
+a session that skips it optimizes the wrong quantity).
+
+**DESIGN-ARC work** — the decision round, new mechanisms, schema
+changes — grounds additionally in `docs/answerable-not-felt-research.md`
+(it CORRECTS the design doc's central framing rather than confirming
+it), the decision round's agenda in
+`docs/directives/2026-09-19-answerable-arc-decision-round.md` addendum 5,
+and the audits that agenda cites.
+
+**Everything else is found, not listed.** `kind list --digest` is the
+index: one line per kind, home and newest member. This block is a
+pointer, never a second corpus — a list that grows here is one nobody
+reads.
+
 **Growth is controlled by FLOW, never by size (R22).** The sixth stage takes
 one of `bounded-by-exit` / `compacted` / `unbounded-with-reason`, and the
 alarm is a kind that GREW WITHOUT AN EXIT EVENT — whatever its count. There
@@ -312,11 +334,17 @@ does not say.
   is labelled PROSE-REST with its reason and is never deleted to make
   the roster green.
 - **The leak scan runs before the irreversible boundary.**
-  `tools/absence-scan.mjs` is armed as this repo's pre-push hook
-  (`tools/git-hooks/pre-push`, symlinked into `.git/hooks/`) from the
-  repo's first commit, because this repo is where workflow templates
-  extracted from PRIVATE repos will land. No template is extracted
-  until that hook exists.
+  `tools/absence-scan.mjs` runs on every push, because this repo is
+  where workflow templates extracted from PRIVATE repos will land.
+  THE ROUTE IS THE MACHINE-WIDE HOOKS PATH, not this repo's own files:
+  `core.hooksPath` points at the dotfiles hooks directory, and a set
+  `core.hooksPath` overrides `.git/hooks` entirely — so
+  `tools/git-hooks/pre-push` and the `.git/hooks` symlink to it both
+  exist and are currently UNREACHABLE. The effect is real and verified;
+  the wiring this file used to claim was not the live one. Whether this
+  repo should carry its own reachable wiring rather than depend on a
+  machine-wide path is finding (i) on the decision round's agenda and is
+  deliberately still open.
 - **Nothing crosses the seam.** Templates carry no project
   identifiers upward; a repo file declares and never restates
   downward.
