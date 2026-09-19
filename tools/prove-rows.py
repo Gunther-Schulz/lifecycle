@@ -1032,6 +1032,75 @@ MUTATIONS = [
      "    if not found:\n        return",
      "    if True:\n        return",
      "the test that this repo has investigation records to govern at all"),
+
+    # lc-231k, THE ARC FAMILY. Five rows landed with their admission PAIRS
+    # and no arrangements here, which is the gap this block closes: the pair
+    # proves the row fires on its plant and stays quiet on its control, and
+    # that is a different claim from "the row is reading the condition the
+    # code names". A row can satisfy its pair while its verdict comes from
+    # somewhere else entirely — `amend_nothing_to_amend` is the live
+    # specimen, passing its pair and reading a branch its arrangement does
+    # not name.
+    #
+    # TWO OF THE FIVE DO NOT TAKE `if False:`, and the reason is law 4 as
+    # this tool's own header states it: a crash is not a red. Each is noted
+    # at its entry.
+
+    # THE MISSING-SLOT ARM ONLY. The duplicate-slot and narrowing-form arms
+    # are SECOND firing inputs of this same refusal and stay live under the
+    # mutation — folding the whole parser would darken the row by breaking
+    # everything it reads, which proves the parser runs and not that this
+    # row reads this arm.
+    ("arc_shape", "arcs.py",
+     "    missing = [s for s in ARC_SLOTS if s not in slots]\n    if missing:",
+     "    missing = [s for s in ARC_SLOTS if s not in slots]\n    if False:",
+     "the missing-slot arm of the arc body parser — a body with no `yield:` "
+     "then parses clean, which is the undeclared-stage shape at arc scale"),
+
+    ("arc_exists", "verbs.py",
+     "    if live.exists():",
+     "    if False:",
+     "`arc open`'s test that the slug is not already live — the second open "
+     "then OVERWRITES a live narrowing and answers CLEAN, which is the "
+     "silent loss this row exists to refuse"),
+
+    # NOT `if False:`. The guard is what stops the next line reading a file
+    # that is not there, so folding it raises FileNotFoundError and the arm
+    # crashes instead of answering. The defect this row catches is the
+    # ABSENCE folding into CLEAN — a close over nothing reporting as a
+    # successful close — so that is the mutation, and the arm still returns
+    # a verdict.
+    ("unknown_arc", "verbs.py",
+     "    if not live.exists():\n"
+     "        out(f\"FINDING [unknown_arc] no live arc {slug!r} in \"\n"
+     "            f\"{arcs.ARCS_DIR}/. A closed arc is not re-closable and a "
+     "slug \"\n"
+     "            \"that was never opened has nothing to move.\")\n"
+     "        return exits.FINDING",
+     "    if not live.exists():\n"
+     "        return exits.CLEAN",
+     "the `arc close` test that there is a live body to move — the absence "
+     "then folds into CLEAN and a close over nothing reports as a close"),
+
+    ("arc_conservation", "verbs.py",
+     "    if not cons.ok:\n"
+     "        out(f\"FINDING [arc_conservation] {cons.message}\")\n"
+     "        return exits.FINDING",
+     "    if False:\n"
+     "        out(f\"FINDING [arc_conservation] {cons.message}\")\n"
+     "        return exits.FINDING",
+     "`arc status`'s identity between the index and the homes — a body that "
+     "left by a path that is not a closure then reports clean, which is the "
+     "loss side going unannounced"),
+
+    ("arc_undispositioned", "verbs.py",
+     "    pending = arcs.undispositioned(live.read_text(encoding=\"utf-8\"))\n"
+     "    if pending:",
+     "    pending = arcs.undispositioned(live.read_text(encoding=\"utf-8\"))\n"
+     "    if False:",
+     "the consuming seam for a reopened belief — the close then files a "
+     "doubt as a settled record in the home nobody re-reads, and the reopen "
+     "bought nothing"),
 ]
 
 
