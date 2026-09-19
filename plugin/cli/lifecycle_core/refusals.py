@@ -363,6 +363,42 @@ def _arc_cli_open_then_status() -> Fired:
     return _arc_cli(["arc", "status"], setup=setup)
 
 
+_ARC_BELIEF = ["arc", "belief", "freeze", "--ident", "b1",
+               "--claim", "RHIThread blocks first", "--basis", "11 captures",
+               "--kill", "a capture where GameThread blocks first"]
+
+
+def _arc_cli_close_with_open_flag() -> Fired:
+    """Open, believe, reopen, then try to close — the consuming seam.
+
+    THE PLANT IS THE WHOLE SEQUENCE because the state under test is one no
+    single act produces: a flag exists only after a reopen, and the refusal
+    is about what CLOSE does in its presence.
+    """
+    def setup(repo):
+        _cli_in(repo, _ARC_OPEN)
+        _cli_in(repo, _ARC_BELIEF)
+        _cli_in(repo, ["arc", "reopen", "freeze", "--ident", "b1",
+                       "--reason", "a 12th capture disagrees"])
+    return _arc_cli(["arc", "close", "freeze"], setup=setup)
+
+
+def _arc_cli_close_after_disposition() -> Fired:
+    """THE CONTROL, and it is the arm that decides shippability: a
+    dispositioned flag must let the arc close. Without it the refusal could
+    be 'close never works once a belief was reopened', which would make a
+    reopen a one-way door."""
+    def setup(repo):
+        _cli_in(repo, _ARC_OPEN)
+        _cli_in(repo, _ARC_BELIEF)
+        _cli_in(repo, ["arc", "reopen", "freeze", "--ident", "b1",
+                       "--reason", "a 12th capture disagrees"])
+        _cli_in(repo, ["arc", "disposition", "freeze", "--ident", "b1",
+                       "--how", "re-derived",
+                       "--reason", "re-ran the capture set; b1 holds"])
+    return _arc_cli(["arc", "close", "freeze"], setup=setup)
+
+
 def _arc_cli_after_hand_delete() -> Fired:
     """The body removed by a path that is NOT a closure — the LOSS side.
 
@@ -876,6 +912,16 @@ ROWS = [
         expect=exits.FINDING,
         fire=lambda: _arc_cli_after_hand_delete(),
         control=lambda: _arc_cli_open_then_status(),
+    ),
+    Row(
+        ident="arc_undispositioned",
+        refusal="`arc close` while a belief flagged for re-derivation has no "
+                "disposition — the close files a doubt as a settled record "
+                "in the home nobody re-reads",
+        firing_input="`arc close` after an `arc reopen` with no disposition",
+        expect=exits.FINDING,
+        fire=lambda: _arc_cli_close_with_open_flag(),
+        control=lambda: _arc_cli_close_after_disposition(),
     ),
     Row(
         ident="arc_shape",

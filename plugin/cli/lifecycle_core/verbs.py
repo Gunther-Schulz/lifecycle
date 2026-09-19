@@ -3390,6 +3390,27 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
             "that was never opened has nothing to move.")
         return exits.FINDING
 
+    # THE CONSUMING SEAM (astra-a5). A reopened belief is re-derived, or
+    # accepted stale WITH A REASON, before the arc moves past it. Without
+    # this the flag is an output nobody re-reads and the reopen bought
+    # nothing — the arc closes carrying a claim somebody had already said
+    # was in doubt, and the closed body is the one nobody re-opens.
+    #
+    # CHEAP FOR LEGITIMATE WORK, which is what keeps it law-11 safe: the
+    # disposition is one line, and "accepted stale" with a reason is a
+    # first-class answer rather than a workaround.
+    pending = arcs.undispositioned(live.read_text(encoding="utf-8"))
+    if pending:
+        out(f"FINDING [arc_undispositioned] arc {slug!r} carries "
+            f"{len(pending)} belief(s) flagged for re-derivation and not "
+            f"dispositioned: {', '.join(pending)}. A close moves the body to "
+            "the home nobody re-reads, so closing over an open flag files a "
+            "doubt as a settled record. Answer each with `arc disposition "
+            f"{slug} --ident <id> --how re-derived|accepted-stale --reason "
+            "<why>` — accepted-stale is a real answer and needs only its "
+            "reason.")
+        return exits.FINDING
+
     idx = arcs.read_index(ctx.repo)
     if not idx.ok:
         out(f"COULD NOT VERIFY: {idx.why}, so this close cannot record "
@@ -3423,3 +3444,121 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
     if code != exits.CLEAN:
         return code
     return exits.CLEAN if cons.ok else exits.FINDING
+
+
+def _arc_append(ctx: Ctx, slug: str, line: str, out, msg: str) -> int:
+    """Append one record line to a live arc body and commit it.
+
+    APPEND-ONLY, like every other record this repo keeps: a belief that was
+    reopened and then dispositioned records BOTH acts, because "what did this
+    arc believe and when did it stop" is the question a successor asks and a
+    rewritten line answers neither half.
+    """
+    live, _closed = _arc_paths(ctx, slug)
+    if not live.exists():
+        out(f"FINDING [unknown_arc] no live arc {slug!r} in "
+            f"{arcs.ARCS_DIR}/.")
+        return exits.FINDING
+    text = live.read_text(encoding="utf-8")
+    atomic.write_text(live, text.rstrip("\n") + "\n" + line + "\n",
+                      encoding="utf-8")
+    out(line)
+    return commit_paths(ctx, [live], msg, out, what="the arc record",
+                        stage_new=True)
+
+
+def cmd_arc_premise(args, out, ctx: Ctx) -> int:
+    """Record a premise the arc rests on — the inbox with visible emptiness.
+
+    A PREMISE IS NOT A BELIEF. A belief is the arc's own claim, carrying a
+    basis and a kill-condition; a premise is something the arc TAKES FROM
+    ELSEWHERE and is exposed to. They are separate lines because their
+    staleness differs in kind: a belief dies when its kill-condition fires, a
+    premise dies when the world it came from moves, and folding them would
+    make one staleness rule stand for two.
+    """
+    return _arc_append(
+        ctx, args.slug,
+        f"{arcs.PREMISE_LINE}: {args.ident} {_today()} {args.text.strip()}",
+        out, f"arcs: premise {args.ident} on {args.slug}")
+
+
+def cmd_arc_belief(args, out, ctx: Ctx) -> int:
+    """Record a belief with its BASIS and its KILL-CONDITION.
+
+    BOTH HALVES ARE DEMANDED AT THE DOOR, and that is the whole mechanism: a
+    belief with no basis is the shape the record checker already refuses one
+    carrier over, and one with no kill-condition can never be shown wrong —
+    it would sit in the arc forever, unfalsifiable, wearing a verdict's
+    clothes. The slot demands the STATEMENT and never the answer: "no
+    kill-condition is known" is a legal kill-condition and passes, which is
+    what keeps this from being the over-constraint it exists to avoid.
+    """
+    return _arc_append(
+        ctx, args.slug,
+        f"{arcs.BELIEF_LINE}: {args.ident} {_today()} {args.claim.strip()} "
+        f"| basis: {args.basis.strip()} | kill: {args.kill.strip()}",
+        out, f"arcs: belief {args.ident} on {args.slug}")
+
+
+def cmd_arc_reopen(args, out, ctx: Ctx) -> int:
+    """Reopen a belief — and FLAG EVERY CITER, which is the act's point.
+
+    A REOPEN THAT ONLY PRINTED ITS CITERS would leave the arc free to move
+    past them: the flag would live in an output nobody re-reads, which is the
+    evaporation this carrier exists to stop (astra-a5). So each affected
+    belief gets a LINE, and `arc advance` and `arc close` consult them.
+
+    CROSS-ARC REACH IS DECLARED AND NOT TAKEN: a belief in another arc that
+    cites this one is the operator's to look at, not this verb's to flag.
+    Flagging across the boundary would let one arc's reopen silently stop
+    another's movement, and the desk that would have to dispose of it never
+    asked for the edge.
+    """
+    live, _closed = _arc_paths(ctx, args.slug)
+    if not live.exists():
+        out(f"FINDING [unknown_arc] no live arc {args.slug!r} in "
+            f"{arcs.ARCS_DIR}/.")
+        return exits.FINDING
+    text = live.read_text(encoding="utf-8")
+    known = {r.ident for r in arcs.appended_lines(text)
+             if r.kind == arcs.BELIEF_LINE}
+    if args.ident not in known:
+        out(f"FINDING [unknown_arc] arc {args.slug!r} records no belief "
+            f"{args.ident!r}. Reopening one nothing wrote would create a "
+            "flag over a claim that was never made, and the disposition it "
+            "then demands could never be satisfied honestly.")
+        return exits.FINDING
+
+    affected = [args.ident] + arcs.citers(text, args.ident)
+    reason = args.reason.strip()
+    lines = [f"{arcs.REDERIVE_LINE}: {i} {_today()} "
+             f"{'reopened: ' if i == args.ident else 'cites ' + args.ident + ': '}"
+             f"{reason}" for i in affected]
+    atomic.write_text(live, text.rstrip("\n") + "\n" + "\n".join(lines) + "\n",
+                      encoding="utf-8")
+    for ln in lines:
+        out(ln)
+    out(f"flagged {len(affected)} belief(s) for re-derivation: "
+        + ", ".join(affected)
+        + ". `arc advance` and `arc close` REFUSE until each is dispositioned "
+          "— re-derived, or accepted stale with a reason.")
+    return commit_paths(ctx, [live], f"arcs: reopen {args.ident} on "
+                        f"{args.slug}", out, what="the arc reopen",
+                        stage_new=True)
+
+
+def cmd_arc_disposition(args, out, ctx: Ctx) -> int:
+    """Answer a re-derive flag — the only thing that clears one."""
+    if args.how not in arcs.DISPOSITIONS:
+        out(f"FINDING [arc_shape] `--how {args.how}` is not one of "
+            f"{', '.join(arcs.DISPOSITIONS)}. The vocabulary is closed "
+            "because the flag exists to stop an arc moving past a belief "
+            "nobody re-examined, and an open-ended answer would let 'noted' "
+            "clear it.")
+        return exits.FINDING
+    return _arc_append(
+        ctx, args.slug,
+        f"{arcs.DISPOSITION_LINE}: {args.ident} {_today()} {args.how} "
+        f"{args.reason.strip()}",
+        out, f"arcs: disposition {args.ident} on {args.slug}")

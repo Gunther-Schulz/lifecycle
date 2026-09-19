@@ -528,6 +528,34 @@ def build_parser() -> argparse.ArgumentParser:
     ac = asub.add_parser("close", help="the MOVE: append to the closed home, "
                                        "count it, delete the live body")
     ac.add_argument("slug")
+    ap = asub.add_parser("premise", help="record a premise the arc RESTS ON "
+                                         "— taken from elsewhere, and dying "
+                                         "when that elsewhere moves")
+    ap.add_argument("slug")
+    ap.add_argument("--ident", required=True, dest="ident")
+    ap.add_argument("--text", required=True)
+    ab = asub.add_parser("belief", help="record a belief with its BASIS and "
+                                        "its KILL-CONDITION — both demanded "
+                                        "at the door")
+    ab.add_argument("slug")
+    ab.add_argument("--ident", required=True, dest="ident")
+    ab.add_argument("--claim", required=True)
+    ab.add_argument("--basis", required=True)
+    ab.add_argument("--kill", required=True,
+                    help="what would show this wrong. \"none known\" is a "
+                         "legal answer; silence is not")
+    ar = asub.add_parser("reopen", help="reopen a belief and FLAG EVERY "
+                                        "CITER within this arc")
+    ar.add_argument("slug")
+    ar.add_argument("--ident", required=True, dest="ident")
+    ar.add_argument("--reason", required=True)
+    ad = asub.add_parser("disposition", help="answer a re-derive flag — the "
+                                             "only thing that clears one")
+    ad.add_argument("slug")
+    ad.add_argument("--ident", required=True, dest="ident")
+    ad.add_argument("--how", required=True,
+                    help="re-derived | accepted-stale")
+    ad.add_argument("--reason", required=True)
 
     ks.add_parser("check", help="validate the declaration")
     ks.add_parser("sweep", help="invariant 1: every tracked file resolves to "
@@ -927,6 +955,14 @@ def main(argv=None) -> int:
                 code = verbs.cmd_arc_open(args, out, ctx)
             elif args.arc_action == "status":
                 code = verbs.cmd_arc_status(args, out, ctx)
+            elif args.arc_action == "premise":
+                code = verbs.cmd_arc_premise(args, out, ctx)
+            elif args.arc_action == "belief":
+                code = verbs.cmd_arc_belief(args, out, ctx)
+            elif args.arc_action == "reopen":
+                code = verbs.cmd_arc_reopen(args, out, ctx)
+            elif args.arc_action == "disposition":
+                code = verbs.cmd_arc_disposition(args, out, ctx)
             else:
                 code = verbs.cmd_arc_close(args, out, ctx)
     elif args.verb == "kind":

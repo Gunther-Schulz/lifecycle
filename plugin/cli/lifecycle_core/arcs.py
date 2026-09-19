@@ -66,6 +66,93 @@ ARC_SLOTS = ("goal", "stage", "narrowing", "premises", "beliefs", "yield")
 #: express is exactly the state that contract exists to surface.
 NARROWING_FORMS = ("eliminative", "palette-with-dispositions", "none")
 
+#: APPENDED LINE KINDS — the arc's record, below its fixed slots.
+#:
+#: WHY APPENDED RATHER THAN IN A SLOT, and the constraint is the carrier's
+#: own: a slot value is ONE LINE, and an arc accumulates many beliefs and
+#: many premises. The item carrier already solved this shape — fixed run
+#: first, dated lines appended below — so the arc follows it rather than
+#: inventing a second layout. A reader that knows one knows the other.
+#:
+#: THE FIXED `beliefs:` AND `premises:` SLOTS ARE PROSE, NEVER A COUNT. A
+#: persisted total is the label-over-body class: correct when written and
+#: silently false once the body grows, with arithmetic the only reader that
+#: would notice. So the slots carry the arc's own one-line statement of what
+#: it currently rests on, and anything that needs the NUMBER counts the
+#: lines at read time.
+BELIEF_LINE = "belief"
+PREMISE_LINE = "premise"
+REDERIVE_LINE = "re-derive"
+DISPOSITION_LINE = "disposition"
+APPENDED_LINE_KINDS = (BELIEF_LINE, PREMISE_LINE, REDERIVE_LINE,
+                       DISPOSITION_LINE)
+
+#: How a disposition may answer a re-derive flag. CLOSED: the point of the
+#: flag is that the arc cannot move past a belief nobody re-examined, and an
+#: open-ended answer would let "noted" clear it.
+DISPOSITIONS = ("re-derived", "accepted-stale")
+
+_APPENDED = re.compile(
+    r"^(" + "|".join(APPENDED_LINE_KINDS) + r"):\s*(\S+)\s+(.*)$")
+
+
+@dataclass(frozen=True)
+class Appended:
+    """One appended record line: its kind, the id it concerns, its text."""
+    kind: str
+    ident: str
+    text: str
+
+
+def appended_lines(text: str) -> list:
+    """Every appended record line in one arc body, in file order."""
+    out = []
+    for raw in text.splitlines():
+        m = _APPENDED.match(raw.strip())
+        if m:
+            out.append(Appended(m.group(1), m.group(2), m.group(3).strip()))
+    return out
+
+
+def undispositioned(text: str) -> list:
+    """Belief ids carrying a re-derive flag no disposition has answered.
+
+    THE CONSUMING SEAM (astra-a5). A reopen that only PRINTED its affected
+    beliefs left the arc free to advance past them — the flag existed in an
+    output nobody re-read, which is the same evaporation the carrier exists
+    to stop. So the flag is a LINE, and this is the predicate the movement
+    verbs consult.
+
+    LAST WINS, per id: a belief can be reopened, dispositioned, and reopened
+    again as evidence moves, and only the latest act counts. Reading the
+    first would freeze an arc on a question already answered.
+    """
+    state = {}
+    for rec in appended_lines(text):
+        if rec.kind == REDERIVE_LINE:
+            state[rec.ident] = True
+        elif rec.kind == DISPOSITION_LINE:
+            state[rec.ident] = False
+    return sorted(i for i, flagged in state.items() if flagged)
+
+
+def citers(text: str, belief_id: str) -> list:
+    """Belief ids whose own line NAMES `belief_id` — the propagation set.
+
+    WITHIN-ARC ONLY, AND DECLARED (the design's cross-arc ruling). A belief
+    in another arc, or a carrier item, that cites this one is PRINTED and
+    inboxed rather than auto-flagged: flagging across a boundary would let
+    one arc's reopen silently stop another's movement, and the party that
+    would have to dispose of it never asked for the edge.
+    """
+    out = []
+    for rec in appended_lines(text):
+        if rec.kind != BELIEF_LINE or rec.ident == belief_id:
+            continue
+        if re.search(r"\b" + re.escape(belief_id) + r"\b", rec.text):
+            out.append(rec.ident)
+    return sorted(set(out))
+
 #: The INDEX head counters. `baseline` is the population that existed before
 #: the counters did; `opened` and `closed` are FLOW. Conservation reads
 #: opened − closed against the live bodies, never a stock count against a

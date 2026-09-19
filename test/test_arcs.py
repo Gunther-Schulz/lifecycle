@@ -343,3 +343,140 @@ class ArcShapeAtTheCommitBoundary(unittest.TestCase):
         run("git", "add", "arcs/INDEX.md")
         got = self._hook(repo)
         self.assertEqual(got.returncode, 0, got.stderr)
+
+
+class BeliefsAndPropagation(unittest.TestCase):
+    """Beliefs, premises, and the reopen that flags every citer.
+
+    THE PROPAGATION IS THE MECHANISM, not the record. A reopen that only
+    named its affected beliefs would leave them in an output nobody re-reads
+    — the evaporation this carrier exists to stop — so each affected belief
+    gets a LINE and the movement verbs consult those lines.
+    """
+
+    def _repo(self):
+        from lifecycle_core import refusals
+        r = refusals._Repo()
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    OPEN = ["arc", "open", "freeze", "--goal", "g", "--narrowing",
+            "eliminative"]
+
+    def _body(self, repo):
+        return (repo.dir / "arcs" / "freeze.md").read_text(encoding="utf-8")
+
+    def _seed(self, repo):
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "belief", "freeze", "--ident", "b1",
+                  "--claim", "RHIThread blocks first", "--basis",
+                  "11 captures", "--kill", "a capture showing otherwise")
+        self._run(repo, "arc", "belief", "freeze", "--ident", "b2",
+                  "--claim", "the stall follows b1", "--basis", "derived",
+                  "--kill", "b1 dies")
+
+    def test_a_reopen_flags_the_belief_AND_its_citers(self):
+        repo = self._repo()
+        self._seed(repo)
+        code, outp = self._run(repo, "arc", "reopen", "freeze", "--ident",
+                               "b1", "--reason", "a 12th capture disagrees")
+        self.assertEqual(code, 0, outp)
+        self.assertEqual(arcs.undispositioned(self._body(repo)), ["b1", "b2"])
+
+    def test_a_belief_citing_NOTHING_is_not_dragged_in(self):
+        """The control for propagation: a reopen must not flag the whole arc,
+
+        or the disposition demand becomes noise and the override reflex it
+        would train is what kills a guard (law 11)."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "belief", "freeze", "--ident", "b1",
+                  "--claim", "c", "--basis", "b", "--kill", "k")
+        self._run(repo, "arc", "belief", "freeze", "--ident", "b9",
+                  "--claim", "unrelated", "--basis", "b", "--kill", "k")
+        self._run(repo, "arc", "reopen", "freeze", "--ident", "b1",
+                  "--reason", "r")
+        self.assertEqual(arcs.undispositioned(self._body(repo)), ["b1"])
+
+    def test_a_disposition_clears_the_flag_and_close_then_works(self):
+        repo = self._repo()
+        self._seed(repo)
+        self._run(repo, "arc", "reopen", "freeze", "--ident", "b1",
+                  "--reason", "r")
+        code, outp = self._run(repo, "arc", "close", "freeze")
+        self.assertEqual(code, 2, outp)
+        for ident in ("b1", "b2"):
+            self._run(repo, "arc", "disposition", "freeze", "--ident", ident,
+                      "--how", "accepted-stale", "--reason",
+                      "the arc is closing on other grounds")
+        self.assertEqual(arcs.undispositioned(self._body(repo)), [])
+        code, outp = self._run(repo, "arc", "close", "freeze")
+        self.assertEqual(code, 0, outp)
+
+    def test_LAST_ACT_WINS_so_a_re_reopen_blocks_again(self):
+        """A belief can be reopened, answered, and reopened again as evidence
+
+        moves. Reading the FIRST act would freeze an arc on a question
+        already answered; reading the last is what makes the flag a live
+        state rather than a scar."""
+        repo = self._repo()
+        self._seed(repo)
+        self._run(repo, "arc", "reopen", "freeze", "--ident", "b1",
+                  "--reason", "r1")
+        self._run(repo, "arc", "disposition", "freeze", "--ident", "b1",
+                  "--how", "re-derived", "--reason", "held")
+        self._run(repo, "arc", "disposition", "freeze", "--ident", "b2",
+                  "--how", "re-derived", "--reason", "held")
+        self.assertEqual(arcs.undispositioned(self._body(repo)), [])
+        self._run(repo, "arc", "reopen", "freeze", "--ident", "b1",
+                  "--reason", "r2, new evidence")
+        self.assertIn("b1", arcs.undispositioned(self._body(repo)))
+
+    def test_reopening_a_belief_that_was_never_recorded_REFUSES(self):
+        """A flag over a claim nobody made demands a disposition that cannot
+
+        be satisfied honestly."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        code, outp = self._run(repo, "arc", "reopen", "freeze", "--ident",
+                               "b7", "--reason", "r")
+        self.assertEqual(code, 2, outp)
+        self.assertIn("unknown_arc", outp)
+
+    def test_an_unknown_disposition_word_is_refused(self):
+        repo = self._repo()
+        self._seed(repo)
+        self._run(repo, "arc", "reopen", "freeze", "--ident", "b1",
+                  "--reason", "r")
+        code, outp = self._run(repo, "arc", "disposition", "freeze",
+                               "--ident", "b1", "--how", "noted",
+                               "--reason", "r")
+        self.assertEqual(code, 2, outp)
+        self.assertIn("arc_shape", outp)
+
+    def test_a_premise_is_recorded_apart_from_a_belief(self):
+        """Different staleness in kind: a belief dies when its kill-condition
+
+        fires, a premise when the world it came from moves."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "premise", "freeze", "--ident", "p1",
+                  "--text", "the tracer fires on every frame")
+        kinds = {r.kind for r in arcs.appended_lines(self._body(repo))}
+        self.assertIn(arcs.PREMISE_LINE, kinds)
+        self.assertNotIn(arcs.BELIEF_LINE, kinds)
