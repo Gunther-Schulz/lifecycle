@@ -36,6 +36,17 @@ are no caps here: the `bound` stage and `ready-cap` were both withdrawn in
 the schema wave, because a cap bounds a LABEL and a capped label is escaped
 by relabelling (J9). One schema version per repo, stamped in the declaration;
 a carrier whose `schema:` line does not EQUAL it is a finding.
+**WITH ONE EXEMPTION, AND IT IS A KIND OF CARRIER RATHER THAN A FILE: a
+RECORD home is PINNED at the version it closed at and is never graded
+against the floor.** A closure record's whole value is that it means what it
+meant when it was written — a line only means anything against a fixed
+blob — so a bump that rewrote the archive would destroy the property the
+archive exists for. The exemption is EXECUTABLE and not prose-rest:
+`carrier_homes` names the homes one-schema-per-repo reaches, and a record
+home's ABSENCE from that list is the pin. Live bodies of the same kind are
+NOT exempt and are reached even where their home is a glob — the exclusion
+that used to drop every glob home was protecting the records, and it now
+protects only them.
 
 Design of record: `carrier-rework-design-2026-08-26.md` in
 claude-code-cache-fix (`docs/directives/`), revision 2. Where this

@@ -2001,13 +2001,24 @@ def run_schema(args, out, ctx) -> int:
 
     carrier_changes = []
     for kind, home in decl.carrier_homes(doc).items():
-        n, why = decl.carrier_schema(repo / home)
-        if n is None:
-            out(f"COULD NOT VERIFY: the `{kind}` carrier could not be read for "
-                f"its schema line: {why}.")
-            return exits.COULD_NOT_VERIFY
-        if n != to_n:
-            carrier_changes.append((home, n, to_n))
+        # A HOME MAY BE A GLOB (lc-242), so the plan is per BODY rather than
+        # per home: each body carries its own `schema:` line and the bump has
+        # to name every file it would rewrite. Reporting the glob itself
+        # would print one line for a change landing in N files, which is the
+        # opposite of what a dry run is for.
+        paths = decl.carrier_paths(repo, home)
+        if "*" in home and not paths:
+            continue
+        for path in paths:
+            n, why = decl.carrier_schema(path)
+            where = str(path.relative_to(repo)) \
+                if path.is_relative_to(repo) else str(path)
+            if n is None:
+                out(f"COULD NOT VERIFY: the `{kind}` carrier {where!r} could "
+                    f"not be read for its schema line: {why}.")
+                return exits.COULD_NOT_VERIFY
+            if n != to_n:
+                carrier_changes.append((where, n, to_n))
 
     out(f"declaration changes: {len(changes)}")
     for key, what, why in changes:

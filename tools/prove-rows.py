@@ -632,8 +632,8 @@ MUTATIONS = [
      "rather than a kind nothing reads"),
 
     ("schema_mismatch", "declaration.py",
-     "        if n != declared:",
-     "        if False:",
+     "            if n != declared:",
+     "            if False:",
      "one-schema-per-repo's own comparison — the declaration and its carriers "
      "then disagree silently, and each reader resolves through whichever file "
      "it happened to open"),

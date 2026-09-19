@@ -569,3 +569,99 @@ class TheApplyRewritesTheLineTheReaderFound(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GlobHomedCarrierReach(unittest.TestCase):
+    """A glob-homed LIVE carrier joins one-schema-per-repo; its RECORD home
+    does not (lc-242, arc design N9 / T-a2).
+
+    THE CONTRADICTION THIS RESOLVES. `carrier_homes` dropped every glob home,
+    so a kind whose bodies are `arcs/*.md` sat OUTSIDE one-schema-per-repo
+    silently — neither checked nor declared exempt, which is the worst of the
+    three states because nothing says which it is. Reversing the exclusion
+    wholesale is equally wrong in the other direction: it would make every
+    CLOSED body schema-stamped and a bump would rewrite the archive, which
+    contradicts what a closure record IS.
+
+    SO THE REVERSAL IS FOR THE LIVE HOME ONLY, and the closed home's absence
+    from `carrier_homes` IS the exemption — stated in the law text in the
+    same act, because an exemption living only in code is a rule nobody can
+    read and one living only in prose is a rule nothing enforces.
+    """
+
+    ARCS = {
+        "home": "arcs/*.md",
+        "writer": "verb:arc",
+        "reader": ["session"],
+        "staleness": "beliefs by kill-condition; premises re-ground at pickup",
+        "exit": {"action": "move", "recording-act": "arc close"},
+        "growth": "bounded-by-exit",
+        "trigger": "verb arc",
+    }
+    CLOSED = {
+        "home": "arcs/closed/*.md",
+        "writer": "verb:arc close",
+        "reader": ["session"],
+        "staleness": "none, declared why: closed bodies are record",
+        "exit": {"action": "compact", "recording-act": "arc compact"},
+        "growth": "unbounded-with-reason: accrues at arc-closure rate; "
+                  "retention is the record role",
+        "trigger": "none, declared why: nothing fires on a closed record",
+    }
+
+    def _decl(self):
+        d = json.loads(json.dumps(GOOD_FULL_DECLARATION))
+        d["kinds"]["arcs"] = self.ARCS
+        d["kinds"]["closed arcs"] = self.CLOSED
+        return d
+
+    def _repo(self, live_schema, closed_schema):
+        d = build(declaration=self._decl())
+        (d / "arcs").mkdir()
+        (d / "arcs" / "closed").mkdir()
+        (d / "arcs" / "a1.md").write_text(
+            f"schema: {live_schema}\n\n## goal\nx\n", encoding="utf-8")
+        (d / "arcs" / "closed" / "a0.md").write_text(
+            f"schema: {closed_schema}\n\n## goal\nx\n", encoding="utf-8")
+        return d
+
+    def test_the_LIVE_glob_home_is_reached(self):
+        """A live arc body stamped below the declaration is a finding."""
+        repo = self._repo(decl.SCHEMA_FLOOR - 1, decl.SCHEMA_FLOOR)
+        res = decl.Result(code=0)
+        doc = json.loads(
+            (repo / ".claude" / "lifecycle.json").read_text(encoding="utf-8"))
+        decl.check_schema_agreement(repo, doc, res)
+        rows = [f.row for f in res.findings]
+        self.assertIn("schema_mismatch", rows,
+                      f"the live arc home was not reached: {res.findings}")
+
+    def test_the_CLOSED_home_is_EXEMPT_and_that_is_the_pin(self):
+        """A closed body at an OLD schema is a record pinned at its closing
+        version, never a mismatch. Without this a bump rewrites the archive."""
+        repo = self._repo(decl.SCHEMA_FLOOR, decl.SCHEMA_FLOOR - 1)
+        res = decl.Result(code=0)
+        doc = json.loads(
+            (repo / ".claude" / "lifecycle.json").read_text(encoding="utf-8"))
+        decl.check_schema_agreement(repo, doc, res)
+        self.assertEqual([f.row for f in res.findings], [],
+                         f"a closed record was graded against the floor: "
+                         f"{res.findings}")
+
+    def test_a_matching_live_body_is_clean(self):
+        """The control: the reach must not fire on an agreeing carrier."""
+        repo = self._repo(decl.SCHEMA_FLOOR, decl.SCHEMA_FLOOR)
+        res = decl.Result(code=0)
+        doc = json.loads(
+            (repo / ".claude" / "lifecycle.json").read_text(encoding="utf-8"))
+        decl.check_schema_agreement(repo, doc, res)
+        self.assertEqual([f.row for f in res.findings], [], str(res.findings))
+
+    def test_the_three_existing_carriers_are_unmoved(self):
+        """MUST-NOT-MOVE: a repo declaring no arcs answers exactly as before."""
+        repo = build()
+        doc = json.loads(
+            (repo / ".claude" / "lifecycle.json").read_text(encoding="utf-8"))
+        homes = decl.carrier_homes(doc)
+        self.assertEqual(sorted(homes), ["done bodies", "items",
+                                         "ledger lines"])

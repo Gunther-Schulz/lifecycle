@@ -1955,10 +1955,12 @@ def carrier_homes(doc: dict) -> dict:
     reported success, because the bump resolved homes through the KINDS alone
     while the closure home is named at the top level.
     """
-    def kind_home(kind):
+    def kind_home(kind, *, allow_glob=False):
         body = (doc.get("kinds") or {}).get(kind)
         h = body.get("home") if isinstance(body, dict) else None
-        return h if isinstance(h, str) and h.strip() and "*" not in h else None
+        if not (isinstance(h, str) and h.strip()):
+            return None
+        return h if allow_glob or "*" not in h else None
 
     out = {}
     items_home = kind_home("items")
@@ -1970,7 +1972,51 @@ def carrier_homes(doc: dict) -> dict:
     if closure and "*" not in closure:
         out["done bodies"] = closure
     out["ledger lines"] = kind_home("ledger lines") or "LEDGER.md"
+
+    # THE GLOB EXCLUSION IS REVERSED FOR THE LIVE ARC HOME, AND ONLY IT
+    # (lc-242; arc design N9/T-a2). A kind whose bodies are `arcs/*.md` sat
+    # OUTSIDE one-schema-per-repo silently — neither checked nor declared
+    # exempt, which is the worst of the three states because nothing said
+    # which it was.
+    #
+    # WHAT THE EXCLUSION PROTECTED, now explicit instead of implicit in a
+    # parse-time guard: it kept CLOSURE RECORDS out of the rewrite path.
+    # Reversing it wholesale would make every closed body schema-stamped and
+    # a bump would rewrite the archive — which contradicts what a closure
+    # record IS. So `closed arcs` is deliberately NOT here, and its ABSENCE
+    # is the pin: a closed body keeps the schema it closed at, and nothing
+    # grades it against the floor. The law text carries the same exemption in
+    # the same versioned act, because an exemption living only in code is a
+    # rule nobody can read and one living only in prose is a rule nothing
+    # enforces.
+    #
+    # NAMED RATHER THAN INFERRED. The kinds this function watches are a
+    # declared list — it already names items, done bodies and ledger lines —
+    # and deriving "is this a record kind?" from a stage's prose would be a
+    # heuristic over text somebody writes freely. A kind joins this list by
+    # being added to it, visibly.
+    arcs_home = kind_home("arcs", allow_glob=True)
+    if arcs_home:
+        out["arcs"] = arcs_home
     return out
+
+
+def carrier_paths(repo: Path, home: str) -> list:
+    """Every concrete file a carrier home names, in a stable order.
+
+    A HOME MAY BE A GLOB (lc-242), and before that was possible every caller
+    could treat `repo / home` as one file. A glob home is N bodies, each
+    carrying its own `schema:` line, so the expansion happens HERE — once —
+    rather than in each consumer: two expansions would disagree about
+    ordering or about what an absent directory means, and the disagreement
+    would be silent.
+
+    SORTED, because callers report per file and an unstable order makes two
+    runs over one tree read as two different answers.
+    """
+    if "*" not in home:
+        return [repo / home]
+    return sorted(repo.glob(home))
 
 
 def schema_head(text: str, name: str = "the carrier"):
@@ -2051,21 +2097,34 @@ def check_schema_agreement(repo: Path, doc: dict, res: Result) -> None:
     if not isinstance(declared, int) or isinstance(declared, bool):
         return
     for kind, home in carrier_homes(doc).items():
-        n, why = carrier_schema(repo / home)
-        if n is None:
-            res.cannot_verify(
-                f"the `{kind}` carrier's schema line could not be read, so "
-                f"one-schema-per-repo was not checked for it: {why}.")
+        paths = carrier_paths(repo, home)
+        if "*" in home and not paths:
+            # A GLOB MATCHING NOTHING IS NOT A CLEAN ANSWER and is not a
+            # finding either: the kind is declared and has no bodies yet,
+            # which is the ordinary state of an optional carrier before its
+            # first instance. Silence here would read as "checked and
+            # agreeing" over a population that was never examined.
             continue
-        if n != declared:
-            res.add("schema_mismatch",
-                    f"the declaration is stamped schema {declared} and the "
-                    f"`{kind}` carrier {home!r} is stamped {n}. ONE schema "
-                    "version per repo (§3.8c): one number, one command per "
-                    "bump. Two numbers for one fact diverge from the moment "
-                    "they disagree, and each reader resolves through "
-                    "whichever it opened. Run `lifecycle migrate "
-                    f"--schema-from {min(n, declared)}`.")
+        for path in paths:
+            n, why = carrier_schema(path)
+            where = str(path.relative_to(repo)) if path.is_relative_to(repo) \
+                else str(path)
+            if n is None:
+                res.cannot_verify(
+                    f"the `{kind}` carrier {where!r} could not be read for "
+                    f"its schema line, so one-schema-per-repo was not "
+                    f"checked for it: {why}.")
+                continue
+            if n != declared:
+                res.add("schema_mismatch",
+                        f"the declaration is stamped schema {declared} and "
+                        f"the `{kind}` carrier {where!r} is stamped {n}. ONE "
+                        "schema "
+                        "version per repo (§3.8c): one number, one command "
+                        "per bump. Two numbers for one fact diverge from the "
+                        "moment they disagree, and each reader resolves "
+                        "through whichever it opened. Run `lifecycle migrate "
+                        f"--schema-from {min(n, declared)}`.")
 
 
 def check_lanes_registered(repo: Path, declared, res: Result) -> None:
