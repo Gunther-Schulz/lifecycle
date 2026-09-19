@@ -1,13 +1,11 @@
-# Design v3: the registered-closed-vocabulary contract (D-3; D-7 rev.; D-8; D-10 deferred)
+# Design v4: the registered-closed-vocabulary contract (D-3; D-7 rev.; D-8; D-10 deferred)
 
-**Round desk, 2026-09-19, THIRD LOCK. v2's attack pass (opus r2: 10
+**Round desk, 2026-09-19, FOURTH LOCK — pass 3 (opus verification: 34/42 discharged; terra recovery) integrated; finding ids resolve in docs/audits/2026-09-19-design-attack-r1.md and -r2-pass3.md (NIT1 discharged by landing them). v2's attack pass (opus r2: 10
 blocking/11 notable/2 nit; astra r2: source-backed convergents + uniques)
 concentrated entirely in realization detail — zero findings against any
 decision or mechanism core, eight v2 repairs verified held on their own
-claims. Every v3 repair cites its finding. v1/v2 in git. Citations: finding
-ids resolve in the attack transcripts (this desk's booked lane reports;
-condensations in the round desk's scratchpad) and docs/2026-09-19-round-
-decisions.md (NIT1).**
+claims. Every repair cites its finding; ids resolve in the two landed
+audits files and docs/2026-09-19-round-decisions.md. v1-v3 in git.**
 
 ## The mechanism (intent unchanged)
 
@@ -22,8 +20,12 @@ contact. The BLOCKER slot stays exempt (V4), and the exemption now BUYS
 something (B9): when `blocker_untyped` fires, the refusal path writes a
 fire-log event carrying the row name in the detail field (firelog's
 existing optional detail — verbs.py + firelog.py in P4's write-set), so
-refusals-where-no-type-fit are countable from the log, and the widening
-signal for the exempt vocabulary is a recorded event, not memory.
+refusals-where-no-type-fit are countable from the log. **Scope, stated
+(FF-1): the fire log is machine-local and best-effort (a lost write is
+silent, firelog.py:19-23), so this count is a FLOOR on one machine, never
+a census — the durable half of the signal is the refusal text at the desk
+that met it. A widening decision cites the floor; it never treats it as
+the population.**
 
 ## The OOV lifecycle, computable end to end (astra-c3, V8)
 
@@ -31,10 +33,13 @@ An OOV instance is a dated line in a carrier slot. It LEAVES the count by
 being amended away (re-typed to a real member once one exists, or its slot
 corrected) — so **the count IS the dispositions-owed figure**: `item check`
 prints "N cannot-express, oldest <date>", and zero means drained. The
-drain act is a desk act whose trigger is the printed age — the repo's
-existing banner-prints-pass-owed pattern, no new review pass, no retire.py
-claim (astra-c3: retire.py consumes fire-log exit events, not this line —
-the v2 sentence claiming it is deleted).
+drain act is a desk act whose trigger is the printed age, **and its RECORD
+is a ledger line written by the session that runs the pass (T-c2/T-w1:
+the pass-owed print is today an instruction with no pass record — the
+ledger verb is the existing recorder, so a graded pass IS its ledger
+line, no new mechanism). Rate decoupled (FF-5): the print fires only
+above the 3:1 tripwire (2.00:1 live), so dispositions are ALSO graded at
+any kaemmung or close pass — the trigger is whichever arrives first.**
 
 ## Parts
 
@@ -49,7 +54,10 @@ OOV consequence stated (N11): `census()` gains an explicit
 docstring protects, printed on its own; `item ready` renders an OOV-graded
 item as unschedulable-with-reason; the move refuses it (a grade must be a
 real member at close). Roster row: OOV value through each registration's
-proof path, output distinct from every member (V6/AV1).
+proof path, output distinct from every member (V6/AV1). **Write-set also
+carries verbs.py (N11-new-defect: the `item ready` unschedulable-with-reason
+rendering realizes in cmd_item_ready — the repair's own added claim gets
+law 24's resolution).**
 
 **P2 — ONE invalid-state partition (V5, f1, N4).** The classifier is
 extracted from `_check_reader_when` and consumed by both instruments;
@@ -59,15 +67,22 @@ legitimate default across all 26 kinds — and only a PRESENT, invalid
 `none` without why, prefixed-reader-with-`when`). The prefixed case is
 also the live repair: read_moments checks the partition BEFORE executing
 anything (the marker-file hole both arms reproduced). Red-first: the
-**SEVEN-case agreement test (N3 — v2 said nine; 3 probes + 4 enumerated
-disagreements = 7)** plus the six existing controls, asserting both
+**SEVEN-case agreement test, addends enumerated (N3, FF-6): r3's three
+probes (verb-mode when; mode-without-command; pure-prose when) plus the
+four r2 disagreement cases (non-string when; none-without-why;
+prefixed-reader-with-when; mode-without-command at the CHECKER side)** plus the six existing controls, asserting both
 instruments return the same classification for every input.
 
 **P3 — census third bucket, forward-only door stamp (D-7 rev.).** The
 stamp is written by the door for **`evidence`-kind blockers ONLY (B2 — the
 slot rule's own type predicate, stated: `BLOCKER_SLOT_RULES` already keys
 blocker-exercise to evidence, and the stamp follows the same key, so a
-later re-type to `external` cannot strand a misplaced stamp)**. Population
+later re-type to `external` cannot strand a misplaced stamp)**. **The stamp's carrier form is the EXISTING slot: `blocker-exercise:
+none-yet <date>` (T-c1 — slot name, serialization and reader are lc-175's
+machinery, nothing new); a re-type evidence→external REMOVES the stamp in
+the SAME amendment (the re-typing door owns the clear), red-first: stamped
+evidence fixture → re-typed external → zero blocker_exercise_misplaced.**
+Population
 figures are **DERIVED at build from `blocker_slot_census`, never restated
 (B1 — the v2 "0/0/8" was falsified by this desk's own re-park ten minutes
 before the lock; the persisted-count class, recorded)**. Write-set:
