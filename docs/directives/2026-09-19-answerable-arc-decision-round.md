@@ -340,6 +340,189 @@ the rule applies to the list of things the round must decide as much as
 to anything else. Nothing here is new work; it is the arc's findings
 given a home the round will actually read.
 
+**EXTENDED at the executing desk `cachyos-setup-36`, 2026-09-19, at the
+wave B seam** — findings (i)-(l), two input documents, and the round's
+own frame and execution shape, all relayed from the driving desk
+`cachyos-setup-b3` where the operator stated them first-hand. Landed as
+ONE edit before this desk hands the bundle to a successor, for the same
+reason the addendum exists at all: an agenda that lives in a channel
+dies with the session holding it.
+
+---
+
+## THE ROUND'S ORGANIZING FRAME — draw the map first, place every input in it
+
+**Operator direction 2026-09-19, filled out at the driving desk; DERIVED
+placement.** The round OPENS by drawing the pieces-and-seams map and
+placing every input into it, rather than deciding eleven findings
+piecemeal.
+
+1. **The per-piece half is built.** The seven stages, plus lc-224's
+   reader moments, govern each kind's own lifecycle.
+2. **The missing half is the EDGES** — the inter-piece judgment moments:
+   a find → book; a decision → ledger; a journey with no map →
+   runbook-or-declined; a probe used twice → tool; about-to-believe →
+   validation read; a flat series → question the instrument; a recurring
+   operator question → disposition; and always, goal → next step. Each
+   owes FOUR parts: an observable TRIGGER, a QUESTION posed with the
+   relevant state in front, a TYPED SLOT with closed vocabulary whose
+   absence is computable, and the slot's own NEXT STEP so nothing
+   terminates in prose.
+3. **The invariant generalized, which is what makes it checkable:**
+   every persisted thing resolves to a registered kind AND **every
+   judgment moment resolves to a registered seam** — a moment with no
+   seam is a finding. Every input this round holds, the (a)-(l) family
+   and the extract's five requirements and the tracer incident alike, is
+   an instance of that one sentence.
+4. **The map is DATA, never a document** — edges declared in the
+   declaration, `audit` walking the graph and failing on a dangling
+   edge, the banner rendering position from it. A map with
+   `reader: session` and no trigger is the-loop.md's own confessed
+   limit rebuilt one level up, and must not be.
+
+Judgment stays free INSIDE the seams: the frame schedules questions and
+never answers them. **The item→done move is the worked example of a
+complete edge, and the standard every new edge is graded against.**
+
+## HOW THE ROUND EXECUTES — statiker-shaped, five forcing points
+
+**Operator direction 2026-09-19.** By hand at the desk pair; the
+operator may invoke the statiker skill proper in the round session, and
+the shape binds either way.
+
+1. **MAP FIRST, as data** — every piece, every edge with
+   trigger/question/slot/next-step, and a status per edge (built /
+   partial / missing / declined-with-reason). All findings and the
+   extract's requirements are placed as edge statuses BEFORE any
+   decision is taken.
+2. **DECISION ROUND over the map** — each decision ledgered with its
+   basis; declines are first-class.
+3. **DESIGN each chosen mechanism to the dispatchable stop** —
+   decision-complete, write-set named, red-first stated, three answers,
+   observer named. Zero design freedom left for a builder.
+4. **FRESH-CONTEXT ATTACK on the locked design, before any build** — a
+   review-tier arm plus the certified additive codex attack arm. Attack
+   lenses PRE-REGISTERED: dangling edges; over-constraint against the
+   model's own default (the measured skill-craft ceiling); lc-222's
+   erosion bound gating always-on additions; and each borrowed
+   tradition's documented degenerate form, using the VERIFIED ones from
+   the framework mapping as attack questions and the PARAMETRIC ones
+   only as prompts.
+5. **NO-DESIGN implementation in write-set waves**, isolated executed
+   verify, then the two gates IN ORDER — mechanical before effect, the
+   design doc's own rule — against its pre-registered kill conditions.
+
+Robustness is judged computably: `audit` walks the map for dangling
+edges; every mechanism goes red-first on its real defect; and every
+mechanism names its own degenerate form at design time, with a detector.
+
+**The arc's thesis, operator first-hand:** statiker and daneel prove the
+special case — an explicit path plus a forced record yields autonomous
+completion. Lifecycle is that machine with the path DECLARED instead of
+hardcoded, the forcing points in the SCHEMA instead of a protocol, and
+the state surviving sessions.
+
+## DECIDE–RECORD–PROCEED, with junctions only at crucial milestones
+
+**Operator first-hand 2026-09-19; DERIVED placement.** Decisions are
+made transparent by the process but made WITHOUT WAITING. The operator
+trusts the system's decisions and intervenes to disagree or redirect —
+their stated reason statiker works. Junction points exist only for
+crucial milestones. The Marvel session's defect was posing questions it
+could have answered itself, either by LOOKING (the investigation derives
+it) or by JUDGING (a variant is clearly best given what is known, or
+known after looking).
+
+**This principle already exists in the operator corpus** —
+derivable-preference delegation, the ratification-ask test, the seam
+digest, the carve-out floor as the junction set — so the round's job is
+NOT minting it but making it ENVIRONMENTAL. The decision seam's typed
+slot forces every would-be operator question through three exits:
+
+1. **answerable by LOOKING** → the look is the next act;
+2. **answerable by JUDGING** → decided, recorded with its basis and
+   derivability reading, proceed, surfaced in the digest;
+3. **a genuine junction** (underivable intent, taste, carve-out) →
+   waits, and is rare by construction.
+
+lc-169's derivability statement is exit 2's existing slot half; finding
+(c)'s missing blocker type is exit 3's; lc-161's decision-absorption
+metric is the trust trajectory this flow feeds, where the operator's
+intervention rate on exit-2 decisions IS the calibration signal.
+
+## TWO-STAGE RETRIEVAL — the presence leg
+
+**Operator first-hand 2026-09-19, with a worked specimen; DERIVED
+consequences.** Not every session ingesting everything, but an INDEX
+whose entry ("a tool exists that relates to my task") triggers the LOOK.
+The look supplies both the pattern and the recorded prior decision; the
+model's own relevance judgment does the matching; the environment only
+keeps the index in view.
+
+**The specimen:** the Marvel arc built tool one auto-starting with the
+game, an operator taste ruling stated once. Tool two was then built NOT
+auto-starting — *"made no sense… it never looked; it didn't even need my
+prior decision — if it had looked at the existing tool, judgment would
+have been pretty clear."*
+
+**The operator's own naming of the mechanism:** *"like MCP or skills:
+they carry descriptions, not the whole corpus, and get loaded when
+relevant."* Three DERIVED consequences:
+
+- **An index entry IS a skill description**, and description quality has
+  an existing eval discipline — skill-craft's Tier-1 triggering evals
+  (blind router simulation, under/over-trigger grading) transfer
+  directly. The round inherits an INSTRUMENT, not merely a pattern.
+- **The failure modes transfer too:** under-trigger (the Marvel case —
+  no entry existed), over-trigger (index noise, the
+  reader-stops-reading disease), and description-body DRIFT
+  (label-over-body). Lifecycle is better armed than the skill system on
+  the third, because kinds carry a staleness stage and skill listings do
+  not.
+- **Three local instances already exist** — the runbook router table,
+  `kind list --digest`, and the structure line lc-174 just wired — so
+  the round designs a GENERALIZATION, not an invention.
+
+**The gap it names, and the round's to design:** DECISIONS indexed by
+the ARTIFACT they concern. The ledger holds decisions chronologically,
+and nothing surfaces the fact that an operator decision exists about a
+thing shaped like the task now in hand. Booked as work in lc-240,
+parked on this round's close; the booking pre-empts no design.
+
+## INPUT DOCUMENTS the round reads
+
+- **`docs/audits/2026-09-19-process-framework-mapping.md`** — landed in
+  this repo (committed) rather than cited across a boundary, because it
+  lived only in a session scratchpad that dies with its session.
+  Produced by a sonnet discovery lane commissioned at the driving desk,
+  operator-requested; every claim marked VERIFIED-with-source or
+  PARAMETRIC, read whole at both desks. **Four notes to read it
+  against:** 8D's dual root-cause requirement (verify the defect's cause
+  AND, separately, the cause of the detection failure) is a method add
+  for every finding in the (a)-(l) family; Cynefin BOUNDS the
+  self-authoring edge (minting a runbook is right only in the complex
+  domain — in clear/complicated the right act is applying the documented
+  one, which is the anti-ceremony guard the runbook-mint slot needs as a
+  named precondition); workflow PROVENANCE/lineage is the closest prior
+  art for evidence with a shelf life, stronger than any original row;
+  and the VERIFIED degenerate forms are pre-registered attack lenses,
+  the PARAMETRIC ones prompts only.
+- **The CachyOS-Setup repo's `dev-notes/2026-09-19-arc-friction-extract.md`**
+  — a design-register friction extract from that repo's freeze arc
+  (session `cachyos-setup-dd`, operator-routed), five requirements and
+  six real-situation test fixtures, every line marked MEASURED/DERIVED.
+  **Four convergences, so the round reads it against this agenda rather
+  than as a new pile:** its requirement 1 (goal as a first-class object
+  with an unprompted yield count) is the third independent route to
+  M2/lc-162/lc-231 territory; requirement 4 (the consuming moment needs
+  a trigger — "most believing is reading") lands directly on lc-224's
+  new reader-moments machinery as candidate substrate; requirement 3
+  (completion graded where the next reader looks) is the two-exits
+  done-where-read rule needing a mechanism; and requirement 2 (evidence
+  with a shelf life — comparisons between moving artifacts stored as
+  durable facts) is a NEW vocabulary member for the (a)-(l) family: a
+  slot kind that cannot express "re-derive at read".
+
 ### The routed findings
 
 Lettered as the round received them. (a)-(f) were routed during queue
@@ -400,24 +583,85 @@ items 1-8; (g) and (h) were found during wave B.
   a softened predicate or an override habit, and that is the round's
   call rather than a mid-wave edit.
 
+**(i)-(l) were found during wave B's remainder at `cachyos-setup-36`.**
+
+- **(i) A LAWS FILE ASSERTS A MECHANISM'S WIRING THAT CANNOT FIRE.**
+  `CLAUDE.md:315-316` states the leak scan "is armed as this repo's
+  pre-push hook (`tools/git-hooks/pre-push`, symlinked into
+  `.git/hooks/`)". Both that file and the `.git/hooks` symlink exist —
+  and both are UNREACHABLE, because `core.hooksPath` is set to the
+  machine-wide dotfiles hooks directory and a set `core.hooksPath`
+  overrides `.git/hooks` entirely. The EFFECT is real (absence-scan does
+  fire on pushes, observed at the driving desk) but it arrives by a
+  different route than the one the laws file names. Law 26's
+  claim-beside-a-mechanism shape, in the laws file itself, and the
+  repo-local hook is a guard that can never fire while reading as armed.
+- **(j) A KIND'S TRIGGER PREDICATE IS DOCUMENTED AS EVALUATED AND IS
+  EVALUATED BY NOTHING** — booked as **lc-237**, parked on this round.
+  `declaration.py:119` describes a kind's `predicate` trigger as run by
+  `lanes.evaluate_trigger`; that function's only call sites are
+  lanes.py:680 and verbs.py:902/1730, none for a kind stage
+  (positive-controlled). The one kind using the mode, `journal entries`,
+  FIRES when run by hand — and it fires on a state the laws file
+  DELIBERATELY declares (laws 13/15/16 each carry their own
+  uncited-reason marker), so wiring it as documented would make it a
+  permanent alarm on legitimate work. Two states under one word: a
+  predicate that has never run and one that runs quiet are
+  indistinguishable in the declaration.
+- **(k) A CARRIER VERB WRITES WITHOUT A COMMITTING ACTOR.** `item park`
+  writes the carrier and leaves the commit to a hand, where `item add`,
+  `item amend` and `item close` all commit themselves. The grade change
+  sits uncommitted and nothing says so — the assumed-delivery class
+  inside the tool's own verb set, one layer deeper than anything else on
+  this list.
+- **(l) A PER-WORKING-COPY LOCK RENDERS A CROSS-REPO ACT AS A
+  COLLISION.** The writer-reservation gate WARNed on a dotfiles commit
+  whose pathspec was dotfiles-only, because a lane held the LIFECYCLE
+  copy; and it WARNed on every subsequent lifecycle commit unrelated to
+  that lane's paths. The gate is correct about what it can see — the
+  vocabulary is one lock per working copy, and it cannot express "two
+  repos, one desk, disjoint pathspecs", so that state renders as the
+  neighbouring one that reads as ordinary collision risk. Filed as a
+  specimen, not a repair: the lock's conservatism is right and only its
+  expressiveness is at issue.
+
 ### THE UNIFYING QUESTION, which is why the list is worth reading as a list
 
-**(a) through (h) are one shape: a vocabulary that cannot express a
+**(a) through (l) are one shape: a vocabulary that cannot express a
 state the world actually has, so the state renders as a neighbouring one
 that reads as ordinary.** (a) renders a foreign reader as `session`; (b)
 renders unknown as unmarked; (c) renders an untestable wait as a quiet
 predicate; (d) renders an unanswerable question as an open one; (e)
 renders a parked entry as new; (f) renders a collapsed partition as a
 serialization verdict; (g) renders a left-behind repo as a healthy one;
-(h) renders an expensive job as a cheap one.
+(h) renders an expensive job as a cheap one; (i) renders an unreachable
+guard as an armed one; (j) renders an unevaluated predicate as a quiet
+one; (k) renders an uncommitted write as a landed one; (l) renders a
+cross-repo act as a collision.
 
 This repo solved exactly this at the EXIT CODE level — law 1's three
 answers, and `exits.worst` as its single home. It has not solved it at
 the SCHEMA level. **So the round's question is whether the schema gets a
-general third-answer mechanism, with (a)-(h) as its test population** —
+general third-answer mechanism, with (a)-(l) as its test population** —
 and that population is what makes the question answerable rather than
-architectural, because a proposed mechanism can be graded against eight
+architectural, because a proposed mechanism can be graded against twelve
 real cases instead of against taste.
+
+**A THIRTEENTH MEMBER ARRIVES FROM THE FRICTION EXTRACT**, and it is the
+one this population did not already contain: a slot kind that cannot
+express "re-derive at read" — evidence whose truth has a shelf life,
+stored as though it were durable. Its closest prior art is workflow
+provenance/lineage (framework mapping, §2.1). Counted here rather than
+lettered because it came from a document rather than from this arc's own
+routing, and the round should decide whether the population is the
+letters alone or the letters plus the extract's requirements.
+
+**ADDED BY THE SAME DESK AS A METHOD NOTE, from the framework mapping's
+8D row:** every member of this family deserves the DUAL root-cause
+question — not only "what state could the vocabulary not express", but
+separately "why did nothing detect that it could not". Several members
+above answer the first and are silent on the second, which is itself a
+finding about how this list was assembled.
 
 ### Open decisions the round carries
 
