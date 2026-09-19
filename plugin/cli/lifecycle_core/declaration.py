@@ -2357,15 +2357,36 @@ def structure_summary(doc: dict) -> dict:
     if not isinstance(kinds, dict):
         kinds = {}
     verb = session = other = 0
+    both = 0
     undeclared = 0
     for body in kinds.values():
         if not isinstance(body, dict):
             other += 1
             undeclared += 1
             continue
-        bucket = _writer_bucket(body.get("writer"))
+        writer = body.get("writer")
+        bucket = _writer_bucket(writer)
         if bucket == "verb":
             verb += 1
+            # THE OVERLAP, COUNTED RATHER THAN HIDDEN. `_writer_bucket` puts
+            # a kind written by BOTH a verb and the session in the `verb`
+            # bucket, deliberately: partial self-administration is the
+            # property this split predicts, and that call is right. What is
+            # NOT right is letting the resulting labels overstate it. The
+            # buckets are exclusive while the underlying fact is not —
+            # `ledger lines` is `verb:ledger add, session` — so a reader
+            # seeing "N session" reads "N kinds have a session writer" when
+            # the honest reading is "N kinds have ONLY a session writer",
+            # and one more has a session writer besides a verb.
+            # This is the same arity shape lc-224 found one field over: a
+            # per-kind scalar cannot describe a multi-valued field, and the
+            # state the vocabulary cannot express renders as a neighbouring
+            # one that reads as ordinary. There it forced a per-entry
+            # sub-field; here the buckets stay and the overlap is simply
+            # made visible, because the bucketing itself is sound and only
+            # its silence was not.
+            if any(t == "session" for t, _ in parse_refs([writer or ""])):
+                both += 1
         elif bucket == "session":
             session += 1
         else:
@@ -2377,6 +2398,7 @@ def structure_summary(doc: dict) -> dict:
         "verb": verb,
         "session": session,
         "other": other,
+        "both": both,
         "undeclared": undeclared,
     }
 
@@ -2392,10 +2414,23 @@ def render_structure(doc: dict) -> list[str]:
     """
     s = structure_summary(doc)
     total = s["total"]
+    # THE SESSION BUCKET IS SPELLED "session-only" AND THE OVERLAP IS NAMED.
+    # The buckets are exclusive; the fact underneath is not. A kind written
+    # by both a verb and the session sits in the verb bucket (deliberately —
+    # partial self-administration is what this split predicts), so calling
+    # the other bucket "writer:session" invites the reading "this many kinds
+    # have a session writer", which is short by exactly the overlap. The
+    # word and the trailing clause are the whole repair: no count moves.
+    both = s.get("both", 0)
+    split = (f"writer split: {s['verb']} of {total} verb-written, "
+             f"{s['session']} of {total} session-only, "
+             f"{s['other']} of {total} other")
+    if both:
+        split += (f" — {both} of the verb-written also name session, so "
+                  f"{s['session'] + both} of {total} carry a session writer "
+                  f"in all")
     return [
         f"kinds registered: {total}",
-        f"writer split: {s['verb']} of {total} verb-written, "
-        f"{s['session']} of {total} writer:session, "
-        f"{s['other']} of {total} other",
+        split,
         f"stage undeclared: {s['undeclared']} of {total}",
     ]

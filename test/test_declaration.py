@@ -491,12 +491,20 @@ class StructureReadout(unittest.TestCase):
             "e": self._kind("producer:plugin-installer"),
         }}
         s = decl.structure_summary(doc)
+        # `both` counts the OVERLAP the exclusive buckets cannot show: this
+        # fixture's verb+session kind sits in `verb` (deliberately — partial
+        # self-administration is the property the split predicts) and is
+        # ALSO session-written. The buckets still partition (2+2+1 == 5);
+        # `both` is a second reading of the same population, never a fourth
+        # bucket, which is why it is excluded from that sum.
         self.assertEqual(s, {"total": 5, "verb": 2, "session": 2,
-                             "other": 1, "undeclared": 0})
+                             "other": 1, "both": 1, "undeclared": 0})
+        self.assertEqual(s["verb"] + s["session"] + s["other"], s["total"])
         self.assertEqual(decl.render_structure(doc), [
             "kinds registered: 5",
-            "writer split: 2 of 5 verb-written, 2 of 5 writer:session, "
-            "1 of 5 other",
+            "writer split: 2 of 5 verb-written, 2 of 5 session-only, "
+            "1 of 5 other — 1 of the verb-written also name session, so "
+            "3 of 5 carry a session writer in all",
             "stage undeclared: 0 of 5",
         ])
 
@@ -532,9 +540,13 @@ class StructureReadout(unittest.TestCase):
         is that every one of the seven stages is undeclared; this function
         agrees rather than crashing on `.get`."""
         doc = {"kinds": {"broken": "not-an-object"}}
+        # `both` is 0 here and must be PRESENT rather than absent: a
+        # malformed body has no writer to overlap with, which is a counted
+        # zero, not a missing key. A summary whose shape changed with its
+        # content would make every caller test for the key first.
         self.assertEqual(decl.structure_summary(doc),
                          {"total": 1, "verb": 0, "session": 0, "other": 1,
-                          "undeclared": 1})
+                          "both": 0, "undeclared": 1})
 
     def test_empty_declaration_prints_zeros_never_silence(self):
         """MUST-NOT-MOVE: a clean, empty declaration still prints its
@@ -542,7 +554,11 @@ class StructureReadout(unittest.TestCase):
         nothing to report."""
         self.assertEqual(decl.render_structure({"kinds": {}}), [
             "kinds registered: 0",
-            "writer split: 0 of 0 verb-written, 0 of 0 writer:session, "
+            # No overlap clause: `both` is 0, so the sentence stays the
+            # short form. The clause appears only when it has something to
+            # report, which is what keeps a clean readout from carrying a
+            # trailing "0 of the verb-written also name session".
+            "writer split: 0 of 0 verb-written, 0 of 0 session-only, "
             "0 of 0 other",
             "stage undeclared: 0 of 0",
         ])
