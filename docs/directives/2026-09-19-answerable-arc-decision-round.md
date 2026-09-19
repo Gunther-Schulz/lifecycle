@@ -1190,3 +1190,14 @@ Report channel: the operator's terminal — this desk closes with this
 addendum; the round desk drives, and the delegation's window for
 operator decisions is the round's decision points and the carve-outs,
 stated in the kickoff paste.
+
+**Successor sessions START IN THE LIFECYCLE REPO** (operator-ratified
+2026-09-19, at the round desk, which was itself opened in CachyOS-Setup):
+the roster injection, the session-start banner (ledger tail, item census,
+softlock chains, ready set) and the write gate are per-repo, keyed to the
+starting cwd — a desk opened elsewhere gets another repo's floor and holds
+this one's only by hand, and its transcript files under the wrong project
+for future archaeology. The build desk after the attack round, and any
+resumed round desk, open here. (This round desk ran clean from the foreign
+cwd — absolute paths and `git -C` throughout — so this is the cheap form
+of a lesson, recorded before it has an expensive one.)
