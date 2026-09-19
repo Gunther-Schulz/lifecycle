@@ -113,6 +113,7 @@ decision: where does lc-236's consolidation token live? → The waves verb's OWN
 decision: which missing edges from the round map build this arc? → Build: D-3 contract, f2 wiring (deploy gated on lc-234 result), E10 shelf-life slot, D-7 bucket, f5 widening plus sibling sweep, D-9 default. Fold: E12/E13 into arc-kind design. Decline: E3 (duplicate home lc-97), E4 (mechanism bar). Park: E11 (re-open named). Body: round-decisions doc
 decision: the map as declaration data: this arc or booked? → BOOKED, blocked-by the arc kind's build. Edges reference kinds and seams D-2/D-3 are about to move; a data model cut before them is rework by construction. Design input: docs/2026-09-19-round-map.md plus frame point 4.
 decision: does blocker_slot_census gain a third bucket, against lc-175's MUST-NOT-MOVE? → YES: PREDATES-THE-MECHANISM, population computed against lc-175's build epoch as a recorded constant; the count line splits; zero new findings, so MUST-NOT-MOVE holds exactly. Basis: Begehung f4 executed evidence plus the census docstring's own three-answer insistence.
+decision: what expresses a blocker on an event this repo cannot test? → Mint the real member: type external <event>, evaluated by nothing, cleared by hand or desk with the event named. Six recorded specimens clear D-3's own widening bar (recorded instances, never guessed members). Specimens re-typed at the contract's build.
 
 ## Archive (pre-migration)
 
