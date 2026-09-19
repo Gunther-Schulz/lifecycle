@@ -204,6 +204,15 @@ BLOCKER_SLOT_RULES = {
 }
 BLOCKER_ONLY_SLOTS = tuple(BLOCKER_SLOT_RULES)
 
+#: The FORWARD-ONLY DOOR STAMP's opener (D-7 rev.). A conditional slot
+#: carrying this records that the block PASSED THROUGH the door and owes its
+#: content; a block carrying no line at all never passed through one, and the
+#: two are different answers. Spelled once here because two readers consume
+#: it — the door that writes it and the census that counts it — and a second
+#: spelling would let the writer produce a value its own counter files under
+#: the wrong bucket.
+SLOT_STAMP_NONE_YET = "none-yet"
+
 #: `<date> <ledger-ref> <one line>`, the three parts the design names. Checked
 #: as ONE predicate with ONE home because two consumers read it: the parser
 #: grades what is on disk and the verb grades what it is about to write, and a
@@ -2113,14 +2122,24 @@ def check_file(path: Path, out, prefix: str | None = None, *,
     # exercised count is what proves the line can ever move, and a bare
     # "0 unexercised" over a carrier holding no evidence blockers at all
     # reads exactly like a carrier whose blockers are all exercised.
-    exercised, unexercised = blocker_slot_census(parsed, BLOCKER_EXERCISE)
-    if exercised or unexercised:
-        out(f"evidence blockers: {exercised} exercised, {unexercised} "
-            f"UNEXERCISED (no `{BLOCKER_EXERCISE}:` record). An exercise "
+    exercised, owed, predates = blocker_slot_census(parsed, BLOCKER_EXERCISE)
+    if exercised or owed or predates:
+        # THE LINE SPLITS, IT DOES NOT RENAME (D-7, lc-175's MUST-NOT-MOVE).
+        # `UNEXERCISED` stays the umbrella and keeps its meaning — an
+        # unexercised blocker is still visible AS absent and still not a
+        # finding — and the split names the two states inside it. Dropping
+        # the word would have moved lc-175's guarantee while claiming to
+        # honour it; its own test is what said so.
+        out(f"evidence blockers: {exercised} exercised, {owed + predates} "
+            f"UNEXERCISED — of those {owed} OWED "
+            f"(stamped at the door, arms not yet written) and {predates} "
+            "PREDATES THE MECHANISM (booked before the door stamped, so "
+            "nobody had the opportunity). An exercise "
             "nobody can see is a discipline that holds only while the person "
             "who held it is in the room; lc-164's booking run proves the "
             "predicate can say NOT YET and cannot prove it ever says "
-            "ARRIVED.")
+            "ARRIVED. The THIRD count is not a quieter spelling of the "
+            "second: only OWED is work this carrier can ask anyone for.")
 
     # THE DERIVABILITY COUNT (lc-179), the same move one slot over. lc-169
     # demands the statement at the door and persists nothing, so today every
@@ -2130,10 +2149,11 @@ def check_file(path: Path, out, prefix: str | None = None, *,
     # blocker MIS-TYPED at booking, read as a decision and actually a factual
     # question a measurement could settle. That class is findable from a
     # persisted statement and unfindable from a printed one.
-    stated, unstated = blocker_slot_census(parsed, NOT_DERIVABLE)
-    if stated or unstated:
+    stated, stamped, unstated = blocker_slot_census(parsed, NOT_DERIVABLE)
+    if stated or stamped or unstated:
         out(f"decision blockers: {stated} with a derivability statement, "
-            f"{unstated} UNSTATED (no `{NOT_DERIVABLE}:` record). lc-169 "
+            f"{stamped + unstated} UNSTATED (no `{NOT_DERIVABLE}:` record). "
+            "lc-169 "
             "demands the statement at the door; what is printed there "
             "scrolls away, so a blocker whose reason was stated and one "
             "whose reason never existed read the same to every later "
@@ -2284,18 +2304,26 @@ def blocker_slot_census(parsed: Parsed, slot: str,
     rule moves.
     """
     want = BLOCKER_SLOT_RULES[slot][0]
-    recorded = missing = 0
+    recorded = owed = predates = 0
     for it in parsed.items:
         kind, _detail = classify_blocker(it.slots.get("blocked-by", ""),
                                          prefix)
         if kind != want:
             continue
         v = (it.slots.get(slot) or "").strip()
-        if v and v.upper() != UNKNOWN:
-            recorded += 1
+        if not v or v.upper() == UNKNOWN:
+            # NEITHER A RECORD NOR A STAMP: this block never passed through
+            # the stamping door, so nobody ever had the opportunity to
+            # exercise it. That is a THIRD answer and not a quieter spelling
+            # of "missing" — folding it into owed counts work nobody could
+            # have done, in the very figure a desk reads to decide whether it
+            # owes any.
+            predates += 1
+        elif v.startswith(SLOT_STAMP_NONE_YET):
+            owed += 1
         else:
-            missing += 1
-    return recorded, missing
+            recorded += 1
+    return recorded, owed, predates
 
 
 def unknown_slots_of(item: Item) -> list:

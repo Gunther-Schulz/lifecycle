@@ -1009,7 +1009,28 @@ def _exercise_record(args, blocker: str, ctx: Ctx, observed: dict) -> str:
         return ""
     arms = (getattr(args, "blocker_exercise", None) or "").strip()
     if not arms:
-        return ""
+        # THE FORWARD-ONLY DOOR STAMP (D-7 rev., P3). An unexercised blocker
+        # used to leave the slot ABSENT, and absence conflated two states the
+        # drain must tell apart: an item booked SINCE this discipline existed
+        # and still owing its arms, and one booked BEFORE it, whose author
+        # never had the opportunity. Counted as one number the second
+        # inflates the first, so the figure a desk consults to decide whether
+        # it owes work counts work nobody could have done.
+        #
+        # WHY A STAMP AND NOT A DATE COMPARISON: the population is not
+        # computable from the carrier. `Item` carries no booking date, and
+        # the attack round measured every evidence-blocked item's requirement
+        # slot as undated — there is nothing to compare against. The stamp
+        # supplies the missing fact at the only moment anyone holds it,
+        # passage through the door, which is why it is FORWARD-ONLY and why
+        # nothing is backfilled: a backfilled stamp would assert an
+        # opportunity that never happened.
+        #
+        # IT IS NOT A REFUSAL. lc-179's boundary stands — nothing new refuses
+        # here, and an author booking an evidence blocker without arms is
+        # doing legitimate work (law 11). The stamp only makes the owing
+        # VISIBLE and countable.
+        return f"none-yet {_today()}"
     code = observed.get("code")
     live = f"live {code}" if code is not None else "live not-observed"
     return f"{_today()} {live} | {arms}"
@@ -2324,6 +2345,24 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
     present = {it.ident: it.slots for it in parsed.items}.get(args.ident, {})
     additions = {s: updates.pop(s) for s in list(updates)
                  if s in items_mod.BLOCKER_ONLY_SLOTS and s not in present}
+
+    # THE RE-TYPING DOOR OWNS THE CLEAR (P3, attack r2 B2). A conditional
+    # slot is legal beside ONE blocker type; re-typing away from that type
+    # strands it, recording an act that cannot have happened. Computed from
+    # the NEW value against the slot rules rather than from a list of pairs,
+    # so a third conditional slot cannot be added and silently miss this.
+    stranded = []
+    if "blocked-by" in updates:
+        new_kind, _d = items_mod.classify_blocker(updates["blocked-by"],
+                                                  ctx.prefix)
+        for slot_, (want, _row, _what) in items_mod.BLOCKER_SLOT_RULES.items():
+            if slot_ in present and new_kind != want:
+                stranded.append(slot_)
+                # The caller may also be amending the slot this re-type is
+                # about to strand; writing it and then dropping it would be
+                # two acts disagreeing inside one amendment.
+                updates.pop(slot_, None)
+                additions.pop(slot_, None)
     if not updates and not additions:
         out("FINDING [amend_nothing_to_amend] `item amend` names no slot to "
             "amend.")
@@ -2332,6 +2371,19 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
     date = _today()
     with items_mod.carrier_lock(ctx.items_path):
         text = ctx.items_path.read_text(encoding="utf-8")
+        if stranded:
+            text, ok = _set_slots(text, args.ident, {}, remove=stranded)
+            if not ok:
+                out(f"FINDING [unknown_item] no live block {args.ident!r} in "
+                    f"{ctx.items_path.name}.")
+                return exits.FINDING
+            out("cleared by the re-type: "
+                + ", ".join(f"`{s}:`" for s in stranded)
+                + " — the slot is legal only beside its own blocker type, "
+                  "and this amendment changes the type. The clear happens "
+                  "HERE because the door that re-types is the only one that "
+                  "knows; left behind, the line records an act that cannot "
+                  "have happened and the shape check refuses the block.")
         if additions:
             text, ok = _set_slots(text, args.ident, {}, insert=additions)
             if not ok:
@@ -2374,7 +2426,8 @@ def _today() -> str:
     return date.today().isoformat()
 
 
-def _set_slots(text: str, ident: str, updates: dict, insert: dict | None = None):
+def _set_slots(text: str, ident: str, updates: dict, insert: dict | None = None,
+               remove: tuple | list = ()):
     """Rewrite named slots of one block IN PLACE. `(text, found)`.
 
     `insert` IS FOR SLOTS THAT MAY NOT EXIST YET — the conditional blocker
@@ -2418,8 +2471,29 @@ def _set_slots(text: str, ident: str, updates: dict, insert: dict | None = None)
         return text, False
     i = start + 1
     pending = dict(insert or {})
+    dropping = tuple(remove or ())
+    dropped = []
     last_fixed = None
     while i < len(lines) and not grammar.ends_block(lines[i]):
+        # REMOVAL IS THE INVERSE OF `insert`, AND ONLY FOR CONDITIONAL SLOTS
+        # (P3). A conditional slot exists only while the blocker carries the
+        # matching type, so a re-type that changes the type leaves a line
+        # recording something that cannot have happened — the misplacement
+        # the shape check refuses. The caller that CHANGES the type is the
+        # only one that can know, so the re-typing door owns the clear.
+        #
+        # NOT A BREACH OF APPEND-ONLY, and the distinction is what makes this
+        # safe: append-only protects the RECORD of what a desk decided — the
+        # fixed slots and their `amended-` history, every one of which stays
+        # verbatim. This line is not a record, it is a CONDITIONAL
+        # ANNOTATION whose precondition just stopped holding, and the same
+        # door already INSERTS one when the precondition starts holding. A
+        # carrier that could grow an annotation and never shed it would
+        # accumulate exactly the stranded slots this part exists to prevent.
+        if any(grammar.is_slot(lines[i], s) for s in dropping):
+            dropped.append(lines[i])
+            del lines[i]
+            continue
         for slot, value in updates.items():
             if grammar.is_slot(lines[i], slot):
                 lines[i] = grammar.render_slot(slot, value)

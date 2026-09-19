@@ -473,6 +473,158 @@ class ExternalBlockerAndItsEnding(unittest.TestCase):
             f"no event carries the row name; details seen: {details}")
 
 
+class ForwardOnlyDoorStamp(unittest.TestCase):
+    """The stamp, and the third census bucket it makes computable (P3, D-7).
+
+    WHAT THE BUCKET IS FOR. `item check` reported evidence blockers as
+    exercised-or-not, and "not" conflated two states: an item booked SINCE
+    the exercise discipline existed and still owing its arms, and one booked
+    BEFORE it, whose author never had the opportunity. Read as one number
+    the second inflates the first, and the figure a desk consults to decide
+    whether it owes work counts work nobody could have done.
+
+    WHY A FORWARD-ONLY STAMP RATHER THAN A DATE COMPARISON. The population
+    is not computable from the carrier: `Item` carries no booking date, and
+    the attack round measured that every evidence-blocked item's requirement
+    slot is undated, so there is nothing to compare against. The stamp
+    supplies the missing fact at the only moment anyone has it — passage
+    through the door — which is why it is forward-only and why no backfill
+    is attempted. An item with neither an exercise record nor a stamp
+    PREDATES the mechanism, and that is a real answer rather than a guess.
+    """
+
+    def _repo(self, items_text=None):
+        from lifecycle_core import refusals
+        r = refusals._Repo(items=items_text or refusals.SEED_ITEMS)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _block(self, repo, ident="xx-2"):
+        import re
+        text = (repo.dir / "ITEMS.md").read_text(encoding="utf-8")
+        m = re.search(rf"^## {re.escape(ident)}$(.*?)(?=^## |\Z)", text,
+                      re.M | re.S)
+        return m.group(1) if m else ""
+
+    PRED = "evidence test -f /nonexistent-so-this-waits"
+
+    def _add_evidence(self, repo):
+        return self._run(
+            repo, "item", "add", "--requirement", "waits on a predicate",
+            "--goal", "mitigate", "--write-set", "tools/a.mjs,tools/b.mjs",
+            "--done-criterion", "d", "--evidence", "MEASURED e",
+            "--blocked-by", self.PRED,
+            "--join", "new", "--absence", "the evidence has not arrived")
+
+    def test_the_add_door_stamps_an_unexercised_evidence_blocker(self):
+        repo = self._repo()
+        code, outp = self._add_evidence(repo)
+        self.assertEqual(code, 0, outp)
+        self.assertIn("blocker-exercise: none-yet", self._block(repo))
+
+    def test_the_stamp_does_NOT_displace_a_real_exercise_record(self):
+        """The control that matters most: the stamp records an ABSENCE of
+
+        arms, and writing it over supplied arms would destroy the evidence
+        it exists to say is missing."""
+        repo = self._repo()
+        code, outp = self._run(
+            repo, "item", "add", "--requirement", "waits on a predicate",
+            "--goal", "mitigate", "--write-set", "tools/a.mjs,tools/b.mjs",
+            "--done-criterion", "d", "--evidence", "MEASURED e",
+            "--blocked-by", self.PRED,
+            "--blocker-exercise", "accepts: a present file; refuses: an "
+                                  "absent one",
+            "--join", "new", "--absence", "x")
+        self.assertEqual(code, 0, outp)
+        block = self._block(repo)
+        self.assertIn("accepts: a present file", block)
+        self.assertNotIn("none-yet", block)
+
+    def test_a_non_evidence_blocker_is_never_stamped(self):
+        """B2's type predicate: the stamp follows the SAME key the slot rule
+
+        does, so a later re-type cannot strand one."""
+        repo = self._repo()
+        code, outp = self._run(
+            repo, "item", "add", "--requirement", "waits on the world",
+            "--goal", "mitigate", "--write-set", "tools/a.mjs,tools/b.mjs",
+            "--done-criterion", "d", "--evidence", "MEASURED e",
+            "--blocked-by", "external the release lands",
+            "--join", "new", "--absence", "x")
+        self.assertEqual(code, 0, outp)
+        self.assertNotIn("blocker-exercise", self._block(repo))
+
+    def test_a_RE_TYPE_out_of_evidence_CLEARS_the_stamp(self):
+        """The design's own red-first: stamped evidence fixture, re-typed to
+
+        external, ZERO blocker_exercise_misplaced. Without the clear the
+        stamp strands on a record that can no longer carry it — and since
+        P3a the check now SEES that, so a missing clear is loud rather than
+        silent."""
+        repo = self._repo()
+        self._add_evidence(repo)
+        self.assertIn("none-yet", self._block(repo))
+        code, outp = self._run(
+            repo, "item", "amend", "xx-2",
+            "--blocked-by", "external the upstream release lands",
+            "--reason", "it was never a predicate wait")
+        self.assertEqual(code, 0, outp)
+        self.assertNotIn("blocker-exercise", self._block(repo))
+        _c, check = self._run(repo, "item", "check")
+        self.assertNotIn("blocker_exercise_misplaced", check)
+
+    def test_the_census_separates_owed_from_PREDATES(self):
+        """Three answers where there were two. The stamped item OWES its
+
+        arms; the unstamped one predates the door and owes nothing."""
+        from lifecycle_core import items as items_mod
+        carrier = (
+            "schema: 6\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+            # booked before the door existed: no record, no stamp
+            "\n## xx-1\ngrade: PARKED\nrequirement: r\ngoal: tend\n"
+            "write-set: a.py\ndone-criterion: d\nevidence: MEASURED e\n"
+            "blocked-by: evidence test -f /nope\n"
+            # passed through the door and still owes its arms
+            "\n## xx-2\ngrade: PARKED\nrequirement: r\ngoal: tend\n"
+            "write-set: a.py\ndone-criterion: d\nevidence: MEASURED e\n"
+            "blocked-by: evidence test -f /nope\n"
+            "blocker-exercise: none-yet 2026-09-19\n")
+        parsed = items_mod.parse(carrier)
+        recorded, owed, predates = items_mod.blocker_slot_census(
+            parsed, items_mod.BLOCKER_EXERCISE)
+        self.assertEqual((recorded, owed, predates), (0, 1, 0 + 1))
+
+    def test_a_real_record_still_counts_as_recorded(self):
+        """The control: the third bucket must not swallow the first."""
+        from lifecycle_core import items as items_mod
+        carrier = (
+            "schema: 6\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+            "\n## xx-1\ngrade: PARKED\nrequirement: r\ngoal: tend\n"
+            "write-set: a.py\ndone-criterion: d\nevidence: MEASURED e\n"
+            "blocked-by: evidence test -f /nope\n"
+            "blocker-exercise: 2026-09-19 live 1 | accepts x; refuses y\n")
+        parsed = items_mod.parse(carrier)
+        recorded, owed, predates = items_mod.blocker_slot_census(
+            parsed, items_mod.BLOCKER_EXERCISE)
+        self.assertEqual((recorded, owed, predates), (1, 0, 0))
+
+
 class ConditionalSlotPlacementReadsTheEFFECTIVEBlocker(unittest.TestCase):
     """A conditional slot is placed against the blocker IN FORCE (P3).
 
