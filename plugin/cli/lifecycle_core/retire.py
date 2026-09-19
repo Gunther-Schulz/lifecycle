@@ -512,12 +512,15 @@ def walk(repo: Path, doc: dict, out, *, acting: bool) -> int:
     # accumulates instead of failing. So the obligation is printed by the
     # pass itself, at the moment the actor is standing in it.
     out("")
-    out("ALSO OWED BY THIS PASS: grade the banner's named-stale lines on "
-        "their CATCHES since the last pass, and record the grading in the "
-        "pass's ledger note — `moments:` is one (lc-243 W1 act 2). A line "
-        "that has caught nothing across several passes is a line to retire, "
-        "and no-yield is a verdict this pass OWNS rather than a fact anyone "
-        "notices: nothing else reads a quiet banner line.")
+    out("ALSO OWED BY THIS PASS: grade the standing flag lines on their "
+        "CATCHES since the last pass, and record the grading in the pass's "
+        "ledger note — `moments:` (lc-243 W1 act 2) and `perishable "
+        "evidence:` (lc-244 W2) are the two today. A line that has caught "
+        "nothing across several passes is a line to retire, and no-yield is "
+        "a verdict this pass OWNS rather than a fact anyone notices: "
+        "nothing else reads a quiet flag line. A line added later joins "
+        "this list by being named here, which is the only place the pass "
+        "looks.")
     return code
 
 
