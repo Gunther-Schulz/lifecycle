@@ -856,3 +856,27 @@ carrier rather than from a conversation that dies with its session.
    persistence — which ships by default and measurably fails — but
    GOVERNED persistence.** The operator's turn-off decision is the
    control arm's result.
+9. **The GOVERNED-PERSISTENCE scout report** lands as
+   `docs/audits/2026-09-19-governed-persistence-scout.md`, committed at
+   the gap. Its source sits in the driving desk's session scratchpad;
+   the path is deliberately NOT written here for the same reason as
+   entry (3) — it carries a session id, which this repo's leak scan
+   refuses in tracked prose. Summary, all claims tagged
+   VERIFIED/PARAMETRIC by the lane: records management, CMDB lore,
+   cache/derivation theory and deliberate-forgetting research surveyed
+   for the persistence differentiator. Top borrowables —
+   **Gupta-Mumick incremental view maintenance**, the formal
+   delta-re-derivation answer to the evidence-shelf-life requirement;
+   the **CMDB failure/recovery pair** (drift-from-population, no
+   continuous discovery, no ownership — countered by FEDERATION, each
+   source staying system-of-record, referenced and never copied, under a
+   configured authority hierarchy, which is one-home-per-fact
+   industrially validated); and **ISO 15489's appraisal-as-recurring**,
+   where admission and staleness are never settled once.
+   Three findings that bear directly on this arc's own design: kill
+   triggers are CONTRADICTING WRITES rather than clocks (interference
+   over decay — clock-only aging is cognitive science's own superseded
+   model); revalidate-on-read RESETS the staleness clock; and strict
+   admission yields a smaller MORE durable store (encoding competition,
+   verified). The last one is the direct counter to the reflex that a
+   record's value grows with its size.
