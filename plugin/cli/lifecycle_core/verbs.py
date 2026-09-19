@@ -3353,8 +3353,13 @@ def cmd_arc_open(args, out, ctx: Ctx) -> int:
         f"(opened {counters['opened']}, closed {counters['closed']})")
     for line in arcs.render_status(ctx.repo):
         out(line)
-    firelog.fire("arc open", repo=str(ctx.repo), outcome=exits.CLEAN,
-                 detail=slug)
+    # THE FIRE-LOG LINE IS THE CLI'S, NOT THIS VERB'S. `cli.main` already
+    # writes ONE line per invocation carrying the verb path and this detail;
+    # a second `firelog.fire` here wrote a DUPLICATE, and the duplicate was
+    # not cosmetic — the growth alarm counts `arc close` events, so every
+    # closure was counted twice on a surface `audit` prints. Measured: one
+    # open and one close produced two records each. One act, one line.
+    args.fire_detail = slug
     return commit_paths(
         ctx, [live, arcs.index_path(ctx.repo)],
         f"arcs: open {slug}", out, what="the arc open", stage_new=True)
@@ -3454,8 +3459,7 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
 
     cons = arcs.conservation(ctx.repo)
     out(f"  {cons.message}")
-    firelog.fire("arc close", repo=str(ctx.repo), outcome=exits.CLEAN,
-                 detail=slug)
+    args.fire_detail = f"{'abandon' if args.abandon else 'close'} {slug}"
     code = commit_paths(
         ctx, [live, closed, arcs.index_path(ctx.repo)],
         f"arcs: close {slug}", out, what="the arc close", stage_new=True)

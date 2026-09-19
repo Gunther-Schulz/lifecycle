@@ -755,3 +755,51 @@ class DeadlineGeneratesItsObserver(unittest.TestCase):
                                "next December", "--what", "x")
         self.assertEqual(code, 2, outp)
         self.assertIn("arc_shape", outp)
+
+
+class ArcVerbsFireTheLogOnce(unittest.TestCase):
+    """ONE act, ONE fire-log line.
+
+    THE DUPLICATE WAS NOT COSMETIC. `cli.main` already writes one line per
+    invocation carrying the verb path; the arc verbs wrote a second. The
+    growth alarm COUNTS `arc close` events, so every closure was counted
+    twice on a surface `audit` prints — a wrong number rather than a noisy
+    one, in the denominator a flow verdict rests on.
+    """
+
+    def _run_in(self, repo, state, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        old = os.environ.get("XDG_STATE_HOME")
+        os.environ["XDG_STATE_HOME"] = str(state)
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+            if old is None:
+                os.environ.pop("XDG_STATE_HOME", None)
+            else:
+                os.environ["XDG_STATE_HOME"] = old
+
+    def test_open_and_close_each_write_exactly_one_record(self):
+        import json
+        from lifecycle_core import refusals
+        repo = refusals._Repo()
+        self.addCleanup(repo.close)
+        state = Path(tempfile.mkdtemp(prefix="lifecycle-arcfire-"))
+        self._run_in(repo, state, "arc", "open", "a1", "--goal", "g",
+                     "--narrowing", "none")
+        self._run_in(repo, state, "arc", "close", "a1")
+        log = state / "lifecycle" / "fire.jsonl"
+        self.assertTrue(log.is_file(), "no fire log was written")
+        verbs_seen = [json.loads(ln).get("verb")
+                      for ln in log.read_text(encoding="utf-8").splitlines()
+                      if ln.strip()]
+        self.assertEqual(verbs_seen.count("arc open"), 1, verbs_seen)
+        self.assertEqual(verbs_seen.count("arc close"), 1, verbs_seen)
