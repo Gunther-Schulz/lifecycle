@@ -3337,7 +3337,10 @@ def cmd_arc_open(args, out, ctx: Ctx) -> int:
         "narrowing": f"{form} — nothing recorded yet",
         "premises": "none recorded yet",
         "beliefs": "none recorded yet",
-        "yield": "0",
+        # PROSE, NOT A COUNT, from the first write. A `0` here would be the
+        # persisted-count class seeded at birth: true for exactly as long as
+        # nothing happens, and silently false afterwards.
+        "yield": "nothing produced yet",
     }, items_mod.SCHEMA_FLOOR)
     # 1. THE BODY, before any counter says it exists.
     atomic.write_text(live, body, encoding="utf-8")
@@ -3562,3 +3565,137 @@ def cmd_arc_disposition(args, out, ctx: Ctx) -> int:
         f"{arcs.DISPOSITION_LINE}: {args.ident} {_today()} {args.how} "
         f"{args.reason.strip()}",
         out, f"arcs: disposition {args.ident} on {args.slug}")
+
+
+def cmd_arc_advance(args, out, ctx: Ctx) -> int:
+    """Move the arc to a new stage — refused while any flag stands.
+
+    THE SAME CONSUMING SEAM `arc close` keeps (astra-a5), and it belongs on
+    BOTH movement verbs for the same reason: advancing past a belief somebody
+    reopened carries the doubt forward into a stage whose work will rest on
+    it. Closing files the doubt; advancing COMPOUNDS it.
+
+    THE OUTWARD STOP RENDERS AT ENTRY, which is astra's correction. An
+    outward stage's acts leave the operator's controlled sphere, and a STOP
+    printed when the stage CLOSES arrives after the act it exists to govern.
+    Marking at entry is the only placement that can precede anything.
+    """
+    slug = args.slug.strip()
+    live, _closed = _arc_paths(ctx, slug)
+    if not live.exists():
+        out(f"FINDING [unknown_arc] no live arc {slug!r} in "
+            f"{arcs.ARCS_DIR}/.")
+        return exits.FINDING
+    text = live.read_text(encoding="utf-8")
+    pending = arcs.undispositioned(text)
+    if pending:
+        out(f"FINDING [arc_undispositioned] arc {slug!r} carries "
+            f"{len(pending)} belief(s) flagged for re-derivation and not "
+            f"dispositioned: {', '.join(pending)}. Advancing past a reopened "
+            "belief carries the doubt into a stage whose work will rest on "
+            "it — a close FILES the doubt, an advance COMPOUNDS it. Answer "
+            f"each with `arc disposition {slug} --ident <id> --how "
+            "re-derived|accepted-stale --reason <why>`.")
+        return exits.FINDING
+
+    to = args.to.strip()
+    mark = f" | {arcs.OUTWARD_MARK}" if args.outward else ""
+    line = (f"{arcs.ADVANCED_LINE}: {to} {_today()} {args.reason.strip()}"
+            f"{mark}")
+    text = arcs.set_slot(text, "stage", to)
+    atomic.write_text(live, text.rstrip("\n") + "\n" + line + "\n",
+                      encoding="utf-8")
+    out(line)
+    if args.outward:
+        out("STOP — THIS STAGE IS MARKED OUTWARD, and the mark is rendered "
+            "HERE, at entry, because a warning printed when the stage closes "
+            "arrives after the act it governs. Acts in this stage leave the "
+            "operator's controlled sphere: a send, a submission, a payment, "
+            "a signature, a public push, a release. The carve-out floor "
+            "binds — where the act has a DRAFT stage the draft is the veto "
+            "point, and where it has none the act and its reasoning are "
+            "surfaced to the operator BEFORE it runs.")
+    return commit_paths(ctx, [live], f"arcs: advance {slug} to {to}", out,
+                        what="the arc advance", stage_new=True)
+
+
+def cmd_arc_narrow(args, out, ctx: Ctx) -> int:
+    """Rewrite the live narrowing, and RECORD what it replaced.
+
+    TWO WRITES, ONE ACT, and the split is the point: the slot is the CURRENT
+    picture — what is still open — because a log of every narrowing ever held
+    guides nothing, which is the finding the investigation-record format
+    already carries as NOW versus ESTABLISHED. The appended line keeps what
+    was ruled out and when, so the arc can say what it eliminated without the
+    live picture accumulating into a pile.
+    """
+    slug = args.slug.strip()
+    live, _closed = _arc_paths(ctx, slug)
+    if not live.exists():
+        out(f"FINDING [unknown_arc] no live arc {slug!r} in "
+            f"{arcs.ARCS_DIR}/.")
+        return exits.FINDING
+    text = live.read_text(encoding="utf-8")
+    arc, _problems = arcs.parse_arc(text, slug)
+    form = (arc.slots.get("narrowing") or "").split()[0:1]
+    form = form[0] if form and form[0] in arcs.NARROWING_FORMS else None
+    if form is None:
+        out(f"FINDING [arc_shape] arc {slug!r} does not declare a narrowing "
+            f"FORM, so a narrowing cannot be recorded against it: a reader "
+            "cannot tell whether the new text eliminates a candidate or adds "
+            "one to a palette.")
+        return exits.FINDING
+    new = args.text.strip()
+    text = arcs.set_slot(text, "narrowing", f"{form} — {new}")
+    line = f"{arcs.NARROWED_LINE}: {form} {_today()} {new}"
+    atomic.write_text(live, text.rstrip("\n") + "\n" + line + "\n",
+                      encoding="utf-8")
+    out(line)
+    return commit_paths(ctx, [live], f"arcs: narrow {slug}", out,
+                        what="the arc narrowing", stage_new=True)
+
+
+def cmd_arc_verdict(args, out, ctx: Ctx) -> int:
+    """Book an operator taste judgment AT UTTERANCE (requirement 4).
+
+    THE GROUND TRUTH IN A SUBJECTIVE DOMAIN IS THE OPERATOR'S VERDICT
+    SENTENCES, and today they evaporate in chat. Walk 2 is where this came
+    from: a divergent arc's stage exit cannot be a predicate, the referee is
+    taste, and a taste judgment that was said and not written is a decision
+    the next session re-asks. Booking it as a byproduct of it being said is
+    the whole mechanism — this verb exists so the recording is one line
+    rather than a memory.
+
+    IT RECORDS, IT DOES NOT GRADE. Whether a verdict is right is the
+    operator's; that it was given is the carrier's.
+    """
+    return _arc_append(
+        ctx, args.slug,
+        f"{arcs.VERDICT_LINE}: {args.ident} {_today()} {args.text.strip()}",
+        out, f"arcs: verdict {args.ident} on {args.slug}")
+
+
+def cmd_arc_yield(args, out, ctx: Ctx) -> int:
+    """Record what this arc produced, and keep the slot PROSE.
+
+    THE COUNT IS NOT STORED. An earlier shape wrote a number into the
+    `yield:` slot, which is the persisted-count class: correct when written
+    and silently false once another line lands, with arithmetic the only
+    reader that would notice. So the slot carries the arc's own one-line
+    statement of what it has produced and `arc status` counts the records at
+    read time.
+    """
+    slug = args.slug.strip()
+    live, _closed = _arc_paths(ctx, slug)
+    if not live.exists():
+        out(f"FINDING [unknown_arc] no live arc {slug!r} in "
+            f"{arcs.ARCS_DIR}/.")
+        return exits.FINDING
+    text = live.read_text(encoding="utf-8")
+    line = f"{arcs.YIELD_LINE}: {args.ident} {_today()} {args.text.strip()}"
+    text = arcs.set_slot(text, "yield", args.summary.strip())
+    atomic.write_text(live, text.rstrip("\n") + "\n" + line + "\n",
+                      encoding="utf-8")
+    out(line)
+    return commit_paths(ctx, [live], f"arcs: yield {args.ident} on {slug}",
+                        out, what="the arc yield", stage_new=True)

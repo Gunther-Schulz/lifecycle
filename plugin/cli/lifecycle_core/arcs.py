@@ -84,8 +84,21 @@ BELIEF_LINE = "belief"
 PREMISE_LINE = "premise"
 REDERIVE_LINE = "re-derive"
 DISPOSITION_LINE = "disposition"
+ADVANCED_LINE = "advanced"
+NARROWED_LINE = "narrowed"
+VERDICT_LINE = "verdict"
+YIELD_LINE = "yielded"
 APPENDED_LINE_KINDS = (BELIEF_LINE, PREMISE_LINE, REDERIVE_LINE,
-                       DISPOSITION_LINE)
+                       DISPOSITION_LINE, ADVANCED_LINE, NARROWED_LINE,
+                       VERDICT_LINE, YIELD_LINE)
+
+#: The mark an OUTWARD stage carries (requirement 8). Outward stages wire the
+#: carve-out floor into STRUCTURE rather than into anybody's memory: an act
+#: whose consequence leaves the operator's controlled sphere is one the arc
+#: has to render a STOP for, and rendering it at the stage's ENTRY is the
+#: whole correction — astra's finding was that an outward STOP printed at the
+#: stage's CLOSE arrives after the act it exists to govern.
+OUTWARD_MARK = "outward"
 
 #: How a disposition may answer a re-derive flag. CLOSED: the point of the
 #: flag is that the arc cannot move past a belief nobody re-examined, and an
@@ -356,6 +369,40 @@ def render_arc(slug: str, slots: dict, schema: int) -> str:
     for slot in ARC_SLOTS:
         out.append(grammar.render_slot(slot, slots[slot]))
     return "\n".join(out) + "\n"
+
+
+def set_slot(text: str, slot: str, value: str) -> str:
+    """Rewrite one FIXED slot of an arc body in place.
+
+    IN PLACE AND ONLY THE NAMED SLOT, the same discipline `_set_slots` keeps
+    for items: re-rendering the whole body from a parsed dict would rewrite
+    every slot this act did not mean to touch, and a slot rewritten
+    identically is still a slot the diff claims authorship of.
+
+    THE FIXED SLOTS ARE THE LIVE PICTURE; the appended lines are the record.
+    `narrowing:` is overwritten because what is still open is a CURRENT
+    state — a log of every narrowing ever held guides nothing — while
+    `narrowed:` lines below keep what was ruled out and when. That split is
+    the investigation record's own NOW-versus-ESTABLISHED shape, which is
+    where this carrier's design came from.
+    """
+    lines = text.split("\n")
+    for i, ln in enumerate(lines):
+        if grammar.is_slot(ln, slot):
+            lines[i] = grammar.render_slot(slot, value)
+            break
+    return "\n".join(lines)
+
+
+def count_of(text: str, kind: str) -> int:
+    """How many appended records of one kind this body carries.
+
+    DERIVED AT READ TIME, never stored. A count written into a slot is
+    correct the moment it is written and silently false once the body grows,
+    with arithmetic the only reader that would notice — so the number is
+    computed where it is asked for and the slot beside it stays prose.
+    """
+    return sum(1 for r in appended_lines(text) if r.kind == kind)
 
 
 def render_status(repo: Path) -> list:

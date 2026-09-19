@@ -480,3 +480,146 @@ class BeliefsAndPropagation(unittest.TestCase):
         kinds = {r.kind for r in arcs.appended_lines(self._body(repo))}
         self.assertIn(arcs.PREMISE_LINE, kinds)
         self.assertNotIn(arcs.BELIEF_LINE, kinds)
+
+
+class StageAndStateVerbs(unittest.TestCase):
+    """advance / narrow / verdict / yield.
+
+    THE LIVE PICTURE AND THE RECORD ARE DIFFERENT THINGS, and these four are
+    where that split is enforced: the fixed slots carry what is CURRENTLY
+    true (a log of every narrowing ever held guides nothing), and the
+    appended lines carry what happened and when. That is the investigation
+    record's NOW-versus-ESTABLISHED shape, which is where this carrier came
+    from.
+    """
+
+    def _repo(self):
+        from lifecycle_core import refusals
+        r = refusals._Repo()
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    OPEN = ["arc", "open", "freeze", "--goal", "g", "--narrowing",
+            "eliminative"]
+
+    def _body(self, repo):
+        return (repo.dir / "arcs" / "freeze.md").read_text(encoding="utf-8")
+
+    def test_narrow_REPLACES_the_live_picture_and_KEEPS_the_record(self):
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "narrow", "freeze", "--text", "four left")
+        self._run(repo, "arc", "narrow", "freeze", "--text", "two left")
+        arc, _p = arcs.parse_arc(self._body(repo), "freeze")
+        self.assertIn("two left", arc.slots["narrowing"])
+        self.assertNotIn("four left", arc.slots["narrowing"])
+        self.assertEqual(arcs.count_of(self._body(repo), arcs.NARROWED_LINE),
+                         2, "the record lost what the slot replaced")
+
+    def test_narrow_KEEPS_the_declared_form(self):
+        """The form is what tells a reader whether the text eliminates or
+
+        adds to a palette; a narrowing that dropped it would leave every
+        later line ambiguous."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "narrow", "freeze", "--text", "two left")
+        arc, _p = arcs.parse_arc(self._body(repo), "freeze")
+        self.assertTrue(arc.slots["narrowing"].startswith("eliminative"))
+
+    def test_advance_REFUSES_while_a_belief_flag_stands(self):
+        """A close FILES the doubt; an advance COMPOUNDS it, carrying it into
+
+        a stage whose work will rest on it."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "belief", "freeze", "--ident", "b1",
+                  "--claim", "c", "--basis", "b", "--kill", "k")
+        self._run(repo, "arc", "reopen", "freeze", "--ident", "b1",
+                  "--reason", "r")
+        code, outp = self._run(repo, "arc", "advance", "freeze", "--to",
+                               "next", "--reason", "moving on")
+        self.assertEqual(code, 2, outp)
+        self.assertIn("arc_undispositioned", outp)
+
+    def test_advance_WORKS_once_dispositioned(self):
+        """The control: without it the refusal could be 'advance never works
+
+        after a reopen', which would make a reopen end the arc."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "belief", "freeze", "--ident", "b1",
+                  "--claim", "c", "--basis", "b", "--kill", "k")
+        self._run(repo, "arc", "reopen", "freeze", "--ident", "b1",
+                  "--reason", "r")
+        self._run(repo, "arc", "disposition", "freeze", "--ident", "b1",
+                  "--how", "re-derived", "--reason", "held")
+        code, outp = self._run(repo, "arc", "advance", "freeze", "--to",
+                               "next", "--reason", "moving on")
+        self.assertEqual(code, 0, outp)
+        arc, _p = arcs.parse_arc(self._body(repo), "freeze")
+        self.assertEqual(arc.slots["stage"], "next")
+
+    def test_an_OUTWARD_stage_renders_its_STOP_AT_ENTRY(self):
+        """astra's correction: a STOP printed when the stage CLOSES arrives
+
+        after the act it exists to govern. Entry is the only placement that
+        can precede anything."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        code, outp = self._run(repo, "arc", "advance", "freeze", "--to",
+                               "submission", "--reason", "ready",
+                               "--outward")
+        self.assertEqual(code, 0, outp)
+        self.assertIn("STOP", outp)
+        self.assertIn("carve-out floor", outp)
+        self.assertIn(arcs.OUTWARD_MARK, self._body(repo))
+
+    def test_an_ordinary_stage_renders_NO_stop(self):
+        """The control. A STOP on every advance is a STOP nobody reads, which
+
+        is how the one that matters arrives pre-discounted."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        _code, outp = self._run(repo, "arc", "advance", "freeze", "--to",
+                                "digging", "--reason", "ready")
+        self.assertNotIn("STOP", outp)
+
+    def test_yield_keeps_the_slot_PROSE_and_counts_at_READ_time(self):
+        """A stored total is correct when written and false once another line
+
+        lands. The slot is the arc's own statement; the number is derived."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        arc, _p = arcs.parse_arc(self._body(repo), "freeze")
+        self.assertNotEqual(arc.slots["yield"].strip(), "0",
+                            "the open seeded a persisted count")
+        self._run(repo, "arc", "yield", "freeze", "--ident", "y1", "--text",
+                  "a tracer", "--summary", "one instrument shipped")
+        self._run(repo, "arc", "yield", "freeze", "--ident", "y2", "--text",
+                  "a runbook", "--summary", "two instruments shipped")
+        self.assertEqual(arcs.count_of(self._body(repo), arcs.YIELD_LINE), 2)
+        arc, _p = arcs.parse_arc(self._body(repo), "freeze")
+        self.assertEqual(arc.slots["yield"], "two instruments shipped")
+
+    def test_a_verdict_is_recorded_at_utterance(self):
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "verdict", "freeze", "--ident", "v1",
+                  "--text", "good enough to ship")
+        self.assertEqual(arcs.count_of(self._body(repo), arcs.VERDICT_LINE), 1)

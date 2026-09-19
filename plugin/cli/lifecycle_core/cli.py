@@ -556,6 +556,34 @@ def build_parser() -> argparse.ArgumentParser:
     ad.add_argument("--how", required=True,
                     help="re-derived | accepted-stale")
     ad.add_argument("--reason", required=True)
+    aa = asub.add_parser("advance", help="move to a new stage — refused "
+                                         "while any belief flag stands")
+    aa.add_argument("slug")
+    aa.add_argument("--to", required=True)
+    aa.add_argument("--reason", required=True)
+    aa.add_argument("--outward", action="store_true",
+                    help="MARK this stage outward: its acts leave the "
+                         "operator's controlled sphere, and the STOP renders "
+                         "at ENTRY because one printed at close arrives "
+                         "after the act it governs")
+    an = asub.add_parser("narrow", help="rewrite the LIVE narrowing and "
+                                        "record what it replaced")
+    an.add_argument("slug")
+    an.add_argument("--text", required=True)
+    av = asub.add_parser("verdict", help="book an operator taste judgment AT "
+                                         "UTTERANCE — the seam where it "
+                                         "otherwise evaporates in chat")
+    av.add_argument("slug")
+    av.add_argument("--ident", required=True, dest="ident")
+    av.add_argument("--text", required=True)
+    ay = asub.add_parser("yield", help="record what this arc produced")
+    ay.add_argument("slug")
+    ay.add_argument("--ident", required=True, dest="ident")
+    ay.add_argument("--text", required=True)
+    ay.add_argument("--summary", required=True,
+                    help="the arc's own one-line statement of what it has "
+                         "produced — PROSE, never a count: a stored total is "
+                         "false the moment another line lands")
 
     ks.add_parser("check", help="validate the declaration")
     ks.add_parser("sweep", help="invariant 1: every tracked file resolves to "
@@ -963,6 +991,14 @@ def main(argv=None) -> int:
                 code = verbs.cmd_arc_reopen(args, out, ctx)
             elif args.arc_action == "disposition":
                 code = verbs.cmd_arc_disposition(args, out, ctx)
+            elif args.arc_action == "advance":
+                code = verbs.cmd_arc_advance(args, out, ctx)
+            elif args.arc_action == "narrow":
+                code = verbs.cmd_arc_narrow(args, out, ctx)
+            elif args.arc_action == "verdict":
+                code = verbs.cmd_arc_verdict(args, out, ctx)
+            elif args.arc_action == "yield":
+                code = verbs.cmd_arc_yield(args, out, ctx)
             else:
                 code = verbs.cmd_arc_close(args, out, ctx)
     elif args.verb == "kind":
