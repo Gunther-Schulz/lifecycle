@@ -122,6 +122,7 @@ decision: E10 form correction: slot marker or evidence-mark member (attack W-7, 
 decision: is an ARC a new registered kind, or the existing lane mechanism widened to carry these stages? → NEW KIND - D-2 unchanged; restates the D-2 line with the asker's own question text so decision_for resolves the edge. Body: docs/2026-09-19-round-decisions.md
 decision: P1 roster row (V6/AV1): admissible under law 22? → NO - law 22: its fire arm needs a registry no repo input can produce. Invariant stays unit-layer. Replacement: a malformed-arm row - fire on an undated cannot-express grade, control on the well-formed one. Ruled at cachyos-setup-43. Body: docs/2026-09-19-vocabulary-contract-design.md
 decision: lc-242's write-set names plugin/hooks/pre-commit (astra-a6): does the hook half ship with the reach act? → NO - the hook half moves WHOLE to lc-231 with the arc-shape checker it routes to, and the staged-arc-shape red-first moves with it. lc-242 is the SCHEMA reach act and is complete without it. Ruled at cachyos-setup-43. Body: docs/2026-09-19-arc-kind-design.md
+decision: the arc INDEX sits inside the arcs kind's own home glob, so four readers must skip it by name: which way out? → THIRD KIND at arcs/INDEX, extensionless: invariant 1 - a file inside another kind's home resolves to the wrong one. Exclusions removed from three arc readers; generic walker untouched. Deviates from the locked two-kind design. Ruled at cachyos-setup-43. Body: docs/2026-09-19-arc-kind-design.md
 
 ## Archive (pre-migration)
 
