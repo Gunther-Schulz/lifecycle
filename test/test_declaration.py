@@ -379,6 +379,129 @@ class ReaderWhenStage(unittest.TestCase):
         self.assertEqual(res.findings, [])
 
 
+class ReaderWhenPartitionAgreement(unittest.TestCase):
+    """ONE invalid-state partition, consumed by BOTH instruments (D-3, P2).
+
+    THE DEFECT THIS GRADES. `_check_reader_when` and `read_moments` each
+    parsed a `when` with their own copy of the same three lines, and two
+    bodies behind one contract disagree. They did: a `predicate` naming
+    nothing, a non-string `when`, a `none` with no why, and — the one that
+    bites — a PREFIXED reader carrying a `when`, which the checker refuses
+    and which `read_moments` had no guard against, so it EXECUTED. Both
+    attack arms reproduced that hole with a marker file.
+
+    HOW AGREEMENT IS OBSERVED, and it is deliberately not by asking the
+    shared classifier what it thinks. Reading one instrument's answer off
+    the other, or both off the thing they share, is the same-parentage
+    error: the expectation would move with the mutant. So each side is read
+    from its OWN observable output — the checker by whether it recorded a
+    finding for the entry, `read_moments` by whether the state it returns is
+    MALFORMED — and the assertion is that those two independent readings
+    agree for every input.
+
+    PRESENCE IS ITS OWN ARGUMENT. An ABSENT `when` is the legitimate default
+    across every kind in this repo, so it must stay UNDECLARED at both
+    sides; a naive extraction folds it into MALFORMED and fires on 26 kinds
+    at once, which is the guard-on-legitimate-work shape (law 11).
+    """
+
+    @staticmethod
+    def _kind(reader):
+        return {"home": "x.md", "writer": "session", "reader": reader,
+                "staleness": "none, declared why: fixture",
+                "exit": {"action": "never", "recording-act": "fixture"},
+                "growth": "unbounded-with-reason — a fixture kind",
+                "trigger": "none, declared why: fixture"}
+
+    #: The seven, with their provenance so the count is checkable rather
+    #: than asserted: r3's three probes, then r2's four disagreement cases.
+    MALFORMED_CASES = [
+        ("r3: verb mode, which this narrower vocabulary excludes",
+         "session", "verb audit"),
+        ("r3: a mode naming no command", "session", "predicate"),
+        ("r3: pure prose", "session", "whenever the session starts"),
+        ("r2: a non-string when", "session", 123),
+        ("r2: none with no why", "session", "none"),
+        ("r2: a PREFIXED reader carrying a when", "verb:audit",
+         "predicate true"),
+        ("r2: a mode whose command is separators only", "session",
+         "predicate :"),
+    ]
+
+    #: The controls. Without them the assertion below passes on a build that
+    #: calls EVERYTHING malformed.
+    WELL_FORMED_CASES = [
+        ("a runnable predicate", "session", "predicate true"),
+        ("a declared none", "session", "none, declared why: fixture"),
+    ]
+
+    def _checker_flags(self, ref, when):
+        """Did the CHECKER record a finding about this entry's `when`?
+
+        Read off `res.findings`, which is the checker's own output, rather
+        than off the classifier they now share — the whole point of an
+        agreement test is two independent readings.
+        """
+        body = self._kind([{"reader": ref, "when": when}])
+        doc = {"kinds": {"fixture": body}}
+        res = decl.Result(code=0)
+        decl._validate_kind("fixture", body, res, decl.ref_world(doc))
+        return any("when" in f.message for f in res.findings)
+
+    def _moments_flags(self, ref, when):
+        """And `read_moments`' own answer for the same input."""
+        moments = decl.read_moments(self._kind([{"reader": ref,
+                                                 "when": when}]))
+        return [m.state for m in moments] == [decl.READ_MOMENT_MALFORMED]
+
+    def test_both_instruments_agree_on_every_malformed_input(self):
+        for label, ref, when in self.MALFORMED_CASES:
+            with self.subTest(case=label):
+                self.assertTrue(self._checker_flags(ref, when),
+                                "the checker did not flag it")
+                self.assertTrue(self._moments_flags(ref, when),
+                                "read_moments did not call it MALFORMED")
+
+    def test_both_instruments_agree_on_every_well_formed_input(self):
+        for label, ref, when in self.WELL_FORMED_CASES:
+            with self.subTest(case=label):
+                self.assertFalse(self._checker_flags(ref, when),
+                                 "the checker flagged a valid `when`")
+                self.assertFalse(self._moments_flags(ref, when),
+                                 "read_moments called a valid `when` "
+                                 "MALFORMED")
+
+    def test_an_absent_when_is_malformed_at_neither(self):
+        """The legitimate default across all 26 kinds. A partition that
+
+        folded absence into MALFORMED would fire on every one of them."""
+        body = self._kind(["session"])
+        res = decl.Result(code=0)
+        decl._validate_kind("fixture", body, res, {"kinds": {"fixture": {}}})
+        self.assertEqual(res.findings, [])
+        self.assertEqual([m.state for m in decl.read_moments(body)],
+                         [decl.READ_MOMENT_UNDECLARED])
+
+    def test_a_prefixed_reader_with_a_when_is_never_EXECUTED(self):
+        """The live repair, and the reason the partition is read BEFORE
+
+        anything runs. Both attack arms drove this case with a `predicate
+        touch <marker>` and watched the file appear: `read_moments` had no
+        bare-reader guard, so a `when` the checker refuses was still run.
+        The marker is the observation — a state assertion alone would pass
+        on a build that classified correctly and executed anyway.
+        """
+        import tempfile
+        from pathlib import Path as _P
+        with tempfile.TemporaryDirectory(prefix="lc-p2-") as td:
+            marker = _P(td) / "executed"
+            body = self._kind([{"reader": "verb:audit",
+                                "when": f"predicate touch {marker}"}])
+            decl.read_moments(body, repo=_P(td))
+            self.assertFalse(marker.exists(),
+                             "a prefixed reader's `when` was EXECUTED")
+
+
 class ReadMomentsEvaluation(unittest.TestCase):
     """The evaluation half — no precedent in this repo before lc-224.
 

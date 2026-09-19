@@ -1517,54 +1517,103 @@ def _check_typed_refs(kind: str, stage: str, values, res: Result,
                     "one that resolves.")
 
 
-def _check_reader_when(kind: str, ref: str, when, res: Result) -> None:
-    """Validate one reader entry's `when` — STRUCTURALLY ONLY.
+#: The partition's fourth state, used only inside it: a `when` that is
+#: present, well-formed, and names a command to run. `read_moments` turns it
+#: into FIRE / QUIET / BROKEN by running it; the checker never does.
+WHEN_PREDICATE = "PREDICATE"
 
-    Mirrors the `trigger` stage's own vocabulary check (§ line ~1177) in
-    shape, over the narrower `READER_WHEN_MODES` vocabulary. Never executes
-    a predicate: the seventh stage does not either at validation time, and a
-    `kind check` that ran shell would be a new side effect nobody asked for
-    — execution is `read_moments`'s job alone, below.
+
+@dataclass(frozen=True)
+class WhenClass:
+    """ONE invalid-state partition over a reader entry's `when` (D-3, P2).
+
+    TWO INSTRUMENTS, ONE BODY. `_check_reader_when` validates and
+    `read_moments` evaluates, and each used to parse the value with its own
+    copy of the same three lines. Two bodies behind one contract disagree,
+    and these did — on a `predicate` naming nothing, on a non-string, on a
+    `none` with no why, and on a PREFIXED reader carrying a `when`, which
+    the checker refused while the evaluator had no guard and RAN it.
+
+    PRESENCE IS ITS OWN ARGUMENT, and this is the repair N4 named. An
+    ABSENT `when` is the legitimate default across every kind in this repo;
+    folding absence into MALFORMED would fire on all of them at once, which
+    is a guard firing on legitimate work (law 11). So `present` is passed in
+    rather than inferred from the value, because `None` and "absent" are not
+    the same fact and only the caller knows which it holds.
+
+    `problem` carries the message WITHOUT its `kind` prefix, because the
+    evaluator does not know the kind's name and the checker does — the one
+    piece neither can share. `row` is the checker's refusal row, kept per
+    case so this extraction changes no finding anyone already relies on.
     """
+    state: str
+    command: str = ""
+    why: str = ""
+    problem: str = ""
+    row: str = ""
+
+
+def classify_reader_when(ref: str, when, *, present: bool) -> WhenClass:
+    """The partition. Both instruments read this and nothing else."""
+    if not present:
+        return WhenClass(READ_MOMENT_UNDECLARED)
     if not isinstance(when, str) or not when.strip():
-        res.add("declaration_malformed",
-                f"kind {kind!r}: reader {ref!r} carries a `when` that is "
-                "not a non-empty string.")
-        return
+        return WhenClass(
+            READ_MOMENT_MALFORMED, row="declaration_malformed",
+            problem=(f"reader {ref!r} carries a `when` that is not a "
+                     "non-empty string."))
     if ref not in REF_BARE:
-        res.add("declaration_malformed",
-                f"kind {kind!r}: reader {ref!r} carries a `when`, but "
-                "`when` is only legal on a bare reader ("
-                + ", ".join(REF_BARE) + "). A prefixed reader's moment is "
-                "the referenced act firing — a `when` there is a second "
-                "answer to a settled question.")
-        return
+        return WhenClass(
+            READ_MOMENT_MALFORMED, row="declaration_malformed",
+            problem=(f"reader {ref!r} carries a `when`, but `when` is only "
+                     "legal on a bare reader (" + ", ".join(REF_BARE)
+                     + "). A prefixed reader's moment is the referenced act "
+                     "firing — a `when` there is a second answer to a "
+                     "settled question."))
     spelled = when.strip()
     mode = spelled.split()[0].strip(" :,—-").lower()
     rest = spelled[len(spelled.split()[0]):].strip(" :,—-")
     rest = rest.split("—")[0].strip(" :,-")
     if mode not in READER_WHEN_MODES:
-        res.add("declaration_malformed",
-                f"kind {kind!r}: reader {ref!r}'s `when` must BEGIN with "
-                f"one of {', '.join(READER_WHEN_MODES)}, got {when!r}. The "
-                "vocabulary is closed and narrower than a kind's own "
-                "`trigger`: `verb` is not a member here because a "
-                "verb-occasioned read is already expressible as "
-                "`verb:<name>` in the reader type itself.")
-        return
+        return WhenClass(
+            READ_MOMENT_MALFORMED, row="declaration_malformed",
+            problem=(f"reader {ref!r}'s `when` must BEGIN with one of "
+                     f"{', '.join(READER_WHEN_MODES)}, got {when!r}. The "
+                     "vocabulary is closed and narrower than a kind's own "
+                     "`trigger`: `verb` is not a member here because a "
+                     "verb-occasioned read is already expressible as "
+                     "`verb:<name>` in the reader type itself."))
     if mode == "none":
         if _needs_why(spelled, "none"):
-            res.add("kind_stage_undeclared",
-                    f"kind {kind!r}: reader {ref!r}'s `when` says \"none\" "
-                    "and states no reason. The word carries the "
-                    "obligation — spelled `none, declared why: <reason>`.")
-        return
-    # mode == "predicate"
+            return WhenClass(
+                READ_MOMENT_MALFORMED, row="kind_stage_undeclared",
+                problem=(f"reader {ref!r}'s `when` says \"none\" and states "
+                         "no reason. The word carries the obligation — "
+                         "spelled `none, declared why: <reason>`."))
+        return WhenClass(READ_MOMENT_NONE, why=rest)
     if not rest:
-        res.add("kind_stage_undeclared",
-                f"kind {kind!r}: reader {ref!r}'s `when` says 'predicate' "
-                "and names nothing. A predicate with no command has no "
-                "state, and no state is not quiet.")
+        return WhenClass(
+            READ_MOMENT_MALFORMED, row="kind_stage_undeclared",
+            problem=(f"reader {ref!r}'s `when` says 'predicate' and names "
+                     "nothing. A predicate with no command has no state, "
+                     "and no state is not quiet."))
+    return WhenClass(WHEN_PREDICATE, command=rest)
+
+
+def _check_reader_when(kind: str, ref: str, when, res: Result) -> None:
+    """Validate one reader entry's `when` — STRUCTURALLY ONLY.
+
+    Never executes a predicate: the seventh stage does not either at
+    validation time, and a `kind check` that ran shell would be a new side
+    effect nobody asked for — execution is `read_moments`'s job alone.
+
+    THE PARTITION IS NOT DECIDED HERE ANY MORE (P2). This maps the shared
+    classifier's verdict onto this instrument's findings, so the two
+    instruments cannot drift apart again by one of them being edited.
+    """
+    verdict = classify_reader_when(ref, when, present=True)
+    if verdict.state == READ_MOMENT_MALFORMED:
+        res.add(verdict.row, f"kind {kind!r}: {verdict.problem}")
 
 
 #: `read_moments`'s per-entry answer. `state` is always one of FIRE / QUIET /
@@ -1586,6 +1635,15 @@ class ReadMoment:
 READ_MOMENT_NONE = "NONE"
 READ_MOMENT_UNDECLARED = "UNDECLARED"
 
+#: A `when` that is PRESENT and invalid — the third answer this evaluator
+#: used to fold into UNDECLARED (D-3, P2). The fold was the defect: an
+#: ABSENT moment is the legitimate default across every kind here, while a
+#: present-and-broken one is somebody's mistake, and reporting them with one
+#: word meant the mistake rendered as the default and nothing looked. It is
+#: the register's own signature class — a state the vocabulary could not
+#: say, arriving as its nearest benign neighbour.
+READ_MOMENT_MALFORMED = "MALFORMED"
+
 
 def read_moments(body: dict, repo: Path | None = None) -> list:
     """Evaluate every `reader` entry's declared WHEN — the O6 evaluation half.
@@ -1606,30 +1664,38 @@ def read_moments(body: dict, repo: Path | None = None) -> list:
     for entry in body.get("reader") or []:
         if isinstance(entry, dict):
             ref = entry.get("reader")
+            # PRESENCE, carried explicitly rather than inferred from the
+            # value: `{"when": null}` and an entry with no `when` key are
+            # different facts, and only this loop can tell them apart.
+            present = "when" in entry
             when = entry.get("when")
         else:
             ref = entry
+            present = False
             when = None
         ref = ref if isinstance(ref, str) else str(ref)
-        if not isinstance(when, str) or not when.strip():
-            out.append(ReadMoment(ref, READ_MOMENT_UNDECLARED))
-            continue
-        spelled = when.strip()
-        mode = spelled.split()[0].strip(" :,—-").lower()
-        rest = spelled[len(spelled.split()[0]):].strip(" :,—-")
-        rest = rest.split("—")[0].strip(" :,-")
-        if mode == "none":
-            out.append(ReadMoment(ref, READ_MOMENT_NONE, rest))
-        elif mode == "predicate" and rest:
-            trig = lanes.evaluate_trigger(rest, cwd=repo)
+        # THE PARTITION IS READ BEFORE ANYTHING IS EXECUTED (P2), and that
+        # ordering is the live repair rather than a tidy-up. This evaluator
+        # had no bare-reader guard, so a `when` on a PREFIXED reader — which
+        # the checker refuses — was still RUN; both attack arms drove a
+        # `predicate touch <marker>` through it and watched the file appear.
+        # Classifying first closes that by construction: only a verdict of
+        # WHEN_PREDICATE ever reaches `evaluate_trigger`.
+        verdict = classify_reader_when(ref, when, present=present)
+        if verdict.state == WHEN_PREDICATE:
+            trig = lanes.evaluate_trigger(verdict.command, cwd=repo)
             out.append(ReadMoment(ref, trig.state, trig.detail))
+        elif verdict.state == READ_MOMENT_NONE:
+            out.append(ReadMoment(ref, READ_MOMENT_NONE, verdict.why))
+        elif verdict.state == READ_MOMENT_MALFORMED:
+            # ITS OWN ANSWER, no longer folded into UNDECLARED. An absent
+            # moment is the legitimate default; a present-and-broken one is
+            # somebody's mistake, and reporting both with one word made the
+            # mistake render as the default.
+            out.append(ReadMoment(ref, READ_MOMENT_MALFORMED,
+                                  verdict.problem))
         else:
-            # A malformed `when` (bad vocabulary, or `predicate` naming
-            # nothing) — `_check_reader_when` reports this at validation
-            # time; `read_moments` never runs shell over something it
-            # cannot parse, so it reports the entry as having no evaluable
-            # moment rather than guessing.
-            out.append(ReadMoment(ref, READ_MOMENT_UNDECLARED, spelled))
+            out.append(ReadMoment(ref, READ_MOMENT_UNDECLARED))
     return out
 
 
