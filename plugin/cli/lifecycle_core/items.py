@@ -764,19 +764,6 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
     # untyped prose — is equally not-evidence. Threading a prefix here to
     # sharpen a distinction the check does not make would be a second reader
     # of the blocker value with its own chance to disagree.
-    for slot_, (want, row, what) in BLOCKER_SLOT_RULES.items():
-        if slot_ not in item.slots:
-            continue
-        kind_, _detail = classify_blocker(item.slots.get("blocked-by", ""),
-                                          None)
-        if kind_ != want:
-            out.problems.append((
-                row, item.line,
-                f"block {item.ident!r} carries `{slot_}:` beside a "
-                f"`blocked-by` that is not a `{want}` blocker "
-                f"({kind_ or 'untyped'}). The slot {what}. Beside any other "
-                "type it records something that cannot have happened."))
-
     # THE CLOSURE REASON CARRIES ITS DATE, checked on the same half the
     # amendment and promotion lines are checked on and for the same reason: a
     # closure record nobody can place in time is a claim about a closure
@@ -823,6 +810,46 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
               "annotation as an addition rather than as a reordering."))
 
     _resolve_amendments(out, item, seen_order)
+
+    # CONDITIONAL-SLOT PLACEMENT IS GRADED AFTER RESOLUTION, and the position
+    # of these lines is the whole check (P3). A conditional slot is legal
+    # beside one TYPE of blocker, and which type this block carries is its
+    # RESOLVED value — law 8's "an item's CURRENT truth comes from `item
+    # slots`, which resolves amendments". Graded before the resolve, as it
+    # was, this read the base line and failed in both directions:
+    #
+    #   LOUD — a re-type INTO a type made a correctly-placed slot read as
+    #   misplaced. Found in operation, re-typing an item's blocker to
+    #   `decision` on a ruling: the amendment was accepted at the door and
+    #   the commit gate then refused the block the door had just written. A
+    #   guard firing on legitimate work stops the lane (law 11), and this
+    #   one stopped a ruling being executed at all.
+    #
+    #   SILENT — a re-type OUT of `evidence` left a stranded
+    #   `blocker-exercise:` invisible, because the base line still said
+    #   `evidence`. That is the direction that matters here: the stamp this
+    #   part introduces is written for evidence-kind blockers only, and
+    #   "the re-type clears the stamp" is unprovable if the check that would
+    #   catch a stranded one cannot see it.
+    #
+    # PREFIX IS NOT NEEDED AND NOT PASSED: this asks only whether the blocker
+    # IS the slot's type, and every non-match — item id, decision, external,
+    # NONE, untyped prose — is equally not-evidence. Threading a prefix here
+    # to sharpen a distinction the check does not make would be a second
+    # reader of the blocker value with its own chance to disagree.
+    for slot_, (want, row, what) in BLOCKER_SLOT_RULES.items():
+        if slot_ not in item.slots:
+            continue
+        kind_, _detail = classify_blocker(item.slots.get("blocked-by", ""),
+                                          None)
+        if kind_ != want:
+            out.problems.append((
+                row, item.line,
+                f"block {item.ident!r} carries `{slot_}:` beside a "
+                f"`blocked-by` that is not a `{want}` blocker "
+                f"({kind_ or 'untyped'}). The slot {what}. Beside any other "
+                "type it records something that cannot have happened."))
+
     _check_promotions(out, item, seen_order)
     out.items.append(item)
 

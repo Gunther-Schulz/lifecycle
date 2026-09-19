@@ -473,5 +473,88 @@ class ExternalBlockerAndItsEnding(unittest.TestCase):
             f"no event carries the row name; details seen: {details}")
 
 
+class ConditionalSlotPlacementReadsTheEFFECTIVEBlocker(unittest.TestCase):
+    """A conditional slot is placed against the blocker IN FORCE (P3).
+
+    FOUND IN OPERATION rather than by reading: re-typing lc-82's blocker from
+    `evidence` to `decision` — a ruling from the round desk — produced a
+    block its own commit gate refused, reporting `not_derivable_misplaced`
+    against a blocker that classifies as `decision` when resolved.
+
+    THE CAUSE IS ORDERING. `_close_block` graded placement BEFORE it called
+    `_resolve_amendments`, so the check read the base slot line while the
+    item's current truth is the last `amended-blocked-by:` (law 8: an item's
+    CURRENT truth comes from the resolved slots). The two directions fail
+    differently and only one of them is loud:
+
+      LOUD — a re-type INTO a type makes a correctly-placed slot read as
+      misplaced, which is a guard firing on legitimate work (law 11) and is
+      what stopped the ruling being executed.
+
+      SILENT, AND IT IS P3's OWN RED — a re-type OUT of `evidence` leaves a
+      stranded `blocker-exercise:` invisible, because the base line still
+      says `evidence` and the check is satisfied. That is attack r2's B2
+      exactly, and without this repair P3's "re-type clears the stamp"
+      red-first could not fire at all: the check it asserts a zero from was
+      blind to the very case.
+    """
+
+    def _carrier(self, block):
+        return ("schema: 6\nbaseline: 1\nadded: 0\ncompacted: 0\n" + block)
+
+    def _rows(self, text):
+        from lifecycle_core import items as items_mod
+        return [r for r, _l, _m in items_mod.parse(text).problems]
+
+    RETYPED_TO_DECISION = (
+        "\n## xx-1\ngrade: PARKED\nrequirement: r\ngoal: tend\n"
+        "write-set: a.py\ndone-criterion: d\nevidence: MEASURED e\n"
+        "blocked-by: evidence false  # the old unfalsifiable spelling\n"
+        "not-derivable: constitutively the operator's\n"
+        "amend-reason: 2026-09-19 re-typed to the court it sits in\n"
+        "amended-blocked-by: 2026-09-19 decision is the set complete?\n")
+
+    RETYPED_OUT_OF_EVIDENCE = (
+        "\n## xx-1\ngrade: PARKED\nrequirement: r\ngoal: tend\n"
+        "write-set: a.py\ndone-criterion: d\nevidence: MEASURED e\n"
+        "blocked-by: evidence false  # the old unfalsifiable spelling\n"
+        "blocker-exercise: none-yet 2026-09-19\n"
+        "amend-reason: 2026-09-19 re-typed to an external wait\n"
+        "amended-blocked-by: 2026-09-19 external the release lands\n")
+
+    def test_a_slot_correct_under_the_AMENDED_blocker_is_not_misplaced(self):
+        """The loud direction: the guard must stop firing on legitimate work."""
+        rows = self._rows(self._carrier(self.RETYPED_TO_DECISION))
+        self.assertNotIn("not_derivable_misplaced", rows)
+
+    def test_a_slot_STRANDED_by_a_re_type_IS_misplaced(self):
+        """The silent direction, and P3's own red: an exercise record left
+
+        behind by a re-type out of `evidence` must be visible."""
+        rows = self._rows(self._carrier(self.RETYPED_OUT_OF_EVIDENCE))
+        self.assertIn("blocker_exercise_misplaced", rows)
+
+    def test_an_UNAMENDED_misplacement_still_fires(self):
+        """The control. Both cases above turn on amendments, so without an
+
+        unamended arm the check could have been disabled outright and both
+        would still pass."""
+        rows = self._rows(self._carrier(
+            "\n## xx-1\ngrade: PARKED\nrequirement: r\ngoal: tend\n"
+            "write-set: a.py\ndone-criterion: d\nevidence: MEASURED e\n"
+            "blocked-by: decision is the set complete?\n"
+            "blocker-exercise: none-yet 2026-09-19\n"))
+        self.assertIn("blocker_exercise_misplaced", rows)
+
+    def test_a_correctly_placed_unamended_slot_does_not_fire(self):
+        """The second control: the check must still pass what is right."""
+        rows = self._rows(self._carrier(
+            "\n## xx-1\ngrade: PARKED\nrequirement: r\ngoal: tend\n"
+            "write-set: a.py\ndone-criterion: d\nevidence: MEASURED e\n"
+            "blocked-by: evidence test -f /nonexistent\n"
+            "blocker-exercise: none-yet 2026-09-19\n"))
+        self.assertNotIn("blocker_exercise_misplaced", rows)
+
+
 if __name__ == "__main__":
     unittest.main()
