@@ -143,7 +143,7 @@ evidence: verbs.py:1584-1598 read at the artifact by the desk: the docstring sta
 blocked-by: NONE
 
 ## lc-52
-grade: PARKED
+grade: READY
 requirement: every carrier verb that commits composes its own message and writes NO Co-Authored-By trailer, so an agent-authored carrier commit is unclaimable by trailer and the operator corpus's AI-attribution rule is unmet on this path, record: opus-lc44-48-49 report gap 5, 2026-08-27
 goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
@@ -154,6 +154,8 @@ not-derivable: 2026-09-19 CROSS-REPO EITHER WAY, so not buildable blind from thi
 amend-reason: 2026-09-19 REGRADE to the residue on the driving desk's ruling (cachyos-setup-b3, 2026-09-19, quoted): the machinery EXISTS and works, so the booked premise is dead, but a live defect is not overtaken - the residue bit twice today
 amended-requirement: 2026-09-19 NOTHING SETS LIFECYCLE_COMMIT_TRAILER BY DEFAULT, so the lazy path produces unmarked carrier-verb commits. The BOOKED premise is DEAD and is corrected here rather than left standing: this entry says carrier verbs write NO Co-Authored-By trailer, and that stopped being true when verbs.COMMIT_TRAILER_ENV / attribution_block() shipped - the verb writes BOTH halves, or neither, when the env supplies them. What survives is the DEFAULT: the var is unset unless a session exports it, so the path of least effort still yields commits no trailer can claim, which is finding (b)'s write side. Law 26's default question verbatim: the repair MOVES THE DEFAULT, never adds a reminder to set a variable - a duty to remember an env export is the under-firing shape this repo mints mechanisms against.
 amended-evidence: 2026-09-19 MEASURED 2026-09-19 by the wave B executing desk (cachyos-setup-c8) and RULED by the driving desk cachyos-setup-b3, whose ruling this regrade cites. THE MACHINERY, read at the artifact: verbs.py COMMIT_TRAILER_ENV plus attribution_block(), whole-or-nothing by construction - a half block is DROPPED rather than written, because a Co-Authored-By: Claude trailer WITHOUT a Claude-Session trailer is the exact shape the machine's pre-push guard acts on, so writing half would FORGE that shape. EXERCISED, not inferred: with the var exported, three carrier-verb commits (close lc-175 6dff400, amend lc-239 adcf2ba, amend lc-238 f58fe0c) each carry BOTH halves, verified by reading the trailers back off each commit, 1/1 each. TWO SPECIMENS OF THE RESIDUE BITING, BOTH TODAY, which is why this is a live defect rather than a closed one: 8a5d760 at the driving desk, and this desk's OWN close commit for lc-175, which landed unmarked and was amended before push only because the verb's warning line was read. Neither author was careless; nothing set the var.
+promote-reason: 2026-09-19 the blocking decision is answered on the ledger 2026-09-19 by exact question match (default source: the plugin's own desk-state kind, hook writes and verbs read, env override, warning fallback); write-set and done-criterion already stood, and the design detail left to the build is within the entry's own must-not-move
+promoted-by: 2026-09-19 round desk (fable, operator-delegated 2026-09-19)
 
 ## lc-53
 grade: READY
