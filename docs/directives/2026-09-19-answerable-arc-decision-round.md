@@ -272,6 +272,14 @@ red (roster kind unregistered) is FIXED (`2a154ea`).
 
 Known-unmarked commit: 4a4ad6e (trailer env unset for one call;
 reported, visible to the hook, deliberately not rebased).
+Second known-unmarked commit: 14df96e (queue item 1, executing desk
+`lifecycle-38`, 2026-09-19) — committed with `git commit -q`, which
+delivers no `gitOperation` and so no SHA to the recorder, exactly the
+mechanism queue item 8 routes as a finding. Same disposition as
+4a4ad6e: reported, visible to the hook, deliberately not rebased. It
+is an UNPLANTED positive control for item 8's second finding, produced
+by the desk the finding was routed from; `-q` dropped for the rest of
+the queue.
 
 ## Addendum 4 — successor desk pair (2026-09-19, driving desk cachyos-setup-b3)
 
