@@ -211,6 +211,8 @@ amend-reason: 2026-09-13 2026-09-13 Same correction as lc-24, same cause: the 20
 amended-blocked-by: 2026-09-13 evidence the write-set's only element is a cache-fix path ('docs/directives/carrier-rework-design-2026-08-26.md@cache-fix'), so the realizing write lands entirely outside this repo; this desk surfaces such items and never executes them. Unblocked by a desk holding the cache-fix copy, or an operator decision moving the document's home.
 amend-reason: 2026-09-13 2026-09-13 Same instrument repair as lc-53 and lc-24. Prose predicate, latent under PARKED. Converted to 'false  # <reason>'; blocked state unchanged.
 amended-blocked-by: 2026-09-13 evidence false  # the write-set's only element is a cache-fix path, so the realizing write lands entirely outside this repo
+amend-reason: 2026-09-19 Re-typed from `evidence false` at the contract's build (D-8): the predicate was the literal `false`, which can never fire, so this read on the board as ordinary machine-court waiting and `item check` counted it among the unclearable softlock chains. It was never a predicate wait — nothing here can test it — and `external` is the member minted for exactly this state. It now ends by an ACT: amend the blocker away with the arrival named.
+amended-blocked-by: 2026-09-19 external the cache-fix path named in this entry's write-set is written, since the realizing write lands entirely outside this repo
 
 ## lc-67
 grade: READY
