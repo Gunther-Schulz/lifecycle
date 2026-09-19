@@ -50,7 +50,18 @@ ARCS_HOME = "arcs/*.md"
 CLOSED_ARCS_HOME = "arcs/closed/*.md"
 ARCS_DIR = "arcs"
 CLOSED_DIR = "arcs/closed"
-INDEX_REL = "arcs/INDEX.md"
+#: EXTENSIONLESS ON PURPOSE, and it is the whole repair of a class that
+#: surfaced in FOUR readers. `arcs/INDEX.md` sat inside the arcs kind's own
+#: home glob `arcs/*.md`, so every reader of that home had to skip it by
+#: name — `live_slugs`, the schema reach's `carrier_paths`, the pre-commit
+#: hook, and finally `retire`'s GENERIC walker, where a name-based exclusion
+#: would have been a kind-specific hack in shared code. MEASURED rather than
+#: assumed: pathlib's glob MATCHES a leading-dot name where shell glob does
+#: not, so `.index.md` escapes nothing here; dropping the extension is what
+#: takes it out of the glob. It is then a persisted thing resolving to no
+#: kind, which invariant 1 forbids — so it is REGISTERED as its own kind
+#: rather than hidden inside another's home.
+INDEX_REL = "arcs/INDEX"
 
 #: An arc body's FIXED slots, in order — the same discipline the item carrier
 #: keeps: a block carries exactly these, exactly once, in this sequence, so a
@@ -255,20 +266,21 @@ def render_index(counters: dict, schema: int) -> str:
     return "\n".join(lines) + "\n"
 
 
-#: The index is NOT an arc body, and it lives INSIDE the arc home — so every
-#: reader of that home has to exclude it BY NAME. Found by this module's own
-#: conservation test on its first run: `arcs/*.md` matched `arcs/INDEX.md`,
-#: the counters file counted itself as a body, and conservation read OVER by
-#: exactly one on a repo that was agreeing. The same glob is what
-#: `carrier_homes` now reaches for the schema check, so the exclusion belongs
-#: to the home rather than to any one caller.
+#: Kept as the index's NAME, no longer as an exclusion anybody applies. The
+#: index is outside the arc home's glob now, so no reader skips it — the
+#: registry knows it as its own kind instead.
 INDEX_STEM = "INDEX"
 
 
 def is_arc_body(path: Path) -> bool:
-    """Is this file an arc BODY rather than the home's own bookkeeping?"""
-    return path.is_file() and path.suffix == ".md" \
-        and path.stem != INDEX_STEM
+    """Is this file an arc BODY?
+
+    NO NAME EXCLUSION ANY MORE. It read `stem != INDEX` while the counters
+    file lived inside this glob; four readers needed that skip and the fifth
+    would have inherited it. The index is extensionless and registered
+    separately now, so membership is simply what the home says it is.
+    """
+    return path.is_file() and path.suffix == ".md"
 
 
 def live_slugs(repo: Path) -> list:

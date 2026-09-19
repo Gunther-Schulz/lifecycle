@@ -1311,10 +1311,28 @@ def _validate_kind(name: str, body, res: Result, world) -> None:
                     f"{', '.join(GROWTH_MODES)}.")
         else:
             mode = growth.strip().split()[0].strip(":,—-").lower()
-            if mode not in GROWTH_MODES:
+            # THE ARM, REGISTERED ON CONTACT (D-3). Some kinds are a SINGLE
+            # FIXED FILE: they do not accrue, are never compacted, and have
+            # no exit, so every one of the three members would be a
+            # NEIGHBOUR standing in for a state this vocabulary cannot say —
+            # which is the failure the contract exists to end, and the
+            # neighbour is always the benign one. Recording the arm with its
+            # reason keeps the honest answer in the declaration and makes it
+            # the widening signal, instead of a kind quietly claiming a
+            # growth control it does not have.
+            #
+            # A MALFORMED ARM IS STILL REFUSED, and by the same predicate the
+            # grade door uses: undated, the instance could never be aged, so
+            # the signal it exists to be could never reach zero owed.
+            from . import vocab as vocab_mod
+            if vocab_mod.is_oov(growth.strip()):
+                pass
+            elif mode not in GROWTH_MODES:
                 res.add("declaration_malformed",
                         f"kind {name!r}: `growth` must BEGIN with one of "
-                        f"{', '.join(GROWTH_MODES)}, got {growth!r}. The "
+                        f"{', '.join(GROWTH_MODES)}, got {growth!r} — or be "
+                        f"the out-of-vocabulary arm, `{vocab_mod.OOV_FORM}`, "
+                        "where no member is true of this kind. The "
                         "vocabulary is closed (R22): a count or a size is not "
                         "a growth control, it is a cap, and the alarm this "
                         "design reads is FLOW.")

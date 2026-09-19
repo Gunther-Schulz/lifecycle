@@ -116,10 +116,10 @@ def main() -> int:
     # any shape at all while the three fixed-path carriers were guarded — the
     # commit-time boundary stopping exactly where the newest carrier began.
     #
-    # THE INDEX IS NOT A BODY and is excluded by the same name the carrier
-    # module excludes it by: it lives INSIDE the arc home and matches the
-    # home's own glob, so a reader that took the glob at face value would
-    # grade the counters file against the body shape and fail it forever.
+    # NO INDEX EXCLUSION HERE ANY MORE. It needed one while the counters file
+    # lived inside the arc home's glob; the index is extensionless and
+    # registered as its own kind now, so this watch sees arc BODIES only and
+    # the skip that four readers carried is gone from all of them.
     glob_watched = []
     arcs_home = home("arcs", allow_glob=True)
     if arcs_home:
@@ -129,8 +129,7 @@ def main() -> int:
         if rel in watched:
             return watched[rel]
         for pattern, checker in glob_watched:
-            if fnmatch.fnmatch(rel, pattern) \
-                    and Path(rel).stem != arcs_mod.INDEX_STEM:
+            if fnmatch.fnmatch(rel, pattern):
                 return checker
         return None
 

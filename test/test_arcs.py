@@ -23,6 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
 from lifecycle_core import arcs  # noqa: E402
+from lifecycle_core import declaration as decl_mod  # noqa: E402
 
 
 class ArcBodyShape(unittest.TestCase):
@@ -331,16 +332,24 @@ class ArcShapeAtTheCommitBoundary(unittest.TestCase):
         got = self._hook(repo)
         self.assertEqual(got.returncode, 0, got.stderr)
 
-    def test_the_INDEX_is_not_graded_as_a_body(self):
-        """It lives inside the arc home and matches its glob, so a reader
+    def test_the_INDEX_is_OUTSIDE_the_arc_home_entirely(self):
+        """CONTROL FLIPPED. This arm used to assert the hook SKIPPED the
 
-        taking the glob at face value would fail the counters file forever."""
+        index by name — the exclusion four readers carried. The index is
+        extensionless and registered as its own kind now, so the assertion
+        is stronger: it does not match the arc home's glob at all, which is
+        why no reader needs to know about it.
+        """
         repo, run = self._repo()
         arcs.index_path(repo).parent.mkdir(parents=True, exist_ok=True)
         arcs.index_path(repo).write_text(
             arcs.render_index({"baseline": 0, "opened": 0, "closed": 0}, 6),
             encoding="utf-8")
-        run("git", "add", "arcs/INDEX.md")
+        import fnmatch
+        self.assertFalse(
+            fnmatch.fnmatch(arcs.INDEX_REL, arcs.ARCS_HOME),
+            f"{arcs.INDEX_REL} still matches the arc home {arcs.ARCS_HOME}")
+        run("git", "add", arcs.INDEX_REL)
         got = self._hook(repo)
         self.assertEqual(got.returncode, 0, got.stderr)
 
@@ -803,3 +812,63 @@ class ArcVerbsFireTheLogOnce(unittest.TestCase):
                       if ln.strip()]
         self.assertEqual(verbs_seen.count("arc open"), 1, verbs_seen)
         self.assertEqual(verbs_seen.count("arc close"), 1, verbs_seen)
+
+
+class TheIndexIsItsOwnRegisteredKind(unittest.TestCase):
+    """Invariant 1 reaching the arc index (lc-231, ruled at the round desk).
+
+    THE STATE THIS REPLACES. The index lived at `arcs/INDEX.md`, INSIDE the
+    arcs kind's own home glob — so it counted as an arc, and four separate
+    readers had to skip it by name. The fourth was a GENERIC walker, where a
+    name-based exclusion would have been a kind-specific hack in shared
+    code, and a fifth reader would have inherited the same debt.
+
+    REGISTERED RATHER THAN SKIPPED, which is what invariant 1 actually asks
+    for: every persisted thing resolves to a registered kind, and a file
+    hiding inside another kind's home resolves to the wrong one.
+    """
+
+    def test_the_index_does_not_match_the_arc_home(self):
+        import fnmatch
+        self.assertFalse(fnmatch.fnmatch(arcs.INDEX_REL, arcs.ARCS_HOME))
+        self.assertFalse(fnmatch.fnmatch(arcs.INDEX_REL,
+                                         arcs.CLOSED_ARCS_HOME))
+
+    def test_the_arc_member_count_no_longer_includes_it(self):
+        """The defect, at the effect site: a repo whose only arc was closed
+
+        reported one instance — the counters file counting itself."""
+        from lifecycle_core import refusals
+        repo = refusals._Repo()
+        self.addCleanup(repo.close)
+        (repo.dir / arcs.ARCS_DIR).mkdir(parents=True, exist_ok=True)
+        arcs.index_path(repo.dir).write_text(
+            arcs.render_index({"baseline": 0, "opened": 1, "closed": 1}, 6),
+            encoding="utf-8")
+        self.assertEqual(arcs.live_slugs(repo.dir), [],
+                         "the index still counts as a live arc body")
+
+    def test_this_repo_declares_the_kind_with_every_stage(self):
+        import json
+        doc = json.loads(
+            (Path(__file__).resolve().parents[1] / ".claude" /
+             "lifecycle.json").read_text(encoding="utf-8"))
+        kind = doc["kinds"]["arc index"]
+        self.assertEqual(sorted(kind), sorted(decl_mod.KIND_STAGES))
+        self.assertEqual(kind["home"], arcs.INDEX_REL)
+
+    def test_its_growth_uses_the_ARM_rather_than_a_neighbour(self):
+        """The contract's first real contact. A single fixed file that
+
+        neither accrues nor is compacted nor has an exit cannot be said by
+        any of the three growth members, and picking the nearest one would be
+        exactly the neighbour-fold the contract exists to end."""
+        import json
+        from lifecycle_core import vocab
+        doc = json.loads(
+            (Path(__file__).resolve().parents[1] / ".claude" /
+             "lifecycle.json").read_text(encoding="utf-8"))
+        growth = doc["kinds"]["arc index"]["growth"]
+        self.assertTrue(vocab.is_oov(growth),
+                        f"growth is not the well-formed arm: {growth!r}")
+        self.assertNotIn(growth.split()[0], decl_mod.GROWTH_MODES)

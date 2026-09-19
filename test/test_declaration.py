@@ -761,3 +761,64 @@ class StructureReadout(unittest.TestCase):
             code = exc.code
         self.assertNotEqual(code, 0)
         self.assertIn("not allowed with", out.getvalue() + err.getvalue())
+
+
+class GrowthVocabularyGainsItsArm(unittest.TestCase):
+    """The growth stage accepts the out-of-vocabulary arm (D-3, on contact).
+
+    THE CONTACT THAT REGISTERED IT. The arc INDEX is a SINGLE FIXED FILE: it
+    does not accrue, it is never compacted, and it has no exit — so none of
+    `bounded-by-exit` / `compacted` / `unbounded-with-reason` can say what is
+    true of it. Every one of the three would be a neighbour standing in for a
+    state the vocabulary cannot express, which is the exact failure the
+    registered-closed-vocabulary contract exists to end.
+
+    SO THE ARM IS USED RATHER THAN THE NEAREST NEIGHBOUR, and that is the
+    whole point of having built it: the honest answer is recorded WITH ITS
+    REASON and becomes the widening signal, instead of a kind quietly
+    claiming a growth control it does not have.
+    """
+
+    @staticmethod
+    def _kind(growth):
+        return {"home": "arcs/INDEX", "writer": "verb:arc open",
+                "reader": ["session"],
+                "staleness": "none, declared why: counters are current by "
+                             "construction",
+                "exit": {"action": "never", "recording-act": "none"},
+                "growth": growth,
+                "trigger": "none, declared why: nothing fires on a counter"}
+
+    def _findings(self, growth):
+        body = self._kind(growth)
+        doc = {"kinds": {"arc index": body}}
+        res = decl.Result(code=0)
+        decl._validate_kind("arc index", body, res, decl.ref_world(doc))
+        return [f.row for f in res.findings]
+
+    def test_the_arm_is_ACCEPTED_where_no_member_is_true(self):
+        rows = self._findings(
+            "cannot-express(2026-09-19): a single fixed file that neither "
+            "accrues nor is compacted nor has an exit")
+        self.assertNotIn("declaration_malformed", rows)
+
+    def test_a_MEMBER_is_still_accepted(self):
+        """The control: opening the door to the arm must not close it on the
+
+        vocabulary's own members."""
+        self.assertEqual(self._findings("bounded-by-exit"), [])
+
+    def test_a_WORD_THAT_IS_NEITHER_is_still_refused(self):
+        """The second control, and the one that decides whether this bought
+
+        anything: an unrecognised word must stay refused. An arm that
+        admitted any string would have widened the vocabulary to everything
+        rather than given it a way to say it cannot speak."""
+        self.assertIn("declaration_malformed", self._findings("smallish"))
+
+    def test_a_MALFORMED_arm_is_refused(self):
+        """Undated: it could never be aged, so the widening signal it is
+
+        supposed to be could never reach zero owed."""
+        self.assertIn("declaration_malformed",
+                      self._findings("cannot-express: no date here"))

@@ -16,7 +16,7 @@
   "template-bindings": {},
   "leak-scan": {
     "source-scope-foreign-path": true,
-    "reason": "ON, no exceptions (design \u00a73.3). This repo's payload is `.md` and `.py` \u2014 templates extracted FROM private repos \u2014 so the corpus-only scope that fits claude-code-cache-fix is blind here: a foreign home path in a template is exactly the leak direction this repo exists on the wrong side of, and no fixture corpus would ever see it. The scanner-side half of this key is a residue, recorded in ITEMS.md: the shipped `foreign-path` class is scoped `corpus`, so honouring this declaration means widening it to source scope, and the scanner is a byte-identical copy that lands in claude-code-cache-fix first."
+    "reason": "ON, no exceptions (design §3.3). This repo's payload is `.md` and `.py` — templates extracted FROM private repos — so the corpus-only scope that fits claude-code-cache-fix is blind here: a foreign home path in a template is exactly the leak direction this repo exists on the wrong side of, and no fixture corpus would ever see it. The scanner-side half of this key is a residue, recorded in ITEMS.md: the shipped `foreign-path` class is scoped `corpus`, so honouring this declaration means widening it to source scope, and the scanner is a byte-identical copy that lands in claude-code-cache-fix first."
   },
   "kinds": {
     "items": {
@@ -28,14 +28,14 @@
         "verb:item ratio",
         "verb:retire"
       ],
-      "staleness": "change-coupling \u2014 an item whose evidence or requirement record pointer no longer resolves",
+      "staleness": "change-coupling — an item whose evidence or requirement record pointer no longer resolves",
       "exit": {
         "action": "move",
         "recording-act": "the item close fire-log line",
         "detail": "to ITEMS-DONE.md on DONE or DROPPED"
       },
-      "growth": "bounded-by-exit \u2014 every item leaves by a recorded closure or a recorded drop, and the alarm is a kind that grew without an exit event, never a count (R22)",
-      "trigger": "verb item add \u2014 admission is the write that CREATES a body; `item park` and `item close` move one already admitted, so they are transitions of this kind rather than its trigger"
+      "growth": "bounded-by-exit — every item leaves by a recorded closure or a recorded drop, and the alarm is a kind that grew without an exit event, never a count (R22)",
+      "trigger": "verb item add — admission is the write that CREATES a body; `item park` and `item close` move one already admitted, so they are transitions of this kind rather than its trigger"
     },
     "done bodies": {
       "home": "ITEMS-DONE.md",
@@ -44,13 +44,13 @@
         "verb:item check",
         "verb:retire"
       ],
-      "staleness": "none, declared why: a closure record is history \u2014 it accumulates, it does not go stale",
+      "staleness": "none, declared why: a closure record is history — it accumulates, it does not go stale",
       "exit": {
         "action": "compact",
         "recording-act": "a ledger decision line naming the compacted range",
-        "detail": "WAVE 4 \u2014 declared now so the kind has no undeclared stage, not implemented"
+        "detail": "WAVE 4 — declared now so the kind has no undeclared stage, not implemented"
       },
-      "growth": "compacted \u2014 done bodies fold on the retire lane's declared rule and git keeps the body; the archive section is history and dropping it would lose the basis of laws still in force",
+      "growth": "compacted — done bodies fold on the retire lane's declared rule and git keeps the body; the archive section is history and dropping it would lose the basis of laws still in force",
       "trigger": "verb item close"
     },
     "ledger lines": {
@@ -63,10 +63,10 @@
       "staleness": "none, declared why: append-only decision history",
       "exit": {
         "action": "never",
-        "recording-act": "compaction only \u2014 a line whose item is DONE and past the horizon folds into that body's compaction line"
+        "recording-act": "compaction only — a line whose item is DONE and past the horizon folds into that body's compaction line"
       },
-      "growth": "unbounded-with-reason \u2014 one line per decision event, no bodies; the decision rate is the control, and the pre-migration prose sits below the archive heading held verbatim",
-      "trigger": "verb ledger add \u2014 the button. `session` also appears in the writer and that is the path AROUND the button; the trigger is the verb, and a hand-written line is a bypass rather than a second trigger"
+      "growth": "unbounded-with-reason — one line per decision event, no bodies; the decision rate is the control, and the pre-migration prose sits below the archive heading held verbatim",
+      "trigger": "verb ledger add — the button. `session` also appears in the writer and that is the path AROUND the button; the trigger is the verb, and a hand-written line is a bypass rather than a second trigger"
     },
     "journal entries": {
       "home": "JOURNAL.md",
@@ -75,13 +75,13 @@
         "session",
         "verb:audit"
       ],
-      "staleness": "change-coupling \u2014 an entry nothing cites is stale, and a law carrying no journal pointer has no basis; read against the citing artifact, never against the entry's age",
+      "staleness": "change-coupling — an entry nothing cites is stale, and a law carrying no journal pointer has no basis; read against the citing artifact, never against the entry's age",
       "exit": {
         "action": "never",
         "recording-act": "the citing law's pointer is the record; an entry leaves only through the retire lane's compaction, which names the folded range in a ledger decision line"
       },
-      "growth": "unbounded-with-reason \u2014 one entry per incident, so growth is bounded by the incident rate; a cap here would drop the lesson justifying a law still in force",
-      "trigger": "predicate grep -q 'NO JOURNAL ENTRY SUPPORTS THIS' CLAUDE.md \u2014 a law standing with no journal entry behind it is exactly when an entry is owed, and the laws file marks that state in its own words. EXERCISED before declaring: fires (0) on the real file, quiet (1) on a control with the marker removed"
+      "growth": "unbounded-with-reason — one entry per incident, so growth is bounded by the incident rate; a cap here would drop the lesson justifying a law still in force",
+      "trigger": "predicate grep -q 'NO JOURNAL ENTRY SUPPORTS THIS' CLAUDE.md — a law standing with no journal entry behind it is exactly when an entry is owed, and the laws file marks that state in its own words. EXERCISED before declaring: fires (0) on the real file, quiet (1) on a control with the marker removed"
     },
     "laws": {
       "home": "CLAUDE.md",
@@ -90,13 +90,13 @@
         "session",
         "verb:audit"
       ],
-      "staleness": "change-coupling \u2014 a law whose JOURNAL pointer no longer resolves has lost its basis, and a law is read against the entry it cites rather than against its age",
+      "staleness": "change-coupling — a law whose JOURNAL pointer no longer resolves has lost its basis, and a law is read against the entry it cites rather than against its age",
       "exit": {
         "action": "never",
         "recording-act": "a retirement is a ledger decision line naming the law and the fire-rate evidence that priced it"
       },
-      "growth": "unbounded-with-reason \u2014 NO CAP (R22, and the 60-line one was withdrawn by this schema wave). A laws file may need 200 lines and the only question is whether every line is a law; the control is SCOPE, checked by `lifecycle audit`'s laws scope audit, and the size is reported as a number that decides nothing",
-      "trigger": "none, declared why: a law is minted when an incident earns it, and whether an incident earns one is the judgment law 26 exists to make someone do. The nearest observable \u2014 a journal entry nothing cites \u2014 is the JOURNAL's trigger, not this one"
+      "growth": "unbounded-with-reason — NO CAP (R22, and the 60-line one was withdrawn by this schema wave). A laws file may need 200 lines and the only question is whether every line is a law; the control is SCOPE, checked by `lifecycle audit`'s laws scope audit, and the size is reported as a number that decides nothing",
+      "trigger": "none, declared why: a law is minted when an incident earns it, and whether an incident earns one is the judgment law 26 exists to make someone do. The nearest observable — a journal entry nothing cites — is the JOURNAL's trigger, not this one"
     },
     "audits": {
       "home": "docs/audits/*.md",
@@ -105,12 +105,12 @@
         "verb:retire",
         "session"
       ],
-      "staleness": "change-coupling \u2014 an audit whose measured artifact has moved past the citation it carries no longer measures anything current",
+      "staleness": "change-coupling — an audit whose measured artifact has moved past the citation it carries no longer measures anything current",
       "exit": {
         "action": "never",
         "recording-act": "none is taken: append-only historical; the recording act for a superseded measurement is the newer audit citing the one it overtakes"
       },
-      "growth": "unbounded-with-reason \u2014 one file per measurement, and a measurement is only taken when a question needs it; that is the control",
+      "growth": "unbounded-with-reason — one file per measurement, and a measurement is only taken when a question needs it; that is the control",
       "trigger": "none, declared why: an audit fires when a review round is commissioned, and commissioning one is a decision about where to look next. No predicate detects an unasked question"
     },
     "directives": {
@@ -120,13 +120,13 @@
         "verb:retire",
         "session"
       ],
-      "staleness": "change-coupling \u2014 a directive whose named desk, carrier state, or dispatch context has moved past its recorded instruction no longer directs current work",
+      "staleness": "change-coupling — a directive whose named desk, carrier state, or dispatch context has moved past its recorded instruction no longer directs current work",
       "exit": {
         "action": "never",
         "recording-act": "none is taken: append-only historical; a superseding directive names the instruction it overtakes"
       },
-      "growth": "unbounded-with-reason \u2014 one dated directive per live drain wave or desk handoff, and the recorded handoff or drain decision that requires it is the control",
-      "trigger": "none, declared why: a directive is written when work is dispatched, and the dispatch is the event \u2014 but it happens at a DESK, leaving no artifact in this repo to observe until the directive itself exists"
+      "growth": "unbounded-with-reason — one dated directive per live drain wave or desk handoff, and the recorded handoff or drain decision that requires it is the control",
+      "trigger": "none, declared why: a directive is written when work is dispatched, and the dispatch is the event — but it happens at a DESK, leaving no artifact in this repo to observe until the directive itself exists"
     },
     "refusal-registry": {
       "home": "plugin/cli/lifecycle_core/refusals.py",
@@ -135,13 +135,13 @@
         "verb:--test",
         "session"
       ],
-      "staleness": "emit-site coverage \u2014 a registry that has fallen behind the code is detected by the coverage check, which reads the SOURCE for finding-emitting sites and fails when one maps to no registered row",
+      "staleness": "emit-site coverage — a registry that has fallen behind the code is detected by the coverage check, which reads the SOURCE for finding-emitting sites and fails when one maps to no registered row",
       "exit": {
         "action": "never",
-        "recording-act": "a row leaves only by deletion with a ledger line naming why \u2014 including the deletion of an UNPROVABLE row, which is law 22's case"
+        "recording-act": "a row leaves only by deletion with a ledger line naming why — including the deletion of an UNPROVABLE row, which is law 22's case"
       },
-      "growth": "bounded-by-exit \u2014 a row enters with its firing input and leaves only by a recorded deletion; the roster's own output states how much of itself is proven, so growth without proof is visible rather than silent",
-      "trigger": "none, declared why: a row is owed when a new FINDING site appears, which `--test`'s emit-site coverage already catches at commit time \u2014 so the enforcement exists and the TRIGGER is the act of writing the finding, not a state anything can poll"
+      "growth": "bounded-by-exit — a row enters with its firing input and leaves only by a recorded deletion; the roster's own output states how much of itself is proven, so growth without proof is visible rather than silent",
+      "trigger": "none, declared why: a row is owed when a new FINDING site appears, which `--test`'s emit-site coverage already catches at commit time — so the enforcement exists and the TRIGGER is the act of writing the finding, not a state anything can poll"
     },
     "cli source": {
       "home": "plugin/cli",
@@ -150,13 +150,13 @@
         "session",
         "verb:--test"
       ],
-      "staleness": "change-coupling \u2014 a module whose design section has moved past the docstring citing it; read against the design document, never against the file's age",
+      "staleness": "change-coupling — a module whose design section has moved past the docstring citing it; read against the design document, never against the file's age",
       "exit": {
         "action": "delete",
         "recording-act": "a dependents search over the roster's emit sites and every declaring repo FIRST, then a ledger line naming the removed module"
       },
-      "growth": "unbounded-with-reason \u2014 one module per contract the design names; the design is the control, and a module answering no design line is a `kind sweep` finding waiting to happen",
-      "trigger": "none, declared why: the write fires when an item whose `write-set:` names this path is BUILT \u2014 that is the event, and the carrier already records it in the write-set slot. No predicate polls it because the moment is a build landing, not a state; the computable half already exists as the slot and the remainder is the judgment that the item is ready"
+      "growth": "unbounded-with-reason — one module per contract the design names; the design is the control, and a module answering no design line is a `kind sweep` finding waiting to happen",
+      "trigger": "none, declared why: the write fires when an item whose `write-set:` names this path is BUILT — that is the event, and the carrier already records it in the write-set slot. No predicate polls it because the moment is a build landing, not a state; the computable half already exists as the slot and the remainder is the judgment that the item is ready"
     },
     "git hooks": {
       "home": "plugin/hooks",
@@ -164,13 +164,13 @@
       "reader": [
         "hook:pre-commit"
       ],
-      "staleness": "use-evidence \u2014 a hook that has never fired is either unregistered with the machine's dispatcher or watching nothing, and both are findings rather than quiet",
+      "staleness": "use-evidence — a hook that has never fired is either unregistered with the machine's dispatcher or watching nothing, and both are findings rather than quiet",
       "exit": {
         "action": "delete",
         "recording-act": "a ledger decision line naming the hook and the dispatcher registration retired with it"
       },
-      "growth": "bounded-by-exit \u2014 one script per declared git hook in plugin.json, and a script the manifest does not declare is a hook nobody can find",
-      "trigger": "none, declared why: as for cli source \u2014 the firing moment is an item naming `plugin/hooks` in its write-set being built, recorded in the carrier at booking time rather than observed by a poll"
+      "growth": "bounded-by-exit — one script per declared git hook in plugin.json, and a script the manifest does not declare is a hook nobody can find",
+      "trigger": "none, declared why: as for cli source — the firing moment is an item naming `plugin/hooks` in its write-set being built, recorded in the carrier at booking time rather than observed by a poll"
     },
     "repo tools": {
       "home": "tools",
@@ -179,12 +179,12 @@
         "session",
         "hook:pre-commit"
       ],
-      "staleness": "use-evidence \u2014 a probe used twice graduates here and one nothing runs is stale; read against the verify block in CLAUDE.md",
+      "staleness": "use-evidence — a probe used twice graduates here and one nothing runs is stale; read against the verify block in CLAUDE.md",
       "exit": {
         "action": "delete",
         "recording-act": "a ledger line naming the tool and what replaced it"
       },
-      "growth": "unbounded-with-reason \u2014 a probe used twice graduates here or dies, so the graduation threshold is the control rather than a count",
+      "growth": "unbounded-with-reason — a probe used twice graduates here or dies, so the graduation threshold is the control rather than a count",
       "trigger": "none, declared why: a tool is written when a probe is used twice (the role's own rule), and 'twice' is a NON-EVENT nothing in this repo counts"
     },
     "tests": {
@@ -193,13 +193,13 @@
       "reader": [
         "session"
       ],
-      "staleness": "change-coupling \u2014 a test whose subject has moved past the behaviour it asserts; a green test over a vanished path is the silent case",
+      "staleness": "change-coupling — a test whose subject has moved past the behaviour it asserts; a green test over a vanished path is the silent case",
       "exit": {
         "action": "delete",
         "recording-act": "a ledger line naming the test and the behaviour that left with it"
       },
-      "growth": "unbounded-with-reason \u2014 one file per obligation whose failure is SILENT; the refusal roster carries the loud ones, so the split is the control",
-      "trigger": "none, declared why: a test is owed when a defect is found, and the finding is the event \u2014 but it lands in a person's reading, not in a state a predicate can read"
+      "growth": "unbounded-with-reason — one file per obligation whose failure is SILENT; the refusal roster carries the loud ones, so the split is the control",
+      "trigger": "none, declared why: a test is owed when a defect is found, and the finding is the event — but it lands in a person's reading, not in a state a predicate can read"
     },
     "plugin manifest": {
       "home": "plugin/.claude-plugin/plugin.json",
@@ -208,12 +208,12 @@
         "session",
         "hook:pre-commit"
       ],
-      "staleness": "change-coupling \u2014 a manifest whose description names verbs the build no longer carries, or hooks the tree does not hold",
+      "staleness": "change-coupling — a manifest whose description names verbs the build no longer carries, or hooks the tree does not hold",
       "exit": {
         "action": "never",
         "recording-act": "none is taken: the plugin cannot exist without it"
       },
-      "growth": "bounded-by-exit \u2014 one manifest, and the version climbs and never goes backwards (law 12)",
+      "growth": "bounded-by-exit — one manifest, and the version climbs and never goes backwards (law 12)",
       "trigger": "none, declared why: the manifest is bumped at release, which is an operator act with no in-repo precondition to observe"
     },
     "marketplace manifest": {
@@ -222,13 +222,13 @@
       "reader": [
         "session"
       ],
-      "staleness": "change-coupling \u2014 an entry naming a plugin path the tree no longer holds",
+      "staleness": "change-coupling — an entry naming a plugin path the tree no longer holds",
       "exit": {
         "action": "never",
         "recording-act": "none is taken: the marketplace entry is how the plugin is installable at all"
       },
-      "growth": "bounded-by-exit \u2014 one entry per plugin this repo publishes",
-      "trigger": "none, declared why: as for the plugin manifest \u2014 a release act, operator-held"
+      "growth": "bounded-by-exit — one entry per plugin this repo publishes",
+      "trigger": "none, declared why: as for the plugin manifest — a release act, operator-held"
     },
     "maintenance notes": {
       "home": "dev-notes",
@@ -236,12 +236,12 @@
       "reader": [
         "session"
       ],
-      "staleness": "use-evidence \u2014 an observation whose pre-formulated rule text has been applied or discarded has left; one nothing has drained is the carrier's own backlog",
+      "staleness": "use-evidence — an observation whose pre-formulated rule text has been applied or discarded has left; one nothing has drained is the carrier's own backlog",
       "exit": {
         "action": "delete",
         "recording-act": "the drain pass applies the pre-formulated text or discards it with a one-line reason, and both are recorded in a ledger line"
       },
-      "growth": "bounded-by-exit \u2014 an entry leaves by being applied or dropped, and the drain seam is the retirement quota; never loaded by operational files",
+      "growth": "bounded-by-exit — an entry leaves by being applied or dropped, and the drain seam is the retirement quota; never loaded by operational files",
       "trigger": "none, declared why: an observation is written when an instrument is found wanting DURING use, which is a reading of the using session and leaves no artifact until it is written"
     },
     "reading roster": {
@@ -250,13 +250,13 @@
       "reader": [
         "session"
       ],
-      "staleness": "change-coupling \u2014 a roster naming a file the tree no longer holds, or omitting one a fresh context must read before working here",
+      "staleness": "change-coupling — a roster naming a file the tree no longer holds, or omitting one a fresh context must read before working here",
       "exit": {
         "action": "never",
         "recording-act": "none is taken: the roster is this repo's declared reading floor, and a repo without one has no floor rather than a smaller one"
       },
-      "growth": "bounded-by-exit \u2014 one entry per artifact a fresh context must read before working here; the roster's own `_not_listed_on_purpose` block is the bound's record, naming what was considered and refused rather than leaving the omissions silent",
-      "trigger": "none, declared why: the computable candidate \u2014 a kind whose `reader` names `session` and which no roster entry lists \u2014 OVER-FIRES by construction, since 20 of this repo's 25 kinds name `session` while the roster deliberately lists two. A guard firing on legitimate work trains the override reflex, so the mechanism bar is unmet and this stays a person's act."
+      "growth": "bounded-by-exit — one entry per artifact a fresh context must read before working here; the roster's own `_not_listed_on_purpose` block is the bound's record, naming what was considered and refused rather than leaving the omissions silent",
+      "trigger": "none, declared why: the computable candidate — a kind whose `reader` names `session` and which no roster entry lists — OVER-FIRES by construction, since 20 of this repo's 25 kinds name `session` while the roster deliberately lists two. A guard firing on legitimate work trains the override reflex, so the mechanism bar is unmet and this stays a person's act."
     },
     "git config": {
       "home": ".gitignore",
@@ -264,12 +264,12 @@
       "reader": [
         "session"
       ],
-      "staleness": "change-coupling \u2014 a rule naming a path shape the tree no longer produces",
+      "staleness": "change-coupling — a rule naming a path shape the tree no longer produces",
       "exit": {
         "action": "never",
         "recording-act": "none is taken: a removed ignore rule is visible as the files it stops hiding"
       },
-      "growth": "bounded-by-exit \u2014 one rule per path shape this repo produces and does not track; the `.claude/*` negation is the declaration's own visibility",
+      "growth": "bounded-by-exit — one rule per path shape this repo produces and does not track; the `.claude/*` negation is the declaration's own visibility",
       "trigger": "none, declared why: an ignore rule changes when something new needs ignoring; the need is discovered by a person looking at `git status`, not by a check"
     },
     "investigation records": {
@@ -279,14 +279,14 @@
         "session",
         "verb:record check"
       ],
-      "staleness": "change-coupling \u2014 a record whose NOW no longer composes its ESTABLISHED lines toward GOAL is stale by the format's own slot discipline and is rewritten before the next probe is chosen. The ESTABLISHED lines themselves age like any cited basis: a line whose command, file or output has moved past the citation no longer establishes what it claims.",
+      "staleness": "change-coupling — a record whose NOW no longer composes its ESTABLISHED lines toward GOAL is stale by the format's own slot discipline and is rewritten before the next probe is chosen. The ESTABLISHED lines themselves age like any cited basis: a line whose command, file or output has moved past the citation no longer establishes what it claims.",
       "exit": {
         "action": "never",
-        "recording-act": "a `## CLOSED` heading whose body carries the graduation pointers \u2014 ESTABLISHED lines to the ledger or docs of the repo they describe, OPEN lines to the item carrier or a recorded one-line disposition. `lifecycle record check` refuses a closure that is undrained or unpointed.",
-        "detail": "THE FILE NEVER MOVES INTO ANY TREE, and that is the stage rather than an omission. Closure here is GRADUATION of the record's CONTENT, never relocation of the file: the body goes to the carrier that will be re-read, and the record stays in XDG state as history. The three benefits the format file names are what the home protects \u2014 no repo is dirtied, no permission dialog fires from the `.claude`-shape protection, and the record survives across repo states and branches, which is exactly what a multi-session arc needs. `the fire log` is the precedent: a machine-wide XDG path declared as a per-repo kind with all seven stages."
+        "recording-act": "a `## CLOSED` heading whose body carries the graduation pointers — ESTABLISHED lines to the ledger or docs of the repo they describe, OPEN lines to the item carrier or a recorded one-line disposition. `lifecycle record check` refuses a closure that is undrained or unpointed.",
+        "detail": "THE FILE NEVER MOVES INTO ANY TREE, and that is the stage rather than an omission. Closure here is GRADUATION of the record's CONTENT, never relocation of the file: the body goes to the carrier that will be re-read, and the record stays in XDG state as history. The three benefits the format file names are what the home protects — no repo is dirtied, no permission dialog fires from the `.claude`-shape protection, and the record survives across repo states and branches, which is exactly what a multi-session arc needs. `the fire log` is the precedent: a machine-wide XDG path declared as a per-repo kind with all seven stages."
       },
-      "growth": "unbounded-with-reason \u2014 one file per project+arc, and an arc opens only when work turns diagnosis-shaped or passes a skip-gauge no. The flow control is the closure gate rather than a count: a record cannot close with undrained slots, so an arc that ends leaves its lines in the carriers that consume them instead of accumulating here. A cap would bound the LABEL and be escaped by opening a second arc (R22).",
-      "trigger": "none, declared why: a record opens when work turns diagnosis-shaped \u2014 the next call exists to explain the previous call's output \u2014 and that reading is the session's own"
+      "growth": "unbounded-with-reason — one file per project+arc, and an arc opens only when work turns diagnosis-shaped or passes a skip-gauge no. The flow control is the closure gate rather than a count: a record cannot close with undrained slots, so an arc that ends leaves its lines in the carriers that consume them instead of accumulating here. A cap would bound the LABEL and be escaped by opening a second arc (R22).",
+      "trigger": "none, declared why: a record opens when work turns diagnosis-shaped — the next call exists to explain the previous call's output — and that reading is the session's own"
     },
     "the fire log": {
       "home": "$XDG_STATE_HOME/lifecycle/fire.jsonl",
@@ -295,14 +295,14 @@
         "verb:audit",
         "verb:retire"
       ],
-      "staleness": "none, declared why: a fire log is an event stream and an old event is history rather than a stale fact; what it feeds \u2014 the fire-rate review and the grew-without-an-exit alarm \u2014 reads flow and needs the whole series",
+      "staleness": "none, declared why: a fire log is an event stream and an old event is history rather than a stale fact; what it feeds — the fire-rate review and the grew-without-an-exit alarm — reads flow and needs the whole series",
       "exit": {
         "action": "compact",
         "recording-act": "a ledger decision line naming the compacted window and the per-verb totals it folded",
-        "detail": "WAVE 3 \u2014 declared now so the kind has no undeclared stage, not implemented. NOT under ~/.claude/: a read or write there costs a permission dialog for the operator and every dispatched agent, and one denied mid-task has already lost a session's work"
+        "detail": "WAVE 3 — declared now so the kind has no undeclared stage, not implemented. NOT under ~/.claude/: a read or write there costs a permission dialog for the operator and every dispatched agent, and one denied mid-task has already lost a session's work"
       },
-      "growth": "compacted \u2014 one line per invocation and one per judgment-rule use, so the invocation rate is the flow; the control is compaction on a declared window, never a size",
-      "trigger": "none, declared why: NOT because it lacks a button \u2014 it has too many. EVERY verb writes it, so its trigger is the verb LAYER rather than any one verb, and `verb <name>` cannot spell that. This is a gap in the stage's vocabulary, recorded here rather than mis-declared as one arbitrary verb"
+      "growth": "compacted — one line per invocation and one per judgment-rule use, so the invocation rate is the flow; the control is compaction on a declared window, never a size",
+      "trigger": "none, declared why: NOT because it lacks a button — it has too many. EVERY verb writes it, so its trigger is the verb LAYER rather than any one verb, and `verb <name>` cannot spell that. This is a gap in the stage's vocabulary, recorded here rather than mis-declared as one arbitrary verb"
     },
     "plugin cache versions": {
       "home": "~/.claude/plugins/cache/<marketplace>/<plugin>",
@@ -311,14 +311,14 @@
         "session",
         "verb:audit"
       ],
-      "staleness": "change-coupling \u2014 a cached version whose marketplace pin has moved past it; on THIS machine the plugin is installed SYMLINKED from the dev checkout, so drift is impossible by construction and the cache is the other machines' problem",
+      "staleness": "change-coupling — a cached version whose marketplace pin has moved past it; on THIS machine the plugin is installed SYMLINKED from the dev checkout, so drift is impossible by construction and the cache is the other machines' problem",
       "exit": {
         "action": "delete",
         "recording-act": "the auto-apply disposition prints the ROLLBACK command in its own notification, and each cleanup is a ledger decision line",
-        "detail": "WAVE 3 \u2014 delete oldest past three. That is an EXIT RULE and not a cap: what leaves is the oldest by parsed semver, red-proven on the real listing where `0.9` string-sorts above `0.11` The drift DETECTOR that reads this kind is wave 3's and is not named as a reader here: a `producer:` reference resolves against the producers this declaration's kinds actually name, and naming one the machine has no home for is law 23's own case \u2014 a thing named without its home."
+        "detail": "WAVE 3 — delete oldest past three. That is an EXIT RULE and not a cap: what leaves is the oldest by parsed semver, red-proven on the real listing where `0.9` string-sorts above `0.11` The drift DETECTOR that reads this kind is wave 3's and is not named as a reader here: a `producer:` reference resolves against the producers this declaration's kinds actually name, and naming one the machine has no home for is law 23's own case — a thing named without its home."
       },
-      "growth": "bounded-by-exit \u2014 a version enters on install and leaves by the cleanup's recorded delete; keeping three is the rollback depth the reversibility claim rests on, not a size limit",
-      "trigger": "none, declared why: written by an EXTERNAL producer (the plugin installer) on install. The event is real and observable \u2014 but it happens outside this repo and this tool never sees it, which is a different thing from having no trigger and is recorded as such"
+      "growth": "bounded-by-exit — a version enters on install and leaves by the cleanup's recorded delete; keeping three is the rollback depth the reversibility claim rests on, not a size limit",
+      "trigger": "none, declared why: written by an EXTERNAL producer (the plugin installer) on install. The event is real and observable — but it happens outside this repo and this tool never sees it, which is a different thing from having no trigger and is recorded as such"
     },
     "legacy backlog": {
       "home": "BACKLOG.md",
@@ -326,13 +326,13 @@
       "reader": [
         "session"
       ],
-      "staleness": "change-coupling \u2014 every entry here has a successor in ITEMS.md, so this file is stale from the moment the migration lands; it is kept only until the successor has been read",
+      "staleness": "change-coupling — every entry here has a successor in ITEMS.md, so this file is stale from the moment the migration lands; it is kept only until the successor has been read",
       "exit": {
         "action": "delete",
         "recording-act": "a ledger decision line naming the migration report that classified every entry and the commit that removes the file",
-        "detail": "WAVE 4, the cut pass. The migration is a DRY RUN and never edits, moves or deletes the old carrier \u2014 retiring it is a separate act after a human has read the report"
+        "detail": "WAVE 4, the cut pass. The migration is a DRY RUN and never edits, moves or deletes the old carrier — retiring it is a separate act after a human has read the report"
       },
-      "growth": "bounded-by-exit \u2014 it has exactly one exit left and takes it once; nothing is ever appended here again, because `lifecycle item add` is the only admission path",
+      "growth": "bounded-by-exit — it has exactly one exit left and takes it once; nothing is ever appended here again, because `lifecycle item add` is the only admission path",
       "trigger": "none, declared why: RETIRED 2026-09-12; the kind takes its `delete` exit and nothing writes it again. A retired kind has no trigger and this states that rather than leaving the stage blank"
     },
     "workflow templates": {
@@ -341,13 +341,13 @@
       "reader": [
         "session"
       ],
-      "staleness": "no binder \u2014 a template no repo binds is stale by definition, and the plugin's suite runs every template against every binder so a binding that stops resolving is loud",
+      "staleness": "no binder — a template no repo binds is stale by definition, and the plugin's suite runs every template against every binder so a binding that stops resolving is loud",
       "exit": {
         "action": "delete",
         "recording-act": "a dependents search over every declaring repo's template-bindings FIRST, then a ledger line naming the retired template and the repos that had bound it"
       },
-      "growth": "unbounded-with-reason \u2014 one per SHARED procedure, and a procedure is only shared once two or more lanes use it; the sharing threshold is the control. EMPTY today (wave 2 extracts the first set), and the directory placeholder is what says so rather than the directory's absence",
-      "trigger": "none, declared why: EMPTY today \u2014 wave 2 extracts the first set, and the extraction is the trigger. Until that wave runs there is no writer to fire"
+      "growth": "unbounded-with-reason — one per SHARED procedure, and a procedure is only shared once two or more lanes use it; the sharing threshold is the control. EMPTY today (wave 2 extracts the first set), and the directory placeholder is what says so rather than the directory's absence",
+      "trigger": "none, declared why: EMPTY today — wave 2 extracts the first set, and the extraction is the trigger. Until that wave runs there is no writer to fire"
     },
     "workflow definitions": {
       "home": "plugin/workflows",
@@ -355,13 +355,13 @@
       "reader": [
         "session"
       ],
-      "staleness": "no binder \u2014 a workflow no repo binds is stale by definition, and the plugin's suite runs every workflow against every binder so a binding that stops resolving is loud",
+      "staleness": "no binder — a workflow no repo binds is stale by definition, and the plugin's suite runs every workflow against every binder so a binding that stops resolving is loud",
       "exit": {
         "action": "delete",
         "recording-act": "a dependents search over every declaring repo's workflow bindings FIRST, then a ledger line naming the retired workflow and the repos that had bound it"
       },
-      "growth": "unbounded-with-reason \u2014 the directory placeholder declares EMPTY until a workflow exists; then one file per SHARED procedure enters only once two or more lanes use it, so the sharing threshold is the control",
-      "trigger": "none, declared why: as for workflow templates \u2014 wave 2's act, not yet a live writer"
+      "growth": "unbounded-with-reason — the directory placeholder declares EMPTY until a workflow exists; then one file per SHARED procedure enters only once two or more lanes use it, so the sharing threshold is the control",
+      "trigger": "none, declared why: as for workflow templates — wave 2's act, not yet a live writer"
     },
     "design notes": {
       "home": "docs/*.md",
@@ -370,13 +370,13 @@
         "verb:retire",
         "session"
       ],
-      "staleness": "change-coupling \u2014 a design note is stale once the item it carries closes, or once a framing it states is superseded by evidence. MEASURED INSTANCE, which is why this stage reads this way: answerable-not-felt.md states momentum-independence as the desk/peer mechanism, and three research lanes refuted it in favour of INDEPENDENCE (arXiv:2603.26993) \u2014 the note's own text was stale the day after it was written, while resolving and reading as current.",
+      "staleness": "change-coupling — a design note is stale once the item it carries closes, or once a framing it states is superseded by evidence. MEASURED INSTANCE, which is why this stage reads this way: answerable-not-felt.md states momentum-independence as the desk/peer mechanism, and three research lanes refuted it in favour of INDEPENDENCE (arXiv:2603.26993) — the note's own text was stale the day after it was written, while resolving and reading as current.",
       "exit": {
         "action": "move",
         "recording-act": "at its item's closure the note's ESTABLISHED claims graduate to the laws file or the ledger and the note moves to docs/directives/ as the arc's persisted design record; the closing ledger line names the commit. Closure by graduation, never deletion.",
-        "detail": "NOT MOVED WHILE LIVE, and the reason is measured rather than stylistic: on 2026-09-18 four citations of `docs/answerable-not-felt.md` stood in THREE artifacts outside this repo's write boundary \u2014 a peer's arc investigation record under XDG state, a dotfiles directive, and a CachyOS-Setup directive \u2014 every one by repo-relative path. Relocating a live note breaks each of them silently, which is the citation-rot class lc-155 exists to catch. So the home claims the note where it already sits, and the move waits for the closure that re-roots its citations."
+        "detail": "NOT MOVED WHILE LIVE, and the reason is measured rather than stylistic: on 2026-09-18 four citations of `docs/answerable-not-felt.md` stood in THREE artifacts outside this repo's write boundary — a peer's arc investigation record under XDG state, a dotfiles directive, and a CachyOS-Setup directive — every one by repo-relative path. Relocating a live note breaks each of them silently, which is the citation-rot class lc-155 exists to catch. So the home claims the note where it already sits, and the move waits for the closure that re-roots its citations."
       },
-      "growth": "bounded-by-exit \u2014 one note per design arc, and each leaves by the graduation above when its item closes. The flow control is that a note cannot be born without an item to carry it.",
+      "growth": "bounded-by-exit — one note per design arc, and each leaves by the graduation above when its item closes. The flow control is that a note cannot be born without an item to carry it.",
       "trigger": "none, declared why: a design note is written when a design is settled, which is the end of a judgment and not a state"
     },
     "begehung findings": {
@@ -386,13 +386,13 @@
         "session",
         "verb:retire"
       ],
-      "staleness": "change-coupling \u2014 a findings file whose cited artifact lines have moved past the citation no longer measures anything current. Its ROUND is closed once and never re-opened, so the file is historical from its close; what ages is the artifact it cites, not the reading.",
+      "staleness": "change-coupling — a findings file whose cited artifact lines have moved past the citation no longer measures anything current. Its ROUND is closed once and never re-opened, so the file is historical from its close; what ages is the artifact it cites, not the reading.",
       "exit": {
         "action": "never",
-        "recording-act": "none is taken: append-only historical, one file per closed round. A later round that re-walks the same axis cites the earlier file rather than superseding it \u2014 the MAP's axis row carries the current yield, the findings file carries how it was reached.",
-        "detail": "REGISTERED BECAUSE THE SWEEP CAUGHT IT, 2026-09-18: the file was tracked and resolved to no kind, so `kind sweep` exited 2 and the declared verify block was red for every writer in the repo until this landed. Worth keeping as the reason: a robustness review's own OUTPUT is exactly the kind of persisted thing this plugin exists to give a home, and the review tripped the invariant it was reviewing for. The alternatives were lc-76's declared-custom disposition (wrong shape \u2014 that is for a one-off file, this is a recurring class, one per round) and leaving it untracked (which loses the round's deliverable; the skill names the findings file as exactly that)."
+        "recording-act": "none is taken: append-only historical, one file per closed round. A later round that re-walks the same axis cites the earlier file rather than superseding it — the MAP's axis row carries the current yield, the findings file carries how it was reached.",
+        "detail": "REGISTERED BECAUSE THE SWEEP CAUGHT IT, 2026-09-18: the file was tracked and resolved to no kind, so `kind sweep` exited 2 and the declared verify block was red for every writer in the repo until this landed. Worth keeping as the reason: a robustness review's own OUTPUT is exactly the kind of persisted thing this plugin exists to give a home, and the review tripped the invariant it was reviewing for. The alternatives were lc-76's declared-custom disposition (wrong shape — that is for a one-off file, this is a recurring class, one per round) and leaving it untracked (which loses the round's deliverable; the skill names the findings file as exactly that)."
       },
-      "growth": "unbounded-with-reason \u2014 one file per closed round, and a round happens only when a walk is run. The flow control is that a round cannot close without its findings file, and cannot open while another is open.",
+      "growth": "unbounded-with-reason — one file per closed round, and a round happens only when a walk is run. The flow control is that a round cannot close without its findings file, and cannot open while another is open.",
       "trigger": "none, declared why: a round is walked when someone decides to walk one; the decision is the event"
     },
     "desk state": {
@@ -402,13 +402,13 @@
         "verb:desk state",
         "session"
       ],
-      "staleness": "none, declared why: the verb ALWAYS OVERWRITES and keeps no history, so a desk's state is current by construction \u2014 there is no older value for a newer one to be stale against. What CAN go stale is a file whose desk no longer exists, and that is residue for the exit rather than staleness of a live fact.",
+      "staleness": "none, declared why: the verb ALWAYS OVERWRITES and keeps no history, so a desk's state is current by construction — there is no older value for a newer one to be stale against. What CAN go stale is a file whose desk no longer exists, and that is residue for the exit rather than staleness of a live fact.",
       "exit": {
         "action": "delete",
         "recording-act": "a ledger decision line naming the desk ids whose state was removed and why each was judged gone",
-        "detail": "DECLARED, NOT IMPLEMENTED (law 15 permits the state and law 22 forbids pretending otherwise): no verb removes a dead desk's state today. It is not a compaction \u2014 there is nothing to fold, since each file holds one desk's current state and no history \u2014 and it is not `never`, because a desk that no longer exists leaves a file nothing will ever read again."
+        "detail": "DECLARED, NOT IMPLEMENTED (law 15 permits the state and law 22 forbids pretending otherwise): no verb removes a dead desk's state today. It is not a compaction — there is nothing to fold, since each file holds one desk's current state and no history — and it is not `never`, because a desk that no longer exists leaves a file nothing will ever read again."
       },
-      "growth": "unbounded-with-reason \u2014 one file per DESK ID, overwritten in place, so the count tracks desks that have ever stored state and never activity: a desk writing a thousand times leaves one file. The flow this kind would be controlled by is therefore the desk population, which is not a rate this plugin produces. Declared unbounded rather than `bounded-by-exit` because the latter would assert a control the delete exit does not yet perform \u2014 the assurance wider than its predicate, in the stage that describes the control.",
+      "growth": "unbounded-with-reason — one file per DESK ID, overwritten in place, so the count tracks desks that have ever stored state and never activity: a desk writing a thousand times leaves one file. The flow this kind would be controlled by is therefore the desk population, which is not a rate this plugin produces. Declared unbounded rather than `bounded-by-exit` because the latter would assert a control the delete exit does not yet perform — the assurance wider than its predicate, in the stage that describes the control.",
       "trigger": "verb desk state"
     },
     "arcs": {
@@ -441,6 +441,22 @@
       },
       "growth": "unbounded-with-reason: accrues at arc-closure rate; retention is the record role; no bound is claimed",
       "trigger": "none, declared why: nothing fires on a closed record"
+    },
+    "arc index": {
+      "home": "arcs/INDEX",
+      "writer": "verb:arc open",
+      "reader": [
+        "session",
+        "verb:arc status"
+      ],
+      "staleness": "none, declared why: the counters are written in the same act as the body they count, so they cannot lag it",
+      "exit": {
+        "action": "never",
+        "recording-act": "none, declared why: the index is the repo's arc history and outlives every arc in it",
+        "detail": "one fixed file per repo; it is never moved, compacted or dropped"
+      },
+      "growth": "cannot-express(2026-09-19): a single fixed file that neither accrues nor is compacted nor has an exit - none of bounded-by-exit, compacted or unbounded-with-reason is true of it, and each would be a benign neighbour standing in for a state this vocabulary cannot say",
+      "trigger": "none, declared why: nothing fires on a counter file; it is written by the verbs that change what it counts"
     }
   }
 }

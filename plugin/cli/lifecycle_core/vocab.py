@@ -168,6 +168,15 @@ def registry() -> tuple:
                         "`kind check`"),
         ),
         Vocabulary(
+            name="growth modes",
+            members=decl.GROWTH_MODES,
+            oov_form=OOV_FORM,
+            consumer="declaration._validate_kind's growth stage",
+            proof_path=("declared as a kind's sixth stage and validated by "
+                        "`kind check`, which accepts the arm and refuses a "
+                        "word that is neither member nor arm"),
+        ),
+        Vocabulary(
             name="evidence marks",
             members=items_mod.EVIDENCE_MARKS,
             oov_form=OOV_FORM,
