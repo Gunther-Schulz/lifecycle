@@ -942,6 +942,21 @@ MUTATIONS = [
      "    if False:",
      "the test that every registered verify command actually EXECUTED"),
 
+    # lc-176. THE COMPARISON ITSELF, which is where this refusal is decided.
+    # Anchoring the `if mismatches:` below it would grade the PRINTING, and
+    # anchoring the `res`-side output would leave the comparison intact and
+    # darken nothing. Folded, every declared expectation matches by
+    # construction, so a command declared `ran-failed` that now runs CLEAN
+    # reports a clean suite — which is precisely the silent degradation this
+    # row exists to refuse, and is indistinguishable from a check that simply
+    # passed. `verify_check_failed`'s plant (a command that RUNS and returns
+    # non-zero) is untouched by this fold, so the two rows stay separable the
+    # same way the did-not-run entry above keeps them separable.
+    ("verify_expectation_wrong", "verify.py",
+     "                  if c.expect is not None and c.expect != v]",
+     "                  if False]",
+     "the test that a declared expectation matches what actually ran"),
+
     # lc-166. THE EXISTENCE HALF, which is where this refusal is decided: the
     # check fires only where records actually sit at the home, and folding
     # the early return makes it return before the declaration is ever read.
