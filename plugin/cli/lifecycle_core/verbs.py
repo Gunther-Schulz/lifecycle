@@ -2363,6 +2363,23 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
                 # two acts disagreeing inside one amendment.
                 updates.pop(slot_, None)
                 additions.pop(slot_, None)
+
+        # AND THE DOOR SWINGS BOTH WAYS. A re-type INTO `evidence` is passage
+        # through a stamping door exactly as a fresh booking is: the item now
+        # carries a predicate and owes its arms. Unstamped it would be filed
+        # under PREDATES THE MECHANISM — the carrier asserting nobody had the
+        # opportunity at the very moment somebody did, and then not asking
+        # for the work it had just become owed.
+        #
+        # ONLY WHERE THERE IS NOTHING THERE: an existing record is somebody's
+        # written arms, and a stamp saying they are missing would overwrite
+        # the evidence it exists to report the absence of.
+        if (new_kind == "evidence"
+                and items_mod.BLOCKER_EXERCISE not in present
+                and items_mod.BLOCKER_EXERCISE not in updates
+                and items_mod.BLOCKER_EXERCISE not in additions):
+            additions[items_mod.BLOCKER_EXERCISE] = _exercise_record(
+                args, updates["blocked-by"], ctx, {})
     if not updates and not additions:
         out("FINDING [amend_nothing_to_amend] `item amend` names no slot to "
             "amend.")

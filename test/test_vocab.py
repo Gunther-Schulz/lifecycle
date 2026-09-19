@@ -570,6 +570,60 @@ class ForwardOnlyDoorStamp(unittest.TestCase):
         self.assertEqual(code, 0, outp)
         self.assertNotIn("blocker-exercise", self._block(repo))
 
+    def test_the_PARK_door_stamps_too(self):
+        """Door two of three. A door that did not stamp would file every item
+
+        it parked under PREDATES — asserting nobody had the opportunity at
+        the exact moment somebody did."""
+        repo = self._repo()
+        code, outp = self._run(
+            repo, "item", "park", "xx-1", "--blocked-by", self.PRED)
+        self.assertEqual(code, 0, outp)
+        self.assertIn("blocker-exercise: none-yet", self._block(repo, "xx-1"))
+
+    def test_the_AMEND_door_stamps_a_RE_TYPE_INTO_evidence(self):
+        """Door three, and the one the first build missed. A re-type INTO
+
+        `evidence` is passage through a door exactly as a fresh booking is —
+        the item now carries a predicate and owes its arms — so leaving it
+        unstamped files it under PREDATES and the carrier stops asking for
+        work it just became owed.
+        """
+        repo = self._repo()
+        code, outp = self._run(
+            repo, "item", "add", "--requirement", "waits on the world",
+            "--goal", "mitigate", "--write-set", "tools/a.mjs,tools/b.mjs",
+            "--done-criterion", "d", "--evidence", "MEASURED e",
+            "--blocked-by", "external the release lands",
+            "--join", "new", "--absence", "x")
+        self.assertEqual(code, 0, outp)
+        self.assertNotIn("blocker-exercise", self._block(repo))
+        code, outp = self._run(
+            repo, "item", "amend", "xx-2", "--blocked-by", self.PRED,
+            "--reason", "it is testable after all")
+        self.assertEqual(code, 0, outp)
+        self.assertIn("blocker-exercise: none-yet", self._block(repo))
+
+    def test_the_AMEND_door_does_not_overwrite_a_real_record(self):
+        """The control for door three: an amendment that re-types WITHIN
+
+        evidence must not replace arms somebody wrote with a stamp saying
+        they are missing."""
+        repo = self._repo()
+        self._run(
+            repo, "item", "add", "--requirement", "waits on a predicate",
+            "--goal", "mitigate", "--write-set", "tools/a.mjs,tools/b.mjs",
+            "--done-criterion", "d", "--evidence", "MEASURED e",
+            "--blocked-by", self.PRED,
+            "--blocker-exercise", "accepts: a present file; refuses: absent",
+            "--join", "new", "--absence", "x")
+        self._run(repo, "item", "amend", "xx-2",
+                  "--blocked-by", "evidence test -f /also-nonexistent",
+                  "--reason", "sharper predicate")
+        block = self._block(repo)
+        self.assertIn("accepts: a present file", block)
+        self.assertNotIn("none-yet", block)
+
     def test_a_RE_TYPE_out_of_evidence_CLEARS_the_stamp(self):
         """The design's own red-first: stamped evidence fixture, re-typed to
 
