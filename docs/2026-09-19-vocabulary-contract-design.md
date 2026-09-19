@@ -1,113 +1,132 @@
-# Design: the registered-closed-vocabulary contract (decision D-3)
+# Design v2: the registered-closed-vocabulary contract (D-3; D-7 as revised; D-8; D-10 deferred)
 
-**Round desk, 2026-09-19. Decision: ledger D-3 (+ D-7, D-8, D-10 as
-instances). Status: LOCKED pending the fresh-context attack round; no build
-before the attack returns. Test population: round map E16. This document is
-the dispatchable design; the builder inherits zero design freedom — form
-follows the repo's existing instances (refusals.py registry idiom, items.py
-slot grammar).**
+**Round desk, 2026-09-19, SECOND LOCK — v1's attack round (opus arm 34
+findings, astra arm additive; both booked) returned 6 blocking + 8 notable
+against this doc; every repair below cites its finding. v1 is in git
+(f8de2f0). Status: LOCKED pending the SECOND attack pass; no build before
+it returns clean-or-repaired. Builder inherits zero design freedom; the
+repo's existing instances fix spelling.**
 
-## The mechanism in one paragraph
+## The mechanism (unchanged in intent, narrowed in application)
 
-Every closed vocabulary the declaration or the carriers' slots carry is
-REGISTERED: name, members, the consumer that renders it. Each registered
-vocabulary carries a typed OUT-OF-VOCABULARY arm — value form
-`cannot-express: <reason>` — rendered DISTINCTLY by its consumer, never
-folded into a member. A registered vocabulary without the arm is a checker
-finding. A recorded OOV instance with its reason is the WIDENING SIGNAL:
-new members are minted from recorded reasons, never guessed (the Begehung's
-sharpened class — "the repair is where the class survives" — turned into
-the mint mechanism). Registration happens ON CONTACT (a gap found, or a
-vocabulary next touched), never as a big-bang sweep.
+Every closed VALUE vocabulary the declaration or the carriers' slots carry
+is REGISTERED: name, members, the IMPORTABLE CONSUMER that renders it. Each
+carries a typed OOV arm — `cannot-express: <reason>` — rendered DISTINCTLY.
+Registration ON CONTACT. A recorded OOV reason is the widening signal.
+**The BLOCKER slot is exempt BY RULE (V4): its contract is resolvability,
+and an OOV arm there legalizes the permanent silent park `blocker_untyped`
+exists to refuse. The blocker vocabulary widens only by REAL members minted
+from recorded refusals — `blocker_untyped`'s refusal text gains one line:
+"if no type fits, the vocabulary is the defect — book it against the
+registry" — the mint signal without the park.**
 
-## Parts (write-set per part; each names its red-first)
+## Parts
 
-**P1 — the registry.** New `plugin/cli/lifecycle_core/vocab.py`:
-`Vocabulary(name, members, oov_form, consumer, renderer)` entries + a shape
-check. Initial registrations (on-contact set, nothing more): reader-when
-states; blocker types; census buckets; item grade words (already closed in
-the carrier — registered, not changed); trigger-stage vocabulary
-(verb/predicate/none-with-reason). New refusal row `vocab_without_oov`
-(fires on a registered vocabulary whose consumer lacks the distinct OOV
-rendering — plant: register a vocabulary with `oov_form=None`). `--test`
-walks the registry the way it walks ROWS. Write-set: vocab.py (new),
-refusals.py, roster.py wiring, test/test_vocab.py (new).
+**P1 — the registry, proof through the consuming path (V6, AV1).**
+`vocab.py`: `Vocabulary(name, members, oov_form, consumer)` where
+`consumer` is the importable rendering function, never a prose label. The
+roster row's plant per vocabulary: push an OOV value THROUGH the consumer
+and assert its output differs from every member's rendering (the
+discriminating pair); a vocabulary whose registration names no consumer, or
+whose consumer folds the OOV value into a member rendering, FIRES. The
+v1 "registry unimportable = CNV" claim is DELETED, not softened — no input
+could produce it short of taking the CLI down (V12, law 22). Initial
+registrations (on-contact set): reader-when states; census buckets; item
+grade words; trigger-stage vocabulary; the evidence-mark vocabulary (W2's
+home). Write-set: vocab.py (new), refusals.py, roster.py, test_vocab.py.
 
-**P2 — reader-when MALFORMED (red-first input 1, Begehung f1).**
-`read_moments` gains state MALFORMED, distinct from UNDECLARED (no `when`
-at all) and BROKEN (a predicate that ran and failed): a `when` that parses
-to no known mode is MALFORMED with the offending text quoted. This makes
-read_moments AGREE with `_check_reader_when` (which already answers
-declaration_malformed for two of the three probed cases — the Begehung's
-two-instruments-disagree finding). Red-first: the lane's own 9-case state
-matrix (r3 TSV row 1 basis) — the three malformed probes must return
-MALFORMED, the six controls unchanged; the matrix lands as
-test_declaration.py cases. Write-set: declaration.py, test_declaration.py.
+**P2 — ONE invalid-state partition, shared by both instruments (V5, f1,
+astra-P2).** The valid/invalid classification of a reader `when` is
+EXTRACTED into one function consumed by BOTH `_check_reader_when` and
+`read_moments` — the repair is structural, not case-patching: the two
+instruments cannot disagree about a state neither separately classifies.
+MALFORMED (offending text quoted) covers the checker's ENTIRE invalid
+partition: unknown mode, mode without command, non-string `when`, `none`
+without why, and the prefixed-reader-with-`when` case. **That last one is
+also a LIVE code repair shipped in the same part: `read_moments` currently
+EXECUTES a predicate for a declaration the validator refuses (proven by the
+attack arm's marker-file probe) — the shared partition is checked BEFORE
+any execution.** Red-first: r3's three probes + the four disagreement cases
+the attack round enumerated, as a NINE-case agreement test asserting the
+two instruments return the same classification for every invalid input.
+Write-set: declaration.py, test_declaration.py.
 
-**P3 — census third bucket (red-first input 2, f4; decision D-7).**
-`blocker_slot_census` gains PREDATES-THE-MECHANISM: population = evidence
-blockers on items whose booking predates the exercise mechanism's build
-epoch — a recorded constant `EXERCISE_EPOCH` in items.py, value = lc-175's
-build commit date, comment citing D-7's ledger line. The item-check line
-splits into three counts; zero grade changes, zero new findings (lc-175's
-MUST-NOT-MOVE honoured exactly). Red-first: at the current carrier the
-bucket reads 8 / missing 0 (all eight predate — f4's executed basis); a
-planted post-epoch fixture item with an unexercised evidence blocker reads
-missing 1. Write-set: items.py, test_items.py.
+**P3 — census third bucket, FORWARD-ONLY door stamp (D-7 as revised on the
+ledger; kills V1/V2/astra-epoch).** No dates are parsed from anywhere: the
+blocker-admission door (the `_check_blocker` seam all three verbs pass
+through — the wave's own three-doors lesson) writes `blocker-exercise:
+none-yet <date>` at admission from the build forward. The census then
+reads three states off marks alone: EXERCISED (a real exercise record) /
+UNEXERCISED (the none-yet stamp — a dated, real opportunity) /
+PREDATES-THE-RECORDING-DOOR (neither mark). Exact, permanent, retroactively
+correct for the eight (they carry neither), and an old item gaining a NEW
+evidence blocker post-build gets stamped at that admission — astra's
+opportunity definition satisfied: opportunity = passage through the
+stamping door. Zero new findings; lc-175's MUST-NOT-MOVE holds. Red-first:
+live carrier reads 0/0/8; a fixture item admitted post-build reads the
+stamp; an exercised fixture reads EXERCISED. Write-set: items.py,
+test_items.py.
 
-**P4 — blocker type `external <event>` (decision D-8).** `classify_blocker`
-gains the member: evaluated by nothing, cleared by hand or desk with the
-event named; `item ready` renders it "in a NAMED EXTERNAL court: <event>",
-never as waiting-on-evidence. AND the general OOV arm lands in the same
-grammar: a blocker written `cannot-express: <reason>` is ACCEPTED, rendered
-as its own line ("the vocabulary cannot express this blocker; reason
-quoted"), counted separately by item check — each instance a standing mint
-signal. Red-first: a planted `external cache-fix ships its next release`
-blocker renders the external court (not evidence-waiting); a planted
-`cannot-express: …` renders the OOV line; a malformed bare prose blocker
-still refuses (blocker_untyped unchanged — proven live at this desk today).
-Specimen re-typing at build: the four cache-fix `evidence false` items
-(lc-24, lc-53, lc-66*, lc-147) amend to `external <named event>`; lc-235's
-round-close blocker clears at close, untouched. (*lc-66 sits behind lc-67's
-item blocker — re-read its slots at build; the tool resolves amendments.)
-Write-set: items.py, cli.py rendering, test_items.py, + the specimen
-amendments (carrier, by verb).
+**P4 — blocker type `external <event>` (D-8; V3's write-set completed; NO
+OOV arm here, per the exemption above).** `classify_blocker` gains the
+member; rendering lands where the renderer LIVES: verbs.py's
+`_blocker_state` (the realizing file — v1 named cli.py, wrong, V3/astra).
+Every restatement site moves in the same change: `blocker_untyped`'s row
+text ("three closed edge types" → the current member list, derived not
+retyped), cli.py:557, verbs.py's three sites, items.py's two, migrate.py's
+one — the enumeration from the attack arm's executed grep, re-run at build.
+Specimens re-typed at build, each read via `item slots` first: lc-24,
+lc-53, lc-147 (cache-fix waits), lc-66 (cross-repo layer; **lc-67 is
+blocked BY lc-66** — v1's footnote reversed it, V11/astra), lc-52 (the
+dotfiles export wait, parked 2026-09-19), and CANDIDATES lc-82, lc-199
+(external-court shapes the v1 list closed over — graded per-item at build,
+not batch-retyped). Red-first: planted `external …` renders its named
+court; bare prose still refuses; the row-text derivation goes red when a
+member is added without it (the V3 class caught by construction).
+Write-set: items.py, verbs.py, refusals.py, migrate.py, cli.py,
+test_items.py, test_verbs.py, + carrier amendments by verb.
 
-## Three answers, per part
+## Always-on: the DEFINITION and the inventory (V10, astra)
 
-P1's shape check: clean / vocab_without_oov / could-not-verify (registry
-unimportable = CNV, never silence). P2: MALFORMED is itself the third
-answer's instantiation at the evaluator. P3: three buckets ARE the repaired
-answer set. P4: OOV blocker = the answer set's open end, counted, never
-folded.
+**Always-on = content or execution added to any path that runs without a
+session choosing it**: session-start hooks and everything their output
+gains, git hooks, and any banner line. Inventory of THIS design: P3's
+three-way count line and P4's external-court line both ride `item check`,
+which the banner runs — always-on CONTENT, admitted on: (a) the erosion
+probe's verdict (HEALTH, lc-234 closed 2026-09-19 at d645ec9) for the
+instrument-bearing half, WITH its rider-2 boundary stated: the probe
+bounds roster-channel instrument decay only — it says NOTHING about banner
+content's effect on session behaviour, which remains purpose.md's open
+kill-condition watch, not a cleared gate; (b) the content delta is two
+lines replacing two lines. No new always-on EXECUTION anywhere in this
+design.
 
 ## Observers (the transition table; home = this section, re-read at close)
 
 | arrow | verb | record | check | OBSERVER |
 |---|---|---|---|---|
-| vocabulary registered → covered | (build act) | vocab.py entry | vocab_without_oov row | `--test` walks the registry |
-| OOV instance written → surfaced | any carrier verb accepting it | the slot line itself | item check's OOV count line | session-start banner (prints item check) |
-| OOV reasons accumulate → widening minted | mint round | ledger decision + member added | the widened member's own red-first | fire-rate review sweeps `cannot-express:` lines (grep, whole-list, never recollection) — judgment remainder, prose-rest declared |
-| registry grows → still consulted? | — | — | — | the erosion probe's roster channel bounds instrument growth (lc-234); vocab registrations are code-side, same channel |
+| vocabulary registered → consumer proven | build act | vocab.py entry | the consumer-path plant (P1) | `--test` — each run IS the consultation (V7: the v1 row named lc-234's probe, which cannot see this arrow; removed) |
+| OOV instance written → surfaced AND AGING | any accepting verb | the slot line | `item check` prints count WITH OLDEST AGE ("N cannot-express, oldest Kd") | the banner (existing) — an aging recording is the visible undrained signal (V8: no time-words, no unowned review; the drain act writes a disposition line on the registry entry, the retirement leg astra asked for) |
+| OOV reasons accumulate → widened or retired | mint round / disposition | ledger + registry disposition line | the widened member's red-first | the kaemmung/retirement machinery reads the same count line (existing trigger, not a new pass) |
 
-## Stop/yield (the admission lens, this mechanism's own)
+## Named non-goals (V9, astra — stated as loudly as (m)'s)
 
-Register ON CONTACT only — the initial set above is what this round
-touched; no sweep for every enum in the codebase (over-constraint bound;
-the sweep is the Collector's Fallacy arm). YIELD = checker findings plus
-recorded OOV instances. STOP = a review window with zero OOV recordings
-across all registered vocabularies asks WHICH of complete-or-unread — the
-fire-rate review's question, not a new mechanism's.
+This contract EXPRESSES states; it does not DETECT the three failure modes
+that silenced f1/f4/f5: cross-instrument disagreement over one input (P2
+repairs the one measured instance structurally; the general comparator is
+not built), the denominator question at a count's birth, and the sibling
+sweep at a repair (W3 v2 carries its one instance as a continuing contract;
+the general duty stays prose-rest, review-consumed). (m)-class shared-exit
+conflicts: unchanged non-goal. **D-10's surviving direction (never-run vs
+runs-quiet as distinct trigger states) is NOT realized by this contract**
+(astra): lc-237 stays parked on this design's build and carries that as its
+own first design question — recorded there at re-point, not silently
+absorbed here.
 
-## Named non-goal
+## Stop/yield
 
-(m)-class conflicts — two correct mechanisms with no shared exit — are NOT
-rendering defects and get no OOV arm; each needs its own shared-exit design
-(first specimen: the redaction-verb / scan-at-admission pair, unbooked,
-carried on the round map).
-
-## Deployment note
-
-All four parts are verb/check-side — none is always-on beyond the existing
-banner's item-check print, so NONE gates on the erosion probe's result.
-(The probe gates f2's read_moments CALLER deployment, a separate design.)
+Register on contact; no sweep. YIELD = consumer-proof findings + recorded
+OOV instances with their dispositions. STOP = the count line's age+count
+signal drained to zero dispositions owed — computable from the line the
+banner already prints, no review window, no owner beyond the machinery
+that already reads it.
