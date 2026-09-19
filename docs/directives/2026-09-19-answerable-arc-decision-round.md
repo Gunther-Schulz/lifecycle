@@ -624,6 +624,47 @@ items 1-8; (g) and (h) were found during wave B.
   neighbouring one that reads as ordinary collision risk. Filed as a
   specimen, not a repair: the lock's conservatism is right and only its
   expressiveness is at issue.
+- **(m) APPEND-ONLY RETENTION × SCAN-BEFORE-PUBLIC MAKES ONE BOOKING
+  CLASS PERMANENTLY UNPUSHABLE — and it is NOT a vocabulary gap like its
+  twelve siblings.** `item amend` is append-only and RETAINS the
+  superseded line by design; the pre-push leak scan refuses certain byte
+  classes in tracked prose. So an entry booked with forbidden bytes
+  cannot be repaired by amendment: the amendment lands, the original
+  line stays beneath it, and the push stays refused. Law 8's
+  verbs-only rule offers no verb that REMOVES, so the carrier has no
+  exit at all for this state.
+  **MEASURED 2026-09-19:** lc-239 was booked with eight absolute foreign
+  home paths in its write-set; the scan blocked the push with 43
+  foreign-path findings; amending to a path-free `other-repo:<name>`
+  form left the original at ITEMS.md:1350 and the refusal unchanged. The
+  bytes entered in ONE unpushed commit plus the tip, and the scan covers
+  "tip tree + unpublished interiors" (its own usage line), so clearing
+  the tip alone does not clear it. Resolved by pre-publication rewrite
+  of UNPUSHED local history at the driving desk — which destroys nothing
+  shared, but is an exit the carrier itself does not provide.
+  **THE CLASS PREDATES TODAY**, which is why this is not one desk's
+  slip: `ITEMS.md:692` already carries a foreign path and is ALREADY on
+  origin/main. It went out before the scan could refuse it, and nothing
+  can now remove it from a public history.
+  **TWO REPAIR CANDIDATES, round input and not decisions.** (1) A
+  REDACTION VERB with a declared marker: it removes forbidden bytes
+  while preserving the fact THAT an amendment happened, so the
+  append-only ethic keeps its guarantee (nothing silently vanishes)
+  without keeping the bytes. (2) The PIT-OF-SUCCESS fix, and the
+  stronger one: the booking verbs run the scan's own value classes over
+  incoming slot text AT ADMISSION, so forbidden bytes never enter a
+  carrier at all. Refuse at the constructor rather than at the boundary —
+  the same move this repo already makes everywhere else, applied to the
+  one gate that currently fires last.
+  **WHY IT BELONGS ON THIS LIST DESPITE NOT BEING A VOCABULARY GAP:** it
+  is the same family one altitude up. (a)-(l) are one mechanism whose
+  vocabulary cannot express a real state; (m) is TWO mechanisms, each
+  correct alone, whose contracts have no intersection. Append-only is
+  right. Scan-before-public is right. A round designing a general
+  third-answer mechanism should know that the family contains this shape
+  too, because a third answer does not help here — nothing is being
+  mis-rendered, and both parties are already saying exactly what they
+  mean.
 
 ### THE UNIFYING QUESTION, which is why the list is worth reading as a list
 
@@ -639,15 +680,21 @@ guard as an armed one; (j) renders an unevaluated predicate as a quiet
 one; (k) renders an uncommitted write as a landed one; (l) renders a
 cross-repo act as a collision.
 
+**(m) IS THE FAMILY'S ODD MEMBER AND IS KEPT DELIBERATELY**: it is not a
+vocabulary gap but two correct mechanisms with no shared exit. A general
+third-answer mechanism does NOT dissolve it, which is exactly why the
+round should hold it beside the twelve — a proposal graded only against
+mis-rendering will look complete and leave (m) untouched.
+
 This repo solved exactly this at the EXIT CODE level — law 1's three
 answers, and `exits.worst` as its single home. It has not solved it at
 the SCHEMA level. **So the round's question is whether the schema gets a
-general third-answer mechanism, with (a)-(l) as its test population** —
+general third-answer mechanism, with (a)-(m) as its test population** —
 and that population is what makes the question answerable rather than
-architectural, because a proposed mechanism can be graded against twelve
+architectural, because a proposed mechanism can be graded against thirteen
 real cases instead of against taste.
 
-**A THIRTEENTH MEMBER ARRIVES FROM THE FRICTION EXTRACT**, and it is the
+**A FURTHER MEMBER ARRIVES FROM THE FRICTION EXTRACT**, and it is the
 one this population did not already contain: a slot kind that cannot
 express "re-derive at read" — evidence whose truth has a shelf life,
 stored as though it were durable. Its closest prior art is workflow
