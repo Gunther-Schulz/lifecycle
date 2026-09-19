@@ -148,3 +148,106 @@ class ArcConservation(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ArcVerbCore(unittest.TestCase):
+    """open / status / close, and the ORDER that decides the crash window.
+
+    LAW 9 IS THE SUBJECT HERE, not the happy path. The body and the counter
+    move in one act, and WHICH is written first decides what a crash between
+    them looks like: body-then-counter leaves a body nothing admitted, which
+    conservation reads as OVER and recoverable; counter-then-body would leave
+    an admission with no body, which reads SHORT — the LOSS side — over a
+    loss that never happened. The window is the same either way; the NAME it
+    gets is what a desk acts on.
+    """
+
+    def _repo(self):
+        from lifecycle_core import refusals
+        r = refusals._Repo()
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    OPEN = ["arc", "open", "freeze", "--goal", "find the root cause",
+            "--narrowing", "eliminative"]
+
+    def test_open_then_close_is_a_clean_round_trip(self):
+        repo = self._repo()
+        code, outp = self._run(repo, *self.OPEN)
+        self.assertEqual(code, 0, outp)
+        self.assertTrue((repo.dir / "arcs" / "freeze.md").is_file())
+        code, outp = self._run(repo, "arc", "close", "freeze")
+        self.assertEqual(code, 0, outp)
+        self.assertFalse((repo.dir / "arcs" / "freeze.md").exists())
+        self.assertTrue((repo.dir / "arcs" / "closed" / "freeze.md").is_file())
+        self.assertIn("index agrees", outp)
+
+    def test_the_open_COMMITS_body_and_counter_together(self):
+        """A new file is UNTRACKED, and `git commit -- <path>` refuses one.
+
+        Measured on the first end-to-end open: both halves were consistent on
+        disk and the commit failed, which is the recording step failing
+        rather than the write. Law 9 asks for them to be durable TOGETHER, so
+        a green that stopped at 'on disk' would not be the claim."""
+        import subprocess
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        r = subprocess.run(["git", "-C", str(repo.dir), "status",
+                            "--porcelain"], capture_output=True, text=True)
+        self.assertEqual(r.stdout.strip(), "",
+                         f"the open left the tree dirty: {r.stdout!r}")
+
+    def test_a_body_with_no_counter_reads_OVER_not_SHORT(self):
+        """THE CRASH WINDOW, constructed rather than crashed. This is the
+
+        state a failure between the two writes leaves, and the assertion is
+        the SIGN: recoverable, not loss."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        # Undo only the counter, leaving the body — exactly the window.
+        arcs.index_path(repo.dir).write_text(
+            arcs.render_index({"baseline": 0, "opened": 0, "closed": 0}, 6),
+            encoding="utf-8")
+        got = arcs.conservation(repo.dir)
+        self.assertFalse(got.ok)
+        self.assertEqual(got.sign, "OVER")
+
+    def test_opening_twice_refuses_rather_than_overwriting(self):
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        code, outp = self._run(repo, *self.OPEN)
+        self.assertEqual(code, 2, outp)
+        self.assertIn("arc_exists", outp)
+
+    def test_an_undeclared_narrowing_form_is_refused_at_the_door(self):
+        repo = self._repo()
+        code, outp = self._run(
+            repo, "arc", "open", "freeze", "--goal", "g",
+            "--narrowing", "convergent")
+        self.assertEqual(code, 2, outp)
+        self.assertIn("arc_shape", outp)
+
+    def test_status_over_a_repo_with_no_arcs_is_CLEAN_not_a_finding(self):
+        """Arcs are OPTIONAL. A repo that never wanted one is the ordinary
+
+        case, and a verb that reported a finding there would make every
+        zero-arc project carry an alarm about a mechanism it declined."""
+        repo = self._repo()
+        code, outp = self._run(repo, "arc", "status")
+        self.assertEqual(code, 0, outp)
+        self.assertIn("NONE", outp)

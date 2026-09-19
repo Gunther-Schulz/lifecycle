@@ -505,6 +505,30 @@ def build_parser() -> argparse.ArgumentParser:
                          "writer:session / other), and how many leave a "
                          "stage undeclared. What the repo IS, beside "
                          "`--digest`'s what-it-holds (lc-174)")
+    # --- `arc` (lc-231): the multi-session unit of work -----------------
+    # OPTIONAL BY DESIGN. A repo that never opens one runs on its queue
+    # untouched; nothing here instantiates an arc, and a zero-arc project is
+    # the ordinary case rather than a gap (walk 3).
+    a = sub.add_parser("arc", help="the multi-session unit of work")
+    asub = a.add_subparsers(dest="arc_action")
+    ao = asub.add_parser("open", help="open an arc — body and counter in ONE "
+                                      "act, so a crash leaves a DUPLICATE "
+                                      "and never a loss")
+    ao.add_argument("slug")
+    ao.add_argument("--goal", required=True,
+                    help="what this arc is FOR, in the requester's words")
+    ao.add_argument("--narrowing", required=True,
+                    help="the narrowing's FORM, declared per arc: "
+                         "eliminative | palette-with-dispositions | none. "
+                         "Not a default — a reader cannot tell what the "
+                         "lines under `narrowing:` mean without it")
+    ao.add_argument("--stage", help="the opening stage (default: opened)")
+    asub.add_parser("status", help="what is open, at what stage, narrowing "
+                                   "how — and conservation over both homes")
+    ac = asub.add_parser("close", help="the MOVE: append to the closed home, "
+                                       "count it, delete the live body")
+    ac.add_argument("slug")
+
     ks.add_parser("check", help="validate the declaration")
     ks.add_parser("sweep", help="invariant 1: every tracked file resolves to "
                                 "a registered kind")
@@ -891,6 +915,20 @@ def main(argv=None) -> int:
             return exits.COULD_NOT_VERIFY
         args.resolved_repo = str(repo)
         code = init_mod.cmd_init(args, out, repo)
+    elif args.verb == "arc":
+        if not args.arc_action:
+            out("COULD NOT VERIFY: `arc` needs an action: open, status, "
+                "close.")
+            return exits.COULD_NOT_VERIFY
+        path = f"arc {args.arc_action}"
+        ctx, code = _context(args, out)
+        if ctx is not None:
+            if args.arc_action == "open":
+                code = verbs.cmd_arc_open(args, out, ctx)
+            elif args.arc_action == "status":
+                code = verbs.cmd_arc_status(args, out, ctx)
+            else:
+                code = verbs.cmd_arc_close(args, out, ctx)
     elif args.verb == "kind":
         if not args.kind_action:
             out("COULD NOT VERIFY: `kind` needs an action: list, check, show.")

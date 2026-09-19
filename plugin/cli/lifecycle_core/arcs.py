@@ -271,6 +271,47 @@ def render_arc(slug: str, slots: dict, schema: int) -> str:
     return "\n".join(out) + "\n"
 
 
+def render_status(repo: Path) -> list:
+    """The `arc status` lines — the banner's renderer (N8).
+
+    ONE SMALL FIXED FIELD-SET PER OPEN ARC, and the always-on cost is bounded
+    by the EXIT rather than by a cap: arcs leave by being closed, so the
+    block's size is governed by flow the way every other growth question here
+    is (R22). A cap would bound a label and be escaped by relabelling.
+
+    LONGHAND, NEVER A SPARSE TABLE. A repo with no arcs says so in a line of
+    its own, because a silent block reads as "nothing to report" and
+    "no arcs" and "the index is unreadable" are different answers — the same
+    reason `lane list` prints its roster state longhand.
+    """
+    lines = []
+    idx = read_index(repo)
+    live = live_slugs(repo)
+    if not idx.ok and not live:
+        lines.append(f"arcs: NONE — {idx.why}. A repo that has never opened "
+                     "an arc is the ordinary state: arcs are OPTIONAL and "
+                     "instantiated per-arc, never a per-project obligation.")
+        return lines
+    if not live:
+        lines.append("arcs: 0 open. The index is readable and the home is "
+                     "empty, which is a different answer from having no "
+                     "index at all.")
+    for slug in live:
+        path = repo / ARCS_DIR / f"{slug}.md"
+        try:
+            arc, _problems = parse_arc(path.read_text(encoding="utf-8"), slug)
+        except OSError as exc:
+            lines.append(f"  {slug}: COULD NOT VERIFY — body unreadable "
+                         f"({exc!r})")
+            continue
+        lines.append(f"  {slug} — stage: {arc.slots.get('stage', '?')}")
+        lines.append(f"      narrowing: {arc.slots.get('narrowing', '?')}")
+        lines.append(f"      yield: {arc.slots.get('yield', '?')}")
+    cons = conservation(repo)
+    lines.append(f"  {cons.message}")
+    return lines
+
+
 def parse_arc(text: str, slug: str) -> tuple:
     """`(Arc, problems)` for one arc body's text.
 

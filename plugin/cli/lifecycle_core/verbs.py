@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from . import atomic, exits, firelog, judgment, lanes, ledger, retire
+from . import arcs, atomic, exits, firelog, judgment, lanes, ledger, retire
 from . import declaration as decl
 from . import grammar
 from . import items as items_mod
@@ -631,7 +631,7 @@ def conservation_guard(ctx: Ctx, paths, out) -> int:
 
 
 def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False,
-                 what: str = "the move") -> int:
+                 what: str = "the move", stage_new: bool = False) -> int:
     """Commit exactly the files this act wrote, BY PATHSPEC, never the index.
 
     The index is shared with whatever else is running in this work tree, so
@@ -653,6 +653,24 @@ def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False,
     if code != exits.CLEAN:
         return code
     rel = [str(p.relative_to(ctx.repo)) for p in paths]
+    if stage_new:
+        # STAGING EXACTLY THIS ACT'S OWN PATHS IS NOT THE `git add` THIS
+        # FUNCTION WARNS ABOUT (lc-231b). The warning above is against
+        # staging the INDEX wholesale, which carries a co-writer's paths out
+        # under this message; naming the same paths the commit is about to
+        # name carries nothing extra by construction.
+        #
+        # IT IS NEEDED BECAUSE A CARRIER CAN BE NEW. The item homes are
+        # always tracked, so a pathspec commit over them has always worked;
+        # an arc body is a FILE PER ARC and its first commit is of an
+        # untracked path, which `git commit -- <path>` refuses. Measured on
+        # the first end-to-end open: "pathspec 'arcs/freeze.md' did not match
+        # any file(s) known to git", with the body and counter already
+        # consistent on disk — the recording step failing, not the write.
+        # It also stages the DELETION half of a move, which is the same
+        # question one direction over.
+        subprocess.run(["git", "-C", str(ctx.repo), "add", "--"] + rel,
+                       capture_output=True, text=True)
     block, warning = attribution_block()
     if warning:
         out(warning)
@@ -3257,3 +3275,151 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
                         what="the ledger line")
     args.fire_detail = f"ledger add {args.line_kind}"
     return code
+
+
+# --- `arc` (lc-231b: the verb core) -------------------------------------------
+
+def _arc_paths(ctx: Ctx, slug: str):
+    return (ctx.repo / arcs.ARCS_DIR / f"{slug}.md",
+            ctx.repo / arcs.CLOSED_DIR / f"{slug}.md")
+
+
+def cmd_arc_open(args, out, ctx: Ctx) -> int:
+    """Open an arc: the body, then the counter, then ONE commit.
+
+    THE ORDER PUTS THE CRASH WINDOW ON THE RECOVERABLE SIDE, which is law 9's
+    judgment applied to an admission rather than a move. Body first: a crash
+    before the counter leaves a body nothing admitted, which conservation
+    reads as OVER — the homes hold more than was admitted, ordinary cause an
+    interrupted write, recoverable. Counter first would leave an admission
+    with no body, which reads SHORT: the LOSS side, over a loss that never
+    happened. The same window, named the other way, and the name is what a
+    desk acts on.
+    """
+    slug = args.slug.strip()
+    if not slug or "/" in slug or slug == arcs.INDEX_STEM:
+        out(f"FINDING [arc_shape] {slug!r} is not a usable arc slug. It "
+            "becomes a filename in the arc home, so it carries no path "
+            f"separator, and it is not {arcs.INDEX_STEM!r}, which is the "
+            "home's own bookkeeping file rather than a body.")
+        return exits.FINDING
+
+    live, _closed = _arc_paths(ctx, slug)
+    if live.exists():
+        out(f"FINDING [arc_exists] an arc {slug!r} is already open at "
+            f"{live.relative_to(ctx.repo)}. Opening over it would overwrite a "
+            "live narrowing — the one thing this carrier exists to keep — and "
+            "a second arc on the same question is a different slug, not the "
+            "same one twice.")
+        return exits.FINDING
+
+    goal = (args.goal or "").strip()
+    form = (args.narrowing or "").strip()
+    if form not in arcs.NARROWING_FORMS:
+        out(f"FINDING [arc_shape] `--narrowing {form or '(unset)'}` is not "
+            f"one of {', '.join(arcs.NARROWING_FORMS)}. The form is a per-arc "
+            "DECLARATION and not a default: a convergent arc eliminates, a "
+            "divergent one keeps a palette whose dead ends are the asset, and "
+            "a reader cannot tell what the lines under `narrowing:` mean "
+            "without being told which this arc is running.")
+        return exits.FINDING
+
+    idx = arcs.read_index(ctx.repo)
+    counters = dict(idx.counters) if idx.counters else {
+        "baseline": 0, "opened": 0, "closed": 0}
+    for c in arcs.INDEX_COUNTERS:
+        counters.setdefault(c, 0)
+
+    live.parent.mkdir(parents=True, exist_ok=True)
+    body = arcs.render_arc(slug, {
+        "goal": goal,
+        "stage": (args.stage or "opened").strip(),
+        "narrowing": f"{form} — nothing recorded yet",
+        "premises": "none recorded yet",
+        "beliefs": "none recorded yet",
+        "yield": "0",
+    }, items_mod.SCHEMA_FLOOR)
+    # 1. THE BODY, before any counter says it exists.
+    atomic.write_text(live, body, encoding="utf-8")
+    # 2. THE COUNTER, in the same act (law 9).
+    counters["opened"] = int(counters["opened"]) + 1
+    atomic.write_text(arcs.index_path(ctx.repo),
+                      arcs.render_index(counters, items_mod.SCHEMA_FLOOR),
+                      encoding="utf-8")
+    out(f"opened arc {slug} → {live.relative_to(ctx.repo)} "
+        f"(opened {counters['opened']}, closed {counters['closed']})")
+    for line in arcs.render_status(ctx.repo):
+        out(line)
+    firelog.fire("arc open", repo=str(ctx.repo), outcome=exits.CLEAN,
+                 detail=slug)
+    return commit_paths(
+        ctx, [live, arcs.index_path(ctx.repo)],
+        f"arcs: open {slug}", out, what="the arc open", stage_new=True)
+
+
+def cmd_arc_status(args, out, ctx: Ctx) -> int:
+    """What is open, at what stage, narrowing how — and conservation."""
+    for line in arcs.render_status(ctx.repo):
+        out(line)
+    cons = arcs.conservation(ctx.repo)
+    if cons.sign == "unread" and not arcs.live_slugs(ctx.repo):
+        # NO INDEX AND NO BODIES is not a broken repo: arcs are optional and
+        # a zero-arc project is the ordinary case. Answering FINDING here
+        # would make every repo that never wanted an arc report one.
+        return exits.CLEAN
+    if not cons.ok:
+        out(f"FINDING [arc_conservation] {cons.message}")
+        return exits.FINDING
+    return exits.CLEAN
+
+
+def cmd_arc_close(args, out, ctx: Ctx) -> int:
+    """The MOVE: append to the closed home, count it, delete the live body.
+
+    THE SAME ORDER AS THE ITEM CARRIER'S CLOSE, and for the same reason: the
+    window between the append and the delete holds two copies of one body,
+    which conservation reports as OVER and recoverable. Deleting first would
+    put that window on the loss side, where a crash leaves nothing to recover
+    and no record that there was anything to recover.
+    """
+    slug = args.slug.strip()
+    live, closed = _arc_paths(ctx, slug)
+    if not live.exists():
+        out(f"FINDING [unknown_arc] no live arc {slug!r} in "
+            f"{arcs.ARCS_DIR}/. A closed arc is not re-closable and a slug "
+            "that was never opened has nothing to move.")
+        return exits.FINDING
+
+    idx = arcs.read_index(ctx.repo)
+    if not idx.ok:
+        out(f"COULD NOT VERIFY: {idx.why}, so this close cannot record "
+            "itself. The counter and the body move in ONE act; writing the "
+            "body without the counter would leave the carrier unable to say "
+            "whether anything was lost.")
+        return exits.COULD_NOT_VERIFY
+
+    body = live.read_text(encoding="utf-8")
+    closed.parent.mkdir(parents=True, exist_ok=True)
+    # 1. APPEND — before the tree ever holds one copy fewer.
+    atomic.write_text(closed, body, encoding="utf-8")
+    # 2. COUNT, in the same act.
+    counters = dict(idx.counters)
+    counters["closed"] = int(counters["closed"]) + 1
+    atomic.write_text(arcs.index_path(ctx.repo),
+                      arcs.render_index(counters, items_mod.SCHEMA_FLOOR),
+                      encoding="utf-8")
+    # 3. DELETE the live body.
+    live.unlink()
+    out(f"closed arc {slug} → {closed.relative_to(ctx.repo)} "
+        f"(opened {counters['opened']}, closed {counters['closed']})")
+
+    cons = arcs.conservation(ctx.repo)
+    out(f"  {cons.message}")
+    firelog.fire("arc close", repo=str(ctx.repo), outcome=exits.CLEAN,
+                 detail=slug)
+    code = commit_paths(
+        ctx, [live, closed, arcs.index_path(ctx.repo)],
+        f"arcs: close {slug}", out, what="the arc close", stage_new=True)
+    if code != exits.CLEAN:
+        return code
+    return exits.CLEAN if cons.ok else exits.FINDING

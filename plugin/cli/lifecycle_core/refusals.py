@@ -304,6 +304,78 @@ def _good_arc_body(**over) -> str:
     return arcs_mod.render_arc("freeze", slots, items_mod.SCHEMA_FLOOR)
 
 
+#: The arc family's CLI drives. A real scratch repo because these verbs write
+#: files, count them, and commit — the three halves law 9 binds together —
+#: and a fixture that mocked any of them would prove the mock.
+_ARC_OPEN = ["arc", "open", "freeze", "--goal", "find the root cause",
+             "--narrowing", "eliminative"]
+
+
+def _cli_in(repo, argv) -> Fired:
+    """One invocation inside an EXISTING scratch repo.
+
+    `_cli` builds its own repo and tears it down, which is right for a
+    single-act row. These rows need SEVERAL acts in ONE tree — open then
+    close, open then delete by hand — because the state under test is the
+    one the first act left behind.
+    """
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    here = os.getcwd()
+    try:
+        os.chdir(str(repo.dir))
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        return Fired(code, buf.getvalue())
+    finally:
+        os.chdir(here)
+
+
+def _arc_cli(argv, *, setup=None) -> Fired:
+    with _Repo() as repo:
+        if setup is not None:
+            setup(repo)
+        return _cli_in(repo, argv)
+
+
+def _arc_cli_once() -> Fired:
+    return _arc_cli(_ARC_OPEN)
+
+
+def _arc_cli_twice() -> Fired:
+    def setup(repo):
+        _cli_in(repo, _ARC_OPEN)
+    return _arc_cli(_ARC_OPEN, setup=setup)
+
+
+def _arc_cli_open_then_close() -> Fired:
+    def setup(repo):
+        _cli_in(repo, _ARC_OPEN)
+    return _arc_cli(["arc", "close", "freeze"], setup=setup)
+
+
+def _arc_cli_open_then_status() -> Fired:
+    def setup(repo):
+        _cli_in(repo, _ARC_OPEN)
+    return _arc_cli(["arc", "status"], setup=setup)
+
+
+def _arc_cli_after_hand_delete() -> Fired:
+    """The body removed by a path that is NOT a closure — the LOSS side.
+
+    A HAND DELETION rather than a tool call, deliberately: the refusal exists
+    for the case no verb performed, and driving it with `arc close` would
+    prove the tool agrees with itself.
+    """
+    def setup(repo):
+        _cli_in(repo, _ARC_OPEN)
+        (repo.dir / "arcs" / "freeze.md").unlink()
+    return _arc_cli(["arc", "status"], setup=setup)
+
+
 def _blocker_graph_run(items_text: str, prefix: str = "xx") -> Fired:
     """`check_blocker_graph` over a scratch carrier — no done home needed,
 
@@ -775,6 +847,35 @@ ROWS = [
         expect=exits.COULD_NOT_VERIFY,
         fire=lambda: _items_run(GOOD_ITEMS.replace("grade: READY", "grade: FOO")),
         control=lambda: _items_run(GOOD_ITEMS),
+    ),
+    Row(
+        ident="arc_exists",
+        refusal="`arc open` over a slug that is already open — a live "
+                "narrowing is the one thing this carrier exists to keep, and "
+                "opening over it would overwrite it silently",
+        firing_input="`arc open <slug>` twice",
+        expect=exits.FINDING,
+        fire=lambda: _arc_cli_twice(),
+        control=lambda: _arc_cli_once(),
+    ),
+    Row(
+        ident="unknown_arc",
+        refusal="`arc close` over a slug with no live body — a closed arc is "
+                "not re-closable and one never opened has nothing to move",
+        firing_input="`arc close <slug>` with no such arc",
+        expect=exits.FINDING,
+        fire=lambda: _arc_cli(["arc", "close", "never-opened"]),
+        control=lambda: _arc_cli_open_then_close(),
+    ),
+    Row(
+        ident="arc_conservation",
+        refusal="the arc index and the arc homes disagree — SHORT means a "
+                "body left by a path that is not a closure (the LOSS side), "
+                "OVER means an interrupted close and is recoverable",
+        firing_input="`arc status` over a home whose body was deleted by hand",
+        expect=exits.FINDING,
+        fire=lambda: _arc_cli_after_hand_delete(),
+        control=lambda: _arc_cli_open_then_status(),
     ),
     Row(
         ident="arc_shape",
