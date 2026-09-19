@@ -1101,6 +1101,35 @@ MUTATIONS = [
      "the consuming seam for a reopened belief — the close then files a "
      "doubt as a settled record in the home nobody re-reads, and the reopen "
      "bought nothing"),
+
+    # lc-243 W1, AND THESE LANDED WITH THE ROWS rather than a lane later —
+    # which is the whole correction the arc family above bought. The rule it
+    # produced: a roster row registered in the same change that registers its
+    # refusal carries its arrangement in that change, or the change names why
+    # the row is proven through a declared family. Neither of these is.
+
+    # THE COLLECTION, not the emission. Anchoring the `out(...)` would grade
+    # the printing while the classification stayed live, and the summary
+    # counts would still report the problem — a row darkened by a mutation
+    # that removed the message and left the verdict is proof about a string.
+    ("reader_moment_broken", "verbs.py",
+     "            if m.state == lanes.BROKEN:\n"
+     "                broken.append((name, m))",
+     "            if False:\n"
+     "                broken.append((name, m))",
+     "the BROKEN arm's collection — a predicate that could not answer then "
+     "prints its state in the per-kind listing and contributes nothing to "
+     "the verdict, so the run exits CLEAN over a moment that is UNKNOWN"),
+
+    ("reader_moment_malformed", "verbs.py",
+     "            elif m.state == decl.READ_MOMENT_MALFORMED:\n"
+     "                malformed.append((name, m))",
+     "            elif False:\n"
+     "                malformed.append((name, m))",
+     "the MALFORMED arm's collection — a `when` nobody could ever have "
+     "executed then folds back into the absent-moment default at the one "
+     "surface built to tell them apart, which is the exact collapse this "
+     "row exists to refuse"),
 ]
 
 

@@ -17,6 +17,7 @@ ordinary add.
 
 import _isolation  # noqa: F401  # lc-183: before any verb runs
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -2112,3 +2113,80 @@ class ConditionalSlotsReachAllThreeDoors(unittest.TestCase):
         code, out = self._run(r, "item", "check")
         self.assertNotIn("item_shape", out,
                          f"the inserted slot broke the block's shape\n{out}")
+
+
+class KindMomentsTest(unittest.TestCase):
+    """`kind moments` — the O6 evaluation half, wired (lc-243 W1 act 1).
+
+    THE ROSTER PAIR PROVES THE TWO FINDINGS and nothing else: plant BROKEN,
+    plant MALFORMED, each against a control. What it cannot reach is the
+    verdict LINE's honesty and the two absence arms, and those are exactly
+    where this verb could report a pass-shaped number over nothing — a run
+    with no kinds, a run with no reader entries, and a CLEAN whose moments
+    were all UNDECLARED so no predicate ever ran.
+    """
+
+    def _kinds(self, reader):
+        d = json.loads(json.dumps(refusals.GOOD_DECLARATION))
+        d["kinds"]["items"]["reader"] = reader
+        return d
+
+    def _run(self, doc, repo=None):
+        buf = []
+        code = verbs.cmd_kind_moments(None, buf.append, repo, doc)
+        return code, "\n".join(buf)
+
+    def test_a_declaration_with_NO_KINDS_is_could_not_verify(self):
+        code, out = self._run({"kinds": {}})
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("registers no kinds", out)
+
+    def test_kinds_that_declare_NO_READER_are_could_not_verify(self):
+        """Zero evaluations is not zero problems. Both print as a zero."""
+        d = json.loads(json.dumps(refusals.GOOD_DECLARATION))
+        d["kinds"]["items"].pop("reader", None)
+        code, out = self._run(d)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("NOT ONE declares a reader entry", out)
+
+    def test_an_ABSENT_when_is_UNDECLARED_and_never_a_finding(self):
+        """Law 11's arm. Nearly every kind in this repo is this case, so a
+        row grading absence would fire on the whole registry at once."""
+        code, out = self._run(self._kinds(["session", "verb:item ready"]))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("UNDECLARED", out)
+        self.assertNotIn("FINDING", out)
+
+    def test_the_CLEAN_line_separates_declared_from_EXECUTED(self):
+        """The assurance-wider-than-predicate arm, and the one this verb
+        would otherwise fail: a registry whose moments are all UNDECLARED
+        reads `50 moments ... CLEAN`, which a reader takes for fifty
+        predicates that answered. The second number is what refuses that."""
+        code, out = self._run(self._kinds(["session", "verb:item ready"]))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("2 declared moment(s)", out)
+        self.assertIn("0 of them EXECUTED", out)
+
+    def test_an_EXECUTED_moment_is_counted_as_executed(self):
+        """The control direction: with a real predicate the second number
+        MOVES. Without this arm the assertion above is satisfied by a verb
+        that can never count an execution at all."""
+        code, out = self._run(
+            self._kinds([{"reader": "session", "when": "predicate true"}]))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("1 of them EXECUTED", out)
+        self.assertIn("FIRE", out)
+
+    def test_broken_and_malformed_are_SEPARATE_findings(self):
+        """One input of each, together: the summary must name both counts
+        apart. A single folded row would report `2 problems` and hand one
+        word to two different repairs."""
+        code, out = self._run(self._kinds([
+            {"reader": "session", "when": "predicate exit 2"},
+            {"reader": "verb:item ready", "when": "predicate true"},
+        ]))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [reader_moment_broken]", out)
+        self.assertIn("FINDING [reader_moment_malformed]", out)
+        self.assertIn("1 broken", out)
+        self.assertIn("1 malformed", out)

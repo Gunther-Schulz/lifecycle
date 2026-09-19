@@ -98,6 +98,15 @@ def cmd_kind(args, out) -> int:
             return res.code
         return retire_mod.cmd_kind_sweep(args, out, repo, res.declaration)
 
+    if args.kind_action == "moments":
+        if res.declaration is None:
+            _report(res, out)
+            out("kind moments: no readable declaration, so no reader moment "
+                "could be evaluated. An empty evaluation reads exactly like "
+                "a registry whose moments all answered.")
+            return res.code
+        return verbs.cmd_kind_moments(args, out, repo, res.declaration)
+
     if args.kind_action == "check":
         _report(res, out)
         if res.code == exits.CLEAN:
@@ -505,6 +514,15 @@ def build_parser() -> argparse.ArgumentParser:
                          "writer:session / other), and how many leave a "
                          "stage undeclared. What the repo IS, beside "
                          "`--digest`'s what-it-holds (lc-174)")
+    ks.add_parser(
+        "moments",
+        help="EVALUATE every kind's declared reader moment and say what it "
+             "answers — the O6 evaluation half, which existed and was read "
+             "by nothing. BROKEN (a predicate that could not answer) and "
+             "MALFORMED (a `when` present and invalid) are separate "
+             "findings because they have separate repairs; an ABSENT `when` "
+             "is UNDECLARED and is never a finding (lc-243)")
+
     # --- `arc` (lc-231): the multi-session unit of work -----------------
     # OPTIONAL BY DESIGN. A repo that never opens one runs on its queue
     # untouched; nothing here instantiates an arc, and a zero-arc project is

@@ -261,6 +261,29 @@ def _decl_run_with_templates(templates: dict, **kw) -> Fired:
         shutil.rmtree(reg, ignore_errors=True)
 
 
+def _moments_run(reader_entries) -> Fired:
+    """`kind moments` over a scratch repo whose one kind carries these readers.
+
+    THE VERB, not `read_moments` directly. The evaluator has been correct and
+    unread for as long as it has existed — that is the gap this verb closes —
+    so a row exercising the evaluator would prove exactly the half that was
+    never in doubt and leave the wiring unproven, which is the mid-chain
+    control the instrument rules forbid. The control enters at the top.
+
+    Deferred import: `verbs` imports this module's siblings and is imported
+    by `cli`, and a module-level import here would put the roster inside
+    that chain for every consumer that only wanted a refusal's text.
+    """
+    from . import verbs
+
+    d = json.loads(json.dumps(GOOD_DECLARATION))
+    d["kinds"]["items"]["reader"] = reader_entries
+    with _Scratch(declaration=d) as s:
+        buf = []
+        code = verbs.cmd_kind_moments(None, buf.append, s.dir, d)
+        return Fired(code, "\n".join(buf))
+
+
 def _items_run(items_text: str, prefix: str = "xx") -> Fired:
     with _Scratch(items_text=items_text) as s:
         buf = []
@@ -4321,9 +4344,61 @@ GOAL_ROWS = [
 ]
 
 
+
+
+# --- `kind moments` (lc-243 W1 act 1) ----------------------------------------
+#
+# TWO ROWS, NOT ONE, and the split is the refusal's own shape rather than a
+# taxonomy preference: BROKEN is a correctly-declared moment whose predicate
+# could not answer (the repair is out in the world), MALFORMED is a `when`
+# nobody could ever have executed (the repair is one line in the
+# declaration). One row would hand a reader one word for two repairs.
+MOMENT_ROWS = [
+    Row(
+        ident="reader_moment_broken",
+        refusal="a kind whose reader moment is a predicate that could not be "
+                "evaluated — the moment is UNKNOWN, and unknown is not quiet",
+        firing_input="a reader `when` of `predicate` naming a command that "
+                     "exits >=2, which is RESERVED for BROKEN",
+        expect=exits.FINDING,
+        # THE CONTROL IS THE FIRE FIXTURE the design names, and it is the
+        # arm that proves the wiring rather than the parsing: both arms are
+        # predicate-mode moments that are actually RUN, and they differ in
+        # exactly one property — whether the predicate answered. A control
+        # with no `when` would differ in two, and would pass over a verb
+        # that never reached the evaluator at all.
+        fire=lambda: _moments_run(
+            [{"reader": "session", "when": "predicate exit 2"}]),
+        control=lambda: _moments_run(
+            [{"reader": "session", "when": "predicate true"}]),
+        stage="lc-243",
+    ),
+    Row(
+        ident="reader_moment_malformed",
+        refusal="a reader `when` that is PRESENT and invalid — a moment "
+                "nobody could have executed, reported as its own answer "
+                "rather than folded into the absent-moment default",
+        firing_input="`when: verb:audit` on a bare reader — the exact input "
+                     "the shared partition classifies MALFORMED (astra-w1: "
+                     "a verb-occasioned read is expressed by naming the verb "
+                     "AS a reader, never by reader-`when`)",
+        expect=exits.FINDING,
+        # PRESENCE IS THE VARIED AXIS. The control is the same reader with
+        # the `when` key ABSENT, which must stay UNDECLARED and contribute
+        # no finding — the legitimate default across nearly every kind in
+        # every repo here. A guard that fired on it would fire on the whole
+        # registry on its first run (law 11), so this pair is what keeps the
+        # row's reach honest in the quiet direction.
+        fire=lambda: _moments_run(
+            [{"reader": "session", "when": "verb:audit"}]),
+        control=lambda: _moments_run([{"reader": "session"}]),
+        stage="lc-243",
+    ),
+]
+
 ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
         + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS + GOAL_ROWS
-        + RECORDS_KIND_ROWS + HOME_ROWS)
+        + RECORDS_KIND_ROWS + HOME_ROWS + MOMENT_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #

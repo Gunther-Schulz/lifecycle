@@ -3837,3 +3837,109 @@ def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
         ctx, [live, body, ctx.repo / decl.DECLARATION_REL],
         f"arcs: deadline {date} on {slug}", out, what="the arc deadline",
         stage_new=True)
+
+
+# --- `kind moments` (lc-243 W1 act 1): the O6 evaluation half, made visible ---
+
+def cmd_kind_moments(args, out, repo: Path, doc: dict) -> int:
+    """Evaluate every kind's declared reader MOMENTS and say what they answer.
+
+    WHAT THIS CLOSES. `declaration.read_moments` has existed and been correct
+    and been read by NOTHING — the evaluation half built and not live, which
+    is the loop map's O6 gap. A kind whose reader moment is BROKEN (its
+    predicate cannot be run) or MALFORMED (its `when` is present and invalid)
+    was indistinguishable at every surface from a kind that is fine, because
+    no surface asked. The evaluator is not changed here and must not be: one
+    trigger evaluator, and a second interpretation of BROKEN living in this
+    verb is exactly the divergence `read_moments` documents itself against.
+
+    THE TWO FINDINGS ARE SEPARATE ROWS, and the split is the whole point
+    rather than taxonomy. BROKEN is a predicate that ran and could not
+    answer — the world moved under a moment that is correctly declared, and
+    the repair is out in the world. MALFORMED is a `when` nobody could ever
+    have executed — the repair is in the declaration, one line away. Folding
+    them would hand a reader one word for two repairs, which is the same
+    collapse the third-answer rule forbids one level down.
+
+    THE ABSENT MOMENT IS NOT A FINDING and never becomes one. UNDECLARED is
+    the legitimate default across nearly every kind in every repo here: a
+    kind is read when a session reads it, and saying so is not a gap. A verb
+    that graded absence would fire on the whole registry on its first run,
+    which is the guard-over-legitimate-work shape that trains the override
+    reflex (law 11).
+
+    THREE ANSWERS, and the empty case is the one that needs saying. A
+    declaration with NO kinds, or one whose kinds declare no reader entries
+    at all, produces zero evaluations — and a printed zero reads exactly like
+    a registry that was checked and found clean. So nothing-to-evaluate is
+    COULD NOT VERIFY naming what was absent, never CLEAN.
+    """
+    kinds = doc.get("kinds") or {}
+    if not kinds:
+        out("kind moments: COULD NOT VERIFY — the declaration registers no "
+            "kinds, so no reader moment could be evaluated. NOT a clean "
+            "registry: zero evaluations and zero problems print the same.")
+        return exits.COULD_NOT_VERIFY
+
+    broken, malformed, seen, ran = [], [], 0, 0
+    for name in kinds:
+        body = kinds[name] if isinstance(kinds[name], dict) else {}
+        moments = decl.read_moments(body, repo)
+        out(f"kind: {name}")
+        if not moments:
+            out("    (no reader entries declared)")
+            continue
+        for m in moments:
+            seen += 1
+            detail = f" — {m.detail}" if m.detail else ""
+            out(f"    reader {m.reader}: {m.state}{detail}")
+            if m.state in (lanes.FIRE, lanes.QUIET, lanes.BROKEN):
+                # EXECUTED, and counted apart from the ones merely READ. The
+                # two numbers are this verb's own honesty: a registry where
+                # every moment is UNDECLARED yields a large `seen` and a zero
+                # `ran`, and a summary carrying only the first would report
+                # fifty predicates' worth of assurance over nothing that ran.
+                ran += 1
+            if m.state == lanes.BROKEN:
+                broken.append((name, m))
+            elif m.state == decl.READ_MOMENT_MALFORMED:
+                malformed.append((name, m))
+
+    if not seen:
+        out(f"kind moments: COULD NOT VERIFY — {len(kinds)} kind(s) "
+            "registered and NOT ONE declares a reader entry, so there was no "
+            "moment to evaluate. The registry was read; it had nothing to "
+            "answer with.")
+        return exits.COULD_NOT_VERIFY
+
+    for name, m in broken:
+        out(f"FINDING [reader_moment_broken] kind {name!r} declares a "
+            f"predicate moment for reader {m.reader!r} that could not be "
+            f"evaluated: {m.detail or '(no detail)'}. The declaration is "
+            "well-formed and the WORLD is what moved — the predicate's "
+            "command is missing, unrunnable, or times out — so the repair is "
+            "out there, not in this file. Until it answers, this kind's "
+            "reader moment is not QUIET; it is unknown, and a session "
+            "reading the declaration alone cannot tell those apart.")
+    for name, m in malformed:
+        out(f"FINDING [reader_moment_malformed] kind {name!r} declares a "
+            f"`when` for reader {m.reader!r} that is PRESENT and invalid: "
+            f"{m.detail or '(no detail)'}. Nothing could ever have executed "
+            "it, so the repair is one line in the declaration. This is not "
+            "an absent moment: an absent `when` is the legitimate default "
+            "and is reported UNDECLARED without a finding, while this one is "
+            "somebody's mistake wearing the default's face.")
+
+    tally = (f"{seen} declared moment(s) over {len(kinds)} kind(s), "
+             f"{ran} of them EXECUTED")
+    if broken or malformed:
+        out(f"kind moments: FINDING — {tally}: {len(broken)} broken, "
+            f"{len(malformed)} malformed.")
+        return exits.FINDING
+    out(f"kind moments: CLEAN — {tally}, none broken and none malformed. "
+        "THE TWO NUMBERS ARE THE VERDICT'S REACH: only an executed moment "
+        "was put to a predicate, and an absent `when` is UNDECLARED, which "
+        "is the legitimate default rather than a gap. A run whose second "
+        "number is 0 has read the registry and exercised no predicate at "
+        "all — clean, and clean about very little.")
+    return exits.CLEAN
