@@ -73,7 +73,20 @@ EXIT_CONTROLLED_MODES = tuple(m for m in decl.GROWTH_MODES
 #: own recording-act rather than guessed: `items`' declared recording act IS
 #: the `item close` fire-log line, and `done bodies`' is the `item compact`
 #: one.
-EXIT_VERBS = {"move": ("item close",), "compact": ("item compact",)}
+#: KEYED ON (KIND, ACTION), never on the action alone (FF-3). `arcs` and
+#: `items` both declare their exit action as `move`, so an action-keyed map
+#: has two wrong answers available and no right one: leave it and an `arc
+#: close` is invisible, so the arcs kind reads GREW WITHOUT AN EXIT while its
+#: exit has been firing; add `arc close` beside `item close` and an arc
+#: closure now satisfies the ITEMS alarm, which then goes quiet on a carrier
+#: that genuinely stopped draining. The collision is stated here so a builder
+#: adding the next kind cannot inherit it.
+EXIT_VERBS = {
+    ("items", "move"): ("item close",),
+    ("arcs", "move"): ("arc close",),
+    ("done bodies", "compact"): ("item compact",),
+    ("closed arcs", "compact"): ("arc compact",),
+}
 
 
 # --- the fire log, read back --------------------------------------------------
@@ -313,7 +326,22 @@ def check_growth(name, mode, action, count, log, log_present, out):
             "event could be seen. An unread log contributes zero events, and "
             "zero events is exactly what fires this alarm.")
         return exits.COULD_NOT_VERIFY, "unchecked"
-    verbs_ = EXIT_VERBS.get(action, ())
+    verbs_ = EXIT_VERBS.get((name, action))
+    if verbs_ is None:
+        # A KIND NOBODY MAPPED IS ITS OWN ANSWER, not zero events. Zero
+        # events is what FIRES this alarm, so folding an unmapped kind into
+        # it would report "grew without an exit" about a kind whose exit this
+        # build simply does not know how to look for — a verdict over a
+        # question never asked. Two kinds are in exactly that state today
+        # (`design notes` and `the fire log`), whose recording acts are prose
+        # graduations rather than verbs, and the honest answer for them is
+        # that nothing here can see their exit fire.
+        out(f"    growth check: COULD NOT VERIFY — no exit verb is mapped "
+            f"for kind {name!r} at action `{action}`, so there is no event "
+            "to look for. NOT the same answer as 'its exit never fired': "
+            "that one is a finding about the kind, this one is a gap in "
+            "this map.")
+        return exits.COULD_NOT_VERIFY, "unchecked"
     events = [r for r in log if str(r.get("verb", "")) in verbs_]
     out(f"    exit events: {len(events)} ({', '.join(verbs_)}) recorded for "
         "this repo")

@@ -694,7 +694,16 @@ class TheWalkAsksACompactedKindAboutItsExit(unittest.TestCase):
         build performs must not be answered NOT CHECKED, and the verb named
         must be the one that writes the fire-log line."""
         self.assertIn("compact", retire.PERFORMED_EXITS)
-        self.assertEqual(retire.EXIT_VERBS["compact"], ("item compact",))
+        # RE-KEYED ON (KIND, ACTION), not weakened (FF-3). The claim this
+        # case makes is unchanged — a performed exit names the verb that
+        # writes its fire-log line — and it is now asserted per KIND, which
+        # is strictly more than the old single-tuple form said: two kinds
+        # compact, by two different verbs, and an action-keyed map could not
+        # express that at all.
+        self.assertEqual(retire.EXIT_VERBS[("done bodies", "compact")],
+                         ("item compact",))
+        self.assertEqual(retire.EXIT_VERBS[("closed arcs", "compact")],
+                         ("arc compact",))
         self.assertEqual(sorted(retire.EXIT_CONTROLLED_MODES),
                          sorted(m for m in decl.GROWTH_MODES
                                 if m != "unbounded-with-reason"),
@@ -783,3 +792,53 @@ class AnAbsenceClaimNamesWhatProvesTheInstrumentWasLive(unittest.TestCase):
         # searched and did not find.
         self.assertIn("does not exist", note)
         self.assertIn("docs/nowhere", note)
+
+
+class GrowthExitVerbsAreKindAware(unittest.TestCase):
+    """The exit map keys on (KIND, ACTION), never on action alone (FF-3).
+
+    THE TRAP THIS AVOIDS IS A ONE-WORD FIX. `arcs` declares its exit action
+    as `move`, which is the same word `items` declares — so a map keyed on
+    the action alone has exactly two wrong answers available and no right
+    one: leave it, and an arc close is invisible so the arcs kind reads
+    GREW WITHOUT AN EXIT while its exit has been firing; add `arc close` to
+    the `move` tuple, and an arc close now satisfies the ITEMS kind, whose
+    growth alarm then goes quiet on a carrier that genuinely stopped
+    draining.
+
+    So the pair below is both directions, and neither alone would have
+    caught the other.
+    """
+
+    ARC_LOG = [{"verb": "arc close"}, {"verb": "arc close"}]
+    ITEM_LOG = [{"verb": "item close"}]
+
+    def _check(self, kind, action, count, log):
+        buf = []
+        code, state = retire.check_growth(kind, "bounded-by-exit", action,
+                                          count, log, True, buf.append)
+        return code, state, "\n".join(buf)
+
+    def test_an_arc_close_satisfies_the_ARCS_kind(self):
+        code, state, outp = self._check("arcs", "move", 2, self.ARC_LOG)
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertNotIn("kind_grew_without_exit", outp)
+
+    def test_an_arc_close_does_NOT_satisfy_the_ITEMS_kind(self):
+        """The direction a naive fix breaks: the items alarm must stay loud
+
+        on a carrier that is not draining, whatever the arcs did."""
+        code, state, outp = self._check("items", "move", 5, self.ARC_LOG)
+        self.assertEqual(code, exits.FINDING, outp)
+        self.assertIn("kind_grew_without_exit", outp)
+
+    def test_an_item_close_still_satisfies_the_ITEMS_kind(self):
+        """The control for both: without it the map could refuse everything
+
+        and the case above would pass while the alarm fired on every repo."""
+        code, state, outp = self._check("items", "move", 5, self.ITEM_LOG)
+        self.assertEqual(code, exits.CLEAN, outp)
+
+    def test_an_item_close_does_NOT_satisfy_the_ARCS_kind(self):
+        code, state, outp = self._check("arcs", "move", 2, self.ITEM_LOG)
+        self.assertEqual(code, exits.FINDING, outp)
