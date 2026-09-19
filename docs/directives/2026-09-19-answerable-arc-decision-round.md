@@ -329,3 +329,110 @@ from this file's prose.
 the executing desk's ack that the operator's first-hand confirmation is
 on its record is the event that authorizes queue work — no item starts
 before it.
+
+## Addendum 5 — the design round's AGENDA: routed findings and open decisions
+
+Written at the executing desk `lifecycle-38` on the driving desk's
+direction, 2026-09-19, at that desk's seam. **This exists because the
+agenda had accumulated in a peer channel, and a channel is not a
+carrier** — addendum 3 says so about this arc's own message history, and
+the rule applies to the list of things the round must decide as much as
+to anything else. Nothing here is new work; it is the arc's findings
+given a home the round will actually read.
+
+### The routed findings
+
+Lettered as the round received them. (a)-(f) were routed during queue
+items 1-8; (g) and (h) were found during wave B.
+
+- **(a) The ref vocabulary cannot express a foreign harness hook.** The
+  reading-roster kind's `reader` names `session` because that is the
+  nearest true value available, not because it is true.
+- **(b) The attribution hook cannot distinguish NO TRAILER from
+  RECORDER-NEVER-SAW-IT.** `git commit -q` delivers no `gitOperation`,
+  so the recorder gets no SHA and the hook reports "unmarked" for two
+  different states.
+- **(c) THERE IS NO BLOCKER TYPE FOR AN EVENT THIS REPO CANNOT TEST.**
+  `classify_blocker` sanctions exactly three — `item`, `decision`,
+  `evidence <executable predicate>` — and a wait on another repo or
+  another desk is none of them. **Five specimens**, and the last two
+  were created by following the rules correctly: the four
+  cross-repo `evidence false` items (lc-24, lc-53, lc-66, lc-147, all
+  waiting on claude-code-cache-fix), plus **lc-235 and lc-236**, both of
+  which wait on THIS ROUND CLOSING and both of which had to be typed
+  `decision` because nothing better exists. Each says so in its own
+  derivability statement rather than quietly mistyping.
+- **(d) A decision blocker can be written in a form its own answer is
+  REFUSED in** (lc-233, booked). The blocker slot accepts a question
+  containing the ` — ` slot separator; `ledger add decision` correctly
+  refuses one; `decision_for` matches by EXACT equality. Such a blocker
+  has exactly one answer that would resolve it and that answer cannot be
+  written. Swept: n=1 live at the time (lc-8's), zero closed.
+- **(e) `item add` derives NEW where the doctrine PARKS.** An entry with
+  an UNKNOWN write-set and a real blocker is graded NEW by the verb, and
+  the backlog doctrine says an unknown boundary demotes to parked
+  (lc-231 was minted into exactly that state and re-parked by hand). May
+  be intended — NEW as a pre-grade state — which is why it is routed
+  rather than booked.
+- **(f) The join's `test/` directory entry collapses the partition.**
+  `item waves` over the schedulable set returns ONE LANE OVER 102 ITEMS,
+  because `test/` is a directory entry written by 13 items and covering
+  files named by 78 more. The lane count has stopped discriminating, and
+  a desk reading only that count reads it as a correct serialization
+  verdict. One grain worse than lc-173 states it — lc-173 blames
+  `refusals.py` at 6 of 8 write-sets; the real collapser is `test/`.
+  Held rather than booked while lc-173 is open.
+- **(g) NOTHING FIRES ON A REPO LEFT BEHIND BY A SCHEMA BUMP.** Only a
+  schema ABOVE the floor is refused (`declaration.py`, the
+  `schema_above_floor` branch); below-floor is silent. So after
+  `SCHEMA_FLOOR` moved 2 -> 3 here, dotfiles sat at 2 under a floor of 3,
+  DEGRADING rather than failing, and no check anywhere said so — it was
+  visible only because law 25 forced a dry-run over every declared repo.
+  The "one schema version per repo" invariant has no CROSS-REPO
+  detector.
+- **(h) THE BOOKING COST-TEST GUARD COMPUTES COST FROM THE WRITE-SET AND
+  IS BLIND TO EXECUTION COST.** It vetoed booking lc-234 on the grounds
+  that one file and one hunk means booking costs what doing costs. True
+  of the ARTIFACT and false of the work: producing that artifact takes a
+  clean checkout plus a full `prove-rows` run per sampled commit. Law 11
+  shape — a guard firing on legitimate work — and it is REPORTED, not
+  repaired: the repair is a declared exemption the guard verifies, never
+  a softened predicate or an override habit, and that is the round's
+  call rather than a mid-wave edit.
+
+### THE UNIFYING QUESTION, which is why the list is worth reading as a list
+
+**(a) through (h) are one shape: a vocabulary that cannot express a
+state the world actually has, so the state renders as a neighbouring one
+that reads as ordinary.** (a) renders a foreign reader as `session`; (b)
+renders unknown as unmarked; (c) renders an untestable wait as a quiet
+predicate; (d) renders an unanswerable question as an open one; (e)
+renders a parked entry as new; (f) renders a collapsed partition as a
+serialization verdict; (g) renders a left-behind repo as a healthy one;
+(h) renders an expensive job as a cheap one.
+
+This repo solved exactly this at the EXIT CODE level — law 1's three
+answers, and `exits.worst` as its single home. It has not solved it at
+the SCHEMA level. **So the round's question is whether the schema gets a
+general third-answer mechanism, with (a)-(h) as its test population** —
+and that population is what makes the question answerable rather than
+architectural, because a proposed mechanism can be graded against eight
+real cases instead of against taste.
+
+### Open decisions the round carries
+
+1. **lc-234's sampling plan** — which historical commits the erosion
+   probe samples, how many, chosen how. The design of record does not
+   contain it; lc-234 is parked on it.
+2. **lc-231's arc-kind design** — and its FIRST question, per the
+   synthesis's requirement 6: is an arc a new registered kind, or the
+   existing lane mechanism widened?
+3. **The head-rule's open half.** Declined both ways on the carrier
+   question (`docs/head-rule-decision-2026-09-19.md`), and that
+   decision's own reach note says it does NOT rule out that multi-arc
+   scheduling needs an ordered head. Re-open event (d) folds it into
+   lc-231's design.
+4. **lc-236's two design questions** — where the consolidation token
+   lives (the waves verb's output, or the route-line convention), and
+   its relation to lc-173 and finding (f).
+5. **The unifying question above.**
