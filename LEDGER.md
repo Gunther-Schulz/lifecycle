@@ -18,7 +18,7 @@
 # incidents and their lessons to `JOURNAL.md`, maintenance notes to
 # `dev-notes/`.
 
-schema: 5
+schema: 6
 decision: the sixth kind stage under R22: keep the key spelled `bound` or replace it → replace it with `growth`, closed to bounded-by-exit/compacted/unbounded-with-reason; `bound` IS the cap concept R22 withdrew and a key whose body has moved is a label that misleads (§3.0b invariant 2 already says growth control)
 decision: where the laws SIZE and SCOPE are reported once the 60-line cap is withdrawn → in `lifecycle audit`, not `kind check`: `kind check` validates the DECLARATION, and a prose-content finding inside it left the verb unable to answer CLEAN over a healthy repo
 decision: whether `item close` leaves the blocker on the moved body → no: it CLEARS it, so no blocker survives in the closure home; only a `decision` blocker is recorded as `blocker-moot:`, since item-id and evidence blockers are not left hanging by a close
