@@ -69,3 +69,52 @@ def fire(verb: str, *, repo: str | None = None, outcome: int | None = None,
         return True
     except OSError:
         return False
+
+
+def last_run(verb: str, repo=None):
+    """The NEWEST fire-log record for `verb`, optionally narrowed to a repo.
+
+    THIS IS A BEST-EFFORT, MACHINE-LOCAL READ and its contract says so
+    rather than hiding it. The fire log lives under `$XDG_STATE_HOME`: it
+    does not travel with the repo, it is not a git object, and a fresh
+    machine or a lost write leaves it empty. A caller that rendered None as
+    "nothing to report" would turn a missing CARRIER into a verdict about
+    the repo, which is the absence-read-as-clean class one layer down from
+    where this module usually sits.
+
+    So: `None` means NO RECORD HERE — never "the verb found nothing". The
+    two are different answers and only the caller can render the difference.
+
+    NEWEST BY THE RECORD'S OWN `at`, not by file order. Append order and
+    timestamp order agree today and the coupling is invisible: a log
+    concatenated from two machines, or rotated and restored, would hand a
+    tail-read a stale record that looks exactly like a current one.
+    """
+    path = log_path()
+    if not path.is_file():
+        return None
+    import json
+    want = str(repo) if repo is not None else None
+    best = None
+    try:
+        for line in path.read_text(encoding="utf-8").split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except ValueError:
+                # A TORN LINE IS SKIPPED, NOT FATAL. This log is appended by
+                # every invocation on the machine; a half-written tail is an
+                # ordinary state, and refusing to read the whole log because
+                # of one would lose every good record behind it.
+                continue
+            if str(rec.get("verb", "")) != verb:
+                continue
+            if want is not None and str(rec.get("repo", "")) != want:
+                continue
+            if best is None or str(rec.get("at", "")) > str(best.get("at", "")):
+                best = rec
+    except OSError:
+        return None
+    return best

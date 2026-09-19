@@ -86,6 +86,12 @@ def cmd_kind(args, out) -> int:
     if repo is None:
         out(f"COULD NOT VERIFY: {why}")
         return exits.COULD_NOT_VERIFY
+    # THE RESOLVED REPO ON THE FIRE LINE, which every other verb family
+    # already records and this one did not. It was harmless while nothing
+    # read a `kind` record back; `kind moments`' banner line reads one, and
+    # narrows by repo — so without this the newest run in ANY repo on the
+    # machine would answer for this one, silently and in the right shape.
+    args.resolved_repo = str(repo)
 
     res = decl.read(repo)
 
@@ -163,6 +169,14 @@ def cmd_kind(args, out) -> int:
     # already does — one verb, one exit-code contract, not two.
     if getattr(args, "structure", False):
         for line in decl.render_structure(d):
+            out(line)
+        # W1 act 2 — APPENDED HERE rather than folded into `render_structure`,
+        # whose three counts are its whole documented contract and are pinned
+        # by four tests. The line belongs to the same banner and to a
+        # different question (what a past RUN found, versus what the repo
+        # IS), and joining them would put a machine-local best-effort read
+        # inside a pure function over the declaration.
+        for line in decl.render_moments_line(repo):
             out(line)
         if res.findings or res.unverified:
             out("")

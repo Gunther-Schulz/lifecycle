@@ -822,3 +822,80 @@ class GrowthVocabularyGainsItsArm(unittest.TestCase):
         supposed to be could never reach zero owed."""
         self.assertIn("declaration_malformed",
                       self._findings("cannot-express: no date here"))
+
+
+class MomentsBannerLineTest(unittest.TestCase):
+    """The W1 act-2 banner line (lc-243) — a NAMED-STALE, best-effort carrier.
+
+    Every arm here is an absence or a staleness arm, because those are the
+    ones whose failure is silent: a missing record rendered as "clean", a
+    week-old verdict rendered in the present tense, an unreadable detail
+    rendered as zeros. The happy path breaks loudly and needs one arm only.
+    """
+
+    def _line(self, rec):
+        orig = decl.firelog.last_run
+        decl.firelog.last_run = lambda verb, repo=None: rec
+        try:
+            return "\n".join(decl.render_moments_line(Path("/nowhere")))
+        finally:
+            decl.firelog.last_run = orig
+
+    @staticmethod
+    def _rec(days_ago=0, **fields):
+        from datetime import date, timedelta
+        day = (date.today() - timedelta(days=days_ago)).isoformat()
+        parts = " ".join(f"{k}={v}" for k, v in fields.items())
+        return {"at": f"{day}T12:00:00+00:00", "verb": "kind moments",
+                "detail": parts}
+
+    def test_NO_RECORD_is_a_fact_about_the_machine_not_the_repo(self):
+        """The carrier is machine-local. Rendering its absence as "clean"
+        would turn a missing log into a verdict about the declaration."""
+        line = self._line(None)
+        self.assertIn("no recorded run on this machine", line)
+        self.assertNotIn("clean", line)
+
+    def test_a_clean_run_carries_its_DATE(self):
+        line = self._line(self._rec(broken=0, malformed=0,
+                                    declared=4, executed=2))
+        self.assertIn("LAST RUN", line)
+        self.assertIn("clean", line)
+        from datetime import date
+        self.assertIn(date.today().isoformat(), line)
+
+    def test_a_run_that_EXECUTED_NOTHING_says_so_beside_its_zeros(self):
+        """The assurance-wider-than-predicate arm, carried through the log:
+        `0 broken, 0 malformed` is what a dead evaluator also writes."""
+        line = self._line(self._rec(broken=0, malformed=0,
+                                    declared=50, executed=0))
+        self.assertIn("0 executed", line)
+        self.assertIn("about the declaration only", line)
+
+    def test_an_OLD_run_is_named_STALE_rather_than_read_as_current(self):
+        line = self._line(self._rec(days_ago=30, broken=0, malformed=0,
+                                    declared=4, executed=4))
+        self.assertIn("STALE", line)
+        self.assertIn("30 day(s) old", line)
+
+    def test_a_RECENT_run_reports_its_age_without_the_stale_word(self):
+        """The control for the arm above: without it, a renderer that
+        stamped STALE on everything would pass that assertion."""
+        line = self._line(self._rec(days_ago=1, broken=0, malformed=0,
+                                    declared=4, executed=4))
+        self.assertIn("1 day(s) old", line)
+        self.assertNotIn("STALE", line)
+
+    def test_an_UNPARSEABLE_detail_reports_no_counts_rather_than_zeros(self):
+        """A record this build cannot read is its own answer. Rendering it
+        as zeros would invent a clean verdict out of a format change."""
+        line = self._line({"at": "2026-09-19T12:00:00+00:00",
+                           "verb": "kind moments", "detail": "who knows"})
+        self.assertIn("could not parse", line)
+        self.assertNotIn("0 broken", line)
+
+    def test_findings_are_reported_with_both_counts(self):
+        line = self._line(self._rec(broken=2, malformed=1,
+                                    declared=9, executed=5))
+        self.assertIn("2 broken", line)
+        self.assertIn("1 malformed", line)

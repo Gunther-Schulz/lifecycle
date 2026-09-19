@@ -41,6 +41,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import exits
+from . import firelog
 
 #: The declaration format this build understands. A file stamped ABOVE it is
 #: refused rather than guessed at — the same rule `ITEMS.md` gets, and for the
@@ -2635,3 +2636,83 @@ def render_structure(doc: dict) -> list[str]:
         split,
         f"stage undeclared: {s['undeclared']} of {total}",
     ]
+
+
+#: How old a recorded `kind moments` result may be before the banner calls it
+#: STALE. Not a freshness policy and not enforcement: the line reports the age
+#: either way, and the word exists so a reader scanning a banner sees the one
+#: that has drifted without doing date arithmetic in their head.
+MOMENTS_STALE_DAYS = 7
+
+
+def render_moments_line(repo) -> list[str]:
+    """The W1 act-2 banner line: the LAST `kind moments` run, with its date.
+
+    A NAMED-STALE CARRIER, and every word of that matters. The line reports
+    a PAST run, never the present state — nothing here evaluates a moment —
+    so it carries the run's DATE and says when that date is old. A banner
+    line that printed yesterday's verdict in the present tense would be a
+    label standing over a body it no longer describes.
+
+    MACHINE-LOCAL AND BEST-EFFORT, STATED IN THE LINE ITSELF. The carrier is
+    the fire log under `$XDG_STATE_HOME`: it does not travel with the repo.
+    On another machine, or after a lost write, the honest rendering is "no
+    recorded run on this machine" — which is what this prints, and it claims
+    NO MORE THAN THAT. It is not "the moments are fine" and it is not "the
+    moments are broken"; the project-scoped truth is the verb's own output
+    at run time, and this line never stands in for it.
+
+    THE REACH NUMBERS TRAVEL WITH THE PROBLEM COUNTS. A stored "0 broken, 0
+    malformed" says nothing on its own — a run that executed no predicate
+    produces exactly that — so the line carries how many moments were
+    declared and how many actually ran, the same pair the verb's own verdict
+    refuses to print without.
+    """
+    rec = firelog.last_run("kind moments", repo)
+    if rec is None:
+        return ["moments: no recorded run on this machine — the carrier is "
+                "the machine-local fire log, so this is a fact about THIS "
+                "machine and not about the repo's moments. `lifecycle kind "
+                "moments` answers now."]
+    at = str(rec.get("at", ""))
+    day = at.split("T")[0] if "T" in at else at
+    detail = str(rec.get("detail") or "")
+    fields = dict(
+        part.split("=", 1) for part in detail.split() if "=" in part)
+
+    def _n(key):
+        try:
+            return int(fields[key])
+        except (KeyError, ValueError):
+            return None
+
+    broken, malformed = _n("broken"), _n("malformed")
+    declared, executed = _n("declared"), _n("executed")
+    age = ""
+    try:
+        from datetime import date as _date
+        d = _date.fromisoformat(day)
+        days = (_date.today() - d).days
+        if days >= MOMENTS_STALE_DAYS:
+            age = f" — STALE, {days} day(s) old"
+        elif days > 0:
+            age = f" — {days} day(s) old"
+    except ValueError:
+        pass
+    if broken is None or malformed is None:
+        # A RECORD WITH NO PARSEABLE COUNTS is not a clean run. It is a
+        # record this build cannot read, which is its own answer: rendering
+        # it as zeros would invent a verdict out of a formatting change.
+        return [f"moments: a run is recorded for {day or 'an unknown date'} "
+                "whose result this build could not parse, so it reports no "
+                f"counts{age}. Re-run `lifecycle kind moments`."]
+    reach = ""
+    if declared is not None and executed is not None:
+        reach = (f"; {declared} declared moment(s), {executed} executed"
+                 + (" — no predicate ran, so this verdict is about the "
+                    "declaration only" if executed == 0 else ""))
+    if broken or malformed:
+        return [f"moments: LAST RUN {day} found {broken} broken, "
+                f"{malformed} malformed{reach}{age}"]
+    return [f"moments: LAST RUN {day} clean — 0 broken, 0 malformed"
+            f"{reach}{age}"]

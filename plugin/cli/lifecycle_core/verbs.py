@@ -3932,6 +3932,15 @@ def cmd_kind_moments(args, out, repo: Path, doc: dict) -> int:
 
     tally = (f"{seen} declared moment(s) over {len(kinds)} kind(s), "
              f"{ran} of them EXECUTED")
+    # THE RESULT CARRIER (W1 act 2). The banner reads this back, so what is
+    # written here is what a later session is told: the two REACH numbers
+    # travel with the two problem counts, because a stored "0 broken, 0
+    # malformed" over a run that executed nothing is the same false
+    # assurance the verdict line above refuses to print.
+    if args is not None:
+        args.fire_detail = (f"broken={len(broken)} malformed={len(malformed)} "
+                            f"declared={seen} executed={ran} "
+                            f"kinds={len(kinds)}")
     if broken or malformed:
         out(f"kind moments: FINDING — {tally}: {len(broken)} broken, "
             f"{len(malformed)} malformed.")
