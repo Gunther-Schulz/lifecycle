@@ -904,6 +904,40 @@ carrier rather than from a conversation that dies with its session.
     preferences — a preference is a premise like any other, and evidence
     that kills it re-opens it.
 
+11. **THE LIVING RECORD, OPERATOR-STATED** — provenance for lc-231's
+    belief-vocabulary input, relayed by the driving desk as the operator's
+    own words 2026-09-19 and carried as their relay: *"if we track what we
+    do and why… all decisions are traceable, knowledge a session can build
+    upon, anything can be revisited — autonomously or triggered by me"*,
+    with the GIT BALANCE named in the same breath — *"not duplicating what
+    git should tell us"*. The second half is the load-bearing one for this
+    repo: it bounds the record against the copy-everything reflex, and it
+    is the same one-home-per-fact rule the carrier doctrine already
+    enforces, stated from the operator's side. Strengthens the
+    reopen-and-propagate input's standing at the round: REOPEN as a
+    first-class verb is the mechanism this sentence asks for, and
+    "autonomously or triggered by me" is precisely the two firing moments
+    that input names.
+
+12. **DESK/PEER IS OPTIONAL** — OPERATOR-STATED 2026-09-19, relayed by the
+    driving desk and carried as theirs: it is the combination they use
+    most, but per project and per task. DERIVED consequence for lc-229 and
+    for the round, and it is a correction to a reading the arc could
+    otherwise drift into: lifecycle requires INDEPENDENT FEEDBACK AS A
+    PROPERTY, never a particular SUPPLIER. The three forms — deterministic
+    instruments, a second context, the operator — are SUBSTITUTABLE and
+    priced per task; desk/peer is the heavyweight instantiation of form
+    two, whose cost the routing rules already gate to heavy arcs, while a
+    dispatched fresh-context verifier or a frozen read-only probe covers
+    lighter work. So lc-229's observer is defined by WHAT IT INDEPENDENTLY
+    READS and never by TOPOLOGY, which is what lets the independence leg
+    scale down to a solo session. EVIDENCE BOUNDARY CARRIED, not buried:
+    the catch study measured who-catches WITHIN pairs and explicitly not
+    pair-vs-single — there is no control arm — so optionality is the
+    measurement's own boundary rather than a concession made to it.
+    Same clause as the arc-walk's "arcs are optional, instantiated
+    per-arc", one mechanism over.
+
 ## Addendum 7 — the desk gap: rewrite, landings, and the bundle handoff (2026-09-19, driving desk cachyos-setup-b3)
 
 **Executing desk for the remainder:** `cachyos-setup-c8` (opus, opened by
