@@ -1102,6 +1102,32 @@ MUTATIONS = [
      "doubt as a settled record in the home nobody re-reads, and the reopen "
      "bought nothing"),
 
+    # lc-246. THE CONTRACT READ, and the mutation makes it ANSWER rather
+    # than vanish: returning a contract where there is none sends the check
+    # down the population branch, which is exactly the defect — the tool
+    # answering, in its own voice, the question the file has not answered.
+    ("roster_population_undeclared", "lanes.py",
+     "    return None, (\n"
+     "        \"the roster declares no contract. Add ONE comment line \u2014 \"",
+     "    return \"population\", (\n"
+     "        \"the roster declares no contract. Add ONE comment line \u2014 \"",
+     "the undeclared-contract answer — a roster that says nothing about "
+     "which reading it takes is then graded as though it had said "
+     "`population`, which is the tool deciding the one thing only the "
+     "file's author can"),
+
+    # NOT `if False:` on the divergence branch: folding it makes the check
+    # fall through to the CLEAN line, which is the defect, but it also
+    # silences the `extra` direction in the same stroke. Emptying `missing`
+    # alone sends this row's own case down the clean path and leaves the
+    # other direction live.
+    ("roster_population_diverges", "lanes.py",
+     "        \"missing\": [p for p in swept if p not in set(listed)],",
+     "        \"missing\": [],",
+     "the OMITTED-repo direction — a declaring repo absent from a roster "
+     "that calls itself the population then reports CLEAN, which is the "
+     "board rendering an unlisted repo as an absent one"),
+
     # lc-243 W1, AND THESE LANDED WITH THE ROWS rather than a lane later —
     # which is the whole correction the arc family above bought. The rule it
     # produced: a roster row registered in the same change that registers its
