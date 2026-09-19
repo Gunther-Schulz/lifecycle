@@ -81,6 +81,8 @@ amend-reason: 2026-09-13 2026-09-13 The 2026-09-12 retirement pass dropped the l
 amended-blocked-by: 2026-09-13 evidence the realizing write is TWO copies, one outside this repo: the write-set names 'cache-fix test/absence-scan.test.mjs' and the done-criterion requires green on lifecycle AND on the cache-fix twin, so this desk cannot complete it however green this side goes. Unblocked by a desk holding the cache-fix copy, or an operator decision to land the halves separately with the divergence declared.
 amend-reason: 2026-09-13 2026-09-13 Same instrument repair as lc-53, same author, same day: the predicate was prose. Latent here only because PARKED items are not evaluated by the board — a promote would have surfaced exit 127. Converted to 'false  # <reason>'; blocked state unchanged.
 amended-blocked-by: 2026-09-13 evidence false  # realizing write is TWO copies, one outside this repo (cache-fix test/absence-scan.test.mjs); done-criterion needs green on both
+amend-reason: 2026-09-19 Re-typed from `evidence false` at the contract's build (D-8): the predicate was the literal `false`, which can never fire, so this read on the board as ordinary machine-court waiting and `item check` counted it among the unclearable softlock chains. It was never a predicate wait — nothing here can test it — and `external` is the member minted for exactly this state. It now ends by an ACT: amend the blocker away with the arrival named.
+amended-blocked-by: 2026-09-19 external the cache-fix copy of test/absence-scan.test.mjs carries the same repair, so both copies can go green together
 
 ## lc-32
 grade: READY
