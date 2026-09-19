@@ -881,6 +881,29 @@ carrier rather than from a conversation that dies with its session.
    verified). The last one is the direct counter to the reflex that a
    record's value grows with its size.
 
+10. **DECISION PRECEDENT, AND THE LEGITIMATE RE-ASK** — OPERATOR-STATED
+    first-hand 2026-09-19, relayed to this desk by the driving desk and
+    carried as their relay of the operator's own words, landed here by
+    the wave B executing desk `cachyos-setup-c8` so it survives the peer
+    channel that would otherwise be its only home. TWO HALVES, and the
+    second is what keeps the first from calcifying. (a) Operator
+    decisions are RECORDED so that a future question of the SAME SHAPE
+    resolves by PRECEDENT rather than by asking again — the resolution
+    citing the ruling, exit 2 against it. (b) The RE-ASK is named as
+    legitimate rather than left to be inferred: where EXECUTION reveals
+    an option better than a recorded preference, the desk SURFACES the
+    delta with a recommendation — never silently obeying a preference
+    that execution has overtaken, and never silently overriding one.
+    Both halves were ratified from two live instances the same day (the
+    statusline-placement re-ask; the pruning). It COMPOSES with the
+    decision-to-artifact-indexing round input rather than competing with
+    it: indexing is how a precedent is FOUND, this is what a precedent
+    WEIGHS and when it reopens. Bearing on this repo directly: (a) is
+    the ledger's existing `decision:` line given a reader, and (b) is
+    the stale-premise rule pointed at the operator's own recorded
+    preferences — a preference is a premise like any other, and evidence
+    that kills it re-opens it.
+
 ## Addendum 7 — the desk gap: rewrite, landings, and the bundle handoff (2026-09-19, driving desk cachyos-setup-b3)
 
 **Executing desk for the remainder:** `cachyos-setup-c8` (opus, opened by
