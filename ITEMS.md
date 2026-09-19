@@ -1,4 +1,4 @@
-schema: 3
+schema: 4
 baseline: 8
 added: 231
 compacted: 0

@@ -60,7 +60,20 @@ from . import exits
 #: every reader resolving through the number resolves through a label whose
 #: body moved under it. The bump was owed from 2026-09-18 and was deferred
 #: then for a timing reason rather than a correctness one.
-SCHEMA_FLOOR = 3
+#: BUMPED 3 -> 4 on 2026-09-19 (lc-224 act 2, its OWN act per lc-218's
+#: MUST-NOT-BUILD — one number, one command per bump, so a failure names one
+#: cause). lc-224 gave the `reader` stage a per-entry `when`, so a reader list
+#: entry is now a bare string OR an object. That widened the accepted SHAPE,
+#: and the reason it is a bump rather than an additive convenience was PROVED
+#: rather than argued: run against a build at floor 3, a declaration carrying
+#: the object form returns `declaration_malformed` ("reader must be a
+#: non-empty list of non-empty strings"), with a bare-string control clean. So
+#: without the bump an older build reads a NEWER declaration and reports it
+#: BROKEN — a confident wrong finding — where `schema_above_floor` would
+#: otherwise refuse honestly, which is the very failure the floor guard's own
+#: rationale names: an old tool reading a new file drops what it does not
+#: recognise, and a dropped slot is invisible in the output.
+SCHEMA_FLOOR = 4
 
 #: Where the declaration lives, relative to the repo root. Tracked; the
 #: install step adds the `.gitignore` negation and this reader fails on an
