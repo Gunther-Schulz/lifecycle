@@ -6,9 +6,10 @@ below are contracts, boundaries, and the one remaining design judgment
 (N9, the closed-body version pin). Citations resolve per the contract v3's
 header note.**
 
-## The two kind declarations — AS DECLARATION OBJECTS (B3: prose failed
+## The kind declarations — AS DECLARATION OBJECTS (B3: prose failed
 ## the closed vocabularies it would be validated against; the validator is
-## the author's first reader)
+## the author's first reader). TWO at the lock; a THIRD was added at
+## build — see the amendment below.
 
 ```json
 "arcs": {
@@ -31,9 +32,42 @@ header note.**
 }
 ```
 
+**AMENDED AT BUILD, 2026-09-19 — A THIRD KIND, ruled at the round desk
+(cachyos-setup-43) and ledgered.** This section declared TWO kinds and the
+build found that insufficient at contact. The index sits INSIDE the `arcs`
+home glob, so by invariant 1 it resolves to the wrong kind: a file under
+another kind's home is that kind's instance, and the index is not an arc.
+Four readers were carrying name-based exclusions to work around it, which is
+the same fact restated in four places waiting to diverge.
+
+MEASURED, and it is what forced the extensionless name: `pathlib`'s glob
+MATCHES a leading-dot file, where a shell glob does not — so `arcs/.index.md`
+does NOT escape `arcs/*.md` here, and only dropping the `.md` does. The home
+is therefore **`arcs/INDEX`**, not `arcs/INDEX.md` as the rest of this
+document still spelled it at the lock.
+
+```json
+"arc index": {
+  "home": "arcs/INDEX",
+  "writer": "verb:arc open",
+  "reader": ["session", "verb:arc status"],
+  "staleness": "none, declared why: the counters are written in the same act as the body they count, so they cannot lag it",
+  "exit": {"action": "never", "recording-act": "none, declared why: the index is the repo's arc history and outlives every arc in it", "detail": "one fixed file per repo; it is never moved, compacted or dropped"},
+  "growth": "cannot-express(2026-09-19): a single fixed file that neither accrues nor is compacted nor has an exit — none of bounded-by-exit, compacted or unbounded-with-reason is true of it, and each would be a benign neighbour standing in for a state this vocabulary cannot say",
+  "trigger": "none, declared why: nothing fires on a counter file; it is written by the verbs that change what it counts"
+}
+```
+
+The growth stage is the **first live use of the registered-closed-vocabulary
+contract's OOV arm** (D-3), reached by contact rather than by a sweep, which
+is that contract's own registration rule. The three exclusions came out of
+the arc readers in the same change; the generic walker never had one.
+
 **VALIDATED BY EXECUTION at the v4 lock (B3/T-a1's only honest discharge):
 `_validate_kind` over these objects verbatim, against ref_world of the live
-declaration plus both kinds, returns ONLY the four dangling references to
+declaration plus both kinds (this paragraph records the LOCK's run and is
+left as it stood; the third kind was validated separately at build, by
+`kind check` over the live declaration — 29 kinds, every stage declared), returns ONLY the four dangling references to
 the not-yet-built `arc` verb family — self-clearing at build, checked
 against the parser per the refusal's own text — and ZERO shape findings;
 negative controls (items, done bodies) return zero. The reader grammar
@@ -48,7 +82,9 @@ in TRIGGER_MODES).
 ## Conservation — project-scoped, travels with the repo (astra-a1, a7)
 
 The fire log is ADVISORY ONLY (machine-local, best-effort — astra's read).
-The authoritative history is **`arcs/INDEX.md`**: head counters
+The authoritative history is **`arcs/INDEX`** (extensionless, and its own
+registered kind — see the amendment above; this line said `arcs/INDEX.md`
+at the lock): head counters
 (baseline/opened/closed), tool-written by `arc open`/`arc close` in the
 same act as the file write (law 9's one-act move discipline). Conservation:
 opened − closed = live files AND closed = closed files, signs per the
@@ -154,7 +190,7 @@ slot machinery — N1), cli.py, verbs.py, declaration.py (kinds +
 carrier_homes reach), refusals.py, firelog.py (arc events), retire.py
 (growth reader, astra-a7), migrate.py, plugin/hooks/pre-commit
 (astra-a6), test_arcs.py, test_verbs.py (the derived table),
-test_declaration.py, .claude/lifecycle.json, arcs/INDEX.md (created by
+test_declaration.py, .claude/lifecycle.json, arcs/INDEX (created by
 first open). Collisions: the JOIN orders file-granular lanes; the
 cross-repo hazard above is the desk's (N7). **The banner CALL to `arc
 status` is a DOTFILES write (session-scan.py — FF-4): outside every
