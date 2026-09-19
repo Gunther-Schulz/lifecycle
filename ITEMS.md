@@ -1371,7 +1371,7 @@ evidence: MEASURED 2026-09-19 at this desk, and the sweep carries a positive con
 blocked-by: NONE
 
 ## lc-239
-grade: READY
+grade: PARKED
 requirement: EIGHT DECLARED REPOS MUST BE MIGRATED OFF SCHEMA 2, AND THE ARC IS NOT MECHANICAL. Each of their 26 kinds needs a trigger stage AUTHORED, not stamped: the seventh stage takes verb <name>, predicate <cmd>, or none declared why <reason>, and which one a kind gets is per-kind judgment about what occasions its write. Disposition decided 2026-09-19 (LEDGER, this repo): migrate all eight, none has grounds to exit governance. lc-218's every-declared-repo clause was false at the artifact and is recorded as a CORRECTION rather than a reopening: that item's build stands and this entry carries its residue.
 goal: enforce-the-invariants
 write-set: other-repo:CachyOS-Setup,other-repo:beat-the-books,other-repo:begehung,other-repo:daneel,other-repo:dispatch-guards,other-repo:skill-craft,other-repo:statiker,other-repo:claude-code-cache-fix
