@@ -102,6 +102,7 @@ decision: lc-157 mechanism #3, idle-is-answerable: build it now or hold it? → 
 dropped: lc-208 — MERGED INTO lc-150: same refusal row migration_ledger_nonzero, identical write-set, opposite directions of one predicate. lc-150 now carries both as separately-proven red-first arms, with this body evidence and its RELAYED marks carried across verbatim.
 decision: regrade: this was READY under the old carrier, and READY is judged rather than inherited → READY, judged by the driving desk cachyos-setup-b3 under the operator standing delegation of 2026-09-19. Rider discharged at the artifact: lc-78 read at 40b610f, its shape call has NOT landed, so lc-8 takes its second branch and its criterion carries the provisional shape naming lc-78.
 decision: head-rule: declare a third READY grade, a lead goal, or neither, given 105 schedulable items and a head that is source order? → NEITHER. The third grade fires on outgrowing what the repo will ever schedule, and the drain record contradicts it: 107 closed, ratio 2.10 CLEAN. A lead goal cannot order a set where 92 of 115 share one goal. Grounds and re-opens: docs/head-rule-decision-2026-09-19.md
+decision: lc-224 reader-WHEN: a sub-field of the existing reader stage, or an eighth kind stage? → SUB-FIELD, per reader ENTRY. ARITY decides it, not cost: 13 of 26 kinds are MIXED (a session reader beside a verb/hook reader), so a per-KIND eighth stage could name only one of two read moments. Owes its own numbered bump; the dotfiles apply is a boundary halt. Basis: lc-224 evidence slot.
 
 ## Archive (pre-migration)
 
