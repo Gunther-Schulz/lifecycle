@@ -1121,6 +1121,21 @@ MUTATIONS = [
      "prints its state in the per-kind listing and contributes nothing to "
      "the verdict, so the run exits CLEAN over a moment that is UNKNOWN"),
 
+    # lc-244 W2. THE GRAMMAR PREDICATE ITSELF, and it must not be `if False:`
+    # on the DOOR's call: folding the call would leave the presence check
+    # still firing on some inputs and this row's plant carries a VALID
+    # sibling precisely so presence passes — so the mutation has to make the
+    # grammar predicate itself answer clean, which is the defect (a
+    # malformed mark admitted beside a valid one).
+    ("evidence_mark_malformed", "items.py",
+     "    if _PERISHABLE_OK.search(v):\n"
+     "        return None",
+     "    if True:\n"
+     "        return None",
+     "the PERISHABLE form check — a mark that names itself and misspells "
+     "itself is then admitted beside its valid sibling, unreadable by the "
+     "freshness check it was written to arm"),
+
     ("reader_moment_malformed", "verbs.py",
      "            elif m.state == decl.READ_MOMENT_MALFORMED:\n"
      "                malformed.append((name, m))",
