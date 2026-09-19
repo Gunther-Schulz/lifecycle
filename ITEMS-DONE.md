@@ -1399,5 +1399,18 @@ blocked-by: NONE
 closed-reason: 2026-09-19 DESIGNED-PROBE closure, the first of the two the criterion allows. Paper opened at a desk per MUST-NOT-BUILD; citation verified real. Discriminator is per-row SURVIVAL of previously-proven rows, not the aggregate proven fraction, which fails the entry own bar by falling under booking lag. Design at docs/audits/2026-09-19-erosion-probe-design.md. NOT RUN.
 closed-ref: 9d97840
 
+## lc-218
+grade: DONE
+requirement: SCHEMA_FLOOR IS 2 AND THE SHAPE IT NAMES CHANGED. A declaration valid under schema 2 yesterday is invalid today, because lc-168 made the trigger stage required. The version no longer identifies the shape — the label-over-body class at the most load-bearing label in the system, since every reader that resolves through the number resolves through a label whose body moved under it. The bump is OWED; it was not taken on 2026-09-18 for a timing reason rather than a correctness one.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/ledger.py,test/test_schema.py
+done-criterion: SCHEMA_FLOOR is 3, every declared repo is migrated to it, and the single-source floor test still passes — items.py and ledger.py import declaration.py rather than restating the number, so a bump to one cannot leave the others silently behind. Law 25 in full: dry-run over EVERY declared repo first, read at the artifact, before a single write lands anywhere; the apply reads back per target and does not report APPLIED on a disagreement. MUST-NOT-BUILD: the bump is not taken in the same act as any other schema change — one number, one command per bump, so a failure names one cause.
+evidence: MEASURED at this desk 2026-09-18: SCHEMA_FLOOR reads 2 while the trigger stage became required in lc-168 (41cee8b), so the two are out of step by construction rather than by drift. MEASURED: the migration applied here WITHOUT a bump because the trigger additions are plain declaration changes and no carrier head needed moving — which is exactly why the gap is silent rather than loud. RELAYED from lifecycle-6f, whose ruling this is, carried as theirs: the bump is owed, and running a freshly-repaired migration across every declared repo spends an irreversible act on an object whose verification is hours old. DERIVED: three of the four gates are already met at this commit and only the cross-repo run is open.
+blocked-by: NONE
+amend-reason: 2026-09-18 Fourth gate MET and VERIFIED AT THE ARTIFACT rather than taken on report: dotfiles kind check reads CLEAN at 5 kinds every stage declared, all five carry a trigger (verb 2, predicate 1, none 2), tree clean at 6732f02. So the repaired apply-plus-read-back has now run clean over BOTH declared repos at the current schema, which was the open half; the other three gates were met at 41cee8b. NOT SCHEDULED AHEAD OF lc-219 — unblocked is not the same as next, and the judgment desk ordering stands: lc-219 attacks a gap with a measured cost today, closes, and changes what every later session HOLDS, so running it first is worth more than running it after twelve repairs.
+amended-blocked-by: 2026-09-18 NONE
+closed-reason: 2026-09-19 SCHEMA_FLOOR is 3, both declared repos migrated, single-source floor test passing. Law 25 in order: dry-run over every declared repo before any write, apply read back per target. Cross-repo half done at the driving desk (dotfiles db3b485) and VERIFIED HERE at the artifact rather than taken from its report: declaration and all three carriers read schema 3 by my own grep. Bump exposed 42 restated constants in fixtures, now derived.
+closed-ref: a533253
+
 ## Archive (pre-migration)
 
