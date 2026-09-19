@@ -644,6 +644,25 @@ MUTATIONS = [
      "the closed-only rule on `superseded-by:`/`blocker-moot:` — a live block "
      "then claims an act no closure performed"),
 
+    # PER-ROW, NEVER ONE GATE FOR BOTH. The check these two rows share is a
+    # generic loop, so mutating its gate would darken BOTH and prove neither —
+    # lc-30's class, named in `_predicate_lint`'s own comment. Each mutation
+    # instead retypes ONE rule entry so that slot's want matches the plant's
+    # blocker (`NONE` -> "none"): the plant stops firing while the other row
+    # and the control are untouched.
+    ("blocker_exercise_misplaced", "items.py",
+     '    BLOCKER_EXERCISE: ("evidence", "blocker_exercise_misplaced",',
+     '    BLOCKER_EXERCISE: ("none", "blocker_exercise_misplaced",',
+     "the exercise slot's type pairing — an exercise record beside a blocker "
+     "that runs no predicate is then accepted, recording an act that cannot "
+     "have happened"),
+
+    ("not_derivable_misplaced", "items.py",
+     '    NOT_DERIVABLE: ("decision", "not_derivable_misplaced",',
+     '    NOT_DERIVABLE: ("none", "not_derivable_misplaced",',
+     "the derivability slot's type pairing — a statement about why a QUESTION "
+     "is not derivable is then accepted beside a blocker that asks none"),
+
     ("unknown_slot_misplaced", "items.py",
      "            if slot in UNKNOWN_LEGAL_SLOTS:",
      "            if True:",
