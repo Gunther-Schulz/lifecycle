@@ -732,3 +732,80 @@ both reported rather than rebased when they happen.
 
 **Horizon:** the driving desk arms a recurring ~30 min artifact watch;
 no item starts before the operator-confirmation ack.
+
+## QUEUED FOR ADDENDUM 7 — the desk gap
+
+Landed by the executing desk `cachyos-setup-36` at its close, 2026-09-19,
+on the driving desk's direction. **These are INPUTS awaiting addendum 7,
+not decisions and not work** — they sit here because the list otherwise
+lives only in a peer channel, which is the premise-with-no-inbox shape
+aimed at the arc's own record. The desk gap inherits them from the
+carrier rather than from a conversation that dies with its session.
+
+1. **GROUNDED AUTONOMY** — OPERATOR-COINED 2026-09-19, promoted to the
+   arc's named guiding principle: guidance concentrated at the SEAMS
+   (when, about what, with which state in view, what answer is demanded)
+   and freedom absolute in the SPANS (what to conclude). It subsumes
+   enable-over-constrain. A one-line amendment to `docs/purpose.md`
+   records the name; that document's own statement–mirror–correction
+   charter covers the write, and the write happens AT THE GAP, not at
+   this desk.
+2. **GOAL / WAYPOINT / PROPOSAL vocabulary** — OPERATOR-RATIFIED. Goals
+   are operator-stated at ignition and stable (the measured 5% slot).
+   WAYPOINTS are self-derived decompositions and alive (the 17-39%
+   slots), each citing its derivation, its exit, and its kill-condition.
+   PROPOSALS are system-noticed candidate arcs, booked and ignited by one
+   operator yes. The goal-advance slot becomes a TWO-LEVEL check
+   (recommendation → waypoint → goal). Drift guard, stated with it:
+   waypoints are free, top goals are never self-minted.
+3. **The missing-layer scout report** lands as
+   `docs/audits/2026-09-19-missing-layer-scout.md`, committed at the gap.
+   Its source sits in the driving desk's session scratchpad and dies with
+   that session; the full report also survives in that desk's transcript
+   as fallback. The path is deliberately NOT written here: it carries a
+   session id, and this repo's own leak scan refuses a capture named by
+   id in tracked prose — ask the driving desk for it, or take the copy it
+   commits.
+4. **The corpus-divider refinement at SLICE grain** — slot the moment,
+   keep the stance; rare-trigger versus missed-moments. Already covered
+   by the operator corpus; named here only as round-reading emphasis, not
+   as new work.
+5. **lc-240 is BOOKED** — the two-stage-retrieval generalization, PARKED
+   on this round's close, beside lc-237 and lc-239. Confirmed by the
+   booking desk.
+6. **STOP/YIELD ADMISSION LENS** — OPERATOR-STATED connection, DERIVED
+   consequence, for the round's attack step. The NLS degenerate form
+   (improvement layers that daily work never adopts) has a round-grain
+   twin that statiker's recent work already cures: stop rules on every
+   cycle — the dispatchable-design stop, the re-entry seam's named
+   reason, sufficiency, yield-stop. **So every mechanism the round admits
+   must carry its own STOP/YIELD condition; a seam with no sufficiency
+   rule is an NLS seed** — locally correct, self-justifying, running
+   unadopted. The stop rules are themselves seams: the computable slice
+   is the boundary firing plus the series/trend in view plus a
+   reason-slot present, and the judgment is whether the reason holds. It
+   guards BOTH directions — no continuing on momentum, and no stopping
+   before the first discriminating probe.
+7. **MAST CORROBORATION NOTE**, DERIVED at the driving desk from the
+   day's own record, to sit beside the missing-layer scout's first
+   borrowable: this arc's same-day catch record matches the 79% finding.
+   Every desk catch today — an impossible population, dead premises,
+   wrong hook claims, a hand-join mislabel, a base-slot regex — was a
+   SPECIFICATION or COORDINATION catch, and not one was an
+   output-correctness bug. The spec-adherence-first verifier emphasis is
+   therefore locally evidenced rather than merely imported.
+8. **THE CLAUDE CLI MEMORY SYSTEM AS THE NAIVE-VERSION NATURAL
+   EXPERIMENT** — OPERATOR-STATED experience, DERIVED mapping. The
+   operator ran the built-in memory feature — the same intent as this
+   design's persistence half, shipped on by default — found it "very low
+   performing and gets stale fast", and turned it off. Every observed
+   failure maps to a MISSING LIFECYCLE STAGE: capture without
+   staleness/exit/bases (stale-invisibly, the label-over-body class as a
+   feature); blob loading without selection/kinds/reader-moments (low
+   performing at the decision moment); no refinement leg (the scout's
+   triple-discovered accumulation-without-integration failure); no
+   verification (silent drift). **The design consequence is the sharpest
+   framing the arc has for what it is selling: the differentiator is not
+   persistence — which ships by default and measurably fails — but
+   GOVERNED persistence.** The operator's turn-off decision is the
+   control arm's result.
