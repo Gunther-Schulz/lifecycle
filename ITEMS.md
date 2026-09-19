@@ -1353,7 +1353,7 @@ evidence: MEASURED 2026-09-19 at this desk with a positive control, and re-verif
 blocked-by: decision has the design round closed, fixing the trigger vocabulary these 26 kinds are authored against?
 
 ## lc-240
-grade: NEW
+grade: PARKED
 requirement: RETRIEVAL IS ALL-OR-NOTHING AND SHOULD BE TWO-STAGE, AND DECISIONS ARE INDEXED BY NOTHING. A session either ingests an artifact wholly at start or never reaches for it, so the environment's only lever today is loading MORE, which is the reader-stops-reading disease. The operator's shape instead: a lean always-on INDEX whose entry (a tool exists that relates to my task) triggers a LOOK, where the look supplies both the pattern and any recorded prior decision, the model's own relevance judgment does the matching, and the environment only keeps the index in view. THE GAP BEYOND THE INDEX ITSELF, and it is the part nothing here covers: DECISIONS INDEXED BY THE ARTIFACT THEY CONCERN. The ledger holds decisions chronologically and nothing surfaces the fact that an operator decision exists about a thing shaped like the task in hand. This is a GENERALIZATION rather than an invention: three local instances already exist (the runbook router table, kind list --digest, and the structure line lc-174 shipped), and the round decides the shape.
 goal: enforce-the-invariants
 write-set: UNKNOWN
