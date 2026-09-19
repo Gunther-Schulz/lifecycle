@@ -120,6 +120,7 @@ decision: D-9 re-ruled: what supplies the commit trailer default, after the atta
 decision: D-7 mechanism revised: how is the predates-the-mechanism census bucket computed, after V1/V2 killed the date-epoch form? → FORWARD-ONLY door stamp: the blocker-admission door writes a dated none-yet mark from now on; the bucket = items carrying neither an exercise record nor the stamp. Opportunity = passage through the stamping door. Ruling unchanged, mechanism replaced. Body: vocabulary-contract v2.
 decision: E10 form correction: slot marker or evidence-mark member (attack W-7, the unrecorded supersession)? → The evidence-MARK member (PERISHABLE with re-derive command) STANDS, recorded as superseding D-5's slot-marker wording: marks are what the admission door already checks, so presence enforces free; the narrowing is accepted and stated. W-7's finding was the silence, repaired by this line.
 decision: is an ARC a new registered kind, or the existing lane mechanism widened to carry these stages? → NEW KIND - D-2 unchanged; restates the D-2 line with the asker's own question text so decision_for resolves the edge. Body: docs/2026-09-19-round-decisions.md
+decision: P1 roster row (V6/AV1): admissible under law 22? → NO - law 22: its fire arm needs a registry no repo input can produce. Invariant stays unit-layer. Replacement: a malformed-arm row - fire on an undated cannot-express grade, control on the well-formed one. Ruled at cachyos-setup-43. Body: docs/2026-09-19-vocabulary-contract-design.md
 
 ## Archive (pre-migration)
 
