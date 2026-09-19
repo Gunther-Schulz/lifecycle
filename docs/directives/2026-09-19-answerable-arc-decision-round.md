@@ -1124,3 +1124,69 @@ when the reason text opens with one (cosmetic, pre-existing — lc-176's
 closed body shows it too); eight `blocker_softlock` chains stand unchanged;
 lc-52 is PARKED on the env-default decision, which is the round's or the
 driving desk's.
+
+## Addendum 9 — the ROUND DESK handoff (2026-09-19, driving desk cachyos-setup-b3, its closing act)
+
+**The arc's execution is COMPLETE** — waves A, C and B closed, every
+verification green at two desks, the record pushed at each seam. What
+remains is JUDGMENT: the design round, preceded by its Begehung. This
+addendum is the round desk's brief; the operator opens that session
+(fable recommended — the round is the arc's judgment-densest act; known
+caveat: guard-heavy vocabulary risks fable classifier refusals, and the
+cure is restart-on-opus, never rephrase) and states the delegation
+first-hand there; the desk's ack on its record authorizes work.
+
+**GROUNDING, in order:** the reading roster (three files, gate-
+enforced); this directive WHOLE — addendum 5 is the agenda (findings
+(a)-(m), the unifying question, the five open decisions, the frame:
+pieces-and-seams, statiker-shaped execution, decide-record-proceed,
+two-stage retrieval, stop/yield admission lens, the precedent/re-ask
+seam, independence-as-property-not-supplier); addenda 7-8 for the
+wave's state; `docs/purpose.md` (grounded autonomy and both-minds now
+in it); the input documents in `docs/audits/` — the three scout
+reports (process-framework mapping, missing-layer, governed-
+persistence), the vocabulary-twins grading, the Hermes extraction, the
+astra probe, and the CachyOS friction extract at
+`dev-notes/2026-09-19-arc-friction-extract.md` in the CachyOS-Setup
+repo (as amended — the premise-inbox requirement 6).
+
+**FIRST ACT — the BEGEHUNG, before the round's map step:** commission
+a robustness walk over the arc's BUILT mechanism set (the wave's six
+mechanisms plus the schema at floor 6), fresh eyes only — never the
+desks that built (both closed) and not the round desk's own inline
+read; `docs/BEGEHUNG-MAP.md` is the standing axis map (two rounds
+recorded; its lens discipline binds). Topology at the round desk's
+judgment: a fresh peer session or a dispatched lane. Its yield joins
+the agenda before the map is drawn.
+
+**THEN the round, exactly as addendum 5's execution form prescribes:**
+map first as data (every piece, every seam, status per edge — all
+findings and requirements PLACED before any decision), decisions with
+ledgered bases (declines first-class), designs to the dispatchable
+stop, fresh-context attack with the pre-registered lenses (the
+anti-borrow degenerate forms; over-constraint vs the model's default;
+the erosion bound — lc-234's probe still unrun, parked on its sampling
+plan, which is the round's decision 1; every admitted mechanism carries
+its own stop/yield condition), then build waves, then the two gates in
+order. Open decisions beyond addendum 5's five: lc-52's env-var
+default (finding (b)'s write side); the staged-migration pilot's
+authoring pass (CachyOS-Setup first, operator decision on lc-239);
+and the pbs-office follow-on, noted as: federated declaration over the
+existing layer, never content migration; first candidate kind the
+projektdaten/konsumiert pair (edges and checker already exist —
+operator grades that layer working-but-not-final, and the relay
+carries that grade, not an endorsement); budget from the pilot's
+measured costs.
+
+**Standing state the round desk inherits:** 125 live items, 115 done;
+ratio 2.02:1 CLEAN; the eight blocker_softlock chains visible by
+design; 25 decision blockers unstated-by-history (deliberately not
+backfilled — same-parentage); the two unmarked-commit classes plus the
+rewrite's third, all recorded; lc-197's capture_dominated crash the one
+standing could-not-verify. The operator's field card
+(claude.ai/artifact/UXES3vbYN3kQ5dwRCciw2S) is the reference layer —
+UPDATE IT at the round's close (the update rule is printed on it).
+Report channel: the operator's terminal — this desk closes with this
+addendum; the round desk drives, and the delegation's window for
+operator decisions is the round's decision points and the carve-outs,
+stated in the kickoff paste.
