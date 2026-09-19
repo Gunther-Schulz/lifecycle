@@ -272,3 +272,52 @@ red (roster kind unregistered) is FIXED (`2a154ea`).
 
 Known-unmarked commit: 4a4ad6e (trailer env unset for one call;
 reported, visible to the hook, deliberately not rebased).
+
+## Addendum 4 — successor desk pair (2026-09-19, driving desk cachyos-setup-b3)
+
+**Driving desk:** `cachyos-setup-b3` (fable; judgment holder, operator
+interface, release gate — succeeds `cachyos-setup-2b`, which closed the
+prior pair in addendum 3 and is no longer driving). **Executing desk:**
+`lifecycle-38` (opus, opened by the operator 2026-09-19). **Authority:**
+the delegation binds the executing desk only once the operator states it
+first-hand in that session; until then this addendum is testimony. The
+operator's continuation instruction at the driving desk ("continue
+lifecycle from this directive") is on that desk's record.
+
+**REPORT-CHANNEL: SendMessage cachyos-setup-b3** — cadence: one message
+per queue-item close (batching adjacent small items is fine), plus any
+decision round or blocker; final terminal text reaches no one.
+
+**Run declaration** (per queue item, inheriting the head directive's wave
+declarations): items 1 and 5 are GROOMING (close ≥ open); items 2–4 are
+BOOKING (open more than close, by design); item 7 is wave B BUILD
+(closes ≥ opens); items 6 and 8 are COMPOSITIONS — proposals and routed
+findings returned to the driving desk, deciding nothing themselves; item
+9 is report-not-prune.
+
+**Base commit: `37f0a6c`** (read at compose time; addendum 3's queue was
+written in that commit and nothing has landed since — "none of it done"
+re-verified at the driving desk: clean tree, HEAD = origin/main).
+Arrival check, three reads: `git merge-base --is-ancestor 37f0a6c HEAD`;
+`git log --oneline 37f0a6c..HEAD`; `git status --porcelain`. This
+addendum's own commit on top of `37f0a6c` is expected and clean; foreign
+commits or a dirty tree HALT and report.
+
+**Item 9 widened by a driving-desk observation (2026-09-19, `git
+worktree list` at compose time): TWO detached worktrees, not one** —
+`…/scratchpad/wt-old` at `2c65b8d` (the known specimen) and a
+`…/scratchpad/base-eb69b02` at `eb69b02` (matching the closed pair's
+attack-round baseline commit). Report-not-prune for both; ownership
+unverified; operator's call.
+
+**Everything else — grounding list, write boundary (this repo whole,
+carrier writes via the tool's verbs only, law 8), out-of-scope returns
+(now to `cachyos-setup-b3`), known frictions, lc-222's gating role —
+stands as the head directive and addendum 3 state it.** The executing
+desk re-reads each item's slots with `item slots <id>` at pickup, never
+from this file's prose.
+
+**Horizons:** the driving desk arms a recurring ~30 min artifact watch;
+the executing desk's ack that the operator's first-hand confirmation is
+on its record is the event that authorizes queue work — no item starts
+before it.
