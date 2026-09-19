@@ -999,13 +999,17 @@ evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs and rea
 blocked-by: NONE
 
 ## lc-199
-grade: PARKED
+grade: READY
 requirement: THE ROLE LINES CONTRADICT A MEASUREMENT RECORDED SIX LINES AWAY. CLAUDE.md role section says the absence-scan copies in tools/ and test/ are byte-identical to the sibling repo and are NOT EDITED HERE, while the same file records commit 7fe9e68 repairing that very test locally — the commit that fixed the scope guard which had made the UUID scan never run. A role line stating a property the file itself refutes is the label-over-body class in the laws file own words, and it is the second instance found in that file today.
 goal: tend
 write-set: CLAUDE.md
 done-criterion: the tools/ and test/ role lines state what is TRUE of those copies now — which parts are byte-identical, which were repaired here, and what that means for the next reader who assumes they can sync from the sibling. RED-FIRST: the current wording is the firing input and is quoted in the change. MUST-NOT-MOVE: the de-duplication decision is unchanged — two copies for one wave stays the deliberate cost — and nothing about the scanner behaviour moves.
 evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs and graded by them as wording. MEASURED at this desk earlier today while correcting the same file node-bite paragraph: 7fe9e68 repaired test/absence-scan.test.mjs in THIS repo by deriving the guard roots from git ls-files, which is a local edit to a file the role line says is not edited here. DERIVED: the role line and the commit record cannot both be true, and the commit is the artifact.
 blocked-by: evidence false  # the judgment desk holds CLAUDE.md in this shared copy
+amend-reason: 2026-09-19 the blocker's PREMISE is dead, ruled at the round desk 2026-09-19 and executed here. It read `evidence false # the judgment desk holds CLAUDE.md in this shared copy`, which was a literal `false` - a predicate that can never fire, so the entry was one of the carrier's nine unclearable softlock chains rather than an item waiting on evidence. The hold it named ended with the build delegation: one writer holds this whole copy for the wave, CLAUDE.md included, and the round desk writes no lifecycle files while it runs. Re-typed rather than left to age, because the entry is being closed in the same act and a closure over a still-blocked body is what the carrier lists for a desk pass.
+amended-blocked-by: 2026-09-19 NONE
+promote-reason: 2026-09-19 decision-complete and in fact already built. All five slots were filled at booking; what held it was a blocker whose premise expired, now re-typed to NONE in the amendment this commit carries. READY is the state the body must pass through to be durable - the commit gate refuses a PARKED body with no typed blocker, correctly, because PARKED asserts something to wait for. It is closed in the next act on evidence that its criterion was met by aa1cc44, so this grade is a transit and not a claim that work remains.
+promoted-by: 2026-09-19 round desk cachyos-setup-43, executed at build desk cachyos-setup-fe
 
 ## lc-200
 grade: READY
