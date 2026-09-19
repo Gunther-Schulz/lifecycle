@@ -852,6 +852,22 @@ def build_parser() -> argparse.ArgumentParser:
                          "instead of the longhand board; same exit code, "
                          "same finding set (never a rendering-only change "
                          "to the verdict)")
+    lpop = lanes_sub.add_parser(
+        "population",
+        help="does the ROSTER match the declared-repo population? (lc-246) "
+             "Sweeps each --under root for repos carrying a declaration and "
+             "reports both directions. It NEVER writes the roster: a verb "
+             "that repaired the population it measures would confirm its "
+             "own edit on the next run")
+    lpop.add_argument(
+        "--under", action="append", default=[], metavar="PATH",
+        help="a root to sweep for declaring repos. REPEATABLE, and REQUIRED "
+             "for a verdict: a sweep with no roots finds nothing, and "
+             "nothing reads exactly like a roster that already lists "
+             "everything. The scope is the caller's claim about reach, and "
+             "this package will not invent one — a path baked in would be a "
+             "machine path (law 6) and a scope nobody chose")
+
     lreg = lanes_sub.add_parser("register", help="put a repo on the roster — "
                                                  "the router's input")
     lreg.add_argument("repo_path", nargs="?",
@@ -1100,10 +1116,12 @@ def main(argv=None) -> int:
     elif args.verb == "lane":
         if not args.lane_action:
             out("COULD NOT VERIFY: `lane` needs an action: list, register, "
-                "new.")
+                "new, population.")
             return exits.COULD_NOT_VERIFY
         path = f"lane {args.lane_action}"
-        if args.lane_action == "register":
+        if args.lane_action == "population":
+            code = lanes_mod.check_roster_population(out, args.under)
+        elif args.lane_action == "register":
             code = lanes_mod.cmd_lane_register(args, out)
         elif args.lane_action == "new":
             repo, why = resolve_repo(args.repo)

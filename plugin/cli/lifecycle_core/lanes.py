@@ -354,6 +354,210 @@ def read_roster(path: Path):
     return out, None
 
 
+#: THE ROSTER'S OWN CONTRACT LINE (lc-246). The roster either IS the
+#: declared-repo population or is a deliberate SUBSET of it, and those are
+#: different files with different meanings for every mechanism generated over
+#: them. Today it says neither, and that silence is what makes an INCOMPLETE
+#: roster the one case the router has no answer for: a listed-but-thin roster
+#: renders as a clean board, indistinguishable from a complete one.
+#:
+#: DECLARED IN THE FILE rather than inferred from its contents, because the
+#: two readings are indistinguishable BY CONTENT — a roster listing one repo
+#: out of ten is either wrong or deliberate, and nothing in the list says
+#: which. Only its author can.
+ROSTER_CONTRACT = "contract:"
+ROSTER_POPULATION = "population"
+ROSTER_SUBSET = "subset"
+ROSTER_CONTRACTS = (ROSTER_POPULATION, ROSTER_SUBSET)
+
+#: How a declaration announces a repo, used by the sweep below. The same
+#: relative path `declaration.DECLARATION_REL` names; spelled from that
+#: constant rather than restated, so a repo that moves its declaration moves
+#: this sweep with it.
+_DECL_GLOB = "*/.claude/lifecycle.json"
+
+
+def roster_contract(path: Path):
+    """`(contract, why-not)` — which reading the roster DECLARES of itself.
+
+    Read from a `# contract: population|subset` comment line. `None` is the
+    honest answer for a roster that declares nothing, and it is NOT a default
+    to one of the two: defaulting would answer, in the tool's own voice, the
+    question this whole entry exists to make someone answer.
+    """
+    if not path.exists():
+        return None, f"no roster at {path}."
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return None, f"{path} could not be read ({exc!r})."
+    for raw in text.split("\n"):
+        s = raw.strip()
+        if not s.startswith("#"):
+            continue
+        body = s.lstrip("#").strip()
+        if not body.lower().startswith(ROSTER_CONTRACT):
+            continue
+        word = body[len(ROSTER_CONTRACT):].strip().split()[0:1]
+        word = (word[0].lower().strip(" .,;") if word else "")
+        if word in ROSTER_CONTRACTS:
+            return word, None
+        return None, (
+            f"the roster's contract line says {word!r}, which is not one of "
+            + " or ".join(ROSTER_CONTRACTS) + ".")
+    return None, (
+        "the roster declares no contract. Add ONE comment line — "
+        f"`# {ROSTER_CONTRACT} {ROSTER_POPULATION}` if this file is meant to "
+        f"list every declaring repo, or `# {ROSTER_CONTRACT} "
+        f"{ROSTER_SUBSET}` if it is a deliberate selection — because a "
+        "roster listing one repo out of ten is either wrong or intended and "
+        "nothing in the list itself can say which.")
+
+
+def declared_repos_under(roots) -> list:
+    """Every repo carrying a declaration under these roots, BY SWEEP.
+
+    THE SCOPE IS THE CALLER'S CLAIM AND IS NEVER GUESSED HERE. A sweep's
+    reach IS the basis of any absence it reports, and a root hardcoded in
+    this package would be both a machine path (law 6) and a reach nobody
+    chose — the same defect one level up from the roster this function
+    grades. So the roots come in; with none, the caller gets no population
+    and must say so.
+    """
+    found = []
+    for root in roots:
+        base = Path(root).expanduser()
+        if not base.is_dir():
+            continue
+        for hit in base.glob("**/" + _DECL_GLOB):
+            repo = hit.parent.parent
+            if not repo.is_dir():
+                continue
+            # THE SAME PREDICATE THE ROSTER SIDE USES, and it is not
+            # tidiness. `resolve_repo_row` refuses a directory that is not a
+            # git work tree, so a sweep counting one would put a repo in the
+            # population that the roster could never legitimately list — and
+            # the divergence it caused could never be cleared by any edit to
+            # the roster. That is a finding with no repair, which trains the
+            # override reflex exactly as a guard firing on legitimate work
+            # does. Two populations compared by two predicates are not
+            # comparable at all.
+            row = resolve_repo_row(str(repo))
+            if row.resolution.startswith("UNRESOLVED"):
+                continue
+            found.append(Path(row.path).resolve())
+    return sorted(set(found))
+
+
+def roster_divergence(path: Path, roots) -> dict:
+    """What the roster lists against what the sweep finds, both directions.
+
+    BOTH DIRECTIONS, because they are different findings with different
+    repairs: a declaring repo the roster OMITS is a mechanism scoped to a
+    population nobody chose, while a roster line naming a repo that carries
+    no declaration is a line that will fail to resolve on every future run.
+    """
+    entries, why = read_roster(path)
+    listed = []
+    for raw in (entries or []):
+        row = resolve_repo_row(raw)
+        if not row.resolution.startswith("UNRESOLVED"):
+            listed.append(Path(row.path).resolve())
+    swept = declared_repos_under(roots)
+    return {
+        "roster_error": why,
+        "listed": sorted(set(listed)),
+        "swept": swept,
+        "missing": [p for p in swept if p not in set(listed)],
+        "extra": [p for p in listed if p not in set(swept)],
+    }
+
+
+def check_roster_population(out, roots) -> int:
+    """Does the roster match the declared-repo population? (lc-246)
+
+    THREE ANSWERS, and the middle one is the whole point. With no scope
+    stated this CANNOT answer — a sweep with no roots finds nothing, and
+    nothing is shaped exactly like a complete roster. With no contract
+    declared it also cannot answer, because the same divergence is a defect
+    under one reading and the intended state under the other.
+
+    IT NEVER REPAIRS WHAT IT MEASURES. There is deliberately no verb here
+    that rewrites the roster from the sweep: a tool that fixes the population
+    it is supposed to report on has no independent reading left to give, and
+    the next run would confirm its own edit. The roster is the operator's
+    file; this prints what to put in it.
+    """
+    path = roster_path()
+    contract, why_contract = roster_contract(path)
+    if not roots:
+        out("roster population: COULD NOT VERIFY — no sweep root was "
+            "given, so the declared-repo population was never enumerated. "
+            "A sweep with no roots returns nothing, and nothing here reads "
+            "exactly like a roster that already lists everything. The root "
+            "is the caller's claim about reach and this package will not "
+            "invent one: a path baked in here would be a machine path "
+            "(law 6) and a scope nobody chose.")
+        return exits.COULD_NOT_VERIFY
+
+    div = roster_divergence(path, roots)
+    if div["roster_error"] and not div["listed"]:
+        out(f"roster population: COULD NOT VERIFY — {div['roster_error']}")
+        return exits.COULD_NOT_VERIFY
+
+    swept, listed = div["swept"], div["listed"]
+    missing, extra = div["missing"], div["extra"]
+    out(f"roster population: {len(listed)} listed, {len(swept)} found by "
+        f"sweep under {', '.join(str(r) for r in roots)}")
+
+    if contract is None:
+        out("    FINDING [roster_population_undeclared] " + (why_contract or "")
+            + " Until it says, this divergence cannot be graded: "
+            f"{len(missing)} declaring repo(s) are absent from the roster "
+            f"and {len(extra)} listed repo(s) carry no declaration, and "
+            "BOTH numbers are the intended state under one reading and a "
+            "defect under the other.")
+        for p_ in missing:
+            out(f"        absent from the roster: {p_}")
+        for p_ in extra:
+            out(f"        listed, carries no declaration: {p_}")
+        return exits.FINDING
+
+    if contract == ROSTER_SUBSET:
+        out(f"    roster population: CLEAN — the roster DECLARES itself a "
+            f"{ROSTER_SUBSET} ({len(missing)} declaring repo(s) are "
+            "deliberately not listed), so a divergence from the swept "
+            "population is this file's intended state and not a finding. "
+            "What that reading OWES is elsewhere: every verb that reads this "
+            "file as THE population is then reading a subset, and that is a "
+            "finding about those verbs rather than about this list.")
+        return exits.CLEAN
+
+    if not missing and not extra:
+        out(f"    roster population: CLEAN — the roster declares itself the "
+            f"{ROSTER_POPULATION} and matches the sweep exactly, over "
+            f"{len(swept)} repo(s). Both numbers are shown above because "
+            "`0 missing` over a sweep that found nothing prints the same.")
+        return exits.CLEAN
+
+    out("    FINDING [roster_population_diverges] the roster declares itself "
+        f"the {ROSTER_POPULATION} and does not match the sweep: "
+        f"{len(missing)} declaring repo(s) absent from it, {len(extra)} "
+        "listed repo(s) carrying no declaration. Every mechanism generated "
+        "over this file — `lane list`'s board, and any reading of law 25's "
+        "EVERY DECLARED REPO that trusts it — is scoped to a population "
+        "nobody chose, and renders the rest as ABSENT rather than as "
+        "UNLISTED.")
+    for p_ in missing:
+        out(f"        absent from the roster: {p_}")
+    for p_ in extra:
+        out(f"        listed, carries no declaration: {p_}")
+    out("    This tool does not write that file. A verb that repaired the "
+        "population it is supposed to measure would confirm its own edit on "
+        "the next run.")
+    return exits.FINDING
+
+
 def resolve_repo_row(raw: str) -> RepoRow:
     """One roster line → a resolution state, NAMED whatever the answer."""
     row = RepoRow(raw=raw)

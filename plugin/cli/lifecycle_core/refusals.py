@@ -2142,6 +2142,65 @@ def _lane_cli(argv, *, roster_lines=None, **repo_kw) -> Fired:
             shutil.rmtree(cfg, ignore_errors=True)
 
 
+def _roster_population(roster_lines, *, declaring: int = 1) -> Fired:
+    """`check_roster_population` over a scratch roster AND a scratch sweep root.
+
+    BOTH SIDES ARE BUILT, because this check compares two populations and a
+    fixture that pinned only one would grade the comparison against a
+    constant. The sweep root holds `declaring` repos that each carry a real
+    `.claude/lifecycle.json`, and `@repo<n>` in a roster line is substituted
+    with the n-th of them — so a control lists repos that genuinely exist
+    and a plant omits one that genuinely declares.
+
+    THE SWEEP ROOT IS A SCRATCH DIRECTORY, never this machine's real one:
+    the row would otherwise grade the operator's actual repo layout, which
+    changes under it and is not this row's subject.
+    """
+    from . import lanes as lanes_mod
+
+    cfg = Path(tempfile.mkdtemp(prefix="lifecycle-cfg-"))
+    root = Path(tempfile.mkdtemp(prefix="lifecycle-sweep-"))
+    try:
+        repos = []
+        for i in range(declaring):
+            d = root / f"repo{i}"
+            (d / ".claude").mkdir(parents=True)
+            (d / ".claude" / "lifecycle.json").write_text(
+                json.dumps(GOOD_DECLARATION, indent=2), encoding="utf-8")
+            # A REAL `git init`, because BOTH sides of this comparison
+            # resolve a repo the same way and that predicate refuses a
+            # directory that is not a git work tree. A fixture skipping it
+            # would leave the sweep finding nothing and the row grading an
+            # empty population against an empty roster — green, and about
+            # nothing.
+            subprocess.run(["git", "init", "-q", "-b", "main", str(d)],
+                           capture_output=True)
+            repos.append(d)
+        if roster_lines is not None:
+            (cfg / "lifecycle").mkdir(parents=True, exist_ok=True)
+            body = []
+            for line in roster_lines:
+                for i, d in enumerate(repos):
+                    line = line.replace(f"@repo{i}", str(d))
+                body.append(line)
+            (cfg / "lifecycle" / "repos").write_text(
+                "\n".join(body) + "\n", encoding="utf-8")
+        prev = os.environ.get("XDG_CONFIG_HOME")
+        try:
+            os.environ["XDG_CONFIG_HOME"] = str(cfg)
+            buf = []
+            code = lanes_mod.check_roster_population(buf.append, [root])
+            return Fired(code, "\n".join(buf))
+        finally:
+            if prev is None:
+                os.environ.pop("XDG_CONFIG_HOME", None)
+            else:
+                os.environ["XDG_CONFIG_HOME"] = prev
+    finally:
+        shutil.rmtree(cfg, ignore_errors=True)
+        shutil.rmtree(root, ignore_errors=True)
+
+
 #: A lane body carrying all four of §3.3's parts. The trigger is the only one
 #: this build parses; the others are present so the row exercises a real lane
 #: file rather than a `Trigger:` line on its own.
@@ -4353,6 +4412,56 @@ GOAL_ROWS = [
 # could not answer (the repair is out in the world), MALFORMED is a `when`
 # nobody could ever have executed (the repair is one line in the
 # declaration). One row would hand a reader one word for two repairs.
+# --- the repo roster's own population (lc-246) -------------------------------
+#
+# TWO ROWS BECAUSE THERE ARE TWO STATES AND THEY HAVE DIFFERENT REPAIRS. A
+# roster that declares no contract cannot be graded at all — the same
+# divergence is the intended state under one reading and a defect under the
+# other — and the repair is one comment line from the file's author. A roster
+# that declares itself the POPULATION and diverges is a plain finding, and
+# the repair is the missing paths. Folding them would report "these
+# disagree" to someone who cannot tell which answer is owed.
+ROSTER_POPULATION_ROWS = [
+    Row(
+        ident="roster_population_undeclared",
+        refusal="a repo roster that does not say whether it IS the declared "
+                "repo population or a deliberate SUBSET of it — the two "
+                "readings are indistinguishable by content, so an "
+                "incomplete roster renders as a clean board",
+        firing_input="a roster carrying repo paths and no `# contract:` line",
+        expect=exits.FINDING,
+        # BOTH ARMS DIVERGE IDENTICALLY — two declaring repos, one listed —
+        # so the ONLY difference is the contract line. A control that also
+        # matched the sweep would differ in two properties and would pass
+        # over a check that had stopped reading the contract entirely.
+        fire=lambda: _roster_population(["@repo0"], declaring=2),
+        control=lambda: _roster_population(
+            ["# contract: subset", "@repo0"], declaring=2),
+        stage="lc-246",
+    ),
+    Row(
+        ident="roster_population_diverges",
+        refusal="a roster that DECLARES itself the declared-repo population "
+                "and does not match it — every mechanism generated over the "
+                "file is then scoped to a population nobody chose, and "
+                "renders the rest as ABSENT rather than as UNLISTED",
+        firing_input="a `# contract: population` roster missing a repo that "
+                     "carries a declaration",
+        expect=exits.FINDING,
+        # THE CONTROL DECLARES THE SAME CONTRACT AND MATCHES. Both arms are
+        # population-contract rosters actually compared against a real
+        # sweep, so they differ in the divergence alone — which is the
+        # predicate. A subset-contract control would prove only that the
+        # other branch returns clean.
+        fire=lambda: _roster_population(
+            ["# contract: population", "@repo0"], declaring=2),
+        control=lambda: _roster_population(
+            ["# contract: population", "@repo0", "@repo1"], declaring=2),
+        stage="lc-246",
+    ),
+]
+
+
 # --- the PERISHABLE mark's grammar (lc-244 W2) -------------------------------
 MARK_ROWS = [
     Row(
@@ -4436,7 +4545,7 @@ MOMENT_ROWS = [
 ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
         + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS + GOAL_ROWS
         + RECORDS_KIND_ROWS + HOME_ROWS + MOMENT_ROWS
-        + MARK_ROWS)
+        + MARK_ROWS + ROSTER_POPULATION_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #
