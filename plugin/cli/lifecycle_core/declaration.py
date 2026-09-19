@@ -2289,3 +2289,113 @@ def render_kinds(doc: dict) -> list[str]:
             else:
                 out.append(f"    {stage:<10} {v}")
     return out
+
+
+def _writer_bucket(writer) -> str:
+    """One kind's `writer` value, bucketed for `structure_summary` — lc-174.
+
+    THE RULE READS THE ACTUAL TYPED REFERENCE, never the raw string, because
+    `writer` is not always a single token: `parse_refs` (§3.8c, the typed-ref
+    parser every other writer/reader check already goes through) splits a
+    comma-joined value into `(type, name)` pairs, and this repo's own
+    declaration carries a writer worth exactly that split — `"verb:ledger
+    add, session"` on `ledger lines`, written by both a verb and the bare
+    session. Reading it with a plain `== "session"` or a hand-rolled
+    substring test would silently drop that kind into the wrong bucket
+    (an equality test in a typed-parser's clothing, the paraphrase-drift
+    class), and a fresh `in`/`startswith` here would be a second, competing
+    parser for a fact `parse_refs` already owns.
+
+    'verb' fires wherever ANY entry in the writer is typed `verb:` — a kind
+    written partly by a verb still carries partial self-administration,
+    which is the property this split predicts. The literal bare `session`
+    (and ONLY that, alone) is its own bucket. Everything else — absent,
+    malformed, `producer:`/`hook:`/`lane:`/`operator`, or a mix that never
+    names a verb — is `other`, exactly as the booking's own wording puts it:
+    "everything else counts as other".
+
+    PROVED against this repo's live declaration, not merely reasoned: the
+    booking's MEASURED-AGAIN figures (26 kinds, verb 5 / session 20 /
+    other 1, 0 undeclared) reproduce ONLY under this rule — a plain
+    `writer == "session"` check would move `ledger lines` (a verb+session
+    mix) out of the verb bucket the booking counts it in.
+    """
+    if not isinstance(writer, str) or not writer.strip():
+        return "other"
+    types = {typ for typ, _ in parse_refs([writer])}
+    if "verb" in types:
+        return "verb"
+    if types == {"session"}:
+        return "session"
+    return "other"
+
+
+def structure_summary(doc: dict) -> dict:
+    """Three facts about what the repo IS — lc-174, the session-start
+    announcement's structure half (`docs/answerable-not-felt.md`, mechanism
+    1: the banner puts open items, the ledger tail, the ready set and gate
+    status in front of a session, and never the declaration's own shape, so
+    a fact already sitting in a tracked file gets re-derived by reasoning).
+
+    Read from THIS FUNCTION'S OWN `doc` ARGUMENT — the parsed declaration —
+    never from a rendered view of it: `render_kinds`/`render_digest` already
+    read the same structure this way, and a hand-grep over either one's
+    OUTPUT would be a partial or transformed view standing in for the
+    source (the paraphrase-drift class's ASSERTION-site shape).
+
+    Every count comes back paired with its own denominator's INPUT (the
+    total), never printed alone — `render_structure` is what actually joins
+    them into "N of M" text (lc-172: a bare count cannot tell a small
+    numerator from a small population).
+
+    A malformed kind body (not an object) counts as `other` and as
+    undeclared-in-full, the same verdict `_validate_kind` reaches for it
+    (every one of the seven stages is undeclared when there is no body to
+    hold them).
+    """
+    kinds = doc.get("kinds")
+    if not isinstance(kinds, dict):
+        kinds = {}
+    verb = session = other = 0
+    undeclared = 0
+    for body in kinds.values():
+        if not isinstance(body, dict):
+            other += 1
+            undeclared += 1
+            continue
+        bucket = _writer_bucket(body.get("writer"))
+        if bucket == "verb":
+            verb += 1
+        elif bucket == "session":
+            session += 1
+        else:
+            other += 1
+        if any(stage not in body for stage in KIND_STAGES):
+            undeclared += 1
+    return {
+        "total": len(kinds),
+        "verb": verb,
+        "session": session,
+        "other": other,
+        "undeclared": undeclared,
+    }
+
+
+def render_structure(doc: dict) -> list[str]:
+    """The session-start STRUCTURE line(s) — lc-174's done-criterion.
+
+    A READOUT, never a refusal (MUST-NOT-MOVE, law 11): it prints the three
+    counts whatever they are and exits clean regardless — a repo with a
+    perfectly clean declaration prints its counts with denominators and
+    never a bare silence, the same standard `render_kinds`/`render_digest`
+    already hold for an empty declaration.
+    """
+    s = structure_summary(doc)
+    total = s["total"]
+    return [
+        f"kinds registered: {total}",
+        f"writer split: {s['verb']} of {total} verb-written, "
+        f"{s['session']} of {total} writer:session, "
+        f"{s['other']} of {total} other",
+        f"stage undeclared: {s['undeclared']} of {total}",
+    ]

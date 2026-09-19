@@ -116,6 +116,23 @@ def _shape_problem(value, argument, horizon):
     return None
 
 
+def _structure_lines(repo) -> list[str]:
+    """Best-effort: this repo's registered-kind STRUCTURE (lc-174) — the
+    count of kinds, the writer split, and how many leave a stage
+    undeclared. Same shape as `_delegation_line`: NEVER gates the verb's
+    own exit code, and a repo with no readable declaration is COULD NOT
+    VERIFY prose, not a refusal — `kind check` already owns that verdict;
+    this is a readout beside it, never a second copy of it."""
+    if repo is None:
+        return ["structure: not checked — no repo context (pass --repo or "
+                "run inside a git work tree)"]
+    res = decl.read(repo)
+    if res.declaration is None:
+        return ["structure: not checked — this repo's declaration could "
+                "not be read"]
+    return decl.render_structure(res.declaration)
+
+
 def _delegation_line(repo) -> str:
     """Best-effort: this repo's declared `delegation` field, or why it could
     not be read. NEVER gates the verb's own exit code — `desk state` with no
@@ -136,6 +153,23 @@ def _delegation_line(repo) -> str:
 
 
 def cmd_desk_state(args, out, repo) -> int:
+    # lc-174 — THE STRUCTURE READOUT, SHORT-CIRCUITING BEFORE THE VALUE
+    # VOCABULARY. `--structure` is not a fifth desk-state value (the
+    # vocabulary above stays exactly REPORTED/WAITING-ON/BLOCKED/DONE): it
+    # is a query, not a turn-end state to record, so it runs whatever
+    # `value` was or was not given rather than joining its refusal path. A
+    # session-start caller (the dotfiles banner hook) has no turn-end state
+    # to record at all — it needs this the way it already calls `item
+    # ready --head` / `item ratio` bare, with no positional — so this
+    # branch must not demand one. THIS STAYS A READOUT, NEVER A GATE (law
+    # 11, and the item's own MUST-NOT-MOVE): it always returns CLEAN,
+    # whatever the counts are, because a session-start check that can fail
+    # a legitimate repo kills every lane in the hook.
+    if getattr(args, "structure", False):
+        for line in _structure_lines(repo):
+            out(line)
+        return exits.CLEAN
+
     value = (getattr(args, "value", None) or "").strip()
     if value not in DESK_STATE_VALUES:
         out(f"FINDING [desk_state_unknown_value] {value!r} is not one of "

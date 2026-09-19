@@ -446,3 +446,201 @@ class ReadMomentsEvaluation(unittest.TestCase):
         states = {m.reader: m.state for m in moments}
         self.assertEqual(states["verb:audit"], "UNDECLARED")
         self.assertIn(states["session"], ("FIRE", "QUIET", "BROKEN"))
+
+
+class StructureReadout(unittest.TestCase):
+    """lc-174 — the session-start announcement carries STRUCTURE, not only
+    state: the count of registered kinds, the writer split (verb-written /
+    writer:session / other), and how many kinds leave a stage undeclared.
+
+    DISCRIMINATION, not presence: every assertion here is on the actual
+    NUMBERS from a declaration this test constructs and controls — a test
+    only checking that some structure line appeared would pass for a
+    readout computing the wrong thing.
+    """
+
+    _FULL = {
+        "home": "x.md", "writer": "session", "reader": ["session"],
+        "staleness": "none, declared why: fixture",
+        "exit": {"action": "never", "recording-act": "fixture"},
+        "growth": "unbounded-with-reason: fixture",
+        "trigger": "none, declared why: fixture",
+    }
+
+    @classmethod
+    def _kind(cls, writer, stages=None):
+        """A kind body carrying `writer` and every stage in `stages`
+        (default: all seven) — omitting a name from `stages` is how a test
+        plants an undeclared stage on purpose."""
+        keep = decl.KIND_STAGES if stages is None else stages
+        body = {k: v for k, v in cls._FULL.items() if k in keep}
+        body["writer"] = writer
+        return body
+
+    def test_the_three_buckets_and_the_denominator(self):
+        """A writer naming a verb AND session together — this repo's own
+        `ledger lines` shape (`verb:ledger add, session`) — must land in
+        the verb bucket: a kind written partly by a verb still carries
+        partial self-administration, which is the property the split
+        predicts (the booking's own wording)."""
+        doc = {"kinds": {
+            "a": self._kind("verb:item close"),
+            "b": self._kind("verb:item add, session"),
+            "c": self._kind("session"),
+            "d": self._kind("session"),
+            "e": self._kind("producer:plugin-installer"),
+        }}
+        s = decl.structure_summary(doc)
+        self.assertEqual(s, {"total": 5, "verb": 2, "session": 2,
+                             "other": 1, "undeclared": 0})
+        self.assertEqual(decl.render_structure(doc), [
+            "kinds registered: 5",
+            "writer split: 2 of 5 verb-written, 2 of 5 writer:session, "
+            "1 of 5 other",
+            "stage undeclared: 0 of 5",
+        ])
+
+    def test_a_writer_naming_neither_verb_nor_session_lands_in_other_and_is_visible(self):
+        doc = {"kinds": {"only-one": self._kind("hook:pre-commit")}}
+        s = decl.structure_summary(doc)
+        self.assertEqual((s["verb"], s["session"], s["other"]), (0, 0, 1))
+        self.assertIn("1 of 1 other", "\n".join(decl.render_structure(doc)))
+
+    def test_a_missing_or_malformed_writer_also_lands_in_other(self):
+        doc = {"kinds": {
+            "no-writer": {k: v for k, v in self._kind("session").items()
+                         if k != "writer"},
+            "blank-writer": self._kind("   "),
+        }}
+        s = decl.structure_summary(doc)
+        self.assertEqual((s["verb"], s["session"], s["other"]), (0, 0, 2))
+
+    def test_an_undeclared_stage_is_counted_against_the_total(self):
+        doc = {"kinds": {
+            "clean": self._kind("session"),
+            "missing-exit": self._kind(
+                "session",
+                stages=[s for s in decl.KIND_STAGES if s != "exit"]),
+        }}
+        s = decl.structure_summary(doc)
+        self.assertEqual(s["undeclared"], 1)
+        self.assertIn("stage undeclared: 1 of 2",
+                      "\n".join(decl.render_structure(doc)))
+
+    def test_a_malformed_kind_body_counts_as_other_and_undeclared(self):
+        """Not a dict at all — `_validate_kind`'s own verdict for this shape
+        is that every one of the seven stages is undeclared; this function
+        agrees rather than crashing on `.get`."""
+        doc = {"kinds": {"broken": "not-an-object"}}
+        self.assertEqual(decl.structure_summary(doc),
+                         {"total": 1, "verb": 0, "session": 0, "other": 1,
+                          "undeclared": 1})
+
+    def test_empty_declaration_prints_zeros_never_silence(self):
+        """MUST-NOT-MOVE: a clean, empty declaration still prints its
+        counts with denominators — never a bare silence that reads as
+        nothing to report."""
+        self.assertEqual(decl.render_structure({"kinds": {}}), [
+            "kinds registered: 0",
+            "writer split: 0 of 0 verb-written, 0 of 0 writer:session, "
+            "0 of 0 other",
+            "stage undeclared: 0 of 0",
+        ])
+
+    def test_reproduces_this_repos_own_live_declaration(self):
+        """Proved against the artifact the item names, not merely reasoned
+        about: `ledger lines`' mixed writer is this repo's own instance of
+        the verb+session case, and it must classify as verb here exactly
+        as the booking's MEASURED-AGAIN figures count it."""
+        doc = json.loads((ROOT / ".claude" / "lifecycle.json")
+                         .read_text(encoding="utf-8"))
+        s = decl.structure_summary(doc)
+        self.assertEqual(s["total"], len(doc["kinds"]))
+        self.assertEqual(s["verb"] + s["session"] + s["other"], s["total"])
+        self.assertEqual(
+            decl._writer_bucket(doc["kinds"]["ledger lines"]["writer"]),
+            "verb")
+        self.assertEqual(
+            decl._writer_bucket(doc["kinds"]["journal entries"]["writer"]),
+            "session")
+        self.assertEqual(
+            decl._writer_bucket(
+                doc["kinds"]["plugin cache versions"]["writer"]),
+            "other")
+
+
+class DeskStateStructureFlag(unittest.TestCase):
+    """lc-174's desk.py half: `--structure` on `cmd_desk_state` short-
+    circuits BEFORE the closed value-vocabulary check and never refuses —
+    it is a query beside the turn-end state, not a fifth value in it, and
+    it stays a readout whatever the declaration holds (law 11 / the
+    item's own MUST-NOT-MOVE: a session-start check that can fail a
+    legitimate repo kills every lane in the hook).
+
+    Called directly against `desk_mod.cmd_desk_state` with a hand-built
+    namespace: the argparse registration for `--structure` (and making the
+    `value` positional optional so a bare `desk state --structure` parses
+    at all) lives in `cli.py`, outside this item's write set — see the
+    closing report's gap slot. This is the desk.py-side half proven ready
+    for that wiring, not a claim that the wiring exists.
+    """
+
+    @staticmethod
+    def _args(**kw):
+        from types import SimpleNamespace
+        base = dict(structure=False, value=None, argument=None,
+                    horizon=None, desk=None)
+        base.update(kw)
+        return SimpleNamespace(**base)
+
+    def _repo(self, kinds):
+        d = Path(tempfile.mkdtemp(prefix="lc174-desk-"))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        doc = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        doc["kinds"] = kinds
+        (d / ".claude").mkdir()
+        (d / ".claude" / "lifecycle.json").write_text(json.dumps(doc),
+                                                       encoding="utf-8")
+        return d
+
+    @staticmethod
+    def _kind():
+        return {"home": "x.md", "writer": "session", "reader": ["session"],
+                "staleness": "none, declared why: fixture",
+                "exit": {"action": "never", "recording-act": "fixture"},
+                "growth": "unbounded-with-reason: fixture",
+                "trigger": "none, declared why: fixture"}
+
+    def test_structure_flag_prints_the_readout_with_no_value_given(self):
+        from lifecycle_core import desk as desk_mod
+        repo = self._repo({"only": self._kind()})
+        out_lines = []
+        code = desk_mod.cmd_desk_state(self._args(structure=True),
+                                       out_lines.append, repo)
+        self.assertEqual(code, exits.CLEAN)
+        text = "\n".join(out_lines)
+        self.assertIn("kinds registered: 1", text)
+        self.assertIn("writer split: 0 of 1 verb-written, "
+                      "1 of 1 writer:session, 0 of 1 other", text)
+        self.assertNotIn(
+            "desk_state_unknown_value", text,
+            "--structure with no `value` must never fall through into the "
+            "closed value-vocabulary refusal path")
+
+    def test_structure_flag_never_refuses_over_an_undeclared_stage(self):
+        broken_kind = {"home": "x.md", "writer": "session"}
+        repo = self._repo({"broken": broken_kind})
+        from lifecycle_core import desk as desk_mod
+        out_lines = []
+        code = desk_mod.cmd_desk_state(self._args(structure=True),
+                                       out_lines.append, repo)
+        self.assertEqual(code, exits.CLEAN)
+        self.assertIn("stage undeclared: 1 of 1", "\n".join(out_lines))
+
+    def test_structure_flag_with_no_repo_context_is_prose_not_a_crash(self):
+        from lifecycle_core import desk as desk_mod
+        out_lines = []
+        code = desk_mod.cmd_desk_state(self._args(structure=True),
+                                       out_lines.append, None)
+        self.assertEqual(code, exits.CLEAN)
+        self.assertIn("structure: not checked", "\n".join(out_lines))
