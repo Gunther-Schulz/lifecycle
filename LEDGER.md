@@ -111,6 +111,7 @@ decision: arc: new registered kind, or the existing lane mechanism widened? → 
 decision: does the schema get a general third-answer mechanism, and what shape? → YES, scoped: the REGISTERED-CLOSED-VOCABULARY contract. Each registered vocabulary carries a typed out-of-vocabulary arm, distinct rendering; recorded OOV reasons are the widening signal. Dissolves 8 of 17 members; rest route bespoke; (m) named non-goal. Red-first f1+f4. Body: round-decisions doc
 decision: where does lc-236's consolidation token live? → The waves verb's OWN OUTPUT, quoted by the route line: a prose convention unfed by a mechanism under-fires. lc-236 blocked-by lc-173 (a collapsed join makes any token wrong); (f)'s could-not-discriminate arm folds into lc-173's design. Body: docs/2026-09-19-round-decisions.md
 decision: which missing edges from the round map build this arc? → Build: D-3 contract, f2 wiring (deploy gated on lc-234 result), E10 shelf-life slot, D-7 bucket, f5 widening plus sibling sweep, D-9 default. Fold: E12/E13 into arc-kind design. Decline: E3 (duplicate home lc-97), E4 (mechanism bar). Park: E11 (re-open named). Body: round-decisions doc
+decision: the map as declaration data: this arc or booked? → BOOKED, blocked-by the arc kind's build. Edges reference kinds and seams D-2/D-3 are about to move; a data model cut before them is rework by construction. Design input: docs/2026-09-19-round-map.md plus frame point 4.
 
 ## Archive (pre-migration)
 
