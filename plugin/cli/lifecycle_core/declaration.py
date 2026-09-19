@@ -73,7 +73,7 @@ from . import exits
 #: otherwise refuse honestly, which is the very failure the floor guard's own
 #: rationale names: an old tool reading a new file drops what it does not
 #: recognise, and a dropped slot is invisible in the output.
-SCHEMA_FLOOR = 4
+SCHEMA_FLOOR = 5
 
 #: Where the declaration lives, relative to the repo root. Tracked; the
 #: install step adds the `.gitignore` negation and this reader fails on an

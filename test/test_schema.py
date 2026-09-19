@@ -357,14 +357,35 @@ class SchemaMigrationRefusesToGuess(unittest.TestCase):
         self.assertNotIn("[schema_mismatch]", out)
 
     def test_the_flag_is_the_callers_claim_and_a_mismatch_refuses(self):
-        """`--schema-from 5` over a repo stamped 1 must not be resolved by
-        reading the file's own number: one of the two is wrong, and that is
-        exactly what must not be silently settled."""
+        """A `--schema-from` at this build's floor over a repo stamped 1 must
+        not be resolved by reading the file's own number: one of the two is
+        wrong, and that is exactly what must not be silently settled.
+
+        THE NUMBER IS DERIVED, AND THE BUMP IS WHY. This case was written as
+        the literal `5` while the floor was 4 — which made it exercise the
+        `schema_above_floor` branch (a build cannot migrate DOWN) and not the
+        MISMATCH branch its own name and docstring describe. It passed for a
+        reason nobody planted, and the 4->5 bump is what exposed it: at floor
+        5 the literal stopped being above the floor, fell through to the
+        mismatch, and went red. The above-floor branch is not left uncovered —
+        `schema_above_floor` is a registered roster row with its own plant and
+        control, so this case was duplicating that one by accident while its
+        stated subject went untested.
+
+        Derived from `SCHEMA_FLOOR`, `from_n` can never exceed the floor, so
+        this exercises the mismatch at every future bump instead of silently
+        changing which branch it lands in. COULD NOT VERIFY rather than
+        FINDING is the honest answer and the one the branch returns: the tool
+        cannot tell which of the two numbers is wrong, and saying so is the
+        third answer rather than a verdict it has not earned.
+        """
         supplied = {**self.OLD,
                     "leak-scan": {"source-scope-foreign-path": True}}
         d = self._repo(supplied)
-        code, out = run_cli(d, "migrate", "--schema-from", "5")
-        self.assertEqual(code, exits.FINDING, out)
+        code, out = run_cli(d, "migrate", "--schema-from",
+                            str(decl.SCHEMA_FLOOR))
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("the flag is the caller's claim", out, out)
 
 
 class UsageErrorsAreNotFindings(unittest.TestCase):
