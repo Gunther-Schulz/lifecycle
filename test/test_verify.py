@@ -46,14 +46,16 @@ class TheBlockIsParsed(unittest.TestCase):
 
     def test_commands_come_out_in_order_without_their_comments(self):
         text = laws("true   # the first\nfalse  # the second")
-        self.assertEqual(verify.parse_block(text), ["true", "false"])
+        self.assertEqual([c.command for c in verify.parse_block(text)],
+                          ["true", "false"])
 
     def test_a_comment_only_line_is_not_a_command(self):
         """The real block wraps long notes onto their own comment lines.
 
         Running one would report a command nobody registered."""
         text = laws("true   # a note\n       # continued on its own line\nfalse")
-        self.assertEqual(verify.parse_block(text), ["true", "false"])
+        self.assertEqual([c.command for c in verify.parse_block(text)],
+                          ["true", "false"])
 
     def test_no_verify_heading_yields_nothing(self):
         self.assertEqual(verify.parse_block("# A repo\n\nNo block here.\n"), [])
@@ -128,6 +130,79 @@ class TheThreeAnswers(unittest.TestCase):
         code, out = self._run("sleep 5", timeout=1)
         self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         self.assertIn("timed out", out)
+
+
+class TheExpectationIsChecked(unittest.TestCase):
+    """lc-176: a declared `# expect:` beside a registered command is a claim
+    the verb CHECKS, not prose beside the fence held by nothing.
+
+    THE DIRECTION THAT MATTERS IS THE SILENT ONE: a declared failure that
+    starts passing must go RED, because that is the case that degrades the
+    instrument rather than breaking it loudly. A declared expectation that
+    still matches must not add a second finding on top of an ordinary
+    failure — `verify_check_failed` already covers "this command failed";
+    `verify_expectation_wrong` exists only for the MISMATCH.
+    """
+
+    def _run(self, commands, **kw):
+        d = Path(tempfile.mkdtemp(prefix="lifecycle-verify-"))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "CLAUDE.md").write_text(laws(commands), encoding="utf-8")
+        said = []
+        code = verify.cmd_verify(Args(**kw), said.append, d, DECL)
+        return code, "\n".join(said)
+
+    def test_a_clean_run_contradicting_a_declared_ran_failed_is_expectation_wrong(self):
+        """THE ARM THE ROW EXISTS FOR: the silent direction. A declared
+        failure that is actually passing must be a FINDING, never a quiet
+        CLEAN — that is exactly the class that trained this repo's own
+        readers to discount a real red for a month (7fe9e68 vs f104ee0)."""
+        code, out = self._run("true  # expect: ran-failed")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("verify_expectation_wrong", out)
+        self.assertNotIn("verify_check_failed", out)
+
+    def test_a_failing_run_matching_a_declared_ran_failed_is_check_failed_not_expectation_wrong(self):
+        """The expectation HOLDS, so only the ordinary failure finding
+        fires — declaring an expected failure does not silence it."""
+        code, out = self._run("true\nfalse  # expect: ran-failed")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("verify_check_failed", out)
+        self.assertNotIn("verify_expectation_wrong", out)
+
+    def test_a_declared_ran_clean_that_went_red_reports_both_findings(self):
+        """Both directions of mismatch-plus-failure fire together — the
+        ordinary failure and the broken expectation are different claims."""
+        code, out = self._run("true\nfalse  # expect: ran-clean")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("verify_check_failed", out)
+        self.assertIn("verify_expectation_wrong", out)
+
+    def test_an_unreadable_expectation_token_is_COULD_NOT_VERIFY(self):
+        """Silently ignoring an unparseable expectation would make the
+        whole mechanism fail open — a token outside the closed vocabulary
+        is a claim the repo cannot even state, never a no-op."""
+        code, out = self._run("true  # expect: bogus")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("bogus", out)
+
+    def test_did_not_run_is_not_a_declarable_expectation(self):
+        """`did-not-run` is deliberately outside the closed vocabulary: a
+        registered command declaring it may never run would contradict the
+        existing `verify_check_did_not_run` refusal, which already treats an
+        unrunnable registered command as a claim the repo is making and not
+        keeping."""
+        code, out = self._run("true  # expect: did-not-run")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("did-not-run", out)
+
+    def test_no_declared_expectation_is_unaffected_by_this_feature(self):
+        """MUST-NOT-MOVE: a command with no `# expect:` behaves exactly as
+        before this feature existed — same verdict, no expectation grading
+        at all."""
+        code, out = self._run("true\ntrue")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("verify_expectation_wrong", out)
 
 
 if __name__ == "__main__":

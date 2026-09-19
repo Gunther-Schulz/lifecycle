@@ -1,5 +1,18 @@
 """`lifecycle verify` — the declared verify block, EXECUTED and COUNTED.
 
+lc-176 EXTENDS THE BOUNDARY BY EXACTLY ONE STEP. The module docstring below
+still holds: this proves commands RAN and what they returned, never that
+they discriminate. What lc-176 adds is that a PROSE CLAIM beside a command —
+a trailing `# expect: ran-clean` / `# expect: ran-failed` comment — is no
+longer held by nothing. It is a claim about the ACTUAL VERDICT `run_one`
+already computes, and it is now checked against it. The direction that
+matters is the silent one: a declared failure that quietly starts passing
+must go RED (`verify_expectation_wrong`), because that is the case a reader
+cannot see by eye — it looks identical to the command simply not existing in
+the block. A declared failure that is STILL failing changes nothing: the
+ordinary `verify_check_failed` finding already covers "this command failed",
+so the expectation matching it adds no second finding.
+
 MECHANISM #1 of the answerable-not-felt arc (docs/answerable-not-felt.md,
 lc-157), and the one ranked most real because it is wholly deterministic. A
 repo's CLAUDE.md declares the exact commands that make work in it
@@ -31,6 +44,7 @@ here exactly as a real one does. Proving a check discriminates is
 
 import re
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 
 from . import exits
@@ -43,15 +57,51 @@ COULD_NOT_START = (126, 127)
 
 VERIFY_HEADING = re.compile(r'^##+\s*Verify\s*$', re.I | re.M)
 
+#: A trailing `# expect: <token> — <note>` comment's own grammar. The token
+#: is the first whitespace-run after `expect:`; everything after it, with a
+#: leading en/em dash or hyphen stripped, is free-text kept for the report —
+#: never parsed, never compared to anything.
+EXPECT_COMMENT = re.compile(r'\bexpect:\s*(\S+)\s*(?:[-–—]\s*(.*))?$')
 
-def parse_block(laws_text: str) -> list[str]:
+#: The closed vocabulary a declared expectation may name. `did-not-run` is
+#: deliberately absent: `run_one` already has a third verdict for a command
+#: that cannot start, and `cmd_verify` already refuses a registered command
+#: in that state outright (`verify_check_did_not_run`) — a repo declaring
+#: "I expect this to not run" would be pre-excusing the exact claim that
+#: refusal exists to catch, never a state this mechanism may bless.
+EXPECT_VOCABULARY = ("ran-clean", "ran-failed")
+
+
+@dataclass(frozen=True)
+class RegisteredCommand:
+    """One line of a `## Verify` fenced block, parsed.
+
+    `command` is stripped exactly as `parse_block` always stripped it — the
+    string that gets RUN and the string that gets PRINTED do not change by
+    this class existing. `expect` is `None` when the line carries no
+    `# expect:` comment at all (the overwhelming case, and the one this
+    feature must leave untouched); otherwise it is the raw token text,
+    unvalidated against `EXPECT_VOCABULARY` here — validating belongs to the
+    grading step that can report COULD NOT VERIFY, not to the parser, whose
+    job is reading text rather than judging it. `note` is the free-text
+    explanation after the token, or `""`.
+    """
+    command: str
+    expect: str | None
+    note: str
+
+
+def parse_block(laws_text: str) -> list[RegisteredCommand]:
     """The commands in the laws file's `## Verify` fenced block, in order.
 
-    A trailing `# comment` is stripped — the block's commands carry inline
-    notes, and running one with its comment attached still works in a shell
-    but makes the reported command a different string from the one a reader
-    would type. Continuation lines (a comment alone on its own line, which
-    the block uses to wrap a long note) are dropped rather than run.
+    A trailing `# comment` is stripped from the RUN command — the block's
+    commands carry inline notes, and running one with its comment attached
+    still works in a shell but makes the reported command a different
+    string from the one a reader would type. A comment naming `expect:` is
+    kept, parsed into the returned record rather than discarded: it is the
+    one per-command declaration channel this block already has. Continuation
+    lines (a comment alone on its own line, which the block uses to wrap a
+    long note) are dropped rather than run.
     """
     m = VERIFY_HEADING.search(laws_text)
     if not m:
@@ -60,13 +110,23 @@ def parse_block(laws_text: str) -> list[str]:
     fence = re.search(r'```[a-zA-Z]*\n(.*?)```', rest, re.S)
     if not fence:
         return []
-    cmds = []
+    out = []
     for raw in fence.group(1).splitlines():
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        cmds.append(re.sub(r'\s+#.*$', '', line).strip())
-    return [c for c in cmds if c]
+        command = re.sub(r'\s+#.*$', '', line).strip()
+        if not command:
+            continue
+        expect = note = None
+        hash_at = line.find("#")
+        if hash_at != -1:
+            m2 = EXPECT_COMMENT.search(line[hash_at:])
+            if m2:
+                expect, note = m2.group(1), (m2.group(2) or "")
+        out.append(RegisteredCommand(command=command, expect=expect,
+                                      note=note or ""))
+    return out
 
 
 def run_one(cmd: str, repo: Path, timeout: int) -> tuple[str, int, str]:
@@ -118,36 +178,59 @@ def cmd_verify(args, out, repo: Path, declaration: dict) -> int:
         return exits.COULD_NOT_VERIFY
 
     out(f"registered: {len(cmds)} command(s) in {laws.name}")
+
+    # A DECLARED EXPECTATION OUTSIDE THE CLOSED VOCABULARY IS COULD NOT
+    # VERIFY, never silently ignored — this is a structural problem with the
+    # DECLARATION itself, checked before anything runs, the same slot the
+    # empty-block and missing-laws-file checks above already occupy.
+    # Silently ignoring an unparseable expectation would make the whole
+    # mechanism fail open: a typo in the token would read as "nothing
+    # declared" instead of as the broken claim it is.
+    unreadable = [c for c in cmds
+                  if c.expect is not None and c.expect not in EXPECT_VOCABULARY]
+    if unreadable:
+        out(f"COULD NOT VERIFY: {laws.name} declares an `# expect:` token "
+            f"this verb cannot read — the closed vocabulary is "
+            f"{', '.join(EXPECT_VOCABULARY)}.")
+        for c in unreadable:
+            out(f"  {c.command}  # expect: {c.expect}")
+        return exits.COULD_NOT_VERIFY
+
     if getattr(args, "list", False):
         for i, c in enumerate(cmds, 1):
-            out(f"  {i}. {c}")
+            out(f"  {i}. {c.command}")
         return exits.CLEAN
 
     timeout = getattr(args, "timeout", 900)
     ran = failed = never = 0
+    verdicts = []  # (RegisteredCommand, verdict) — only for commands that ran
     for i, c in enumerate(cmds, 1):
-        verdict, code, detail = run_one(c, repo, timeout)
+        verdict, code, detail = run_one(c.command, repo, timeout)
+        verdicts.append((c, verdict))
         if verdict == "ran-clean":
             ran += 1
-            out(f"  {i}. RAN, clean       {c}")
+            out(f"  {i}. RAN, clean       {c.command}")
         elif verdict == "ran-failed":
             ran += 1
             failed += 1
-            out(f"  {i}. RAN, FAILED ({code})  {c}")
+            out(f"  {i}. RAN, FAILED ({code})  {c.command}")
             if detail:
                 out(f"       {detail[:200]}")
         else:
             never += 1
-            out(f"  {i}. DID NOT RUN      {c}")
+            out(f"  {i}. DID NOT RUN      {c.command}")
             out(f"       {detail[:200]}")
 
     out(f"executed: {ran} of {len(cmds)} registered   "
         f"(failed {failed}, never ran {never})")
 
     # THE ORDER OF THESE TWO IS THE VERB'S POINT. A check that never ran is
-    # reported BEFORE a failure, because a run that is missing checks cannot
-    # say what the remaining ones would have found — the suite's verdict is
-    # could-not-verify whatever the checks that DID run returned.
+    # reported BEFORE anything about expectations or failures, because a run
+    # that is missing checks cannot say what the remaining ones would have
+    # found — the suite's verdict is could-not-verify whatever the checks
+    # that DID run returned, and whatever any of them declared. This early
+    # return is byte-identical to the verb's behaviour before lc-176: a
+    # command with no `# expect:` never reaches any of the code below it.
     if never:
         out(f"COULD NOT VERIFY [verify_check_did_not_run] {never} registered "
             "command(s) never executed. This is not a pass with fewer "
@@ -156,11 +239,32 @@ def cmd_verify(args, out, repo: Path, declaration: dict) -> int:
             "it from the block — a registered check that cannot run is a "
             "claim the repo is making and not keeping.")
         return exits.COULD_NOT_VERIFY
+
+    # A DECLARED EXPECTATION THAT DISAGREES WITH THE ACTUAL VERDICT IS ITS
+    # OWN FINDING, separate from `verify_check_failed` — the two are
+    # different claims (this command failed; this command's own recorded
+    # expectation was wrong) and print independently when both apply. THE
+    # DIRECTION THAT MATTERS is a declared `ran-failed` that is now
+    # `ran-clean`: the command's own output looks identical to a check that
+    # simply passed, which is exactly the silent failure lc-176 exists to
+    # catch (this repo's own node-bites paragraph, stale for a month).
+    mismatches = [(c, v) for c, v in verdicts
+                  if c.expect is not None and c.expect != v]
+    code = exits.CLEAN
+    if mismatches:
+        out(f"FINDING [verify_expectation_wrong] {len(mismatches)} of "
+            f"{len(cmds)} declared expectation(s) do not match what "
+            "actually ran.")
+        for c, v in mismatches:
+            note = f" — {c.note}" if c.note else ""
+            out(f"  declared {c.expect}, actual {v}: {c.command}{note}")
+        code = exits.worst([code, exits.FINDING])
     if failed:
         out(f"FINDING [verify_check_failed] {failed} of {len(cmds)} "
             "registered command(s) ran and returned non-zero.")
-        return exits.FINDING
-    out(f"verify: CLEAN — all {len(cmds)} registered command(s) executed "
-        "and returned zero. This says they RAN, never that they "
-        "discriminate; red-first proof is `tools/prove-rows.py`'s job.")
-    return exits.CLEAN
+        code = exits.worst([code, exits.FINDING])
+    if code == exits.CLEAN:
+        out(f"verify: CLEAN — all {len(cmds)} registered command(s) executed "
+            "and returned zero. This says they RAN, never that they "
+            "discriminate; red-first proof is `tools/prove-rows.py`'s job.")
+    return code

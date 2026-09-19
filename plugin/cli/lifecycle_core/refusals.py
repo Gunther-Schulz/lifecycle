@@ -416,6 +416,26 @@ ROWS = [
         control=lambda: _verify_run("true\ntrue"),
     ),
     Row(
+        ident="verify_expectation_wrong",
+        refusal="a registered command's declared `# expect:` does not match "
+                "what it actually did",
+        firing_input="a laws file whose `## Verify` block names a command "
+                     "that runs CLEAN while its trailing comment declares "
+                     "`# expect: ran-failed` — the silent direction (a "
+                     "declared failure quietly starting to pass) that "
+                     "trained this repo's own readers to discount a real "
+                     "red for a month",
+        expect=exits.FINDING,
+        fire=lambda: _verify_run("true  # expect: ran-failed"),
+        # The control differs in the EXPECTATION TOKEN ALONE over an
+        # identical command with an identical actual verdict (`true`,
+        # ran-clean) — the pair isolates the expectation check itself,
+        # never the command's own outcome. A failing command in the
+        # control would exit FINDING via `verify_check_failed` for a
+        # different reason and prove nothing about this row.
+        control=lambda: _verify_run("true  # expect: ran-clean"),
+    ),
+    Row(
         ident="declaration_absent",
         refusal="public undeclared — a repo with no declaration",
         firing_input="a repo with no `.claude/lifecycle.json` at all",
