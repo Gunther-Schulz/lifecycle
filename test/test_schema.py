@@ -41,7 +41,12 @@ from lifecycle_core.refusals import (  # noqa: E402
 
 
 def build(items_text=SEED_ITEMS, done_text=EMPTY_DONE, declaration=None,
-          ledger_text="schema: 2\n") -> Path:
+          ledger_text=None) -> Path:
+    # DERIVED, never restated (lc-218): a literal here disagrees with
+    # SEED_ITEMS/EMPTY_DONE the moment SCHEMA_FLOOR moves, and the repo
+    # then fails `schema_mismatch` for a reason the test is not about.
+    if ledger_text is None:
+        ledger_text = f"schema: {decl.SCHEMA_FLOOR}\n"
     d = Path(tempfile.mkdtemp(prefix="lifecycle-schema-"))
     run = lambda *a: subprocess.run(a, cwd=str(d), capture_output=True,  # noqa: E731
                                     text=True)
@@ -87,7 +92,8 @@ class DerivedHead(unittest.TestCase):
     """
 
     def _repo(self, n=12):
-        head = f"schema: 2\nbaseline: {n}\nadded: 0\ncompacted: 0\n\n"
+        head = (f"schema: {decl.SCHEMA_FLOOR}\nbaseline: {n}\n"
+                "added: 0\ncompacted: 0\n\n")
         goals = ["mitigate" if i % 3 == 0 else "verify" for i in range(n)]
         body = "\n".join(block(f"xx-{i + 1}", goal=goals[i]) for i in range(n))
         return build(items_text=head + body)
@@ -166,14 +172,14 @@ class CommentBlockBeforeTheSchemaLine(unittest.TestCase):
     def test_a_comment_block_above_the_schema_line_parses(self):
         parsed = items.parse(self.PREAMBLE + SEED_ITEMS)
         self.assertEqual(parsed.problems, [], parsed.problems)
-        self.assertEqual(parsed.head.get("schema"), 2)
+        self.assertEqual(parsed.head.get("schema"), decl.SCHEMA_FLOOR)
         self.assertEqual(len(parsed.items), 1)
 
     def test_the_same_block_BELOW_the_schema_line_is_a_shape_break(self):
         """The control. Without it, "comments are allowed" is
         indistinguishable from "the head is not checked at all"."""
-        text = SEED_ITEMS.replace("schema: 2\n", "schema: 2\n" + self.PREAMBLE,
-                                  1)
+        head = f"schema: {decl.SCHEMA_FLOOR}\n"
+        text = SEED_ITEMS.replace(head, head + self.PREAMBLE, 1)
         parsed = items.parse(text)
         self.assertTrue(parsed.problems,
                         "a comment below the version must be a shape break — "
@@ -183,7 +189,7 @@ class CommentBlockBeforeTheSchemaLine(unittest.TestCase):
 
     def test_the_ledger_reads_a_preamble_and_still_finds_its_version(self):
         from lifecycle_core import ledger
-        parsed = ledger.parse(self.PREAMBLE + "schema: 2\n"
+        parsed = ledger.parse(self.PREAMBLE + f"schema: {decl.SCHEMA_FLOOR}\n"
                               "dropped: xx-1 — overtaken by the rework\n")
         self.assertEqual(parsed.problems, [], parsed.problems)
         self.assertEqual(len(parsed.lines), 1)
@@ -247,7 +253,8 @@ class FlowNotSize(unittest.TestCase):
     """
 
     def _ratio(self, added, closed_n):
-        head = f"schema: 2\nbaseline: 1\nadded: {added}\ncompacted: 0\n\n"
+        head = (f"schema: {decl.SCHEMA_FLOOR}\nbaseline: 1\n"
+                f"added: {added}\ncompacted: 0\n\n")
         done = EMPTY_DONE + "\n" + "\n".join(
             block(f"xx-{100 + i}", grade="DONE") for i in range(closed_n))
         d = build(items_text=head + block("xx-1"), done_text=done)
@@ -298,7 +305,8 @@ class SchemaMigrationRefusesToGuess(unittest.TestCase):
     }
 
     def _repo(self, declaration):
-        d = build(items_text=SEED_ITEMS.replace("schema: 2", "schema: 1"),
+        d = build(items_text=SEED_ITEMS.replace(
+                      f"schema: {decl.SCHEMA_FLOOR}", "schema: 1"),
                   done_text="schema: 1\n",
                   ledger_text="schema: 1\n",
                   declaration=declaration)
@@ -454,11 +462,13 @@ class TheApplyRewritesTheLineTheReaderFound(unittest.TestCase):
     }
 
     def _repo(self, head, body_extra=""):
-        items_text = SEED_ITEMS.replace("schema: 2\n", head + "\n", 1)
+        items_text = SEED_ITEMS.replace(
+            f"schema: {decl.SCHEMA_FLOOR}\n", head + "\n", 1)
         if body_extra:
             items_text = items_text + body_extra
         d = build(items_text=items_text, ledger_text="schema: 1\n",
-                  done_text=EMPTY_DONE.replace("schema: 2", "schema: 1", 1))
+                  done_text=EMPTY_DONE.replace(
+                      f"schema: {decl.SCHEMA_FLOOR}", "schema: 1", 1))
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         doc = json.loads((d / ".claude" / "lifecycle.json")
                          .read_text(encoding="utf-8"))
@@ -482,7 +492,7 @@ class TheApplyRewritesTheLineTheReaderFound(unittest.TestCase):
                         f"{name}: the run printed `written: ITEMS.md` and the "
                         f"carrier came back byte-identical. exit={code}")
                     self.assertEqual(
-                        after.split("\n")[0], "schema: 2",
+                        after.split("\n")[0], f"schema: {decl.SCHEMA_FLOOR}",
                         f"{name}: the head is what must carry the new version")
                 else:
                     self.assertNotEqual(

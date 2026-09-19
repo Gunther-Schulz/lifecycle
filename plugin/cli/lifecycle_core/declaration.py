@@ -52,7 +52,15 @@ from . import exits
 #: mismatch is `schema_mismatch`, not a floor question. Two numbers for one
 #: fact is the shape that diverges the moment they disagree, and the reader
 #: resolves through whichever it happens to open.
-SCHEMA_FLOOR = 2
+#: BUMPED 2 -> 3 on 2026-09-19 (lc-218). The number had stopped identifying
+#: the shape: lc-168 (41cee8b) made the `trigger` stage REQUIRED, so a
+#: declaration valid under schema 2 on one day was invalid under schema 2 on
+#: the next, while the stamp said the same thing both times. That is the
+#: label-over-body class at the most load-bearing label in the system, since
+#: every reader resolving through the number resolves through a label whose
+#: body moved under it. The bump was owed from 2026-09-18 and was deferred
+#: then for a timing reason rather than a correctness one.
+SCHEMA_FLOOR = 3
 
 #: Where the declaration lives, relative to the repo root. Tracked; the
 #: install step adds the `.gitignore` negation and this reader fails on an

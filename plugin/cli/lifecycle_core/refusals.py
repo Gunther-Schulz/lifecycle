@@ -41,7 +41,13 @@ from . import ledger as ledger_mod
 #: row mutates exactly one thing away from. Derived from the design's own
 #: stage list, never read back out of a real repo's file.
 GOOD_DECLARATION = {
-    "schema": 2,
+    # DERIVED, never restated (lc-218). This fixture is the control every
+    # row mutates one thing away from, and the carriers beside it are seeded
+    # from `ledger.head_text()` / the constants below, which read the live
+    # floor. A literal here disagrees with them the moment the floor moves,
+    # and `schema_mismatch` then fires on EVERY declaration row's control —
+    # 42 of them did exactly that on the 2 -> 3 bump.
+    "schema": items_mod.SCHEMA_FLOOR,
     "id-prefix": "xx",
     "public": True,
     "laws": "LAWS.md",
@@ -70,7 +76,7 @@ GOOD_DECLARATION = {
     },
 }
 
-GOOD_ITEMS = """schema: 2
+GOOD_ITEMS = f"""schema: {items_mod.SCHEMA_FLOOR}
 baseline: 0
 
 ## xx-1
@@ -750,7 +756,8 @@ PROSE_REST = [
 #: out of a repo: an expectation derived from the artifact it grades moves
 #: with the mutant.
 GOOD_FULL_DECLARATION = {
-    "schema": 2, "id-prefix": "xx", "public": False, "laws": "LAWS.md",
+    "schema": items_mod.SCHEMA_FLOOR, "id-prefix": "xx", "public": False,
+    "laws": "LAWS.md",
     "closure-home": "ITEMS-DONE.md", "trigger-policy": "on-demand",
     "goals": ["see", "attribute", "mitigate", "verify", "retire"],
     "head-rule": {"lead-goal": "mitigate"},
@@ -811,7 +818,7 @@ GOOD_FULL_DECLARATION = {
 }
 
 #: A carrier head whose conservation identity balances against ONE live item.
-SEED_ITEMS = """schema: 2
+SEED_ITEMS = f"""schema: {items_mod.SCHEMA_FLOOR}
 baseline: 1
 added: 0
 compacted: 0
@@ -826,8 +833,9 @@ evidence: none yet
 blocked-by: NONE
 """
 
-EMPTY_ITEMS = "schema: 2\nbaseline: 0\nadded: 0\ncompacted: 0\n"
-EMPTY_DONE = "schema: 2\n"
+EMPTY_ITEMS = (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+               "baseline: 0\nadded: 0\ncompacted: 0\n")
+EMPTY_DONE = f"schema: {items_mod.SCHEMA_FLOOR}\n"
 
 #: THE SAME CARRIER WITH A SECOND BODY, built the way the `duplicate_id` row
 #: already builds one: the seed block under another id, with `baseline` raised
@@ -858,7 +866,8 @@ def _blocked_block(ident: str, grade: str, blocker: str) -> str:
 #: carrying only the item form would score identically whether or not the
 #: check got that distinction right.
 FOUR_BLOCKER_ITEMS = (
-    "schema: 2\nbaseline: 4\nadded: 0\ncompacted: 0\n"
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 4\nadded: 0\ncompacted: 0\n")
     + _blocked_block("xx-1", "PARKED", "xx-9999")
     + _blocked_block("xx-2", "PARKED", "decision which window")
     + _blocked_block("xx-3", "PARKED", "evidence test -f /nonexistent")
@@ -871,13 +880,15 @@ FOUR_BLOCKER_ITEMS = (
 #: differing in the blocker value as well would prove whichever of the two the
 #: reader assumed.
 PARK_AMENDED_ITEMS = (
-    "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 1\nadded: 0\ncompacted: 0\n")
     + _blocked_block("xx-1", "READY", "NONE")
     + "amend-reason: 2026-09-12 the earlier wait was cleared by the "
       "retirement pass\namended-blocked-by: 2026-09-12 NONE\n"
 )
 PARK_UNAMENDED_ITEMS = (
-    "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 1\nadded: 0\ncompacted: 0\n")
     + _blocked_block("xx-1", "READY", "NONE")
 )
 
@@ -888,12 +899,14 @@ PARK_UNAMENDED_ITEMS = (
 #: in the blocker's state would be a pair proving whichever of the two the
 #: reader assumed.
 BLOCKER_TARGET_LIVE_ITEMS = (
-    "schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 2\nadded: 0\ncompacted: 0\n")
     + _blocked_block("xx-1", "READY", "xx-2")
     + _blocked_block("xx-2", "READY", "NONE")
 )
 BLOCKER_TARGET_CLOSED_ITEMS = (
-    "schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 2\nadded: 0\ncompacted: 0\n")
     + _blocked_block("xx-1", "READY", "xx-2")
 )
 BLOCKER_TARGET_CLOSED_DONE = EMPTY_DONE + _blocked_block("xx-2", "DONE", "NONE")
@@ -948,11 +961,13 @@ CARRIED_POINTER_CLAUSE = (
 #: marker hits none (R11 — a guard that fires on legitimate work stops the
 #: lane).
 CARRIED_POINTER_ITEMS = (
-    "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 1\nadded: 0\ncompacted: 0\n")
     + _clause_block("xx-1", CARRIED_POINTER_CLAUSE)
 )
 CARRIED_POINTER_PROSE_ITEMS = (
-    "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 1\nadded: 0\ncompacted: 0\n")
     + _clause_block("xx-1", CARRIED_POINTER_CLAUSE.replace(
         "CARRIED POINTER", "a carried pointer", 1))
 )
@@ -2275,7 +2290,7 @@ def _coverage_over_copy(*, plant: bool, word: str = "FINDING") -> Fired:
 #: refuse. The requirement keeps the `— record: <path>:<line>` tail a
 #: migration writes, so the row exercises the title PARSE and not a bare
 #: string equality that a tail would defeat.
-MERGE_TARGET_ITEMS = """schema: 2
+MERGE_TARGET_ITEMS = f"""schema: {items_mod.SCHEMA_FLOOR}
 baseline: 1
 added: 0
 compacted: 0
@@ -2361,7 +2376,7 @@ def _migrate_run(*, backlog=None, force=False, merge=False,
 #: every build before lc-86 wrote. The `evidence` range is what the retire
 #: refusal reads; the `requirement` tail is the same anchor's other half and is
 #: there so the fixture is a real migrated block rather than a fragment.
-UNPINNED_ANCHOR_ITEMS = """schema: 2
+UNPINNED_ANCHOR_ITEMS = f"""schema: {items_mod.SCHEMA_FLOOR}
 baseline: 1
 added: 0
 compacted: 0
@@ -2870,7 +2885,8 @@ SCHEMA_ROWS = [
         expect=exits.FINDING,
         fire=lambda: _decl_run(
             declaration=GOOD_DECLARATION, gitignore="", laws_lines=10,
-            items_text=EMPTY_ITEMS.replace("schema: 2", "schema: 1", 1)),
+            items_text=EMPTY_ITEMS.replace(
+                f"schema: {items_mod.SCHEMA_FLOOR}", "schema: 1", 1)),
         # The SAME repo with the carrier at the declaration's number.
         control=lambda: _decl_run(**_GOOD_KW),
         stage="wave 1d, the schema wave",
@@ -3609,7 +3625,7 @@ RECORD_ROWS = [
 
 # --- lc-16: reading the carrier BY GOAL -------------------------------------
 
-_TWO_GOAL_ITEMS = """schema: 2
+_TWO_GOAL_ITEMS = f"""schema: {items_mod.SCHEMA_FLOOR}
 baseline: 0
 
 ## xx-1
