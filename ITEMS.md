@@ -1320,7 +1320,7 @@ evidence: MEASURED AT THIS DESK 2026-09-19, executed rather than read, calling r
 blocked-by: NONE
 
 ## lc-231
-grade: NEW
+grade: PARKED
 requirement: AN ARC IS THE ONE THING THIS SYSTEM IS ABOUT AND THE ONLY THING IT DOES NOT REGISTER. Every persisted thing resolves to a registered kind (invariant 1), and 26 kinds are declared; the ARC -- the multi-session unit of work that statiker and daneel maintain and that dies with its protocol run -- is not among them. The design of record names this exactly: those protocols capture in-flight and richly, and what they do NOT do is outlive their own arc, so session 11 re-derives what session 3 knew. Lifecycle's job is to be what they write into. Record: docs/directives/2026-09-19-arc-walk-synthesis.md, and docs/answerable-not-felt.md section 'What statiker and daneel already do'.
 goal: enforce-the-invariants
 write-set: UNKNOWN
