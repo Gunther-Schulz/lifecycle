@@ -182,6 +182,31 @@ REF_BARE = ("session", "operator")
 #: why it lives here as data rather than in a sentence.
 REF_TYPES = ("lane", "verb", "hook", "session", "producer", "operator")
 
+#: lc-224 — THE READER STAGE GAINS A PER-ENTRY WHEN. Decision (LEDGER
+#: 8a5d760): the WHEN attaches to each `reader` ENTRY rather than as an
+#: eighth kind stage, because a per-kind scalar cannot describe a kind whose
+#: reader list MIXES a bare role with a `verb:`/`hook:` reference — this
+#: repo's own `laws` kind (`reader: ["session", "verb:audit"]`) is exactly
+#: such a kind, and seventeen of twenty-six declared kinds carry more than
+#: one reader entry.
+#:
+#: Deliberately NARROWER than `TRIGGER_MODES`: `verb` is not a member. A read
+#: occasioned by a verb is already expressible by making the reader entry
+#: itself `verb:<name>` — a `verb` WHEN there would be a second spelling of a
+#: fact the reader TYPE already carries, not a new one.
+#:
+#:   predicate <cmd>       a condition, evaluated by `lanes.evaluate_trigger`
+#:                         — the ONE evaluator, same as the `trigger` stage.
+#:   none, declared why: <reason>
+#:                         the read genuinely has no moment, and says so —
+#:                         the same escape `staleness`, `growth` and
+#:                         `trigger` already use.
+#:
+#: LEGAL ONLY ON A BARE READER (`session`, `operator`). On a prefixed reader
+#: the moment is the referenced act firing, so a `when` there is a second
+#: answer to a settled question.
+READER_WHEN_MODES = ("predicate", "none")
+
 #: THE ONE PLUGIN-RESERVED GOAL (§3.1b, operator 2026-08-28): "work on this
 #: repo's own carrier, method, hooks, machinery, or migration residue". It is
 #: in no declaration's `goals` list and is not declarable per repo — the
@@ -1129,15 +1154,55 @@ def _validate_kind(name: str, body, res: Result, world) -> None:
 
     reader = body.get("reader")
     if "reader" in body:
-        if not isinstance(reader, list) or not reader or not all(
-                isinstance(r, str) and r.strip() for r in reader):
+        if not isinstance(reader, list) or not reader:
             res.add("declaration_malformed",
                     f"kind {name!r}: `reader` must be a non-empty list of "
-                    "non-empty strings. A kind nothing reads is the "
-                    "registry's own recorded defect — it accumulates "
-                    "forever and no gate ever looks at it.")
+                    "non-empty strings, or objects carrying `reader` and "
+                    "`when`. A kind nothing reads is the registry's own "
+                    "recorded defect — it accumulates forever and no gate "
+                    "ever looks at it.")
         else:
-            _check_typed_refs(name, "reader", reader, res, world)
+            # lc-224: A `reader` ENTRY IS EITHER TODAY'S BARE STRING
+            # (unchanged) OR AN OBJECT carrying `reader` (the same typed
+            # token) and `when` (§ READER_WHEN_MODES). `typed` collects the
+            # plain typed-reference strings either shape reduces to, so an
+            # all-bare-string declaration feeds `_check_typed_refs` the
+            # IDENTICAL list it always did — byte-identical findings for
+            # every declaration written before this change.
+            typed = []
+            for entry in reader:
+                if isinstance(entry, str):
+                    if not entry.strip():
+                        res.add("declaration_malformed",
+                                f"kind {name!r}: `reader` must be a "
+                                "non-empty list of non-empty strings, or "
+                                "objects carrying `reader` and `when`. A "
+                                "kind nothing reads is the registry's own "
+                                "recorded defect — it accumulates forever "
+                                "and no gate ever looks at it.")
+                        continue
+                    typed.append(entry)
+                elif isinstance(entry, dict):
+                    ref = entry.get("reader")
+                    if not isinstance(ref, str) or not ref.strip():
+                        res.add("declaration_malformed",
+                                f"kind {name!r}: a `reader` object must "
+                                "carry a non-empty `reader` key — the same "
+                                "typed token a bare entry carries.")
+                        continue
+                    typed.append(ref)
+                    if "when" in entry:
+                        _check_reader_when(name, ref, entry["when"], res)
+                else:
+                    res.add("declaration_malformed",
+                            f"kind {name!r}: `reader` must be a non-empty "
+                            "list of non-empty strings, or objects carrying "
+                            "`reader` and `when`. A kind nothing reads is "
+                            "the registry's own recorded defect — it "
+                            "accumulates forever and no gate ever looks at "
+                            "it.")
+            if typed:
+                _check_typed_refs(name, "reader", typed, res, world)
 
     if isinstance(writer, str) and writer.strip():
         _check_typed_refs(name, "writer", [writer], res, world)
@@ -1437,6 +1502,122 @@ def _check_typed_refs(kind: str, stage: str, values, res: Result,
                     f"not in {what}. Nothing dangles (invariant 4): a "
                     "reference that resolves to nothing renders exactly like "
                     "one that resolves.")
+
+
+def _check_reader_when(kind: str, ref: str, when, res: Result) -> None:
+    """Validate one reader entry's `when` — STRUCTURALLY ONLY.
+
+    Mirrors the `trigger` stage's own vocabulary check (§ line ~1177) in
+    shape, over the narrower `READER_WHEN_MODES` vocabulary. Never executes
+    a predicate: the seventh stage does not either at validation time, and a
+    `kind check` that ran shell would be a new side effect nobody asked for
+    — execution is `read_moments`'s job alone, below.
+    """
+    if not isinstance(when, str) or not when.strip():
+        res.add("declaration_malformed",
+                f"kind {kind!r}: reader {ref!r} carries a `when` that is "
+                "not a non-empty string.")
+        return
+    if ref not in REF_BARE:
+        res.add("declaration_malformed",
+                f"kind {kind!r}: reader {ref!r} carries a `when`, but "
+                "`when` is only legal on a bare reader ("
+                + ", ".join(REF_BARE) + "). A prefixed reader's moment is "
+                "the referenced act firing — a `when` there is a second "
+                "answer to a settled question.")
+        return
+    spelled = when.strip()
+    mode = spelled.split()[0].strip(" :,—-").lower()
+    rest = spelled[len(spelled.split()[0]):].strip(" :,—-")
+    rest = rest.split("—")[0].strip(" :,-")
+    if mode not in READER_WHEN_MODES:
+        res.add("declaration_malformed",
+                f"kind {kind!r}: reader {ref!r}'s `when` must BEGIN with "
+                f"one of {', '.join(READER_WHEN_MODES)}, got {when!r}. The "
+                "vocabulary is closed and narrower than a kind's own "
+                "`trigger`: `verb` is not a member here because a "
+                "verb-occasioned read is already expressible as "
+                "`verb:<name>` in the reader type itself.")
+        return
+    if mode == "none":
+        if _needs_why(spelled, "none"):
+            res.add("kind_stage_undeclared",
+                    f"kind {kind!r}: reader {ref!r}'s `when` says \"none\" "
+                    "and states no reason. The word carries the "
+                    "obligation — spelled `none, declared why: <reason>`.")
+        return
+    # mode == "predicate"
+    if not rest:
+        res.add("kind_stage_undeclared",
+                f"kind {kind!r}: reader {ref!r}'s `when` says 'predicate' "
+                "and names nothing. A predicate with no command has no "
+                "state, and no state is not quiet.")
+
+
+#: `read_moments`'s per-entry answer. `state` is always one of FIRE / QUIET /
+#: BROKEN (from `lanes.evaluate_trigger`, for a `predicate` WHEN) or NONE (a
+#: declared `none, declared why: ...`) or UNDECLARED (no `when` at all —
+#: today's default shape, unchanged). An absent moment and a quiet one are
+#: different answers, so both are reported; only a `predicate` WHEN is ever
+#: actually run.
+@dataclass
+class ReadMoment:
+    reader: str
+    state: str
+    detail: str = ""
+
+
+#: The two states `read_moments` assigns itself, never `lanes.evaluate_trigger`
+#: — that function's own contract is FIRE/QUIET/BROKEN and stays untouched
+#: (the ONE evaluator, CLAUDE.md "The router, and the ONE trigger evaluator").
+READ_MOMENT_NONE = "NONE"
+READ_MOMENT_UNDECLARED = "UNDECLARED"
+
+
+def read_moments(body: dict, repo: Path | None = None) -> list:
+    """Evaluate every `reader` entry's declared WHEN — the O6 evaluation half.
+
+    A `predicate` WHEN is RUN, through `lanes.evaluate_trigger` and NOTHING
+    ELSE — no second mapping, no local exit interpretation, so this cannot
+    disagree with `lane list` or `item ready` about what BROKEN means. A
+    `none` WHEN or an absent one is reported, never executed and never
+    silently dropped: an absent moment and a quiet one are different
+    answers.
+
+    Deferred import: `lanes` imports this module (`from . import
+    declaration as decl`), so a module-level import here would be circular
+    — the same reason `_verb_exists` defers its own `cli` import.
+    """
+    from . import lanes
+    out = []
+    for entry in body.get("reader") or []:
+        if isinstance(entry, dict):
+            ref = entry.get("reader")
+            when = entry.get("when")
+        else:
+            ref = entry
+            when = None
+        ref = ref if isinstance(ref, str) else str(ref)
+        if not isinstance(when, str) or not when.strip():
+            out.append(ReadMoment(ref, READ_MOMENT_UNDECLARED))
+            continue
+        spelled = when.strip()
+        mode = spelled.split()[0].strip(" :,—-").lower()
+        rest = spelled[len(spelled.split()[0]):].strip(" :,—-")
+        rest = rest.split("—")[0].strip(" :,-")
+        if mode == "none":
+            out.append(ReadMoment(ref, READ_MOMENT_NONE, rest))
+        elif mode == "predicate" and rest:
+            trig = lanes.evaluate_trigger(rest, cwd=repo)
+            out.append(ReadMoment(ref, trig.state, trig.detail))
+        else:
+            # A malformed `when` (bad vocabulary, or `predicate` naming
+            # nothing) — `_check_reader_when` reports this at validation
+            # time; `read_moments` never runs shell over something it
+            # cannot parse, so it reports the entry as having no evaluable
+            # moment rather than guessing.
+            out.append(ReadMoment(ref, READ_MOMENT_UNDECLARED, spelled))
+    return out
 
 
 def check_laws_present(repo: Path, laws_rel: str, res: Result) -> None:

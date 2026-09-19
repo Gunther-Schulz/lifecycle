@@ -11,6 +11,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "plugin" / "cli"))
 
 from lifecycle_core import declaration as decl, exits, refusals  # noqa: E402
+from lifecycle_core import lanes as lanes_mod  # noqa: E402
 
 
 class DeclaredHomesSweep(unittest.TestCase):
@@ -266,3 +268,181 @@ class TheRegistryDigest(unittest.TestCase):
         by_none = next(ln for ln in lines if "read by nobody" in ln)
         self.assertNotIn("[session-read]", by_verb)
         self.assertIn("[session-read]", by_none)
+
+
+class ReaderWhenStage(unittest.TestCase):
+    """lc-224 — the reader stage gains a per-entry WHEN.
+
+    Decision (LEDGER 8a5d760): the WHEN attaches PER READER ENTRY rather than
+    as an eighth stage — a per-kind scalar cannot describe a kind whose
+    reader list mixes a bare role with a `verb:`/`hook:` reference, and this
+    repo's own `laws` kind (`reader: ["session", "verb:audit"]`,
+    `GOOD_FULL_DECLARATION`) is exactly such a kind. A `reader` list entry is
+    EITHER today's bare string (unchanged) OR an object carrying `reader`
+    and `when`.
+    """
+
+    @staticmethod
+    def _kind(reader):
+        return {"home": "x.md", "writer": "session", "reader": reader,
+                "staleness": "none, declared why: fixture",
+                "exit": {"action": "never", "recording-act": "fixture"},
+                "growth": "unbounded-with-reason — a fixture kind",
+                "trigger": "none, declared why: fixture"}
+
+    def _findings(self, reader):
+        doc = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        doc["kinds"] = {"widgets": self._kind(reader)}
+        res = decl.Result(exits.CLEAN)
+        decl.validate(doc, res)
+        return [f.row for f in res.findings]
+
+    def _messages(self, reader):
+        doc = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        doc["kinds"] = {"widgets": self._kind(reader)}
+        res = decl.Result(exits.CLEAN)
+        decl.validate(doc, res)
+        return [f.message for f in res.findings]
+
+    # --- shape: a bare string is unchanged, an object is now accepted ------
+
+    def test_a_bare_string_reader_still_validates_exactly_as_before(self):
+        self.assertEqual(self._findings(["session"]), [])
+
+    def test_an_object_reader_with_a_predicate_when_validates_clean(self):
+        self.assertEqual(
+            self._findings([{"reader": "session", "when": "predicate true"}]),
+            [])
+
+    def test_an_object_reader_with_a_declared_none_when_validates_clean(self):
+        self.assertEqual(
+            self._findings([{"reader": "session",
+                             "when": "none, declared why: no button exists"}]),
+            [])
+
+    # --- malformed shapes ---------------------------------------------------
+
+    def test_object_missing_its_reader_key_is_malformed(self):
+        """DISCRIMINATING on message, not just ident: the old shape check
+        rejects any non-string entry with its GENERIC message too, so the
+        ident alone would pass on the unchanged file for the wrong reason."""
+        msgs = self._messages([{"when": "predicate true"}])
+        self.assertTrue(any("must carry a non-empty `reader` key" in m
+                            for m in msgs), msgs)
+
+    def test_object_whose_reader_is_not_a_string_is_malformed(self):
+        msgs = self._messages([{"reader": 7, "when": "predicate true"}])
+        self.assertTrue(any("must carry a non-empty `reader` key" in m
+                            for m in msgs), msgs)
+
+    def test_when_that_is_not_a_string_is_malformed(self):
+        msgs = self._messages([{"reader": "session", "when": 7}])
+        self.assertTrue(any("carries a `when` that is not a non-empty "
+                            "string" in m for m in msgs), msgs)
+
+    def test_when_outside_the_closed_vocabulary_is_malformed(self):
+        msgs = self._messages([{"reader": "session", "when": "verb audit"}])
+        self.assertTrue(any("must BEGIN with one of" in m
+                            and "when" in m for m in msgs), msgs)
+
+    def test_when_is_illegal_on_a_prefixed_reader(self):
+        """The moment is the referenced act firing; a `when` there is a
+        second answer to a settled question. DISCRIMINATING on message: the
+        old shape check would call this malformed too, for the wrong
+        reason (any non-string entry), so the ident alone proves nothing
+        pre-implementation."""
+        msgs = self._messages(
+            [{"reader": "verb:audit", "when": "predicate true"}])
+        self.assertTrue(any("only legal on a bare reader" in m
+                            for m in msgs), msgs)
+
+    # --- missing reasons ----------------------------------------------------
+
+    def test_none_when_with_no_reason_is_kind_stage_undeclared(self):
+        findings = self._findings([{"reader": "session", "when": "none"}])
+        self.assertIn("kind_stage_undeclared", findings)
+
+    def test_predicate_when_naming_nothing_is_kind_stage_undeclared(self):
+        findings = self._findings(
+            [{"reader": "session", "when": "predicate"}])
+        self.assertIn("kind_stage_undeclared", findings)
+
+    # --- MUST-NOT-MOVE: existing all-string declarations are untouched -----
+
+    def test_the_repos_own_laws_kind_reader_list_is_still_clean(self):
+        """`laws` is this repo's own mixed kind — `["session",
+        "verb:audit"]` — and it carries no `when` at all, so it must
+        validate byte-identically to before this change: clean."""
+        doc = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        res = decl.Result(exits.CLEAN)
+        decl.validate(doc, res)
+        self.assertEqual(res.findings, [])
+
+
+class ReadMomentsEvaluation(unittest.TestCase):
+    """The evaluation half — no precedent in this repo before lc-224.
+
+    Routes through `lanes.evaluate_trigger` and nothing else, so it cannot
+    disagree with `lane list` or `item ready` about what BROKEN means (the
+    ONE-evaluator rule, CLAUDE.md "The router, and the ONE trigger
+    evaluator"). Three answers, each its own test, per law 1.
+    """
+
+    @staticmethod
+    def _kind(reader):
+        return {"home": "x.md", "writer": "session", "reader": reader,
+                "staleness": "none, declared why: fixture",
+                "exit": {"action": "never", "recording-act": "fixture"},
+                "growth": "unbounded-with-reason — a fixture kind",
+                "trigger": "none, declared why: fixture"}
+
+    def test_fire(self):
+        moments = decl.read_moments(
+            self._kind([{"reader": "session", "when": "predicate true"}]))
+        self.assertEqual([m.state for m in moments], ["FIRE"])
+
+    def test_quiet(self):
+        moments = decl.read_moments(
+            self._kind([{"reader": "session", "when": "predicate false"}]))
+        self.assertEqual([m.state for m in moments], ["QUIET"])
+
+    def test_broken_nonzero_exit(self):
+        moments = decl.read_moments(
+            self._kind([{"reader": "session", "when": "predicate exit 2"}]))
+        self.assertEqual([m.state for m in moments], ["BROKEN"])
+
+    def test_broken_cannot_run_at_all(self):
+        """A `cwd` that does not exist makes `subprocess.run` raise OSError —
+        the arm `evaluate_trigger` reserves for a predicate that could not be
+        run at all, distinct from one that ran and exited >=2."""
+        moments = decl.read_moments(
+            self._kind([{"reader": "session", "when": "predicate true"}]),
+            repo=Path("/lc224-does-not-exist-anywhere"))
+        self.assertEqual([m.state for m in moments], ["BROKEN"])
+
+    def test_a_none_when_is_reported_but_not_evaluated(self):
+        moments = decl.read_moments(self._kind(
+            [{"reader": "session",
+             "when": "none, declared why: no button exists"}]))
+        self.assertEqual([m.state for m in moments], ["NONE"])
+
+    def test_an_absent_when_is_reported_but_not_evaluated(self):
+        """An absent moment and a quiet one are different answers — both are
+        reported, never omitted; only a `predicate` WHEN is ever run."""
+        moments = decl.read_moments(self._kind(["session"]))
+        self.assertEqual([m.state for m in moments], ["UNDECLARED"])
+
+    def test_a_mixed_kind_evaluates_exactly_one_moment(self):
+        """lc-224's own motivating shape: a `laws`-style mixed reader list,
+        `when` on only the bare entry. Both entries are REPORTED; only the
+        one carrying a `predicate` WHEN is actually RUN."""
+        body = self._kind(
+            [{"reader": "session", "when": "predicate true"}, "verb:audit"])
+        with mock.patch.object(lanes_mod, "evaluate_trigger",
+                               wraps=lanes_mod.evaluate_trigger) as spy:
+            moments = decl.read_moments(body)
+        self.assertEqual(spy.call_count, 1)
+        self.assertEqual(len(moments), 2)
+        states = {m.reader: m.state for m in moments}
+        self.assertEqual(states["verb:audit"], "UNDECLARED")
+        self.assertIn(states["session"], ("FIRE", "QUIET", "BROKEN"))
