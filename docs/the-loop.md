@@ -32,7 +32,7 @@ Status vocabulary, and it is deliberately not a grade of quality:
 |---|---|---|---|---|---|---|
 | O1 | nothing → a session exists | — | — | — | SessionStart hooks | MECHANIZED |
 | O2 | session → holds standing state | — | — | — | `session-scan.py` injects ledger tail, item census, ready items, gate status | MECHANIZED |
-| O3 | session → holds the repo's reading roster | — | `.claude/required-reading.json` | roster gate | `required-reading-inject.py` | **GAP — this repo declares no roster at all** |
+| O3 | session → holds the repo's reading roster | — | `.claude/required-reading.json` | roster gate | `required-reading-inject.py` | **MECHANIZED 2026-09-19** — the roster SHIPPED (`e71a414`) and is a REGISTERED KIND (`2a154ea`); injected at session start, gate arms on first write |
 | O4 | session → holds the registry map | `kind list --digest` | — | its own three arms | a SessionStart hook | **PARTIAL — the verb SHIPPED 2026-09-18 (lc-219); the hook that runs it is not built** |
 | O5 | session → picks work | `item ready` | — | `item check` | the injected ready list | MECHANIZED |
 | O6 | **session needs a kind's CONTENT at the moment it matters** | — | — | — | — | **GAP — the central one; see below** |
@@ -147,9 +147,11 @@ not yet designed; that is the honest state.
 4. **I10 — a silenced red is indistinguishable from an understood one.**
 5. **O8 — nothing fires a close.** The ceremony is good; its trigger is a
    person remembering.
-6. **O3 — no reading roster.** Small, booked. **O4's verb SHIPPED the day
+6. ~~**O3 — no reading roster.**~~ **CLOSED 2026-09-19**: the roster shipped
+   (`e71a414`) and became a registered kind (`2a154ea`), so it is injected at
+   session start and its gate arms on first write. **O4's verb SHIPPED the day
    this file was written**; the hook that puts its output in front of a
-   session has not.
+   session has not, so O4 remains PARTIAL and is the live half of this line.
 
 **This file is edited in place as its rows move, and that is not
 housekeeping.** A map whose rows go stale while its author watches is the
@@ -178,7 +180,15 @@ found — locate it here first. If it is already a row, the row was not acted
 on; if it is not a row, the table was incomplete and gains one. Both outcomes
 are more useful than the finding alone.
 
-**The limit:** this table is itself a persisted artifact with `reader:
-session` and no read trigger. It is O6's own subject. Nothing fires it, and
-the first thing that would make it fire is the registry digest listing it by
-name.
+**The limit, and it MOVED on 2026-09-19 — the paragraph below previously
+said nothing fires this file, which is no longer true and was the kind of
+stale sentence this page exists to make visible.** This table is a persisted
+artifact with `reader: session`, and it now HAS a read trigger: it is named
+in `.claude/required-reading.json`, so a fresh context is handed it at
+session start and a write gate arms on it. That closes the session-boundary
+half only. It does not close O6, whose whole finding is that retrieval fails
+at MOMENTS OF APPLICATION rather than at session boundaries — a session can
+be handed this file at minute one and still not reach for it at minute
+forty, which is instance 3 of the design's own three-instance table. The
+registry digest listing it by name would still raise the odds and still not
+close it.
