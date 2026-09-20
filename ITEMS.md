@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 243
+added: 244
 compacted: 0
 
 ## lc-3
@@ -1408,4 +1408,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/refusals.py
 done-criterion: prove-rows reports amend_nothing_to_amend and capture_dominated PROVEN again; each repaired arrangement is re-admitted on lc-142 PAIR terms (real anchor: the named row changes; inert anchor: rows changed NONE, both quoted), the repair takes lc-30 scoping form where the diagnosis confirms that class (same-parentage mutation narrowed per direction, never a widened assertion), and no OTHER row verdict moves against the pre-repair baseline run, which is recorded with the fix. RED-FIRST is already standing: both rows are red at HEAD today, so the baseline needs no construction.
 evidence: MEASURED (erosion probe, 12-sample longitudinal run over df13f3e..cb32a4c, lane sonnet-erosion-probe, table re-derived independently at this desk from the TSV, figures agree cell-for-cell): amend_nothing_to_amend PROVEN for 7 consecutive samples then FAILED from 55591ec (2026-09-19) through HEAD; capture_dominated PROVEN for 8 samples then COULD_NOT_VERIFY from a533253 (2026-09-19) through HEAD. These are the ONLY two non-transient regressions in 797 previously-proven row-pair transitions. DERIVED, a direction not a conclusion: both retiring commits are same-day refusals.py changes (a533253 rewrote 50 lines for the schema floor; 55591ec added 54 arc-carrier lines), so the first hypothesis is the lc-30 class — an added or reworked neighbour retiring an existing proof — but the per-row diagnosis has not run.
+blocked-by: NONE
+
+## lc-252
+grade: READY
+requirement: KIND MOMENTS LABELS A COUNT OF READER ENTRIES AS DECLARED MOMENTS: seen increments for every moment INCLUDING UNDECLARED ones (verbs.py, the tally loop above the honesty comment), so over this repo the tally prints 50 declared moment(s) where the declaration declares ZERO, and the fire detail carries declared=50 executed=0 into the machine-wide carrier. The console is saved by its neighbours (0 of them EXECUTED beside it); the carrier half has no neighbours and is what a later counter reads — the O6 surfacing design (proposal, lifecycle-ef 2026-09-20) proposes exactly such counters over that carrier, so the wrong word there is load-bearing, not cosmetic. Same class as lc-247, one surface over. Record: the O6 proposal section 10; verified at this desk at verbs.py and the live output.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: The tally word matches its predicate: entries, declared (carrying a when), and executed are three separately-labelled numbers in both the console tally and the fire-log detail, and declared counts ONLY entries with a declared when. RED-FIRST is live today: over this repo the current output prints declared=50 against a declaration declaring 0 — that firing input must read declared=0 after the fix, with the entry count still visible. Tests pinning the old wording move with it; none deleted to green. The console honesty pairing (executed beside declared) survives unchanged.
+evidence: MEASURED at this desk 2026-09-20: verbs.py increments seen per moment unconditionally (read at the source, ~line 3909); kind moments over this repo prints "50 declared moment(s)" console-side and the declaration carries 0 object-form reader entries (re-derived by script: 50 entries, verb 23 / session 24 / hook 3). RELAYED (lifecycle-ef, O6 proposal section 10) and re-verified here: the fire detail carries declared=50 executed=0 into the carrier a banner reads back. DERIVED: any surfaced-vs-read counter built on that detail inherits the wrong word, which is why this precedes the O6 build.
 blocked-by: NONE
