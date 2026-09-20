@@ -85,6 +85,18 @@ JSONL, not the search tool, or it under-counts the very events it exists to
 count. A zero from the search tool over this class is an instrument reading,
 not an absence.
 
+**One graded specimen already in hand (2026-09-20, the non-technical
+session; operator-pasted and operator-confirmed in this repo's own
+conversation):** the operator asked what the goal was; the session's read
+was correct by the operator's own grading ("yes, so hoping you are back on
+track") and the arc re-corrected. The read closed with a one-bit
+confirmation demand — "is that the goal, or is it something else, in your
+words?" — which is the slot pattern's whole shape already: statement plus
+cheap confirmation. One event. The operator reports doing this across
+projects and sessions with "usually correct" results; that stays
+recollection-grade until the sweep counts it, and it also says the baseline
+data spans MULTIPLE project corpora, not one.
+
 **TREATMENT (prospective, mechanism must exist in trial form).** Sessions
 run with a seam-fired goal-question demand: the investigation record's GOAL
 slot re-read and a one-line "how the current move serves it" written at each
@@ -125,6 +137,18 @@ babysitting falls — only the drift-intervention slice is counted.
 - **COULD NOT VERIFY** (too few established drift episodes land in the
   treatment window to read either way): reported as exactly that, with the
   episode count, never as either verdict.
+
+**WHAT SURVIVES A QUIET — added 2026-09-20 from the operator's own
+refinement, first-hand: "usually correct, not always — but then I can
+adjust."** The adjustability depends entirely on the answer being STATED: a
+wrong goal-read written down is graded in one glance and corrected in one
+turn, where a wrong goal held silently drifts for an afternoon. So a QUIET
+result kills only the TRIGGER-SUFFICES claim; it demotes the candidate from
+removes-the-operator-trigger to cheapens-the-operator's-grading (they scan
+a line instead of detecting drift from the work's behavior) — a separate
+and weaker license the round weighs against its honest cost, which is that
+it still spends operator attention at every seam. Under QUIET the
+direction-drift bullet records the demotion, not a bare kill.
 
 ## What this probe cannot be asked
 
