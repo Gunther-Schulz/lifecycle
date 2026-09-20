@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 245
+added: 246
 compacted: 0
 
 ## lc-3
@@ -1431,3 +1431,12 @@ write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/vo
 done-criterion: `kind moments` renders a DERIVED state, carrying which tier derived it, for every reader entry the two tiers cover, and reserves UNDECLARED for the residue; the state is registered in vocab.py's registry with its proof path, and the cannot-express bucket is untouched. RED-FIRST, live today, no fixture needed: over this repo's own declaration the current output is 50 UNDECLARED / 0 DERIVED, and after the change the same input reads 23 verb-tier + 24 session-tier DERIVED with the 3 hook entries unchanged. CONTROL: a reader that is neither verb nor session keeps UNDECLARED, so the change is not a rename of UNDECLARED. MUST-NOT-MOVE: UNDECLARED never becomes a finding (law 11, and kind moments' own stated rule).
 evidence: MEASURED at this desk 2026-09-20 over the live declaration: 29 kinds, 50 reader entries, 0 with an object-form when; kind moments prints 50 UNDECLARED and no FIRE/QUIET/BROKEN/MALFORMED/NONE, exit 0; split verb 23 / session 24 / hook 3 re-derived by script, by kind session+verb 13 / session-only 9 / verb-only 4 / hook+session 2 / hook-only 1. MEASURED at this desk: lc-241's closure sits in the done home. DERIVED (design desk, adopted here): a verb reader's moment is implicit in the verb running — lc-224's own arity argument rests on it, so tier 1 authors nothing. RELAYED (lifecycle-ef join, method stated — 128 live items resolved via item slots --json, positive control lc-252 matched, function grain read from requirement lines, biased toward under-serializing): same-region holders are lc-237 (a SIBLING REGISTRATION in the same vocab.py registry — one lane or a stated order, or the closed vocabulary grows two spellings for one concept) and lc-247; the other declaration.py holders name other regions. RELAYED: D1 GO as recommended (operator 2026-09-20, ledgered).
 blocked-by: NONE
+
+## lc-254
+grade: READY
+requirement: NOTHING PUTS A DUE READ IN FRONT OF A SESSION: the evaluation half is built and no surface consumes it, so a kind whose moment fires is indistinguishable from one that did not. Surface it on the ACT — when a verb runs, name the kinds whose derived moment that act fired — costing no context when no verb runs and adding no always-on channel. Record: the booked design §4 Part B and §5 D2. The surfacing rides main() in cli.py — the ONE dispatch point already observing every act — because a per-verb copy in verbs.py would be a second implementation of a thing the system has one of; the due-for-this-act lookup belongs beside the derivation in declaration.py.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/declaration.py,test/test_declaration.py,test/test_verbs.py
+done-criterion: A verb invocation whose act matches a kind's derived moment prints a due-read line naming that kind; one matching none prints nothing. RED-FIRST, two arms from the live repo: today EVERY verb run prints no such line (baseline), and after the change a run of a verb that is a declared reader of a kind prints it while a run over an unrelated kind still prints none. MUST-NOT-MOVE: no always-on output — a session that runs no verb sees nothing added, and the erosion rider licenses no context addition here.
+evidence: MEASURED (lifecycle-ef, 2026-09-20): firelog.fire is called once per invocation from main(), and a baseline/act/delta run (1,301,044 lines, three verb runs, +3 lines read back carrying verb/repo/outcome/detail) shows the act is already observed. DERIVED (the booked design §2): lifecycle observes acts only — a reply, a reasoning step and a direct file read are invisible to every mechanism here, so an act-anchored surface is the only one available. RELAYED (lifecycle-ef join): cli.py same-region holder is lc-181 only, of 12 file-grain holders. RELAYED: D2 GO as recommended (operator 2026-09-20, ledgered).
+blocked-by: lc-253
