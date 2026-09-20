@@ -3919,7 +3919,7 @@ def cmd_kind_moments(args, out, repo: Path, doc: dict) -> int:
             "registry: zero evaluations and zero problems print the same.")
         return exits.COULD_NOT_VERIFY
 
-    broken, malformed, seen, ran = [], [], 0, 0
+    broken, malformed, entries, declared, ran = [], [], 0, 0, 0
     for name in kinds:
         body = kinds[name] if isinstance(kinds[name], dict) else {}
         moments = decl.read_moments(body, repo)
@@ -3928,22 +3928,27 @@ def cmd_kind_moments(args, out, repo: Path, doc: dict) -> int:
             out("    (no reader entries declared)")
             continue
         for m in moments:
-            seen += 1
+            entries += 1
             detail = f" — {m.detail}" if m.detail else ""
             out(f"    reader {m.reader}: {m.state}{detail}")
+            # `read_moments` preserves an absent `when` as UNDECLARED. Every
+            # other state comes from a present `when`, including NONE and a
+            # malformed one, which remain declarations even when unexecuted.
+            if m.state != decl.READ_MOMENT_UNDECLARED:
+                declared += 1
             if m.state in (lanes.FIRE, lanes.QUIET, lanes.BROKEN):
                 # EXECUTED, and counted apart from the ones merely READ. The
                 # two numbers are this verb's own honesty: a registry where
-                # every moment is UNDECLARED yields a large `seen` and a zero
-                # `ran`, and a summary carrying only the first would report
-                # fifty predicates' worth of assurance over nothing that ran.
+                # every reader entry is UNDECLARED yields many entries and
+                # zero declarations or executions; the summary must retain
+                # all three facts rather than call those entries declared.
                 ran += 1
             if m.state == lanes.BROKEN:
                 broken.append((name, m))
             elif m.state == decl.READ_MOMENT_MALFORMED:
                 malformed.append((name, m))
 
-    if not seen:
+    if not entries:
         out(f"kind moments: COULD NOT VERIFY — {len(kinds)} kind(s) "
             "registered and NOT ONE declares a reader entry, so there was no "
             "moment to evaluate. The registry was read; it had nothing to "
@@ -3968,16 +3973,17 @@ def cmd_kind_moments(args, out, repo: Path, doc: dict) -> int:
             "and is reported UNDECLARED without a finding, while this one is "
             "somebody's mistake wearing the default's face.")
 
-    tally = (f"{seen} declared moment(s) over {len(kinds)} kind(s), "
-             f"{ran} of them EXECUTED")
+    tally = (f"{entries} reader entr{'y' if entries == 1 else 'ies'}, "
+             f"{declared} declared moment(s), {ran} EXECUTED over "
+             f"{len(kinds)} kind(s)")
     # THE RESULT CARRIER (W1 act 2). The banner reads this back, so what is
-    # written here is what a later session is told: the two REACH numbers
+    # written here is what a later session is told: the three REACH numbers
     # travel with the two problem counts, because a stored "0 broken, 0
     # malformed" over a run that executed nothing is the same false
     # assurance the verdict line above refuses to print.
     if args is not None:
         args.fire_detail = (f"broken={len(broken)} malformed={len(malformed)} "
-                            f"declared={seen} executed={ran} "
+                            f"entries={entries} declared={declared} executed={ran} "
                             f"kinds={len(kinds)}")
     if broken or malformed:
         out(f"kind moments: FINDING — {tally}: {len(broken)} broken, "

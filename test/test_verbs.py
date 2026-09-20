@@ -21,6 +21,7 @@ import json
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
@@ -2131,9 +2132,9 @@ class KindMomentsTest(unittest.TestCase):
         d["kinds"]["items"]["reader"] = reader
         return d
 
-    def _run(self, doc, repo=None):
+    def _run(self, doc, repo=None, args=None):
         buf = []
-        code = verbs.cmd_kind_moments(None, buf.append, repo, doc)
+        code = verbs.cmd_kind_moments(args, buf.append, repo, doc)
         return code, "\n".join(buf)
 
     def test_a_declaration_with_NO_KINDS_is_could_not_verify(self):
@@ -2164,8 +2165,16 @@ class KindMomentsTest(unittest.TestCase):
         predicates that answered. The second number is what refuses that."""
         code, out = self._run(self._kinds(["session", "verb:item ready"]))
         self.assertEqual(code, exits.CLEAN, out)
-        self.assertIn("2 declared moment(s)", out)
-        self.assertIn("0 of them EXECUTED", out)
+        self.assertIn("2 reader entries, 0 declared moment(s), 0 EXECUTED", out)
+
+    def test_all_UNDECLARED_entries_are_not_counted_as_declared_in_fire_log(self):
+        args = SimpleNamespace()
+        code, out = self._run(
+            self._kinds(["session", "verb:item ready"]), args=args)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(
+            args.fire_detail,
+            "broken=0 malformed=0 entries=2 declared=0 executed=0 kinds=1")
 
     def test_an_EXECUTED_moment_is_counted_as_executed(self):
         """The control direction: with a real predicate the second number
@@ -2174,7 +2183,7 @@ class KindMomentsTest(unittest.TestCase):
         code, out = self._run(
             self._kinds([{"reader": "session", "when": "predicate true"}]))
         self.assertEqual(code, exits.CLEAN, out)
-        self.assertIn("1 of them EXECUTED", out)
+        self.assertIn("1 EXECUTED", out)
         self.assertIn("FIRE", out)
 
     def test_broken_and_malformed_are_SEPARATE_findings(self):
