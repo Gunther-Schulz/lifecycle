@@ -1675,5 +1675,16 @@ blocked-by: NONE
 closed-reason: 2026-09-20 Built by a dispatched sonnet lane to the criterion exactly: 50 UNDECLARED became 23 verb-tier + 24 session-tier DERIVED with the 3 hook entries the honest residue; READ_MOMENT_DERIVED registered in vocab.py and exercised by the registry-generic tests untouched; derivation kept out of the shared checker partition deliberately; DERIVED does not count as declared (default, not declaration) — it rides as a fourth number in tally and fire detail. Desk-verified before close: diff read whole, suite 973 OK (964 + 1 from lc-252 + 8 new — the brief-baseline 1-off explained and logged as this desk's stale figure), --test 127/127 CLEAN, live fire detail entries=50 declared=0 derived=47 executed=0, and a FULL prove-rows walk post-change: every recorded arrangement held, 106 PROVEN, rc 0. Banner display gap booked as lc-257; the design doc's under-trigger row records its own overtaking.
 closed-ref: b1fc7f9
 
+## lc-254
+grade: DONE
+requirement: NOTHING PUTS A DUE READ IN FRONT OF A SESSION: the evaluation half is built and no surface consumes it, so a kind whose moment fires is indistinguishable from one that did not. Surface it on the ACT — when a verb runs, name the kinds whose derived moment that act fired — costing no context when no verb runs and adding no always-on channel. Record: the booked design §4 Part B and §5 D2. The surfacing rides main() in cli.py — the ONE dispatch point already observing every act — because a per-verb copy in verbs.py would be a second implementation of a thing the system has one of; the due-for-this-act lookup belongs beside the derivation in declaration.py.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/declaration.py,test/test_declaration.py,test/test_verbs.py
+done-criterion: A verb invocation whose act matches a kind's derived moment prints a due-read line naming that kind; one matching none prints nothing. RED-FIRST, two arms from the live repo: today EVERY verb run prints no such line (baseline), and after the change a run of a verb that is a declared reader of a kind prints it while a run over an unrelated kind still prints none. MUST-NOT-MOVE: no always-on output — a session that runs no verb sees nothing added, and the erosion rider licenses no context addition here.
+evidence: MEASURED (lifecycle-ef, 2026-09-20): firelog.fire is called once per invocation from main(), and a baseline/act/delta run (1,301,044 lines, three verb runs, +3 lines read back carrying verb/repo/outcome/detail) shows the act is already observed. DERIVED (the booked design §2): lifecycle observes acts only — a reply, a reasoning step and a direct file read are invisible to every mechanism here, so an act-anchored surface is the only one available. RELAYED (lifecycle-ef join): cli.py same-region holder is lc-181 only, of 12 file-grain holders. RELAYED: D2 GO as recommended (operator 2026-09-20, ledgered).
+blocked-by: NONE
+blocker-moot: lc-253 (the blocker closed before this item did)
+closed-ref: a25b402
+
 ## Archive (pre-migration)
 
