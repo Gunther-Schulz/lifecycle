@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 242
+added: 243
 compacted: 0
 
 ## lc-3
@@ -1399,4 +1399,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/cli.py,test/test_items.py,test/test_refusals.py
 done-criterion: the write path (add / park / amend) demands, beside an evidence blocker, a discrimination statement naming what each outcome of the predicate decides for the item disposition, the lc-169 sibling for the evidence type: presence computable, fill quality stays judgment (law 26). Absence is a new refusal row proven red-first. MUST-NOT-FIRE arm decides shippability: every legitimate existing form passes once the statement is present, false-hash-comment predicates included; entries predating the mechanism report as UNSTATED in the banner, never as findings, matching the lc-169 precedent.
 evidence: RELAYED 2026-09-20, operator-pasted transcript from an ungoverned image-generation repo, carried as that session own account and not re-measured here: a rewrite was held on an expensive probe booked as its GATE (loaded model, render, timings) while the rewrite justification depended on no outcome of it; the session own correction re-graded the probe from gate to first build step, and the deciding fact was one query on an instrument it had already run twice for other questions. The catching instrument was the operator, twice in one day there. DERIVED at this desk: in this carrier vocabulary that is an evidence blocker whose clearing decides nothing, a shape no current check watches, the mirror of blocker_softlock.
+blocked-by: NONE
+
+## lc-251
+grade: READY
+requirement: THE EROSION PROBE FOUND ITS TWO LIVE REGRESSIONS AND BOTH STAND UNREPAIRED AT HEAD: roster row amend_nothing_to_amend FAILED (its mutation no longer darkens it — the run signature: verdict stays 2/named under the mutation) since 55591ec, and capture_dominated COULD NOT VERIFY (its arm RAISES ZeroDivisionError under its own mutation) since a533253. Record: docs/audits/2026-09-19-erosion-probe-design.md, THE PROBE HAS RUN section, and docs/audits/erosion-survival-2026-09-20.tsv.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/refusals.py
+done-criterion: prove-rows reports amend_nothing_to_amend and capture_dominated PROVEN again; each repaired arrangement is re-admitted on lc-142 PAIR terms (real anchor: the named row changes; inert anchor: rows changed NONE, both quoted), the repair takes lc-30 scoping form where the diagnosis confirms that class (same-parentage mutation narrowed per direction, never a widened assertion), and no OTHER row verdict moves against the pre-repair baseline run, which is recorded with the fix. RED-FIRST is already standing: both rows are red at HEAD today, so the baseline needs no construction.
+evidence: MEASURED (erosion probe, 12-sample longitudinal run over df13f3e..cb32a4c, lane sonnet-erosion-probe, table re-derived independently at this desk from the TSV, figures agree cell-for-cell): amend_nothing_to_amend PROVEN for 7 consecutive samples then FAILED from 55591ec (2026-09-19) through HEAD; capture_dominated PROVEN for 8 samples then COULD_NOT_VERIFY from a533253 (2026-09-19) through HEAD. These are the ONLY two non-transient regressions in 797 previously-proven row-pair transitions. DERIVED, a direction not a conclusion: both retiring commits are same-day refusals.py changes (a533253 rewrote 50 lines for the schema floor; 55591ec added 54 arc-carrier lines), so the first hypothesis is the lc-30 class — an added or reworked neighbour retiring an existing proof — but the per-row diagnosis has not run.
 blocked-by: NONE
