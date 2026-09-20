@@ -2236,3 +2236,99 @@ class KindMomentsTest(unittest.TestCase):
         self.assertIn("FINDING [reader_moment_malformed]", out)
         self.assertIn("1 broken", out)
         self.assertIn("1 malformed", out)
+
+
+class DueReadSurfaceIntegration(unittest.TestCase):
+    """O6 §4 Part B (lc-254), end to end through `main()` — cli.py's ONE
+
+    dispatch point, not `declaration.due_reads_for_act` in isolation (that
+    unit lives in test_declaration.py's `DueReadsForAct`). RED-FIRST, live
+    over the real repo before this change (quoted in the lane's report to
+    the dispatcher, 2026-09-20 at HEAD 8b7e939): `item ready --head` printed
+    no due-read line, and its fire.jsonl record carried no `detail` key at
+    all — `{"at": ..., "verb": "item ready", "repo": ..., "outcome": 0}`.
+    """
+
+    def _repo(self, items_reader=None, **kw):
+        import json
+        d = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        if items_reader is not None:
+            d["kinds"]["items"]["reader"] = items_reader
+        r = refusals._Repo(declaration=d, **kw)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _detail(self, repo, verb):
+        from lifecycle_core import firelog
+        rec = firelog.last_run(verb, repo=str(repo.dir))
+        self.assertIsNotNone(rec, f"no fire-log record for {verb!r}")
+        return rec.get("detail") or ""
+
+    def test_tier_1_prints_on_stdout_and_lands_in_the_fire_detail(self):
+        """`items`' real reader entry `verb:item ready`
+
+        (GOOD_FULL_DECLARATION, unmodified) — the moment IS `item ready`
+        running."""
+        repo = self._repo()
+        code, out = self._run(repo, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("due read: kind 'items' is due now", out)
+        self.assertIn("'item ready' running", out)
+        self.assertIn("surfaced=items", self._detail(repo, "item ready"))
+
+    def test_an_unrelated_verb_surfaces_nothing_on_either_side(self):
+        """`kind check` is not named as a reader or writer of any kind in
+
+        this declaration — the negative arm the item's own done-criterion
+        names ('one matching none prints nothing')."""
+        repo = self._repo()
+        code, out = self._run(repo, "kind", "check")
+        self.assertNotIn("due read:", out)
+        self.assertNotIn("surfaced=", self._detail(repo, "kind check"))
+
+    def test_tier_2_fires_via_the_kinds_own_writer_field(self):
+        """`items`' `writer` already names `verb:item add, verb:item park,
+
+        verb:item close` (GOOD_FULL_DECLARATION, unmodified) — adding a bare
+        `session` reader alongside the real `verb:item ready` one makes the
+        WRITE side derivable too, exercised here through `item add`, one of
+        the kind's own real writer acts. The mapping is not invented for
+        this test: it is the declaration's own `writer` field."""
+        repo = self._repo(items_reader=["verb:item ready", "session"])
+        code, out = self._run(repo, *refusals.GOOD_ADD)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("due read: kind 'items' is due now", out)
+        self.assertIn("being written", out)
+        detail = self._detail(repo, "item add")
+        # APPENDED, never overwritten: `item add` sets its own detail ("new
+        # <id> source=...", verbs.py) and this surface must not replace it —
+        # both facts share the one `detail` field the fire log carries.
+        self.assertIn("new ", detail)
+        self.assertIn("surfaced=items", detail)
+
+    def test_zero_due_kinds_means_no_output_and_no_surfaced_field(self):
+        """MUST-NOT-MOVE (the item's own done-criterion): absence, never an
+
+        empty `surfaced=` token — a run over no due kinds must look exactly
+        like today's pre-lc-254 fire line, not like a new field that
+        happens to be empty. `items` here declares NO reader entries at
+        all, so no act can ever find it due."""
+        repo = self._repo(items_reader=[])
+        code, out = self._run(repo, "item", "ratio")
+        self.assertNotIn("due read:", out)
+        self.assertNotIn("surfaced", self._detail(repo, "item ratio"))

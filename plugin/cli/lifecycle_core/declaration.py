@@ -1792,6 +1792,88 @@ def read_moments(body: dict, repo: Path | None = None) -> list:
     return out
 
 
+@dataclass
+class DueRead:
+    """One kind whose DERIVED reader moment fires for a given act (O6 §4 Part
+    B, lc-254: "surface it on the ACT — when a verb runs, name the kinds
+    whose derived moment that act fired").
+
+    `note` is the SAME prose `_derived_reader_detail` already produces for
+    `kind moments` — reused rather than re-worded, so the two surfaces
+    (`kind moments`'s evaluation and this act-time surface) can never drift
+    apart describing the same derivation two ways.
+    """
+    kind: str
+    reader: str
+    note: str
+
+
+def due_reads_for_act(doc: dict, act_path: str) -> list:
+    """Every kind whose DERIVED reader moment IS `act_path` running.
+
+    Consumed by `cli.py`'s `main()` — the ONE dispatch point that already
+    observes every act — to surface a due-read line on the acting verb's own
+    output (O6 §4 Part B1) and to add `surfaced=<kinds>` to that invocation's
+    fire-log detail (§7's transition table, row 1). Never called from a
+    per-verb copy: a second implementation beside `main()` would be exactly
+    the class this repo's own CLAUDE.md (law 24, the `_carrier_verb`
+    incident) already names as the wrong shape.
+
+    STRUCTURAL ONLY — this never calls `lanes.evaluate_trigger`, unlike
+    `read_moments`. DERIVED never comes from a predicate: it is assigned
+    only where `classify_reader_when` returns UNDECLARED, and that function
+    returns UNDECLARED if and only if no `when` is present on the entry (its
+    own contract, one branch, nothing else reaches it) — so checking
+    presence here answers the same question `classify_reader_when` would,
+    without running anything. Calling `read_moments` here instead would run
+    every kind's declared predicate as a side effect of every unrelated verb
+    invocation — a `predicate touch <marker>`-shaped entry would fire on
+    every single command run in the repo, not only the one act it declares.
+
+    Two tiers, matching O6 §4 Part A and `_derived_reader_detail` exactly:
+      - Tier 1 (`verb:<name>` reader): fires when `act_path == name` — the
+        moment IS that verb running.
+      - Tier 2 (bare `session` reader): fires when `act_path` is one of the
+        kind's own declared WRITER verbs. The write-target mapping is not
+        invented here: `writer` already names, per kind, which verb(s)
+        write its `home` (e.g. `items`: `writer: "verb:item add, verb:item
+        park, verb:item close"`), in the exact `verb:<path>` spelling
+        `main()`'s own dispatch paths already use — parsed with
+        `parse_refs`, the one typed-ref parser every reader/writer check
+        already goes through, rather than re-derived from source.
+
+    At most one `DueRead` per kind: further reader entries on a kind already
+    found due for this act cannot change whether that kind is due.
+    """
+    out = []
+    for name, body in (doc.get("kinds") or {}).items():
+        if not isinstance(body, dict):
+            continue
+        for entry in body.get("reader") or []:
+            if isinstance(entry, dict):
+                ref = entry.get("reader")
+                present = "when" in entry
+            else:
+                ref = entry
+                present = False
+            ref = ref if isinstance(ref, str) else str(ref)
+            if present:
+                continue
+            fires = False
+            if ref.startswith(_DERIVE_VERB_PREFIX):
+                fires = ref[len(_DERIVE_VERB_PREFIX):] == act_path
+            elif ref == _DERIVE_SESSION_REF:
+                writer = body.get("writer")
+                if isinstance(writer, str) and writer.strip():
+                    fires = any(typ == "verb" and wname == act_path
+                                for typ, wname in parse_refs([writer]))
+            if fires:
+                note = _derived_reader_detail(ref, body.get("home")) or ""
+                out.append(DueRead(name, ref, note))
+                break
+    return sorted(out, key=lambda d: d.kind)
+
+
 def check_laws_present(repo: Path, laws_rel: str, res: Result) -> None:
     """The declared laws file exists and is readable — nothing about its SIZE.
 

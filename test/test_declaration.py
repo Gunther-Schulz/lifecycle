@@ -658,6 +658,134 @@ class DerivedReaderMoments(unittest.TestCase):
         self.assertIn(decl.READ_MOMENT_NONE, v.members)
 
 
+class DueReadsForAct(unittest.TestCase):
+    """O6 §4 Part B (lc-254): the acting verb's own output names the kinds
+
+    whose DERIVED reader moment fires for that act. RED-FIRST, live over
+    this repo's own declaration before this change: `python3 plugin/cli/
+    lifecycle item ready --head` printed no due-read line and its fire.jsonl
+    line carried no `detail` key at all (measured 2026-09-20 at HEAD 8b7e939,
+    quoted in the lane's report to the dispatcher).
+    """
+
+    @staticmethod
+    def _kind(reader, writer, home="x.md"):
+        return {"home": home, "writer": writer, "reader": reader,
+                "staleness": "none, declared why: fixture",
+                "exit": {"action": "never", "recording-act": "fixture"},
+                "growth": "unbounded-with-reason: fixture",
+                "trigger": "none, declared why: fixture"}
+
+    def test_tier_1_fires_on_the_exact_verb_and_nothing_else(self):
+        doc = {"kinds": {"items": self._kind(["verb:item ready"], "session")}}
+        self.assertEqual([d.kind for d in decl.due_reads_for_act(
+            doc, "item ready")], ["items"])
+        self.assertEqual(decl.due_reads_for_act(doc, "item park"), [],
+                          "an unrelated act must not surface a Tier 1 kind")
+
+    def test_tier_2_fires_when_the_act_is_one_of_the_kinds_own_writers(self):
+        """The write-target mapping is the kind's OWN `writer` field — this
+
+        repo's real `items` shape (`writer: "verb:item add, verb:item park,
+        verb:item close"`, `reader: [..., "session"]`)."""
+        doc = {"kinds": {"items": self._kind(
+            ["verb:item ready", "session"],
+            "verb:item add, verb:item park, verb:item close")}}
+        for act in ("item add", "item park", "item close"):
+            with self.subTest(act=act):
+                due = decl.due_reads_for_act(doc, act)
+                self.assertEqual([d.kind for d in due], ["items"])
+                self.assertIn("tier 2", due[0].note)
+        self.assertEqual(decl.due_reads_for_act(doc, "item ratio"), [],
+                          "a writer verb not named in `writer` must not fire")
+
+    def test_an_authored_when_is_never_surfaced_here(self):
+        """DERIVED is only ever the ABSENT-`when` default (O6 §4 Part A);
+
+        an authored `when` on a derivable ref shape is a declaration, not a
+        derivation, and this act-time surface must not treat it as due."""
+        doc = {"kinds": {"items": self._kind(
+            [{"reader": "verb:item ready",
+              "when": "none, declared why: fixture"}], "session")}}
+        self.assertEqual(decl.due_reads_for_act(doc, "item ready"), [])
+
+    def test_CONTROL_a_reader_neither_tier_derives_never_fires(self):
+        """§4 Part A's own control, replayed at this surface: `operator` and
+
+        every prefixed shape besides `verb:` have no computable default, so
+        no act can ever make them due here."""
+        for ref in ("operator", "lane:something", "hook:something",
+                    "producer:something"):
+            with self.subTest(ref=ref):
+                doc = {"kinds": {"items": self._kind([ref], "session")}}
+                self.assertEqual(
+                    decl.due_reads_for_act(doc, "item ready"), [],
+                    f"{ref!r} must never surface")
+
+    def test_never_executes_a_predicate(self):
+        """A kind with an authored, EXECUTABLE `when` on an unrelated reader
+
+        sits beside the derivable one — this must never run it (only
+        `read_moments` runs predicates), proven by a marker file that a run
+        would create and this call must not."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            marker = Path(td) / "marker"
+            doc = {"kinds": {"items": self._kind(
+                [{"reader": "session",
+                  "when": f"predicate: touch {marker}"},
+                 "verb:item ready"],
+                "session")}}
+            decl.due_reads_for_act(doc, "item ready")
+            self.assertFalse(marker.exists(),
+                              "due_reads_for_act executed a `when` predicate")
+
+    def test_multiple_kinds_and_a_kind_matched_by_both_tiers_once_each(self):
+        doc = {"kinds": {
+            "items": self._kind(["verb:item ready"], "session"),
+            "ledger lines": self._kind(["verb:item ready"], "session"),
+            "desk state": self._kind(["verb:desk state", "session"],
+                                      "verb:desk state"),
+        }}
+        due = decl.due_reads_for_act(doc, "item ready")
+        self.assertEqual(sorted(d.kind for d in due),
+                          ["items", "ledger lines"])
+        # `desk state`'s reader carries BOTH a Tier 1 ref matching its own
+        # verb and a Tier 2 session ref whose writer matches the same verb —
+        # at most one DueRead per kind (a kind is due or it is not).
+        due2 = decl.due_reads_for_act(doc, "desk state")
+        self.assertEqual([d.kind for d in due2], ["desk state"])
+
+    def test_empty_declaration_returns_empty_never_crashes(self):
+        self.assertEqual(decl.due_reads_for_act({"kinds": {}}, "item ready"),
+                          [])
+        self.assertEqual(decl.due_reads_for_act({}, "item ready"), [])
+
+    def test_reproduces_this_repos_own_live_shape(self):
+        """`closed arcs` (home `arcs/closed/*.md`, writer `verb:arc close`,
+
+        reader `["session"]`) is this repo's live Tier-2-only shape (no
+        `verb:` reader entry at all) — measured against `.claude/
+        lifecycle.json` at HEAD, quoted rather than re-typed by hand."""
+        doc = decl_module_json_fixture()
+        due = decl.due_reads_for_act(doc, "arc close")
+        self.assertEqual([d.kind for d in due], ["closed arcs"])
+        self.assertIn("arcs/closed", due[0].note)
+
+
+def decl_module_json_fixture():
+    """This repo's own live `.claude/lifecycle.json`, read fresh — the
+
+    fixture `DueReadsForAct.test_reproduces_this_repos_own_live_shape` needs
+    the real `closed arcs` kind rather than a hand-typed copy that could
+    silently drift from it.
+    """
+    import json
+    repo_root = Path(__file__).resolve().parent.parent
+    return json.loads((repo_root / ".claude" / "lifecycle.json")
+                       .read_text(encoding="utf-8"))
+
+
 class StructureReadout(unittest.TestCase):
     """lc-174 — the session-start announcement carries STRUCTURE, not only
     state: the count of registered kinds, the writer split (verb-written /

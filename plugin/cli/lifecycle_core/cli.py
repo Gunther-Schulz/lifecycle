@@ -1190,13 +1190,44 @@ def main(argv=None) -> int:
             f"build carries stages {STAGES_BUILT}.")
         code = exits.COULD_NOT_VERIFY
 
+    # THE SURFACE (O6 §4 Part B, lc-254). `main()` is the ONE dispatch point
+    # that already observes every act, so the due-read lookup rides here
+    # rather than a per-verb copy (law 24's `_carrier_verb` reasoning,
+    # applied to this seam). ONLY where the branch above already resolved a
+    # repo: a verb whose repo is not scoped to one tree at this point (`lane
+    # list`/`register`/`population`, `record check`) is NOT covered — this
+    # never re-resolves via `args.repo` on its own, which would change the
+    # fire line's `repo:` field for verbs outside this surface's scope.
+    resolved_repo = getattr(args, "resolved_repo", None)
+    due = []
+    if resolved_repo:
+        due_res = decl.read(Path(resolved_repo))
+        if due_res.declaration is not None:
+            due = decl.due_reads_for_act(due_res.declaration, path)
+
+    # ZERO ALWAYS-ON OUTPUT (the item's own MUST-NOT-MOVE): a run over no
+    # due kinds adds nothing here and no `surfaced=` token below — absence,
+    # never an empty field, so a counter over the fire log can tell "ran and
+    # found none due" from "never asked" only by the line's own presence.
+    for d in due:
+        out(f"due read: kind {d.kind!r} is due now — {d.note}")
+
     # ONE line per invocation, carrying the RESOLVED repo rather than the
     # `--repo` flag: §3.1 says the tool records the writer's repo on every
     # write, and the flag is absent on every invocation that used the cwd.
+    fire_detail = getattr(args, "fire_detail", None)
+    if due:
+        # APPENDED, never overwritten: several verbs already set their own
+        # `fire_detail` for their own purpose (e.g. `item close`'s
+        # "close <id> DONE") and that detail is not this surface's to
+        # replace — the two facts share the one `detail` field the fire log
+        # carries, so both are kept, separated by `; `.
+        surfaced = "surfaced=" + ",".join(d.kind for d in due)
+        fire_detail = f"{fire_detail}; {surfaced}" if fire_detail else surfaced
     firelog.fire(path,
-                 repo=getattr(args, "resolved_repo", None) or args.repo,
+                 repo=resolved_repo or args.repo,
                  outcome=code,
-                 detail=getattr(args, "fire_detail", None))
+                 detail=fire_detail)
     return code
 
 
