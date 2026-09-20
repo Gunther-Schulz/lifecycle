@@ -741,6 +741,38 @@ self-declarable in a way a general "should I check the record?" prompt is not.
 Unprobed; recorded here rather than booked, because the mechanism bar is not yet
 met and the honest next step is watching whether the moment recurs.
 
+**THE MOMENT RECURRED — 2026-09-20, twice in one day, both specimens from
+outside this repo, operator-pasted.** Specimen 1 (wan2gp, desk `58df31`;
+transcript-pinned at this desk): a rewrite was held on an expensive probe
+booked as its GATE (a loaded model, a render, timings) while the deciding
+fact — do a 20B and a 12.9B model fit one card — was one query on an
+instrument the session had already run twice for other questions. The
+measurement arrived only on the operator's push (32,607 MiB total, 13:31,
+three minutes before the session's own post-mortem — both turns read at the
+transcript; the twice-run-never-asked count is RELAYED, that session's own
+tally). The post-mortem names the mechanism in this paragraph's own terms:
+framing the question as a TRADEOFF suspended the measure-it rule — "a
+tradeoff has no obvious moment where a number is owed" — and booking the
+expensive measurement hid the gap, because a named deferral reads as
+diligence. "Tradeoff to weigh" is UNDECIDABLE-BY-COMPUTATION declared from
+memory at the exact moment arithmetic answered. Specimen 2 (a non-technical
+conversation, RELAYED whole): a killed hypothesis was replaced mid-reply by
+an invented premise delivered in the verified register — the session's own
+diagnosis, "keeping the theory running" — the same seam crossed in the
+opposite direction: specimen 1 declared an answerable question unanswerable,
+specimen 2 declared an unanswered one answered. In both, the catching
+instrument was the operator; in both, the applicable rule was loaded and
+inert — the adherence split replicated in two domains this arc never
+touched, which is evidence for the DEMAND leg over the PRESENCE leg from
+outside software. Status: the candidate moves from "watching whether the
+moment recurs" to RECURRED. The mechanism bar is STILL unmet here — the
+moment is self-declarable, not machine-observable, so no lifecycle trigger
+fires on it — and the conduct half already has its corpus carrier (specimen
+1's session recorded pre-formulated rule text for the dotfiles drain). What
+precipitates in THIS repo is the computable slice specimen 1 exposes in the
+carrier's own vocabulary: an `evidence` blocker whose clearing decides
+nothing — the mirror of blocker_softlock — booked as lc-250.
+
 ### 2. Sessions maintain a NARROWING as they work — THE REAL GAP
 
 **IT IS NOT A LOG. It is a live picture of what is still open and what has
