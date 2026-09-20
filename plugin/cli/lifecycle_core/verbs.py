@@ -2415,10 +2415,31 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
                 and items_mod.BLOCKER_EXERCISE not in additions):
             additions[items_mod.BLOCKER_EXERCISE] = _exercise_record(
                 args, updates["blocked-by"], ctx, {})
-    if not updates and not additions:
-        out("FINDING [amend_nothing_to_amend] `item amend` names no slot to "
-            "amend.")
-        return exits.FINDING
+
+    # ONE DECIDING CONDITION PER REFUSAL (lc-164's rule), NOT A SECOND DOOR.
+    # A `[amend_nothing_to_amend]` refusal used to sit here too — added by
+    # fa6ea7e's conditional-slot work — re-deciding the exact question line
+    # 2298 already answered. `additions` is populated ONLY by popping OUT of
+    # `updates` (a few lines above) or by the stamping door just above this
+    # comment, so `updates` starting empty (line 2298's own condition)
+    # implies `additions` is still empty here too, unconditionally. And once
+    # "blocked-by" is part of `updates` it can never leave: the stranding
+    # loop above pops the CONDITIONAL slots it invalidates, never
+    # "blocked-by" itself, which is only read and classified. So there is no
+    # real input where `updates` is non-empty at line 2298 and both `updates`
+    # and `additions` are empty here — this branch could never fire on
+    # anything but the case its neighbour already refused.
+    # PROVED BY EXECUTION, not merely by this reading (lc-251's done-
+    # criterion demanded the probe before the removal): a line tracer on this
+    # exact source line, driven across ten real `item amend` invocations —
+    # no slot flag, one ordinary slot, both blocker-retype directions with
+    # the conditional slots stranded / freshly added / re-supplied /
+    # untouched, additions-only amendments, and a re-type clearing the
+    # blocker outright — never observed `updates` and `additions` both empty
+    # here. Removed rather than merged, exactly as lc-164 repaired
+    # `blocker_predicate_broken`: one deciding condition is what keeps
+    # `tools/prove-rows.py`'s existing `amend_nothing_to_amend` arrangement
+    # (line 2298's `if not updates:`, unchanged) provable again.
 
     date = _today()
     with items_mod.carrier_lock(ctx.items_path):
