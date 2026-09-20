@@ -187,7 +187,7 @@ it repeats the class it exists to fix.
 | failure | what it looks like | detector | repair |
 |---|---|---|---|
 | **over-trigger** | every verb output carries due-read noise; the reader stops reading | surfaced-vs-read ratio per kind, from the fire log — a kind surfaced N times and never read is the candidate | move the MOMENT, never the reader (law 11 from the default side) |
-| **under-trigger** | no moment, nothing surfaces, invisible | `kind moments` already renders UNDECLARED; the new number is UNDECLARED-**with-a-session-reader**, which is the honest gap count rather than today's 50 | supply a default (D1b) or author the residue |
+| **under-trigger** | no moment, nothing surfaces, invisible | `kind moments` already renders UNDECLARED; the new number is UNDECLARED-**with-a-session-reader**, which is the honest gap count rather than today's 50 *(OVERTAKEN BY THE BUILD, 2026-09-20: lc-253 derives every verb and session reader, so a session-tier UNDECLARED can no longer occur — the under-trigger surface is now the RESIDUE: operator, lane:, hook:, producer: readers, 3 of 50 entries in this repo today)* | supply a default (D1b) or author the residue |
 | **drift** | the surfaced description diverges from the body | kinds carry a staleness stage; a surfaced DESCRIPTION inherits lc-247's class and must state its predicate exactly | the staleness stage, and no description wider than its predicate |
 
 **DECLARED UNDETECTED:** whether the surfaced read was *useful*. Relevance is the
