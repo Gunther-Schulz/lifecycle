@@ -77,13 +77,19 @@ suspicion signal, not the question, does the work.
 **BASELINE (retrospective, data held).** Operator-fired goal-question events
 in the transcript corpus: each graded for whether the answer was correct and
 whether the course changed. This turns "usually correct" from recollection
-into a rate. INSTRUMENT LIMIT, load-bearing: the session-search MCP's
-declared scope excludes queue-operation records — exactly where operator
-MID-TURN interjections live, and pressing a drifting session is
-characteristically mid-turn. The baseline sweep therefore reads raw session
-JSONL, not the search tool, or it under-counts the very events it exists to
-count. A zero from the search tool over this class is an instrument reading,
-not an absence.
+into a rate. INSTRUMENT LIMIT, load-bearing — REASON CORRECTED BY THE SWEEP
+ITSELF (2026-09-20): the session-search MCP's declared scope excludes
+queue-operation records, and this design originally reasoned that operator
+goal-questions live there as mid-turn interjections. MEASURED: zero of the
+seven baseline events is a queue-operation record — all seven are plain
+`type=user` turns — while goal-token question hits split 112 user to 67
+queue-operation across the corpus, so the excluded population is real and
+sizeable but is not where this event class lives. The raw-JSONL instruction
+STANDS, on corrected ground: the class spans record types nothing declares
+in advance, and a sweep keyed to the record type the original reasoning
+named would have returned ZERO events, the known positive included. A zero
+from the search tool over this class remains an instrument reading, not an
+absence.
 
 **One graded specimen already in hand (2026-09-20, the non-technical
 session; operator-pasted and operator-confirmed in this repo's own
@@ -95,7 +101,9 @@ words?" — which is the slot pattern's whole shape already: statement plus
 cheap confirmation. One event. The operator reports doing this across
 projects and sessions with "usually correct" results; that stays
 recollection-grade until the sweep counts it, and it also says the baseline
-data spans MULTIPLE project corpora, not one.
+data spans MULTIPLE project corpora, not one. (SUPERSEDED 2026-09-20, same
+day: the sweep ran — the baseline-result section below carries the rate
+this paragraph was waiting for.)
 
 **TREATMENT (prospective, mechanism must exist in trial form).** Sessions
 run with a seam-fired goal-question demand: the investigation record's GOAL
@@ -104,6 +112,48 @@ seam (round open, wave authorization, record update). No hook needs building
 for the trial — a directive in the brief suffices for N sessions — which
 keeps the probe ahead of any design-arc admission decision rather than
 depending on one.
+
+## THE BASELINE ARM HAS RUN — measured 2026-09-20
+
+Sweep executed by a delegated opus desk over the LOCAL transcript corpus
+only (65 project directories, 2,447 JSONL files, 982,105 records; Remote
+Control and cloud sessions write no JSONL here, so their events are
+invisible to these counts by construction). Rows verified at this desk:
+the TSV re-read, the two load-bearing unsigned-ask rows re-opened at the
+raw records. Evidence artifacts (12-row TSV, the read-and-excluded TIER A
+chunk list, the reach probe): dotfiles-private
+`claude/records/drift-baseline-2026-09-20/`.
+
+- **The knowledge leg is now a rate, and it is 7 of 7.** Seven operator
+  goal-question events, 2026-08-04 to 2026-09-20, four projects. Every
+  goal-read CORRECT on the operator's own next turns; rider 1's
+  wrong-restatement class is EMPTY (0 corrected-by-operator, 0 unclear),
+  including two events where the goal had to be INFERRED rather than read
+  back. "Usually correct" was under-claimed.
+- **Course change followed in 6 of 7** (one N-A) — 5 of 7 under strict
+  attribution: in one event the direction moved only after a SECOND
+  operator intervention three minutes later, so that row's YES is about
+  the stretch, not the goal-read alone.
+- **The confound is measured, not argued: 5 of 7 asks were SIGNED** — four
+  carried the drift complaint inside the ask itself, one followed six
+  same-session babysitting complaints. The unsigned cell holds n=2 and
+  splits (one course change, one N-A). **So the baseline arm returns
+  COULD NOT VERIFY on trigger-sufficiency** — exactly the outcome the
+  vacuous-quantity section predicted a restatement-rate would paper over.
+  The treatment arm remains the only discriminator; what the baseline
+  settles is the knowledge leg and the confound's size.
+- **Pattern-reach bound, part of the rate's basis:** one of the seven
+  events carries NO goal word ("why are we doing these reviews? isn't it
+  overkill?") and was found only by a wider direction-check net — so any
+  goal-keyed instrument under-counts the class by at least 1 in 7, and
+  the true class is wider than any keyword family proves.
+- **Adjacent rows recorded, deliberately not pooled:** one drift
+  INTERVENTION with no question (operator asserts the goal, session
+  re-aims) — baseline material for the drift-interventions-per-session
+  row of the outcome table; one INVERSE event (operator states the goal,
+  session corrects the formulation, operator accepts) — the
+  adjustability leg of WHAT SURVIVES A QUIET running in the other
+  direction.
 
 ## Rider 1 — the third answer is load-bearing
 
