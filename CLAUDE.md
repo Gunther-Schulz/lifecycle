@@ -189,7 +189,13 @@ journal pointer is where the incident lives.
     this repo has measured sat in the difference between the two.
     WORKED EXAMPLES, which are not the rule and never bound it. An item
     whose done-criterion emits a NEW finding carries `refusals.py`,
-    because law 2 puts a refusal's realizing file there. A NEW VERB
+    because law 2 puts a refusal's realizing file there. A PROOF REPAIR —
+    a done-criterion demanding a roster row read PROVEN again — carries
+    `tools/prove-rows.py`, where the arrangements live, and only
+    sometimes `refusals.py`: the roster and the arrangements are two
+    files by design, and lc-251's first booking granted the roster file
+    while both of its repairs landed in the arrangements (measured,
+    2026-09-20, one halted lane). A NEW VERB
     realizes in four places: its BODY (`verbs.py`), its WIRING
     (`cli.py`: the subparser, the action tuple, the `_carrier_verb`
     branch), any SLOT VOCABULARY it writes (`items.py`, where
