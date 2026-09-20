@@ -1706,5 +1706,15 @@ evidence: MEASURED at the build desk 2026-09-19, over the live declaration: 12 o
 blocked-by: NONE
 closed-ref: 84ae909
 
+## lc-255
+grade: DONE
+requirement: READING IS INVISIBLE, SO 'WAS IT READ?' HAS NO ANSWER: kind show prints a kind's STAGES and nothing prints its BODY, and a session that opens the file directly is unobservable — the retrieval question the design of record withdraws its grade over stays unmeasurable. Add a verb that puts a registered kind's body (or its pointer where the body is large) in front of the session, whose invocation the fire log already records. Record: the booked design §4 Part C and §5 D3. Four-places rule applied: BODY verbs.py, WIRING cli.py (subparser, action tuple, _carrier_verb branch), REFUSAL refusals.py; items.py absent (no item slot written); test_verbs.py present as the MUST-MOVE-WITH half (the hand-written dispatch table that derives the action tuple from source — lc-120's exact omission); tools/prove-rows.py carries the new row's arrangement (the arrangements live there, not the roster — lc-251 measured that split today).
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,test/test_verbs.py,tools/prove-rows.py
+done-criterion: The verb prints a registered kind's body and emits one fire line carrying read=<kind>, with THREE ANSWERS: an unregistered name is a FINDING, a home that cannot be read is COULD NOT VERIFY naming what was absent, and a clean read prints the body. Its refusal is a registered roster row admitted on lc-142's PAIR: at its real anchor the run reads rows changed: <the row>, and re-pointed at an inert anchor it reads rows changed: NONE and FAILS with 'the row did NOT change' — both quoted in the closing report. The verb's own output states the proxy bound: read means read-through-the-verb, and a direct file open is not counted. MUST-NOT-MOVE: kind show stays the STAGES surface, this verb never rewrites the body it prints.
+evidence: MEASURED at this desk 2026-09-20: kind show laws prints stages (home, writer, reader, staleness, exit, growth, trigger) and no body. MEASURED (lifecycle-ef): lifecycle kind --help lists {list,moments,check,sweep,show}; every invocation already writes one fire line with an optional detail field, so the record half needs no new carrier. DERIVED (the booked design): routing the read through a verb converts an unobservable act into an observed one — the only way the surfaced-vs-read number exists. RELAYED (lifecycle-ef join, function grain): of 24 verbs.py holders only lc-181 and lc-252 touch this region; test_verbs.py's dispatch table is the one true contention — lc-251 (in flight) and lc-252 both hold it, so whichever lands last re-derives the action tuple. RELAYED: D3 GO as recommended (operator 2026-09-20, ledgered).
+blocked-by: NONE
+closed-ref: ce7edfe
+
 ## Archive (pre-migration)
 
