@@ -99,7 +99,7 @@
       "trigger": "none, declared why: a law is minted when an incident earns it, and whether an incident earns one is the judgment law 26 exists to make someone do. The nearest observable — a journal entry nothing cites — is the JOURNAL's trigger, not this one"
     },
     "audits": {
-      "home": "docs/audits/*.md",
+      "home": "docs/audits/*",
       "writer": "session",
       "reader": [
         "verb:retire",
@@ -110,7 +110,7 @@
         "action": "never",
         "recording-act": "none is taken: append-only historical; the recording act for a superseded measurement is the newer audit citing the one it overtakes"
       },
-      "growth": "unbounded-with-reason — one file per measurement, and a measurement is only taken when a question needs it; that is the control",
+      "growth": "unbounded-with-reason — one file per measurement (its data files, TSVs among them, ride the same round), and a measurement is only taken when a question needs it; that is the control",
       "trigger": "none, declared why: an audit fires when a review round is commissioned, and commissioning one is a decision about where to look next. No predicate detects an unasked question"
     },
     "directives": {
