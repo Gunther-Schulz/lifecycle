@@ -1686,5 +1686,15 @@ blocked-by: NONE
 blocker-moot: lc-253 (the blocker closed before this item did)
 closed-ref: a25b402
 
+## lc-257
+grade: DONE
+requirement: THE BANNER'S MOMENTS LINE DOES NOT SURFACE THE DERIVED COUNT, AND AFTER lc-253 THAT COUNT IS THE POPULATION'S WHOLE STORY: declaration.render_moments_line parses the fire detail generically and surfaces declared/executed/broken/malformed only, so over this repo it renders '0 declared moment(s), 0 executed' while 47 of 50 reader entries carry a DERIVED moment — the banner reads as nothing-there over a mostly-derived registry. Display gap only: the parser was verified live not to crash or misbehave on the new derived= field. Record: lc-253 lane closing report part 3/4 (gap surfaced, not built), fire detail at HEAD: entries=50 declared=0 derived=47 executed=0.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/declaration.py,test/test_declaration.py
+done-criterion: render_moments_line surfaces the derived count beside declared and executed (the four-number honesty the tally and fire detail already carry), renders unchanged over a pre-lc-253 detail that carries no derived= field (older stored results stay readable — the parser stays tolerant of the absent key, showing derived only when present), and the banner's stale/absent/unparseable rules are untouched. RED-FIRST: over this repo's stored result the current line omits derived=47; after the change it shows it; over a synthetic old-format detail the line renders exactly as today.
+evidence: RELAYED (lc-253 lane report part 3/4, its live verification): the generic dict-parse does not crash on derived= and does not surface it. MEASURED at this desk 2026-09-20: the last fire.jsonl line after a real kind moments run reads broken=0 malformed=0 entries=50 declared=0 derived=47 executed=0 kinds=29, and the live banner section renders 0 declared/0 executed with no derived figure. DERIVED: the entries= field (also new since b42a689) raises the same question and the build decides whether it too surfaces — one decision, stated in the change, not two items.
+blocked-by: NONE
+closed-ref: 3496cf6
+
 ## Archive (pre-migration)
 
