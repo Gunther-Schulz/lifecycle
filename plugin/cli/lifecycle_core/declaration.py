@@ -2546,8 +2546,15 @@ def render_digest(doc: dict, repo: Path) -> list[str]:
         home = body.get("home")
         reader = body.get("reader")
         reads = reader if isinstance(reader, list) else [reader or ""]
-        marker = "  [session-read]" if any(
-            "session" in str(r) for r in reads) else ""
+        reader_refs = [entry.get("reader") if isinstance(entry, dict)
+                       else entry for entry in reads]
+        # parse_refs, not startswith: a comma-joined entry ("session,
+        # verb:x") is legal to the typed-ref grammar, and this predicate
+        # must read refs with the same parser _check_typed_refs does or
+        # the two disagree on exactly that shape.
+        typed = parse_refs([r for r in reader_refs if isinstance(r, str)])
+        marker = ("  [session-read]"
+                  if not any(t == "verb" for t, _ in typed) else "")
 
         if not isinstance(home, str) or not home.strip():
             lines.append(f"  {name:<22} COULD NOT VERIFY: no home declared, "

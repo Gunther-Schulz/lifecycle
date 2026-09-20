@@ -269,6 +269,27 @@ class TheRegistryDigest(unittest.TestCase):
         self.assertNotIn("[session-read]", by_verb)
         self.assertIn("[session-read]", by_none)
 
+    def test_a_mixed_session_and_verb_reader_has_no_session_marker(self):
+        """RED-FIRST: any verb reader means a verb reads the kind for you."""
+        d, doc = self._repo({
+            "mixed readers": self._kind(
+                "mixed.md", ["session", "verb:item ready"]),
+        })
+        (d / "mixed.md").write_text("mixed", encoding="utf-8")
+        line = next(ln for ln in decl.render_digest(doc, d)
+                    if "mixed readers" in ln)
+        self.assertNotIn("[session-read]", line)
+
+    def test_a_dict_form_verb_reader_has_no_session_marker(self):
+        d, doc = self._repo({
+            "dict verb reader": self._kind(
+                "dict.md", [{"reader": "verb:item ready"}]),
+        })
+        (d / "dict.md").write_text("dict", encoding="utf-8")
+        line = next(ln for ln in decl.render_digest(doc, d)
+                    if "dict verb reader" in ln)
+        self.assertNotIn("[session-read]", line)
+
 
 class ReaderWhenStage(unittest.TestCase):
     """lc-224 — the reader stage gains a per-entry WHEN.
