@@ -1079,6 +1079,28 @@ class MomentsBannerLineTest(unittest.TestCase):
         from datetime import date
         self.assertIn(date.today().isoformat(), line)
 
+    def test_a_clean_run_with_entries_and_derived_carries_all_reach_counts(self):
+        line = self._line(self._rec(broken=0, malformed=0, entries=50,
+                                    declared=0, derived=47, executed=0))
+        self.assertIn("; 50 reader entries — 0 declared, 47 derived, 0 "
+                      "executed — no predicate ran, so this verdict is "
+                      "about the declaration only", line)
+
+    def test_a_clean_run_with_derived_but_no_entries_carries_three_counts(self):
+        line = self._line(self._rec(broken=0, malformed=0, declared=0,
+                                    derived=47, executed=0))
+        self.assertIn("; 0 declared moment(s), 47 derived, 0 executed — "
+                      "no predicate ran, so this verdict is about the "
+                      "declaration only", line)
+
+    def test_an_old_format_clean_run_keeps_its_exact_reach_wording(self):
+        rec = self._rec(broken=0, malformed=0, declared=4, executed=2)
+        line = self._line(rec)
+        self.assertEqual(
+            line, "moments: LAST RUN " + rec["at"].split("T")[0]
+            + " clean — 0 broken, 0 malformed; 4 declared moment(s), "
+            "2 executed")
+
     def test_a_run_that_EXECUTED_NOTHING_says_so_beside_its_zeros(self):
         """The assurance-wider-than-predicate arm, carried through the log:
         `0 broken, 0 malformed` is what a dead evaluator also writes."""

@@ -2843,7 +2843,8 @@ def render_moments_line(repo) -> list[str]:
             return None
 
     broken, malformed = _n("broken"), _n("malformed")
-    declared, executed = _n("declared"), _n("executed")
+    entries, declared = _n("entries"), _n("declared")
+    derived, executed = _n("derived"), _n("executed")
     age = ""
     try:
         from datetime import date as _date
@@ -2864,9 +2865,16 @@ def render_moments_line(repo) -> list[str]:
                 f"counts{age}. Re-run `lifecycle kind moments`."]
     reach = ""
     if declared is not None and executed is not None:
-        reach = (f"; {declared} declared moment(s), {executed} executed"
-                 + (" — no predicate ran, so this verdict is about the "
-                    "declaration only" if executed == 0 else ""))
+        if derived is not None and entries is not None:
+            reach = (f"; {entries} reader entries — {declared} declared, "
+                     f"{derived} derived, {executed} executed")
+        elif derived is not None:
+            reach = (f"; {declared} declared moment(s), {derived} derived, "
+                     f"{executed} executed")
+        else:
+            reach = f"; {declared} declared moment(s), {executed} executed"
+        reach += (" — no predicate ran, so this verdict is about the "
+                  "declaration only" if executed == 0 else "")
     if broken or malformed:
         return [f"moments: LAST RUN {day} found {broken} broken, "
                 f"{malformed} malformed{reach}{age}"]
