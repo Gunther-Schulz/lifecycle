@@ -1696,5 +1696,15 @@ evidence: RELAYED (lc-253 lane report part 3/4, its live verification): the gene
 blocked-by: NONE
 closed-ref: 3496cf6
 
+## lc-247
+grade: DONE
+requirement: THE DIGEST'S `[session-read]` MARKER CLAIMS MORE THAN ITS PREDICATE ESTABLISHES, on the surface a session reads to learn what the repo holds. Its legend says the marker names "a kind no verb reads for you"; the predicate asks only whether ANY reader mentions `session`. A kind read by BOTH a session and a verb therefore renders as though nothing reads it for you, which is the assurance-wider-than-predicate class (the mechanism's own words about itself) in a pointer surface - and a pointer surface is exactly where a reader stops looking. Record: found at the build desk 2026-09-19 while declaring the arc kinds.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/declaration.py,test/test_declaration.py
+done-criterion: The marker's PREDICATE and its LEGEND say the same thing. Either the predicate narrows to what the legend claims - marked only where no reader is a `verb:` reference - or the legend narrows to what the predicate establishes, and the wording changes with it. RED-FIRST: a kind declaring BOTH a session reader and a verb reader must render differently from one declaring a session reader alone; today they render identically, which is the defect. CONTROL: a kind with only a session reader keeps its marker, so the repair is not simply deleting the marker. MUST-NOT-BUILD: nothing that changes what `--digest` is FOR - it stays a pointer surface and never becomes an authority on content (lc-219's own boundary).
+evidence: MEASURED at the build desk 2026-09-19, over the live declaration: 12 of the 28 registered kinds declare BOTH a session reader and a `verb:` reader - journal entries, laws, audits, directives, refusal-registry, cli source, investigation records, plugin cache versions, design notes, begehung findings, desk state, and arcs. ELEVEN of those twelve predate this session's arc declaration, so the defect is pre-existing and widespread rather than introduced by it; arcs is merely the specimen that made it visible. MEASURED, the predicate itself, read at the artifact: declaration.py marks `[session-read]` on `any("session" in str(r) for r in reads)`, while the legend printed two lines above it says the marker means a kind no verb reads for you. DERIVED: the two are different questions, and the wider one is the one printed - so eleven kinds carry a marker that is false about them, on the surface lc-219 built for a session to learn the repo's map from.
+blocked-by: NONE
+closed-ref: 84ae909
+
 ## Archive (pre-migration)
 
