@@ -128,6 +128,7 @@ decision: has the design round closed, fixing the trigger vocabulary these 26 ki
 decision: has the design round closed, settling whether the index is a new kind, a widened digest, or a declaration field? → CLOSED 2026-09-19 - round complete: 10 decisions, 4 locked designs, 2 attack rounds, 7-item build wave DONE and pushed (head d1374ed). Desk cachyos-setup-43. Body: docs/2026-09-19-round-decisions.md. SHAPE still open - this answers the round, not the new-kind/digest/field question.
 decision: when does the next design-arc decision round run, relative to the two designed probes (erosion, drift-trigger baseline) → operator GO 2026-09-20, first-hand: probes first, round after, consuming their results; added agenda: the WHEN/reader-trigger stage (O6) and lc-250. Lanes: docs/directives/2026-09-20-drift-baseline-sweep-brief.md and this date's dispatch record
 decision: run the drift probe treatment arm? → YES (operator 2026-09-20, answering the numbered round). 5 governed-repo sessions or 4 weeks; demand block + grading: docs/directives/2026-09-20-drift-treatment-arm-directive.md, log docs/audits/drift-treatment-log.tsv. Slot admission gated on its outcome.
+decision: open the O6 WHEN/reader-trigger design arc now or after the treatment arm? → NOW (operator 2026-09-20): erosion probe HEALTH cleared the instrument-accumulation objection; goal-question slot admission stays gated on the treatment arm. Arc delegated to peer desk lifecycle-ef; kickoff docs/directives/2026-09-20-o6-when-stage-arc-kickoff.md.
 
 ## Archive (pre-migration)
 
