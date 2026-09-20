@@ -27,6 +27,21 @@ directive operationalizes its TREATMENT paragraph and adds nothing to it.
   established drift episodes in the window is COULD NOT VERIFY with the
   episode count, never either verdict.
 
+## Two rulings, 2026-09-20 (the O6 desk's interim surfaced the ambiguity)
+
+- **The investigation record need not pre-exist at kickoff.** The
+  goal-check's GOAL source is the investigation record where one exists;
+  before one exists it is the brief's or kickoff's own stated goal. A
+  session that never opens a record still fires the demand at its round
+  and wave seams.
+- **INDEPENDENCE EXCLUSION, binding:** a session whose own work product
+  CONSUMES or DECIDES this arm's result is never in the treated sample —
+  today that is the O6 design-arc desk (lifecycle-ef), whose slot-admission
+  material is this arm's consumer. The arc that grades the instrument
+  cannot sit inside the instrument's sample; the research companion's
+  independence finding is the ground. Its kickoff therefore carries the
+  directive's PATH and deliberately not the demand block.
+
 ## The demand block (pasted verbatim into treated briefs)
 
 ```
