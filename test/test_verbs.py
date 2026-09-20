@@ -2238,6 +2238,190 @@ class KindMomentsTest(unittest.TestCase):
         self.assertIn("1 malformed", out)
 
 
+class TheKindReadVerb(unittest.TestCase):
+    """`kind read <name>` (lc-255, O6 §4 Part C, D3a) — THREE ANSWERS and
+    the body-vs-pointer split assigned at booking, over `cmd_kind_read`
+    directly (the CLI wiring and the fire log get their own coverage in
+    `KindReadIntegration` below). A plain `tempfile` directory stands in for
+    a repo: this verb touches the filesystem, never git, so a real `_Repo`
+    would only add commit overhead for these arms.
+    """
+
+    def _run(self, repo, kinds, name):
+        args = SimpleNamespace(name=name)
+        buf = []
+        code = verbs.cmd_kind_read(args, buf.append, repo, {"kinds": kinds})
+        return code, "\n".join(buf), args
+
+    def test_an_unregistered_kind_is_a_FINDING(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            code, out, _ = self._run(
+                Path(d), {"items": {"home": "x.md"}}, "nosuchkind")
+            self.assertEqual(code, exits.FINDING, out)
+            self.assertIn("FINDING [read_kind_unregistered]", out)
+            self.assertIn("'nosuchkind'", out)
+
+    def test_a_kind_with_no_home_is_could_not_verify(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            code, out, _ = self._run(Path(d), {"empty": {}}, "empty")
+            self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+            self.assertIn("declares no `home`", out)
+
+    def test_an_unresolvable_variable_is_could_not_verify(self):
+        """NEVER a zero-shaped clean — the class `retire.expand_home` and
+        `_UNEXPANDED` exist to name (lc-170/172's own reasoning, reused)."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            code, out, _ = self._run(
+                Path(d), {"x": {"home": "$SOME_LC255_UNSET_VAR/thing.md"}},
+                "x")
+            self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+            self.assertIn("cannot resolve", out)
+
+    def test_a_home_matching_no_file_is_could_not_verify_naming_the_absence(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            code, out, _ = self._run(Path(d), {"x": {"home": "nope.md"}}, "x")
+            self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+            self.assertIn("matched no file", out)
+            self.assertIn("nope.md", out)
+
+    def test_a_glob_home_matching_no_file_is_could_not_verify(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            code, out, _ = self._run(
+                Path(d), {"x": {"home": "arcs/*.md"}}, "x")
+            self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+
+    def test_a_small_single_file_prints_its_body_verbatim(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            (repo / "SMALL.md").write_text("line one\nline two\n",
+                                            encoding="utf-8")
+            code, out, args = self._run(repo, {"x": {"home": "SMALL.md"}},
+                                        "x")
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertIn("line one", out)
+            self.assertIn("line two", out)
+            self.assertIn("proxy bound: read here means "
+                          "read-through-this-verb", out)
+            self.assertEqual(args.fire_detail, "read=x")
+
+    def test_a_large_single_file_prints_a_pointer_never_the_body(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            (repo / "BIG.md").write_text(
+                "\n".join(f"line {i}" for i in range(500)) + "\n",
+                encoding="utf-8")
+            code, out, args = self._run(repo, {"x": {"home": "BIG.md"}}, "x")
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertNotIn("line 0\n", out)
+            self.assertIn("500 line(s)", out)
+            self.assertIn("body large — open the path above.", out)
+            self.assertIn("proxy bound:", out)
+            self.assertEqual(args.fire_detail, "read=x")
+
+    def test_a_glob_home_matching_several_files_prints_a_pointer(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            (repo / "docs").mkdir()
+            (repo / "docs" / "a.md").write_text("a body\n", encoding="utf-8")
+            (repo / "docs" / "b.md").write_text("b body\n", encoding="utf-8")
+            code, out, args = self._run(
+                repo, {"x": {"home": "docs/*.md"}}, "x")
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertIn("2 file(s)", out)
+            self.assertIn("newest:", out)
+            self.assertNotIn("a body", out)
+            self.assertNotIn("b body", out)
+            self.assertEqual(args.fire_detail, "read=x")
+
+    def test_a_directory_home_resolving_to_ONE_file_is_a_body_not_a_pointer(self):
+        """The split is on FILE COUNT after resolution, never on the home's
+        declared SHAPE — a directory or a carrier that happens to resolve
+        to one file is one file."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            (repo / "onlyone").mkdir()
+            (repo / "onlyone" / "solo.md").write_text("solo body\n",
+                                                       encoding="utf-8")
+            code, out, args = self._run(repo, {"x": {"home": "onlyone"}}, "x")
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertIn("solo body", out)
+            self.assertEqual(args.fire_detail, "read=x")
+
+    def test_a_carrier_with_several_ITEM_BLOCKS_is_still_ONE_file(self):
+        """`retire.list_home` would count this as several INSTANCES (one
+        per fixed-slot block); this verb counts FILES, so a carrier with
+        three items is still the single-file body branch. Guards against
+        silently switching to `list_home`'s instance-counting semantics."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            carrier = "schema: 3\nbaseline: 0\n\n" + "\n".join(
+                f"## xx-{i}\ngrade: READY\nrequirement: r{i}\n"
+                f"goal: mitigate\nwrite-set: t{i}.py\n"
+                f"done-criterion: d{i}\nevidence: none\nblocked-by: NONE\n"
+                for i in range(3))
+            (repo / "CARRIER.md").write_text(carrier, encoding="utf-8")
+            code, out, args = self._run(
+                repo, {"x": {"home": "CARRIER.md"}}, "x")
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertNotIn("file(s)", out)
+            self.assertIn("xx-0", out)
+            self.assertIn("xx-2", out)
+            self.assertEqual(args.fire_detail, "read=x")
+
+
+class KindReadIntegration(unittest.TestCase):
+    """`kind read`, end to end through `main()` — the fire log actually
+    records `read=<kind>` (D3a's whole point). RED-FIRST, live over the
+    real repo before this change (quoted in the lane's report to the
+    dispatcher): `kind read items` was `argument kind_action: invalid
+    choice`, exit 3 — a usage error, never a verdict about the repo.
+    """
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _detail(self, repo, verb):
+        from lifecycle_core import firelog
+        rec = firelog.last_run(verb, repo=str(repo.dir))
+        self.assertIsNotNone(rec, f"no fire-log record for {verb!r}")
+        return rec.get("detail") or ""
+
+    def test_a_clean_read_fires_with_read_equals_kind_in_the_detail(self):
+        with refusals._Repo() as r:
+            code, out = self._run(r, "kind", "read", "items")
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertIn("proxy bound:", out)
+            self.assertIn("read=items", self._detail(r, "kind read"))
+
+    def test_an_unregistered_name_exits_FINDING_through_main(self):
+        with refusals._Repo() as r:
+            code, out = self._run(r, "kind", "read", "nosuchkind")
+            self.assertEqual(code, exits.FINDING, out)
+            self.assertIn("FINDING [read_kind_unregistered]", out)
+
+
 class DueReadSurfaceIntegration(unittest.TestCase):
     """O6 §4 Part B (lc-254), end to end through `main()` — cli.py's ONE
 

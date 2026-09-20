@@ -2366,6 +2366,18 @@ LANE_ROWS = [
         stage="wave 1, stage 8 (found by the emit-site coverage check)",
     ),
     Row(
+        ident="read_kind_unregistered",
+        refusal="`kind read` naming a kind the declaration does not "
+                "register — the read verb's own unregistered-kind check, "
+                "the same predicate `unregistered_kind` proves for `kind "
+                "show`, over a distinct emit site (lc-255, O6 §4 Part C)",
+        firing_input="`kind read nosuchkind`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["kind", "read", "nosuchkind"]),
+        control=lambda: _cli(["kind", "read", "items"]),
+        stage="wave 2, O6 D3a (lc-255)",
+    ),
+    Row(
         ident="emit_site_unregistered",
         refusal="ASSIGNED ITEM B — a site in the code emits a FINDING under a "
                 "row the roster does not register: no plant, no control, no "

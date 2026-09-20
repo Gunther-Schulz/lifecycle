@@ -145,6 +145,9 @@ def cmd_kind(args, out) -> int:
             out(line)
         return exits.CLEAN
 
+    if args.kind_action == "read":
+        return verbs.cmd_kind_read(args, out, repo, res.declaration)
+
     d = res.declaration
 
     # THE DIGEST IS THE WHOLE OUTPUT, not a section of the wall form (lc-219).
@@ -633,6 +636,13 @@ def build_parser() -> argparse.ArgumentParser:
                                 "a registered kind")
     show = ks.add_parser("show", help="one kind, every stage")
     show.add_argument("name")
+    read = ks.add_parser(
+        "read",
+        help="a registered kind's BODY (or its pointer where the body is "
+             "large) — the read AS AN ACT, recorded by the fire log (O6 "
+             "§4 Part C, D3a). `kind show` prints STAGES; this prints "
+             "CONTENT")
+    read.add_argument("name")
 
     it = sub.add_parser("item", help="the item carrier")
     its = it.add_subparsers(dest="item_action")
@@ -1064,7 +1074,8 @@ def main(argv=None) -> int:
                 code = verbs.cmd_arc_close(args, out, ctx)
     elif args.verb == "kind":
         if not args.kind_action:
-            out("COULD NOT VERIFY: `kind` needs an action: list, check, show.")
+            out("COULD NOT VERIFY: `kind` needs an action: list, check, "
+                "show, read.")
             return exits.COULD_NOT_VERIFY
         path = f"kind {args.kind_action}"
         code = cmd_kind(args, out)

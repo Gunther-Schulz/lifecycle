@@ -542,6 +542,15 @@ MUTATIONS = [
      "'(none)'}\")\n            return exits.CLEAN",
      "the exit code behind `kind show`'s unregistered-kind message"),
 
+    ("read_kind_unregistered", "verbs.py",
+     '        out(f"FINDING [read_kind_unregistered] {args.name!r} is not a "\n'
+     "            f\"registered kind. Registered: {', '.join(kinds) or "
+     "'(none)'}\")\n        return exits.FINDING",
+     '        out(f"FINDING [read_kind_unregistered] {args.name!r} is not a "\n'
+     "            f\"registered kind. Registered: {', '.join(kinds) or "
+     "'(none)'}\")\n        return exits.CLEAN",
+     "the exit code behind `kind read`'s unregistered-kind message"),
+
     ("emit_site_unregistered", "roster.py",
      "    if not uncovered:",
      "    if True:",

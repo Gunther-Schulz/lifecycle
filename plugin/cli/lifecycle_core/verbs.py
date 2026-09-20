@@ -4020,3 +4020,140 @@ def cmd_kind_moments(args, out, repo: Path, doc: dict) -> int:
         "exercised no predicate at all — clean, and clean about very "
         "little.")
     return exits.CLEAN
+
+
+# --- `kind read` (lc-255, O6 §4 Part C, D3a): the read AS AN OBSERVED ACT ---
+
+#: Above this many lines a single-file body is a POINTER, never the text
+#: itself (assigned). Named so the two branches below cite one number rather
+#: than two copies of a literal drifting apart.
+_READ_BODY_LINE_LIMIT = 400
+
+
+def cmd_kind_read(args, out, repo: Path, doc: dict) -> int:
+    """Print a registered kind's BODY (or its pointer where large) — the
+    read routed through a verb so the fire log records it (D3a).
+
+    THREE ANSWERS (law 1). An unregistered `name` is a FINDING
+    (`read_kind_unregistered`) — the same check `kind show` already makes
+    inline in `cli.py`, reused here rather than reinvented. A registered
+    kind whose home resolves to nothing READABLE — an unresolvable
+    variable, an absent path, an unreadable file, a pattern matching no
+    file — is COULD NOT VERIFY, naming what was absent. That is this verb's
+    OWN third answer and never a registered refusal: "the world does not
+    have this file yet" is a fact about the repo, not a defect in the
+    declaration (`kind show`'s sibling reasoning for an absent home,
+    `render_digest`, draws the identical line). Anything else is CLEAN.
+
+    BODY VS POINTER (assigned). A home resolving to exactly one existing
+    file prints that file's body verbatim when it is at most
+    `_READ_BODY_LINE_LIMIT` lines; a longer single file, or a home matching
+    more than one file (a directory or a glob), prints a POINTER instead —
+    repo-relative path(s), a count where there is more than one, and a
+    date. The pointer IS a clean read: it still fires `read=<kind>` below,
+    because the proxy this verb exists to supply is "was the verb invoked",
+    never "was the whole body dumped".
+
+    WHY THE FILE-RESOLUTION SHAPE COMES FROM `declaration.render_digest`
+    AND NOT FROM `retire.list_home`. `list_home` counts INSTANCES OF A
+    KIND — for a carrier home it returns one entry per fixed-slot block
+    (an item ident per item), which is the right notion for the growth
+    walk and the wrong one here: a carrier holding twenty items is still
+    ONE PHYSICAL FILE, and grading it by item count would route a
+    single-file home onto the multi-file pointer branch it does not
+    belong on. `render_digest` already resolves a home to FILES —
+    `retire.expand_home`, then glob / directory / plain-file, newest by
+    mtime — which is the question this verb is actually asking, so that
+    branch shape is reused (`retire.expand_home`, `retire._UNEXPANDED`,
+    `retire._shown`, `declaration._mtime_date` — each already reached
+    across this same module boundary by `render_digest` itself) rather
+    than re-derived a third time.
+
+    THE PROXY BOUND (assigned wording) prints on every clean invocation,
+    body and pointer alike: "read" here means read-through-this-verb, and a
+    session that opens the file directly is invisible to the fire log by
+    construction — the design's own stated boundary (§4 Part C), restated
+    in the one place a caller will actually see it.
+    """
+    kinds = doc.get("kinds") or {}
+    if args.name not in kinds:
+        out(f"FINDING [read_kind_unregistered] {args.name!r} is not a "
+            f"registered kind. Registered: {', '.join(kinds) or '(none)'}")
+        return exits.FINDING
+
+    body = kinds[args.name] if isinstance(kinds[args.name], dict) else {}
+    home = body.get("home")
+    if not isinstance(home, str) or not home.strip():
+        out(f"COULD NOT VERIFY: kind {args.name!r} declares no `home`, so "
+            "there is nothing to read.")
+        return exits.COULD_NOT_VERIFY
+
+    resolved = retire.expand_home(home)
+    if retire._UNEXPANDED.search(resolved):
+        out(f"COULD NOT VERIFY: kind {args.name!r}'s home {home!r} carries "
+            "a variable this verb cannot resolve, so nothing was read — "
+            "not an empty file.")
+        return exits.COULD_NOT_VERIFY
+
+    path = repo / resolved
+    try:
+        if "*" in resolved:
+            # Mirrors `render_digest`'s own glob branch, in-tree and
+            # absolute-home alike: an in-repo glob globbed from the
+            # matched directory itself would double the prefix and report
+            # a false zero over a directory that holds real files.
+            if Path(resolved).is_absolute():
+                stem = resolved.split("*", 1)[0]
+                base = Path(stem if stem.endswith("/")
+                            else str(Path(stem).parent))
+                pattern = resolved[len(str(base)):].lstrip("/")
+                hits = sorted(base.glob(pattern)) if base.is_dir() else []
+            else:
+                hits = sorted(repo.glob(resolved))
+            hits = [p for p in hits if p.is_file()]
+        elif path.is_dir():
+            hits = sorted(p for p in path.rglob("*") if p.is_file())
+        elif path.is_file():
+            hits = [path]
+        else:
+            hits = []
+    except OSError as exc:
+        out(f"COULD NOT VERIFY: kind {args.name!r}'s home {home!r} could "
+            f"not be examined ({exc!r}).")
+        return exits.COULD_NOT_VERIFY
+
+    if not hits:
+        out(f"COULD NOT VERIFY: kind {args.name!r}'s home {home!r} "
+            f"(resolved: {resolved!r}) matched no file. Nothing was read.")
+        return exits.COULD_NOT_VERIFY
+
+    if len(hits) == 1:
+        target = hits[0]
+        try:
+            text = target.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            out(f"COULD NOT VERIFY: {retire._shown(target, repo)} could "
+                f"not be read ({exc!r}).")
+            return exits.COULD_NOT_VERIFY
+        lines = text.splitlines()
+        shown = retire._shown(target, repo)
+        if len(lines) <= _READ_BODY_LINE_LIMIT:
+            out(f"kind {args.name!r} — body of {shown} ({len(lines)} "
+                "line(s)):")
+            out("")
+            for line in lines:
+                out(line)
+        else:
+            out(f"kind {args.name!r} — {shown}, {len(lines)} line(s), "
+                f"mtime {decl._mtime_date(target)}")
+            out("body large — open the path above.")
+    else:
+        newest = max(hits, key=lambda p: p.stat().st_mtime)
+        out(f"kind {args.name!r} — {len(hits)} file(s) under {home!r}, "
+            f"newest: {retire._shown(newest, repo)} "
+            f"({decl._mtime_date(newest)})")
+
+    out("proxy bound: read here means read-through-this-verb — a direct "
+        "file open is not counted.")
+    args.fire_detail = f"read={args.name}"
+    return exits.CLEAN
