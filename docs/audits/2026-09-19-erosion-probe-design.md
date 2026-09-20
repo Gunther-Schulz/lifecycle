@@ -1,7 +1,9 @@
 # The erosion probe — DESIGN, 2026-09-19 (lc-222)
 
-**Status: a DESIGNED probe, which is one of lc-222's two declared closures.
-Not yet run.** The other closure — a recorded finding that no available
+**Status: RUN, 2026-09-20 — result in THE PROBE HAS RUN section below;
+verdict on the pre-registered criterion: HEALTH on the roster channel, with
+the probe's two live catches booked as lc-251.** (Header superseded in
+place; it read "Not yet run" until the run landed.) The other closure — a recorded finding that no available
 measurement discriminates — was considered and is NOT the answer here; the
 discriminating measurement exists and the data is already on disk.
 
@@ -111,6 +113,51 @@ dirty tree, and its own reason is provenance — a `PROVEN` it prints over an
 uncommitted state cites a state nobody can fetch. So the longitudinal run
 needs CLEAN historical checkouts, one per sampled commit, which is what a git
 worktree is for.
+
+## THE PROBE HAS RUN — measured 2026-09-20
+
+Executed by a dispatched sonnet lane in a scratch clone (the live checkout
+kept moving during the run, which confirmed the clone rationale above);
+per-row table re-derived independently at the integrating desk from the
+data file, `erosion-survival-2026-09-20.tsv` beside this document — every
+transition, count and trajectory agrees cell-for-cell. Twelve samples,
+df13f3e (2026-08-26) through cb32a4c (2026-09-20), roster growing 41 → 127
+rows; 1,115 row-verdicts; zero unrunnable samples.
+
+**Verdict on the pre-registered criterion: HEALTH.** Of 797
+previously-proven row-pair transitions, ONE regressed as rider 1's erosion
+class (0.13%); ten of eleven transitions show zero regression of any kind,
+including the two largest rosters (94/94, 102/102 survived), so there is
+no rate rising with roster size — the flip condition for the erosion
+verdict, named above before data was pulled, did not occur. No row was
+ever silently dropped from the roster after proving (0 of 797).
+
+**Rider 1 did its job — the split carried three different findings:**
+
+- `amend_nothing_to_amend`: PROVEN seven consecutive samples, FAILED from
+  55591ec (2026-09-19) to HEAD — the mutation stopped darkening the row
+  with the arrangement intact. THE one erosion instance, invisible until
+  this run.
+- `capture_dominated`: PROVEN eight samples, then the arm RAISES under its
+  own mutation from a533253 (2026-09-19) to HEAD — arrangement-broke, NOT
+  erosion, live and unrepaired.
+- `ledger_body`: a one-sample arrangement dip (2026-09-13) that self-healed
+  — the class pooling would have miscounted as erosion.
+
+Both live regressions date to same-day `refusals.py` commits (the schema
+floor rewrite and the arc-carrier rows), so the first diagnostic hypothesis
+is this repo's own lc-30 class — an added or reworked neighbour retiring an
+existing proof. Repair booked as **lc-251** (pair-rule re-admission,
+scoping repair, no other row moves); the diagnosis belongs to that item,
+not this document.
+
+**What the result licenses, no wider than rider 2:** the roster channel
+shows no erosion under growth — arXiv:2605.09315's shape did NOT reproduce
+on this repo's instrument data — so accumulation of instrument-bearing
+mechanisms is not counter-indicated by this measurement. It says nothing
+about rule-corpus effects on session behaviour, and one measured erosion
+instance in 797 is also the proof that the probe class is worth re-running:
+without this run, both 2026-09-19 casualties would still be silent.
 
 ## What this probe cannot be asked
 
