@@ -129,6 +129,7 @@ decision: has the design round closed, settling whether the index is a new kind,
 decision: when does the next design-arc decision round run, relative to the two designed probes (erosion, drift-trigger baseline) → operator GO 2026-09-20, first-hand: probes first, round after, consuming their results; added agenda: the WHEN/reader-trigger stage (O6) and lc-250. Lanes: docs/directives/2026-09-20-drift-baseline-sweep-brief.md and this date's dispatch record
 decision: run the drift probe treatment arm? → YES (operator 2026-09-20, answering the numbered round). 5 governed-repo sessions or 4 weeks; demand block + grading: docs/directives/2026-09-20-drift-treatment-arm-directive.md, log docs/audits/drift-treatment-log.tsv. Slot admission gated on its outcome.
 decision: open the O6 WHEN/reader-trigger design arc now or after the treatment arm? → NOW (operator 2026-09-20): erosion probe HEALTH cleared the instrument-accumulation objection; goal-question slot admission stays gated on the treatment arm. Arc delegated to peer desk lifecycle-ef; kickoff docs/directives/2026-09-20-o6-when-stage-arc-kickoff.md.
+decision: O6 surfacing round D1-D4: default moment, carrier, read verb, written record? → ALL FOUR as recommended (operator 2026-09-20): derived moments (verb=its run; session=home written), surfacing in the acting verb output, a recorded read verb, nothing new written. Binding copy: docs/directives/2026-09-20-o6-surfacing-design.md. lc-252 precedes counters.
 
 ## Archive (pre-migration)
 
