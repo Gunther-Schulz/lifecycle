@@ -1164,6 +1164,29 @@ claim, runnable now.
   slightly away from the question. Cost the most on 2026-09-18, in two
   separate arcs, and has NO mechanism. The GOAL-slot-unmoved-while-ESTABLISHED
   -fills shape is an unprobed guess.
+  **THE GAP'S SHAPE MOVED, 2026-09-20 (operator, first-hand):** pressing a
+  drifting session with "what do you think the goal is?" usually returns a
+  CORRECT answer — their observation across sessions, including where the
+  goal was only partly stated and had to be inferred. So the goal is
+  articulable in-context while unapplied: the failure is the TRIGGER, not
+  the knowledge, and the operator is currently the only trigger — their
+  word for it, babysitting, which is the purpose doc's own failure mode
+  (the operator pulled back into the inner loop). What that licenses is
+  narrower than a drift DETECTOR (uncomputable, and the external survey
+  found none): a mechanism need only FIRE the question at seams and demand
+  the answer written — the required-slots pattern, the record's GOAL slot
+  the natural home, an inferred goal written early so it costs the
+  operator one confirmation instead of silent re-inference every turn.
+  The confound to probe before believing it: the operator's ask carries a
+  suspicion signal a scheduled ask lacks; the intrinsic-self-correction
+  result (arXiv:2310.01798) predicts that difference matters, the
+  operator's observation predicts it does not (they supply no content,
+  only the trigger, and the correction still lands). Probe design:
+  `docs/audits/2026-09-20-direction-drift-trigger-probe-design.md` — the
+  attempt to BOOK the design was vetoed by the carrier's own cost test as
+  do-it-now, and the veto was correct, so the design was written in the
+  same session. Until the probe runs, this stays a candidate and the
+  operator stays the mechanism.
 - **Completeness as distinct from scope decay.** The 55% measures decay, never
   sufficiency. Whether a booked item was COMPLETE is unmeasured.
 - **Trust calibration** (lc-161) and **whether desk/peer beats a single
