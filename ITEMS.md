@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 244
+added: 245
 compacted: 0
 
 ## lc-3
@@ -1421,4 +1421,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
 done-criterion: The tally word matches its predicate: entries, declared (carrying a when), and executed are three separately-labelled numbers in both the console tally and the fire-log detail, and declared counts ONLY entries with a declared when. RED-FIRST is live today: over this repo the current output prints declared=50 against a declaration declaring 0 — that firing input must read declared=0 after the fix, with the entry count still visible. Tests pinning the old wording move with it; none deleted to green. The console honesty pairing (executed beside declared) survives unchanged.
 evidence: MEASURED at this desk 2026-09-20: verbs.py increments seen per moment unconditionally (read at the source, ~line 3909); kind moments over this repo prints "50 declared moment(s)" console-side and the declaration carries 0 object-form reader entries (re-derived by script: 50 entries, verb 23 / session 24 / hook 3). RELAYED (lifecycle-ef, O6 proposal section 10) and re-verified here: the fire detail carries declared=50 executed=0 into the carrier a banner reads back. DERIVED: any surfaced-vs-read counter built on that detail inherits the wrong word, which is why this precedes the O6 build.
+blocked-by: NONE
+
+## lc-253
+grade: READY
+requirement: A READER MOMENT MUST BE DERIVED OR IT WILL NOT EXIST: the per-reader-entry `when` has been declarable for a day and 0 of 29 kinds declare one, so `kind moments` renders 50 UNDECLARED and the surfacing half has no input to surface. Derive the moment in two tiers — a `verb:` reader's moment is the verb running, a `session` reader's default moment is the kind's home being written — leaving an authored `when` for the residue and UNDECLARED legitimate. Record: the booked design docs/directives/2026-09-20-o6-surfacing-design.md §4 Part A and §5 D1. vocab.py carries the new state (lc-241's closed-vocabulary registry); refusals.py is ABSENT deliberately — this item emits no new finding, and if the build finds one owed the boundary is incomplete and the item STOPS rather than widening.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/vocab.py,plugin/cli/lifecycle_core/verbs.py,test/test_declaration.py,test/test_verbs.py
+done-criterion: `kind moments` renders a DERIVED state, carrying which tier derived it, for every reader entry the two tiers cover, and reserves UNDECLARED for the residue; the state is registered in vocab.py's registry with its proof path, and the cannot-express bucket is untouched. RED-FIRST, live today, no fixture needed: over this repo's own declaration the current output is 50 UNDECLARED / 0 DERIVED, and after the change the same input reads 23 verb-tier + 24 session-tier DERIVED with the 3 hook entries unchanged. CONTROL: a reader that is neither verb nor session keeps UNDECLARED, so the change is not a rename of UNDECLARED. MUST-NOT-MOVE: UNDECLARED never becomes a finding (law 11, and kind moments' own stated rule).
+evidence: MEASURED at this desk 2026-09-20 over the live declaration: 29 kinds, 50 reader entries, 0 with an object-form when; kind moments prints 50 UNDECLARED and no FIRE/QUIET/BROKEN/MALFORMED/NONE, exit 0; split verb 23 / session 24 / hook 3 re-derived by script, by kind session+verb 13 / session-only 9 / verb-only 4 / hook+session 2 / hook-only 1. MEASURED at this desk: lc-241's closure sits in the done home. DERIVED (design desk, adopted here): a verb reader's moment is implicit in the verb running — lc-224's own arity argument rests on it, so tier 1 authors nothing. RELAYED (lifecycle-ef join, method stated — 128 live items resolved via item slots --json, positive control lc-252 matched, function grain read from requirement lines, biased toward under-serializing): same-region holders are lc-237 (a SIBLING REGISTRATION in the same vocab.py registry — one lane or a stated order, or the closed vocabulary grows two spellings for one concept) and lc-247; the other declaration.py holders name other regions. RELAYED: D1 GO as recommended (operator 2026-09-20, ledgered).
 blocked-by: NONE
