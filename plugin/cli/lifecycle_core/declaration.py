@@ -1637,10 +1637,11 @@ def _check_reader_when(kind: str, ref: str, when, res: Result) -> None:
 
 #: `read_moments`'s per-entry answer. `state` is always one of FIRE / QUIET /
 #: BROKEN (from `lanes.evaluate_trigger`, for a `predicate` WHEN) or NONE (a
-#: declared `none, declared why: ...`) or UNDECLARED (no `when` at all —
-#: today's default shape, unchanged). An absent moment and a quiet one are
-#: different answers, so both are reported; only a `predicate` WHEN is ever
-#: actually run.
+#: declared `none, declared why: ...`) or UNDECLARED (no `when` at all and no
+#: computable default — the residue) or DERIVED (no `when` at all, but the
+#: ref shape supplies one — O6 §4 Part A). An absent moment and a quiet one
+#: are different answers, so both are reported; only a `predicate` WHEN is
+#: ever actually run.
 @dataclass
 class ReadMoment:
     reader: str
@@ -1648,7 +1649,7 @@ class ReadMoment:
     detail: str = ""
 
 
-#: The two states `read_moments` assigns itself, never `lanes.evaluate_trigger`
+#: The three states `read_moments` assigns itself, never `lanes.evaluate_trigger`
 #: — that function's own contract is FIRE/QUIET/BROKEN and stays untouched
 #: (the ONE evaluator, CLAUDE.md "The router, and the ONE trigger evaluator").
 READ_MOMENT_NONE = "NONE"
@@ -1663,6 +1664,55 @@ READ_MOMENT_UNDECLARED = "UNDECLARED"
 #: say, arriving as its nearest benign neighbour.
 READ_MOMENT_MALFORMED = "MALFORMED"
 
+#: No `when` at all, but the reader's OWN SHAPE supplies a default moment
+#: (O6 §4 Part A, lc-253). This is the fourth answer the vocabulary could
+#: not say before: a `verb:` or `session` reader without an authored `when`
+#: used to fold into UNDECLARED — the same neighbour-fold vocab.py's
+#: contract names, here caught by the evaluator rather than left to render
+#: as "nothing to surface". DERIVED is never authored and never validated by
+#: `_check_reader_when` — it is `read_moments`'s own default, applied only
+#: where `classify_reader_when` has already said UNDECLARED (no `when`
+#: present); a present-and-invalid `when` stays MALFORMED regardless of the
+#: ref's shape, because an authored mistake is not the same fact as nothing
+#: authored at all.
+READ_MOMENT_DERIVED = "DERIVED"
+
+#: Tier 1 (§4 Part A): the ref prefix whose moment IS the verb running.
+#: Read literally against the ref string, never re-derived from
+#: REF_PREFIXES — a `lane:`, `hook:` or `producer:` reader is prefixed too
+#: and has no stated default yet, so it stays residue (UNDECLARED).
+_DERIVE_VERB_PREFIX = "verb:"
+
+#: Tier 2 (§4 Part A): the one bare ref whose moment defaults to the kind's
+#: own `home` being written. `operator` is REF_BARE's other member and is
+#: deliberately excluded — the design names only `verb:` and `session`
+#: readers as having a computable default; an `operator` reader stays
+#: residue, authorable via `when` exactly like today.
+_DERIVE_SESSION_REF = "session"
+
+
+def _derived_reader_detail(ref: str, home) -> str | None:
+    """The tier-specific detail for a DERIVED moment, or None if `ref` is
+    not one of the two derivable shapes.
+
+    Kept separate from the state itself so a caller can tell "derived, and
+    here is which tier" from "not derivable" without parsing prose out of
+    `detail` — the same reason `WhenClass.state` and `.problem` are two
+    fields rather than one.
+    """
+    if ref.startswith(_DERIVE_VERB_PREFIX):
+        verb_name = ref[len(_DERIVE_VERB_PREFIX):]
+        return (f"tier 1 (verb reader): the moment is {verb_name!r} running "
+                "— nothing authored, nothing to author (O6 §4 Part A)")
+    if ref == _DERIVE_SESSION_REF:
+        if isinstance(home, str) and home.strip():
+            where = f"home ({home})"
+        else:
+            where = "home (undeclared)"
+        return (f"tier 2 (session reader): default moment is the kind's "
+                f"{where} being written — nothing authored (O6 §4 Part A)")
+    return None
+
 
 def read_moments(body: dict, repo: Path | None = None) -> list:
     """Evaluate every `reader` entry's declared WHEN — the O6 evaluation half.
@@ -1673,6 +1723,22 @@ def read_moments(body: dict, repo: Path | None = None) -> list:
     `none` WHEN or an absent one is reported, never executed and never
     silently dropped: an absent moment and a quiet one are different
     answers.
+
+    AN ABSENT `when` IS NOT ALWAYS UNDECLARED (O6 §4 Part A, lc-253). Where
+    `classify_reader_when` says UNDECLARED — no `when` present — this
+    function asks a second, narrower question the shared partition does not:
+    does the ref's OWN SHAPE supply a default? A `verb:` reader's moment IS
+    the verb running; a bare `session` reader's default moment is the
+    kind's `home` being written. Both are derivable from fields the
+    declaration already carries, so DERIVED costs nothing to author and
+    UNDECLARED narrows to the genuine residue (`operator`, and any
+    `lane:`/`hook:`/`producer:` reader, none of which have a stated
+    default). This is deliberately NOT folded into `classify_reader_when`:
+    that function's contract is the checker/evaluator shared PARTITION over
+    `when`'s presence and validity, and a `verb:`/`session` ref with no
+    `when` is still, structurally, "no `when`" — the derivation is what
+    THIS evaluator does about that fact, not a new partition state the
+    checker must also validate.
 
     Deferred import: `lanes` imports this module (`from . import
     declaration as decl`), so a module-level import here would be circular
@@ -1714,7 +1780,15 @@ def read_moments(body: dict, repo: Path | None = None) -> list:
             out.append(ReadMoment(ref, READ_MOMENT_MALFORMED,
                                   verdict.problem))
         else:
-            out.append(ReadMoment(ref, READ_MOMENT_UNDECLARED))
+            # verdict.state == READ_MOMENT_UNDECLARED: no `when` present.
+            # Ask the second question classify_reader_when does not: does
+            # the ref's shape itself supply a default (O6 §4 Part A)?
+            derived_detail = _derived_reader_detail(ref, body.get("home"))
+            if derived_detail is not None:
+                out.append(ReadMoment(ref, READ_MOMENT_DERIVED,
+                                      derived_detail))
+            else:
+                out.append(ReadMoment(ref, READ_MOMENT_UNDECLARED))
     return out
 
 

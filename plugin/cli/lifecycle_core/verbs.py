@@ -3906,6 +3906,19 @@ def cmd_kind_moments(args, out, repo: Path, doc: dict) -> int:
     which is the guard-over-legitimate-work shape that trains the override
     reflex (law 11).
 
+    FOUR ANSWERS NOW, not three, and DERIVED is honest about what it is NOT
+    (O6 §4 Part A, lc-253). A `verb:` or bare `session` reader with no
+    authored `when` renders DERIVED rather than UNDECLARED — the ref's own
+    shape supplies the moment (the verb running; the kind's home being
+    written) — but DERIVED is deliberately NOT folded into `declared`: it
+    carries no authored `when`, and derivation is the DEFAULT this design
+    supplies, not a declaration anyone made. Counting it as declared would
+    let the tally claim authorship for a fact the declaration's author never
+    wrote, which is the same false-assurance shape lc-252 repaired one word
+    over. So `declared` keeps its exact prior meaning (an authored `when`,
+    executed or not) and DERIVED gets its own, fourth number — the three-
+    number honesty widens rather than bends.
+
     THREE ANSWERS, and the empty case is the one that needs saying. A
     declaration with NO kinds, or one whose kinds declare no reader entries
     at all, produces zero evaluations — and a printed zero reads exactly like
@@ -3919,7 +3932,7 @@ def cmd_kind_moments(args, out, repo: Path, doc: dict) -> int:
             "registry: zero evaluations and zero problems print the same.")
         return exits.COULD_NOT_VERIFY
 
-    broken, malformed, entries, declared, ran = [], [], 0, 0, 0
+    broken, malformed, entries, declared, derived, ran = [], [], 0, 0, 0, 0
     for name in kinds:
         body = kinds[name] if isinstance(kinds[name], dict) else {}
         moments = decl.read_moments(body, repo)
@@ -3931,10 +3944,15 @@ def cmd_kind_moments(args, out, repo: Path, doc: dict) -> int:
             entries += 1
             detail = f" — {m.detail}" if m.detail else ""
             out(f"    reader {m.reader}: {m.state}{detail}")
-            # `read_moments` preserves an absent `when` as UNDECLARED. Every
-            # other state comes from a present `when`, including NONE and a
-            # malformed one, which remain declarations even when unexecuted.
-            if m.state != decl.READ_MOMENT_UNDECLARED:
+            # `read_moments` preserves an absent `when` as UNDECLARED or, for
+            # a derivable ref shape, DERIVED. Every other state comes from a
+            # present `when`, including NONE and a malformed one, which
+            # remain declarations even when unexecuted. DERIVED is counted
+            # apart from both: it is not nothing (UNDECLARED), and it is not
+            # authored (declared) — see the docstring's FOUR ANSWERS note.
+            if m.state == decl.READ_MOMENT_DERIVED:
+                derived += 1
+            elif m.state != decl.READ_MOMENT_UNDECLARED:
                 declared += 1
             if m.state in (lanes.FIRE, lanes.QUIET, lanes.BROKEN):
                 # EXECUTED, and counted apart from the ones merely READ. The
@@ -3974,25 +3992,31 @@ def cmd_kind_moments(args, out, repo: Path, doc: dict) -> int:
             "somebody's mistake wearing the default's face.")
 
     tally = (f"{entries} reader entr{'y' if entries == 1 else 'ies'}, "
-             f"{declared} declared moment(s), {ran} EXECUTED over "
-             f"{len(kinds)} kind(s)")
+             f"{declared} declared moment(s), {derived} DERIVED, "
+             f"{ran} EXECUTED over {len(kinds)} kind(s)")
     # THE RESULT CARRIER (W1 act 2). The banner reads this back, so what is
-    # written here is what a later session is told: the three REACH numbers
+    # written here is what a later session is told: the four REACH numbers
     # travel with the two problem counts, because a stored "0 broken, 0
     # malformed" over a run that executed nothing is the same false
-    # assurance the verdict line above refuses to print.
+    # assurance the verdict line above refuses to print. `derived` is its
+    # own number rather than folded into `declared`: nothing was authored,
+    # so counting it as a declaration would claim authorship for a default
+    # (O6 §4 Part A, lc-253).
     if args is not None:
         args.fire_detail = (f"broken={len(broken)} malformed={len(malformed)} "
-                            f"entries={entries} declared={declared} executed={ran} "
+                            f"entries={entries} declared={declared} "
+                            f"derived={derived} executed={ran} "
                             f"kinds={len(kinds)}")
     if broken or malformed:
         out(f"kind moments: FINDING — {tally}: {len(broken)} broken, "
             f"{len(malformed)} malformed.")
         return exits.FINDING
     out(f"kind moments: CLEAN — {tally}, none broken and none malformed. "
-        "THE TWO NUMBERS ARE THE VERDICT'S REACH: only an executed moment "
-        "was put to a predicate, and an absent `when` is UNDECLARED, which "
-        "is the legitimate default rather than a gap. A run whose second "
-        "number is 0 has read the registry and exercised no predicate at "
-        "all — clean, and clean about very little.")
+        "THE EXECUTED NUMBER IS THE VERDICT'S REACH: only an executed "
+        "moment was put to a predicate. DERIVED costs nothing to author and "
+        "is not a declaration; an absent `when` with no derivable ref shape "
+        "is UNDECLARED, which is the legitimate default rather than a gap. "
+        "A run whose EXECUTED number is 0 has read the registry and "
+        "exercised no predicate at all — clean, and clean about very "
+        "little.")
     return exits.CLEAN

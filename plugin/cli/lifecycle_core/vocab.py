@@ -160,6 +160,22 @@ def registry() -> tuple:
                         "carries the state"),
         ),
         Vocabulary(
+            name="reader moment states",
+            members=(decl.READ_MOMENT_NONE, decl.READ_MOMENT_UNDECLARED,
+                      decl.READ_MOMENT_MALFORMED, decl.READ_MOMENT_DERIVED),
+            oov_form=OOV_FORM,
+            consumer="declaration.read_moments / verbs.cmd_kind_moments",
+            proof_path=("computed per reader entry by `read_moments` from "
+                        "the entry's `when` presence/validity and, absent a "
+                        "`when`, the ref's own shape (O6 §4 Part A); "
+                        "rendered per-entry by `kind moments` and folded "
+                        "into its `declared=`/`derived=`/`executed=` fire-"
+                        "log tally. NOT this vocabulary: `lanes."
+                        "evaluate_trigger`'s own FIRE/QUIET/BROKEN, which "
+                        "is the ONE trigger evaluator's separate, untouched "
+                        "contract (CLAUDE.md)."),
+        ),
+        Vocabulary(
             name="trigger modes",
             members=decl.TRIGGER_MODES,
             oov_form=OOV_FORM,

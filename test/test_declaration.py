@@ -474,12 +474,19 @@ class ReaderWhenPartitionAgreement(unittest.TestCase):
     def test_an_absent_when_is_malformed_at_neither(self):
         """The legitimate default across all 26 kinds. A partition that
 
-        folded absence into MALFORMED would fire on every one of them."""
+        folded absence into MALFORMED would fire on every one of them.
+        `session` is DERIVED rather than UNDECLARED since lc-253 (O6 §4
+        Part A) — the point this test makes (not malformed) is unchanged by
+        which non-malformed state it lands on; `operator` is the ref shape
+        neither tier derives, so it still reaches UNDECLARED unmoved."""
         body = self._kind(["session"])
         res = decl.Result(code=0)
         decl._validate_kind("fixture", body, res, {"kinds": {"fixture": {}}})
         self.assertEqual(res.findings, [])
         self.assertEqual([m.state for m in decl.read_moments(body)],
+                         [decl.READ_MOMENT_DERIVED])
+        residue = self._kind(["operator"])
+        self.assertEqual([m.state for m in decl.read_moments(residue)],
                          [decl.READ_MOMENT_UNDECLARED])
 
     def test_a_prefixed_reader_with_a_when_is_never_EXECUTED(self):
@@ -551,14 +558,21 @@ class ReadMomentsEvaluation(unittest.TestCase):
 
     def test_an_absent_when_is_reported_but_not_evaluated(self):
         """An absent moment and a quiet one are different answers — both are
-        reported, never omitted; only a `predicate` WHEN is ever run."""
-        moments = decl.read_moments(self._kind(["session"]))
+        reported, never omitted; only a `predicate` WHEN is ever run.
+        `operator` is the residue ref shape neither tier derives (O6 §4
+        Part A, lc-253's CONTROL), so it is the one still reaching
+        UNDECLARED here — see DerivedReaderMoments below for `session`/
+        `verb:` on the DERIVED side."""
+        moments = decl.read_moments(self._kind(["operator"]))
         self.assertEqual([m.state for m in moments], ["UNDECLARED"])
 
     def test_a_mixed_kind_evaluates_exactly_one_moment(self):
         """lc-224's own motivating shape: a `laws`-style mixed reader list,
         `when` on only the bare entry. Both entries are REPORTED; only the
-        one carrying a `predicate` WHEN is actually RUN."""
+        one carrying a `predicate` WHEN is actually RUN. `verb:audit`'s
+        absent `when` is DERIVED (tier 1, O6 §4 Part A, lc-253) rather than
+        UNDECLARED — it is still never EXECUTED, which is this test's actual
+        claim (`spy.call_count == 1`, for the `session` entry alone)."""
         body = self._kind(
             [{"reader": "session", "when": "predicate true"}, "verb:audit"])
         with mock.patch.object(lanes_mod, "evaluate_trigger",
@@ -567,8 +581,81 @@ class ReadMomentsEvaluation(unittest.TestCase):
         self.assertEqual(spy.call_count, 1)
         self.assertEqual(len(moments), 2)
         states = {m.reader: m.state for m in moments}
-        self.assertEqual(states["verb:audit"], "UNDECLARED")
+        self.assertEqual(states["verb:audit"], "DERIVED")
         self.assertIn(states["session"], ("FIRE", "QUIET", "BROKEN"))
+
+
+class DerivedReaderMoments(unittest.TestCase):
+    """O6 §4 Part A (lc-253): a `verb:` or bare `session` reader with no
+
+    authored `when` gets a computed default instead of folding into
+    UNDECLARED — the same neighbour-fold vocab.py's contract exists to end
+    (a state the vocabulary could not say renders as its nearest benign
+    member), here caught by the evaluator itself. RED-FIRST, live over this
+    repo's own declaration before this change: `kind moments` printed 50
+    UNDECLARED / 0 DERIVED (desk measurement, 2026-09-20, quoted in the item).
+    """
+
+    @staticmethod
+    def _kind(reader, home="x.md"):
+        return {"home": home, "writer": "session", "reader": reader,
+                "staleness": "none, declared why: fixture",
+                "exit": {"action": "never", "recording-act": "fixture"},
+                "growth": "unbounded-with-reason — a fixture kind",
+                "trigger": "none, declared why: fixture"}
+
+    def test_tier_1_a_verb_reader_with_no_when_is_DERIVED(self):
+        moments = decl.read_moments(self._kind(["verb:item ready"]))
+        self.assertEqual([m.state for m in moments], ["DERIVED"])
+        self.assertIn("tier 1", moments[0].detail)
+        self.assertIn("'item ready' running", moments[0].detail)
+
+    def test_tier_2_a_session_reader_with_no_when_is_DERIVED(self):
+        moments = decl.read_moments(self._kind(["session"], home="ITEMS.md"))
+        self.assertEqual([m.state for m in moments], ["DERIVED"])
+        self.assertIn("tier 2", moments[0].detail)
+        self.assertIn("ITEMS.md", moments[0].detail)
+        self.assertIn("being written", moments[0].detail)
+
+    def test_tier_2_with_no_home_reports_undeclared_home_rather_than_crash(self):
+        """A kind lacking `home` is itself a declaration defect elsewhere
+        (law 2); this evaluator must not crash or invent a path for it."""
+        body = {"reader": ["session"]}
+        moments = decl.read_moments(body)
+        self.assertEqual([m.state for m in moments], ["DERIVED"])
+        self.assertIn("undeclared", moments[0].detail)
+
+    def test_CONTROL_a_reader_neither_tier_derives_stays_UNDECLARED(self):
+        """§4 Part A's own control: an `operator` bare reader, and every
+
+        prefixed shape besides `verb:` (`lane:`, `hook:`, `producer:`), have
+        no stated default and must not move — proving DERIVED narrows
+        UNDECLARED to the genuine residue rather than replacing it."""
+        for ref in ("operator", "lane:something", "hook:something",
+                    "producer:something"):
+            with self.subTest(ref=ref):
+                moments = decl.read_moments(self._kind([ref]))
+                self.assertEqual([m.state for m in moments], ["UNDECLARED"],
+                                 f"{ref!r} moved off UNDECLARED")
+
+    def test_an_authored_when_still_OVERRIDES_derivation(self):
+        """§4 Part A: 'DERIVED unless a `when` overrides it' — an authored
+
+        `when` on a derivable ref is not shadowed by the new default."""
+        moments = decl.read_moments(self._kind(
+            [{"reader": "session", "when": "none, declared why: fixture"}]))
+        self.assertEqual([m.state for m in moments], ["NONE"])
+
+    def test_DERIVED_is_registered_in_the_closed_vocabulary(self):
+        """lc-241's contract: a new read-moment state must be a member of a
+        registered vocabulary, not a bare string only this module knows."""
+        from lifecycle_core import vocab
+        v = vocab.by_name("reader moment states")
+        self.assertIsNotNone(v, "no 'reader moment states' registration")
+        self.assertIn(decl.READ_MOMENT_DERIVED, v.members)
+        self.assertIn(decl.READ_MOMENT_UNDECLARED, v.members)
+        self.assertIn(decl.READ_MOMENT_MALFORMED, v.members)
+        self.assertIn(decl.READ_MOMENT_NONE, v.members)
 
 
 class StructureReadout(unittest.TestCase):

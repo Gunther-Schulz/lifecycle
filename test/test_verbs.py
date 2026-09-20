@@ -2151,30 +2151,67 @@ class KindMomentsTest(unittest.TestCase):
         self.assertIn("NOT ONE declares a reader entry", out)
 
     def test_an_ABSENT_when_is_UNDECLARED_and_never_a_finding(self):
-        """Law 11's arm. Nearly every kind in this repo is this case, so a
-        row grading absence would fire on the whole registry at once."""
-        code, out = self._run(self._kinds(["session", "verb:item ready"]))
+        """Law 11's arm, on the RESIDUE shape (O6 §4 Part A's CONTROL):
+
+        `operator`/`lane:`/`hook:`/`producer:` readers have no computable
+        default and stay UNDECLARED. `session`/`verb:` moved to DERIVED —
+        see test_an_ABSENT_when_on_a_DERIVABLE_ref_is_DERIVED below."""
+        code, out = self._run(self._kinds(["operator", "hook:something"]))
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("UNDECLARED", out)
+        self.assertNotIn("FINDING", out)
+
+    def test_an_ABSENT_when_on_a_DERIVABLE_ref_is_DERIVED_not_a_finding(self):
+        """O6 §4 Part A, lc-253: a `verb:` or bare `session` reader with no
+
+        authored `when` gets a computed default rather than folding into
+        UNDECLARED — the neighbour-fold vocab.py's contract exists to end,
+        caught here rather than left to render as nothing-to-surface."""
+        code, out = self._run(self._kinds(["session", "verb:item ready"]))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("reader session: DERIVED", out)
+        self.assertIn("reader verb:item ready: DERIVED", out)
         self.assertNotIn("FINDING", out)
 
     def test_the_CLEAN_line_separates_declared_from_EXECUTED(self):
         """The assurance-wider-than-predicate arm, and the one this verb
         would otherwise fail: a registry whose moments are all UNDECLARED
         reads `50 moments ... CLEAN`, which a reader takes for fifty
-        predicates that answered. The second number is what refuses that."""
+        predicates that answered. The EXECUTED number is what refuses
+        that — and DERIVED is its own number too (lc-253): nothing here was
+        authored, so it must not inflate `declared`."""
         code, out = self._run(self._kinds(["session", "verb:item ready"]))
         self.assertEqual(code, exits.CLEAN, out)
-        self.assertIn("2 reader entries, 0 declared moment(s), 0 EXECUTED", out)
+        self.assertIn(
+            "2 reader entries, 0 declared moment(s), 2 DERIVED, 0 EXECUTED",
+            out)
 
     def test_all_UNDECLARED_entries_are_not_counted_as_declared_in_fire_log(self):
+        """Renamed in spirit by lc-253: `session`/`verb:` are now DERIVED,
+
+        not UNDECLARED, but DERIVED must ALSO not count as declared — it
+        carries no authored `when` either."""
         args = SimpleNamespace()
         code, out = self._run(
             self._kinds(["session", "verb:item ready"]), args=args)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertEqual(
             args.fire_detail,
-            "broken=0 malformed=0 entries=2 declared=0 executed=0 kinds=1")
+            "broken=0 malformed=0 entries=2 declared=0 derived=2 "
+            "executed=0 kinds=1")
+
+    def test_the_genuine_RESIDUE_is_still_not_counted_as_declared(self):
+        """The control for the test above: a ref shape neither tier
+
+        derives must still land in neither `declared` nor `derived`."""
+        args = SimpleNamespace()
+        code, out = self._run(
+            self._kinds(["operator", "hook:something"]), args=args)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(
+            args.fire_detail,
+            "broken=0 malformed=0 entries=2 declared=0 derived=0 "
+            "executed=0 kinds=1")
 
     def test_an_EXECUTED_moment_is_counted_as_executed(self):
         """The control direction: with a real predicate the second number
