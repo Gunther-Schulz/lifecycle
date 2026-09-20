@@ -1,9 +1,15 @@
 # The erosion probe — DESIGN, 2026-09-19 (lc-222)
 
-**Status: RUN, 2026-09-20 — result in THE PROBE HAS RUN section below;
-verdict on the pre-registered criterion: HEALTH on the roster channel, with
-the probe's two live catches booked as lc-251.** (Header superseded in
-place; it read "Not yet run" until the run landed.) The other closure — a recorded finding that no available
+**Status: RUN TWICE, verdict HEALTH on the roster channel both times.**
+First run 2026-09-19 (lc-234, 6 day-boundary samples — results:
+`2026-09-19-erosion-probe-results.md` beside this file; verdict issued at
+that round desk, lc-234 closed on it). Second run 2026-09-20 (12 samples —
+an UNINTENDED replication: this header still read "Not yet run" a day
+after the first run closed, and a desk composed a wave from the label
+without the one directory listing that would have shown the results file;
+the stale label cost a lane, the convergence is what it bought). Second
+run's result: THE PROBE HAS RUN section below. The two live catches are
+booked as lc-251. The other closure — a recorded finding that no available
 measurement discriminates — was considered and is NOT the answer here; the
 discriminating measurement exists and the data is already on disk.
 
@@ -114,7 +120,8 @@ uncommitted state cites a state nobody can fetch. So the longitudinal run
 needs CLEAN historical checkouts, one per sampled commit, which is what a git
 worktree is for.
 
-## THE PROBE HAS RUN — measured 2026-09-20
+## THE PROBE HAS RUN — measured 2026-09-20 (SECOND run; the first is
+## lc-234's, 2026-09-19, in the results file beside this document)
 
 Executed by a dispatched sonnet lane in a scratch clone (the live checkout
 kept moving during the run, which confirmed the clone rationale above);
@@ -135,29 +142,40 @@ ever silently dropped from the roster after proving (0 of 797).
 **Rider 1 did its job — the split carried three different findings:**
 
 - `amend_nothing_to_amend`: PROVEN seven consecutive samples, FAILED from
-  55591ec (2026-09-19) to HEAD — the mutation stopped darkening the row
-  with the arrangement intact. THE one erosion instance, invisible until
-  this run.
-- `capture_dominated`: PROVEN eight samples, then the arm RAISES under its
-  own mutation from a533253 (2026-09-19) to HEAD — arrangement-broke, NOT
+  the first sample past 2026-09-19 14:52 — the mutation stopped darkening
+  the row with the arrangement intact. THE one erosion instance. Causal
+  commit fa6ea7e (verbs.py gained a second branch emitting the same
+  finding, which co-fires with the recorded anchor's for the row's firing
+  input) — first diagnosed in run 1's results file, independently
+  re-derived by the lc-251 lane; the sampled flip commits (0bb97d0 in run
+  1, 55591ec in run 2) are just each run's first sample after fa6ea7e.
+- `capture_dominated`: reads PROVEN for eight samples and NEVER WAS — the
+  recorded mutation makes the arm crash (ZeroDivisionError), and a
+  prove-rows scoring defect counted any raise as "changed" until 0737205
+  fixed it ("a crashed arm is COULD NOT VERIFY, never a proof"); from the
+  first sample carrying that fix the row reads COULD_NOT_VERIFY, which is
+  the honest state it was always in. Arrangement-broke-at-birth, NOT
   erosion, live and unrepaired.
 - `ledger_body`: a one-sample arrangement dip (2026-09-13) that self-healed
   — the class pooling would have miscounted as erosion.
 
-Both live regressions date to same-day `refusals.py` commits (the schema
-floor rewrite and the arc-carrier rows), so the first diagnostic hypothesis
-is this repo's own lc-30 class — an added or reworked neighbour retiring an
-existing proof. Repair booked as **lc-251** (pair-rule re-admission,
-scoping repair, no other row moves); the diagnosis belongs to that item,
-not this document.
+(A first hypothesis — the lc-30 class, read off two same-day `refusals.py`
+commits — was REFUTED by the lc-251 lane's diagnosis and by run 1's own
+results file: the causes are a verbs.py product-code commit and a
+born-broken arrangement, per the trajectory bullets above. Recorded rather
+than deleted because the wrong hypothesis shaped lc-251's first booking.)
+Repair booked as **lc-251** (pair-rule re-admission, no other row moves);
+the diagnosis lives with that item and run 1's results file.
 
 **What the result licenses, no wider than rider 2:** the roster channel
 shows no erosion under growth — arXiv:2605.09315's shape did NOT reproduce
 on this repo's instrument data — so accumulation of instrument-bearing
 mechanisms is not counter-indicated by this measurement. It says nothing
-about rule-corpus effects on session behaviour, and one measured erosion
-instance in 797 is also the proof that the probe class is worth re-running:
-without this run, both 2026-09-19 casualties would still be silent.
+about rule-corpus effects on session behaviour. The two runs' independent
+convergence — different sampling plans, different desks, same verdict, same
+two casualties, same causal commit for the erosion instance — is the
+replication's one genuine yield, bought at the price of a lane the stale
+status header spent.
 
 ## What this probe cannot be asked
 

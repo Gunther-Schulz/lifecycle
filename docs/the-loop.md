@@ -123,17 +123,23 @@ mechanism.
 | M3 | a carrier → grows | `item add` | the head counters | `item ratio`, conservation | session-start banner | MECHANIZED |
 | M4 | growth → a retirement pass | retirement | closures | the flow ratio | the banner prints "pass owed" | MECHANIZED |
 | M5 | a rule → earns its stay or leaves | fire-rate review | the register | fire counts | **memory** | **GAP** |
-| M6 | **the corpus grows → does it still help?** | — | — | — | — | **GAP — and there is counter-evidence** |
+| M6 | **the corpus grows → does it still help?** | — | — | — | — | **PARTIAL — roster channel PROBED TWICE, HEALTH; behaviour channel still unprobed** |
 | M7 | a design → signed off | the transition table | the design doc | the table itself | the close convention | PARTIAL |
 
-**M6 IS THE GAP WITH EXTERNAL COUNTER-EVIDENCE AND IT BELONGS AT THE TOP OF
-ANY READING OF THIS FILE.** Agents accumulating rules, skills and memory show
-non-monotonic capability erosion *unless explicitly constrained*
-(arXiv:2605.09315, lane-verified, unopened here). This repo grows its corpus
-every session. The qualifier is where M3-M5 live, so the design is not
-refuted — but **no probe has been run here**, and a claim this much rests on
-earns one built to disprove it. The measurement that would discriminate is
-not yet designed; that is the honest state.
+**M6's ROSTER CHANNEL IS PROBED — TWICE — AND SURVIVED; ITS BEHAVIOUR
+CHANNEL IS NOT, AND THE COUNTER-EVIDENCE STILL STANDS OVER THAT HALF.**
+Agents accumulating rules, skills and memory show non-monotonic capability
+erosion *unless explicitly constrained* (arXiv:2605.09315, opened at the
+design desk 2026-09-19). The probe was designed
+(`docs/audits/2026-09-19-erosion-probe-design.md`) and RUN 2026-09-19
+(lc-234, 6 samples, results file beside the design doc) and AGAIN
+2026-09-20 (12 samples, unintended replication off this row's own stale
+"no probe has been run" — the label this paragraph carried a day too
+long): verdict HEALTH both times on the pre-registered per-row survival
+criterion, one true erosion instance across 797 previously-proven
+row-pair transitions, booked lc-251. Rider 2 bounds the reach: this
+measures the ROSTER channel only — whether the rule corpus degrades
+session BEHAVIOUR remains unmeasured, and that half is the open gap.
 
 ---
 
@@ -141,7 +147,9 @@ not yet designed; that is the honest state.
 
 1. **O6 — nothing fires a read at the moment of application.** Measured cost
    tonight. Everything else on this page is smaller.
-2. **M6 — the corpus may be degrading what it improves, unprobed.**
+2. **M6 — the corpus may be degrading what it improves.** Roster channel
+   probed twice (2026-09-19/20), HEALTH; the behaviour channel is the
+   remaining unprobed half.
 3. **I3/I4 — booking and ledgering fire from memory.** Cheap to fix by I5's
    route: a count at close, not a better duty.
 4. **I10 — a silenced red is indistinguishable from an understood one.**
