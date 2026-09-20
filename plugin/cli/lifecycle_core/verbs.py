@@ -4090,9 +4090,9 @@ def cmd_kind_read(args, out, repo: Path, doc: dict) -> int:
 
     resolved = retire.expand_home(home)
     if retire._UNEXPANDED.search(resolved):
-        out(f"COULD NOT VERIFY: kind {args.name!r}'s home {home!r} carries "
-            "a variable this verb cannot resolve, so nothing was read — "
-            "not an empty file.")
+        out(f"COULD NOT VERIFY: the home of kind {args.name!r} ({home!r}) "
+            "carries a variable this verb cannot resolve, so nothing was "
+            "read — not an empty file.")
         return exits.COULD_NOT_VERIFY
 
     path = repo / resolved
@@ -4118,13 +4118,13 @@ def cmd_kind_read(args, out, repo: Path, doc: dict) -> int:
         else:
             hits = []
     except OSError as exc:
-        out(f"COULD NOT VERIFY: kind {args.name!r}'s home {home!r} could "
-            f"not be examined ({exc!r}).")
+        out(f"COULD NOT VERIFY: the home of kind {args.name!r} ({home!r}) "
+            f"could not be examined ({exc!r}).")
         return exits.COULD_NOT_VERIFY
 
     if not hits:
-        out(f"COULD NOT VERIFY: kind {args.name!r}'s home {home!r} "
-            f"(resolved: {resolved!r}) matched no file. Nothing was read.")
+        out(f"COULD NOT VERIFY: the home of kind {args.name!r} ({home!r}, "
+            f"resolved: {resolved!r}) matched no file. Nothing was read.")
         return exits.COULD_NOT_VERIFY
 
     if len(hits) == 1:
