@@ -711,12 +711,36 @@ MUTATIONS = [
      "prose belonging to another kind, which is the clean-forever check the "
      "60-line cap was replaced BY rather than the cap it replaced"),
 
+    # lc-251: FOLD THE VERDICT, NEVER THE CONDITION — the schema-wave
+    # principle stated at this file's own header block (~line 593, "none
+    # removes machinery, because a mutation that crashes proves the branch
+    # is reached and not that the row discriminates") applied to a row that
+    # violated it since it was written. The anchor used to be the bare
+    # `if closed == 0:` guard, replaced with `if False:`; with this row's
+    # fixture (NO_DRAIN_ITEMS: added > 0, closed == 0 — closed=0 IS the
+    # refusal's own definition, "capture with no drain"), removing the guard
+    # let execution fall straight into `ratio = added / closed` and RAISE
+    # ZeroDivisionError. MEASURED (erosion probe, 2026-09-20): this was never
+    # a working arrangement — a since-fixed scoring bug in this file's own
+    # `verdicts()` (0737205, "a crashed arm is COULD NOT VERIFY, never a
+    # proof") had counted the crash as "the row changed" for eight samples
+    # before the fix made it honestly report COULD NOT VERIFY. The repair
+    # folds the branch's OWN verdict instead of removing the guard that
+    # protects the division below it: the `out(...)` calls still run (the
+    # `[capture_dominated]` tag still prints, so `named` stays true) and only
+    # the RETURN changes, from FINDING to CLEAN — same shape as
+    # `unknown_item`/`unregistered_kind` above. The trailing `ratio = added /
+    # closed` line is part of the anchor only to make the match unique (the
+    # tripwire branch a few lines down prints and returns the identical two
+    # lines for a different refusal); it is never reached either way, since
+    # the mutated line still returns before it runs.
     ("capture_dominated", "verbs.py",
-     "    if closed == 0:",
-     "    if False:",
-     "the no-drain branch of the flow alarm — a carrier that has admitted "
-     "work and closed none then divides by zero's neighbour and reads as a "
-     "ratio, which is the one case a size-based cap also missed"),
+     "        return exits.FINDING\n    ratio = added / closed",
+     "        return exits.CLEAN\n    ratio = added / closed",
+     "the no-drain branch's OWN verdict — folded to CLEAN rather than the "
+     "guard removed, so a carrier that has admitted work and closed none "
+     "reads as though it drained, which is the one case a size-based cap "
+     "also missed"),
 
     ("kind_grew_without_exit", "retire.py",
      "    if count and not events:",
