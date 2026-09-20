@@ -121,8 +121,12 @@ Control and cloud sessions write no JSONL here, so their events are
 invisible to these counts by construction). Rows verified at this desk:
 the TSV re-read, the two load-bearing unsigned-ask rows re-opened at the
 raw records. Evidence artifacts (12-row TSV, the read-and-excluded TIER A
-chunk list, the reach probe): dotfiles-private
-`claude/records/drift-baseline-2026-09-20/`.
+chunk list, the reach probe): in the operator's `dotfiles` repo — a
+PRIVATE repo; there is no repo named "dotfiles-private" — at
+`claude/records/drift-baseline-2026-09-20/`. Private deliberately: the
+artifacts carry personal-session pointers, and 12 of the read-residue
+file's 274 lines quote chunks from personal sessions, so that directory
+never moves to a less private home.
 
 - **The knowledge leg is now a rate, and it is 7 of 7.** Seven operator
   goal-question events, 2026-08-04 to 2026-09-20, four projects. Every
