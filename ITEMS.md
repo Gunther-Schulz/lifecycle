@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 251
+added: 252
 compacted: 0
 
 ## lc-3
@@ -1420,3 +1420,13 @@ done-criterion: A behaviour-channel probe exists with a NAMED dependent variable
 evidence: MEASURED this session, ugrep --no-ignore-files: zero hits for behaviour channel or behavior channel in ITEMS.md, ITEMS-DONE.md, LEDGER.md; positive control, the same pattern returns hits in docs/the-loop.md, so instrument and scope both discriminate. RELAYED from docs/the-loop.md:129-142: roster channel PROBED TWICE (lc-234 n=6 2026-09-19; replication n=12 2026-09-20), verdict HEALTH both times on the pre-registered per-row survival criterion, one true erosion instance across 797 row-pair transitions, booked lc-251; rider 2 bounds the reach to the roster channel only. Counter-evidence standing over the unprobed half: arXiv:2605.09315, non-monotonic capability erosion unless explicitly constrained - opened at the design desk 2026-09-19, NOT opened here.
 blocked-by: decision the behaviour-channel probe design, specifically its dependent variable
 not-derivable: 2026-09-21 Looked for a design in docs/audits/: the roster-channel probe design (2026-09-19-erosion-probe-design.md) is the nearest and does NOT supply one - its dependent variable is per-row survival across refusals.py row-pair transitions, a roster/retrieval quantity. Looked for an entry in ITEMS.md, ITEMS-DONE.md and LEDGER.md: zero hits. What counts as degraded BEHAVIOUR is constitutively a scope call - purpose.md states a strong model steered too tightly performs BELOW its own default, which names the effect and not an observable.
+
+## lc-260
+grade: NEW
+requirement: The desk/peer control arm is one of three gaps the gap map deliberately does not claim to have closed, and it has no carrier: the catch study measured WHO catches, never whether the split beats a single session. Record: docs/the-loop.md:176-179 and docs/audits/2026-09-18-desk-peer-catch-study.md.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A control arm exists OR is recorded as declined: either a comparison carrying a second arm of comparable work run single-session, result in docs/audits/; or a dated one-line decline in LEDGER.md naming the spend as the reason. Verifier: one of those two artifacts exists AND docs/the-loop.md:176-179 is amended to cite it, so the gap map stops carrying an unrouted gap. Must-not-move: the catch study numbers and their FLOOR labelling stay unchanged.
+evidence: RELAYED from docs/audits/2026-09-18-desk-peer-catch-study.md, not re-derived here: it EXECUTED and produced numbers on a DIFFERENT question - 103 events graded across 3 sonnet lanes over 9 real sessions, SELF 63 CROSS 25 MECHANISM 5 ESCAPED 10; of 25 cross catches ~21 cite an artifact read against ~4 reasoning-only; cleanest lane direction split 8:1 peer-to-desk. All counts labelled FLOORS by the study, and no positive control on any lane sampling scorer. The study disclaims this item in its own words: no control arm exists and none is possible here; it measures who catches, never whether desk/peer beats a single session. Decision-theoretic prior, RELAYED from docs/answerable-not-felt.md:20-23: role separation over the SAME information is dominated by a single centralized decision maker (arXiv:2603.26993), so the split pays only through independent artifact reads - which is exactly what a control arm would test.
+blocked-by: decision whether to spend sessions running comparable work WITHOUT the desk/peer split to create a control arm
+not-derivable: 2026-09-21 Looked in ITEMS.md, ITEMS-DONE.md and LEDGER.md: grep control arm returns only lc-161 evidence line and an unrelated retire.py code literal (ITEMS-DONE.md:1078/1081), neither a desk/peer-split study; positive control, the same phrase returns hits in docs/the-loop.md and in the catch study. The catch study itself states no control arm exists and none is possible retrospectively. Constitutively the operator call: the control data does not exist and can only be created PROSPECTIVELY by deliberately running comparable work single-session, which is a spend decision on the very operator time the split exists to save.
