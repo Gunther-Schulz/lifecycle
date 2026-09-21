@@ -1398,6 +1398,7 @@ evidence: LANE-VERIFIED and NOT opened at any desk here: arXiv:2605.09315. MEASU
 blocked-by: NONE
 closed-reason: 2026-09-19 DESIGNED-PROBE closure, the first of the two the criterion allows. Paper opened at a desk per MUST-NOT-BUILD; citation verified real. Discriminator is per-row SURVIVAL of previously-proven rows, not the aggregate proven fraction, which fails the entry own bar by falling under booking lag. Design at docs/audits/2026-09-19-erosion-probe-design.md. NOT RUN.
 closed-ref: 9d97840
+closure-superseded-by: 2026-09-21 d645ec9 NOT RUN is stale: lc-234 RAN this probe 2026-09-19 (6 samples, HEALTH); lc-251 replicated 2026-09-20 (12 samples, HEALTH). Roster channel only; the behaviour channel is still unprobed, booked lc-259.
 
 ## lc-218
 grade: DONE
