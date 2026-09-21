@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 250
+added: 251
 compacted: 0
 
 ## lc-3
@@ -1410,3 +1410,13 @@ done-criterion: Each of the four candidates at docs/answerable-not-felt-research
 evidence: MEASURED this session, ugrep --no-ignore-files over the carriers: zero hits for TF-IDF or cross-encoder in ITEMS.md and ITEMS-DONE.md; positive control, the same pattern returns three hits in docs/ (research file lines 114, 116, 155) and control-2 lc-228 returns 2 in ITEMS.md, so instrument and scope both discriminate. The four unrouted candidates: planner-mediated oracle (line 151), cheap syntactic triage (line 155), layered pass levels (line 158), scalable oversight (line 163). RELAYED from the research file as DESK-VERIFIED abstracts, not opened here: TF-IDF at the completion boundary AUROC 0.83-0.95 against the LLM judge ceiling 0.65, 4-8x more false-success recovery at equal flag rate, ~3300x lower latency (lines 116-121); a 400M cross-encoder retains 98.7 percent of verification accuracy at up to 99.97 percent less compute (line 114).
 blocked-by: decision which of the four unrouted research candidates are admitted to the mechanism decision
 not-derivable: 2026-09-21 Looked for a routing decision in docs/answerable-not-felt.md open-decisions (2026-09-18), docs/2026-09-19-round-decisions.md, docs/2026-09-19-wave-designs.md and LEDGER.md: open decision (2) names ONLY independent-observer verification and admission control. No entry admits or declines candidates 3-6. Constitutively the operator/desk call: admitting a statistical detector sits adjacent to the MUST-NOT-BUILD prose-grading clauses in lc-228 and lc-229, and the note states a corpus mint needs the operator GO asked first-hand.
+
+## lc-259
+grade: NEW
+requirement: M6 behaviour channel is ranked gap 2 on the gap map and has no carrier anywhere; the erosion counter-evidence stands over the half asking whether the rule corpus degrades session BEHAVIOUR rather than retrieval. Record: docs/the-loop.md:126-142 and :148-152.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A behaviour-channel probe exists with a NAMED dependent variable and a pre-registered criterion, and has RUN, its result recorded in docs/audits/ beside the roster-channel results. Verifier: a results file naming the dependent variable, the sample, the pre-registered criterion and the verdict; a design with no run does NOT satisfy this - lc-222 was closed as designed-only and the gap map then carried a stale no-probe-has-been-run label for a day, causing an unintended replication. Must-not-move: the roster-channel verdict HEALTH stands unamended; this measures the other half.
+evidence: MEASURED this session, ugrep --no-ignore-files: zero hits for behaviour channel or behavior channel in ITEMS.md, ITEMS-DONE.md, LEDGER.md; positive control, the same pattern returns hits in docs/the-loop.md, so instrument and scope both discriminate. RELAYED from docs/the-loop.md:129-142: roster channel PROBED TWICE (lc-234 n=6 2026-09-19; replication n=12 2026-09-20), verdict HEALTH both times on the pre-registered per-row survival criterion, one true erosion instance across 797 row-pair transitions, booked lc-251; rider 2 bounds the reach to the roster channel only. Counter-evidence standing over the unprobed half: arXiv:2605.09315, non-monotonic capability erosion unless explicitly constrained - opened at the design desk 2026-09-19, NOT opened here.
+blocked-by: decision the behaviour-channel probe design, specifically its dependent variable
+not-derivable: 2026-09-21 Looked for a design in docs/audits/: the roster-channel probe design (2026-09-19-erosion-probe-design.md) is the nearest and does NOT supply one - its dependent variable is per-row survival across refusals.py row-pair transitions, a roster/retrieval quantity. Looked for an entry in ITEMS.md, ITEMS-DONE.md and LEDGER.md: zero hits. What counts as degraded BEHAVIOUR is constitutively a scope call - purpose.md states a strong model steered too tightly performs BELOW its own default, which names the effect and not an observable.
