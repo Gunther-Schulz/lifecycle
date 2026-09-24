@@ -3283,10 +3283,11 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
     not fail, it ACCUMULATES. The measured consequence is one level over —
     `item ready` resolves a `decision` blocker against a ledger line, so an
     item read as UNBLOCKED in a tree where the answer was never committed.
-    `--no-commit` is NOT mirrored from `item add` here: the flag lives on the
-    parser, which this change does not own, and the contract holds without it
-    — after CLEAN the line is committed, because a commit that fails is a
-    FINDING and not a CLEAN.
+    `--no-commit` IS NOW MIRRORED FROM `item add` (lc-116): a caller batching
+    several ledger lines into one commit owns that commit the same way it
+    can for every item verb — after CLEAN the line is committed unless
+    `--no-commit` said otherwise, because a commit that fails is a FINDING
+    and not a CLEAN.
     """
     if not args.line_kind:
         out("COULD NOT VERIFY: `ledger add` needs a line kind: "
@@ -3325,7 +3326,8 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
     # one kind of four, and the other three would keep accumulating.
     code = commit_paths(ctx, (ctx.ledger_path,),
                         f"lifecycle: ledger {args.line_kind}", out,
-                        what="the ledger line")
+                        what="the ledger line",
+                        skip=getattr(args, "no_commit", False))
     args.fire_detail = f"ledger add {args.line_kind}"
     return code
 
@@ -3521,7 +3523,8 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
     return exits.CLEAN if cons.ok else exits.FINDING
 
 
-def _arc_append(ctx: Ctx, slug: str, line: str, out, msg: str) -> int:
+def _arc_append(ctx: Ctx, slug: str, line: str, out, msg: str, *,
+                skip: bool = False) -> int:
     """Append one record line to a live arc body and commit it.
 
     APPEND-ONLY, like every other record this repo keeps: a belief that was
@@ -3535,6 +3538,9 @@ def _arc_append(ctx: Ctx, slug: str, line: str, out, msg: str) -> int:
     is a no-op for a kind that is neither — so a disposition or verdict line
     costs one idempotent recompute rather than a second code path deciding
     which kinds matter.
+
+    `skip` IS `commit_paths`' `skip` (lc-116): a caller batching several arc
+    writes owns the commit, the same escape every other carrier write has.
     """
     live, _closed = _arc_paths(ctx, slug)
     if not live.exists():
@@ -3546,7 +3552,7 @@ def _arc_append(ctx: Ctx, slug: str, line: str, out, msg: str) -> int:
     atomic.write_text(live, text, encoding="utf-8")
     out(line)
     return commit_paths(ctx, [live], msg, out, what="the arc record",
-                        stage_new=True)
+                        stage_new=True, skip=skip)
 
 
 def cmd_arc_premise(args, out, ctx: Ctx) -> int:
@@ -3562,7 +3568,8 @@ def cmd_arc_premise(args, out, ctx: Ctx) -> int:
     return _arc_append(
         ctx, args.slug,
         f"{arcs.PREMISE_LINE}: {args.ident} {_today()} {args.text.strip()}",
-        out, f"arcs: premise {args.ident} on {args.slug}")
+        out, f"arcs: premise {args.ident} on {args.slug}",
+        skip=getattr(args, "no_commit", False))
 
 
 def cmd_arc_belief(args, out, ctx: Ctx) -> int:
@@ -3580,7 +3587,8 @@ def cmd_arc_belief(args, out, ctx: Ctx) -> int:
         ctx, args.slug,
         f"{arcs.BELIEF_LINE}: {args.ident} {_today()} {args.claim.strip()} "
         f"| basis: {args.basis.strip()} | kill: {args.kill.strip()}",
-        out, f"arcs: belief {args.ident} on {args.slug}")
+        out, f"arcs: belief {args.ident} on {args.slug}",
+        skip=getattr(args, "no_commit", False))
 
 
 def cmd_arc_reopen(args, out, ctx: Ctx) -> int:
@@ -3631,7 +3639,7 @@ def cmd_arc_reopen(args, out, ctx: Ctx) -> int:
           "— re-derived, or accepted stale with a reason.")
     return commit_paths(ctx, [live], f"arcs: reopen {args.ident} on "
                         f"{args.slug}", out, what="the arc reopen",
-                        stage_new=True)
+                        stage_new=True, skip=getattr(args, "no_commit", False))
 
 
 def cmd_arc_disposition(args, out, ctx: Ctx) -> int:
@@ -3647,7 +3655,8 @@ def cmd_arc_disposition(args, out, ctx: Ctx) -> int:
         ctx, args.slug,
         f"{arcs.DISPOSITION_LINE}: {args.ident} {_today()} {args.how} "
         f"{args.reason.strip()}",
-        out, f"arcs: disposition {args.ident} on {args.slug}")
+        out, f"arcs: disposition {args.ident} on {args.slug}",
+        skip=getattr(args, "no_commit", False))
 
 
 def cmd_arc_advance(args, out, ctx: Ctx) -> int:
@@ -3706,7 +3715,8 @@ def cmd_arc_advance(args, out, ctx: Ctx) -> int:
             "point, and where it has none the act and its reasoning are "
             "surfaced to the operator BEFORE it runs.")
     return commit_paths(ctx, [live], f"arcs: advance {slug} to {to}", out,
-                        what="the arc advance", stage_new=True)
+                        what="the arc advance", stage_new=True,
+                        skip=getattr(args, "no_commit", False))
 
 
 def cmd_arc_narrow(args, out, ctx: Ctx) -> int:
@@ -3742,7 +3752,8 @@ def cmd_arc_narrow(args, out, ctx: Ctx) -> int:
     atomic.write_text(live, new_text, encoding="utf-8")
     out(line)
     return commit_paths(ctx, [live], f"arcs: narrow {slug}", out,
-                        what="the arc narrowing", stage_new=True)
+                        what="the arc narrowing", stage_new=True,
+                        skip=getattr(args, "no_commit", False))
 
 
 def cmd_arc_verdict(args, out, ctx: Ctx) -> int:
@@ -3762,7 +3773,8 @@ def cmd_arc_verdict(args, out, ctx: Ctx) -> int:
     return _arc_append(
         ctx, args.slug,
         f"{arcs.VERDICT_LINE}: {args.ident} {_today()} {args.text.strip()}",
-        out, f"arcs: verdict {args.ident} on {args.slug}")
+        out, f"arcs: verdict {args.ident} on {args.slug}",
+        skip=getattr(args, "no_commit", False))
 
 
 def cmd_arc_yield(args, out, ctx: Ctx) -> int:
@@ -3788,7 +3800,8 @@ def cmd_arc_yield(args, out, ctx: Ctx) -> int:
     atomic.write_text(live, new_text, encoding="utf-8")
     out(line)
     return commit_paths(ctx, [live], f"arcs: yield {args.ident} on {slug}",
-                        out, what="the arc yield", stage_new=True)
+                        out, what="the arc yield", stage_new=True,
+                        skip=getattr(args, "no_commit", False))
 
 
 def _retire_arc_lanes(ctx: Ctx, slug: str, text: str, names, out) -> list:
@@ -3900,7 +3913,7 @@ def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
     return commit_paths(
         ctx, [live, body, ctx.repo / decl.DECLARATION_REL],
         f"arcs: deadline {date} on {slug}", out, what="the arc deadline",
-        stage_new=True)
+        stage_new=True, skip=getattr(args, "no_commit", False))
 
 
 # --- `kind moments` (lc-243 W1 act 1): the O6 evaluation half, made visible ---

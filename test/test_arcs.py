@@ -22,7 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
-from lifecycle_core import arcs  # noqa: E402
+from lifecycle_core import arcs, exits  # noqa: E402
 from lifecycle_core import declaration as decl_mod  # noqa: E402
 
 
@@ -668,6 +668,156 @@ class ArcHeaderIsDerivedNeverStale(unittest.TestCase):
                             "--help"], capture_output=True, text=True)
         self.assertIn("replace", r.stdout.lower(), r.stdout)
         self.assertIn("narrowed:", r.stdout, r.stdout)
+
+
+class ArcVerbsHonourNoCommit(unittest.TestCase):
+    """lc-116, WIDENED 2026-09-24: every arc line verb gets `--no-commit`,
+
+    from the SAME `commit_paths` skip branch every other carrier write
+    uses — `arc open` and `arc close` are the declared exceptions, since
+    each moves a counter with the body in ONE act (law 9).
+    """
+
+    def _repo(self):
+        from lifecycle_core import refusals
+        r = refusals._Repo()
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        """`cli.main`'s code, whichever way it hands it back.
+
+        An unrecognized flag is argparse's OWN refusal — `cli.error` turns
+        it into `SystemExit(COULD_NOT_VERIFY)` rather than a return — and
+        letting that escape makes the arm that PROBES for it an ERROR
+        rather than a verdict (test_moves.py's `run_cli`, same shape).
+        """
+        import io
+        import os
+        from contextlib import redirect_stderr, redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            out_buf, err_buf = io.StringIO(), io.StringIO()
+            with redirect_stdout(out_buf), redirect_stderr(err_buf):
+                try:
+                    code = cli_mod.main(["--repo", str(repo.dir)]
+                                        + list(argv))
+                except SystemExit as exc:
+                    code = (exc.code if isinstance(exc.code, int)
+                           else exits.COULD_NOT_VERIFY)
+        finally:
+            os.chdir(here)
+        # argparse's own refusal writes to STDERR (`_Parser.error`), so the
+        # combined text is what a caller reading either stream would see.
+        return code, out_buf.getvalue() + err_buf.getvalue()
+
+    def _head(self, repo):
+        import subprocess
+        return subprocess.run(["git", "-C", str(repo.dir), "rev-parse",
+                               "HEAD"], capture_output=True,
+                              text=True).stdout.strip()
+
+    OPEN = ["arc", "open", "freeze", "--goal", "g", "--narrowing",
+            "eliminative"]
+
+    def _body(self, repo):
+        return (repo.dir / "arcs" / "freeze.md").read_text(encoding="utf-8")
+
+    def test_the_verifiers_own_scenario_one_premise_two_beliefs(self):
+        """Verbatim from the done-criterion: seeding an arc with one premise
+
+        and two beliefs under `--no-commit` produces no commit until the
+        caller commits, and the NOT COMMITTED text is the shared one."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        after_open = self._head(repo)
+        _c, o1 = self._run(repo, "arc", "premise", "freeze", "--ident", "P1",
+                           "--text", "t", "--no-commit")
+        _c, o2 = self._run(repo, "arc", "belief", "freeze", "--ident", "B1",
+                           "--claim", "c1", "--basis", "b1", "--kill", "k1",
+                           "--no-commit")
+        _c, o3 = self._run(repo, "arc", "belief", "freeze", "--ident", "B2",
+                           "--claim", "c2", "--basis", "b2", "--kill", "k2",
+                           "--no-commit")
+        for outp in (o1, o2, o3):
+            self.assertIn("NOT COMMITTED (--no-commit)", outp, outp)
+        self.assertEqual(self._head(repo), after_open,
+                         "a --no-commit arc write moved HEAD")
+        # THE LINES ARE ON DISK, uncommitted — a caller-owned commit lands
+        # them together, which is the whole point of the escape.
+        import subprocess
+        r = subprocess.run(["git", "-C", str(repo.dir), "commit", "-am",
+                            "batched arc lines"], capture_output=True,
+                           text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotEqual(self._head(repo), after_open)
+        arc, _p = arcs.parse_arc(self._body(repo), "freeze")
+        self.assertEqual(arc.slots["premises"], "1 recorded: P1")
+        self.assertEqual(arc.slots["beliefs"], "2 recorded: B1, B2")
+
+    def test_every_line_verb_honours_no_commit(self):
+        """Closed sweep over the nine widened verbs — four routed through
+
+        `_arc_append`, five with their own `commit_paths` call — so a verb
+        reaching the parser without the flag wired is a missing case."""
+        for verb, extra in (
+            ("premise", ["--ident", "p1", "--text", "t"]),
+            ("belief", ["--ident", "b1", "--claim", "c", "--basis", "b",
+                       "--kill", "k"]),
+            ("disposition", None),  # seeded below; needs a reopen first
+            ("verdict", ["--ident", "v1", "--text", "good enough"]),
+            ("reopen", None),
+            ("narrow", ["--text", "two left"]),
+            ("advance", ["--to", "next", "--reason", "moving on"]),
+            ("yield", ["--ident", "y1", "--text", "x", "--summary", "s"]),
+            ("deadline", ["--date", "2027-01-01", "--what", "x"]),
+        ):
+            with self.subTest(verb=verb):
+                repo = self._repo()
+                self._run(repo, *self.OPEN)
+                after_open = self._head(repo)
+                if verb == "disposition":
+                    self._run(repo, "arc", "belief", "freeze", "--ident",
+                             "b1", "--claim", "c", "--basis", "b", "--kill",
+                             "k")
+                    self._run(repo, "arc", "reopen", "freeze", "--ident",
+                             "b1", "--reason", "r")
+                    after_open = self._head(repo)
+                    extra = ["--ident", "b1", "--how", "accepted-stale",
+                            "--reason", "r"]
+                elif verb == "reopen":
+                    self._run(repo, "arc", "belief", "freeze", "--ident",
+                             "b1", "--claim", "c", "--basis", "b", "--kill",
+                             "k")
+                    after_open = self._head(repo)
+                    extra = ["--ident", "b1", "--reason", "r"]
+                code, outp = self._run(repo, "arc", verb, "freeze",
+                                       *extra, "--no-commit")
+                self.assertEqual(code, exits.CLEAN, outp)
+                self.assertIn("NOT COMMITTED (--no-commit)", outp, outp)
+                self.assertEqual(self._head(repo), after_open,
+                                 f"arc {verb} --no-commit moved HEAD")
+
+    def test_arc_open_and_close_carry_NO_such_flag(self):
+        """MUST-NOT-MOVE: the two single-act verbs are declared exceptions —
+
+        each moves a counter with the body in ONE act (law 9), so neither
+        gets an escape that would split that act in two."""
+        repo = self._repo()
+        code, outp = self._run(repo, *self.OPEN, "--no-commit")
+        self.assertEqual(code, 3, outp)
+        self.assertIn("unrecognized arguments", outp)
+        self._run(repo, *self.OPEN[:-2] + ["--narrowing", "eliminative"])
+        # a fresh arc for the close probe, since the run above may have
+        # failed at argparse before opening
+        self._run(repo, "arc", "open", "closeme", "--goal", "g",
+                  "--narrowing", "none")
+        code, outp = self._run(repo, "arc", "close", "closeme",
+                               "--no-commit")
+        self.assertEqual(code, 3, outp)
+        self.assertIn("unrecognized arguments", outp)
 
 
 class StageAndStateVerbs(unittest.TestCase):

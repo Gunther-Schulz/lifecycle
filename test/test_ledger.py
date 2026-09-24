@@ -271,15 +271,68 @@ class TheSiblingVerbIsUNCHANGED(unittest.TestCase):
         self.assertEqual(names, ["ITEMS.md"], out)
 
     def test_item_add_still_honours_no_commit(self):
-        """The flag `ledger add` deliberately does NOT mirror is untouched on
-        the verb that has it: `--no-commit` still writes the carrier, still
-        says NOT COMMITTED, and still leaves the tree dirty."""
+        """MUST NOT MOVE (lc-116): `item add`'s own flag, which PREDATES the
+
+        ledger's, is untouched by the widening — `--no-commit` still writes
+        the carrier, still says NOT COMMITTED, and still leaves the tree
+        dirty, exactly as before `ledger add` gained the same escape."""
         d = build()
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         code, out = run_cli(d, *self.ADD, "--join", "new", "--no-commit")
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("NOT COMMITTED (--no-commit)", out)
         self.assertIn("M ITEMS.md", status(d))
+
+
+class LedgerAddHonoursNoCommit(unittest.TestCase):
+    """lc-116: `ledger add` gains the SAME escape `item add` already has.
+
+    `--no-commit` writes the line and prints the SAME NOT COMMITTED text
+    every other verb prints, from the SAME function (`commit_paths`' skip
+    branch) — never a second spelling of that sentence. Closed over
+    `INVOCATIONS` (lc-56's own enumeration) so a line kind reaching the verb
+    without an arm here is a missing case rather than a silent pass.
+    """
+
+    def test_EVERY_line_kind_honours_no_commit(self):
+        from lifecycle_core import ledger as ledger_mod
+        self.assertEqual(set(INVOCATIONS), set(ledger_mod.KINDS),
+                         "a line kind exists that no arm here invokes")
+        for kind, (argv, substance) in INVOCATIONS.items():
+            with self.subTest(kind=kind):
+                d = build()
+                self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+                before = head(d)
+                code, out = run_cli(d, *argv, "--no-commit")
+                self.assertEqual(code, exits.CLEAN, out)
+                self.assertIn("NOT COMMITTED (--no-commit)", out, out)
+                self.assertEqual(head(d), before,
+                                 "a --no-commit run moved HEAD")
+                self.assertIn("M LEDGER.md", status(d), out)
+                self.assertIn(substance,
+                              (d / "LEDGER.md").read_text(encoding="utf-8"))
+
+    def test_no_commit_leaves_the_line_for_a_LATER_batched_commit(self):
+        """The use case that motivated the ask (lc-116's own evidence):
+
+        several ledger lines land uncommitted, then one caller-owned commit
+        carries them all together."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        before = head(d)
+        run_cli(d, "ledger", "add", "decision", "--question", "q1",
+               "--answer", "a1", "--no-commit")
+        run_cli(d, "ledger", "add", "decision", "--question", "q2",
+               "--answer", "a2", "--no-commit")
+        self.assertEqual(head(d), before, "a batched write moved HEAD early")
+        r = subprocess.run(["git", "-C", str(d), "commit", "-am",
+                            "batched ledger lines"],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotEqual(head(d), before)
+        blob = committed_ledger(d)
+        self.assertIn("decision: q1", blob)
+        self.assertIn("decision: q2", blob)
 
 
 if __name__ == "__main__":

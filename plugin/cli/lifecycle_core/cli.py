@@ -678,18 +678,28 @@ def build_parser() -> argparse.ArgumentParser:
                          "the same counters, recorded so the body does not "
                          "read as an arc that finished")
     ac.add_argument("--reason", help="why it was abandoned")
+    # `--no-commit` (lc-116, WIDENED): the same escape every carrier write
+    # carries, EXCEPT `arc open`/`arc close` — each of those moves a counter
+    # with the body in ONE act (law 9) and stays a single-act commit.
+    _ARC_NO_COMMIT_HELP = ("skip the commit (a caller batching several arc "
+                          "writes owns it) — the same escape `item add` and "
+                          "the other carrier verbs carry")
     adl = asub.add_parser("deadline", help="a dated deadline AND the "
                                            "date-predicate lane that "
                                            "observes it")
     adl.add_argument("slug")
     adl.add_argument("--date", required=True, help="ISO, YYYY-MM-DD")
     adl.add_argument("--what", required=True, help="what falls due")
+    adl.add_argument("--no-commit", dest="no_commit", action="store_true",
+                     help=_ARC_NO_COMMIT_HELP)
     ap = asub.add_parser("premise", help="record a premise the arc RESTS ON "
                                          "— taken from elsewhere, and dying "
                                          "when that elsewhere moves")
     ap.add_argument("slug")
     ap.add_argument("--ident", required=True, dest="ident")
     ap.add_argument("--text", required=True)
+    ap.add_argument("--no-commit", dest="no_commit", action="store_true",
+                    help=_ARC_NO_COMMIT_HELP)
     ab = asub.add_parser("belief", help="record a belief with its BASIS and "
                                         "its KILL-CONDITION — both demanded "
                                         "at the door")
@@ -700,11 +710,15 @@ def build_parser() -> argparse.ArgumentParser:
     ab.add_argument("--kill", required=True,
                     help="what would show this wrong. \"none known\" is a "
                          "legal answer; silence is not")
+    ab.add_argument("--no-commit", dest="no_commit", action="store_true",
+                    help=_ARC_NO_COMMIT_HELP)
     ar = asub.add_parser("reopen", help="reopen a belief and FLAG EVERY "
                                         "CITER within this arc")
     ar.add_argument("slug")
     ar.add_argument("--ident", required=True, dest="ident")
     ar.add_argument("--reason", required=True)
+    ar.add_argument("--no-commit", dest="no_commit", action="store_true",
+                    help=_ARC_NO_COMMIT_HELP)
     ad = asub.add_parser("disposition", help="answer a re-derive flag — the "
                                              "only thing that clears one")
     ad.add_argument("slug")
@@ -712,6 +726,8 @@ def build_parser() -> argparse.ArgumentParser:
     ad.add_argument("--how", required=True,
                     help="re-derived | accepted-stale")
     ad.add_argument("--reason", required=True)
+    ad.add_argument("--no-commit", dest="no_commit", action="store_true",
+                    help=_ARC_NO_COMMIT_HELP)
     aa = asub.add_parser("advance", help="move to a new stage — refused "
                                          "while any belief flag stands")
     aa.add_argument("slug")
@@ -722,6 +738,8 @@ def build_parser() -> argparse.ArgumentParser:
                          "operator's controlled sphere, and the STOP renders "
                          "at ENTRY because one printed at close arrives "
                          "after the act it governs")
+    aa.add_argument("--no-commit", dest="no_commit", action="store_true",
+                    help=_ARC_NO_COMMIT_HELP)
     an = asub.add_parser("narrow", help="REPLACE the live narrowing with "
                                         "this text — the text it replaces "
                                         "is kept as a `narrowed:` line "
@@ -733,12 +751,16 @@ def build_parser() -> argparse.ArgumentParser:
                          "NOT lost: it is appended as a `narrowed:` record, "
                          "so narrowing five times in a row keeps five "
                          "`narrowed:` lines and only the newest is live")
+    an.add_argument("--no-commit", dest="no_commit", action="store_true",
+                    help=_ARC_NO_COMMIT_HELP)
     av = asub.add_parser("verdict", help="book an operator taste judgment AT "
                                          "UTTERANCE — the seam where it "
                                          "otherwise evaporates in chat")
     av.add_argument("slug")
     av.add_argument("--ident", required=True, dest="ident")
     av.add_argument("--text", required=True)
+    av.add_argument("--no-commit", dest="no_commit", action="store_true",
+                    help=_ARC_NO_COMMIT_HELP)
     ay = asub.add_parser("yield", help="record what this arc produced")
     ay.add_argument("slug")
     ay.add_argument("--ident", required=True, dest="ident")
@@ -747,6 +769,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="the arc's own one-line statement of what it has "
                          "produced — PROSE, never a count: a stored total is "
                          "false the moment another line lands")
+    ay.add_argument("--no-commit", dest="no_commit", action="store_true",
+                    help=_ARC_NO_COMMIT_HELP)
 
     ks.add_parser("check", help="validate the declaration")
     ks.add_parser("sweep", help="invariant 1: every tracked file resolves to "
@@ -969,20 +993,31 @@ def build_parser() -> argparse.ArgumentParser:
 
     ladd = leds.add_parser("add", help="append one fixed-slot line")
     ladds = ladd.add_subparsers(dest="line_kind")
+    _NO_COMMIT_HELP = ("skip the commit (a caller batching several ledger "
+                       "lines owns it) — the same escape `item add` and the "
+                       "other carrier verbs carry (lc-116)")
     sup = ladds.add_parser("superseded")
     sup.add_argument("ident")
     sup.add_argument("--by", required=True)
     sup.add_argument("--reason")
+    sup.add_argument("--no-commit", dest="no_commit", action="store_true",
+                     help=_NO_COMMIT_HELP)
     rej = ladds.add_parser("rejected")
     rej.add_argument("item")
     rej.add_argument("--approach")
     rej.add_argument("--why", dest="why_text")
+    rej.add_argument("--no-commit", dest="no_commit", action="store_true",
+                     help=_NO_COMMIT_HELP)
     dro = ladds.add_parser("dropped")
     dro.add_argument("ident")
     dro.add_argument("--reason")
+    dro.add_argument("--no-commit", dest="no_commit", action="store_true",
+                     help=_NO_COMMIT_HELP)
     dec = ladds.add_parser("decision")
     dec.add_argument("--question")
     dec.add_argument("--answer")
+    dec.add_argument("--no-commit", dest="no_commit", action="store_true",
+                     help=_NO_COMMIT_HELP)
 
     lrej = leds.add_parser("rejected",
                            help="THE GATE: every rejected approach for an "
