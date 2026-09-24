@@ -127,7 +127,14 @@ journal pointer is where the incident lives.
     `--no-verify` is never taken — it kills every lane in the hook. (J10)
 12. **Versions climb and never go backwards**; the birth series is `0.1.x`.
     (J10)
-13. **Installed symlinked from the dev checkout** on the machine that builds
+13. **The CLI resolves by name through a symlink from the dev checkout** —
+    `~/.local/bin/lifecycle`, declared as a link row in dotfiles'
+    `bootstrap/manifest.py` (sourced from `lifecycle_cli()`), laid down by
+    `./dot apply` and drift-checked by its doctor. It is NOT installed as a
+    Claude Code plugin; the plugin-cache clause below is the design's intent
+    for that later step, not the current state. (lc-273, 2026-09-24.)
+    Original wording, kept for the record: **Installed symlinked from the dev
+    checkout** on the machine that builds
     it; pinned and drift-detected elsewhere; the cache keeps three. (NO
     JOURNAL ENTRY SUPPORTS THIS — checked against every J-numbered entry in
     `JOURNAL.md`, found in none. It restates the design's own deployment
@@ -140,7 +147,7 @@ journal pointer is where the incident lives.
     only places holding the CLI's path are dotfiles' `session-scan.py` and
     `dot`. Two CachyOS-Setup sessions each re-derived the path by hand the
     same day, and one shipped carrier edits with the check unverified.
-    Repair and the law's rewording: lc-273.
+    Repaired by lc-273 (dotfiles bfac708): the link above now exists.
 14. **`ITEMS.md` carries a schema line**; the tool refuses above its floor.
     (J8)
 15. **Every registered kind declares all its stages**, including the ones a
