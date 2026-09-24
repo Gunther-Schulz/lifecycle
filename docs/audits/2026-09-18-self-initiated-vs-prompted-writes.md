@@ -1,10 +1,12 @@
 # The gate-1 baseline: are carrier writes SELF-INITIATED or PROMPTED?
 
-**Status: INCOMPLETE — one arm of four reported.** Written at the moment the
-first arm landed rather than at the study's end, because the alternative was
-leaving it in a session scratchpad that dies with the session. The remaining
-arms are appended here as they return; a reader finding this file with arms
-still marked PENDING is reading it correctly.
+**Status: CLOSED AS-IS 2026-09-24 (LEDGER.md, `decision: lc-260`).** L1 VOID,
+L2 reported parts 1-2 of 3 (part 3 dropped), L3 reported, L4 COULD NOT VERIFY
+(retry dropped). The arms table below is the per-arm record. Dropped because
+`answerable-not-felt.md` (GATE 1'S WRITE HALF) already consumed this study
+at its real width, and no outstanding arm could move that verdict. This line
+replaces the original "INCOMPLETE — one arm of four reported" header, which
+had gone stale after L2, L3 and L4 were appended.
 
 ## Why this measurement exists
 

@@ -1,9 +1,10 @@
 # Robustness review: which checks report CLEAN without having looked?
 
 **Read-only, at pinned sha `09ea70a`, 2026-09-18.** Two opus lanes; lane 1
-(checks) reported in full, lane 2 (the instruments themselves) still running at
-the time of writing and appended when it lands. A reader finding lane 2 marked
-PENDING is reading this correctly.
+(checks) reported in full. **Lane 2 (the instruments themselves) NEVER
+RETURNED — its run was dropped 2026-09-24 (LEDGER.md, `decision: lc-260`),
+its output unrecoverable; its QUESTION is re-booked as `lc-268`.** The Lane 2
+heading below still reads PENDING until lc-268 fills it.
 
 **Why this lens and not a general review.** This repo found the same defect in
 itself five times in one day: a check reporting clean over a population it never
@@ -143,7 +144,7 @@ not run the suite or the prover, and no verdict here rests on either.
 **`migrate.py` is where the next pass belongs, and it is lc-168's own file — so
 that pass is owed BEFORE the migration, not after.**
 
-## Lane 2 — PENDING
+## Lane 2 — PENDING (run dropped 2026-09-24, LEDGER.md `decision: lc-260`; question re-booked as lc-268)
 
 The instruments themselves: which recorded proofs prove less than they claim.
 Lens: *a pair proves the refusal's AXIS and never its REACH; reach is proven by
