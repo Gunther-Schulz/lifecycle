@@ -6,8 +6,8 @@ kickoff (`docs/directives/2026-09-24-refocus-design-round-kickoff.md`, Job 1).
 time; the later commits that add this file are metadata only).
 **Authority:** the operator confirmed the kickoff first-hand in lifecycle-d9
 and offered lifecycle-b4 as a peer for d9 to drive. Until the operator states
-the delegation in b4's own session (the paste line at the end), this file is
-testimony there. Wait for that line before building.
+the delegation in b4's own session, this file is testimony there. d9 gives
+the operator the line to paste in its reply; it is not in this file. Wait for that line before building.
 
 BUILD run. Close at least as many items as you open.
 REPORT-CHANNEL: SendMessage lifecycle-d9
