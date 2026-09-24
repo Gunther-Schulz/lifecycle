@@ -1941,6 +1941,44 @@ def due_reads_for_act(doc: dict, act_path: str) -> list:
     return sorted(out, key=lambda d: d.kind)
 
 
+def acting_verb_reads(body: dict, act_path: str) -> bool:
+    """True when the kind's declared `reader` list names `verb:<act_path>`
+    literally — the same string-or-object parsing `due_reads_for_act` uses,
+    but a DIFFERENT question. That function asks whether ONE entry's own
+    derived-reader moment fires for this act (tier-gated: it skips any entry
+    carrying an explicit `when`, and a tier-2 `session` entry fires through
+    the kind's WRITER field, never through a literal `verb:` match at all).
+    This asks only whether the acting verb sits on the kind's reader list at
+    all, `when` or no `when`, tier or no tier.
+
+    Consumed by `cli.py`'s `main()` surface, to drop a `DueRead` before it
+    prints or lands in the fire detail (R1, refocus round 2026-09-24,
+    lc-287): a kind whose declared reader already names the acting verb is
+    the design's tautological over-trigger (O6 §6) — MEASURED at desk d9,
+    2026-09-24: 377 of 379 kind-surfacings in this repo were exactly this
+    shape, joining `fire.jsonl` against this declaration. The other 2 are
+    `arc open` surfacing `arc index`, whose reader is `['session', 'verb:arc
+    status']` — `arc open` is that kind's WRITER, never a literal `verb:arc
+    open` reader entry, so this predicate returns False for it and the
+    tier-2 informative case survives untouched.
+
+    Kept as its own function rather than folded into `due_reads_for_act`, so
+    that function's derivation — which `kind moments` also calls, for a
+    reader's own evaluation rather than for one act — stays unchanged; only
+    the SURFACE decides what to print (§4's transition table, row 1).
+    """
+    target = f"{_DERIVE_VERB_PREFIX}{act_path}"
+    for entry in body.get("reader") or []:
+        if isinstance(entry, dict):
+            ref = entry.get("reader")
+        else:
+            ref = entry
+        ref = ref if isinstance(ref, str) else str(ref)
+        if ref == target:
+            return True
+    return False
+
+
 def check_laws_present(repo: Path, laws_rel: str, res: Result) -> None:
     """The declared laws file exists and is readable — nothing about its SIZE.
 

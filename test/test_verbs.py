@@ -2505,17 +2505,77 @@ class DueReadSurfaceIntegration(unittest.TestCase):
         self.assertIsNotNone(rec, f"no fire-log record for {verb!r}")
         return rec.get("detail") or ""
 
-    def test_tier_1_prints_on_stdout_and_lands_in_the_fire_detail(self):
-        """`items`' real reader entry `verb:item ready`
+    def test_tier_1_tautological_notice_is_removed_R1(self):
+        """R1 (refocus round, 2026-09-24, lc-287): an act never surfaces a
 
-        (GOOD_FULL_DECLARATION, unmodified) — the moment IS `item ready`
-        running."""
+        kind the acting verb is itself a declared reader of. `items`' real
+        reader entry `verb:item ready` (GOOD_FULL_DECLARATION, unmodified)
+        is exactly that shape — the moment IS `item ready` running, which is
+        precisely why it carries no information (measured: 377 of 379 real
+        surfacings were this tautology). THIS TEST USED TO BE
+        `test_tier_1_prints_on_stdout_and_lands_in_the_fire_detail` and
+        asserted the OPPOSITE — that the due-read line and `surfaced=`
+        token DID appear; that was the old, now-removed tier-1 behaviour
+        this round deliberately kills. RED on the pre-R1 code (both
+        assertions below failed: the line and the token were present)."""
         repo = self._repo()
         code, out = self._run(repo, "item", "ready", "--head")
         self.assertEqual(code, exits.CLEAN, out)
-        self.assertIn("due read: kind 'items' is due now", out)
-        self.assertIn("'item ready' running", out)
-        self.assertIn("surfaced=items", self._detail(repo, "item ready"))
+        self.assertNotIn("due read: kind 'items'", out)
+        self.assertNotIn("surfaced=items", self._detail(repo, "item ready"))
+
+    def test_item_check_no_longer_surfaces_its_own_kind_R1(self):
+        """Same shape as the test above, driven the way the brief named it:
+
+        `items`' reader here is overridden to `verb:item check` — literally
+        `item check` reading its own kind, the tautology R1 removes. RED on
+        the pre-R1 code."""
+        repo = self._repo(items_reader=["verb:item check", "verb:item ratio"])
+        code, out = self._run(repo, "item", "check")
+        self.assertNotIn("due read: kind 'items'", out)
+        self.assertNotIn("surfaced=items", self._detail(repo, "item check"))
+
+    def test_arc_open_still_surfaces_arc_index_R1_control(self):
+        """POSITIVE CONTROL for R1 (lc-287): the tier-2 case R1 must NOT
+
+        touch. `arc index`'s reader is `['session', 'verb:arc status']` —
+        `arc open` is that kind's WRITER, never a literal `verb:arc open`
+        reader entry, so `acting_verb_reads` returns False for it and the
+        informative surfacing survives. Shape matches this repo's own real
+        production declaration (`.claude/lifecycle.json`, opened at the
+        critique pass): `arcs`/`arc index` are added to a copy of
+        GOOD_FULL_DECLARATION since that fixture declares neither."""
+        import json
+        d = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        d["kinds"]["arcs"] = {
+            "home": "arcs/*.md",
+            "writer": ("verb:arc open, verb:arc premise, verb:arc belief, "
+                       "verb:arc reopen, verb:arc disposition, "
+                       "verb:arc advance, verb:arc narrow, verb:arc verdict, "
+                       "verb:arc yield, verb:arc deadline"),
+            "reader": ["session", "verb:arc status"],
+            "staleness": "none, declared why: fixture",
+            "exit": {"action": "move", "recording-act": "arc close"},
+            "growth": "unbounded-with-reason — fixture",
+            "trigger": "none, declared why: fixture",
+        }
+        d["kinds"]["arc index"] = {
+            "home": "arcs/INDEX",
+            "writer": "verb:arc open",
+            "reader": ["session", "verb:arc status"],
+            "staleness": "none, declared why: fixture",
+            "exit": {"action": "never", "recording-act": "none"},
+            "growth": "unbounded-with-reason — fixture",
+            "trigger": "none, declared why: fixture",
+        }
+        repo = refusals._Repo(declaration=d)
+        self.addCleanup(repo.close)
+        code, out = self._run(repo, "arc", "open", "freeze", "--goal",
+                              "find the root cause", "--narrowing",
+                              "eliminative")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("due read: kind 'arc index' is due now", out)
+        self.assertIn("surfaced=arc index", self._detail(repo, "arc open"))
 
     def test_an_unrelated_verb_surfaces_nothing_on_either_side(self):
         """`kind check` is not named as a reader or writer of any kind in

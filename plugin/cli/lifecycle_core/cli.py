@@ -1389,7 +1389,23 @@ def main(argv=None) -> int:
     if resolved_repo:
         due_res = decl.read(Path(resolved_repo))
         if due_res.declaration is not None:
-            due = decl.due_reads_for_act(due_res.declaration, path)
+            due_doc = due_res.declaration
+            due = decl.due_reads_for_act(due_doc, path)
+            # R1 (refocus round, 2026-09-24, lc-287): drop the tautological
+            # notice — a kind whose declared reader already names THIS
+            # acting verb tells the session nothing it was not just handed.
+            # MEASURED: 377 of 379 kind-surfacings in this repo were exactly
+            # this shape. Filtered HERE, at the surface, rather than inside
+            # `due_reads_for_act`: that function's derivation is shared with
+            # `kind moments` and stays unchanged (§4's transition table, row
+            # 1); only what PRINTS is this round's business. `arc open`
+            # surfacing `arc index` is the surviving positive control — its
+            # reader is a bare `session` entry mapped through the WRITER
+            # field, never a literal `verb:arc open` reader entry, so
+            # `acting_verb_reads` does not match it.
+            due = [d for d in due
+                   if not decl.acting_verb_reads(
+                       (due_doc.get("kinds") or {}).get(d.kind) or {}, path)]
 
     # ZERO ALWAYS-ON OUTPUT (the item's own MUST-NOT-MOVE): a run over no
     # due kinds adds nothing here and no `surfaced=` token below — absence,
