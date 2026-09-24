@@ -1831,5 +1831,16 @@ blocked-by: NONE
 closed-reason: 2026-09-24 Link row in dotfiles bootstrap/manifest.py (bfac708), sourced from lifecycle_cli(); red-first doctor 'deployed link missing', then 'deployed link in place'; lifecycle resolves by name in a fresh login zsh from /tmp (ran item check on CachyOS-Setup) and in fish; ./dot test all passed. Link laid down by hand identical to the row (full ./dot apply not run: it also updates plugins, the operator's act). Law 13 reworded. session-scan.py keeps its own literal (must-not-move: the banner's invocation).
 closed-ref: 0d38586
 
+## lc-274
+grade: DONE
+requirement: The amendment and promotion date refusal (`item_shape`, items.py around the two `does not open with its ISO date` sites) states a false reason for a common near-miss: `2026-09-21, operator testimony ...` DOES open with its ISO date and fails only on the comma, yet the message says the date is missing and never states the accepted shape, and no repair verb covers the class. A session facing five of these on cs-63 gave up rather than guess the format. Record: CachyOS-Setup session 3d4ee9d2, 2026-09-24 ~10:24-10:48Z, via the discovery lane; regex `_AMEND_VALUE` verified at this desk.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: Both sites (amendment lines, promotion lines) state the required shape literally, `<YYYY-MM-DD> <text>` with a single space after the date, and, where the line begins with a valid ISO date followed by any other character, name that character and position ("the date is present; the character after it is ',' - the shape needs a space"). One shared message function for both sites. The accepted shape is NOT widened (one spelling, the closed-vocabulary rule). Verifier: a test with `2026-09-21, x` asserts the message names the comma and the literal shape; control `2026-09-21 x` stays clean; a line with no date keeps a message saying the date is missing; red-first against the pre-change tree. Must-not-move: item_shape stays one row, same exit code.
+evidence: MEASURED 2026-09-24 at this desk: _AMEND_VALUE matches 2026-09-21 x (True) and rejects 2026-09-21, x (False); both message sites (items.py ~1112 promotion, ~1191 amendment) print does not open with its ISO date. RELAYED from the discovery lane: session 3d4ee9d2 left 5 such findings on cs-63, quoting it could not derive the accepted date format; item repair --shape covers slot order only (cli.py docstring, read by the lane).
+blocked-by: NONE
+closed-reason: 2026-09-24 2026-09-24 both date-shape sites share _date_shape_reason: the separator is named with its position and the literal shape stated; accepted regex unchanged. Red-first at the desk (2 comma tests red on the old items.py); suite 1038 OK, --test 128/128.
+closed-ref: 27f150b
+
 ## Archive (pre-migration)
 

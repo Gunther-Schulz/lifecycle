@@ -1494,15 +1494,6 @@ done-criterion: A record carrying a `## CLOSED` heading is graded ONLY by the cl
 evidence: MEASURED 2026-09-24: after appending ## CLOSED with graduation pointers to lifecycle--answerable-arc-build.md and lifecycle--answerable-arc-design-round.md, record check still printed record_line_untagged (34 lines) and record_slot_missing for them; 11 findings across 9 records before and after. records.py grade path runs every shape finding before the CLOSED_SLOT branch, which adds only the two closure findings.
 blocked-by: NONE
 
-## lc-274
-grade: READY
-requirement: The amendment and promotion date refusal (`item_shape`, items.py around the two `does not open with its ISO date` sites) states a false reason for a common near-miss: `2026-09-21, operator testimony ...` DOES open with its ISO date and fails only on the comma, yet the message says the date is missing and never states the accepted shape, and no repair verb covers the class. A session facing five of these on cs-63 gave up rather than guess the format. Record: CachyOS-Setup session 3d4ee9d2, 2026-09-24 ~10:24-10:48Z, via the discovery lane; regex `_AMEND_VALUE` verified at this desk.
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
-done-criterion: Both sites (amendment lines, promotion lines) state the required shape literally, `<YYYY-MM-DD> <text>` with a single space after the date, and, where the line begins with a valid ISO date followed by any other character, name that character and position ("the date is present; the character after it is ',' - the shape needs a space"). One shared message function for both sites. The accepted shape is NOT widened (one spelling, the closed-vocabulary rule). Verifier: a test with `2026-09-21, x` asserts the message names the comma and the literal shape; control `2026-09-21 x` stays clean; a line with no date keeps a message saying the date is missing; red-first against the pre-change tree. Must-not-move: item_shape stays one row, same exit code.
-evidence: MEASURED 2026-09-24 at this desk: _AMEND_VALUE matches 2026-09-21 x (True) and rejects 2026-09-21, x (False); both message sites (items.py ~1112 promotion, ~1191 amendment) print does not open with its ISO date. RELAYED from the discovery lane: session 3d4ee9d2 left 5 such findings on cs-63, quoting it could not derive the accepted date format; item repair --shape covers slot order only (cli.py docstring, read by the lane).
-blocked-by: NONE
-
 ## lc-275
 grade: READY
 requirement: The duplicate check at item add fails in both directions: it did not flag lc-264 (surfaced-vs-read counter, booked 2026-09-24) against lc-256 (the same counter, booked 2026-09-20), so the booking even claimed no item carried it; and it flagged lc-266 as a match for lc-268 on two shared words (record, stay) that carry no meaning. A token-overlap join trains the booker to dismiss the prompt and still misses the real duplicate. Record: lc-256 amendment 2026-09-24; the item add output for lc-268 (match: shares 2 requirement token(s): record, stay).
