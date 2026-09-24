@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 267
+added: 268
 compacted: 0
 
 ## lc-3
@@ -1504,3 +1504,13 @@ write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
 done-criterion: At item add, a live item describing the same deliverable is offered as a join candidate and an unrelated item sharing only common words is not: with lc-256 live, booking lc-264 text offers lc-256; booking lc-268 text does not offer lc-266. Candidate reasons print the terms that matched, and stop-words (record, stay, and the carrier boilerplate every requirement shares) never count. Verifier: both pairs as a test over a fixture carrier holding the two real bodies; red-first against the pre-change predicate (it misses the first pair and offers the second).
 evidence: MEASURED 2026-09-24: item add for lc-268 printed match: shares 2 requirement token(s): record, stay against lc-266; lc-264 requirement said no item carries the counter while lc-256 (READY since 2026-09-20) carried it - found only by reading both at status time.
 blocked-by: NONE
+
+## lc-276
+grade: NEW
+requirement: The O6 surfacing design pre-registered its own kill condition 1 - surfaced-vs-read flat near zero, presence without demand, the design is the wrong leg - and it is firing: 125 surfacings to 8 reads since 2026-09-20, and one session (09020605) saw ~61 due-read lines and made 0 reads. Kill condition 2 is live beside it: that session read files directly, which the counter cannot see. The demand leg the design deferred (D4 b, not machine-checkable) has no carrier. Record: docs/directives/2026-09-20-o6-surfacing-design.md sections 2, 5 (D4), 8; lifecycle audit 2026-09-24.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A design decision is recorded (ledger + the answerable arc) answering: given that lifecycle observes ACTS only, which demand at which moment converts a due read into an act - e.g. a verb that refuses to proceed until the due kind was read through kind read in the same session, versus surfacing withdrawn as inert. The decision names its own falsifier on the surfaced-vs-read counter (lc-256 windowed). Verifier: the ledger decision line and the arc narrowing both cite the kill-condition measurement.
+evidence: MEASURED 2026-09-24: lifecycle audit SURFACED VS READ since 2026-09-20: 125 surfacing records, 8 read records, 8 of 9 surfaced kinds never read; the same table read 64/8 earlier the same day, before session 09020605 ran, which added ~61 surfacings and no read. The design doc section 8 names kill condition 1 in these words.
+blocked-by: decision which demand at which moment converts a surfaced due read into an act, or is surfacing withdrawn
+not-derivable: 2026-09-24 searched LEDGER.md for demand and surfacing decision lines: D1-D4 of 2026-09-20 decide the surfacing half only and explicitly defer the demand leg (D4 b), so no record answers it; it is a design-arc decision for the round.
