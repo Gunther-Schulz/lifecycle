@@ -1,1 +1,2 @@
 date	session	repo	seams	checks_written	catches	wrong_restatements	operator_interventions	note
+2026-09-24	a492dd49	lifecycle	2	2	0	0	0	SELF-GRADED: the treated session is also the driving desk that grades it (no separate desk this session), so weigh as testimony. Treated from the operator GO onward; seams = the step-1 GO and the lc-264 build start; no decision round opened and no investigation record updated after treatment. The one course change (57a0bdc, check-before-act) was caught by the session own suite, not by a goal-check, and was not a goal drift.
