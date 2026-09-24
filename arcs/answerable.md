@@ -2,7 +2,7 @@ schema: 6
 
 ## answerable
 goal: Operator, 2026-09-18 (docs/answerable-not-felt.md, North star): improve the operator-LLM interaction so work becomes more DEPENDABLE, EFFICIENT, and AUTONOMOUS - dependability is what earns autonomy. Sharpened 2026-09-19 (docs/purpose.md): give a project a continuous mind, kept outside every head that thinks with it.
-stage: measuring
+stage: refocus
 narrowing: palette-with-dispositions — OPEN, five lines: (1) lc-256 windowed O6 observer, now also to separate tier-1 surfacings the acting verb itself reads; (2) lc-276 the O6 DEMAND leg - kill condition 1 firing (125 surfaced / 8 read); (3) lc-259 M6 behaviour-channel probe; (4) lc-260 desk/peer control arm; (5) lc-258 four unrouted research candidates. ELIMINATED 2026-09-24: lc-268 reach-vs-axis answered (47 reach / 60 axis / 21 no-proof at a011b01; defects lc-279, lc-280) - the roster proves distinctions far more often than it proves boundaries.
 premises: none recorded yet
 beliefs: none recorded yet
@@ -22,3 +22,4 @@ narrowed: palette-with-dispositions 2026-09-24 OPEN, five lines: (1) lc-256 wind
 narrowed: palette-with-dispositions 2026-09-24 OPEN, six lines: (1) lc-256 windowed O6 observer; (2) lc-276 the O6 DEMAND leg - the design kill condition 1 is firing (125 surfaced / 8 read; session 09020605 ~61 / 0), which supports B4 and asks whether surfacing needs a demand or withdrawal; (3) lc-259 M6 behaviour-channel probe, the unprobed half of B1; (4) lc-260 desk/peer control arm, the only test that could kill B3; (5) lc-258 four unrouted research candidates; (6) lc-268 reach-vs-axis review, IN FLIGHT at a011b01. Nothing eliminated yet.
 narrowed: palette-with-dispositions 2026-09-24 OPEN, five lines: (1) lc-256 windowed O6 observer, now also to separate tier-1 surfacings the acting verb itself reads; (2) lc-276 the O6 DEMAND leg - kill condition 1 firing (125 surfaced / 8 read); (3) lc-259 M6 behaviour-channel probe; (4) lc-260 desk/peer control arm; (5) lc-258 four unrouted research candidates. ELIMINATED 2026-09-24: lc-268 reach-vs-axis answered (47 reach / 60 axis / 21 no-proof at a011b01; defects lc-279, lc-280) - the roster proves distinctions far more often than it proves boundaries.
 yielded: Y1 2026-09-24 docs/audits/2026-09-18-robustness-clean-without-looking.md Lane 2 (lc-268, 61b7d8d): per-row reach/axis/no-proof table over all 128 rows, two defects booked (lc-279, lc-280).
+advanced: refocus 2026-09-24 Operator decision 2026-09-24 (LEDGER, freeze-and-refocus): the presence leg failed its own kill condition 1 and reach outside this repo is missing (lc-273), so new mechanism work is frozen; order is reach (lc-273), then one design round on demand-at-moment and the seam trigger (lc-276, lc-277), with lc-161 as the outcome measure.
