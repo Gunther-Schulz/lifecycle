@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 265
+added: 266
 compacted: 0
 
 ## lc-3
@@ -1482,4 +1482,13 @@ goal: enforce-the-invariants
 write-set: CLAUDE.md,dotfiles:dot,dotfiles:claude/hooks/session-scan.py
 done-criterion: In a fresh shell on this machine, `lifecycle --help` resolves by name from any directory (a PATH entry laid down by the machine's own deploy, `./dot apply`, derived from the same `manifest.lifecycle_cli()` the banner uses so there is one source of the path), and `./dot apply`'s doctor reports it drifted when the link is missing. Law 13 is reworded to state the deployment that actually exists, with a journal pointer. Verifier: `env -i HOME=$HOME PATH=<the login PATH> zsh -lc 'command -v lifecycle && lifecycle item check --repo <CachyOS-Setup>'` resolves and runs; red first on today's machine (command -v fails). Must-not-move: the banner hook's own invocation.
 evidence: MEASURED 2026-09-24 at this desk: command -v lifecycle claude-lifecycle -> rc 1 (control: command -v git resolves); grep lifecycle installed_plugins.json -> 0 of 9 installed plugins; session-scan.py:211 holds the hardcoded path. RELAYED from the discovery lane with verbatim excerpts: bad016d0 spent ~5 calls hunting and shipped carrier edits unverified; 3d4ee9d2 spent ~5-6 calls and found the path by grepping the hook source.
+blocked-by: NONE
+
+## lc-274
+grade: READY
+requirement: The amendment and promotion date refusal (`item_shape`, items.py around the two `does not open with its ISO date` sites) states a false reason for a common near-miss: `2026-09-21, operator testimony ...` DOES open with its ISO date and fails only on the comma, yet the message says the date is missing and never states the accepted shape, and no repair verb covers the class. A session facing five of these on cs-63 gave up rather than guess the format. Record: CachyOS-Setup session 3d4ee9d2, 2026-09-24 ~10:24-10:48Z, via the discovery lane; regex `_AMEND_VALUE` verified at this desk.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: Both sites (amendment lines, promotion lines) state the required shape literally, `<YYYY-MM-DD> <text>` with a single space after the date, and, where the line begins with a valid ISO date followed by any other character, name that character and position ("the date is present; the character after it is ',' - the shape needs a space"). One shared message function for both sites. The accepted shape is NOT widened (one spelling, the closed-vocabulary rule). Verifier: a test with `2026-09-21, x` asserts the message names the comma and the literal shape; control `2026-09-21 x` stays clean; a line with no date keeps a message saying the date is missing; red-first against the pre-change tree. Must-not-move: item_shape stays one row, same exit code.
+evidence: MEASURED 2026-09-24 at this desk: _AMEND_VALUE matches 2026-09-21 x (True) and rejects 2026-09-21, x (False); both message sites (items.py ~1112 promotion, ~1191 amendment) print does not open with its ISO date. RELAYED from the discovery lane: session 3d4ee9d2 left 5 such findings on cs-63, quoting it could not derive the accepted date format; item repair --shape covers slot order only (cli.py docstring, read by the lane).
 blocked-by: NONE
