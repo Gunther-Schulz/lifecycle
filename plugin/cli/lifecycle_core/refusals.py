@@ -2111,7 +2111,13 @@ VERB_ROWS = [
         expect=exits.FINDING,
         fire=lambda: _cli(["item", "check"],
                           declaration=_split_closure_home()),
-        control=lambda: _cli(["item", "check"]),
+        # lc-280: the `./` SPELLING, not the unmodified default — the old
+        # control (`_cli(["item", "check"])`, both sides already the exact
+        # same string) never exercised the comparison the plant is about,
+        # so it could not have discriminated a normalising fix from a
+        # no-op. This one names the SAME file both ways.
+        control=lambda: _cli(["item", "check"],
+                             declaration=_dot_spelled_closure_home()),
         stage="wave 1, stage 5",
     ),
 ]
@@ -2970,6 +2976,18 @@ def _mutate_add(flag: str, value: str) -> list:
 def _split_closure_home() -> dict:
     d = json.loads(json.dumps(GOOD_FULL_DECLARATION))
     d["kinds"]["done bodies"]["home"] = "SOMEWHERE-ELSE.md"
+    return d
+
+
+def _dot_spelled_closure_home() -> dict:
+    """lc-280's discriminating CONTROL: the SAME file, spelled with a `./`
+    prefix on the `done bodies` side. An unmodified `_Repo()` control never
+    exercised the comparison at all — both sides were already byte-identical
+    strings — so it could not tell a real normalising fix from a no-op. This
+    one can: before the fix it FIRES (`./ITEMS-DONE.md` != `ITEMS-DONE.md`
+    as strings); after, it is silent."""
+    d = json.loads(json.dumps(GOOD_FULL_DECLARATION))
+    d["kinds"]["done bodies"]["home"] = "./ITEMS-DONE.md"
     return d
 
 

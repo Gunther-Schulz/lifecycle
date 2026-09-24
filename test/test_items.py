@@ -8,6 +8,7 @@ read as an empty one, and the census's refusal to guess.
 
 import _isolation  # noqa: F401  # lc-183: before any verb runs
 
+import json
 import sys
 import tempfile
 import unittest
@@ -2859,3 +2860,46 @@ class PerishableCountAgreesWithFlagTest(unittest.TestCase):
             "tools/pool-count.py — 44 rows\n"
             "amend-reason: 2026-09-19 re-derived it\n"))
         self.assertIn("1 mark(s), 0 never re-derived", after)
+
+
+class ClosureHomeSplitComparesNormalisedPaths(unittest.TestCase):
+    """lc-280: `closure_home_split` compared the two closure-home spellings
+    as plain strings, so `./ITEMS-DONE.md` beside `closure-home:
+    ITEMS-DONE.md` fired as TWO closure homes over one file. RED-FIRST
+    against the pre-fix `verbs.py` — verified directly (the old module was
+    loaded under a separate package name from `git show HEAD` at the
+    commit before this fix landed and run against the identical fixture):
+    the `./`-spelled plant there FIRES `[closure_home_split]`; here it is
+    silent."""
+
+    def test_a_dot_prefixed_spelling_of_the_SAME_file_stays_silent(self):
+        d = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        d["kinds"]["done bodies"]["home"] = "./ITEMS-DONE.md"
+        fired = refusals._cli(["item", "check"], declaration=d)
+        self.assertEqual(fired.code, exits.CLEAN, fired.output)
+        self.assertNotIn("closure_home_split", fired.output)
+
+    def test_a_genuinely_different_file_still_fires(self):
+        """MUST-NOT-MOVE: two different files are still two closure homes."""
+        fired = refusals._cli(
+            ["item", "check"],
+            declaration=refusals._split_closure_home())
+        self.assertEqual(fired.code, exits.FINDING, fired.output)
+        self.assertIn("FINDING [closure_home_split]", fired.output)
+        self.assertIn("SOMEWHERE-ELSE.md", fired.output)
+
+    def test_the_unmodified_control_stays_clean(self):
+        fired = refusals._cli(["item", "check"])
+        self.assertEqual(fired.code, exits.CLEAN, fired.output)
+
+    def test_the_rows_own_control_now_discriminates(self):
+        """The row's CONTROL is the `./`-spelled declaration (lc-280), not
+        the unmodified default: an unmodified control never exercised the
+        comparison at all (both sides were already byte-identical), so it
+        could not have told a real normalising fix from a no-op."""
+        row = next(r for r in refusals.VERB_ROWS
+                   if r.ident == "closure_home_split")
+        fired = row.fire()
+        ctrl = row.control()
+        self.assertEqual(fired.code, row.expect, fired.output)
+        self.assertNotEqual(ctrl.code, row.expect, ctrl.output)

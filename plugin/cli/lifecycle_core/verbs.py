@@ -28,6 +28,7 @@ put the window on the loss side. `check_move_integrity` is what makes that
 window visible afterwards.
 """
 
+import posixpath
 import re
 import subprocess
 from dataclasses import dataclass
@@ -144,7 +145,12 @@ def context(repo: Path, declaration: dict, out):
         return None, exits.FINDING
 
     done_home = _kind_home(declaration, "done bodies")
-    if done_home and done_home != closure:
+    # lc-280: compare NORMALISED repo-relative paths, not raw strings —
+    # `./ITEMS-DONE.md` beside `closure-home: ITEMS-DONE.md` is ONE home
+    # spelled two ways, not two homes over one file. Two genuinely
+    # different files still fire; only the SPELLING is folded.
+    if (done_home
+            and posixpath.normpath(done_home) != posixpath.normpath(closure)):
         out(f"FINDING [closure_home_split] the declaration names TWO closure "
             f"homes: `closure-home` says {closure!r} and the `done bodies` "
             f"kind's `home` says {done_home!r}. One fact, one home — a reader "
