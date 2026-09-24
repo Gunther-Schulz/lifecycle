@@ -142,6 +142,7 @@ decision: refocus round R5: when does /standort fire → manual; each run writes
 decision: refocus round R6: does lc-282 build freshness fingerprints → no new mechanism: directives are covered by the existing judgment-register row once retire pass 2 runs, audits stay exempt as history, prose status claims stay judgment; lc-282 is re-pointed to making pass 2 run (desk decision, d9; R6)
 decision: who judges the refocus round open questions and future ones from desk lifecycle-d9 → session lifecycle-64 is the judge (operator, first-hand in lifecycle-d9 2026-09-24: "pos all open quetsions and fuure ones to @lifecycle-64 it will be teh judge"); binding once the operator states it in lifecycle-64 itself; irreversible and outward acts stay the operator's
 decision: refocus round R1 and R2: proceed now under the freeze as defect repairs → YES (judge lifecycle-64 under the operator delegation stated first-hand in its session 2026-09-24): R1 keys on the declared-reader predicate with the arc-open positive control kept, tier-2 and lc-276 falsifier kept; R2 absent env writes session=absent; R2 lands with or before R1
+decision: refocus round R3: move the drift treatment arm trigger to the verbs → YES after the lc-161 stage-2 baseline is recorded and R2 is live; the LEDGER:130 arm, window and grading stand (judge lifecycle-64 (operator delegation); conditions in docs/directives/2026-09-24-refocus-design-round.md section 7)
 
 ## Archive (pre-migration)
 
