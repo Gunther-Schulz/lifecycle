@@ -330,26 +330,55 @@ def conservation(repo: Path) -> Conservation:
     opened = idx.counters["opened"]
     closed_n = idx.counters["closed"]
     baseline = idx.counters["baseline"]
-    live = len(live_slugs(repo))
-    closed_files = len(closed_slugs(repo))
+    live_list = live_slugs(repo)
+    closed_list = closed_slugs(repo)
+    live = len(live_list)
+    closed_files = len(closed_list)
 
     expect_live = baseline + opened - closed_n
     if live != expect_live:
         sign = "SHORT" if live < expect_live else "OVER"
+        delta = abs(expect_live - live)
+        if sign == "OVER":
+            # lc-267: the same unaccounted-vs-duplicate split the item
+            # carrier's `report_conservation` makes, at arc scale — a slug
+            # in BOTH homes is this carrier's own `duplicate_id` shape (the
+            # window an interrupted `arc close` leaves), and a surplus a
+            # duplicate cannot explain names the other cause instead: a
+            # body that reached a home without passing `arc open`/`arc
+            # close`.
+            dup = len(set(live_list) & set(closed_list))
+            unaccounted = max(delta - dup, 0)
+            if unaccounted:
+                over_text = (
+                    f"OVER means the homes hold more than was admitted. "
+                    f"{dup} of the surplus match a slug in BOTH homes — the "
+                    "ordinary INTERRUPTED-CLOSE case, where `arc close` "
+                    f"appends before it deletes. {unaccounted} do"
+                    f"{'es' if unaccounted == 1 else ''} not: that part is "
+                    "UNACCOUNTED FOR, and its ordinary cause is a body that "
+                    "reached a home without passing `arc open`/`arc "
+                    "close`. Only the duplicate part is recoverable by "
+                    "waiting for the close to finish; the unaccounted part "
+                    "is not.")
+            else:
+                over_text = (
+                    "OVER means the homes hold more than was admitted, "
+                    "whose ordinary cause is an INTERRUPTED CLOSE: the move "
+                    "appends to the closed home before deleting from the "
+                    "live one, so the window between those writes "
+                    "legitimately holds both. It is recoverable and must "
+                    "not be repaired as if it were loss.")
+        else:
+            over_text = ("SHORT means a body left by a path that is not a "
+                        "closure — a hand deletion or a bad merge — and it "
+                        "is the LOSS side.")
         return Conservation(
             False, sign,
-            f"arc conservation is {sign} by {abs(expect_live - live)}: the "
+            f"arc conservation is {sign} by {delta}: the "
             f"index records baseline {baseline} + opened {opened} − closed "
             f"{closed_n} = {expect_live} live bodies and the home holds "
-            f"{live}. "
-            + ("SHORT means a body left by a path that is not a closure — a "
-               "hand deletion or a bad merge — and it is the LOSS side."
-               if sign == "SHORT" else
-               "OVER means the homes hold more than was admitted, whose "
-               "ordinary cause is an INTERRUPTED CLOSE: the move appends to "
-               "the closed home before deleting from the live one, so the "
-               "window between those writes legitimately holds both. It is "
-               "recoverable and must not be repaired as if it were loss."))
+            f"{live}. " + over_text)
     if closed_files != closed_n:
         sign = "SHORT" if closed_files < closed_n else "OVER"
         return Conservation(

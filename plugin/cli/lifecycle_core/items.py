@@ -1624,7 +1624,8 @@ def conservation(items_parsed: Parsed, done_parsed: Parsed | None,
     """
     out = {"ok": None, "why": None, "items": len(items_parsed.items),
            "done": None, "archive": None, "baseline": None, "added": None,
-           "compacted": None, "expected": None, "actual": None}
+           "compacted": None, "expected": None, "actual": None,
+           "duplicate": None}
 
     missing = [k for k in ("baseline", "added", "compacted")
                if k not in items_parsed.head]
@@ -1648,6 +1649,11 @@ def conservation(items_parsed: Parsed, done_parsed: Parsed | None,
     out["actual"] = out["items"] + out["done"]
     out["expected"] = out["baseline"] + out["added"] - out["compacted"]
     out["ok"] = out["actual"] == out["expected"]
+    # lc-267: how many of a surplus an OVER verdict can already attribute to
+    # `duplicate_id`'s own population, computed here (both parses are in
+    # hand) rather than re-derived by `report_conservation` from a dict that
+    # does not carry the parses themselves.
+    out["duplicate"] = duplicate_ident_count(items_parsed, done_parsed)
     return out
 
 
@@ -1678,14 +1684,39 @@ def report_conservation(c: dict, out) -> int:
             "The bodies are in git; this says one is missing from the "
             "files, not that it is gone.")
     else:
-        out(f"FINDING [conservation_surplus] the identity is OVER by "
-            f"{delta}: the homes hold MORE bodies than were ever admitted. "
-            "This is not loss and must not be repaired as if it were. The "
-            "ordinary cause is an interrupted close — the move appends to "
-            "the done home before deleting from the carrier, so a crash "
-            "between the two leaves both copies and both are counted. Check "
-            "the DUPLICATE line above first: if an id is in both homes, this "
-            "number is that same event and the repair is the same one.")
+        # lc-267: the surplus a duplicate cannot explain names its OWN
+        # cause — a body admitted without passing `item add` moves the
+        # count exactly the way a duplicate does, and the interrupted-
+        # close attribution below is wrong for it specifically. `c` may
+        # carry no `duplicate` count (an older caller's dict, or a
+        # could-not-verify path this branch never reaches in practice);
+        # treated as 0 rather than crashing, which keeps today's text as
+        # the fallback rather than a new could-not-verify shape.
+        dup = c.get("duplicate") or 0
+        unaccounted = max(delta - dup, 0)
+        if unaccounted:
+            out(f"FINDING [conservation_surplus] the identity is OVER by "
+                f"{delta}: the homes hold MORE bodies than were ever "
+                "admitted. This is not loss and must not be repaired as if "
+                f"it were. {dup} of the surplus match an id in BOTH homes "
+                "— the DUPLICATE line above, the ordinary interrupted-close "
+                f"case. {unaccounted} do{'es' if unaccounted == 1 else ''} "
+                "not: the surplus minus the duplicates is UNACCOUNTED FOR, "
+                "and its ordinary cause is a body that reached a home "
+                "without passing `item add` — a hand-added or otherwise "
+                "admitted-around-the-door body moves the count exactly the "
+                "way a duplicate does. Check the DUPLICATE line above for "
+                "which ids ARE accounted for; the rest is not.")
+        else:
+            out(f"FINDING [conservation_surplus] the identity is OVER by "
+                f"{delta}: the homes hold MORE bodies than were ever "
+                "admitted. This is not loss and must not be repaired as if "
+                "it were. The ordinary cause is an interrupted close — the "
+                "move appends to the done home before deleting from the "
+                "carrier, so a crash between the two leaves both copies "
+                "and both are counted. Check the DUPLICATE line above "
+                "first: if an id is in both homes, this number is that "
+                "same event and the repair is the same one.")
     return exits.FINDING
 
 
@@ -1722,6 +1753,26 @@ def bump_compacted(text: str) -> tuple[str, bool]:
 
 
 # --- the move's own integrity ------------------------------------------------
+
+def duplicate_ident_count(items_parsed: Parsed, done_parsed: Parsed | None) -> int:
+    """How many ids sit in BOTH homes — `check_move_integrity`'s own
+
+    population, read as a COUNT rather than as a finding (lc-267). The
+    conservation OVER message needs to know how much of a surplus its
+    duplicates already explain, without re-running the write side of that
+    check or re-emitting its finding a second time. The archive region
+    counts here too, for the same reason `check_move_integrity` reads it
+    (lc-177): an id live AND archived is the same interrupted-close shape
+    one region over.
+    """
+    if done_parsed is None:
+        return 0
+    live = {it.ident for it in items_parsed.items}
+    done_side = ({d.ident for d in done_parsed.items}
+                 | {ident for ident, _line
+                    in getattr(done_parsed, "archive_idents", ())})
+    return len(live & done_side)
+
 
 def check_move_integrity(items_parsed: Parsed, done_parsed: Parsed | None,
                          out, done_unreadable: str | None = None) -> int:

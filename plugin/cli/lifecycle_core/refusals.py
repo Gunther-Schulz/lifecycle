@@ -2037,9 +2037,15 @@ VERB_ROWS = [
         ident="conservation_surplus",
         refusal="conservation OVER — the homes hold more bodies than were "
                 "ever admitted. NOT loss, and it must not be repaired as if "
-                "it were: the ordinary cause is an interrupted close. This "
-                "row is not in §3.9, which names only 'conservation short'; "
-                "it was found by the interrupted-move test, where the single "
+                "it were: the ordinary cause is an interrupted close, UNLESS "
+                "a duplicate id does not fully account for the surplus, in "
+                "which case the message names the second cause instead — a "
+                "body admitted without passing `item add` (lc-267). This "
+                "plant's own carrier has NO id in both homes (`move "
+                "integrity: CLEAN` above), so it exercises that second "
+                "branch: 0 duplicates, 1 unaccounted. This row is not in "
+                "§3.9, which names only 'conservation short'; it was found "
+                "by the interrupted-move test, where the single "
                 "short-message told a deletion story over the recoverable "
                 "case (surfaced to the desk)",
         firing_input="a carrier whose head under-counts what the two homes "

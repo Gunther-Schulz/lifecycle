@@ -147,6 +147,69 @@ class ArcConservation(unittest.TestCase):
         self.assertEqual(got.sign, "unread")
 
 
+class ArcConservationAttributesTheSecondCause(unittest.TestCase):
+    """lc-267, arc-carrier mirror of the item carrier's OVER split.
+
+    A slug in BOTH homes is this carrier's own `duplicate_id` shape (the
+    interrupted `arc close` window `ArcConservation`'s own
+    `test_an_interrupted_close_is_OVER...` already proves); a surplus that
+    duplicate does not fully explain names the OTHER cause instead — a
+    body that reached a home without passing `arc open`/`arc close`.
+    """
+
+    #: The fixture builder, IDENTICAL to `ArcConservation._repo` — not
+    #: inherited, because subclassing would re-run every one of that
+    #: class's own tests a second time under this name, and this class
+    #: proves something different from it rather than extending it.
+    _repo = ArcConservation._repo
+
+    def test_over_by_two_one_duplicate_one_hand_added_names_1_unaccounted(self):
+        """PLANT: opened 1, closed 1 → expect_live 0. `a` is live AND
+
+        closed (the DUPLICATE); `b` is live only, with no matching `opened`
+        count at all (the HAND-ADD). live=2, over by 2; the duplicate slug
+        set is {`a`}, so unaccounted = 2 - 1 = 1."""
+        repo = self._repo(opened=1, closed=1, live=("a", "b"),
+                          closed_bodies=("a",))
+        got = arcs.conservation(repo)
+        self.assertFalse(got.ok)
+        self.assertEqual(got.sign, "OVER")
+        self.assertIn("OVER by 2", got.message)
+        self.assertIn("1 of the surplus match", got.message)
+        self.assertIn("1 does not", got.message)
+        self.assertIn("UNACCOUNTED FOR", got.message)
+        self.assertIn("arc open", got.message)
+
+    def test_over_by_one_pure_duplicate_keeps_todays_wording(self):
+        """CONTROL: the same shape MINUS the hand-add — this is exactly
+
+        `ArcConservation.test_an_interrupted_close_is_OVER_and_says_it_is_
+        recoverable`'s own fixture, re-asserted here with the UNACCOUNTED
+        token's absence as the discriminating half."""
+        repo = self._repo(opened=1, closed=1, live=("a",),
+                          closed_bodies=("a",))
+        got = arcs.conservation(repo)
+        self.assertFalse(got.ok)
+        self.assertEqual(got.sign, "OVER")
+        self.assertIn("OVER by 1", got.message)
+        self.assertIn("recoverable", got.message)
+        self.assertIn("INTERRUPTED CLOSE", got.message)
+        self.assertNotIn("UNACCOUNTED", got.message)
+
+    def test_must_not_move_short_is_untouched(self):
+        """MUST-NOT-MOVE: SHORT's own arm
+
+        (`ArcConservation.test_a_body_gone_by_a_path_that_is_not_a_closure_
+        is_SHORT`) is unchanged by this class existing — re-run here as a
+        sibling class rather than assumed."""
+        repo = self._repo(opened=2, closed=0, live=("a",))
+        got = arcs.conservation(repo)
+        self.assertFalse(got.ok)
+        self.assertEqual(got.sign, "SHORT")
+        self.assertIn("LOSS", got.message)
+        self.assertNotIn("UNACCOUNTED", got.message)
+
+
 if __name__ == "__main__":
     unittest.main()
 

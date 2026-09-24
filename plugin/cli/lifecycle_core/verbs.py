@@ -595,9 +595,12 @@ def conservation_guard(ctx: Ctx, paths, out) -> int:
     SHORT ONLY, NEVER SURPLUS, and this is the whole of the law-11 care here.
     The two signs are two diagnoses: SHORT means a body left by a path that is
     not a closure, which is this defect. SURPLUS means the homes hold more
-    than was admitted, whose ordinary cause is an INTERRUPTED CLOSE — the move
-    appends to the done home before deleting from the carrier, so the window
-    between those two writes legitimately holds both copies. A guard failing
+    than was admitted — ORDINARILY an INTERRUPTED CLOSE, where the move
+    appends to the done home before deleting from the carrier and the window
+    between those two writes legitimately holds both copies; where a surplus
+    is not fully explained by such a duplicate, `report_conservation` names
+    the second cause instead (lc-267: a body admitted without passing `item
+    add`) — this guard is silent on BOTH, and either reading, a guard failing
     on surplus would fire on the design working as designed, and worse, would
     block the very commit that finishes the interrupted move.
     """

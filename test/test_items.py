@@ -818,6 +818,80 @@ class BlockerUntypedNoneSynonym(unittest.TestCase):
         self.assertEqual(out.count("[blocker_untyped]"), 1, out)
 
 
+class ConservationOverAttributesTheSecondCause(unittest.TestCase):
+    """lc-267 — an OVER identity distinguishes what a DUPLICATE already
+
+    explains from a surplus no duplicate accounts for. `duplicate_id`
+    proves the interrupted-close shape (an id in both homes); this is the
+    OTHER cause the old message never named — a body that reached a home
+    without passing `item add` moves the count exactly the same way.
+    """
+
+    def _head(self, baseline, added):
+        return (f"schema: {items.SCHEMA_FLOOR}\nbaseline: {baseline}\n"
+                f"added: {added}\ncompacted: 0\n\n")
+
+    def _block(self, ident, grade="READY"):
+        return (f"## {ident}\ngrade: {grade}\nrequirement: a body — "
+                "record: LEDGER.md\ngoal: mitigate\n"
+                "write-set: tools/thing.py\ndone-criterion: done\n"
+                "evidence: none yet\nblocked-by: NONE\n")
+
+    def _run(self, items_text, done_text):
+        live = items.parse(items_text)
+        done = items.parse(done_text)
+        buf = []
+        c = items.conservation(live, done)
+        code = items.report_conservation(c, buf.append)
+        return code, "\n".join(buf)
+
+    def test_over_by_two_one_duplicate_one_hand_added_names_1_unaccounted(self):
+        """PLANT: baseline 1, added 0 → expected 1. Live holds `xx-1`
+
+        (about to close, also in done — the DUPLICATE) and `xx-2`, a body
+        with no matching `added` count at all (the HAND-ADD). done holds
+        `xx-1`. actual = items(2) + done(1) = 3, over by 2; duplicate_ident
+        finds 1 (`xx-1`); unaccounted = 2 - 1 = 1."""
+        items_text = (self._head(1, 0) + self._block("xx-1") + "\n"
+                     + self._block("xx-2"))
+        done_text = f"schema: {items.SCHEMA_FLOOR}\n" + self._block(
+            "xx-1", grade="DONE")
+        code, out = self._run(items_text, done_text)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[conservation_surplus]", out)
+        self.assertIn("OVER by 2", out)
+        self.assertIn("1 of the surplus match", out)
+        self.assertIn("1 does not", out)
+        self.assertIn("UNACCOUNTED FOR", out)
+        self.assertIn("item add", out)
+
+    def test_over_by_one_pure_duplicate_keeps_todays_wording(self):
+        """CONTROL: the same shape MINUS the hand-add — one duplicate, no
+
+        unaccounted body. `unaccounted` computes to 0 and the message stays
+        exactly what it said before lc-267."""
+        items_text = self._head(1, 0) + self._block("xx-1")
+        done_text = f"schema: {items.SCHEMA_FLOOR}\n" + self._block(
+            "xx-1", grade="DONE")
+        code, out = self._run(items_text, done_text)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[conservation_surplus]", out)
+        self.assertIn("OVER by 1", out)
+        self.assertIn("ordinary cause is an interrupted close", out)
+        self.assertNotIn("UNACCOUNTED", out)
+
+    def test_must_not_move_short_and_surplus_stay_two_rows(self):
+        """MUST-NOT-MOVE: SHORT is untouched by this change — one row,
+
+        `conservation_short`, and the surplus row's name and exit code are
+        unchanged in both arms above."""
+        items_text = self._head(2, 0) + self._block("xx-1")
+        code, out = self._run(items_text, f"schema: {items.SCHEMA_FLOOR}\n")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[conservation_short]", out)
+        self.assertNotIn("[conservation_surplus]", out)
+
+
 def _done_home_holding(ident, grade):
     """The done home with one closed body at the named GRADE.
 
