@@ -1446,15 +1446,6 @@ evidence: MEASURED this session at current HEAD, ugrep --no-ignore-files, this d
 blocked-by: decision finish the outstanding arms or record them dropped
 not-derivable: 2026-09-21 Looked in ITEMS.md, ITEMS-DONE.md and LEDGER.md for any entry naming these two audits or their outstanding arms: zero hits (positive control, grep of the audit filenames returns hits in docs/). Whether a measurement started eight months into an arc is still worth finishing is a scope/taste call on what the arc still needs, not a fact derivable from the record - and the self-initiated study says in its own text that one arm decides nothing and that the reported arm is the ungoverned one, which names the cost of stopping but not the decision.
 
-## lc-266
-grade: READY
-requirement: The blocker_untyped finding says a bad blocked-by value reached the file by a path that did not pass the door, but proposes no repair token and cannot distinguish a bypassed door from an author that has no door (an agent without the plugin): the bad values stay in the carrier as the visible idiom and neighbouring entries teach the defect faster than the check corrects it. Record: peer session cachyos-setup-33 reports 2026-09-24; plugin/cli/lifecycle_core/items.py:1843-1851.
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,test/test_items.py
-done-criterion: Where an untyped blocked-by value is a NONE synonym (nothing, none in any case, n/a, a dash), both doors (item check and the write-path refusal) name the one-token repair NONE in the finding text; any other untyped value keeps today text. The message names both causes it cannot tell apart - a hand edit around the door, or an author with no access to it - rather than implying a bypass. Verifier: test with blocked-by nothing asserting the repair token appears, and a control with an unrelated untyped value asserting it does not; red-first against the pre-change tree. Must-not-move: the finding stays blocker_untyped, one row, same exit code; no auto-rewrite of the carrier.
-evidence: RELAYED from cachyos-setup-33 with git provenance it measured: CachyOS-Setup/ITEMS.md carries blocked-by: NONE from the CLI commit de01ca7 (2026-09-18) and blocked-by: nothing from two Claude-session hand-edit commits 0620159 and 53d3e01 (2026-09-19/20), plus three uncommitted lines the operator attributes to Codex sessions without the plugin (unverified). The last lifecycle-subject commit there is 2026-09-18. Five such entries silently park and the banner prints ready COULD NOT VERIFY. MEASURED here: the message text at items.py:1843-1851 names merge, hand edit, rename, and no repair.
-blocked-by: NONE
-
 ## lc-267
 grade: READY
 requirement: The conservation OVER message names one cause, an interrupted close, and routes the reader to the duplicate line; a body hand-added around item add (or by an author without the plugin) moves the surplus identically, so a legitimate-looking hand add is mis-attributed. Record: peer session cachyos-setup-33 report 2026-09-24; items.py:1641, verbs.py:598, arcs.py:349, refusals.py:933 and 2040.

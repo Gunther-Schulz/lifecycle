@@ -1759,5 +1759,16 @@ blocked-by: NONE
 closed-reason: 2026-09-24 Desk re-run at 6cd5a84: suite 1030 OK 0 skipped (baseline 1010); --test 128/128 CLEAN; prove-rows 107 of 128, every arrangement held, exit 0. Built by lane sonnet-lc265-267, red-first per item. file/stdin twin per prose slot; item amend has no absence slot inline, so no twin (reported gap, correct per the brief).
 closed-ref: 467f6b6
 
+## lc-266
+grade: DONE
+requirement: The blocker_untyped finding says a bad blocked-by value reached the file by a path that did not pass the door, but proposes no repair token and cannot distinguish a bypassed door from an author that has no door (an agent without the plugin): the bad values stay in the carrier as the visible idiom and neighbouring entries teach the defect faster than the check corrects it. Record: peer session cachyos-setup-33 reports 2026-09-24; plugin/cli/lifecycle_core/items.py:1843-1851.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,test/test_items.py
+done-criterion: Where an untyped blocked-by value is a NONE synonym (nothing, none in any case, n/a, a dash), both doors (item check and the write-path refusal) name the one-token repair NONE in the finding text; any other untyped value keeps today text. The message names both causes it cannot tell apart - a hand edit around the door, or an author with no access to it - rather than implying a bypass. Verifier: test with blocked-by nothing asserting the repair token appears, and a control with an unrelated untyped value asserting it does not; red-first against the pre-change tree. Must-not-move: the finding stays blocker_untyped, one row, same exit code; no auto-rewrite of the carrier.
+evidence: RELAYED from cachyos-setup-33 with git provenance it measured: CachyOS-Setup/ITEMS.md carries blocked-by: NONE from the CLI commit de01ca7 (2026-09-18) and blocked-by: nothing from two Claude-session hand-edit commits 0620159 and 53d3e01 (2026-09-19/20), plus three uncommitted lines the operator attributes to Codex sessions without the plugin (unverified). The last lifecycle-subject commit there is 2026-09-18. Five such entries silently park and the banner prints ready COULD NOT VERIFY. MEASURED here: the message text at items.py:1843-1851 names merge, hand edit, rename, and no repair.
+blocked-by: NONE
+closed-reason: 2026-09-24 Desk re-run at 6cd5a84: suite 1030 OK 0 skipped (baseline 1010); --test 128/128 CLEAN; prove-rows 107 of 128, every arrangement held, exit 0. Built by lane sonnet-lc265-267, red-first per item. Third emit site (verbs._blocker_state, the item ready render) not in the criterion; follow-up at the desk.
+closed-ref: b232e1e
+
 ## Archive (pre-migration)
 
