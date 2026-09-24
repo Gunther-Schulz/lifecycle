@@ -132,6 +132,7 @@ decision: open the O6 WHEN/reader-trigger design arc now or after the treatment 
 decision: O6 surfacing round D1-D4: default moment, carrier, read verb, written record? → ALL FOUR as recommended (operator 2026-09-20): derived moments (verb=its run; session=home written), surfacing in the acting verb output, a recorded read verb, nothing new written. Binding copy: docs/directives/2026-09-20-o6-surfacing-design.md. lc-252 precedes counters.
 decision: lc-260: the 2026-09-18 audit arms that never returned - finish or drop? → DROPPED: self-initiated L2 part 3 and L4 (study consumed as-is by answerable-not-felt GATE 1; no arm moves it) and robustness Lane 2 run (output lost); Lane 2 QUESTION re-booked as lc-268. Basis and per-arm reasons in lc-260 done body. Operator GO 2026-09-24.
 decision: correction: the 2026-09-24 decision line headed lc-260 (6fff837) - which item does it dispose? → lc-261 (the four unreturned audit arms). lc-260 is the desk/peer control-arm gap and is untouched. The mislabel came from a desk status summary; audit citations fixed at 2f18c8e, a mistaken lc-260 close was reverted uncommitted.
+decision: finish the outstanding arms or record them dropped → moot (closed by lc-261)
 
 ## Archive (pre-migration)
 
