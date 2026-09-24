@@ -7,3 +7,4 @@ narrowing: palette-with-dispositions — nothing recorded yet
 premises: none recorded yet
 beliefs: none recorded yet
 yield: nothing produced yet
+premise: P1 2026-09-24 The north star and its creed (presence, demand, independent feedback) - docs/purpose.md, operator-corrected 2026-09-19.
