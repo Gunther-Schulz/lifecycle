@@ -1,233 +1,269 @@
 # 2026-09-24: the refocus design round. What fires at which moment, and what it demands
 
 **Desk:** lifecycle-d9 (Opus 5.5), Job 2 of
-`docs/directives/2026-09-24-refocus-design-round-kickoff.md`. **Base:**
-`5d902c7`. **Status:** DRAFT. Awaiting a fresh-context attack round, then the
-operator's decision round. Nothing here is decided yet.
-**Covers:** lc-276 (the O6 demand leg), lc-277 (a seam-fired goal question),
-the `/standort` trigger, and one prior-art candidate (resume read-back, from
-`docs/audits/2026-09-24-prior-art-problem-side-synthesis.md`). lc-281 is
-blocked on this round's outcome.
+`docs/directives/2026-09-24-refocus-design-round-kickoff.md`.
+**Status:** REVISION 2, after the attack round. It is the operator's
+decision round in waiting.
 
-## 0. The question, and the boundary that shapes every answer
+Revision 1 (`7400e56`) was attacked by two fresh-context arms:
+- **opus:** 16 findings, 5 blocking;
+- **codex gpt-6-astra (additive):** 12 findings.
 
-The question is: **given that lifecycle observes ACTS only, what fires at
-which moment, and what does it DEMAND?**
+Most of revision 1's recommendations did not survive. It is replaced here in
+place; `git show 7400e56:<this path>` has it. §5 records what the attack
+changed, finding by finding.
 
-The boundary is O6 design §2, still true at `5d902c7`. Lifecycle sees verb
-invocations (one fire line each), git hooks, and session-start hooks. It does
-not see file reads, reply text, or reasoning. So a demand for a READ cannot
-be checked here. Only a demand for a WRITE made at an ACT can be. That one
-sentence settles most of this round.
+## 0. The corrected evidence (read this before any decision)
 
-## 1. The evidence the round rests on, graded
+**1. Kill condition 1 was measured on tautological notices only.**
+Measured at this desk after opus F1, by joining every surfacing record for
+this repo in `fire.jsonl` against the declared readers in
+`.claude/lifecycle.json`:
+- 377 of 379 kind-surfacings came from a verb that is itself a declared
+  reader of the kind it surfaced.
+- The other 2 are `arc open` surfacing `arc index`.
 
-- **Notices did not change behaviour; refusals did.** The O6 counter reads
-  125 surfacings against 8 `kind read` records since 2026-09-20. Session
-  09020605 surfaced about 61 due-read lines and made 0 reads. The claim that
-  "every behaviour change came from a refusal, none from a notice" is that
-  session's own grading (testimony, lc-276 evidence slot).
-- **MEASURED THIS ROUND: the counter is blind in exactly the way O6 §8's kill
-  condition 2 predicted.** The fire log was joined to session 09020605's
-  transcript by repo and time window (15:10:51 to 16:47:55Z). Findings:
-  - 114 surfacing records in the window, 0 `kind read` records.
-  - Surfacings per kind: items 102, done bodies 80, ledger lines 5, arcs 4,
-    arc index 4, journal entries 3, laws 3, plugin cache versions 3, the fire
-    log 3.
-  - Tool calls naming the kind's home, counted after the first surfacing of
-    that kind: items 25, done bodies 30, ledger lines 27, arcs 10, laws 12,
-    arc index 1, journal entries 0, plugin cache versions 0, the fire log 0.
-  - So the session DID work in the surfaced homes, directly, and the counter
-    saw none of it.
-  - DERIVED, and not causal: those calls include writes and greps that the
-    work needed anyway. Nothing here shows a surfacing CAUSED a read. It
-    shows only that "8 reads" is not a measurement of reading.
-  - The three kinds with a zero (journal, plugin cache, fire log) are the
-    only clean "surfaced and never touched" cases.
-  - The probe script ran inline at the desk and is not persisted. Its inputs
-    were the transcript, `fire.jsonl`, and `.claude/lifecycle.json` homes.
-- **Most surfacing is tier-1 tautology.** Of the 114 records, 102 name
-  `items`, and nearly every one came from `item check` or `item ready`,
-  verbs that read ITEMS.md themselves. lc-256's evidence already inferred
-  this. It is now observed: the fire detail itself pairs `verb: item check`
-  with `surfaced=done bodies,items`.
-- **The goal question: the knowledge holds, the trigger is missing.** The
-  drift arc's B1 is 7 of 7 correct restatements when asked. Its B3 is that
-  the treatment arm was applied at 1 of 4 and 2 of 2 seams, self-graded, and
-  carried only by a brief directive, which is memory.
-- **The adherence split** (visible-output duties fire; remember-to duties do
-  not) is purpose.md's DEMAND pillar. It is measured in dotfiles as 5 of 6,
-  from one session.
-- **Prior art, desk-graded by dev-17 today** (the synthesis cited above):
-  - Receiver-side read-back (I-PASS, with a 47% bundle effect;
-    desk-verified by dev-17).
-  - Goal restated per action (ReflAct, arXiv 2505.15182; dev-17
-    desk-verified the paper exists).
-  - Drift sidecars (CodeBolt).
-  - None of these isolates the demand component.
+So "125 surfaced / 8 read" measured notices that told the session nothing it
+had not just been handed. **The O6 counter has NOT tested whether an
+INFORMATIVE notice changes behaviour. That leg is untested, not refuted.**
 
-## 2. The principle this round proposes (D2 is where it gets decided)
+What still stands for the DEMAND direction is the adherence split
+(purpose.md, dotfiles-measured, 5 of 6, one session). The observation that
+refusals changed behaviour every time they fired is session 09020605's own
+grading, and it is testimony.
 
-**Lifecycle demands WRITES at ACTS it owns, and it never demands reads.**
-Where a read matters at an act, the VERB PERFORMS THE READ as part of the act
-and demands an acknowledgment ONLY WHEN THE READ FOUND SOMETHING.
+**2. The counter cannot attribute anything to a session.**
+- `firelog.fire()` writes `at`, `verb`, `repo`, `outcome`, `detail` and no
+  session key (`firelog.py:51-61`).
+- My revision-1 window join gave 114 surfacing records; opus's recount of
+  the same window gave 129. Neither instrument can separate sessions, so the
+  discrepancy stays open against both (law 17).
+- My probe script was not persisted. I withdraw its per-kind "touched
+  directly" figures as evidence of anything beyond the fact that direct file
+  work is invisible to `kind read`.
 
-Two effects follow:
-- The read becomes observable by construction, because the verb did it. This
-  generalizes tier 1.
-- A demand fires only on a non-empty result, which keeps false fires near
-  zero. That is the mechanism bar, and law 26's "can the default make the
-  writing unnecessary?" answered as "mostly yes".
+**3. Reads ARE computable in this stack, though not by a lifecycle verb.**
+`dotfiles/claude/hooks/required-reading-gate.py` computes reads from the
+transcript and refuses a session's first Write/Edit until the declared files
+were Read (header, lines 1-19, opened). Revision 1's "a demand for a READ
+cannot be checked here" is true of lifecycle verbs only.
 
-This is option 1 of lc-276 (the verb reads the kind) joined to option 3
-(demand only where a miss is costly), with the cost test made computable: a
-miss is costly where the act would duplicate or contradict something the
-record already holds.
+**4. A lifecycle verb already knows its session.**
+`desk.py:74-95` `resolve_desk_id` defaults to `CLAUDE_CODE_SESSION_ID`, which
+is set in the Bash tool environment (relayed by opus, which ran `echo`).
 
-## 3. The decisions (numbered; each with a recommendation and its falsifier)
+**5. Booking already has a near-match demand.**
+- `item add` runs `candidates()` (rarity-weighted requirement tokens plus a
+  shared write-set) and refuses with `FINDING [join_undisposed]` until the
+  call carries `--join merge-into|supersede|new --absence`
+  (`verbs.py:731-738`, opened).
+- Its over-fire history is measured: 126 of 138 before lc-46, and
+  boilerplate matches after it (lc-248).
+- `ledger add` has no such gate.
 
-**D1. The fate of the surfacing channel (lc-276).**
-- (a) Keep it as is.
-- (b) Deltas only (lc-276 option 2).
-- (c) Two-stage retrieval (option 4, lc-240).
-- (d) **RECOMMENDED: withdraw due-read lines from verb output.** Tier-1 lines
-  go immediately, since the acting verb reads the kind itself. Tier-2 lines
-  go because their effect cannot be measured by any instrument that can be
-  built here (§1, kill condition 2). Keep `kind read` and the fire-log
-  counter as instruments. Surfacing comes back only as part of a D2 demand.
-- **Falsifier:** once D1 ships, the lc-161 after-measure shows operator
-  catches of the unread-artifact class ("this was already in X") rising
-  against the Job 3 baseline. That would mean the notices were doing work
-  the counter could not see.
-- **Consequence:** lc-256 (the windowed counter) is re-scoped to count D2
-  and D3 firings and their fills. It does not keep counting surfacings.
+**6. The goal question's admission is already gated, by the operator.**
+LEDGER.md:130: "run the drift probe treatment arm? → YES … 5 governed-repo
+sessions or 4 weeks … Slot admission gated on its outcome". The window,
+consumer and grading are in `docs/directives/2026-09-20-drift-treatment-arm-directive.md`
+(opened, lines 20-30).
 
-**D2. The demand leg (lc-276's core): conditional demands at booking.**
-- **RECOMMENDED:** `item add` and `ledger add` search the item and ledger
-  carriers for near-matches of the new text (the normalized-match reader
-  lc-278 builds for the census, one reader). They PRINT the hits.
-  - If there is a hit, the verb refuses unless the call carries
-    `--related <ids or ledger lines>` or `--related none:<one-line reason>`.
-  - If there is no hit, nothing is printed and nothing is demanded.
-- This is the "booking into an area the ledger decides" case from lc-276
-  option 3, and lc-99 is its measured instance: a blocker unresolved for 11
-  days over one apostrophe.
-- **Falsifier:** over the first 30 demand firings, either of these kills it:
-  - `none:` fills exceed 80% (the matcher over-fires, law 11);
-  - operator catches of duplicate or contradicting bookings do not fall
-    against the baseline.
-- **Declared undetected:** whether a `--related` fill is TRUE. That is
-  judgment. The slot demands the statement, never the answer (law 26).
+**7. Required prose already exists at the D3 seams.**
+- `arc advance --reason`, `arc narrow --text` (`cli.py:714-727`, relayed by
+  opus).
+- `item close --reason` → `closed-reason:`.
 
-**D3. The seam-fired goal question (lc-277).**
-- **RECOMMENDED:** at three seams lifecycle owns, the verb prints the live
-  goal and refuses unless the call carries `--goal-check "<one line: what
-  this act moved toward the goal, or off-goal: reason>"`. The seams:
-  - `item close`: the item's `goal=` slot text, and the goal of any arc
-    whose record cites the item id;
-  - `arc advance`: the arc's own goal;
-  - `arc narrow`.
-- Each firing writes one fire line, `goal-seam=<seam> arc=<id> filled=<y/n>`.
-  The drift treatment log is then DERIVED from the fire log by a verb, not
-  by a session's memory. That closes lc-277's done-criterion and B3.
-- **Signing, deliberately:** the question carries no complaint. It is the
-  UNSIGNED arm that separates H1 from H2 in the drift probe.
-- **Dispatch seam:** it lives in dispatch-guards, not here. A brief-gate
-  lane requiring a `Goal:` line in every brief would be the fourth seam. It
-  is proposed as a separate item in that repo, and this round does not build
-  it.
-- **Falsifier:** the pre-registered criterion of the drift probe (its design
-  doc) over the derived rows. Also, if more than 50% of fills are the same
-  text repeated inside a session, the demand is ceremony and the seam set
-  shrinks.
+## 1. The principle that survives
 
-**D4. Resume read-back (dev-17's candidate 1, the receiving half of the kill
-test).**
-- **RECOMMENDED: design now, build as the second slice, after D3's firing
-  data exists.**
-- The mechanism: a session's first CARRIER WRITE is refused until the
-  session has recorded a read-back through a verb, `lifecycle desk readback
-  --goal … --now … --next …`. The read-back is checked only for form: a
-  named arc resolves, cited ids resolve.
-- **Named unverified premise:** how a lifecycle verb knows its session. The
-  desk-state kind is keyed per session uuid, which suggests a route, but
-  that route has not been opened this round. The build item's first act is
-  that check.
-- The home spans two repos: the dotfiles write gate and a lifecycle verb.
-- **Falsifier:** read-backs that restate the record with no difference from
-  the injected banner, in more than 80% of sessions. That would be presence
-  in a demand's costume.
+**Lifecycle changes behaviour at acts, by refusal.** This is measured every
+time it fires, and it is also the only lever lifecycle owns. Two
+qualifications, both from the attack:
+- **Reuse before adding.** Where an act already demands prose or already
+  runs a match, the round widens that demand. It never stacks a second flag
+  on the same act (law 26's first question; the fixing module's WHERE/WHAT
+  axes).
+- **Conditional before unconditional.** A demand that fires on every act
+  (item close runs ~63/week in the real repos since 2026-09-17, per the
+  opus fire-log census) must justify its cost on data. A demand that fires
+  only when a check found something justifies itself by the mechanism bar.
 
-**D5. When `/standort` fires.**
-- (a) Manual only, as today.
-- (b) A timer or cadence. Disfavoured: the frame's prediction is that an
-  act-anchored trigger beats a memory-anchored or timer-anchored one.
-- (c) **RECOMMENDED: demanded at `arc advance`.**
-  - The verb refuses unless the ledger holds a `/standort` decision line
-    dated after that arc's previous advance, or the call carries
-    `--standort-skip "<reason>"`.
-  - Manual runs stay available.
-  - A stage change is the rare, costly moment where a position check pays
-    for itself.
-- **Falsifier:** skip reasons used at more than half the advances, or no
-  standort run in 30 days changing a verdict (every run a TWEAK with no
-  booking). In that case the demand moves or goes.
+## 2. The decisions (the operator round draws from these)
 
-**D7. Freshness fingerprints on persisted projections (lc-282, dev-17's
-candidate 3, booked at `ea67e9d`).**
-- **RECOMMENDED: no new stage. The home is each kind's existing staleness
-  stage.**
-- The staleness stage declares "change-coupling — … moved past the citation"
-  for audits, directives, design notes and begehung findings (read from
-  `.claude/lifecycle.json` at `ea67e9d`). What is missing is EXECUTING it.
-- The build: a body that cites `path@<commit>` is a FINDING when `path`
-  changed after `<commit>`. The check runs in the `retire` / `audit` walk
-  and in `/standort` phase 8. Both are acts, and it is a refusal-grade
-  finding, never a notice (D1).
-- Order: after D4.
-- **Falsifier (reach):** if under a quarter of directive and audit claims
-  carry a `path@commit` pin, the check examines almost nothing. That is an
-  instrument answering a narrower question than it names. In that case the
-  default moves to the writer: the verbs stamp the source when they write,
-  law 26's first question.
-- **Unverified:** whether any current check executes change-coupling beyond
-  "the pointer resolves". A grep for `change-coupling` in
-  `plugin/cli/lifecycle_core/` finds only declaration fixtures in
-  `refusals.py` and a label in `judgment.py`. The build item's first act is
-  to read the retire walk.
+**R1. The surfacing channel (lc-276).**
+- **RECOMMENDED:**
+  - Remove TIER-1 notices: those whose acting verb is a declared reader of
+    the surfaced kind (377 of 379). They are the design's own "over-trigger"
+    degenerate form (O6 §6) and carry no information.
+  - Keep TIER-2 surfacing (the 2 of 379) and the counter unchanged.
+  - The demand leg stays OPEN, because its evidence was tautological.
+- lc-256 keeps its scope and its MUST-NOT-MOVE.
+- lc-276's falsifier stays on the counter, as its done-criterion requires:
+  if tier-2 surfacings, once their moments are informative, are followed by a
+  read in the window less often than 1 in 10 over the first 30, the notice
+  leg is dead on real data and the demand leg is designed then.
+- **Classed as a defect repair** under the freeze: a notice naming a kind
+  the acting verb just read is shipped output that carries nothing. The
+  operator confirms or rejects that class in the round.
 
-**D6. Order, under the freeze.**
-- **RECOMMENDED:** nothing from D1 to D5 ships until the lc-161 baseline is
-  recorded (Job 3; ledgered with its extractor commit and data-file
-  pointer).
-- Then, in order: D1 (the smallest, and a removal), D3, D5, D2 (after lc-278
-  lands its reader), D4.
-- Each lands as its own item with its roster rows red-first.
-- This round's ledger line unblocks lc-281. Its answer to lc-281's question:
-  lifecycle enforces at ACTS, by refusal or by demanded write, never by
-  notice. So a corpus rule is class (a) or (b) only if an act can carry it.
+**R2. Fire lines carry the session key.**
+- **RECOMMENDED:** `firelog.fire()` records the session (via
+  `resolve_desk_id`'s source, `CLAUDE_CODE_SESSION_ID`, absent → the field
+  says absent, never omitted).
+- This repairs the counter's measured blindness (§0.2).
+- It is the precondition for every per-session derivation below and for the
+  lc-161 after-measure.
+- **Classed as a defect repair** of a shipped instrument. It is additive to
+  the log line, so no carrier schema moves.
+
+**R3. The goal question at seams (lc-277), as the TREATMENT ARM, not as a
+release.**
+- **RECOMMENDED:** the treatment arm keeps its operator-decided window and
+  grading. What changes is its TRIGGER: from a brief directive (memory) to
+  the verbs.
+  - At the acts that already demand prose (`item close --reason`,
+    `arc advance --reason`, `arc narrow --text`), the verb PRINTS the live
+    goal immediately before recording. The already-demanded prose is the
+    written answer. No new flag, no new slot, no schema change.
+  - Each such act's fire line gains `goal-seam=<seam>`. With R2's session
+    key, seams-per-session derive from the record.
+- **Scope, stated, since it amends an operator-decided arm:**
+  - The probe design's treatment seams are "round open, wave authorization,
+    record update". This moves the arm to verb seams, which breaks
+    comparability with rows 1-2 (both self-graded, n=2).
+  - Catches, wrong restatements and operator interventions stay
+    independently graded, per the probe design. A fire line cannot supply
+    them.
+  - The dispatch seam lives in dispatch-guards and is booked there as a
+    separate item. lc-277's done-criterion names dispatch, so lc-277 stays
+    open until that lands. It is NOT closed by this.
+- **Falsifier:** the probe's own pre-registered caught-by-whom criterion
+  over the window. Too few established drift episodes gives COULD NOT
+  VERIFY, never a verdict (directive lines 26-28).
+
+**R4. Resume read-back (dev-17's candidate 1, filed under lc-276 option 6).**
+- **RECOMMENDED: PARK.** The named missing evidence is R3's arm outcome. A
+  read-back is the goal question fired at the resume seam, and the arm
+  decides whether an environment-fired restatement does anything.
+- Design facts carried so the park is cheap to lift:
+  - the session key exists (§0.4);
+  - the observer must be the lifecycle verbs, not the dotfiles gate, whose
+    scope is Write/Edit/MultiEdit/NotebookEdit while carrier writes go
+    through `lifecycle` via Bash;
+  - desk state overwrites (`desk.py:197`), so the read-back needs its own
+    record, which is a schema change (law 25).
+- Falsifier to pre-register when lifted: recovery errors (the next act
+  contradicts the record), never textual novelty. Astra: an identical
+  correct read-back is success.
+
+**R5. When `/standort` fires.**
+- **RECOMMENDED:** stays manual.
+- Its run's ledger line takes a FIXED question prefix, `standort: <scope>
+  position check`, so runs become countable by exact match. That is a
+  convention in `standort.md`, not a schema slot.
+- **Named deferral:** a trigger is decided once 4 runs are recorded, on two
+  counts read from those lines:
+  - how many runs changed a verdict or booked an item (a run that changes
+    nothing needs no trigger);
+  - the interval between runs.
+- Revision 1's arc-advance demand is withdrawn:
+  - unbuildable, since ledger lines carry no date or type slot (`ledger.py`
+    134-135);
+  - under-sampled, at ~4 advances a month;
+  - its skip flag was an unverified override (law 11).
+
+**R6. Freshness fingerprints (lc-282, dev-17's candidate 3).**
+- **RECOMMENDED:** no new mechanism.
+  - The directive-staleness rule already exists as a judgment-register row
+    ("directives: a cited file changed past the citation -> stale. audits:
+    never", `judgment.py:65-78`, relayed by opus).
+  - Its home is retire's second pass, which prints NOT RUN.
+- lc-282's decision is therefore: the projection population it asks about is
+  (a) directives, which that register row covers once its pass runs, and
+  (b) prose status claims (CLAUDE.md role lines, the-loop.md cells).
+- (b) is judgment-shaped, since both motivating incidents carry no pinnable
+  source, and it is already served by the-loop.md's dated-status convention.
+- Audits stay "never": they are historical. That was astra's
+  historical-vs-current finding, and the existing row already says it.
+- lc-282 is re-pointed to "make retire's pass 2 run the existing row", or
+  dropped if that is already booked. The build item's first act is that
+  carrier search.
+
+**R7. `ledger add` gets the booking gate `item add` already has.**
+- **RECOMMENDED:** widen `candidates()` to decision lines, and refuse an
+  undisposed near-match with the same `--join` vocabulary. It is ONE
+  matcher, not lc-278's equality reader, which answers a different question.
+- This is the whole of revision 1's D2 that survives.
+- Its over-fire risk is the one lc-46/lc-248 already measured, so it ships
+  with that rate reported.
+- It is new reach, so it waits for the freeze exit.
+
+**R8. The freeze exit.**
+LEDGER.md:138 freezes new mechanism and names no exit. Revision 1 made
+"baseline recorded" the exit. That reverses an operator-pinned decision by
+inference, and it is withdrawn. The exit is the operator's.
+- **RECOMMENDED:** R1 and R2 proceed now as defect repairs.
+- R3 (a change to an existing trial's trigger, no new slot) proceeds after
+  the lc-161 baseline is recorded.
+- R7 and every other new mechanism wait for an explicit freeze exit.
+
+**R9. lc-281's answer.**
+- Lifecycle enforces at ACTS, by refusal; that is measured.
+- Notice-borne enforcement is UNTESTED (§0.1), so it is no class.
+- So a corpus rule is class (a) if a refusal enforces it today, (b) if an
+  act lifecycle owns could carry a refusal for it, (c) otherwise. Revision
+  1's "never by notice" is withdrawn as wider than its basis.
+- This answer unblocks lc-281.
+
+## 3. The lc-161 baseline must separate the classes the decisions are graded
+on
+
+Both arms found that revision 1's falsifiers read categories the baseline
+did not collect. So the extractor's stage-2 classification carries, per
+operator message, one of these classes:
+- **legitimate (the operator's by kind):** IGNITION, DECISION, TASTE, INFO;
+- **the refocus's targets:**
+  - ALREADY-IN-RECORD (the operator points to something the record held; a
+    duplicate booking is a subclass);
+  - STEER (goal or direction, including "what is the goal?");
+  - CORRECTION (other catches);
+  - NUDGE (continue, status);
+  - RATIFICATION (answering an ask the session could settle);
+  - RELAY;
+- **the third answer:** COULD-NOT-CLASSIFY.
+
+R1 is graded on ALREADY-IN-RECORD, R3 on STEER, and the refocus as a whole
+on targets per 100 turns. Attribution across decisions stays weak by
+construction, because several ship in one window. That is said here so the
+after-measure is not over-read.
 
 ## 4. The transition table (sign-off requirement; OBSERVER column)
 
-Home of this table: this document, until the build items quote it.
-
 | arrow | verb | record written | check that proves it | OBSERVER |
 |---|---|---|---|---|
-| a booking resembles held record | `item add` / `ledger add` | fire line `demand=related filled=<y/n>`; the fill in the item or ledger body | red-first: a near-match plant refuses without `--related`, a distinct text passes silent | the verb invocation |
-| an item closes | `item close` | fire line `goal-seam=close`; the fill as an item amendment | red-first: close without `--goal-check` refuses | the verb invocation |
-| an arc advances or narrows | `arc advance` / `arc narrow` | fire line `goal-seam=advance`/`narrow`; the fill as an arc line | red-first as above | the verb invocation |
-| an arc advances without a position check | `arc advance` | the refusal, or a `standort-skip` arc line | red-first: no standort ledger line since the last advance, so it refuses | the verb invocation, reading the ledger |
-| a session resumes (first carrier write) | `desk readback` (D4) | fire line `readback`; the fill in desk state | red-first: a first write without a read-back is refused by the gate | the dotfiles write gate (a harness hook) |
-| a demand is satisfied by rote | the counter verb (lc-256, re-scoped) | none; it reads fire lines | fill-diversity and `none:` rates against the falsifiers above | the counter's own run at session start (banner) and at `/standort` phase 6, **not memory** |
-| drift treatment row | a verb deriving it from `goal-seam` lines | `drift-treatment-log.tsv` row | the row's seams equal the fire lines' count | the derivation verb, run by `/standort` |
+| a verb reads its own kind | any declared-reader verb | no surfacing line (R1) | red-first: a reader verb of kind K no longer prints K; `arc open` still surfaces `arc index` | the verb invocation |
+| any verb runs | every verb | fire line with `session=` (R2) | red-first: with the env var set, the line carries it; unset, it carries `session=absent` | the verb invocation |
+| a seam act records its prose | `item close` / `arc advance` / `arc narrow` | the existing prose, plus a fire line `goal-seam=` | red-first: the goal line prints before the record, and the fire line carries the seam | the verb invocation |
+| treatment rows are derived | a derivation over `goal-seam` lines keyed by session | the seams column of `drift-treatment-log.tsv` | seams equal the fire-line count per session | the desk grading the arm (the directive's named grader), not memory; catches and interventions are graded independently by that desk |
+| a `/standort` run happens | `ledger add decision` with the fixed prefix | the ledger line | exact-prefix count | the run itself; the trigger decision reads the count once 4 exist |
+| a ledger decision near-matches (R7, after freeze exit) | `ledger add` | the refusal, or `--join` disposition | red-first on a near-match plant | the verb invocation |
 
-The one row whose observer is a person or a periodic run is the rote-fill
-row. That is the honest remainder: whether a fill is meaningful is judgment.
+## 5. What the attack changed (disposition per finding)
 
-## 5. What this round does NOT claim
-
-- That any demand improves outcomes. Gate 2 is graded only against the lc-161
-  baseline, after gate 1 shows the demands firing.
-- That fills are true. The slot demands the statement, never the answer.
-- That D1's withdrawal loses nothing. Its falsifier exists because the
-  counter is blind.
+| finding | disposition |
+|---|---|
+| opus F1 (tier-1 only) | ACCEPTED, re-measured: 377/379 (§0.1); R1 rewritten, R9 narrowed |
+| opus F2 (reads computable) | ACCEPTED (§0.3) |
+| opus F3, astra 5, 6 (lc-277 not closed; no session key) | ACCEPTED: R2 added, R3 states lc-277 stays open |
+| opus F4, F15 (falsifier uncomputable, seam class) | ACCEPTED: R3 keeps the probe's grading and names the seam amendment |
+| opus F5, F13, astra 9 (standort predicate, skip override) | ACCEPTED: R5 withdrawn to manual plus counted runs |
+| opus F6-F8, astra 11-12 (D7 re-invents, checks nothing) | ACCEPTED: R6 |
+| opus F9, astra 3-4, opus cat-6 (D2 re-invents the join) | ACCEPTED: R7 reuses `candidates()` |
+| opus F10, astra 8 (session key known; desk overwrites) | ACCEPTED: R4 |
+| opus F11 (row 1 fully applied) | ACCEPTED: row 1 is 2 of 2; lc-277's "minority" wording to be amended |
+| opus F12 (counts irreproducible) | ACCEPTED (§0.2) |
+| opus F14, astra 2 (baseline lacks classes) | ACCEPTED (§3) |
+| opus F16 (lc-256 MUST-NOT-MOVE) | ACCEPTED: R1 keeps lc-256's scope |
+| opus cat-4 (observers) | ACCEPTED: §4 rebuilt |
+| opus cat-5 (stacking, schema, freeze) | ACCEPTED: no new flags or slots in R1-R3; R8 |
+| astra 1 (tier-1 verbs that only enumerate files) | ACCEPTED in part: R1 keys on DECLARED reader, and whether a declared reader truly reads is a separate reach question for `retire` (its staleness pass prints NOT RUN) |
+| astra 7 (identical read-back) | ACCEPTED: R4 falsifier |
+| astra 10 (admission gate) | ACCEPTED: R3 and R8 |
