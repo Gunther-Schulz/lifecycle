@@ -4,7 +4,7 @@
 (checks) reported in full. **Lane 2 (the instruments themselves) NEVER
 RETURNED — its run was dropped 2026-09-24 (LEDGER.md, 2026-09-24 decision for item lc-261),
 its output unrecoverable; its QUESTION is re-booked as `lc-268`.** The Lane 2
-heading below still reads PENDING until lc-268 fills it.
+heading below was filled by lc-268 on 2026-09-24.
 
 **Why this lens and not a general review.** This repo found the same defect in
 itself five times in one day: a check reporting clean over a population it never
@@ -144,8 +144,161 @@ not run the suite or the prover, and no verdict here rests on either.
 **`migrate.py` is where the next pass belongs, and it is lc-168's own file — so
 that pass is owed BEFORE the migration, not after.**
 
-## Lane 2 — PENDING (run dropped 2026-09-24, LEDGER.md 2026-09-24 decision for item lc-261; question re-booked as lc-268)
+## Lane 2 — RUN 2026-09-24 at `a011b01` (lc-268; the original 2026-09-18 run was lost, see LEDGER.md 2026-09-24 decision for item lc-261)
 
 The instruments themselves: which recorded proofs prove less than they claim.
 Lens: *a pair proves the refusal's AXIS and never its REACH; reach is proven by
 the arm that must stay SILENT.*
+
+**Result: 47 of 128 rows prove REACH, 60 prove AXIS only, 21 have NO recorded proof.** Row count derived from `lifecycle --test --list` at `a011b01` (128 executable, 6 prose-rest out of scope); the table below covers exactly those 128, checked by set comparison at the desk (0 missing, 0 extra). Reviewer: an opus read-only lane (opus-lc268-review); `[read]` = test body read, `[name]` = graded from the test name only; (P+) the reviewer probed the near-miss and the row held, (P!) the probe exposed a defect. The reviewer did not run prove-rows or the suite.
+
+**Grading rule.** A row's own plant/control pair is its AXIS. REACH-PROVEN needs one more arm: a control keeping a surface feature a too-wide predicate would key on and still silent; a test case firing on a far member or silent on a near-miss; or a sibling row at the same decision site firing on a far member.
+
+**Two defects found, both reproduced at the desk with the roster's own fixtures:** D1 — a command GROUP passes as a verb (`trigger: verb item` exits 0; control `verb item clsoe` exits 2) → lc-279. D2 — `closure_home_split` fires on `./ITEMS-DONE.md` beside `ITEMS-DONE.md`, one file → lc-280.
+
+**Most likely to hide a real defect** (reviewer's ranking): D1; D2; `records_kind_undeclared` (two checkouts sharing a basename; unprobed); `closed_ref_unresolvable` with a resolving non-commit object (`HEAD^{tree}`; unprobed); `arc_conservation` OVER side (unplanted, unprobed).
+
+**Messages wider than any arm:** declaration_malformed (40 emit sites behind one row), arc_conservation, migration_ambiguous_closure, laws_scope_audit, conservation_surplus, blocker_predicate_broken, dangling_reference_carrier, retire_source_not_writing, unknown_slot_misplaced, and dangling_reference/trigger_verb_unknown (falsified by D1).
+
+### REACH-PROVEN (47)
+
+| row | basis / untested near-miss |
+|---|---|
+| `verify_expectation_wrong` | t_verify:165 [read] a matching ran-failed stays silent; :199 |
+| `declaration_malformed` | t_declaration:1035 [read] well-formed arm accepted; t_migrate:2354-2380 far members [name] |
+| `declaration_ignored` | the tracked sibling shares its one check-ignore site (prove-rows.py:24-33) = far member |
+| `declaration_ignored_tracked` | same basis, reversed |
+| `kind_stage_undeclared` | t_declaration:382,386 far members [name]; probe: a missing growth fires |
+| `dangling_reference` | t_tend_goal:103 goal-type far member [name]; probe: verb/hook fire (but see D1) |
+| `unknown_grade_read` | sibling grade_arm_malformed's control, R:1001-1008, silent on the well-formed arm |
+| `arc_undispositioned` | control R:409-422 (flag existed, dispositioned) |
+| `arc_shape` | t_arcs:301,533,820 far forms [name] |
+| `dangling_reference_carrier` | control R:1822-1829 keeps 3 other blocker forms; t_items:927,948 [name] |
+| `blocker_predicate_broken` | t_verbs:1474 exit>=2 far member, :1572 [name] |
+| `blocker_predicate_satisfied_at_booking` | control R:1630-1638, same head -N shape |
+| `close_over_live_blocker` | t_verbs:430 DROPPED target [name]; probe: drop over a live blocker CLEAN |
+| `close_carries_pointer` | control R:1741-1746 is the over-fire probe; t_items:1631,1648 [name] |
+| `blocker_softlock` | t_items:1050 chain-into-false far member [name] |
+| `park_over_superseding_amendment` | t_items:1436 [name] |
+| `promote_while_blocked` | t_lanes:760 an answered decision promotes [name] |
+| `cost_test_veto` | t_items:1224 [read], :1239 |
+| `conservation_short` | t_retire:251 [read] compacted>0 stays CLEAN |
+| `conservation_surplus` | t_items:868 the pure-duplicate branch [name] |
+| `evidence_unmarked` | t_items:2166 legacy carrier silent, :2145 amend door [name] |
+| `decision_not_derivable_unstated` | t_items:2269,2286 [name] |
+| `item_shape` | t_items:1872 each malformed shape [name] |
+| `done_slot_on_live_item` | t_items:453,1897 [name only, weak] |
+| `blocked_in_done_home` | t_items:566-599 prefix and other-question moot records [name] |
+| `blocker_exercise_misplaced` | control R:3409-3412; t_vocab:755 |
+| `not_derivable_misplaced` | control R:3430-3434; t_items:2540 |
+| `ready_with_unknown_slot` | t_items:2460 [read] a migrated item's UNKNOWN stays silent |
+| `kind_grew_without_exit` | t_retire:626,667,827 [name] |
+| `route_set_unwatched` | t_refusals:281 an agreeing row stays silent, :290 [name] |
+| `route_set_unnamed` | same |
+| `schema_mismatch` | t_schema:628 live glob home, far member [name] |
+| `hook_not_executable` | control R:3776-3779 keeps a 100644 non-hook file (R:3700-3704) |
+| `compaction_would_strip` | t_retire:318 edited but COMMITTED compacts [name] |
+| `trigger_broken` | t_lane_new:257 [read] a fresh lane reads QUIET; t_lanes:1030 |
+| `lane_table_absent` | t_lanes:889 [read] the other generator is accepted |
+| `verify_check_did_not_run` | t_verify:88 non-executable script, far member [name] |
+| `goal_query_undeclared` | control R:4412-4418, a declared goal holding nothing; t_items:2032 |
+| `desk_state_kind_undeclared` | t_declaration:168 another repo's file stays silent [name] |
+| `reader_moment_malformed` | control R:4550-4558, the absent-when default |
+| `roster_population_undeclared` | control R:4451-4457 diverges identically under a subset contract |
+| `merge_duplicate_body` | t_migrate:830,1209 [name] |
+| `move_uncommitted` | t_ledger:203 ledger door, far member [name] |
+| `record_line_unbasised` | hyphen sibling fires on a present-but-wrong separator |
+| `record_route_invalid` | outside_set sibling, plus the route-set check |
+| `emit_site_unregistered` | the CNV sibling R:4387, far member |
+| `capture_dominated` | control lands AT the 3:1 tripwire (R:3231-3233), a boundary arm |
+
+### AXIS-ONLY (60)
+
+| row | basis / untested near-miss |
+|---|---|
+| `declaration_absent` | a zero-byte lifecycle.json (must be malformed, not absent) |
+| `declaration_malformed_missing_key` | public: null or "false" |
+| `laws_scope_audit` | message names 4 markers, plant fires one (a dated pointer P+) |
+| `laws_absent_could_not_verify` | laws path naming a directory |
+| `schema_above_floor` | done-home or declaration above the floor (ledger P+) |
+| `duplicate_id` | xx-1 beside xx-10 (P+) |
+| `arc_exists` | arc open freeze2 while freeze is open |
+| `unknown_arc` | re-closing a CLOSED slug (P+) |
+| `arc_conservation` | the OVER side: text claims SHORT and OVER, only SHORT planted |
+| `unknown_grade_write` | a well-formed cannot-express arm on write (P+) |
+| `foreign_origin_item` | cwd in a subdirectory of the target repo; private repo with foreign cwd |
+| `join_undisposed` | a write-set sharing only a path prefix (tools/harvest.mjs.bak) |
+| `new_without_absence` | --absence "" |
+| `cost_test_unverified` | a two-path write-set with no --hunks (P+) |
+| `blocker_untyped` | decisionwhich window (no space) |
+| `closed_ref_unresolvable` | a sha that resolves but is not a commit (HEAD^{tree}) |
+| `blocker_unstorable` | an en dash or " - " separator |
+| `dangling_reference_item` | a DONE id must stay silent; a DROPPED id on the write path must fire |
+| `parked_without_typed_blocker` | an evidence blocker that parses |
+| `amend_without_reason` | --reason " " |
+| `promote_without_judgment` | only one of --by/--reason (P+: both fire) |
+| `ready_with_unknown_slot_promote` | the word UNKNOWN inside requirement prose |
+| `amend_nothing_to_amend` | --goal <its current value> (a no-op change) |
+| `duplicate_id_cross_home` | xx-1 live, xx-10 done (P+) |
+| `conservation_unverified` | baseline: x |
+| `ledger_body` | a reason with a trailing newline (probe FIRES, debatable) |
+| `closure_home_split` | ./ITEMS-DONE.md (P!: D2, lc-280) |
+| `roster_absent` | roster present but empty or comments-only |
+| `repo_unresolved` | a path with a trailing slash or ~ |
+| `unknown_item` | item ready <id held only in the done home> |
+| `unknown_source` | --source Operator |
+| `new_without_typed_blocker` | --write-set UNKNOWN --blocked-by NONE |
+| `ledger_shape` | a blank line before schema: |
+| `unregistered_kind` | kind show item (a prefix of items) |
+| `read_kind_unregistered` | kind read item |
+| `migrate_would_overwrite` | only ITEMS-DONE.md present |
+| `migrate_repeated_from` | --from-done X --from Y (derived to hold, cli.py:1305) |
+| `migration_unclassified` | a lowercase ready |
+| `migration_ambiguous_closure` | UNDONE mid-title; shape 2 claimed and unplanted |
+| `merge_source_self_duplicate` | a re-imported duplicate must stay silent |
+| `migration_ledger_nonzero` | a ledger holding only blank lines after its head |
+| `lane_undeclared` | a non-lane lanes/README.md |
+| `declaration_retired_key` | the withdrawn bound stage (probe: fires declaration_malformed instead) |
+| `leak_scan_undeclared_reason` | reason: "" |
+| `reference_untyped` | verb: item ready (space after the colon) |
+| `open_grade_in_done_home` | DROPPED must stay silent (P+) |
+| `unknown_slot_misplaced` | grade: UNKNOWN (text names grade; probe fires CNV, code 3) |
+| `unregistered_persisted_thing` | an untracked stray file must stay silent |
+| `record_slot_missing` | ## Moves (different case) |
+| `record_now_empty` | NOW holding only a whitespace line |
+| `record_line_untagged` | a blank or continuation line under ESTABLISHED |
+| `record_tag_unknown` | a lowercase [verified] |
+| `record_probe_missing` | probe: present and empty |
+| `record_closed_undrained` | the word PENDING inside a VERIFIED basis |
+| `record_closed_unpointed` | a CLOSED prose line carrying no arrow |
+| `home_unresolvable` | an absent in-tree home (CLEAN by design, P+, unpinned by the row) |
+| `records_kind_undeclared` | two repos with the same basename (glob keys on basename; derived, unprobed) |
+| `reader_moment_broken` | predicate false (exit 1, quiet) |
+| `evidence_mark_malformed` | a lowercase perishable in prose (P+) |
+| `roster_population_diverges` | a listed repo spelled non-canonically (trailing slash or symlink) |
+
+### NO-PROOF-RECORDED (21)
+
+| row | basis / untested near-miss |
+|---|---|
+| `grade_arm_malformed` | reach bounded by control (well-formed arm, R:1001) |
+| `hook_not_executable_declared` | reach bounded by control (plain file) |
+| `verify_check_failed` | reach bounded by test (t_verify:165) |
+| `binding_slot_unbound` | reach bounded by test (t_workflow_bind:295) |
+| `retire_source_not_writing` | reach bounded by test (t_migrate:2147, schema-from half) |
+| `record_route_outside_set` | reach bounded by sibling |
+| `record_line_unbasised_hyphen` | reach bounded by sibling |
+| `emit_site_unregistered_could_not_verify` | reach bounded by sibling |
+| `binding_slot_unbound_absent_key` | axis only |
+| `binding_template_missing` | axis only |
+| `binding_template_unparsable` | axis only |
+| `closure_pointer_ref_unresolvable` | axis only |
+| `desk_state_shape` | axis only |
+| `desk_state_unknown_value` | axis only |
+| `lane_new_exists` | axis only |
+| `workflow_binding_exists` | axis only |
+| `retire_source_uncommitted` | axis only |
+| `retire_source_laws_absent` | axis only |
+| `retire_source_unpinned_anchor` | axis only |
+| `trigger_verb_unknown` | DEFECT D1 (group names pass as verbs), lc-279 |
+| `migration_readback_disagrees` | reach not applicable (plant is a monkeypatched writer) |
