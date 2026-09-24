@@ -258,7 +258,7 @@ it into this round.
 | 1 measure the goal recurringly | ACCEPTED. One stale premise: the extractor is TRACKED (`fbd5ecd`), not untracked, and stage 2 is running | lc-161 stages 1-2; recurring kill drills ride lc-283 |
 | 2 withdraw surfacing | PARTLY REJECTED on the memo's own evidence: the 224/8 count is the same tautological population (§0.1, 377 of 379), so "firing harder" is the tier-1 volume growing | R1 removes tier-1; tier-2 withdrawal waits for evidence |
 | 3 demands ride existing verbs | ACCEPTED, and it is R3's shape | adds the rule to §1 (below); the verb × demand × miss-cost survey is booked as lc-284, blocked on the freeze exit |
-| 4 short sessions on purpose | ACCEPTED as a candidate; the memo names its own precondition | booked lc-285, PARKED, blocked by lc-283 (kill loss must measure low first) |
+| 4 short acting frames (AMENDED on operator correction, relayed by lifecycle-64: restarts replaced by main desk + lanes/peers; window length is not an established cause) | ACCEPTED as amended; the load-bearing half is outside readers at the MAIN desk's seams, and the kill test stays the loss meter | lc-285 amended in place; blocked on whether the drift probe carries an acting-frame-architecture axis |
 | 5 pre-registered probe as the admission bar | ACCEPTED | operator question (a scope rule for every future mechanism) |
 
 §1 addendum, from lever 3: **at most one new demand per verb per round.**
