@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 283
+added: 284
 compacted: 0
 
 ## lc-3
@@ -1590,4 +1590,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py
 done-criterion: cmd_item_ratio (verbs.py:1653) gains a DIVERGENCE verdict beside the spike tripwire: net growth - capture minus closed-plus-dropped - positive and sustained over a declared window prints a FINDING (exit 2) naming the net gain and the window, and the CLEAN text never prints over a carrier whose open count grew across that window. Registered as a refusals.py row with its firing input, red-first via a prove-rows arrangement admitted on the lc-142 pair; the natural red is the live carrier itself (282:151, net +131) - the repaired verb MUST fire on it and that firing is quoted beside the close. Defect repair to a shipped instrument: inside the freeze, no admission-bar probe owed (LEDGER decision line, admission bar exempts defect repairs).
 evidence: PERISHABLE(2026-09-24, re-derive: lifecycle item ratio): the verb printed "ratio: CLEAN - the carrier is draining" at 282:151 = 1.87:1, open 139. MEASURED: code read this session at verbs.py:1646-1723, tripwire constant and CLEAN branch at 1713-1723. DERIVED: the (1,3) dead zone follows from the arithmetic - no window in that band ever fires the 3:1 spike test.
+blocked-by: NONE
+
+## lc-292
+grade: READY
+requirement: READY has decayed into a label nobody believes: 117 READY items over a carrier whose actually-scheduled head is about 3 (lc-289, lc-290, the lc-161 after-measurement). The accretion doctrine names the decay - when the ready set outgrows what the repo will ever schedule, the grade asserts an intent nobody holds and the head is indistinguishable from the tail. Most READY bodies are new mechanisms that three standing decisions already gate: the freeze, the admission bar, and the lc-161 verdict structure. Record: operator escalation 2026-09-24, session lifecycle-64.
+goal: lean-machinery-strict-checks
+write-set: ITEMS.md,LEDGER.md
+done-criterion: One demotion pass over every open READY item, each classed and moved by tool verbs, never hand edits: (a) defect repair to a shipped instrument, or already-scheduled head work, stays READY; (b) new mechanism, or work whose worth the lc-161 verdict decides, goes PARKED with the ONE shared named blocker - freeze (LEDGER decision line 2026-09-24) + admission bar + lc-161 after-measurement verdict - so a single ledger answer re-releases the whole class; (c) overtaken or duplicate takes a recorded DROP with a one-line reason. The close reports counts per class, quotes the post-pass READY head in full, and item ratio drop count moves off zero where (c) applied. Runs BEFORE the lc-161 after-measurement, so the after-number is read over a carrier whose head means something.
+evidence: PERISHABLE(2026-09-24, re-derive: lifecycle item ready --head): 116 listed plus head, 117 READY total, head-rule source order, no lead goal. MEASURED: freeze pin, admission bar, and baseline are ledger decision lines read this session. DERIVED: the about-3 live head follows from the freeze - everything else waits on the verdict by decisions already made.
 blocked-by: NONE
