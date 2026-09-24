@@ -1446,15 +1446,6 @@ evidence: MEASURED this session at current HEAD, ugrep --no-ignore-files, this d
 blocked-by: decision finish the outstanding arms or record them dropped
 not-derivable: 2026-09-21 Looked in ITEMS.md, ITEMS-DONE.md and LEDGER.md for any entry naming these two audits or their outstanding arms: zero hits (positive control, grep of the audit filenames returns hits in docs/). Whether a measurement started eight months into an arc is still worth finishing is a scope/taste call on what the arc still needs, not a fact derivable from the record - and the self-initiated study says in its own text that one arm decides nothing and that the reported arm is the ungoverned one, which names the cost of stopping but not the decision.
 
-## lc-267
-grade: READY
-requirement: The conservation OVER message names one cause, an interrupted close, and routes the reader to the duplicate line; a body hand-added around item add (or by an author without the plugin) moves the surplus identically, so a legitimate-looking hand add is mis-attributed. Record: peer session cachyos-setup-33 report 2026-09-24; items.py:1641, verbs.py:598, arcs.py:349, refusals.py:933 and 2040.
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/arcs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py,test/test_arcs.py
-done-criterion: Where the surplus is not accounted for by ids present in both homes, the OVER finding says so and names the second cause - bodies admitted without passing item add - and the surplus count minus the duplicate count; where every surplus unit is a duplicate it keeps the interrupted-close attribution. Verifier: plant a carrier over by 2 with one duplicate and one hand-added body; the finding names 1 unaccounted and the hand-add cause; control with only duplicates keeps the current wording. Red-first against the pre-change tree. Must-not-move: SHORT and OVER stay two rows with opposite repairs; exit codes unchanged.
-evidence: RELAYED from cachyos-setup-33: CachyOS-Setup conservation read items 46 + done 11 = 57 against baseline 31 + added 22 = 53 (over 4) and moved to over 6 after that session hand-added two items; one real duplicate (cs-36) exists, so at least part of the surplus is not interrupted closes. MEASURED here: the interrupted-close attribution appears at five source sites, listed in the requirement.
-blocked-by: NONE
-
 ## lc-268
 grade: READY
 requirement: The robustness review of 2026-09-18 commissioned a second lane over the INSTRUMENTS themselves - which recorded proofs prove less than they claim, under the lens: a pair proves the refusal AXIS and never its REACH; reach is proven by the arm that must stay SILENT - and that lane never returned; its output is unrecoverable and the question was never re-asked. Record: docs/audits/2026-09-18-robustness-clean-without-looking.md, heading Lane 2; lc-260 disposition.

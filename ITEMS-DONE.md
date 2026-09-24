@@ -1770,5 +1770,16 @@ blocked-by: NONE
 closed-reason: 2026-09-24 Desk re-run at 6cd5a84: suite 1030 OK 0 skipped (baseline 1010); --test 128/128 CLEAN; prove-rows 107 of 128, every arrangement held, exit 0. Built by lane sonnet-lc265-267, red-first per item. Third emit site (verbs._blocker_state, the item ready render) not in the criterion; follow-up at the desk.
 closed-ref: b232e1e
 
+## lc-267
+grade: DONE
+requirement: The conservation OVER message names one cause, an interrupted close, and routes the reader to the duplicate line; a body hand-added around item add (or by an author without the plugin) moves the surplus identically, so a legitimate-looking hand add is mis-attributed. Record: peer session cachyos-setup-33 report 2026-09-24; items.py:1641, verbs.py:598, arcs.py:349, refusals.py:933 and 2040.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/arcs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py,test/test_arcs.py
+done-criterion: Where the surplus is not accounted for by ids present in both homes, the OVER finding says so and names the second cause - bodies admitted without passing item add - and the surplus count minus the duplicate count; where every surplus unit is a duplicate it keeps the interrupted-close attribution. Verifier: plant a carrier over by 2 with one duplicate and one hand-added body; the finding names 1 unaccounted and the hand-add cause; control with only duplicates keeps the current wording. Red-first against the pre-change tree. Must-not-move: SHORT and OVER stay two rows with opposite repairs; exit codes unchanged.
+evidence: RELAYED from cachyos-setup-33: CachyOS-Setup conservation read items 46 + done 11 = 57 against baseline 31 + added 22 = 53 (over 4) and moved to over 6 after that session hand-added two items; one real duplicate (cs-36) exists, so at least part of the surplus is not interrupted closes. MEASURED here: the interrupted-close attribution appears at five source sites, listed in the requirement.
+blocked-by: NONE
+closed-reason: 2026-09-24 Desk re-run at 6cd5a84: suite 1030 OK 0 skipped (baseline 1010); --test 128/128 CLEAN; prove-rows 107 of 128, every arrangement held, exit 0. Built by lane sonnet-lc265-267, red-first per item. duplicate_ident_count duplicates check_move_integrity counting; unification follow-up at the desk. arcs closed-counter branch left as-is (different invariant, no duplicate population).
+closed-ref: 6cd5a84
+
 ## Archive (pre-migration)
 
