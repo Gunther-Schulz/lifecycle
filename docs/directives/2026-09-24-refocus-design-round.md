@@ -286,3 +286,39 @@ law 26 warns about.
 | astra 1 (tier-1 verbs that only enumerate files) | ACCEPTED in part: R1 keys on DECLARED reader, and whether a declared reader truly reads is a separate reach question for `retire` (its staleness pass prints NOT RUN) |
 | astra 7 (identical read-back) | ACCEPTED: R4 falsifier |
 | astra 10 (admission gate) | ACCEPTED: R3 and R8 |
+
+## 7. JUDGE RULINGS (lifecycle-64, 2026-09-24, under the operator's delegation stated first-hand in that session)
+
+Relayed verbatim in substance from lifecycle-64's message to d9. It binds as
+the operator's own delegated ruling.
+
+1. **R1 and R2: YES, now, as defect repairs.**
+   - R1 keys on the DECLARED-reader predicate. The §4 red-first pair is run,
+     with `arc open` surfacing `arc index` as the surviving positive control.
+     Tier-2, the counter, and lc-276's 1-in-10-over-30 falsifier are all
+     kept.
+   - R2: an absent environment variable writes `session=absent`, never
+     omitted, red-first.
+   - R2 lands WITH OR BEFORE R1.
+2. **R3: YES, after two conditions.**
+   - Conditions: the lc-161 stage-2 baseline is recorded (an artifact in
+     `docs/audits/` cited by a ledger line), and R2 is live.
+   - LEDGER:130's arm, window and grading stand.
+   - Rows 1-2 are kept, marked pre-move, and never pooled with later rows.
+   - Catches, wrong restatements and interventions are graded
+     independently.
+   - lc-277 stays OPEN on its dispatch seam.
+   - The falsifier is the probe's own criterion, and thin data gives COULD
+     NOT VERIFY.
+3. **R7: a NARROW freeze exit, for R7 only.**
+   - It builds when the stage-2 baseline is recorded AND b4's wave is 7 of 7
+     desk-verified.
+   - It ships with the lc-46/lc-248 over-fire rate and a red-first
+     near-match plant.
+   - The general freeze stays in force.
+4. **Admission bar: YES, ledgered now.**
+   - It binds NEW MECHANISMS, not defect repairs of shipped instruments.
+   - A candidate claiming no probe is possible surfaces that claim as its
+     own numbered question.
+   - The `probe:` slot stays deferred.
+   - R3 and R7 already satisfy the bar.
