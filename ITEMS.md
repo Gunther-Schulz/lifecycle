@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 270
+added: 271
 compacted: 0
 
 ## lc-3
@@ -1561,3 +1561,13 @@ write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
 done-criterion: The census reports decision blockers in THREE buckets - stated, answered by the ledger (the same resolution item ready uses, one reader), unstated - and names any unstated blocker for which a ledger decision line matches after whitespace and punctuation are normalised, as a near-match to check (never auto-resolved: equality stays the resolution rule). Verifier: fixture with one stated, one exactly answered, one unstated, and one differing from its ledger line by an apostrophe: buckets 1/1/2 and the apostrophe case named as a near-match; red-first against the pre-change census.
 evidence: MEASURED 2026-09-24: item check printed decision blockers: 6 stated, 21 UNSTATED; after the gap-fill 17 stated, 11 UNSTATED, and item ready reads all 11 (lc-8, 23, 32, 36, 41, 71, 76, 78, 235, 239, 240) as UNBLOCKED by the ledger. lc-99 blocked-by read deletion record shape while LEDGER.md:78 reads deletion record-apostrophe-s shape; item ready said BLOCKED until amended.
 blocked-by: NONE
+
+## lc-279
+grade: READY
+requirement: A command GROUP passes as a verb: trigger: verb item (and lane, kind) and reader verb:item read CLEAN, while lifecycle item alone is COULD NOT VERIFY (needs an action) - so a WHEN nothing will ever fire reads as reachable, which trigger_verb_unknown and dangling_reference both claim to refuse. Record: lc-268 review (opus, 2026-09-24, pinned a011b01), defect D1; declaration.py _verb_exists and cli_verbs (per the review, read not executed).
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_declaration.py
+done-criterion: A trigger or verb: reader naming a command group that is not itself executable fires trigger_verb_unknown / dangling_reference, the message saying the name is a GROUP and listing its actions; a full verb path stays clean. trigger_verb_unknown gains a prove-rows arrangement (it has none) admitted on a pair. Verifier: the review plant (trigger: verb item) fires; control (verb item check) clean; red-first. Must-not-move: existing full-path triggers.
+evidence: MEASURED at the desk 2026-09-24 with the roster fixtures: _decl_run with trigger verb item -> exit 0, no finding; control verb item clsoe -> exit 2 FINDING [trigger_verb_unknown]. RELAYED from the review: reader verb:item and verb:lane also CLEAN; lifecycle item prints COULD NOT VERIFY needs an action.
+blocked-by: decision is a command-group trigger ever legal, or always a finding
+not-derivable: 2026-09-24 the lc-268 review searched the declaration design and ledger for a ruling on group-level triggers and found none; the desk grep of LEDGER.md for group trigger returns nothing.
