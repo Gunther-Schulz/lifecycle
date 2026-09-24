@@ -154,7 +154,7 @@ def split_slots(text: str) -> dict:
 
 
 def check_one(path: Path):
-    """`(findings, unreadable, waiting_asks)` for one record.
+    """`(findings, unreadable, waiting_asks, closed)` for one record.
 
     `findings` are whole message strings, one per CLASS per record rather
     than one per offending line: a record of loose prose yields hundreds of
@@ -165,11 +165,30 @@ def check_one(path: Path):
     try:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as e:
-        return [], f"{path.name} — {type(e).__name__}: {e}", 0
+        return [], f"{path.name} — {type(e).__name__}: {e}", 0, False
 
     findings = []
     slots = split_slots(text)
     name = path.name
+
+    if CLOSED_SLOT in slots:
+        undrained = [l for l in slots.get("OPEN", [])
+                     if l.strip().startswith("[PENDING]")]
+        if undrained:
+            findings.append(
+                f"FINDING [record_closed_undrained] {name}: marked closed "
+                f"with {len(undrained)} undrained [PENDING] line(s) in OPEN. "
+                "Closure is GRADUATION — open lines land in the item carrier "
+                "or take a recorded one-line disposition — never deletion "
+                "and never silence.")
+        if not slots[CLOSED_SLOT]:
+            findings.append(
+                f"FINDING [record_closed_unpointed] {name}: marked closed "
+                "with no pointer under the heading. A record closes WITH a "
+                "pointer to where everything went; a closure that says only "
+                "that it happened leaves every graduated line unfindable, "
+                "which is the same loss as deleting them.")
+        return findings, None, 0, True
 
     missing = [s for s in SLOTS if s not in slots]
     if missing:
@@ -256,25 +275,7 @@ def check_one(path: Path):
             "consistent with either answer decides nothing — naming it is "
             f"what makes the question answerable. First: {unprobed[0]!r}")
 
-    if CLOSED_SLOT in slots:
-        undrained = [l for l in slots.get("OPEN", [])
-                     if l.strip().startswith("[PENDING]")]
-        if undrained:
-            findings.append(
-                f"FINDING [record_closed_undrained] {name}: marked closed "
-                f"with {len(undrained)} undrained [PENDING] line(s) in OPEN. "
-                "Closure is GRADUATION — open lines land in the item carrier "
-                "or take a recorded one-line disposition — never deletion "
-                "and never silence.")
-        if not slots[CLOSED_SLOT]:
-            findings.append(
-                f"FINDING [record_closed_unpointed] {name}: marked closed "
-                "with no pointer under the heading. A record closes WITH a "
-                "pointer to where everything went; a closure that says only "
-                "that it happened leaves every graduated line unfindable, "
-                "which is the same loss as deleting them.")
-
-    return findings, None, waiting
+    return findings, None, waiting, False
 
 
 def cmd_record_check(args, out) -> int:
@@ -293,15 +294,20 @@ def cmd_record_check(args, out) -> int:
             "exactly like a pass.")
         return exits.COULD_NOT_VERIFY
 
-    all_findings, unreadable, waiting = [], [], 0
+    all_findings, unreadable, waiting, closed = [], [], 0, []
     for p in files:
-        f, bad, w = check_one(p)
+        f, bad, w, is_closed = check_one(p)
         all_findings += f
         if bad:
             unreadable.append(bad)
         waiting += w
+        if is_closed:
+            closed.append(p.name)
 
     out(f"records: {len(files)} at {d}")
+    for name in closed:
+        out(f"  CLOSED {name}: shape ungraded (a closed record is pinned at "
+            "the format it closed under); closure gate only.")
     for line in all_findings:
         out(f"  {line}")
     for bad in unreadable:

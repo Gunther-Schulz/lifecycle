@@ -220,6 +220,22 @@ class RouteAndProbe(unittest.TestCase):
 
 class ClosureGate(unittest.TestCase):
 
+    def test_closed_record_is_shape_ungraded(self):
+        """A graduate keeps the format it closed under, not today's floor."""
+        old_format = GOOD.replace(
+            "[VERIFIED] the parser folds wrapped lines — test_records.py"
+            "::test_fold, green",
+            "the parser folded wrapped lines in the old record format").replace(
+            "[PENDING] does the gate fire on a real closure — route: measure "
+            "— probe: plant a closed record; red = the gate fires, green = "
+            "it is blind",
+            "[VERIFIED] the gate fires — test_records.py::ClosureGate, green")
+        code, out = run_one(old_format + "\n## CLOSED\n"
+                            "ESTABLISHED → LEDGER.md; OPEN → lc-99\n")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("record_line_untagged", out)
+        self.assertIn("CLOSED record.md: shape ungraded", out)
+
     def test_closed_with_an_undrained_pending_is_a_finding(self):
         code, out = run_one(GOOD + "\n## CLOSED\nESTABLISHED → LEDGER.md; "
                                    "OPEN → lc-99\n")
@@ -246,6 +262,19 @@ class ClosureGate(unittest.TestCase):
         code, out = run_one(drained + "\n## CLOSED\nESTABLISHED → LEDGER.md; "
                                       "OPEN → lc-99\n")
         self.assertEqual(code, exits.CLEAN, out)
+
+    def test_live_record_with_old_untagged_shape_is_a_finding(self):
+        old_format = GOOD.replace(
+            "[VERIFIED] the parser folds wrapped lines — test_records.py"
+            "::test_fold, green",
+            "the parser folded wrapped lines in the old record format").replace(
+            "[PENDING] does the gate fire on a real closure — route: measure "
+            "— probe: plant a closed record; red = the gate fires, green = "
+            "it is blind",
+            "[VERIFIED] the gate fires — test_records.py::ClosureGate, green")
+        code, out = run_one(old_format)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("record_line_untagged", out)
 
     def test_the_word_closed_in_prose_does_not_trip_the_gate(self):
         """Anchored on the HEADING, never on the word.
