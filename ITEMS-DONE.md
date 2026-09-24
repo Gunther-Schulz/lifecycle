@@ -1842,5 +1842,16 @@ blocked-by: NONE
 closed-reason: 2026-09-24 2026-09-24 both date-shape sites share _date_shape_reason: the separator is named with its position and the literal shape stated; accepted regex unchanged. Red-first at the desk (2 comma tests red on the old items.py); suite 1038 OK, --test 128/128.
 closed-ref: 27f150b
 
+## lc-272
+grade: DONE
+requirement: `lifecycle record check` grades a CLOSED investigation record's line SHAPE (untagged lines, missing slots, bases, routes) exactly as it grades a live one, so a record that predates the format and was properly graduated with a `## CLOSED` heading reports findings forever. That is the pinned-record rule this repo already applies to closure homes (CLAUDE.md, the RECORD exemption: a record means what it meant when written and is never graded against the floor), missing at one more carrier; its cost is a permanent red that trains readers to discount record check. Record: records.py grade path (anchor: `if CLOSED_SLOT in slots:`), measured 2026-09-24 on two records graduated in session 09020605.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/records.py,test/test_records.py
+done-criterion: A record carrying a `## CLOSED` heading is graded ONLY by the closure gate (record_closed_undrained, record_closed_unpointed); every shape finding is skipped for it and the output names it as CLOSED and ungraded, never silently. A live record keeps every shape finding. Verifier: a planted closed record with untagged ESTABLISHED lines and a pointer yields no record_line_untagged and prints its CLOSED status; control: the same record without the heading yields record_line_untagged; a closed record with a [PENDING] OPEN line still yields record_closed_undrained. Red-first against the pre-change tree on the first arm. Must-not-move: the two closure-gate rows and their plants.
+evidence: MEASURED 2026-09-24: after appending ## CLOSED with graduation pointers to lifecycle--answerable-arc-build.md and lifecycle--answerable-arc-design-round.md, record check still printed record_line_untagged (34 lines) and record_slot_missing for them; 11 findings across 9 records before and after. records.py grade path runs every shape finding before the CLOSED_SLOT branch, which adds only the two closure findings.
+blocked-by: NONE
+closed-reason: 2026-09-24 2026-09-24 a record with ## CLOSED is graded by the closure gate only and printed as CLOSED/ungraded; live records keep every shape finding. Red-first at the desk; suite 1040 OK, --test 128/128, prove-rows PROVEN for record_line_untagged, record_closed_undrained, record_closed_unpointed.
+closed-ref: c6bba0d
+
 ## Archive (pre-migration)
 

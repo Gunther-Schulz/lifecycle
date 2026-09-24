@@ -1485,15 +1485,6 @@ done-criterion: The header slots are DERIVED, never stale (move the default, law
 evidence: MEASURED 2026-09-24 on arcs/answerable.md: after 2 premises and 4 beliefs were recorded, the header read premises: none recorded yet and beliefs: none recorded yet; verbs.py cmd_arc_premise and cmd_arc_belief both call _arc_append, which appends a line only; the header values are set once at verbs.py:3391-3392 in arc open.
 blocked-by: NONE
 
-## lc-272
-grade: READY
-requirement: `lifecycle record check` grades a CLOSED investigation record's line SHAPE (untagged lines, missing slots, bases, routes) exactly as it grades a live one, so a record that predates the format and was properly graduated with a `## CLOSED` heading reports findings forever. That is the pinned-record rule this repo already applies to closure homes (CLAUDE.md, the RECORD exemption: a record means what it meant when written and is never graded against the floor), missing at one more carrier; its cost is a permanent red that trains readers to discount record check. Record: records.py grade path (anchor: `if CLOSED_SLOT in slots:`), measured 2026-09-24 on two records graduated in session 09020605.
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/records.py,test/test_records.py
-done-criterion: A record carrying a `## CLOSED` heading is graded ONLY by the closure gate (record_closed_undrained, record_closed_unpointed); every shape finding is skipped for it and the output names it as CLOSED and ungraded, never silently. A live record keeps every shape finding. Verifier: a planted closed record with untagged ESTABLISHED lines and a pointer yields no record_line_untagged and prints its CLOSED status; control: the same record without the heading yields record_line_untagged; a closed record with a [PENDING] OPEN line still yields record_closed_undrained. Red-first against the pre-change tree on the first arm. Must-not-move: the two closure-gate rows and their plants.
-evidence: MEASURED 2026-09-24: after appending ## CLOSED with graduation pointers to lifecycle--answerable-arc-build.md and lifecycle--answerable-arc-design-round.md, record check still printed record_line_untagged (34 lines) and record_slot_missing for them; 11 findings across 9 records before and after. records.py grade path runs every shape finding before the CLOSED_SLOT branch, which adds only the two closure findings.
-blocked-by: NONE
-
 ## lc-275
 grade: READY
 requirement: The duplicate check at item add fails in both directions: it did not flag lc-264 (surfaced-vs-read counter, booked 2026-09-24) against lc-256 (the same counter, booked 2026-09-20), so the booking even claimed no item carried it; and it flagged lc-266 as a match for lc-268 on two shared words (record, stay) that carry no meaning. A token-overlap join trains the booker to dismiss the prompt and still misses the real duplicate. Record: lc-256 amendment 2026-09-24; the item add output for lc-268 (match: shares 2 requirement token(s): record, stay).
