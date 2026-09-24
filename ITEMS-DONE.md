@@ -1877,5 +1877,16 @@ blocked-by: NONE
 closed-reason: 2026-09-24 fire lines carry session=<id> or session=absent; red-first on assertions, suite 1044 OK 0 skipped, --test CLEAN, live line verified
 closed-ref: 98fc752
 
+## lc-271
+grade: DONE
+requirement: The arc header's `premises:` and `beliefs:` slots are written once at `arc open` as "none recorded yet" and never updated: `arc premise` and `arc belief` append their lines through `_arc_append` without touching the header, so a live arc states it holds no premises or beliefs directly above the lines that record them. Label-over-body inside the carrier built to prevent it. Also: `arc narrow --help` does not say the text REPLACES the live picture (its docstring does), which led the first real user to write five narrows that each overwrote the last. Record: arcs/answerable.md at 9b3e931..a3517f1 (first arc ever opened).
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,test/test_arcs.py
+done-criterion: The header slots are DERIVED, never stale (move the default, law 26): after any `arc premise` / `arc belief` / `arc reopen`, the `premises:` and `beliefs:` header lines state the count and the idents currently recorded (e.g. `2 recorded: P1, P2`), or "none recorded yet" only while none exist; `arc status` prints the same counts. `arc narrow --help` states that the text replaces the live narrowing and the replaced one is kept as a `narrowed:` line. Verifier: a test opening an arc, recording one premise and two beliefs, asserting the header reads `1 recorded: P1` and `2 recorded: B1, B2` and never "none recorded yet"; red-first against the pre-change tree. Must-not-move: the appended premise/belief lines and their format; arc conservation.
+evidence: MEASURED 2026-09-24 on arcs/answerable.md: after 2 premises and 4 beliefs were recorded, the header read premises: none recorded yet and beliefs: none recorded yet; verbs.py cmd_arc_premise and cmd_arc_belief both call _arc_append, which appends a line only; the header values are set once at verbs.py:3391-3392 in arc open.
+blocked-by: NONE
+closed-reason: 2026-09-24 2026-09-24 premises:/beliefs: header slots are derived from the body (arcs.header_summary / refresh_header) at every arc line write, reopen's own write site included; arc status prints the same function; arc narrow --help states REPLACE. Red-first re-run at the desk against the pre-change tree (6 test names red). Suite 1054 OK 0 skipped, --test 128/128, prove-rows 107 held.
+closed-ref: 2e1e116
+
 ## Archive (pre-migration)
 
