@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 273
+added: 274
 compacted: 0
 
 ## lc-3
@@ -1575,3 +1575,13 @@ done-criterion: A survey artifact in docs/audits/ classifies every rule-bearing 
 evidence: RELAYED from session dev-17, 2026-09-24, checked there and not re-measured here: the 9 instruction files total 168.1k chars, over Claude Code 150k-char line; in the 2.1.281 binary that limit only drives a warning (Instruction files will impact performance), nothing is truncated, and dev-17 received the last module (environment.md) complete. Carrier search at this desk 2026-09-24 over ITEMS.md and ITEMS-DONE.md for claude/modules, global corpus, corpus shrink/migrate, 150k, instruction files: 2 hits (lc-202 lane-name validation, lc-152 law 24 wording), neither equivalent.
 blocked-by: decision has the refocus design round (lc-276, lc-277) settled what lifecycle enforces at a moment, so rules can be classed as already-enforced or mechanizable
 not-derivable: 2026-09-24 the round has not run; LEDGER.md holds only the freeze-and-refocus decision that schedules it, so no record answers whether its outcome is settled.
+
+## lc-282
+grade: NEW
+requirement: Persisted projections of the record (handoff notes, status tables, generated agent instructions, digests written to disk) carry the version or hash of the record they were generated from, and a check refuses one whose source has since moved. Refocus-round candidate 3 from docs/audits/2026-09-24-prior-art-problem-side-synthesis.md finding 3 (operator direction, dev-17, 2026-09-24).
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A design decision is recorded (ledger) naming which persisted views are projections of which record, the fingerprint each carries, and the refusal that fires when the source moved; or recording that none qualify and why. Verifier: the ledger line cites this item; if built, red-first on a projection left in place after its source changed.
+evidence: RELAYED (codex lane, docs/audits/2026-09-24-prior-art-problem-side-synthesis.md finding 3): staleness is the most-reported failure across 16 practitioner memory systems; spec-kit issue #1100 says feature specs become history after merge with no living spec. MEASURED 2026-09-24 (dev-17 opened each via the GitHub API): Beads issue #2139 exists and discusses stale generated instructions; rosehgal/handoff exists, and RELAYED from the lane it renders its markdown handoff from an append-only event log. MEASURED (read at HEAD 2026-09-24): CLAUDE.md's test/ role entry records that role lines asserted byte-identical copies that had diverged, corrected in place 2026-09-18; the-loop.md's direction-drift sentence was corrected by 1506e1a. DERIVED: both internal cases are a persisted projection drifting from its body with no check noticing, the class this item would refuse.
+blocked-by: decision which persisted views are projections that must carry a source fingerprint, and whether this folds into lc-240's index
+not-derivable: 2026-09-24 searched ITEMS.md for freshness, projection, fingerprint, generated view, banner, digest, handoff, read-back: hits lc-97 (close skill), lc-221 (prove-rows arrangements), lc-240 (two-stage retrieval), none about the freshness of a persisted view; no LEDGER.md decision on it.
