@@ -1569,6 +1569,10 @@ done-criterion: A design decision is recorded (ledger) naming which persisted vi
 evidence: RELAYED (codex lane, docs/audits/2026-09-24-prior-art-problem-side-synthesis.md finding 3): staleness is the most-reported failure across 16 practitioner memory systems; spec-kit issue #1100 says feature specs become history after merge with no living spec. MEASURED 2026-09-24 (dev-17 opened each via the GitHub API): Beads issue #2139 exists and discusses stale generated instructions; rosehgal/handoff exists, and RELAYED from the lane it renders its markdown handoff from an append-only event log. MEASURED (read at HEAD 2026-09-24): CLAUDE.md's test/ role entry records that role lines asserted byte-identical copies that had diverged, corrected in place 2026-09-18; the-loop.md's direction-drift sentence was corrected by 1506e1a. DERIVED: both internal cases are a persisted projection drifting from its body with no check noticing, the class this item would refuse.
 blocked-by: decision which persisted views are projections that must carry a source fingerprint, and whether this folds into lc-240's index
 not-derivable: 2026-09-24 searched ITEMS.md for freshness, projection, fingerprint, generated view, banner, digest, handoff, read-back: hits lc-97 (close skill), lc-221 (prove-rows arrangements), lc-240 (two-stage retrieval), none about the freshness of a persisted view; no LEDGER.md decision on it.
+amend-reason: 2026-09-24 refocus round R6 (ledgered): re-pointed from new fingerprints to running the existing register row
+amended-requirement: 2026-09-24 Make retire pass 2 execute the existing judgment-register row for directives (a cited file changed past the citation is stale; audits never), which today prints NOT RUN. Re-pointed by the refocus round R6: no new fingerprint mechanism. Record: docs/directives/2026-09-24-refocus-design-round.md R6; plugin/cli/lifecycle_core/judgment.py:65-78.
+amended-blocked-by: 2026-09-24 decision is the freeze on new mechanism lifted
+amended-not-derivable: 2026-09-24 2026-09-24 LEDGER.md:138 freezes new mechanism and names no exit; making a NOT RUN pass run is new reach.
 
 ## lc-283
 grade: NEW
