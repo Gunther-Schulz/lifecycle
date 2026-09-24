@@ -262,7 +262,8 @@ def cmd_item_check(args, out, err=None) -> int:
               items_mod.check_done_file, ctx.prefix)],
             out, err)
 
-    code = items_mod.check_file(ctx.items_path, out, prefix=ctx.prefix)
+    code = items_mod.check_file(ctx.items_path, out, prefix=ctx.prefix,
+                                ledger_path=ctx.ledger_path)
 
     # THE MOVE'S OWN WINDOW. `check_file` reads one home; an id sitting in
     # BOTH is invisible to it by construction, and that is exactly what an

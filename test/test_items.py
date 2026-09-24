@@ -2597,6 +2597,50 @@ class DecisionBlockerDerivabilityIsPersisted(unittest.TestCase):
                       "lc-169's door refusal left the registry")
 
 
+class DecisionBlockerCensusReadsTheLedger(unittest.TestCase):
+    """lc-278 — an answered decision needs no derivability statement."""
+
+    def test_the_census_separates_stated_answered_and_unstated(self):
+        """The apostrophe arm remains UNSTATED, but names the likely typo."""
+        from lifecycle_core import ledger
+
+        def block(ident, question, statement=None):
+            body = (f"## {ident}\ngrade: READY\n"
+                    "requirement: the census reports the real wait — LEDGER.md\n"
+                    "goal: mitigate\nwrite-set: tools/thing.py\n"
+                    "done-criterion: the count distinguishes every state\n"
+                    "evidence: none yet\n"
+                    f"blocked-by: decision {question}\n")
+            if statement is not None:
+                body += f"not-derivable: {statement}\n"
+            return body
+
+        items_text = (f"schema: {items.SCHEMA_FLOOR}\nbaseline: 4\n"
+                      "added: 0\ncompacted: 0\n\n"
+                      + block("xx-1", "who chooses the release window",
+                              "2026-09-24 the operator must choose it")
+                      + "\n" + block("xx-2", "which capture is canonical")
+                      + "\n" + block("xx-3", "which archive to retain")
+                      + "\n" + block("xx-4", "deletion record shape"))
+        ledger_text = (ledger.head_text()
+                       + ledger.render("decision", {
+                           "question": "which capture is canonical",
+                           "answer": "the rotated capture",
+                       }) + "\n"
+                       + ledger.render("decision", {
+                           "question": "deletion record's shape",
+                           "answer": "one record per deletion",
+                       }) + "\n")
+
+        fired = refusals._cli(["item", "check"], items=items_text,
+                              ledger_text=ledger_text)
+        self.assertEqual(fired.code, exits.CLEAN, fired.output)
+        self.assertIn("1 with a derivability statement, 1 ANSWERED by the "
+                      "ledger", fired.output)
+        self.assertIn("2 UNSTATED", fired.output)
+        self.assertIn("near-match: xx-4", fired.output)
+
+
 class PerishableFreshnessTest(unittest.TestCase):
     """`PERISHABLE, never re-derived` (lc-244, W2).
 

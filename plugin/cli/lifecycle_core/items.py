@@ -1369,6 +1369,14 @@ def classify_blocker(value: str, prefix: str | None):
     return None, ""
 
 
+def _norm_question(s: str) -> str:
+    """The near-match view of a decision question; never its resolver."""
+    s = (s or "").casefold()
+    s = re.sub(r"['’]s\b", "", s)
+    s = re.sub(r"[^\w\s]", "", s)
+    return " ".join(s.split())
+
+
 # --- writing: the shape, spelled in exactly one place ------------------------
 
 def render_block(ident: str, slots: dict) -> str:
@@ -2372,7 +2380,8 @@ def _owning_ident(parsed: Parsed, line: int) -> str | None:
 
 
 def check_file(path: Path, out, prefix: str | None = None, *,
-               text: str | None = None, collect: list | None = None) -> int:
+               text: str | None = None, collect: list | None = None,
+               ledger_path: Path | None = None) -> int:
     """The pre-commit shape check over one carrier file.
 
     `text` runs the check over a body that is not on disk — the git INDEX's,
@@ -2520,13 +2529,58 @@ def check_file(path: Path, out, prefix: str | None = None, *,
     # persisted statement and unfindable from a printed one.
     stated, stamped, unstated = blocker_slot_census(parsed, NOT_DERIVABLE)
     if stated or stamped or unstated:
-        out(f"decision blockers: {stated} with a derivability statement, "
-            f"{stamped + unstated} UNSTATED (no `{NOT_DERIVABLE}:` record). "
-            "lc-169 "
-            "demands the statement at the door; what is printed there "
-            "scrolls away, so a blocker whose reason was stated and one "
-            "whose reason never existed read the same to every later "
-            "reader.")
+        tail = ("lc-169 "
+                "demands the statement at the door; what is printed there "
+                "scrolls away, so a blocker whose reason was stated and one "
+                "whose reason never existed read the same to every later "
+                "reader.")
+        if ledger_path is None:
+            out(f"decision blockers: {stated} with a derivability statement, "
+                f"{stamped + unstated} UNSTATED (no `{NOT_DERIVABLE}:` record). "
+                + tail)
+        else:
+            # Imported here: `ledger` reads this carrier, while its writers
+            # already import the item vocabulary.
+            from . import ledger
+            led, _why = ledger.read(ledger_path)
+            if led is None:
+                out(f"decision blockers: {stated} with a derivability statement, "
+                    f"{stamped + unstated} UNSTATED (no `{NOT_DERIVABLE}:` record). "
+                    + tail + " The ledger could not be read, so ANSWERED is "
+                    "not separated here.")
+            else:
+                answered = 0
+                unanswered = []
+                for it in parsed.items:
+                    kind, detail = classify_blocker(
+                        it.slots.get("blocked-by", ""), prefix)
+                    if kind != "decision":
+                        continue
+                    value = (it.slots.get(NOT_DERIVABLE) or "").strip()
+                    if (value and value.upper() != UNKNOWN
+                            and not value.startswith(SLOT_STAMP_NONE_YET)):
+                        continue
+                    if ledger.decision_for(led, detail, for_item=it.ident):
+                        answered += 1
+                    else:
+                        unanswered.append((it.ident, detail))
+                out(f"decision blockers: {stated} with a derivability statement, "
+                    f"{answered} ANSWERED by the ledger (no statement needed), "
+                    f"{len(unanswered)} UNSTATED (no `{NOT_DERIVABLE}:` record). "
+                    + tail)
+                for ident, detail in unanswered:
+                    for ln in led.lines:
+                        question = (ln.slots.get("question")
+                                    if ln.kind == "decision" else None)
+                        if (question and detail != question
+                                and _norm_question(detail)
+                                == _norm_question(question)):
+                            out(f"  near-match: {ident} blocks on {detail!r}; "
+                                f"the ledger answers {question!r} "
+                                f"({ledger_path.name}:{ln.lineno}) — equal after "
+                                "normalising whitespace and punctuation. NOT "
+                                "resolved: equality is the rule; amend the blocker "
+                                "or ledger the exact question.")
 
     c = census(parsed)
     out(f"census: open {c['open']}  closed {c['closed']}  "
