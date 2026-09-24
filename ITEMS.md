@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 262
+added: 263
 compacted: 0
 
 ## lc-3
@@ -1455,4 +1455,13 @@ goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
 done-criterion: item close accepts an optional --expect TEXT; when given, the close refuses (exit 2, nothing moved) unless TEXT occurs case-insensitively in the item resolved requirement, and the refusal prints the requirement head so the caller sees which item the id names. Without --expect behaviour is unchanged (pit of success is not forced here: making it mandatory would break every existing caller and the tool own closes). Verifier: test closing with a matching --expect succeeds, with a non-matching one refuses and leaves both homes byte-identical; red-first against the pre-change tree (unknown flag). Must-not-move: close semantics without the flag.
 evidence: MEASURED 2026-09-24: item close lc-260 moved the desk/peer control-arm body while the session intended the four-audit-arms item (lc-261); the mislabel originated in the session own status summary and travelled into ledger line 6fff837 and commit a53e131 before the close echoed the real body. Recovered only because lc-269 made that close fail uncommitted.
+blocked-by: NONE
+
+## lc-271
+grade: READY
+requirement: The arc header's `premises:` and `beliefs:` slots are written once at `arc open` as "none recorded yet" and never updated: `arc premise` and `arc belief` append their lines through `_arc_append` without touching the header, so a live arc states it holds no premises or beliefs directly above the lines that record them. Label-over-body inside the carrier built to prevent it. Also: `arc narrow --help` does not say the text REPLACES the live picture (its docstring does), which led the first real user to write five narrows that each overwrote the last. Record: arcs/answerable.md at 9b3e931..a3517f1 (first arc ever opened).
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,test/test_arcs.py
+done-criterion: The header slots are DERIVED, never stale (move the default, law 26): after any `arc premise` / `arc belief` / `arc reopen`, the `premises:` and `beliefs:` header lines state the count and the idents currently recorded (e.g. `2 recorded: P1, P2`), or "none recorded yet" only while none exist; `arc status` prints the same counts. `arc narrow --help` states that the text replaces the live narrowing and the replaced one is kept as a `narrowed:` line. Verifier: a test opening an arc, recording one premise and two beliefs, asserting the header reads `1 recorded: P1` and `2 recorded: B1, B2` and never "none recorded yet"; red-first against the pre-change tree. Must-not-move: the appended premise/belief lines and their format; arc conservation.
+evidence: MEASURED 2026-09-24 on arcs/answerable.md: after 2 premises and 4 beliefs were recorded, the header read premises: none recorded yet and beliefs: none recorded yet; verbs.py cmd_arc_premise and cmd_arc_belief both call _arc_append, which appends a line only; the header values are set once at verbs.py:3391-3392 in arc open.
 blocked-by: NONE
