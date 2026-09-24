@@ -85,7 +85,7 @@ def resolve_desk_id(args):
     explicit = getattr(args, "desk", None)
     if explicit and explicit.strip():
         return explicit.strip(), "--desk", None
-    env = os.environ.get("CLAUDE_CODE_SESSION_ID")
+    env = os.environ.get(firelog.SESSION_ENV)
     if env and env.strip():
         return env.strip(), "CLAUDE_CODE_SESSION_ID", None
     return None, None, (

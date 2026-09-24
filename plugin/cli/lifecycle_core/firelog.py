@@ -48,12 +48,21 @@ def _clip(s: str) -> str:
     return s if len(s) <= FIELD_CAP else s[:FIELD_CAP] + "…"
 
 
+#: The harness's session id. `desk.resolve_desk_id` reads the same variable;
+#: one spelling, here, so the two readers cannot drift apart.
+SESSION_ENV = "CLAUDE_CODE_SESSION_ID"
+
+
 def fire(verb: str, *, repo: str | None = None, outcome: int | None = None,
          detail: str | None = None) -> bool:
     """Append one line. Returns whether it was written."""
     rec = {
         "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "verb": _clip(verb),
+        # Refocus round R2: every line names its session, or says `absent` —
+        # an omitted key and a session-less caller must not read the same.
+        "session": _clip((os.environ.get(SESSION_ENV) or "").strip()
+                         or "absent"),
     }
     if repo is not None:
         rec["repo"] = _clip(repo)
