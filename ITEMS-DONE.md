@@ -1805,5 +1805,20 @@ blocked-by: NONE
 closed-reason: 2026-09-24 Built at the desk. Red-first: done-home test and item-check leg of the end-to-end close test failed on their assertions pre-fix (the close alone passed pre-fix, fixture repo has no hook - recorded in the test); item-moot control fires both sides. Live: lc-261, the item whose close measured the defect, closed clean at c5d3e4a. Suite 1034 OK 0 skipped; --test 128/128 CLEAN; prove-rows 107 of 128 all held, not_derivable_misplaced PROVEN, duplicate_id_cross_home re-pointed and PROVEN (rows changed: itself only).
 closed-ref: e129e90
 
+## lc-268
+grade: DONE
+requirement: The robustness review of 2026-09-18 commissioned a second lane over the INSTRUMENTS themselves - which recorded proofs prove less than they claim, under the lens: a pair proves the refusal AXIS and never its REACH; reach is proven by the arm that must stay SILENT - and that lane never returned; its output is unrecoverable and the question was never re-asked. Record: docs/audits/2026-09-18-robustness-clean-without-looking.md, heading Lane 2; lc-260 disposition.
+goal: lean-machinery-strict-checks
+write-set: docs/audits/2026-09-18-robustness-clean-without-looking.md
+done-criterion: A read-only review lane runs the Lane 2 lens at a pinned sha over tools/prove-rows.py arrangements and the refusals.py roster: for each recorded proof it states whether a silent arm exists that bounds the refusal reach, naming rows that prove axis only. Results are appended under the Lane 2 heading, which stops reading PENDING and names the sha. Verifier: the heading carries a sha and a per-row disposition table whose row count equals the roster row count printed by lifecycle --test --list at that sha (derived, not restated); a row with no disposition is the finding. Must-not-move: Lane 1 text and numbers unchanged.
+evidence: MEASURED 2026-09-24 at 2e75945: the audit file line 6 says lane 2 was still running at writing time; heading Lane 2 - PENDING at line 146 with its lens and no body; ugrep for robustness-clean-without-looking over ITEMS.md, ITEMS-DONE.md, LEDGER.md and docs finds only lc-260 and the decision-round grounding list - nothing re-ran the lens. The erosion probes of 2026-09-19/20 measured per-row proof SURVIVAL across history, not reach (from the-loop.md M6 summary; the probe design doc itself unopened here).
+blocked-by: NONE
+not-derivable: 2026-09-24 a spend decision on an arm the operator GO did not cover; no ledger precedent for re-running a lost review lane
+amend-reason: 2026-09-24 The requirement named lc-260 as the disposing item; it is lc-261 (ledger correction 39a590e).
+amended-requirement: 2026-09-24 The robustness review of 2026-09-18 commissioned a second lane over the INSTRUMENTS themselves - which recorded proofs prove less than they claim, under the lens: a pair proves the refusal AXIS and never its REACH; reach is proven by the arm that must stay SILENT - and that lane never returned; its output is unrecoverable and the question was never re-asked. Record: docs/audits/2026-09-18-robustness-clean-without-looking.md, heading Lane 2; lc-261 disposition.
+blocker-moot: spend an opus review lane on the Lane 2 lens (answered in the ledger before this item closed)
+closed-reason: 2026-09-24 Lane 2 run at a011b01 by an opus read-only review lane; heading names the sha; per-row table covers exactly the 128 rows --test --list prints (desk set comparison: 0 missing, 0 extra); Lane 1 untouched. Result 47 reach / 60 axis / 21 no-proof; defects D1, D2 reproduced at the desk and booked lc-279, lc-280.
+closed-ref: 61b7d8d
+
 ## Archive (pre-migration)
 
