@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 256
+added: 257
 compacted: 0
 
 ## lc-3
@@ -1448,4 +1448,13 @@ goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/firelog.py,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/retire.py,test/test_declaration.py,test/test_retire.py
 done-criterion: A per-kind tally over this repo fire-log records - surfaced count from surfaced= tokens, read count from read= tokens, first-surfacing date - renders as ONE banner line on kind list --structure (after the moments line) and as a per-kind table in lifecycle audit, naming every kind surfaced and never read. Three answers: no readable fire log is COULD NOT VERIFY in audit and a machine-local no-record line in the banner; zero surfacing records for the repo says so and is COULD NOT VERIFY in audit (a recorder not reaching reads like a quiet one); otherwise CLEAN. Zero-read kinds are listed, never a FINDING: over-trigger vs presence-without-demand is review judgment, labelled PROSE-REST, and the ratio is stated as not a usefulness measure. Verifier: unit tests on the parser (compound detail close X; surfaced=a,b), the banner line and the audit states, red-first against the pre-change tree; live run over this repo shows the real counts. Must-not-move: render_structure three-line contract and render_moments_line unchanged; --structure exit code unchanged.
 evidence: MEASURED 2026-09-24 at this desk: ugrep over ITEMS.md for surfaced-vs-read returns 0; the 2 ITEMS-DONE.md hits are evidence text of lc-252/lc-255, not this counter. Fire log (152 MB, 1.33M lines) holds 116 real-repo surfaced= lines across 4 repos and 8 real read= lines, all in lifecycle; 225 more from /tmp test repos, filtered by the repo field. No lanes declared here, so audit fires only on demand; the session-start banner calls kind list --structure, which is the one memory-free observer.
+blocked-by: NONE
+
+## lc-265
+grade: READY
+requirement: item add takes every prose slot only as a command-line argument, so a slot body carrying backticks or embedded single quotes cannot be passed safely from the zsh Bash tool (a backtick inside a double-quoted payload is command-substituted and the string builds minus the word, one layer above any CLI check), which pushes authors of the longest, evidence-rich entries to hand-edit the carrier. Record: peer session cachyos-setup-33 report 2026-09-24 (booking cs-67..69); dotfiles environment module, double-quoted payload entry.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: item add and item amend accept each prose slot (requirement, done-criterion, evidence, absence, not-derivable, reason) from a file or from stdin as well as inline; a body read that way reaches the carrier byte-identical, backticks and single quotes included; a missing or unreadable file is COULD NOT VERIFY exit 3, never an empty slot. Verifier: a test booking a slot body containing a backtick-wrapped word and an embedded single quote via the file form and reading it back with item slots, red against the pre-change tree (the flag does not exist). Must-not-move: the inline flags and their semantics.
+evidence: RELAYED from cachyos-setup-33 (2026-09-24): its cs-67..69 bodies contained backtick-wrapped tokens and embedded single quotes, so it hand-edited ITEMS.md instead of calling item add. MEASURED here 2026-09-24: item add --help lists only inline string options for every slot; grep for stdin in cli.py returns 0 hits. This session booked lc-264 inline by stripping backticks and quotes from the prose, which is the degradation the finding names.
 blocked-by: NONE
