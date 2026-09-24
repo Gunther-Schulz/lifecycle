@@ -554,6 +554,122 @@ class BeliefsAndPropagation(unittest.TestCase):
         self.assertNotIn(arcs.BELIEF_LINE, kinds)
 
 
+class ArcHeaderIsDerivedNeverStale(unittest.TestCase):
+    """lc-271: the `premises:`/`beliefs:` header is DERIVED, not written once.
+
+    THE DEFECT, MEASURED (record: arcs/answerable.md at 9b3e931..a3517f1).
+    `arc open` seeds both header slots as "none recorded yet" and nothing
+    ever touches them again — `arc premise`/`arc belief` append their line
+    through `_arc_append`, which only appends. A live arc can therefore
+    state it holds no premises or beliefs directly above the lines that
+    record some: a label-over-body defect inside the carrier built to
+    prevent exactly that shape (Grounding, paraphrase drift).
+    """
+
+    def _repo(self):
+        from lifecycle_core import refusals
+        r = refusals._Repo()
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    OPEN = ["arc", "open", "freeze", "--goal", "g", "--narrowing",
+            "eliminative"]
+
+    def _body(self, repo):
+        return (repo.dir / "arcs" / "freeze.md").read_text(encoding="utf-8")
+
+    def test_the_header_states_counts_and_idents_never_none_recorded(self):
+        """The verifier slot, verbatim: 1 premise, 2 beliefs, and the header
+
+        reads `1 recorded: P1` / `2 recorded: B1, B2` — never "none recorded
+        yet" once something IS recorded."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "premise", "freeze", "--ident", "P1",
+                  "--text", "the tracer fires on every frame")
+        self._run(repo, "arc", "belief", "freeze", "--ident", "B1",
+                  "--claim", "c1", "--basis", "b1", "--kill", "k1")
+        self._run(repo, "arc", "belief", "freeze", "--ident", "B2",
+                  "--claim", "c2", "--basis", "b2", "--kill", "k2")
+        arc, _p = arcs.parse_arc(self._body(repo), "freeze")
+        self.assertEqual(arc.slots["premises"], "1 recorded: P1")
+        self.assertEqual(arc.slots["beliefs"], "2 recorded: B1, B2")
+        self.assertNotIn("none recorded yet", arc.slots["premises"])
+        self.assertNotIn("none recorded yet", arc.slots["beliefs"])
+
+    def test_a_fresh_arc_still_reads_none_recorded_yet(self):
+        """The control: a header that always says "N recorded" even at zero
+
+        would be as wrong as one that never updates — it would just be
+        wrong in the other direction."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        arc, _p = arcs.parse_arc(self._body(repo), "freeze")
+        self.assertEqual(arc.slots["premises"], "none recorded yet")
+        self.assertEqual(arc.slots["beliefs"], "none recorded yet")
+
+    def test_a_reopen_leaves_the_belief_header_correct(self):
+        """The done-criterion's third named verb. `arc reopen` appends
+
+        `re-derive:` lines, not `belief:` lines, so the belief COUNT is
+        unchanged — but the header must still be the DERIVED value, not a
+        stale one a reopen's own write path forgot to refresh."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "belief", "freeze", "--ident", "B1",
+                  "--claim", "c1", "--basis", "b1", "--kill", "k1")
+        self._run(repo, "arc", "reopen", "freeze", "--ident", "B1",
+                  "--reason", "a 12th capture disagrees")
+        arc, _p = arcs.parse_arc(self._body(repo), "freeze")
+        self.assertEqual(arc.slots["beliefs"], "1 recorded: B1")
+
+    def test_arc_status_prints_the_same_counts(self):
+        """`arc status` prints the counts from the SAME function, never a
+
+        second derivation — so it cannot drift from what the header
+        itself says."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "premise", "freeze", "--ident", "P1",
+                  "--text", "t")
+        self._run(repo, "arc", "belief", "freeze", "--ident", "B1",
+                  "--claim", "c", "--basis", "b", "--kill", "k")
+        _code, outp = self._run(repo, "arc", "status")
+        self.assertIn("1 recorded: P1", outp)
+        self.assertIn("1 recorded: B1", outp)
+
+    def test_narrow_help_states_the_text_REPLACES_the_live_picture(self):
+        """The requirement's second half: the first real user wrote five
+
+        narrows that each overwrote the last because `--help` did not say
+        so (only the docstring did). This reads the rendered `--help`
+        output, the thing that user actually saw."""
+        import subprocess
+        import sys
+        from pathlib import Path
+        cli_path = (Path(__file__).resolve().parents[1] / "plugin" / "cli"
+                    / "lifecycle")
+        r = subprocess.run([sys.executable, str(cli_path), "arc", "narrow",
+                            "--help"], capture_output=True, text=True)
+        self.assertIn("replace", r.stdout.lower(), r.stdout)
+        self.assertIn("narrowed:", r.stdout, r.stdout)
+
+
 class StageAndStateVerbs(unittest.TestCase):
     """advance / narrow / verdict / yield.
 

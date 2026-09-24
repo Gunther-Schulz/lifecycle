@@ -3528,6 +3528,13 @@ def _arc_append(ctx: Ctx, slug: str, line: str, out, msg: str) -> int:
     reopened and then dispositioned records BOTH acts, because "what did this
     arc believe and when did it stop" is the question a successor asks and a
     rewritten line answers neither half.
+
+    THE HEADER IS REFRESHED IN THE SAME WRITE (lc-271). Every verb routed
+    through here appends one line of SOME kind; `arcs.refresh_header`
+    recomputes `premises:`/`beliefs:` from the body as it now stands, which
+    is a no-op for a kind that is neither — so a disposition or verdict line
+    costs one idempotent recompute rather than a second code path deciding
+    which kinds matter.
     """
     live, _closed = _arc_paths(ctx, slug)
     if not live.exists():
@@ -3535,8 +3542,8 @@ def _arc_append(ctx: Ctx, slug: str, line: str, out, msg: str) -> int:
             f"{arcs.ARCS_DIR}/.")
         return exits.FINDING
     text = live.read_text(encoding="utf-8")
-    atomic.write_text(live, text.rstrip("\n") + "\n" + line + "\n",
-                      encoding="utf-8")
+    text = arcs.refresh_header(text.rstrip("\n") + "\n" + line + "\n")
+    atomic.write_text(live, text, encoding="utf-8")
     out(line)
     return commit_paths(ctx, [live], msg, out, what="the arc record",
                         stage_new=True)
@@ -3610,8 +3617,12 @@ def cmd_arc_reopen(args, out, ctx: Ctx) -> int:
     lines = [f"{arcs.REDERIVE_LINE}: {i} {_today()} "
              f"{'reopened: ' if i == args.ident else 'cites ' + args.ident + ': '}"
              f"{reason}" for i in affected]
-    atomic.write_text(live, text.rstrip("\n") + "\n" + "\n".join(lines) + "\n",
-                      encoding="utf-8")
+    # HEADER REFRESH (lc-271): a `re-derive:` line is neither a premise nor
+    # a belief, so this recompute is idempotent — kept for the same reason
+    # `_arc_append` keeps it: one write path, one place that can go stale.
+    new_text = arcs.refresh_header(
+        text.rstrip("\n") + "\n" + "\n".join(lines) + "\n")
+    atomic.write_text(live, new_text, encoding="utf-8")
     for ln in lines:
         out(ln)
     out(f"flagged {len(affected)} belief(s) for re-derivation: "
@@ -3682,8 +3693,8 @@ def cmd_arc_advance(args, out, ctx: Ctx) -> int:
     line = (f"{arcs.ADVANCED_LINE}: {to} {_today()} {args.reason.strip()}"
             f"{mark}")
     text = arcs.set_slot(text, "stage", to)
-    atomic.write_text(live, text.rstrip("\n") + "\n" + line + "\n",
-                      encoding="utf-8")
+    new_text = arcs.refresh_header(text.rstrip("\n") + "\n" + line + "\n")
+    atomic.write_text(live, new_text, encoding="utf-8")
     out(line)
     if args.outward:
         out("STOP — THIS STAGE IS MARKED OUTWARD, and the mark is rendered "
@@ -3727,8 +3738,8 @@ def cmd_arc_narrow(args, out, ctx: Ctx) -> int:
     new = args.text.strip()
     text = arcs.set_slot(text, "narrowing", f"{form} — {new}")
     line = f"{arcs.NARROWED_LINE}: {form} {_today()} {new}"
-    atomic.write_text(live, text.rstrip("\n") + "\n" + line + "\n",
-                      encoding="utf-8")
+    new_text = arcs.refresh_header(text.rstrip("\n") + "\n" + line + "\n")
+    atomic.write_text(live, new_text, encoding="utf-8")
     out(line)
     return commit_paths(ctx, [live], f"arcs: narrow {slug}", out,
                         what="the arc narrowing", stage_new=True)
@@ -3773,8 +3784,8 @@ def cmd_arc_yield(args, out, ctx: Ctx) -> int:
     text = live.read_text(encoding="utf-8")
     line = f"{arcs.YIELD_LINE}: {args.ident} {_today()} {args.text.strip()}"
     text = arcs.set_slot(text, "yield", args.summary.strip())
-    atomic.write_text(live, text.rstrip("\n") + "\n" + line + "\n",
-                      encoding="utf-8")
+    new_text = arcs.refresh_header(text.rstrip("\n") + "\n" + line + "\n")
+    atomic.write_text(live, new_text, encoding="utf-8")
     out(line)
     return commit_paths(ctx, [live], f"arcs: yield {args.ident} on {slug}",
                         out, what="the arc yield", stage_new=True)
@@ -3881,8 +3892,8 @@ def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
 
     line = (f"{arcs.DEADLINE_LINE}: {name} {stage} {date} "
             f"{args.what.strip()}")
-    atomic.write_text(live, text.rstrip("\n") + "\n" + line + "\n",
-                      encoding="utf-8")
+    new_text = arcs.refresh_header(text.rstrip("\n") + "\n" + line + "\n")
+    atomic.write_text(live, new_text, encoding="utf-8")
     out(line)
     out(f"generated observer lane {name!r} and declared it — `lane list` "
         f"reports it QUIET until {date}.")

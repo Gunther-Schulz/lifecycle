@@ -478,6 +478,47 @@ def count_of(text: str, kind: str) -> int:
     return sum(1 for r in appended_lines(text) if r.kind == kind)
 
 
+def header_summary(text: str, kind: str) -> str:
+    """The `premises:`/`beliefs:` header line, DERIVED from the body (lc-271).
+
+    `"<n> recorded: <id1>, <id2>"`, idents in order of FIRST APPEARANCE and
+    DEDUPLICATED — a reopened belief carries `re-derive:`/`disposition:`
+    lines too, a DIFFERENT kind, so a citer or a disposition never inflates
+    the count. Or `"none recorded yet"` while n == 0 — a header that always
+    read "N recorded", even at zero, would be as wrong as one that never
+    updates, only in the other direction.
+
+    THE SAME INSTRUMENT `count_of` ALREADY READS, `appended_lines` — a
+    second reader of the body would risk a second answer to "how many".
+    """
+    idents = []
+    seen = set()
+    for rec in appended_lines(text):
+        if rec.kind != kind or rec.ident in seen:
+            continue
+        seen.add(rec.ident)
+        idents.append(rec.ident)
+    if not idents:
+        return "none recorded yet"
+    return f"{len(idents)} recorded: {', '.join(idents)}"
+
+
+def refresh_header(text: str) -> str:
+    """Rewrite `premises:` and `beliefs:` from the body's OWN record (lc-271).
+
+    Called at every arc line write, so the two header slots can never say
+    "none recorded yet" directly above the lines that record some — the
+    label-over-body defect `arcs/answerable.md` shipped at its first real
+    use (law 26: DERIVED, never stale — move the default). Idempotent on a
+    write that touched neither kind: recomputing from the same lines yields
+    the same header. Only these two slots move; every other slot, and the
+    appended line the caller just added, are untouched.
+    """
+    text = set_slot(text, "premises", header_summary(text, PREMISE_LINE))
+    text = set_slot(text, "beliefs", header_summary(text, BELIEF_LINE))
+    return text
+
+
 def render_status(repo: Path) -> list:
     """The `arc status` lines — the banner's renderer (N8).
 
@@ -506,13 +547,20 @@ def render_status(repo: Path) -> list:
     for slug in live:
         path = repo / ARCS_DIR / f"{slug}.md"
         try:
-            arc, _problems = parse_arc(path.read_text(encoding="utf-8"), slug)
+            text = path.read_text(encoding="utf-8")
+            arc, _problems = parse_arc(text, slug)
         except OSError as exc:
             lines.append(f"  {slug}: COULD NOT VERIFY — body unreadable "
                          f"({exc!r})")
             continue
         lines.append(f"  {slug} — stage: {arc.slots.get('stage', '?')}")
         lines.append(f"      narrowing: {arc.slots.get('narrowing', '?')}")
+        # DERIVED HERE, from the body text, NEVER from the stored header
+        # slot (lc-271) — the same function every write path uses to keep
+        # that slot true, so `arc status` cannot print a value that has
+        # drifted from what a fresh derivation would say.
+        lines.append(f"      premises: {header_summary(text, PREMISE_LINE)}")
+        lines.append(f"      beliefs: {header_summary(text, BELIEF_LINE)}")
         lines.append(f"      yield: {arc.slots.get('yield', '?')}")
     cons = conservation(repo)
     lines.append(f"  {cons.message}")

@@ -722,10 +722,17 @@ def build_parser() -> argparse.ArgumentParser:
                          "operator's controlled sphere, and the STOP renders "
                          "at ENTRY because one printed at close arrives "
                          "after the act it governs")
-    an = asub.add_parser("narrow", help="rewrite the LIVE narrowing and "
-                                        "record what it replaced")
+    an = asub.add_parser("narrow", help="REPLACE the live narrowing with "
+                                        "this text — the text it replaces "
+                                        "is kept as a `narrowed:` line "
+                                        "below, never overwritten")
     an.add_argument("slug")
-    an.add_argument("--text", required=True)
+    an.add_argument("--text", required=True,
+                    help="what is still open, replacing the CURRENT "
+                         "`narrowing:` line. The picture this replaces is "
+                         "NOT lost: it is appended as a `narrowed:` record, "
+                         "so narrowing five times in a row keeps five "
+                         "`narrowed:` lines and only the newest is live")
     av = asub.add_parser("verdict", help="book an operator taste judgment AT "
                                          "UTTERANCE — the seam where it "
                                          "otherwise evaporates in chat")
