@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 279
+added: 280
 compacted: 0
 
 ## lc-3
@@ -1590,4 +1590,13 @@ goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py,test/
 done-criterion: A kind K is not surfaced (no due read line, no surfaced= token) when the declaration lists verb:<act> among K readers; arc open still surfaces arc index (positive control); kind moments derivation unchanged. Verifier: red-first test on item check surfacing items (red before, absent after) with the arc open control green both sides.
 evidence: MEASURED at desk d9 2026-09-24: fire.jsonl joined with .claude/lifecycle.json readers, 377 of 379 kind-surfacings came from a declared reader verb of that kind; the other 2 are arc open surfacing arc index.
+blocked-by: NONE
+
+## lc-288
+grade: READY
+requirement: Refocus round R3: move the drift treatment arm trigger from the brief directive to the verbs. item close, arc advance and arc narrow print the live goal immediately before recording their already-required prose, and their fire line gains goal-seam=<seam>. No new flag, slot or schema. Record: docs/directives/2026-09-24-refocus-design-round.md R3, judge ruling 2; LEDGER.md:130 arm unchanged.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py,test/
+done-criterion: Each of the three verbs prints one goal line before the record (arc verbs: the arc goal; item close: the item goal slot text from the declaration goals, plus the goal of any open arc whose file cites the item id) and appends goal-seam=close|advance|narrow to its fire detail; with no goal resolvable it says so rather than printing nothing. Verifier: red-first per verb; a live run shows the line and a fire line carrying goal-seam and session.
+evidence: MEASURED at desk d9 2026-09-24: judge ruling 2 conditions both met, lc-161 baseline recorded (3de8ef7, ledgered) and R2 live (lc-286, 98fc752). RELAYED from the opus attack arm (cli.py:714-727): existing required prose at item close --reason, arc advance --reason, arc narrow --text.
 blocked-by: NONE
