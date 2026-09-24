@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 263
+added: 264
 compacted: 0
 
 ## lc-3
@@ -1464,4 +1464,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,test/test_arcs.py
 done-criterion: The header slots are DERIVED, never stale (move the default, law 26): after any `arc premise` / `arc belief` / `arc reopen`, the `premises:` and `beliefs:` header lines state the count and the idents currently recorded (e.g. `2 recorded: P1, P2`), or "none recorded yet" only while none exist; `arc status` prints the same counts. `arc narrow --help` states that the text replaces the live narrowing and the replaced one is kept as a `narrowed:` line. Verifier: a test opening an arc, recording one premise and two beliefs, asserting the header reads `1 recorded: P1` and `2 recorded: B1, B2` and never "none recorded yet"; red-first against the pre-change tree. Must-not-move: the appended premise/belief lines and their format; arc conservation.
 evidence: MEASURED 2026-09-24 on arcs/answerable.md: after 2 premises and 4 beliefs were recorded, the header read premises: none recorded yet and beliefs: none recorded yet; verbs.py cmd_arc_premise and cmd_arc_belief both call _arc_append, which appends a line only; the header values are set once at verbs.py:3391-3392 in arc open.
+blocked-by: NONE
+
+## lc-272
+grade: READY
+requirement: `lifecycle record check` grades a CLOSED investigation record's line SHAPE (untagged lines, missing slots, bases, routes) exactly as it grades a live one, so a record that predates the format and was properly graduated with a `## CLOSED` heading reports findings forever. That is the pinned-record rule this repo already applies to closure homes (CLAUDE.md, the RECORD exemption: a record means what it meant when written and is never graded against the floor), missing at one more carrier; its cost is a permanent red that trains readers to discount record check. Record: records.py grade path (anchor: `if CLOSED_SLOT in slots:`), measured 2026-09-24 on two records graduated in session 09020605.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/records.py,test/test_records.py
+done-criterion: A record carrying a `## CLOSED` heading is graded ONLY by the closure gate (record_closed_undrained, record_closed_unpointed); every shape finding is skipped for it and the output names it as CLOSED and ungraded, never silently. A live record keeps every shape finding. Verifier: a planted closed record with untagged ESTABLISHED lines and a pointer yields no record_line_untagged and prints its CLOSED status; control: the same record without the heading yields record_line_untagged; a closed record with a [PENDING] OPEN line still yields record_closed_undrained. Red-first against the pre-change tree on the first arm. Must-not-move: the two closure-gate rows and their plants.
+evidence: MEASURED 2026-09-24: after appending ## CLOSED with graduation pointers to lifecycle--answerable-arc-build.md and lifecycle--answerable-arc-design-round.md, record check still printed record_line_untagged (34 lines) and record_slot_missing for them; 11 findings across 9 records before and after. records.py grade path runs every shape finding before the CLOSED_SLOT branch, which adds only the two closure findings.
 blocked-by: NONE
