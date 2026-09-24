@@ -3,7 +3,7 @@ schema: 6
 ## answerable
 goal: Operator, 2026-09-18 (docs/answerable-not-felt.md, North star): improve the operator-LLM interaction so work becomes more DEPENDABLE, EFFICIENT, and AUTONOMOUS - dependability is what earns autonomy. Sharpened 2026-09-19 (docs/purpose.md): give a project a continuous mind, kept outside every head that thinks with it.
 stage: measuring
-narrowing: palette-with-dispositions — M6 behaviour channel: lc-259 NEW, write-set UNKNOWN - the unprobed half of B1; design then run.
+narrowing: palette-with-dispositions — Desk/peer control arm: lc-260 NEW, blocked on a spend decision - the only test that could kill B3.
 premises: none recorded yet
 beliefs: none recorded yet
 yield: nothing produced yet
@@ -15,3 +15,4 @@ belief: B3 2026-09-24 INDEPENDENCE, not timing, is the load-bearing property of 
 belief: B4 2026-09-24 Surfacing a kind at its moment does not by itself cause a read: most surfacings are never followed by kind read. | basis: lifecycle audit 2026-09-24: since 2026-09-20, 64 surfacing records, 8 read records; done bodies and ledger lines surfaced, never read (lc-264 counter). | kill: The windowed counter (lc-256) showing reads following surfacings within a window, or reads happening by direct file open the counter does not see (it counts kind read only).
 narrowed: palette-with-dispositions 2026-09-24 O6 observer, windowed: lc-256 READY (residue of lc-264) - decides whether B4 is a real gap or a counting artifact.
 narrowed: palette-with-dispositions 2026-09-24 M6 behaviour channel: lc-259 NEW, write-set UNKNOWN - the unprobed half of B1; design then run.
+narrowed: palette-with-dispositions 2026-09-24 Desk/peer control arm: lc-260 NEW, blocked on a spend decision - the only test that could kill B3.
