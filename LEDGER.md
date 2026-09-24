@@ -137,6 +137,7 @@ rejected: lc-267 — extend the unaccounted-surplus wording to arcs.py second co
 decision: spend an opus review lane on the Lane 2 lens → YES - operator GO 2026-09-24 (go all on decisions), first-hand in session 09020605; dispatched the same day, result lands in the answerable arc.
 decision: fundamentally re-evaluate lifecycle, or keep draining the backlog as before? → FREEZE-AND-REFOCUS (operator YES 2026-09-24, session 09020605): no new mechanism except fixing found defects; reach first (lc-273); one design round on demand-at-moment + seam trigger (lc-276, lc-277); outcome measure lc-161.
 decision: is a command-group trigger ever legal, or always a finding → always a finding (operator, first-hand in session lifecycle-d9 kickoff 2026-09-24: "lc-279: a command-group trigger is NOT legal, always a finding"); the message names the name as a GROUP and lists its actions (lc-279 done-criterion)
+decision: refocus round R4: build resume read-back now, or park it → PARK until the drift treatment arm reports (desk decision, d9, derivable: a read-back is the goal question at the resume seam and the arm decides whether an environment-fired restatement does anything; docs/directives/2026-09-24-refocus-design-round.md R4)
 
 ## Archive (pre-migration)
 
