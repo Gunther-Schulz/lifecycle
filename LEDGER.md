@@ -149,6 +149,7 @@ decision: has the refocus design round (lc-276, lc-277) settled what lifecycle e
 decision: is the lc-161 BEFORE baseline recorded for the refocus round → YES at 3de8ef7: docs/audits/2026-09-24-lc161-baseline.md, 5.75 operator messages per 100 turns over 394 sessions, 58.6% refocus targets (3.37 per 100); the gate for R3 and R7 (judge rulings 2 and 3) is met on this half
 decision: when does desk lifecycle-d9 report to the judge lifecycle-64 on the answerable arc → every dispatched build or wave reports to lifecycle-64 at completion at the latest; blockers, decisions and milestones earlier; batched otherwise (operator at lifecycle-64, relayed there first-hand 2026-09-24)
 decision: is the lifecycle-64 judge role and the reports-to-lifecycle-64 cadence still live after the 2026-09-24 close → SUSPENDED at the close (operator, via lifecycle-64): completion reports land as ledger lines for the operator; the judge role exists again only when the operator re-delegates it in a live session
+decision: what does the NEXT lifecycle session open with, before any other work → lc-291 then lc-292, BEFORE the lc-161 after-measurement - both defect/hygiene repairs inside the freeze (operator direction 2026-09-24, first-hand at lifecycle-64); the bodies are on the items. lc-289 and lc-290 stand behind them.
 
 ## Archive (pre-migration)
 
