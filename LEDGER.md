@@ -141,6 +141,7 @@ decision: refocus round R4: build resume read-back now, or park it → PARK unti
 decision: refocus round R5: when does /standort fire → manual; each run writes a ledger decision line whose question starts "standort: <scope> position check", and a trigger is decided after 4 runs from how many changed a verdict or booked an item (desk decision, d9: the arc-advance demand was unbuildable, ledger lines carry no date slot; R5)
 decision: refocus round R6: does lc-282 build freshness fingerprints → no new mechanism: directives are covered by the existing judgment-register row once retire pass 2 runs, audits stay exempt as history, prose status claims stay judgment; lc-282 is re-pointed to making pass 2 run (desk decision, d9; R6)
 decision: who judges the refocus round open questions and future ones from desk lifecycle-d9 → session lifecycle-64 is the judge (operator, first-hand in lifecycle-d9 2026-09-24: "pos all open quetsions and fuure ones to @lifecycle-64 it will be teh judge"); binding once the operator states it in lifecycle-64 itself; irreversible and outward acts stay the operator's
+decision: refocus round R1 and R2: proceed now under the freeze as defect repairs → YES (judge lifecycle-64 under the operator delegation stated first-hand in its session 2026-09-24): R1 keys on the declared-reader predicate with the arc-open positive control kept, tier-2 and lc-276 falsifier kept; R2 absent env writes session=absent; R2 lands with or before R1
 
 ## Archive (pre-migration)
 
