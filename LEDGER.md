@@ -148,6 +148,7 @@ decision: refocus round: admission bar for new mechanisms → YES: no new mechan
 decision: has the refocus design round (lc-276, lc-277) settled what lifecycle enforces at a moment, so rules can be classed as already-enforced or mechanizable → YES: lifecycle enforces at ACTS by refusal (measured); notice-borne enforcement is untested and is no class. Class (a) a refusal enforces the rule today, (b) an act lifecycle owns could carry a refusal, (c) otherwise (refocus round R9)
 decision: is the lc-161 BEFORE baseline recorded for the refocus round → YES at 3de8ef7: docs/audits/2026-09-24-lc161-baseline.md, 5.75 operator messages per 100 turns over 394 sessions, 58.6% refocus targets (3.37 per 100); the gate for R3 and R7 (judge rulings 2 and 3) is met on this half
 decision: when does desk lifecycle-d9 report to the judge lifecycle-64 on the answerable arc → every dispatched build or wave reports to lifecycle-64 at completion at the latest; blockers, decisions and milestones earlier; batched otherwise (operator at lifecycle-64, relayed there first-hand 2026-09-24)
+decision: is the lifecycle-64 judge role and the reports-to-lifecycle-64 cadence still live after the 2026-09-24 close → SUSPENDED at the close (operator, via lifecycle-64): completion reports land as ledger lines for the operator; the judge role exists again only when the operator re-delegates it in a live session
 
 ## Archive (pre-migration)
 
