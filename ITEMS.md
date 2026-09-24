@@ -1510,6 +1510,8 @@ done-criterion: A trigger or verb: reader naming a command group that is not its
 evidence: MEASURED at the desk 2026-09-24 with the roster fixtures: _decl_run with trigger verb item -> exit 0, no finding; control verb item clsoe -> exit 2 FINDING [trigger_verb_unknown]. RELAYED from the review: reader verb:item and verb:lane also CLEAN; lifecycle item prints COULD NOT VERIFY needs an action.
 blocked-by: decision is a command-group trigger ever legal, or always a finding
 not-derivable: 2026-09-24 the lc-268 review searched the declaration design and ledger for a ruling on group-level triggers and found none; the desk grep of LEDGER.md for group trigger returns nothing.
+amend-reason: 2026-09-24 2026-09-24 the fix turns this repo's own declaration into findings (kinds 'ledger lines' and 'arcs' name the command groups 'ledger add' and 'arc'); the operator's ruling leaves no exemption, so the declaration moves with the predicate (law 24, must-move-with; judgment desk d9 ruling, peer desk b4)
+amended-write-set: 2026-09-24 plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_declaration.py,.claude/lifecycle.json
 
 ## lc-280
 grade: READY
