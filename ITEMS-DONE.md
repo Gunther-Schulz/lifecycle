@@ -1853,5 +1853,18 @@ blocked-by: NONE
 closed-reason: 2026-09-24 2026-09-24 a record with ## CLOSED is graded by the closure gate only and printed as CLOSED/ungraded; live records keep every shape finding. Red-first at the desk; suite 1040 OK, --test 128/128, prove-rows PROVEN for record_line_untagged, record_closed_undrained, record_closed_unpointed.
 closed-ref: c6bba0d
 
+## lc-278
+grade: DONE
+requirement: The item check census counts a decision blocker the LEDGER ALREADY ANSWERS as UNSTATED (no not-derivable record), though an answered decision needs no derivability statement: on 2026-09-24 it printed 21 UNSTATED, of which 11 item ready reads as UNBLOCKED - the ledger ANSWERS this decision. The overstated count sends a session to write statements nobody needs, and it hides the one case worth surfacing: a blocker a ledger line answers in all but spelling (lc-99, one stripped apostrophe, BLOCKED for 11 days). Record: item check census line; lc-99 amendment 2026-09-24.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: The census reports decision blockers in THREE buckets - stated, answered by the ledger (the same resolution item ready uses, one reader), unstated - and names any unstated blocker for which a ledger decision line matches after whitespace and punctuation are normalised, as a near-match to check (never auto-resolved: equality stays the resolution rule). Verifier: fixture with one stated, one exactly answered, one unstated, and one differing from its ledger line by an apostrophe: buckets 1/1/2 and the apostrophe case named as a near-match; red-first against the pre-change census.
+evidence: MEASURED 2026-09-24: item check printed decision blockers: 6 stated, 21 UNSTATED; after the gap-fill 17 stated, 11 UNSTATED, and item ready reads all 11 (lc-8, 23, 32, 36, 41, 71, 76, 78, 235, 239, 240) as UNBLOCKED by the ledger. lc-99 blocked-by read deletion record shape while LEDGER.md:78 reads deletion record-apostrophe-s shape; item ready said BLOCKED until amended.
+blocked-by: NONE
+amend-reason: 2026-09-24 2026-09-24 the census in items.check_file has no ledger path; the declared ledger home reaches it only through cli.py:265 (ctx.ledger_path), so cli.py realizes the change too (law 24, peer desk b4, read at items.py:2374 and cli.py:265)
+amended-write-set: 2026-09-24 plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,test/test_items.py
+closed-reason: 2026-09-24 2026-09-24 census splits stated / ANSWERED by the ledger (item ready's resolver) / unstated, and names normalised near-matches without resolving them. Red-first at the desk; suite 1041 OK, --test 128/128; live 22/11/0.
+closed-ref: e453c42
+
 ## Archive (pre-migration)
 
