@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 272
+added: 273
 compacted: 0
 
 ## lc-3
@@ -1561,3 +1561,13 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals
 done-criterion: closure_home_split compares normalised repo-relative paths: ./ITEMS-DONE.md and ITEMS-DONE.md are one home and stay silent; two different files still fire. The row gains a control carrying the ./ spelling. Verifier: plant (SOMEWHERE-ELSE.md) fires, ./ control silent; red-first on the ./ control.
 evidence: MEASURED at the desk 2026-09-24 with GOOD_FULL_DECLARATION: done bodies home ./ITEMS-DONE.md with closure-home ITEMS-DONE.md -> exit 2, FINDING [closure_home_split] names TWO closure homes; unmodified control -> exit 0.
 blocked-by: NONE
+
+## lc-281
+grade: PARKED
+requirement: Corpus-to-lifecycle migration survey: shrink the global operator corpus (dotfiles `claude/modules/*.md`) by moving procedure-shaped rules into lifecycle rather than lazy-loading them. Operator, relayed from session dev-17 (2026-09-24): lazy loading does not fit what the corpus is for, and much of it "will be better served by lifecycle in the future". Walk the corpus rule by rule and classify each rule as (a) ALREADY enforced by lifecycle, shrink it to a one-line pointer; (b) MECHANIZABLE, a lifecycle build candidate; or (c) JUDGMENT, stays prose. Likely rich sources: accretion.md (backlog doctrine, file roles, two exits), insurance.md (ledger), calibration.md (investigation record, close questions). Record: booking request from dev-17, 2026-09-24.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A survey artifact in docs/audits/ classifies every rule-bearing bullet of the corpus modules into (a)/(b)/(c). Each (a) names the lifecycle refusal row or verb that enforces it (resolvable), each (b) is booked as its own item, and each (c) keeps its prose. Enumeration coverage: the bullet count per module is derived from the files at a pinned dotfiles commit, and every bullet gets exactly one class. Verifier: the class counts sum to the derived bullet count, and every (a) pointer resolves with `lifecycle --test --list`. The corpus edits themselves (shrinking the (a) rules) are separate items, because the corpus has its own maintenance doctrine and mint gate.
+evidence: RELAYED from session dev-17, 2026-09-24, checked there and not re-measured here: the 9 instruction files total 168.1k chars, over Claude Code 150k-char line; in the 2.1.281 binary that limit only drives a warning (Instruction files will impact performance), nothing is truncated, and dev-17 received the last module (environment.md) complete. Carrier search at this desk 2026-09-24 over ITEMS.md and ITEMS-DONE.md for claude/modules, global corpus, corpus shrink/migrate, 150k, instruction files: 2 hits (lc-202 lane-name validation, lc-152 law 24 wording), neither equivalent.
+blocked-by: decision has the refocus design round (lc-276, lc-277) settled what lifecycle enforces at a moment, so rules can be classed as already-enforced or mechanizable
+not-derivable: 2026-09-24 the round has not run; LEDGER.md holds only the freeze-and-refocus decision that schedules it, so no record answers whether its outcome is settled.
