@@ -1,6 +1,6 @@
 # The gate-1 baseline: are carrier writes SELF-INITIATED or PROMPTED?
 
-**Status: CLOSED AS-IS 2026-09-24 (LEDGER.md, `decision: lc-260`).** L1 VOID,
+**Status: CLOSED AS-IS 2026-09-24 (LEDGER.md, 2026-09-24 decision for item lc-261).** L1 VOID,
 L2 reported parts 1-2 of 3 (part 3 dropped), L3 reported, L4 COULD NOT VERIFY
 (retry dropped). The arms table below is the per-arm record. Dropped because
 `answerable-not-felt.md` (GATE 1'S WRITE HALF) already consumed this study
