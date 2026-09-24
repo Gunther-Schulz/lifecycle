@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 276
+added: 277
 compacted: 0
 
 ## lc-3
@@ -1605,3 +1605,12 @@ done-criterion: An audit enumerating every verb in cli.py action table (derived 
 evidence: RELAYED from lifecycle-64 memo lever 3, graded ACCEPTED at desk lifecycle-d9 2026-09-24. Existing prose demands at item close --reason, arc advance --reason, arc narrow --text (cli.py:714-727, relayed by the opus attack arm).
 blocked-by: decision is the freeze on new mechanism lifted for demand work
 not-derivable: 2026-09-24 LEDGER.md:138 freezes new mechanism and names no exit; the exit is the operator question in the refocus round.
+
+## lc-285
+grade: NEW
+requirement: Short sessions on purpose: once kill-loss measures low, bound the session window by deliberate restarts so a wrong frame cannot compound (the hyperfocus drift mode), making the drift check the residual guard of a short session. Record: docs/audits/2026-09-24-levers-memo-lifecycle-64.md lever 4; docs/purpose.md drift modes.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A pre-registered trial of a restart cadence against the lc-161 intervention series and the lc-283 kill-loss measure, with a falsifier and hard negatives (legitimate long work).
+evidence: RELAYED from lifecycle-64 memo lever 4 (DERIVED there from purpose.md premises); restart-over-compact exists in the operator corpus for cost only (calibration module, session depth). Its own named precondition is measured-low kill loss.
+blocked-by: lc-283
