@@ -466,13 +466,20 @@ amend-reason: 2026-09-18 2026-09-18 write-set repaired to PATHS ONLY. The slot c
 amended-write-set: 2026-09-18 plugin/hooks,plugin/.claude-plugin
 
 ## lc-99
-grade: PARKED
+grade: READY
 requirement: a retire makes the migrated repo's own audit go from CLEAN to FINDING, and nothing decides whether that is right. lc-86's --retire-source writes the deletion record into the declared laws file; retire.laws_scope_audit then reports 'FINDING [laws_scope_audit] 2 line(s) POSSIBLY MIS-HOMED' against that record's date and its file-shaped tokens. Measured on the real artifact by the lc-86 build lane, not reasoned. It is a review finding and never a refusal, so nothing breaks - but every repo that retires a carrier acquires a standing audit finding it cannot clear, and a finding nobody can clear is the discount reflex again: the next real laws_scope_audit hit in that repo reads as the known one - record: lc-86 build lane report 5/6, 2026-09-13
 goal: enforce-the-invariants
 write-set: UNKNOWN — depends on the decision: plugin/cli/lifecycle_core/retire.py (the audit learns the record's shape), or plugin/cli/lifecycle_core/migrate.py (the record lands somewhere else), or neither
 done-criterion: a repo that has retired a carrier under --retire-source reads CLEAN on 'lifecycle audit' for that reason alone, OR the finding is declared correct and the record moves to whatever home does not trip it - and the entry records WHICH, with the run that shows it. MUST-NOT-MOVE, and it is the whole risk: laws_scope_audit keeps firing on genuinely mis-homed prose. The forbidden repair is shaping the deletion record's text to slip past the checker - writing for the instrument, which the build lane explicitly declined to do and which would leave the record less useful to its actual reader
 evidence: MEASURED by the lc-86 build lane on the real artifact during its S5 verification, 2026-09-13, and reported rather than dodged: the lane states it did not shape the record to avoid the checker because that would be writing for the instrument. NOT RE-RUN AT THIS DESK - relayed from the lane's report, and the reproduction is cheap once lc-86's flag is reachable: retire a fixture carrier, then run 'lifecycle audit' in that repo
 blocked-by: decision which of the three readings is right: (1) the audit should know a deletion record shape and pass it, (2) the record belongs in a home the audit does not scan, or (3) the finding is correct and a retired repo simply carries it, in which case the entry closes as DROPPED with that reason
+amend-reason: 2026-09-24 The decision was ANSWERED 2026-09-13 at LEDGER.md:78 (reading 1: the audit learns the deletion record shape and passes it). The blocker text lost one apostrophe (record shape vs record-apostrophe-s shape) when booked through the shell, so exact-match lookup read it as unanswered for 11 days - the lc-265 hazard class. Found by the codex luna gap-draft lane, graded at the desk 2026-09-24.
+amended-blocked-by: 2026-09-24 NONE
+amend-reason: 2026-09-24 Narrowed to the branch the ledger decided (LEDGER.md:78, reading 1); the OR-branches were placeholders pending that decision.
+amended-write-set: 2026-09-24 plugin/cli/lifecycle_core/retire.py,test/test_retire.py
+amended-done-criterion: 2026-09-24 A repo that has retired a carrier under --retire-source reads CLEAN on lifecycle audit for that reason alone: laws_scope_audit recognises the deletion record shape --retire-source writes and passes it, while any other numbered-step or measured-figure line in the laws file still fires. Verifier: a test retiring a carrier in a temp repo then running audit, CLEAN on the laws scope; control: the same laws file with an ordinary measured-figure line added fires; red-first against the pre-change tree.
+promote-reason: 2026-09-24 Decision answered at LEDGER.md:78; write-set and done-criterion now name the decided branch; verifier stated. READY judged, not derived.
+promoted-by: 2026-09-24 desk session 09020605
 
 ## lc-100
 grade: READY
