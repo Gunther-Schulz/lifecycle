@@ -136,6 +136,7 @@ decision: finish the outstanding arms or record them dropped → moot (closed by
 rejected: lc-267 — extend the unaccounted-surplus wording to arcs.py second conservation branch (closed counter vs closed files) — declined, ground: no incident. Different invariant with no duplicate population to subtract, and no arcs/ directory exists in any repo here, so the branch has never fired. Raised by the lc-267 lane as gap (c)3.
 decision: spend an opus review lane on the Lane 2 lens → YES - operator GO 2026-09-24 (go all on decisions), first-hand in session 09020605; dispatched the same day, result lands in the answerable arc.
 decision: fundamentally re-evaluate lifecycle, or keep draining the backlog as before? → FREEZE-AND-REFOCUS (operator YES 2026-09-24, session 09020605): no new mechanism except fixing found defects; reach first (lc-273); one design round on demand-at-moment + seam trigger (lc-276, lc-277); outcome measure lc-161.
+decision: is a command-group trigger ever legal, or always a finding → always a finding (operator, first-hand in session lifecycle-d9 kickoff 2026-09-24: "lc-279: a command-group trigger is NOT legal, always a finding"); the message names the name as a GROUP and lists its actions (lc-279 done-criterion)
 
 ## Archive (pre-migration)
 
