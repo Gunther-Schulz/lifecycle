@@ -9,3 +9,4 @@ beliefs: none recorded yet
 yield: nothing produced yet
 premise: P1 2026-09-24 The north star and its creed (presence, demand, independent feedback) - docs/purpose.md, operator-corrected 2026-09-19.
 premise: P2 2026-09-24 The gap map ranking: O6 (nothing fires a read at the moment of application) first, M6 (corpus erosion) second, I3/I4 third - docs/the-loop.md.
+belief: B1 2026-09-24 The rule corpus does not erode the ROSTER channel: proofs survive history. | basis: Erosion probe run twice (2026-09-19 n=6, 2026-09-20 n=12): HEALTH, 1 true erosion across 797 row-pair transitions - docs/audits/2026-09-19-erosion-probe-results.md, erosion-survival-2026-09-20.tsv. | kill: A later erosion run with a rising per-row erosion rate; says nothing about the BEHAVIOUR channel (lc-259).
