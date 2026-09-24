@@ -1446,15 +1446,6 @@ evidence: MEASURED this session at current HEAD, ugrep --no-ignore-files, this d
 blocked-by: decision finish the outstanding arms or record them dropped
 not-derivable: 2026-09-21 Looked in ITEMS.md, ITEMS-DONE.md and LEDGER.md for any entry naming these two audits or their outstanding arms: zero hits (positive control, grep of the audit filenames returns hits in docs/). Whether a measurement started eight months into an arc is still worth finishing is a scope/taste call on what the arc still needs, not a fact derivable from the record - and the self-initiated study says in its own text that one arm decides nothing and that the reported arm is the ungoverned one, which names the cost of stopping but not the decision.
 
-## lc-265
-grade: READY
-requirement: item add takes every prose slot only as a command-line argument, so a slot body carrying backticks or embedded single quotes cannot be passed safely from the zsh Bash tool (a backtick inside a double-quoted payload is command-substituted and the string builds minus the word, one layer above any CLI check), which pushes authors of the longest, evidence-rich entries to hand-edit the carrier. Record: peer session cachyos-setup-33 report 2026-09-24 (booking cs-67..69); dotfiles environment module, double-quoted payload entry.
-goal: lean-machinery-strict-checks
-write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
-done-criterion: item add and item amend accept each prose slot (requirement, done-criterion, evidence, absence, not-derivable, reason) from a file or from stdin as well as inline; a body read that way reaches the carrier byte-identical, backticks and single quotes included; a missing or unreadable file is COULD NOT VERIFY exit 3, never an empty slot. Verifier: a test booking a slot body containing a backtick-wrapped word and an embedded single quote via the file form and reading it back with item slots, red against the pre-change tree (the flag does not exist). Must-not-move: the inline flags and their semantics.
-evidence: RELAYED from cachyos-setup-33 (2026-09-24): its cs-67..69 bodies contained backtick-wrapped tokens and embedded single quotes, so it hand-edited ITEMS.md instead of calling item add. MEASURED here 2026-09-24: item add --help lists only inline string options for every slot; grep for stdin in cli.py returns 0 hits. This session booked lc-264 inline by stripping backticks and quotes from the prose, which is the degradation the finding names.
-blocked-by: NONE
-
 ## lc-266
 grade: READY
 requirement: The blocker_untyped finding says a bad blocked-by value reached the file by a path that did not pass the door, but proposes no repair token and cannot distinguish a bypassed door from an author that has no door (an agent without the plugin): the bad values stay in the carrier as the visible idiom and neighbouring entries teach the defect faster than the check corrects it. Record: peer session cachyos-setup-33 reports 2026-09-24; plugin/cli/lifecycle_core/items.py:1843-1851.

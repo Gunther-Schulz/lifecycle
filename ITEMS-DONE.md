@@ -1748,5 +1748,16 @@ blocked-by: NONE
 closed-reason: 2026-09-24 Built and verified at 1211cef. Banner line on kind list --structure and a per-kind table in lifecycle audit, three answers, never-read kinds listed as PROSE-REST candidates rather than findings. Live: since 2026-09-20, 49 surfacings over 3 kinds, 8 reads; done bodies (30) and ledger lines (5) never read - agrees cell for cell with an independent jq tally. Red-first: 8 arms red against 630d526, then 4 single-condition mutations each reddening their target arm, control OK. Desk re-runs on the committed tree: suite 1010 OK, --test 128/128 CLEAN, prove-rows every arrangement held (107 of 128), node bites 62/0/0, kind sweep CLEAN after 57a0bdc.
 closed-ref: 1211cef
 
+## lc-265
+grade: DONE
+requirement: item add takes every prose slot only as a command-line argument, so a slot body carrying backticks or embedded single quotes cannot be passed safely from the zsh Bash tool (a backtick inside a double-quoted payload is command-substituted and the string builds minus the word, one layer above any CLI check), which pushes authors of the longest, evidence-rich entries to hand-edit the carrier. Record: peer session cachyos-setup-33 report 2026-09-24 (booking cs-67..69); dotfiles environment module, double-quoted payload entry.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: item add and item amend accept each prose slot (requirement, done-criterion, evidence, absence, not-derivable, reason) from a file or from stdin as well as inline; a body read that way reaches the carrier byte-identical, backticks and single quotes included; a missing or unreadable file is COULD NOT VERIFY exit 3, never an empty slot. Verifier: a test booking a slot body containing a backtick-wrapped word and an embedded single quote via the file form and reading it back with item slots, red against the pre-change tree (the flag does not exist). Must-not-move: the inline flags and their semantics.
+evidence: RELAYED from cachyos-setup-33 (2026-09-24): its cs-67..69 bodies contained backtick-wrapped tokens and embedded single quotes, so it hand-edited ITEMS.md instead of calling item add. MEASURED here 2026-09-24: item add --help lists only inline string options for every slot; grep for stdin in cli.py returns 0 hits. This session booked lc-264 inline by stripping backticks and quotes from the prose, which is the degradation the finding names.
+blocked-by: NONE
+closed-reason: 2026-09-24 Desk re-run at 6cd5a84: suite 1030 OK 0 skipped (baseline 1010); --test 128/128 CLEAN; prove-rows 107 of 128, every arrangement held, exit 0. Built by lane sonnet-lc265-267, red-first per item. file/stdin twin per prose slot; item amend has no absence slot inline, so no twin (reported gap, correct per the brief).
+closed-ref: 467f6b6
+
 ## Archive (pre-migration)
 
