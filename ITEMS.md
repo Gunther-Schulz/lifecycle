@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 264
+added: 265
 compacted: 0
 
 ## lc-3
@@ -1473,4 +1473,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/records.py,test/test_records.py
 done-criterion: A record carrying a `## CLOSED` heading is graded ONLY by the closure gate (record_closed_undrained, record_closed_unpointed); every shape finding is skipped for it and the output names it as CLOSED and ungraded, never silently. A live record keeps every shape finding. Verifier: a planted closed record with untagged ESTABLISHED lines and a pointer yields no record_line_untagged and prints its CLOSED status; control: the same record without the heading yields record_line_untagged; a closed record with a [PENDING] OPEN line still yields record_closed_undrained. Red-first against the pre-change tree on the first arm. Must-not-move: the two closure-gate rows and their plants.
 evidence: MEASURED 2026-09-24: after appending ## CLOSED with graduation pointers to lifecycle--answerable-arc-build.md and lifecycle--answerable-arc-design-round.md, record check still printed record_line_untagged (34 lines) and record_slot_missing for them; 11 findings across 9 records before and after. records.py grade path runs every shape finding before the CLOSED_SLOT branch, which adds only the two closure findings.
+blocked-by: NONE
+
+## lc-273
+grade: READY
+requirement: The `lifecycle` CLI resolves on no PATH and the plugin is not installed, so a session in any governed repo other than this one cannot run a verb without already knowing the dev checkout path: `command -v lifecycle` fails, `installed_plugins.json` has no lifecycle entry, and the path lives only in dotfiles `claude/hooks/session-scan.py:211` and `dot` (`manifest.lifecycle_cli()`). Law 13 of this repo claimed the opposite. Record: discovery lane sonnet-cs-discovery 2026-09-24 over CachyOS-Setup sessions bad016d0 and 3d4ee9d2; CLAUDE.md law 13 (corrected in place the same day).
+goal: enforce-the-invariants
+write-set: CLAUDE.md,dotfiles:dot,dotfiles:claude/hooks/session-scan.py
+done-criterion: In a fresh shell on this machine, `lifecycle --help` resolves by name from any directory (a PATH entry laid down by the machine's own deploy, `./dot apply`, derived from the same `manifest.lifecycle_cli()` the banner uses so there is one source of the path), and `./dot apply`'s doctor reports it drifted when the link is missing. Law 13 is reworded to state the deployment that actually exists, with a journal pointer. Verifier: `env -i HOME=$HOME PATH=<the login PATH> zsh -lc 'command -v lifecycle && lifecycle item check --repo <CachyOS-Setup>'` resolves and runs; red first on today's machine (command -v fails). Must-not-move: the banner hook's own invocation.
+evidence: MEASURED 2026-09-24 at this desk: command -v lifecycle claude-lifecycle -> rc 1 (control: command -v git resolves); grep lifecycle installed_plugins.json -> 0 of 9 installed plugins; session-scan.py:211 holds the hardcoded path. RELAYED from the discovery lane with verbatim excerpts: bad016d0 spent ~5 calls hunting and shipped carrier edits unverified; 3d4ee9d2 spent ~5-6 calls and found the path by grepping the hook source.
 blocked-by: NONE
