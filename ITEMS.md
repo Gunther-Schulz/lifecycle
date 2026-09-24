@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 282
+added: 283
 compacted: 0
 
 ## lc-3
@@ -1582,3 +1582,12 @@ done-criterion: A pre-registered probe design for a waking event (or a recorded 
 evidence: RELAYED from judge lifecycle-64 2026-09-24 (operator observation there): all lifecycle sessions idle with unblocked work. MEASURED at desk d9 the same evening: the R1/R3 lane sat idle with its prove-rows finished and its report unsent until the desk demanded it; b4 lane sonnet-arc-verbs ran re-animated for about an hour after its items closed.
 blocked-by: decision which waking event, if any, is worth a pre-registered probe for a desk that ends its turn with a non-empty queue
 not-derivable: 2026-09-24 no ledger line or item designs a waking event; the admission bar requires a probe design before any build, and the choice of event is design judgment for a live desk.
+
+## lc-291
+grade: READY
+requirement: item ratio grades 1.87:1 CLEAN with the text "the carrier is draining" over a carrier that gained net +131 items since birth. The tripwire (3:1) detects capture-domination spikes only, so any SUSTAINED ratio between 1:1 and 3:1 grows without bound while the alarm prints CLEAN - the verdict text asserts the opposite of the arithmetic (law 26 silent-toward-passing class, on the growth invariant own instrument). Record: measured 2026-09-24 at the live carrier (282 booked / 151 closed / open 139), session lifecycle-64, operator escalation the same evening.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py
+done-criterion: cmd_item_ratio (verbs.py:1653) gains a DIVERGENCE verdict beside the spike tripwire: net growth - capture minus closed-plus-dropped - positive and sustained over a declared window prints a FINDING (exit 2) naming the net gain and the window, and the CLEAN text never prints over a carrier whose open count grew across that window. Registered as a refusals.py row with its firing input, red-first via a prove-rows arrangement admitted on the lc-142 pair; the natural red is the live carrier itself (282:151, net +131) - the repaired verb MUST fire on it and that firing is quoted beside the close. Defect repair to a shipped instrument: inside the freeze, no admission-bar probe owed (LEDGER decision line, admission bar exempts defect repairs).
+evidence: PERISHABLE(2026-09-24, re-derive: lifecycle item ratio): the verb printed "ratio: CLEAN - the carrier is draining" at 282:151 = 1.87:1, open 139. MEASURED: code read this session at verbs.py:1646-1723, tripwire constant and CLEAN branch at 1713-1723. DERIVED: the (1,3) dead zone follows from the arithmetic - no window in that band ever fires the 3:1 spike test.
+blocked-by: NONE
