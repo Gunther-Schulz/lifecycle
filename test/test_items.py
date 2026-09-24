@@ -359,6 +359,28 @@ class Amendments(unittest.TestCase):
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("ISO date", out)
 
+    def test_an_amendment_date_followed_by_a_comma_names_the_separator(self):
+        code, out = run_check(self._amended("amended-goal: 2026-09-21, x"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("','", out)
+        self.assertIn("<YYYY-MM-DD> <text>", out)
+
+    def test_an_amendment_with_the_accepted_date_shape_stays_clean(self):
+        code, out = run_check(self._amended("amended-goal: 2026-09-21 x"))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("[item_shape]", out)
+
+    def test_an_amendment_without_a_date_says_the_date_is_missing(self):
+        code, out = run_check(self._amended("amended-goal: x"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("does not open with its ISO date", out)
+
+    def test_a_promotion_date_followed_by_a_comma_names_the_separator(self):
+        code, out = run_check(self._amended("promote-reason: 2026-09-21, x"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("','", out)
+        self.assertIn("<YYYY-MM-DD> <text>", out)
+
     def test_amending_the_GRADE_is_a_finding(self):
         """READY is judged (law 10). A quiet second writer of the grade slot
         would be exactly the derivation the design refuses."""

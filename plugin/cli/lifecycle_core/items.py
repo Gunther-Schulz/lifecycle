@@ -566,6 +566,22 @@ AMEND_REASON = "amend-reason"
 _AMEND_VALUE = re.compile(r"^(\d{4}-\d{2}-\d{2})\s+(\S.*)$")
 
 
+def _date_shape_reason(raw: str) -> str:
+    """Explain why an amendment or promotion value misses its date shape."""
+    date = re.match(r"^\d{4}-\d{2}-\d{2}", raw)
+    required = "Required shape: '<YYYY-MM-DD> <text>' (one space after the date)"
+    if date:
+        after_date = raw[date.end():]
+        if after_date and not after_date[0].isspace():
+            return ("the date is present; the character after it is "
+                    f"{after_date[0]!r} at position {date.end() + 1} - "
+                    f"the shape needs a space. {required}")
+        if not after_date or not after_date.strip():
+            return ("the date is present but no text follows it. "
+                    f"{required}")
+    return f"does not open with its ISO date. {required}"
+
+
 def opens_with_date(value: str) -> bool:
     """Does `value` already open with its ISO date?
 
@@ -1109,7 +1125,7 @@ def _check_promotions(out: Parsed, item: Item, seen_order: list) -> None:
             out.problems.append((
                 "item_shape", lineno,
                 f"block {item.ident!r}: the promotion line {name!r} on line "
-                f"{lineno} does not open with its ISO date: {raw[:60]!r}. A "
+                f"{lineno} {raw[:60]!r}. {_date_shape_reason(raw)}. A "
                 "promotion records WHEN the desk judged; undated it is a "
                 "claim about a judgment nobody can place in time."))
 
@@ -1188,7 +1204,7 @@ def _resolve_amendments(out: Parsed, item: Item, seen_order: list) -> None:
             out.problems.append((
                 "item_shape", lineno,
                 f"block {item.ident!r}: the amendment line {name!r} on line "
-                f"{lineno} does not open with its ISO date: {raw[:60]!r}. An "
+                f"{lineno} {raw[:60]!r}. {_date_shape_reason(raw)}. An "
                 "amendment records WHEN the value changed; undated it is an "
                 "in-place rewrite with a longer file."))
             continue
