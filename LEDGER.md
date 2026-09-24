@@ -134,6 +134,7 @@ decision: lc-260: the 2026-09-18 audit arms that never returned - finish or drop
 decision: correction: the 2026-09-24 decision line headed lc-260 (6fff837) - which item does it dispose? → lc-261 (the four unreturned audit arms). lc-260 is the desk/peer control-arm gap and is untouched. The mislabel came from a desk status summary; audit citations fixed at 2f18c8e, a mistaken lc-260 close was reverted uncommitted.
 decision: finish the outstanding arms or record them dropped → moot (closed by lc-261)
 rejected: lc-267 — extend the unaccounted-surplus wording to arcs.py second conservation branch (closed counter vs closed files) — declined, ground: no incident. Different invariant with no duplicate population to subtract, and no arcs/ directory exists in any repo here, so the branch has never fired. Raised by the lc-267 lane as gap (c)3.
+decision: spend an opus review lane on the Lane 2 lens → YES - operator GO 2026-09-24 (go all on decisions), first-hand in session 09020605; dispatched the same day, result lands in the answerable arc.
 
 ## Archive (pre-migration)
 
