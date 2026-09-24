@@ -12,6 +12,6 @@
   "_not_listed_on_purpose": {
     "CLAUDE.md": "The laws file is already injected by the harness; restating it here would be a second home for one fact.",
     "ITEMS.md / LEDGER.md": "Read by verbs, not by a session — item ready, item check, ledger rejected. A kind a command reads needs no roster entry.",
-    "docs/audits/*": "Individually reachable through `kind list --digest`, which names each home and its newest member. A roster that lists everything is one nobody reads; the digest is the index, this roster is the floor."
+    "docs/audits/": "Individually reachable through `kind list --digest`, which names each home and its newest member. A roster that lists everything is one nobody reads; the digest is the index, this roster is the floor."
   }
 }

@@ -99,7 +99,7 @@
       "trigger": "none, declared why: a law is minted when an incident earns it, and whether an incident earns one is the judgment law 26 exists to make someone do. The nearest observable — a journal entry nothing cites — is the JOURNAL's trigger, not this one"
     },
     "audits": {
-      "home": "docs/audits/*",
+      "home": "docs/audits",
       "writer": "session",
       "reader": [
         "verb:retire",
