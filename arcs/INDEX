@@ -1,0 +1,11 @@
+schema: 6
+
+baseline: 0
+opened: 1
+closed: 0
+
+# The arc index — FLOW counters, never a stock cap (R22).
+# `opened` and `closed` are written by `arc open` and `arc
+# close` in the same act as the body write (law 9), so a
+# crash leaves a DUPLICATE and never a loss. `baseline` is
+# the population that existed before these counters did.
