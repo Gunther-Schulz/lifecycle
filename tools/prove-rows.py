@@ -327,9 +327,12 @@ MUTATIONS = [
      "the ledger's one-line rule — the NO BODIES half"),
 
     ("closure_home_split", "verbs.py",
-     "    if done_home and done_home != closure:",
+     "    if (done_home\n"
+     "            and posixpath.normpath(done_home) != posixpath.normpath(closure)):",
      "    if False:",
-     "the comparison between the two declared closure homes"),
+     "the comparison between the two declared closure homes — lc-280's "
+     "normalised form, updated from the plain-string comparison this "
+     "anchor named before the fix"),
 
     # THE ANCHOR IS THE REFUSAL'S OWN BRANCH, never the predicate under it.
     # `_CARRIED_POINTER` and `_carried_pointer_lines` are read by a SECOND
