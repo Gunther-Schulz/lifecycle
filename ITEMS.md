@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 274
+added: 275
 compacted: 0
 
 ## lc-3
@@ -1585,3 +1585,13 @@ done-criterion: A design decision is recorded (ledger) naming which persisted vi
 evidence: RELAYED (codex lane, docs/audits/2026-09-24-prior-art-problem-side-synthesis.md finding 3): staleness is the most-reported failure across 16 practitioner memory systems; spec-kit issue #1100 says feature specs become history after merge with no living spec. MEASURED 2026-09-24 (dev-17 opened each via the GitHub API): Beads issue #2139 exists and discusses stale generated instructions; rosehgal/handoff exists, and RELAYED from the lane it renders its markdown handoff from an append-only event log. MEASURED (read at HEAD 2026-09-24): CLAUDE.md's test/ role entry records that role lines asserted byte-identical copies that had diverged, corrected in place 2026-09-18; the-loop.md's direction-drift sentence was corrected by 1506e1a. DERIVED: both internal cases are a persisted projection drifting from its body with no check noticing, the class this item would refuse.
 blocked-by: decision which persisted views are projections that must carry a source fingerprint, and whether this folds into lc-240's index
 not-derivable: 2026-09-24 searched ITEMS.md for freshness, projection, fingerprint, generated view, banner, digest, handoff, read-back: hits lc-97 (close skill), lc-221 (prove-rows arrangements), lc-240 (two-stage retrieval), none about the freshness of a persisted view; no LEDGER.md decision on it.
+
+## lc-283
+grade: NEW
+requirement: Run purpose.md acceptance criterion, the KILL TEST: at an arbitrary moment kill a working session, resume with a fresh one from the carriers, and measure the loss. It had a carrier (lc-231 assigned it to lc-239 beat 1) and lost it when lc-239 was rescoped to the eight-repo schema migration. Record: docs/purpose.md Session-independence section; lc-231 closed-reason in ITEMS-DONE.md; dev-17 report 2026-09-24.
+goal: enforce-the-invariants
+write-set: UNKNOWN
+done-criterion: A designed and run kill test: the kill moment chosen by rule, not by convenience; the loss measured as facts, decisions or in-flight state the resumed session had to re-derive or got wrong, graded against the killed session transcript by a party other than the resumed session; the result recorded as an audit and a ledger line. The design names what it cannot see.
+evidence: MEASURED 2026-09-24 at desk lifecycle-d9: grep -ci on ITEMS.md for "kill test" and for "pilot arc" returns 0 and 0; lc-239 item slots show a PARKED schema-migration body with no kill-test text. RELAYED from dev-17 (credited there to lifecycle-64): lc-231 closed-reason says the KILL TEST and the ONE PILOT ARC belong to lc-239 beat 1. The pilot arc named beside it is in the same orphaned state (0 hits) and rides this item until split. It is the only measurement of whether the refocus round mechanisms reduce loss (docs/directives/2026-09-24-refocus-design-round.md), and it needs the fire-log session key (R2) to attribute acts to the killed and resumed sessions.
+blocked-by: decision how the kill test is run: which moment, which work, and who grades the loss
+not-derivable: 2026-09-24 searched ITEMS.md and LEDGER.md for kill test and pilot arc: no design or decision line exists; purpose.md states the criterion only.
