@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 281
+added: 282
 compacted: 0
 
 ## lc-3
@@ -1572,3 +1572,13 @@ evidence: MEASURED at desk d9 2026-09-24: verbs.py:290 candidates() and helpers 
 blocked-by: NONE
 amend-reason: 2026-09-24 d9 close: the lane was stopped mid prove-rows and its report never arrived, so lane verification is re-done at the repair desk; the gate was reverted (6db4b3d) rather than held unpushed; the ship set, including the post-build replay condition that until now lived only in messages, is carried here
 amended-done-criterion: 2026-09-24 SHIP SET (judge lifecycle-64, LEDGER lines 144-147 and the R7 repair ruling, docs/directives/2026-09-24-refocus-design-round.md section 7): (1) re-apply 1ad96e5 (reverted at 6db4b3d at the d9 close) and add a decision-only document-frequency cap DECISION_MATCH_MAX_DOC_FRACTION = 0.05, passed into informative_tokens as a parameter whose default keeps item add at 0.5; never MATCH_MIN_TOKENS; (2) FALSIFIER AT THE BUILT COMPARATOR: re-run the pinned replay (docs/audits/2026-09-24-lc289-replay-pinned.jsonl at 6824bf0, identity = fire line + best-match line) against the built code, and it must reproduce the K=0.05 sweep row exactly, 30 fires, 11 of 11 STRONG kept, 9 of 30 WEAK still firing; any divergence is a build finding; (3) red-first on a pinned weak pair (fires before the cap, silent after) and a strong pair (fires both sides); (4) ledger_join_undisposed roster row plus prove-rows arrangement admitted on the lc-142 pair, full prove-rows green at PROVEN >= 109, suite and --test green; then push. Report the per-fire token attribution and the K-sweep beside the item close.
+
+## lc-290
+grade: NEW
+requirement: A desk that ends its turn with a non-empty, unblocked queue has no waking event: on 2026-09-24 the whole answerable arc halted with all work unblocked until the operator noticed every session idle (relayed by judge lifecycle-64). Any mechanism candidate falls under the admission bar (LEDGER.md decision: admission bar for new mechanisms): a pre-registered probe or it does not build. Record: this session d9 and lifecycle-64, 2026-09-24.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A pre-registered probe design for a waking event (or a recorded decline) that names its falsifier and window; no build before the probe design is ledgered.
+evidence: RELAYED from judge lifecycle-64 2026-09-24 (operator observation there): all lifecycle sessions idle with unblocked work. MEASURED at desk d9 the same evening: the R1/R3 lane sat idle with its prove-rows finished and its report unsent until the desk demanded it; b4 lane sonnet-arc-verbs ran re-animated for about an hour after its items closed.
+blocked-by: decision which waking event, if any, is worth a pre-registered probe for a desk that ends its turn with a non-empty queue
+not-derivable: 2026-09-24 no ledger line or item designs a waking event; the admission bar requires a probe design before any build, and the choice of event is design judgment for a live desk.
