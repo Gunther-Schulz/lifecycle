@@ -55,7 +55,7 @@
     },
     "ledger lines": {
       "home": "LEDGER.md",
-      "writer": "verb:ledger add, session",
+      "writer": "verb:ledger add decision, verb:ledger add dropped, verb:ledger add rejected, verb:ledger add superseded, session",
       "reader": [
         "verb:ledger rejected",
         "verb:item add"
@@ -66,7 +66,7 @@
         "recording-act": "compaction only — a line whose item is DONE and past the horizon folds into that body's compaction line"
       },
       "growth": "unbounded-with-reason — one line per decision event, no bodies; the decision rate is the control, and the pre-migration prose sits below the archive heading held verbatim",
-      "trigger": "verb ledger add — the button. `session` also appears in the writer and that is the path AROUND the button; the trigger is the verb, and a hand-written line is a bypass rather than a second trigger"
+      "trigger": "verb ledger add decision — the button, and one of four: `ledger add` is a command GROUP (lc-279), so the trigger names a leaf; `ledger add dropped`, `rejected` and `superseded` write this kind by the same act and are listed in the writer. `session` also appears in the writer and that is the path AROUND the button; the trigger is the verb, and a hand-written line is a bypass rather than a second trigger"
     },
     "journal entries": {
       "home": "JOURNAL.md",
@@ -413,7 +413,7 @@
     },
     "arcs": {
       "home": "arcs/*.md",
-      "writer": "verb:arc",
+      "writer": "verb:arc open, verb:arc premise, verb:arc belief, verb:arc reopen, verb:arc disposition, verb:arc advance, verb:arc narrow, verb:arc verdict, verb:arc yield, verb:arc deadline",
       "reader": [
         "session",
         "verb:arc status"
@@ -425,7 +425,7 @@
         "detail": "moves the body to arcs/closed/, writes INDEX counters and the fire-log event"
       },
       "growth": "bounded-by-exit",
-      "trigger": "verb arc"
+      "trigger": "verb arc open — the act that brings an arc body into existence; `arc` is a command GROUP (lc-279), so the trigger names a leaf, and every line verb that appends to the body is listed in the writer"
     },
     "closed arcs": {
       "home": "arcs/closed/*.md",

@@ -1414,16 +1414,23 @@ def cli_verbs() -> frozenset:
     from . import cli as cli_mod
     out = set()
     parser = cli_mod.build_parser()
-    for action in parser._actions:
-        if not isinstance(action, _ap._SubParsersAction):
-            continue
-        for verb, sub in action.choices.items():
-            out.add(verb)
-            for sub_action in sub._actions:
-                if not isinstance(sub_action, _ap._SubParsersAction):
-                    continue
-                for name in sub_action.choices:
-                    out.add(f"{verb} {name}")
+
+    # EVERY DEPTH, not two levels (lc-279). `ledger add decision` is a real
+    # leaf three levels down; a walk that stopped at `<verb> <action>` handed
+    # the reader site a pool holding the GROUP `ledger add` and not its
+    # actions, so the one correct spelling read as dangling and the wrong one
+    # read as present. Whether a path is a leaf or a group is `_verb_lookup`'s
+    # question; this pool answers only whether the path exists at all.
+    def walk(p, prefix):
+        for action in p._actions:
+            if not isinstance(action, _ap._SubParsersAction):
+                continue
+            for name, sub in action.choices.items():
+                path = f"{prefix} {name}".strip()
+                out.add(path)
+                walk(sub, path)
+
+    walk(parser, "")
     out.add("--test")
     return frozenset(out)
 
