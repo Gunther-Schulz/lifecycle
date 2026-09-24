@@ -174,8 +174,10 @@ not, and a rule stated beside a mechanism that does not hold it is worse than
 no rule: it inherits the mechanism's authority while nothing grades it.)
 
 **Three gaps this file deliberately does NOT claim to have closed**, because
-they were open before it and remain so: direction drift has no mechanism and
-an external survey found none either; completeness-as-distinct-from-decay is
+they were open before it and remain so: direction drift has no mechanism
+HERE — the external half moved 2026-09-24: the 2026-09-18 survey's zero is
+refuted, prior art exists (`docs/audits/2026-09-24-prior-art-problem-side-synthesis.md`,
+finding 1); completeness-as-distinct-from-decay is
 unmeasured; and there is no control arm for whether the desk/peer split helps.
 
 ## How to use this, and its own honest limit
