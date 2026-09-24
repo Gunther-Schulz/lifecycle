@@ -140,6 +140,7 @@ decision: is a command-group trigger ever legal, or always a finding → always 
 decision: refocus round R4: build resume read-back now, or park it → PARK until the drift treatment arm reports (desk decision, d9, derivable: a read-back is the goal question at the resume seam and the arm decides whether an environment-fired restatement does anything; docs/directives/2026-09-24-refocus-design-round.md R4)
 decision: refocus round R5: when does /standort fire → manual; each run writes a ledger decision line whose question starts "standort: <scope> position check", and a trigger is decided after 4 runs from how many changed a verdict or booked an item (desk decision, d9: the arc-advance demand was unbuildable, ledger lines carry no date slot; R5)
 decision: refocus round R6: does lc-282 build freshness fingerprints → no new mechanism: directives are covered by the existing judgment-register row once retire pass 2 runs, audits stay exempt as history, prose status claims stay judgment; lc-282 is re-pointed to making pass 2 run (desk decision, d9; R6)
+decision: who judges the refocus round open questions and future ones from desk lifecycle-d9 → session lifecycle-64 is the judge (operator, first-hand in lifecycle-d9 2026-09-24: "pos all open quetsions and fuure ones to @lifecycle-64 it will be teh judge"); binding once the operator states it in lifecycle-64 itself; irreversible and outward acts stay the operator's
 
 ## Archive (pre-migration)
 
