@@ -146,6 +146,7 @@ decision: refocus round R3: move the drift treatment arm trigger to the verbs �
 decision: refocus round R7: freeze exit for the ledger add near-match gate → NARROW exit for R7 only, once the stage-2 baseline is recorded and b4 wave is 7 of 7 desk-verified; the general freeze stays (judge lifecycle-64 (operator delegation); conditions in docs/directives/2026-09-24-refocus-design-round.md section 7)
 decision: refocus round: admission bar for new mechanisms → YES: no new mechanism without a pre-registered probe (falsifier, window, hard negatives where drift-shaped); defect repairs exempt; a no-probe-possible claim is its own question (judge lifecycle-64 (operator delegation); conditions in docs/directives/2026-09-24-refocus-design-round.md section 7)
 decision: has the refocus design round (lc-276, lc-277) settled what lifecycle enforces at a moment, so rules can be classed as already-enforced or mechanizable → YES: lifecycle enforces at ACTS by refusal (measured); notice-borne enforcement is untested and is no class. Class (a) a refusal enforces the rule today, (b) an act lifecycle owns could carry a refusal, (c) otherwise (refocus round R9)
+decision: is the lc-161 BEFORE baseline recorded for the refocus round → YES at 3de8ef7: docs/audits/2026-09-24-lc161-baseline.md, 5.75 operator messages per 100 turns over 394 sessions, 58.6% refocus targets (3.37 per 100); the gate for R3 and R7 (judge rulings 2 and 3) is met on this half
 
 ## Archive (pre-migration)
 
