@@ -1561,12 +1561,3 @@ amended-requirement: 2026-09-24 Short ACTING FRAMES via main desk plus dispatch 
 amended-done-criterion: 2026-09-24 A pre-registered measurement of whether drift stratifies by acting-frame architecture (main+lanes vs long single frame), carried by the drift probe where it can be, with a falsifier and hard negatives (legitimate long work); no build before that result. Note: main+lanes has no control arm either (the-loop.md limit line), so the admission bar applies to it too.
 amended-evidence: 2026-09-24 OPERATOR CORRECTION 2026-09-24, RELAYED by lifecycle-64 (testimony; the operator can confirm first-hand): window LENGTH as the drift cause is not established, killing a running session costs in-flight continuity, and the proposal is a main session with subagents and/or peer sessions instead. lifecycle-64 grading: purpose.md blames the acting frame self-blindness, not length; governance-decay (rule absent from context raises violations) argues for more context present, not less; the residual lanes do not fix is main-desk frame-lock, so outside-reader seams on the MAIN desk are the load-bearing half.
 amended-blocked-by: 2026-09-24 decision does the drift probe carry the acting-frame-architecture stratification
-
-## lc-288
-grade: READY
-requirement: Refocus round R3: move the drift treatment arm trigger from the brief directive to the verbs. item close, arc advance and arc narrow print the live goal immediately before recording their already-required prose, and their fire line gains goal-seam=<seam>. No new flag, slot or schema. Record: docs/directives/2026-09-24-refocus-design-round.md R3, judge ruling 2; LEDGER.md:130 arm unchanged.
-goal: lean-machinery-strict-checks
-write-set: plugin/cli/lifecycle_core/verbs.py,test/
-done-criterion: Each of the three verbs prints one goal line before the record (arc verbs: the arc goal; item close: the item goal slot text from the declaration goals, plus the goal of any open arc whose file cites the item id) and appends goal-seam=close|advance|narrow to its fire detail; with no goal resolvable it says so rather than printing nothing. Verifier: red-first per verb; a live run shows the line and a fire line carrying goal-seam and session.
-evidence: MEASURED at desk d9 2026-09-24: judge ruling 2 conditions both met, lc-161 baseline recorded (3de8ef7, ledgered) and R2 live (lc-286, 98fc752). RELAYED from the opus attack arm (cli.py:714-727): existing required prose at item close --reason, arc advance --reason, arc narrow --text.
-blocked-by: NONE

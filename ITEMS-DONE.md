@@ -1940,5 +1940,16 @@ blocked-by: NONE
 closed-reason: 2026-09-24 desk-verified: suite 1074 OK 0 skipped, --test 128/128, prove-rows 108 PROVEN 0 FAILED at c7fa13c; live item check prints no items notice; arc open control kept; the pinning tier-1 test was inverted in place
 closed-ref: 244d1e4
 
+## lc-288
+grade: DONE
+requirement: Refocus round R3: move the drift treatment arm trigger from the brief directive to the verbs. item close, arc advance and arc narrow print the live goal immediately before recording their already-required prose, and their fire line gains goal-seam=<seam>. No new flag, slot or schema. Record: docs/directives/2026-09-24-refocus-design-round.md R3, judge ruling 2; LEDGER.md:130 arm unchanged.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py,test/
+done-criterion: Each of the three verbs prints one goal line before the record (arc verbs: the arc goal; item close: the item goal slot text from the declaration goals, plus the goal of any open arc whose file cites the item id) and appends goal-seam=close|advance|narrow to its fire detail; with no goal resolvable it says so rather than printing nothing. Verifier: red-first per verb; a live run shows the line and a fire line carrying goal-seam and session.
+evidence: MEASURED at desk d9 2026-09-24: judge ruling 2 conditions both met, lc-161 baseline recorded (3de8ef7, ledgered) and R2 live (lc-286, 98fc752). RELAYED from the opus attack arm (cli.py:714-727): existing required prose at item close --reason, arc advance --reason, arc narrow --text.
+blocked-by: NONE
+closed-reason: 2026-09-24 desk-verified as lc-287; live arc narrow printed the arc goal and fired goal-seam=narrow with session; item-close tests written after the build, red shown by disabling the call sites (3 of 4 red on assertions, the 4th a negative control)
+closed-ref: c7fa13c
+
 ## Archive (pre-migration)
 
