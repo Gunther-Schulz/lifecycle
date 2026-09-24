@@ -3,7 +3,7 @@ schema: 6
 ## answerable
 goal: Operator, 2026-09-18 (docs/answerable-not-felt.md, North star): improve the operator-LLM interaction so work becomes more DEPENDABLE, EFFICIENT, and AUTONOMOUS - dependability is what earns autonomy. Sharpened 2026-09-19 (docs/purpose.md): give a project a continuous mind, kept outside every head that thinks with it.
 stage: measuring
-narrowing: palette-with-dispositions — Desk/peer control arm: lc-260 NEW, blocked on a spend decision - the only test that could kill B3.
+narrowing: palette-with-dispositions — Four unrouted research candidates (planner-mediated oracle, syntactic triage, layered pass levels, scalable oversight): lc-258 NEW - each needs one of three exits.
 premises: none recorded yet
 beliefs: none recorded yet
 yield: nothing produced yet
@@ -16,3 +16,4 @@ belief: B4 2026-09-24 Surfacing a kind at its moment does not by itself cause a 
 narrowed: palette-with-dispositions 2026-09-24 O6 observer, windowed: lc-256 READY (residue of lc-264) - decides whether B4 is a real gap or a counting artifact.
 narrowed: palette-with-dispositions 2026-09-24 M6 behaviour channel: lc-259 NEW, write-set UNKNOWN - the unprobed half of B1; design then run.
 narrowed: palette-with-dispositions 2026-09-24 Desk/peer control arm: lc-260 NEW, blocked on a spend decision - the only test that could kill B3.
+narrowed: palette-with-dispositions 2026-09-24 Four unrouted research candidates (planner-mediated oracle, syntactic triage, layered pass levels, scalable oversight): lc-258 NEW - each needs one of three exits.
