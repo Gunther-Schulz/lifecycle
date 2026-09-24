@@ -1101,13 +1101,31 @@ GOOD_FULL_DECLARATION = {
         },
         "ledger lines": {
             "home": "LEDGER.md",
-            "writer": "verb:ledger add, session",
+            # lc-279: `ledger add` is itself a command GROUP (its actions are
+            # `decision`/`dropped`/`rejected`/`superseded`, three levels
+            # deep), so `verb:ledger add` / `verb ledger add` are not valid
+            # leaf references — the same shape the row this fixture supports
+            # (`trigger_verb_unknown`) now refuses. The genuine three-level
+            # leaf (`ledger add decision`) exposes a SEPARATE, narrower gap —
+            # `cli_verbs()` derives only two levels, so a `verb:` reader at
+            # three levels reads `dangling_reference` even though the parser
+            # has the path — out of this item's scope (its own predicate,
+            # `_verb_lookup`, walks arbitrary depth and does not have this
+            # limit; only the reader/writer pool built from `cli_verbs()`
+            # does). `session` stands in here rather than papering over
+            # either gap with a fabricated verb.
+            "writer": "session",
             "reader": ["verb:ledger rejected"],
             "staleness": "none, declared why: append-only decision history",
             "exit": {"action": "never", "recording-act": "compaction only"},
             "growth": "unbounded-with-reason — one line per decision event and "
                       "no bodies; the decision rate is the control",
-            "trigger": "verb ledger add",
+            "trigger": "none, declared why: fixture — `ledger add`'s only "
+                      "writing actions sit three levels deep, past "
+                      "`cli_verbs()`'s two-level derivation (lc-279 gap, "
+                      "out of scope here); a bare group or a broken "
+                      "three-level reference would defeat this fixture's "
+                      "own job of being valid",
         },
         # THE LAWS FILE IS A KIND. Registered here rather than left implicit:
         # `kind sweep` asks the world whether anything sits outside the

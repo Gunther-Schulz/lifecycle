@@ -1096,40 +1096,66 @@ def check_desk_state_kind_declared(repo, doc, res: Result) -> None:
             "XDG home declared as a per-repo kind.")
 
 
-def _verb_exists(spelled: str) -> bool:
-    """Is `spelled` a real command path, per the PARSER?
+def _verb_lookup(spelled: str) -> tuple:
+    """`(status, group_actions)` for `spelled` against the live PARSER.
+
+    `status` is one of `"leaf"` (a full, executable command path), `"group"`
+    (a real command GROUP — reachable in the parser, but not itself
+    runnable, because it has its own subcommands), or `"unknown"` (not in
+    the parser at all). `group_actions` is the group's sorted action names,
+    or `None` for the other two statuses.
 
     DERIVED, NEVER RESTATED (law 24's worked example, and lc-204's rule one
     stage over). A hardcoded verb list beside the parser it mirrors cannot age
     loudly: the parser gains a subcommand, the list stays green, and the two
     part company with no symptom. So this walks the live parser's subactions —
-    the same source `--test` derives its surface size from.
+    the same source `cli_verbs` derives its own surface from.
+
+    ONE PREDICATE, used by BOTH the trigger site (`_validate_kind`) and the
+    `verb:` reader site (`_check_typed_refs`) — lc-279's repair for the
+    defect the review found: the old `_verb_exists` walked every PREFIX
+    alongside every leaf, and `cli_verbs()` separately added the bare
+    top-level verb name for the same reason, so a command GROUP (`item`,
+    with no action of its own) satisfied both existence checks — `trigger:
+    verb item` and a `verb:item` reader both read CLEAN, a WHEN that will
+    never fire reading exactly like one that is simply reachable.
 
     The import is deferred because `cli` imports this module; the same lazy
     form `refusals.py` already uses for its own CLI drives. A parser that
-    cannot be built at all answers TRUE rather than false: this predicate
-    exists to catch a MISSPELLED verb, and a broken parser is a different and
-    much louder failure that every other verb would report first — answering
-    false there would turn one defect into a finding on every declared kind.
+    cannot be built at all answers `("leaf", None)` rather than `"unknown"`:
+    this predicate exists to catch a MISSPELLED or group-shaped verb, and a
+    broken parser is a different and much louder failure that every other
+    verb would report first — answering `"unknown"` there would turn one
+    defect into a finding on every declared kind.
     """
     import argparse
+    if spelled == "--test":
+        return ("leaf", None)
     try:
         from . import cli as cli_mod
         parser = cli_mod.build_parser()
     except Exception:
-        return True
+        return ("leaf", None)
 
-    want = tuple(spelled.split())
+    want = spelled.split()
+    if not want:
+        return ("unknown", None)
 
-    def paths(p, prefix=()):
-        found = {prefix} if prefix else set()
-        for action in getattr(p, "_actions", ()):
-            if isinstance(action, argparse._SubParsersAction):
-                for verb, sub in action.choices.items():
-                    found |= paths(sub, prefix + (verb,))
-        return found
+    node = parser
+    for part in want:
+        sub_action = next(
+            (a for a in getattr(node, "_actions", ())
+             if isinstance(a, argparse._SubParsersAction)
+             and part in a.choices),
+            None)
+        if sub_action is None:
+            return ("unknown", None)
+        node = sub_action.choices[part]
 
-    return want in paths(parser)
+    for action in getattr(node, "_actions", ()):
+        if isinstance(action, argparse._SubParsersAction):
+            return ("group", tuple(sorted(action.choices)))
+    return ("leaf", None)
 
 
 def _validate_kind(name: str, body, res: Result, world) -> None:
@@ -1293,16 +1319,28 @@ def _validate_kind(name: str, body, res: Result, world) -> None:
                         f"kind {name!r}: `trigger` says {mode!r} and names "
                         f"nothing. The word carries the obligation: "
                         f"{'a verb with no name fires on nothing' if mode == 'verb' else 'a predicate with no command has no state, and no state is not quiet'}.")
-            elif mode == "verb" and not _verb_exists(rest):
-                res.add("trigger_verb_unknown",
-                        f"kind {name!r}: `trigger` names the verb {rest!r}, "
-                        f"which this build does not have. Checked against the "
-                        f"PARSER, not a list restated here, so this cannot go "
-                        f"stale silently as the verb set moves. A trigger "
-                        f"naming a verb that does not exist is a kind nothing "
-                        f"will ever fire — the WHEN is declared and "
-                        f"unreachable, which reads exactly like a kind that "
-                        f"is simply quiet.")
+            elif mode == "verb":
+                v_status, v_actions = _verb_lookup(rest)
+                if v_status == "unknown":
+                    res.add("trigger_verb_unknown",
+                            f"kind {name!r}: `trigger` names the verb {rest!r}, "
+                            f"which this build does not have. Checked against the "
+                            f"PARSER, not a list restated here, so this cannot go "
+                            f"stale silently as the verb set moves. A trigger "
+                            f"naming a verb that does not exist is a kind nothing "
+                            f"will ever fire — the WHEN is declared and "
+                            f"unreachable, which reads exactly like a kind that "
+                            f"is simply quiet.")
+                elif v_status == "group":
+                    res.add("trigger_verb_unknown",
+                            f"kind {name!r}: `trigger` names {rest!r}, which is "
+                            f"a command GROUP in this build, not an executable "
+                            f"verb — its actions are: "
+                            f"{', '.join(v_actions)}. A group is real but "
+                            "nothing runs it, so a trigger naming one is the "
+                            "same unreachable WHEN as a misspelled verb: "
+                            "declared and never fired, reading exactly like a "
+                            "kind that is simply quiet.")
 
     growth = body.get("growth")
     if "growth" in body:
@@ -1520,6 +1558,28 @@ def _check_typed_refs(kind: str, stage: str, values, res: Result,
                     f"kind {kind!r}: `{stage}` names the type {typ!r} with no "
                     "target after the colon.")
             continue
+        if typ == "verb":
+            # THE SAME PREDICATE the trigger site calls (lc-279) — a command
+            # GROUP (`item`, with no action of its own) used to be a member
+            # of `world.verbs` (`cli_verbs()` adds the bare top-level verb
+            # name for the same reason `_verb_lookup`'s old form walked
+            # every prefix), so `verb:item` read CLEAN exactly like
+            # `verb:item ready` does. Intercepted BEFORE the pool lookup
+            # below, whose text `_route_check_over_copy`'s narrowing
+            # mutation anchors on verbatim — this branch adds a check in
+            # front of it rather than changing what it reads.
+            v_status, v_actions = _verb_lookup(name)
+            if v_status == "group":
+                res.add("dangling_reference",
+                        f"kind {kind!r}: `{stage}` names verb:{name!r}, "
+                        f"which is a command GROUP in this build, not an "
+                        f"executable verb — its actions are: "
+                        f"{', '.join(v_actions)}. A group is real but "
+                        "nothing runs it, so a reference to one resolves "
+                        "to nothing you can run: nothing dangles "
+                        "(invariant 4), the same unreachable shape under "
+                        "a different name.")
+                continue
         pool, what = {
             "lane": (world.lanes, "the declared `lanes` list"),
             "verb": (world.verbs, "this build's CLI verbs"),
@@ -1742,7 +1802,7 @@ def read_moments(body: dict, repo: Path | None = None) -> list:
 
     Deferred import: `lanes` imports this module (`from . import
     declaration as decl`), so a module-level import here would be circular
-    — the same reason `_verb_exists` defers its own `cli` import.
+    — the same reason `_verb_lookup` defers its own `cli` import.
     """
     from . import lanes
     out = []

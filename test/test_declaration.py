@@ -1261,3 +1261,82 @@ class SurfacingBannerLineTest(unittest.TestCase):
         self.assertEqual(moments and moments[0] + 1,
                          lines.index(surf[0]), run.stdout)
         self.assertIn("no readable fire log", bare.stdout)
+
+
+class CommandGroupIsNotAVerb(unittest.TestCase):
+    """lc-279: a command GROUP passing as a verb (lc-268 review, defect D1).
+
+    `item` resolves in the parser — as a GROUP, not as an action — and
+    before this fix that satisfied both `_verb_exists`'s prefix-inclusive
+    walk and `cli_verbs()`'s bare-top-level addition, so `trigger: verb
+    item` and a `verb:item` reader both read CLEAN: a WHEN that will never
+    fire, indistinguishable from one that is reachable. RED-FIRST against
+    the pre-fix `declaration.py`: both plants below read CLEAN there
+    (verified directly, not relayed from the review — the old module was
+    loaded under a separate package name from `git show HEAD` at the
+    commit before this fix landed and read against the identical
+    fixtures).
+    """
+
+    def test_a_group_shaped_trigger_names_itself_a_group(self):
+        d = json.loads(json.dumps(refusals.GOOD_DECLARATION))
+        d["kinds"]["items"]["trigger"] = "verb item"
+        fired = refusals._decl_run(declaration=d, gitignore="", laws_lines=10)
+        self.assertEqual(fired.code, exits.FINDING, fired.output)
+        self.assertIn("FINDING [trigger_verb_unknown]", fired.output)
+        self.assertIn("command GROUP", fired.output)
+        self.assertIn("add", fired.output, "the group's own actions must be "
+                      "listed, not just named as a group")
+
+    def test_a_full_verb_path_trigger_stays_clean(self):
+        """MUST-NOT-MOVE: the existing full-path trigger the roster's own
+        `GOOD_DECLARATION` carries (`verb item add`)."""
+        fired = refusals._decl_run(**refusals._GOOD_KW)
+        self.assertEqual(fired.code, exits.CLEAN, fired.output)
+
+    def test_a_misspelled_verb_still_reads_UNKNOWN_not_a_group(self):
+        """MUST-NOT-MOVE: lc-168's original row, `item clsoe`."""
+        fired = refusals._decl_run(
+            declaration=refusals._kind_trigger_unknown_verb(),
+            gitignore="", laws_lines=10)
+        self.assertEqual(fired.code, exits.FINDING, fired.output)
+        self.assertIn("FINDING [trigger_verb_unknown]", fired.output)
+        self.assertNotIn("command GROUP", fired.output)
+
+    def test_a_group_shaped_verb_reader_names_itself_a_group(self):
+        d = json.loads(json.dumps(refusals.GOOD_DECLARATION))
+        d["kinds"]["items"]["reader"] = ["verb:item"]
+        fired = refusals._decl_run(declaration=d, gitignore="", laws_lines=10)
+        self.assertEqual(fired.code, exits.FINDING, fired.output)
+        self.assertIn("FINDING [dangling_reference]", fired.output)
+        self.assertIn("command GROUP", fired.output)
+        self.assertIn("ready", fired.output)
+
+    def test_a_full_path_verb_reader_stays_clean(self):
+        """MUST-NOT-MOVE: `GOOD_DECLARATION`'s own `verb:item ready` reader."""
+        fired = refusals._decl_run(**refusals._GOOD_KW)
+        self.assertEqual(fired.code, exits.CLEAN, fired.output)
+
+    def test_a_dangling_lane_reference_is_unaffected(self):
+        """MUST-NOT-MOVE: lc-168's `dangling_reference` row, `lane: nope` —
+        the new verb-group branch sits ahead of the pool lookup and must
+        never intercept a different reference type."""
+        fired = refusals._decl_run(declaration=refusals._kind_lane_nope(),
+                                   gitignore="", laws_lines=10)
+        self.assertEqual(fired.code, exits.FINDING, fired.output)
+        self.assertIn("FINDING [dangling_reference]", fired.output)
+        self.assertNotIn("command GROUP", fired.output)
+
+    def test_the_ONE_predicate_agrees_with_itself_at_both_call_sites(self):
+        """`_verb_lookup("item")` is what both `_validate_kind` and
+        `_check_typed_refs` call — asserted directly, since the whole
+        defect was two call sites each deriving their own (wrong) answer."""
+        status, actions = decl._verb_lookup("item")
+        self.assertEqual(status, "group")
+        self.assertIn("add", actions)
+        self.assertIn("ready", actions)
+        self.assertEqual(actions, tuple(sorted(actions)))
+
+    def test_the_predicate_still_answers_leaf_and_unknown(self):
+        self.assertEqual(decl._verb_lookup("item ready")[0], "leaf")
+        self.assertEqual(decl._verb_lookup("item nope-nope")[0], "unknown")

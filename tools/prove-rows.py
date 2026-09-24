@@ -401,6 +401,19 @@ MUTATIONS = [
      "declaration pointing at a lane, verb, hook or producer that does not "
      "exist then reads exactly like one pointing at something that does"),
 
+    # lc-279: the trigger site's MISSPELLED-verb branch. `_verb_lookup`
+    # answers "unknown" for `item clsoe` (the row's firing input) and
+    # "group" for a real command group — two different branches deciding
+    # the SAME finding id, so this anchor disables only the "unknown" arm
+    # and leaves the "group" arm (proven separately below, by the same
+    # pair discipline lc-142 demands) untouched.
+    ("trigger_verb_unknown", "declaration.py",
+     '                if v_status == "unknown":',
+     "                if False:",
+     "the misspelled-verb branch of the trigger check — a `trigger` naming "
+     "a verb this build does not have then reads exactly like one that "
+     "resolves"),
+
     # NOT `if False:` here. Removing the branch lets `read_text` raise
     # FileNotFoundError, which the next `except (OSError, …)` turns into the
     # SAME could-not-verify — the row would not move and the mutation would
