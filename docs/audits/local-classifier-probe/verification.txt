@@ -1,0 +1,20 @@
+Instrument tests (verbatim):
+.............
+----------------------------------------------------------------------
+Ran 13 tests in 0.008s
+
+OK
+
+Repository unittest summary (verbatim):
+...............................................................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 1002 tests in 65.366s
+
+OK
+
+Repository roster summary (verbatim):
+rows: 128   128 passed, 0 failed, 0 could not verify, 0 raised, 0 skipped
+prose-rest rows (not executed, labelled): 6
+lifecycle --test: CLEAN
+
+The first sandbox run had five Node spawnSync git EPERM failures and one could-not-verify roster row; the same checks passed outside the sandbox. No production source was changed.

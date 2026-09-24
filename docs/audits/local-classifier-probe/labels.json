@@ -1,0 +1,731 @@
+{
+  "method": "Single curator, historical sources, before model scores; null means unjudged, not irrelevant. See design.",
+  "events": {
+    "lc-241": {
+      "LEDGER.md": {
+        "relevant": true,
+        "reason": "The requirement names the recorded D-3 decision."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": true,
+        "reason": "Governing contract for the exact vocabulary implementation."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-242": {
+      "LEDGER.md": {
+        "relevant": null,
+        "reason": "General decision history may carry additional precedent; not exhaustively adjudicated for this event."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": true,
+        "reason": "Specifies the glob-home reach and version-story change."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-243": {
+      "LEDGER.md": {
+        "relevant": true,
+        "reason": "The requirement names decision D-5."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": true,
+        "reason": "O6 states the exact unmet observation obligation."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": true,
+        "reason": "W1 is the governing implementation design."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-244": {
+      "LEDGER.md": {
+        "relevant": true,
+        "reason": "The requirement names D-5 and its E10 correction."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": true,
+        "reason": "W2 specifies the perishable evidence mark."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-245": {
+      "LEDGER.md": {
+        "relevant": true,
+        "reason": "The requirement names D-5."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": true,
+        "reason": "W3 specifies relay reach independently of filename extensions."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-246": {
+      "LEDGER.md": {
+        "relevant": true,
+        "reason": "The requirement points to the measured ten-repo population."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": true,
+        "reason": "Reach section names the missing-roster wave finding."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-251": {
+      "LEDGER.md": {
+        "relevant": null,
+        "reason": "General decision history may carry additional precedent; not exhaustively adjudicated for this event."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": true,
+        "reason": "The historical run section supplies the two failing mutation arrangements."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": true,
+        "reason": "Earlier run records the same regressed and arrangement-broken rows; needed to avoid misdating the regression."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-253": {
+      "LEDGER.md": {
+        "relevant": null,
+        "reason": "General decision history may carry additional precedent; not exhaustively adjudicated for this event."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": true,
+        "reason": "O6 explains the specific missing reader moment."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": true,
+        "reason": "The new DERIVED state must satisfy this registered-vocabulary contract."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/directives/2026-09-20-o6-surfacing-design.md": {
+        "relevant": true,
+        "reason": "Part A and D1 are the binding two-tier default design."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-256": {
+      "LEDGER.md": {
+        "relevant": null,
+        "reason": "General decision history may carry additional precedent; not exhaustively adjudicated for this event."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": true,
+        "reason": "O6 locates the read-at-application gap the counter measures."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/directives/2026-09-20-o6-surfacing-design.md": {
+        "relevant": true,
+        "reason": "Part C and D4 specify the counter and its observation boundary."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-258": {
+      "LEDGER.md": {
+        "relevant": null,
+        "reason": "General decision history may carry additional precedent; not exhaustively adjudicated for this event."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": true,
+        "reason": "Its open-decisions block is one side of the missing-admission comparison."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": true,
+        "reason": "Its additional mechanisms are the other side of that comparison."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/directives/2026-09-20-o6-surfacing-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-259": {
+      "LEDGER.md": {
+        "relevant": null,
+        "reason": "General decision history may carry additional precedent; not exhaustively adjudicated for this event."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": true,
+        "reason": "M6 names and ranks the unmeasured behavior channel."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": true,
+        "reason": "External-memory counter-evidence and unmeasured gates constrain the new behavior experiment."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/directives/2026-09-20-o6-surfacing-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": true,
+        "reason": "Specifies the roster-only measurement and its limitation; avoid treating it as behavioral evidence."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-260": {
+      "LEDGER.md": {
+        "relevant": null,
+        "reason": "General decision history may carry additional precedent; not exhaustively adjudicated for this event."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": true,
+        "reason": "Names the missing single-session control arm."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": true,
+        "reason": "The role-separation evidence defines why the missing comparison matters."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/directives/2026-09-20-o6-surfacing-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": true,
+        "reason": "The study defines what was measured and disclaims the comparison this item asks for."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      }
+    },
+    "lc-261": {
+      "LEDGER.md": {
+        "relevant": null,
+        "reason": "General decision history may carry additional precedent; not exhaustively adjudicated for this event."
+      },
+      "docs/purpose.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/the-loop.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/answerable-not-felt-research.md": {
+        "relevant": null,
+        "reason": "Broad related grounding; marginal usefulness at this particular booking is uncertain."
+      },
+      "docs/2026-09-19-arc-kind-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-vocabulary-contract-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/2026-09-19-wave-designs.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/directives/2026-09-20-o6-surfacing-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-design.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-19-erosion-probe-results.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-desk-peer-catch-study.md": {
+        "relevant": false,
+        "reason": "This candidate addresses a different implementation contract or empirical study from the specific task; no direct task evidence assigned."
+      },
+      "docs/audits/2026-09-18-robustness-clean-without-looking.md": {
+        "relevant": true,
+        "reason": "Contains the outstanding robustness measurement arm."
+      },
+      "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": {
+        "relevant": true,
+        "reason": "Contains the other outstanding arms and their recorded statuses."
+      }
+    }
+  }
+}

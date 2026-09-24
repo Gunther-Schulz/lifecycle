@@ -1,0 +1,323 @@
+{
+  "schema": 1,
+  "model": "knowledgator/gliclass-instruct-base-v1.0",
+  "revision": "4f6a108b08a5537f395521d19b5073e197923dd3",
+  "policy": {
+    "budget": 3,
+    "thresholds": [
+      0.3,
+      0.5,
+      0.7
+    ],
+    "min_events": 20,
+    "min_sessions": 5,
+    "gain": 0.1,
+    "max_noise": 0.5,
+    "max_p95_seconds": 2.0,
+    "max_rss_gib": 4.0
+  },
+  "dataset_sha256": "3f56cde128ede475b2b370f8c0dd1136656e15f0d83f8f0c075c271ab8e15742",
+  "labels_sha256": "3b934370bfd1ead6f143028d7d3be463fb4c0324af230aded6e00852691c5a91",
+  "design_sha256": "69812ed41be1984ab69c15ab7424edce599fc4f4d42537c690cc86f2ab585549",
+  "harness_sha256": "8f32b1fad25bc2ef9bb0926cadf3f71abca826a17774a7a1861af8761ad51c45",
+  "python": "3.13.15",
+  "platform": "Linux",
+  "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+  "threads": 8,
+  "device": "cpu",
+  "dtype": "torch.float32",
+  "packages": {
+    "gliclass": "0.1.20",
+    "transformers": "5.17.0",
+    "torch": "2.14.0+cpu",
+    "huggingface-hub": "1.32.0",
+    "tokenizers": "0.23.2"
+  },
+  "load_seconds": 0.6249192959949141,
+  "controls": {
+    "relevant": 0.008053066208958626,
+    "irrelevant": 0.00024656832101754844,
+    "insufficient_context": {
+      "id": "empty-query",
+      "status": "COULD NOT VERIFY",
+      "reason": "Empty act query",
+      "scores": {},
+      "inference_calls": 0
+    }
+  },
+  "events": [
+    {
+      "id": "lc-241",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 0.00034599524224177003,
+        "docs/purpose.md": 0.09378522634506226,
+        "docs/the-loop.md": 0.022786172106862068,
+        "docs/answerable-not-felt.md": 0.08079588413238525,
+        "docs/answerable-not-felt-research.md": 0.0661655142903328,
+        "docs/2026-09-19-arc-kind-design.md": 0.0636940747499466,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.09767624735832214,
+        "docs/2026-09-19-wave-designs.md": 0.20380577445030212,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.028924601152539253,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.05777742341160774,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.08041004091501236,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.09571287781000137,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.05968153104186058
+      },
+      "seconds": 10.617607441992732
+    },
+    {
+      "id": "lc-242",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 0.00021212185674812645,
+        "docs/purpose.md": 0.06811463087797165,
+        "docs/the-loop.md": 0.008996603079140186,
+        "docs/answerable-not-felt.md": 0.08237064629793167,
+        "docs/answerable-not-felt-research.md": 0.06886573880910873,
+        "docs/2026-09-19-arc-kind-design.md": 0.08124483376741409,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.08784844726324081,
+        "docs/2026-09-19-wave-designs.md": 0.07315149903297424,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.03167654201388359,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.0348711758852005,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.04055393859744072,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.03449048101902008,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.06227556988596916
+      },
+      "seconds": 8.990761844994267
+    },
+    {
+      "id": "lc-243",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 0.00014663737965747714,
+        "docs/purpose.md": 0.05192948132753372,
+        "docs/the-loop.md": 0.00669248029589653,
+        "docs/answerable-not-felt.md": 0.05000744387507439,
+        "docs/answerable-not-felt-research.md": 0.049272459000349045,
+        "docs/2026-09-19-arc-kind-design.md": 0.114309161901474,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.21072646975517273,
+        "docs/2026-09-19-wave-designs.md": 0.13235411047935486,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.014068209566175938,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.026479752734303474,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.028102358803153038,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.05050930008292198,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.03533192723989487
+      },
+      "seconds": 8.706414471002063
+    },
+    {
+      "id": "lc-244",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 0.00015348246961366385,
+        "docs/purpose.md": 0.07098239660263062,
+        "docs/the-loop.md": 0.008159149438142776,
+        "docs/answerable-not-felt.md": 0.06149083375930786,
+        "docs/answerable-not-felt-research.md": 0.04839792102575302,
+        "docs/2026-09-19-arc-kind-design.md": 0.07115498185157776,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.08910498768091202,
+        "docs/2026-09-19-wave-designs.md": 0.02983108162879944,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.031477466225624084,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.04231264814734459,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.03395397588610649,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.05899469926953316,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.05578328296542168
+      },
+      "seconds": 8.222333612007787
+    },
+    {
+      "id": "lc-245",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 0.00020033011969644576,
+        "docs/purpose.md": 0.1492983102798462,
+        "docs/the-loop.md": 0.020638834685087204,
+        "docs/answerable-not-felt.md": 0.2180662900209427,
+        "docs/answerable-not-felt-research.md": 0.14678947627544403,
+        "docs/2026-09-19-arc-kind-design.md": 0.22120171785354614,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.1614265888929367,
+        "docs/2026-09-19-wave-designs.md": 0.14799347519874573,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.0641431137919426,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.05362463369965553,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.10532014816999435,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.1132889986038208,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.12507344782352448
+      },
+      "seconds": 7.343384391992004
+    },
+    {
+      "id": "lc-246",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 0.00012183836224721745,
+        "docs/purpose.md": 0.11805196106433868,
+        "docs/the-loop.md": 0.016277994960546494,
+        "docs/answerable-not-felt.md": 0.27879026532173157,
+        "docs/answerable-not-felt-research.md": 0.14526118338108063,
+        "docs/2026-09-19-arc-kind-design.md": 0.20568716526031494,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.1759939044713974,
+        "docs/2026-09-19-wave-designs.md": 0.16657696664333344,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.05518009141087532,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.06764557212591171,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.13324132561683655,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.22970525920391083,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.09396462142467499
+      },
+      "seconds": 7.123601578990929
+    },
+    {
+      "id": "lc-251",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 0.00012560289178509265,
+        "docs/purpose.md": 0.09441161900758743,
+        "docs/the-loop.md": 0.012220444157719612,
+        "docs/answerable-not-felt.md": 0.2249336540699005,
+        "docs/answerable-not-felt-research.md": 0.10326328873634338,
+        "docs/2026-09-19-arc-kind-design.md": 0.03237570822238922,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.1418357938528061,
+        "docs/2026-09-19-wave-designs.md": 0.11362095922231674,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.011623864062130451,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.07126760482788086,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.057201236486434937,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.07570457458496094,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.09561974555253983
+      },
+      "seconds": 7.2756058020022465
+    },
+    {
+      "id": "lc-253",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 0.0003191518480889499,
+        "docs/purpose.md": 0.31760865449905396,
+        "docs/the-loop.md": 0.03265774995088577,
+        "docs/answerable-not-felt.md": 0.30163466930389404,
+        "docs/answerable-not-felt-research.md": 0.32500070333480835,
+        "docs/2026-09-19-arc-kind-design.md": 0.050380319356918335,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.23988978564739227,
+        "docs/2026-09-19-wave-designs.md": 0.19992461800575256,
+        "docs/directives/2026-09-20-o6-surfacing-design.md": 0.22428986430168152,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.4446460008621216,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.07718748599290848,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.2468876987695694,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.2966594398021698,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.2123337835073471
+      },
+      "seconds": 10.33328561099188
+    },
+    {
+      "id": "lc-256",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 0.00021965787163935602,
+        "docs/purpose.md": 0.13134515285491943,
+        "docs/the-loop.md": 0.022621385753154755,
+        "docs/answerable-not-felt.md": 0.11622992157936096,
+        "docs/answerable-not-felt-research.md": 0.14110897481441498,
+        "docs/2026-09-19-arc-kind-design.md": 0.03363284096121788,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.2098286747932434,
+        "docs/2026-09-19-wave-designs.md": 0.07068454474210739,
+        "docs/directives/2026-09-20-o6-surfacing-design.md": 0.08099658787250519,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.17186863720417023,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.04783497378230095,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.07629793882369995,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.12976866960525513,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.11571567505598068
+      },
+      "seconds": 10.133758028998272
+    },
+    {
+      "id": "lc-258",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 9.767618757905439e-05,
+        "docs/purpose.md": 0.271872878074646,
+        "docs/the-loop.md": 0.055243704468011856,
+        "docs/answerable-not-felt.md": 0.37342503666877747,
+        "docs/answerable-not-felt-research.md": 0.2761077582836151,
+        "docs/2026-09-19-arc-kind-design.md": 0.20502115786075592,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.4992636442184448,
+        "docs/2026-09-19-wave-designs.md": 0.35835763812065125,
+        "docs/directives/2026-09-20-o6-surfacing-design.md": 0.5068482756614685,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.5294702053070068,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.08933528512716293,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.45206332206726074,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.5834274291992188,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.5642622709274292
+      },
+      "seconds": 7.394919009995647
+    },
+    {
+      "id": "lc-259",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 8.038035593926907e-05,
+        "docs/purpose.md": 0.1716252565383911,
+        "docs/the-loop.md": 0.021884053945541382,
+        "docs/answerable-not-felt.md": 0.3772487938404083,
+        "docs/answerable-not-felt-research.md": 0.2743425965309143,
+        "docs/2026-09-19-arc-kind-design.md": 0.1042076051235199,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.36741122603416443,
+        "docs/2026-09-19-wave-designs.md": 0.2186644822359085,
+        "docs/directives/2026-09-20-o6-surfacing-design.md": 0.33466365933418274,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.2659434974193573,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.03690987825393677,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.2878533899784088,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.4537750482559204,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.47312653064727783
+      },
+      "seconds": 7.1523242839903105
+    },
+    {
+      "id": "lc-260",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 9.879465505946428e-05,
+        "docs/purpose.md": 0.23493757843971252,
+        "docs/the-loop.md": 0.029947465285658836,
+        "docs/answerable-not-felt.md": 0.47629886865615845,
+        "docs/answerable-not-felt-research.md": 0.3733808994293213,
+        "docs/2026-09-19-arc-kind-design.md": 0.11948022246360779,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.36434119939804077,
+        "docs/2026-09-19-wave-designs.md": 0.19083993136882782,
+        "docs/directives/2026-09-20-o6-surfacing-design.md": 0.3805566430091858,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.3058205842971802,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.04248177260160446,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.1327165961265564,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.7374374866485596,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.4295010268688202
+      },
+      "seconds": 7.442388922005193
+    },
+    {
+      "id": "lc-261",
+      "status": "SCORED",
+      "scores": {
+        "LEDGER.md": 0.00013850598770659417,
+        "docs/purpose.md": 0.5286487340927124,
+        "docs/the-loop.md": 0.2799505591392517,
+        "docs/answerable-not-felt.md": 0.569345235824585,
+        "docs/answerable-not-felt-research.md": 0.6798413991928101,
+        "docs/2026-09-19-arc-kind-design.md": 0.3558645248413086,
+        "docs/2026-09-19-vocabulary-contract-design.md": 0.6783736944198608,
+        "docs/2026-09-19-wave-designs.md": 0.5257730484008789,
+        "docs/directives/2026-09-20-o6-surfacing-design.md": 0.8303138017654419,
+        "docs/audits/2026-09-19-erosion-probe-design.md": 0.6729679703712463,
+        "docs/audits/2026-09-19-erosion-probe-results.md": 0.36181265115737915,
+        "docs/audits/2026-09-18-desk-peer-catch-study.md": 0.7631667852401733,
+        "docs/audits/2026-09-18-robustness-clean-without-looking.md": 0.7128795981407166,
+        "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md": 0.5476096868515015
+      },
+      "seconds": 7.9803672050038585
+    }
+  ],
+  "peak_rss_gib": 1.3693885803222656,
+  "complete": true,
+  "input_tokens": {
+    "max": 1119,
+    "pairs": 175,
+    "truncated_pairs": 7
+  }
+}

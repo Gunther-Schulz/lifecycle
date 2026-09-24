@@ -1,0 +1,85 @@
+{
+  "events": [
+    {
+      "commit": "9f3715b5",
+      "id": "lc-241",
+      "split": "tune"
+    },
+    {
+      "commit": "6c569dbe",
+      "id": "lc-242",
+      "split": "tune"
+    },
+    {
+      "commit": "26f89941",
+      "id": "lc-243",
+      "split": "tune"
+    },
+    {
+      "commit": "2dc837df",
+      "id": "lc-244",
+      "split": "tune"
+    },
+    {
+      "commit": "fe6bd170",
+      "id": "lc-245",
+      "split": "tune"
+    },
+    {
+      "commit": "f8e345fb",
+      "id": "lc-246",
+      "split": "tune"
+    },
+    {
+      "commit": "df89fb80",
+      "id": "lc-251",
+      "split": "test"
+    },
+    {
+      "commit": "9adadd6a",
+      "id": "lc-253",
+      "split": "test"
+    },
+    {
+      "commit": "583a8448",
+      "id": "lc-256",
+      "split": "test"
+    },
+    {
+      "commit": "75a1cc40",
+      "id": "lc-258",
+      "split": "test"
+    },
+    {
+      "commit": "db0038fc",
+      "id": "lc-259",
+      "split": "test"
+    },
+    {
+      "commit": "9cb7ebd3",
+      "id": "lc-260",
+      "split": "test"
+    },
+    {
+      "commit": "3115415a",
+      "id": "lc-261",
+      "split": "test"
+    }
+  ],
+  "candidates": [
+    "LEDGER.md",
+    "docs/purpose.md",
+    "docs/the-loop.md",
+    "docs/answerable-not-felt.md",
+    "docs/answerable-not-felt-research.md",
+    "docs/2026-09-19-arc-kind-design.md",
+    "docs/2026-09-19-vocabulary-contract-design.md",
+    "docs/2026-09-19-wave-designs.md",
+    "docs/directives/2026-09-20-o6-surfacing-design.md",
+    "docs/audits/2026-09-19-erosion-probe-design.md",
+    "docs/audits/2026-09-19-erosion-probe-results.md",
+    "docs/audits/2026-09-18-desk-peer-catch-study.md",
+    "docs/audits/2026-09-18-robustness-clean-without-looking.md",
+    "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "sentiment": [
+    {
+      "label": "positive",
+      "score": 0.5918071866035461
+    },
+    {
+      "label": "negative",
+      "score": 3.59871301043313e-05
+    },
+    {
+      "label": "neutral",
+      "score": 0.024997159838676453
+    }
+  ],
+  "topic": [
+    {
+      "label": "space",
+      "score": 0.9999327659606934
+    },
+    {
+      "label": "politics",
+      "score": 0.000952657253947109
+    },
+    {
+      "label": "sports",
+      "score": 2.0767170383351186e-07
+    },
+    {
+      "label": "technology",
+      "score": 0.9972821474075317
+    },
+    {
+      "label": "health",
+      "score": 0.003036073874682188
+    }
+  ]
+}

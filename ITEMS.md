@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 253
+added: 255
 compacted: 0
 
 ## lc-3

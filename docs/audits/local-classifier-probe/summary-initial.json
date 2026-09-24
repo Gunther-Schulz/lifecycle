@@ -1,0 +1,325 @@
+{
+  "threshold": 0.7,
+  "tuning_utility": {
+    "0.3": 0,
+    "0.5": 0,
+    "0.7": 0
+  },
+  "held_out_events": 7,
+  "held_out_sessions": 2,
+  "metrics": {
+    "model": {
+      "tp": 1,
+      "fp": 3,
+      "fn": 16,
+      "relevant": 17,
+      "selected": 4,
+      "unjudged_selected": 0,
+      "recall": 0.058823529411764705,
+      "precision": 0.25
+    },
+    "baseline": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 17,
+      "relevant": 17,
+      "selected": 7,
+      "unjudged_selected": 7,
+      "recall": 0.0,
+      "precision": null
+    },
+    "citation": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 7,
+      "relevant": 17,
+      "selected": 10,
+      "unjudged_selected": 0,
+      "recall": 0.5882352941176471,
+      "precision": 1.0
+    }
+  },
+  "recall_gain_over_best_baseline": -0.5294117647058824,
+  "recall_gain_vs_citation_cluster_bootstrap_95pct": [
+    -0.6,
+    -0.42857142857142855
+  ],
+  "p95_event_seconds": 10.33328561099188,
+  "peak_rss_gib": 1.3693885803222656,
+  "controls_pass": true,
+  "verdict": "REJECT_THIS_CONFIGURATION",
+  "reasons": [
+    "Small convenience sample; insufficient independent sessions for adoption",
+    "Fails pre-registered latency/memory or incremental-retrieval/noise criterion"
+  ],
+  "rows": [
+    {
+      "id": "lc-251",
+      "session": "12d6d72869864367",
+      "model": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 2,
+        "relevant": 2,
+        "selected": 0,
+        "unjudged_selected": 0
+      },
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 2,
+        "relevant": 2,
+        "selected": 1,
+        "unjudged_selected": 1
+      },
+      "citation": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 1,
+        "relevant": 2,
+        "selected": 1,
+        "unjudged_selected": 0
+      },
+      "selected": {
+        "model": [],
+        "baseline": [
+          "LEDGER.md"
+        ],
+        "citation": [
+          "docs/audits/2026-09-19-erosion-probe-design.md"
+        ]
+      }
+    },
+    {
+      "id": "lc-253",
+      "session": "12d6d72869864367",
+      "model": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 3,
+        "relevant": 3,
+        "selected": 0,
+        "unjudged_selected": 0
+      },
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 3,
+        "relevant": 3,
+        "selected": 1,
+        "unjudged_selected": 1
+      },
+      "citation": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 2,
+        "relevant": 3,
+        "selected": 1,
+        "unjudged_selected": 0
+      },
+      "selected": {
+        "model": [],
+        "baseline": [
+          "LEDGER.md"
+        ],
+        "citation": [
+          "docs/directives/2026-09-20-o6-surfacing-design.md"
+        ]
+      }
+    },
+    {
+      "id": "lc-256",
+      "session": "12d6d72869864367",
+      "model": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 2,
+        "relevant": 2,
+        "selected": 0,
+        "unjudged_selected": 0
+      },
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 2,
+        "relevant": 2,
+        "selected": 1,
+        "unjudged_selected": 1
+      },
+      "citation": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 1,
+        "relevant": 2,
+        "selected": 1,
+        "unjudged_selected": 0
+      },
+      "selected": {
+        "model": [],
+        "baseline": [
+          "LEDGER.md"
+        ],
+        "citation": [
+          "docs/directives/2026-09-20-o6-surfacing-design.md"
+        ]
+      }
+    },
+    {
+      "id": "lc-258",
+      "session": "ec1956c0d7856d3d",
+      "model": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 2,
+        "relevant": 2,
+        "selected": 0,
+        "unjudged_selected": 0
+      },
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 2,
+        "relevant": 2,
+        "selected": 1,
+        "unjudged_selected": 1
+      },
+      "citation": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "relevant": 2,
+        "selected": 2,
+        "unjudged_selected": 0
+      },
+      "selected": {
+        "model": [],
+        "baseline": [
+          "LEDGER.md"
+        ],
+        "citation": [
+          "docs/answerable-not-felt-research.md",
+          "docs/answerable-not-felt.md"
+        ]
+      }
+    },
+    {
+      "id": "lc-259",
+      "session": "ec1956c0d7856d3d",
+      "model": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 3,
+        "relevant": 3,
+        "selected": 0,
+        "unjudged_selected": 0
+      },
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 3,
+        "relevant": 3,
+        "selected": 1,
+        "unjudged_selected": 1
+      },
+      "citation": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 2,
+        "relevant": 3,
+        "selected": 1,
+        "unjudged_selected": 0
+      },
+      "selected": {
+        "model": [],
+        "baseline": [
+          "LEDGER.md"
+        ],
+        "citation": [
+          "docs/the-loop.md"
+        ]
+      }
+    },
+    {
+      "id": "lc-260",
+      "session": "ec1956c0d7856d3d",
+      "model": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 3,
+        "relevant": 3,
+        "selected": 1,
+        "unjudged_selected": 0
+      },
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 3,
+        "relevant": 3,
+        "selected": 1,
+        "unjudged_selected": 1
+      },
+      "citation": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 1,
+        "relevant": 3,
+        "selected": 2,
+        "unjudged_selected": 0
+      },
+      "selected": {
+        "model": [
+          "docs/audits/2026-09-18-robustness-clean-without-looking.md"
+        ],
+        "baseline": [
+          "LEDGER.md"
+        ],
+        "citation": [
+          "docs/audits/2026-09-18-desk-peer-catch-study.md",
+          "docs/the-loop.md"
+        ]
+      }
+    },
+    {
+      "id": "lc-261",
+      "session": "ec1956c0d7856d3d",
+      "model": {
+        "tp": 1,
+        "fp": 2,
+        "fn": 1,
+        "relevant": 2,
+        "selected": 3,
+        "unjudged_selected": 0
+      },
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 2,
+        "relevant": 2,
+        "selected": 1,
+        "unjudged_selected": 1
+      },
+      "citation": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "relevant": 2,
+        "selected": 2,
+        "unjudged_selected": 0
+      },
+      "selected": {
+        "model": [
+          "docs/directives/2026-09-20-o6-surfacing-design.md",
+          "docs/audits/2026-09-18-desk-peer-catch-study.md",
+          "docs/audits/2026-09-18-robustness-clean-without-looking.md"
+        ],
+        "baseline": [
+          "LEDGER.md"
+        ],
+        "citation": [
+          "docs/audits/2026-09-18-robustness-clean-without-looking.md",
+          "docs/audits/2026-09-18-self-initiated-vs-prompted-writes.md"
+        ]
+      }
+    }
+  ]
+}
