@@ -492,6 +492,110 @@ def _sys_stderr():
     return sys.stderr
 
 
+#: The prose slots that take a `--<slot>-file PATH` twin beside their inline
+#: flag (lc-265), per verb — `{slot-name: dest-attr}`. A slot not listed here
+#: has no twin. `item add`'s CLI already validates every value coming through
+#: the inline flag (`_collect_slots`, the goal check, `_do_new`'s absence
+#: check); folding a file/stdin body into the same `args` attribute before
+#: dispatch means every one of those checks runs unchanged, over the read
+#: body rather than a copy of it.
+#:
+#: `item amend` has no `--absence` at all — `verbs.AMEND_FLAGS` does not
+#: carry it — so it gets no twin: inventing one here would accept a value
+#: `item amend`'s own verb has never read (lc-265's own naming rule).
+PROSE_FILE_SLOTS = {
+    "add": {
+        "requirement": "requirement",
+        "done-criterion": "done_criterion",
+        "evidence": "evidence",
+        "absence": "absence",
+        "not-derivable": "not_derivable",
+        "reason": "reason",
+    },
+    "amend": {
+        "requirement": "requirement",
+        "done-criterion": "done_criterion",
+        "evidence": "evidence",
+        "not-derivable": "not_derivable",
+        "reason": "reason",
+    },
+}
+
+
+def _read_prose_file(path: str):
+    """One prose slot body, from a file or from stdin (`path == "-"`).
+
+    Returns `(body, why-not)`. A trailing single newline is stripped — one,
+    not all — so a body written with a normal editor's closing newline reads
+    back the way it was typed; every other byte, including a backtick-quoted
+    word or an embedded single quote, is untouched here (lc-265: the file/
+    stdin form exists to bypass the CLI's OWN quoting, so this reader must
+    not add a transform of its own — the existing inline path's `.strip()`
+    in `_collect_slots` still runs afterward, same as it does for every
+    inline value today, and is not this function's concern).
+    """
+    try:
+        if path == "-":
+            data = sys.stdin.read()
+        else:
+            data = Path(path).read_text()
+    except OSError as exc:
+        return None, f"could not be read ({exc!r})"
+    if data.endswith("\n"):
+        data = data[:-1]
+    return data, None
+
+
+def _resolve_prose_files(args, verb: str, out) -> int:
+    """Fold each `--<slot>-file` twin into its slot's inline attribute.
+
+    lc-265. Runs before the verb body sees `args`, so `verbs.cmd_item_add` /
+    `cmd_item_amend` and everything downstream (`_collect_slots`, the goal
+    check, `_do_new`'s absence check) read one value per slot and do not
+    know which door it came through — the inline flags and their semantics
+    are the must-not-move, and this keeps them by construction rather than
+    by a parallel code path.
+
+    Two refusals, both COULD_NOT_VERIFY (`3`): the flag pair conflicts
+    (`--x` and `--x-file` both given — one source per slot, never silently
+    preferring one) or more than one slot in the invocation names stdin
+    (`-` has one body to give). Both are usage-shaped — a malformed
+    invocation, not a finding about the repo (`exits.py`'s own contract;
+    the same remap `_Parser.error` already applies to argparse's own usage
+    errors) — never `exits.FINDING`. A missing or unreadable file is the
+    same code for the same reason: the tool formed no verdict, so the slot
+    is left unset rather than silently emptied.
+    """
+    slot_map = PROSE_FILE_SLOTS.get(verb, {})
+    stdin_flags = []
+    for slot, attr in slot_map.items():
+        file_val = getattr(args, f"{attr}_file", None)
+        if file_val is None:
+            continue
+        if getattr(args, attr, None) is not None:
+            out(f"COULD NOT VERIFY: --{slot} and --{slot}-file were both "
+                f"given for one slot. One source per slot — the two could "
+                "disagree, and nothing here is licensed to pick a winner.")
+            return exits.COULD_NOT_VERIFY
+        if file_val == "-":
+            stdin_flags.append(f"--{slot}-file")
+    if len(stdin_flags) > 1:
+        out("COULD NOT VERIFY: more than one flag named `-` (stdin) in one "
+            f"invocation ({', '.join(stdin_flags)}). Stdin has one body to "
+            "give, and only one slot may claim it.")
+        return exits.COULD_NOT_VERIFY
+    for slot, attr in slot_map.items():
+        file_val = getattr(args, f"{attr}_file", None)
+        if file_val is None:
+            continue
+        body, why = _read_prose_file(file_val)
+        if body is None:
+            out(f"COULD NOT VERIFY: --{slot}-file {file_val!r} {why}.")
+            return exits.COULD_NOT_VERIFY
+        setattr(args, attr, body)
+    return exits.CLEAN
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = _Parser(
         prog="lifecycle",
@@ -713,6 +817,18 @@ def build_parser() -> argparse.ArgumentParser:
     add.add_argument("--no-commit", dest="no_commit", action="store_true",
                      help="skip the move's third step (a batching caller "
                           "owns the commit)")
+    # THE FILE/STDIN TWINS (lc-265): one per prose slot in `PROSE_FILE_SLOTS`,
+    # read from `cli.py`'s own table rather than listed again here — the
+    # reason `amend`'s slot loop above cites for itself applies here too, a
+    # flag this parser accepted and `_resolve_prose_files` did not fold would
+    # be silent by construction.
+    for _slot in PROSE_FILE_SLOTS["add"]:
+        add.add_argument(f"--{_slot}-file",
+                         help=f"`--{_slot}`'s body from a file, or `-` for "
+                              "stdin (at most one slot per invocation) — "
+                              "byte-identical, backticks and single quotes "
+                              "included; a trailing single newline is "
+                              "stripped. Conflicts with the inline flag.")
 
     ready = its.add_parser("ready", help="READY-and-unblocked; PROMOTES NOTHING")
     ready.add_argument("ident", nargs="?",
@@ -756,6 +872,17 @@ def build_parser() -> argparse.ArgumentParser:
     amend.add_argument("--no-commit", dest="no_commit", action="store_true",
                        help="write the carrier without committing it — a "
                             "caller batching amendments owns that commit")
+    # THE FILE/STDIN TWINS (lc-265), the `amend` half of `PROSE_FILE_SLOTS` —
+    # narrower than `add`'s: `amend` has no `--absence` flag at all (it is
+    # not in `verbs.AMEND_FLAGS`), so it gets no `--absence-file` either.
+    for _slot in PROSE_FILE_SLOTS["amend"]:
+        amend.add_argument(f"--{_slot}-file",
+                           help=f"`--{_slot}`'s body from a file, or `-` "
+                                "for stdin (at most one slot per "
+                                "invocation) — byte-identical, backticks "
+                                "and single quotes included; a trailing "
+                                "single newline is stripped. Conflicts "
+                                "with the inline flag.")
 
     # `item promote` (lc-39) — the desk's re-grade, and the ONLY path from
     # NEW to READY. Both flags are verb-checked rather than argparse-required:
@@ -1266,8 +1393,14 @@ def _carrier_verb(args, out) -> int:
     if ctx is None:
         return code
     if args.item_action == "add":
+        code = _resolve_prose_files(args, "add", out)
+        if code != exits.CLEAN:
+            return code
         return verbs.cmd_item_add(args, out, ctx)
     if args.item_action == "amend":
+        code = _resolve_prose_files(args, "amend", out)
+        if code != exits.CLEAN:
+            return code
         return verbs.cmd_item_amend(args, out, ctx)
     if args.item_action == "promote":
         return verbs.cmd_item_promote(args, out, ctx)

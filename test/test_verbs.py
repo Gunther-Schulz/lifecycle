@@ -2516,3 +2516,174 @@ class DueReadSurfaceIntegration(unittest.TestCase):
         code, out = self._run(repo, "item", "ratio")
         self.assertNotIn("due read:", out)
         self.assertNotIn("surfaced", self._detail(repo, "item ratio"))
+
+
+class ProseSlotsFromFileOrStdin(unittest.TestCase):
+    """lc-265 — `item add`/`item amend`'s `--<slot>-file` twin.
+
+    THE RED THIS PINS: every prose slot on `item add` and `item amend` took
+    its body as a command-line argument ONLY, so a body with a backtick-
+    wrapped word or an embedded single quote could not cross the Bash tool's
+    zsh double-quoted payload intact (a backtick inside a double-quoted
+    string is command-substituted away one layer above any CLI check — the
+    dotfiles environment module's own finding, relayed by cachyos-setup-33).
+    `--requirement-file` etc. did not exist pre-change — argparse's own
+    `unrecognized arguments` refusal (remapped to `exits.COULD_NOT_VERIFY`
+    by `_Parser.error`) is the named red these arms accept as discriminating
+    (law 4's own carve-out for a usage-shaped pre-change failure).
+    """
+
+    #: A body no inline flag could carry intact: a backtick-wrapped word (a
+    #: zsh double-quoted payload command-substitutes it away) and an
+    #: embedded single quote (closes a single-quoted payload early).
+    TRICKY = "an odd `literal` word and it's still one sentence"
+
+    def _repo(self, **kw):
+        r = refusals._Repo(**kw)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv, stdin=None):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        old_stdin = sys.stdin
+        try:
+            os.chdir(str(repo.dir))
+            if stdin is not None:
+                sys.stdin = io.StringIO(stdin)
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+            sys.stdin = old_stdin
+        return code, buf.getvalue()
+
+    def _ident(self, out):
+        import re
+        m = re.search(r"added (\S+) \[", out)
+        self.assertIsNotNone(m, f"no id in add output:\n{out}")
+        return m.group(1)
+
+    def _write(self, body):
+        import os
+        import tempfile
+        fd, path = tempfile.mkstemp(prefix="lc265-")
+        with os.fdopen(fd, "w") as f:
+            f.write(body)
+        self.addCleanup(os.remove, path)
+        return path
+
+    def _good_add_via_file(self, path, *, flag="--requirement-file"):
+        base = list(refusals.GOOD_ADD)
+        i = base.index("--requirement")
+        # DROP the inline value at i+1, DROP the inline flag at i, splice in
+        # the file twin — the plant still carries every OTHER slot inline,
+        # so the arm proves the file form composes with the ordinary CLI
+        # rather than replacing it wholesale.
+        return base[:i] + [flag, path] + base[i + 2:]
+
+    def test_a_tricky_body_reaches_the_carrier_byte_identical_via_file(self):
+        path = self._write(self.TRICKY)
+        repo = self._repo()
+        code, out = self._run(repo, *self._good_add_via_file(path))
+        self.assertEqual(code, exits.CLEAN, out)
+        ident = self._ident(out)
+        code, slots_out = self._run(repo, "item", "slots", ident, "--json")
+        self.assertEqual(code, exits.CLEAN, slots_out)
+        got = json.loads(slots_out)["slots"]["requirement"]
+        self.assertEqual(got, self.TRICKY)
+
+    def test_a_tricky_body_reaches_the_carrier_byte_identical_via_stdin(self):
+        repo = self._repo()
+        code, out = self._run(
+            repo, *self._good_add_via_file("-"), stdin=self.TRICKY)
+        self.assertEqual(code, exits.CLEAN, out)
+        ident = self._ident(out)
+        code, slots_out = self._run(repo, "item", "slots", ident, "--json")
+        self.assertEqual(code, exits.CLEAN, slots_out)
+        got = json.loads(slots_out)["slots"]["requirement"]
+        self.assertEqual(got, self.TRICKY)
+
+    def test_a_trailing_single_newline_is_stripped_not_every_newline(self):
+        """MUST-NOT-MOVE half of the read, at the READER ITSELF
+
+        (`cli._read_prose_file`) rather than through `item add`: every
+        prose slot this repo's `item add`/`amend` accept is `.strip()`-ed
+        downstream (`_collect_slots`, `cmd_item_amend`), which would mask
+        the one-vs-every distinction if this arm went through the CLI —
+        a value ending in two newlines and one ending in one read back
+        identically once `.strip()` has run over either. The READER's own
+        contract does not depend on that downstream strip (a future slot
+        or caller might not have one), so it is proven here directly."""
+        from lifecycle_core import cli as cli_mod
+        one = self._write("single line\n")
+        two = self._write("single line\n\n")
+        got_one, why_one = cli_mod._read_prose_file(one)
+        got_two, why_two = cli_mod._read_prose_file(two)
+        self.assertIsNone(why_one)
+        self.assertIsNone(why_two)
+        self.assertEqual(got_one, "single line")
+        self.assertEqual(got_two, "single line\n")
+
+    def test_a_missing_file_is_could_not_verify_never_an_empty_slot(self):
+        repo = self._repo()
+        before = (repo.dir / "ITEMS.md").read_text(encoding="utf-8")
+        code, out = self._run(
+            repo, *self._good_add_via_file("/no/such/file-lc265"))
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertEqual((repo.dir / "ITEMS.md").read_text(encoding="utf-8"),
+                         before, "a refused add must not touch the carrier")
+
+    def test_inline_and_file_both_given_refuses_naming_both(self):
+        repo = self._repo()
+        argv = list(refusals.GOOD_ADD) + [
+            "--requirement-file", self._write(self.TRICKY)]
+        code, out = self._run(repo, *argv)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("--requirement", out)
+        self.assertIn("--requirement-file", out)
+
+    def test_two_stdin_flags_in_one_invocation_refuses(self):
+        repo = self._repo()
+        argv = self._good_add_via_file("-") + ["--evidence-file", "-"]
+        # DROP the inline --evidence so the two `-file -` flags are the only
+        # source for their slots (the conflict check above would otherwise
+        # fire first and mask the one this arm targets).
+        i = argv.index("--evidence")
+        argv = argv[:i] + argv[i + 2:]
+        code, out = self._run(repo, *argv, stdin=self.TRICKY)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("stdin", out.lower())
+
+    def test_item_amend_also_accepts_the_file_form(self):
+        repo = self._repo(items=refusals.SEED_ITEMS)
+        path = self._write(self.TRICKY)
+        code, out = self._run(
+            repo, "item", "amend", "xx-1", "--requirement-file", path,
+            "--reason", "moving a tricky requirement off a hand edit")
+        self.assertEqual(code, exits.CLEAN, out)
+        code, slots_out = self._run(repo, "item", "slots", "xx-1", "--json")
+        got = json.loads(slots_out)["slots"]["requirement"]
+        self.assertEqual(got, self.TRICKY)
+
+    def test_item_amend_has_no_absence_file_twin_by_design(self):
+        """The NAMED GAP: `item amend` never accepted `--absence` inline
+
+        (`verbs.AMEND_FLAGS` carries no `absence` entry), so it gets no
+        `--absence-file` twin — inventing one would accept a value the
+        verb itself has never read. Proven as a real argparse refusal
+        rather than asserted in prose: the flag is UNRECOGNIZED."""
+        repo = self._repo(items=refusals.SEED_ITEMS)
+        with self.assertRaises(SystemExit) as cm:
+            import io
+            from contextlib import redirect_stdout
+            from lifecycle_core import cli as cli_mod
+            with redirect_stdout(io.StringIO()):
+                cli_mod.main(["--repo", str(repo.dir), "item", "amend",
+                             "xx-1", "--absence-file", "-",
+                             "--reason", "x"])
+        self.assertEqual(cm.exception.code, exits.COULD_NOT_VERIFY)
