@@ -3078,6 +3078,12 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
                 ctx, args.ident, detail, args.drop, out)
             if item_code != exits.CLEAN:
                 return item_code
+        # R3 SEAM (refocus round, 2026-09-24, lc-288), printed before the
+        # move: the already-required `--reason` prose below is the written
+        # answer this treatment arm was measuring for; this is only the READ
+        # half. Runs for BOTH grades (DONE and DROPPED) — a drop's own
+        # required reason is exactly as much "the record" as a done close's.
+        _print_item_close_goal(ctx, out, args.ident, subject)
         # THE APPENDED LINES, IN `DONE_ONLY_SLOTS` ORDER, in ONE buffer write
         # with the move. Two writes would leave a body moved without its
         # record, or a record about a move that did not happen — and the
@@ -3183,6 +3189,7 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
         code = exits.worst([code, items_mod.report_conservation(
             items_mod.conservation(items_parsed, done_parsed, done_why), out)])
     args.fire_detail = f"close {args.ident} {grade}"
+    _append_fire_detail(args, "goal-seam=close")
     return code
 
 
@@ -3343,6 +3350,97 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
 def _arc_paths(ctx: Ctx, slug: str):
     return (ctx.repo / arcs.ARCS_DIR / f"{slug}.md",
             ctx.repo / arcs.CLOSED_DIR / f"{slug}.md")
+
+
+# --- R3, the goal seam (refocus round, 2026-09-24, lc-288) --------------------
+#
+# The treatment arm's TRIGGER moves from a brief directive (memory) to the
+# verb itself: `item close`, `arc advance` and `arc narrow` each print the
+# LIVE goal immediately before the already-required prose those acts already
+# demand (`--reason`, `--text`) records. No new flag, slot or schema — the
+# already-demanded prose is the written answer this arm was measuring for;
+# this is only the READ half. `LEDGER.md:130`'s arm, window and grading are
+# unchanged; only WHAT FIRES the row moves.
+
+def _goal_line(source: str, text) -> str | None:
+    """`goal (<source>): <text>`, or `None` if `text` is blank.
+
+    The shared formatter so all three seams below render one sentence
+    identically — a second spelling of "the goal line" per verb is exactly
+    the paraphrase-drift this corpus warns against.
+    """
+    text = (text or "").strip()
+    return f"goal ({source}): {text}" if text else None
+
+
+def _print_seam_goal(out, source: str, text) -> None:
+    """Single-source seam print (`arc advance`, `arc narrow`): the line, or
+
+    the NAMED absence — `goal: none resolvable for this act` — when the
+    arc's own `goal:` slot is blank. Never silence: an unprinted line here
+    would be indistinguishable from a verb that never got this far.
+    """
+    line = _goal_line(source, text)
+    out(line if line is not None else "goal: none resolvable for this act")
+
+
+def _print_item_close_goal(ctx: Ctx, out, ident: str, subject) -> None:
+    """R3 seam for `item close`: TWO sources, each printed independently
+
+    when it resolves, neither invented when it does not.
+
+    1. The item's OWN `goal:` slot (source `item goal <ident>`) — resolved
+       against the declaration's `goals` (`decl.effective_goals`, which adds
+       the plugin-reserved `tend`): an item legitimately advancing no goal
+       carries UNKNOWN there (`items.UNKNOWNABLE_SLOTS`), and UNKNOWN is not
+       a declared goal, so it silently does not resolve rather than printing
+       a line that asserts a goal the item never claimed.
+    2. Every OPEN arc (`arcs/*.md` — `arcs/closed/` is a different home and
+       a closed arc's thread is no longer live work this close informs)
+       that names `ident` as a WHOLE TOKEN in its body (source `arc
+       <slug>`), using the same `\\b`-anchored match `arcs.citers` already
+       runs for belief ids — a substring match would also catch `xx-10`
+       inside a search for `xx-1`.
+
+    `goal: none resolvable for this act` prints once, only when NEITHER
+    source produced a line — the MUST-NOT-MOVE this repo's surfacing
+    convention already keeps: an absence is spoken, never silent.
+    """
+    printed = False
+    if subject is not None:
+        goal_name = (subject.slots.get("goal") or "").strip()
+        if goal_name in decl.effective_goals(ctx.declaration):
+            line = _goal_line(f"item goal {ident}", goal_name)
+            if line is not None:
+                out(line)
+                printed = True
+    pattern = re.compile(r"\b" + re.escape(ident) + r"\b")
+    for slug in arcs.live_slugs(ctx.repo):
+        path = ctx.repo / arcs.ARCS_DIR / f"{slug}.md"
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if not pattern.search(text):
+            continue
+        arc_obj, _probs = arcs.parse_arc(text, slug)
+        line = _goal_line(f"arc {slug}", arc_obj.slots.get("goal"))
+        if line is not None:
+            out(line)
+            printed = True
+    if not printed:
+        out("goal: none resolvable for this act")
+
+
+def _append_fire_detail(args, addition: str) -> None:
+    """Append to `args.fire_detail` without ever overwriting one a verb
+
+    already set for its own purpose — the same '; '-joined idiom `cli.py`'s
+    `main()` surface already uses for the R1 `surfaced=` token, applied here
+    because a verb sets its own detail BEFORE `main()` ever sees it.
+    """
+    existing = getattr(args, "fire_detail", None)
+    args.fire_detail = f"{existing}; {addition}" if existing else addition
 
 
 def cmd_arc_open(args, out, ctx: Ctx) -> int:
@@ -3697,13 +3795,21 @@ def cmd_arc_advance(args, out, ctx: Ctx) -> int:
         return exits.FINDING
 
     to = args.to.strip()
+    arc_obj, _probs = arcs.parse_arc(text, slug)
     # THE LEAVING STAGE'S DEADLINES END WITH IT (astra-a8). A deadline belongs
     # to the stage that set it; one that outlived its stage keeps firing about
     # a date nothing is waiting for, and a board carrying doors nobody can act
     # on is how a reader learns to skim the board.
-    leaving = (arcs.parse_arc(text, slug)[0].slots.get("stage") or "").strip()
+    leaving = (arc_obj.slots.get("stage") or "").strip()
     _retire_arc_lanes(ctx, slug, text,
                       arcs.deadline_lanes(text, stage=leaving), out)
+    # R3 SEAM (refocus round, 2026-09-24, lc-288): the treatment arm's
+    # trigger moves from a brief directive (memory) to the verb itself. The
+    # already-required `--reason` prose below is the written answer; this
+    # prints the LIVE goal so the answer has something to be an answer TO,
+    # immediately before that prose records.
+    _print_seam_goal(out, f"arc {slug}", arc_obj.slots.get("goal"))
+    _append_fire_detail(args, "goal-seam=advance")
     mark = f" | {arcs.OUTWARD_MARK}" if args.outward else ""
     line = (f"{arcs.ADVANCED_LINE}: {to} {_today()} {args.reason.strip()}"
             f"{mark}")
@@ -3751,6 +3857,10 @@ def cmd_arc_narrow(args, out, ctx: Ctx) -> int:
             "cannot tell whether the new text eliminates a candidate or adds "
             "one to a palette.")
         return exits.FINDING
+    # R3 SEAM (refocus round, 2026-09-24, lc-288) — see `cmd_arc_advance`'s
+    # own comment for the full rationale; the shape is identical here.
+    _print_seam_goal(out, f"arc {slug}", arc.slots.get("goal"))
+    _append_fire_detail(args, "goal-seam=narrow")
     new = args.text.strip()
     text = arcs.set_slot(text, "narrowing", f"{form} — {new}")
     line = f"{arcs.NARROWED_LINE}: {form} {_today()} {new}"

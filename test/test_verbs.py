@@ -314,6 +314,100 @@ class ClosureRecordIsWritten(unittest.TestCase):
         self.assertEqual(self._carriers(r), before,
                          "the refused close touched a carrier")
 
+    def test_close_prints_the_item_goal_before_recording_R3(self):
+        """R3 (refocus round, 2026-09-24, lc-288): the treatment arm's
+
+        trigger moves from a brief directive (memory) to the verb itself.
+        `xx-1` (SEED_ITEMS) declares `goal: mitigate`, a member of
+        GOOD_FULL_DECLARATION's `goals`. RED on the pre-R3 code: no
+        `goal (item goal xx-1):` line printed at all, and no `goal-seam=`
+        token reached the fire log."""
+        from lifecycle_core import firelog
+        r = self._repo()
+        code, out = self._run(r, "item", "close", "xx-1",
+                              "--reason", self.REASON)
+        self.assertEqual(code, exits.CLEAN, out)
+        lines = out.rstrip("\n").split("\n")
+        self.assertIn("goal (item goal xx-1): mitigate", lines)
+        goal_idx = lines.index("goal (item goal xx-1): mitigate")
+        rec_idx = next(i for i, l in enumerate(lines)
+                       if l.startswith(f"{items.CLOSED_REASON}:"))
+        self.assertLess(goal_idx, rec_idx, out)
+        rec = firelog.last_run("item close", repo=str(r.dir))
+        self.assertIsNotNone(rec, "no fire-log record for 'item close'")
+        self.assertIn("goal-seam=close", rec.get("detail") or "")
+        # NEVER OVERWRITTEN: `item close` already sets its own detail
+        # ("close <id> DONE") for its own purpose, and the R3 seam must not
+        # replace it — both facts share the one `detail` field.
+        self.assertIn("close xx-1 DONE", rec.get("detail") or "")
+
+    def test_close_also_surfaces_a_citing_open_arcs_goal_R3(self):
+        """The second source: an OPEN arc whose body names the item id as a
+
+        WHOLE TOKEN gets its own goal line too, beside the item's own."""
+        from lifecycle_core import arcs
+        r = self._repo()
+        (r.dir / "arcs").mkdir(exist_ok=True)
+        body = arcs.render_arc("freeze", {
+            "goal": "find the freeze root cause",
+            "stage": "narrowing",
+            "narrowing": "eliminative — xx-1 is the leading candidate",
+            "premises": "none recorded yet",
+            "beliefs": "none recorded yet",
+            "yield": "nothing produced yet",
+        }, items.SCHEMA_FLOOR)
+        (r.dir / "arcs" / "freeze.md").write_text(body, encoding="utf-8")
+        code, out = self._run(r, "item", "close", "xx-1",
+                              "--reason", self.REASON)
+        self.assertEqual(code, exits.CLEAN, out)
+        lines = out.rstrip("\n").split("\n")
+        self.assertIn("goal (item goal xx-1): mitigate", lines)
+        self.assertIn("goal (arc freeze): find the freeze root cause", lines)
+
+    def test_close_never_surfaces_a_CLOSED_arcs_goal_R3(self):
+        """The negative control: `arcs/closed/` is a different home and a
+
+        closed arc's thread is no longer live work this close informs."""
+        from lifecycle_core import arcs
+        r = self._repo()
+        (r.dir / "arcs" / "closed").mkdir(parents=True, exist_ok=True)
+        body = arcs.render_arc("done-arc", {
+            "goal": "an already-finished thread",
+            "stage": "closed",
+            "narrowing": "eliminative — xx-1 was the answer",
+            "premises": "none recorded yet",
+            "beliefs": "none recorded yet",
+            "yield": "nothing produced yet",
+        }, items.SCHEMA_FLOOR)
+        (r.dir / "arcs" / "closed" / "done-arc.md").write_text(
+            body, encoding="utf-8")
+        code, out = self._run(r, "item", "close", "xx-1",
+                              "--reason", self.REASON)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("goal (arc done-arc):", out)
+
+    def test_close_prints_none_resolvable_when_nothing_resolves_R3(self):
+        """The MUST-NOT-BE-SILENT arm: an item whose goal is UNKNOWN (the
+
+        migration's declared transitional value — `items.UNKNOWNABLE_SLOTS`)
+        and no citing open arc resolves NEITHER source, and the line says so
+        rather than printing nothing."""
+        items_text = (
+            f"schema: {items.SCHEMA_FLOOR}\n"
+            "baseline: 1\nadded: 0\ncompacted: 0\n\n"
+            "## xx-1\ngrade: READY\n"
+            "requirement: a fixture with no goal on record\n"
+            "goal: UNKNOWN\nwrite-set: tools/thing.py\n"
+            "done-criterion: it goes red then green\nevidence: none yet\n"
+            "blocked-by: NONE\n")
+        r = refusals._Repo(items=items_text)
+        self.addCleanup(r.close)
+        code, out = self._run(r, "item", "close", "xx-1",
+                              "--reason", self.REASON)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("goal: none resolvable for this act", out)
+        self.assertNotIn("goal (item goal xx-1):", out)
+
 
 class ItemBlockerAtClose(unittest.TestCase):
     """lc-90 — what a close does with an `<item-id>` blocker, all four states.

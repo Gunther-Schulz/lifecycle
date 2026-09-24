@@ -880,6 +880,27 @@ class StageAndStateVerbs(unittest.TestCase):
         arc, _p = arcs.parse_arc(self._body(repo), "freeze")
         self.assertTrue(arc.slots["narrowing"].startswith("eliminative"))
 
+    def test_narrow_prints_the_live_goal_before_recording_R3(self):
+        """Same R3 shape as `arc advance`'s twin test, for `arc narrow`.
+
+        RED on the pre-R3 code: no `goal (arc freeze):` line, no
+        `goal-seam=narrow` in the fire log."""
+        from lifecycle_core import firelog
+        repo = self._repo()
+        self._run(repo, *self.OPEN)  # OPEN's --goal is "g"
+        code, outp = self._run(repo, "arc", "narrow", "freeze", "--text",
+                               "two left")
+        self.assertEqual(code, 0, outp)
+        lines = outp.rstrip("\n").split("\n")
+        self.assertIn("goal (arc freeze): g", lines)
+        goal_idx = lines.index("goal (arc freeze): g")
+        nar_idx = next(i for i, l in enumerate(lines)
+                       if l.startswith(f"{arcs.NARROWED_LINE}:"))
+        self.assertLess(goal_idx, nar_idx, outp)
+        rec = firelog.last_run("arc narrow", repo=str(repo.dir))
+        self.assertIsNotNone(rec, "no fire-log record for 'arc narrow'")
+        self.assertIn("goal-seam=narrow", rec.get("detail") or "")
+
     def test_advance_REFUSES_while_a_belief_flag_stands(self):
         """A close FILES the doubt; an advance COMPOUNDS it, carrying it into
 
@@ -912,6 +933,31 @@ class StageAndStateVerbs(unittest.TestCase):
         self.assertEqual(code, 0, outp)
         arc, _p = arcs.parse_arc(self._body(repo), "freeze")
         self.assertEqual(arc.slots["stage"], "next")
+
+    def test_advance_prints_the_live_goal_before_recording_R3(self):
+        """R3 (refocus round, 2026-09-24, lc-288): the treatment arm's
+
+        trigger moves from a brief directive (memory) to the verb itself.
+        The verb PRINTS the arc's live `goal:` slot immediately before the
+        already-required `--reason` prose is recorded, and the fire line
+        gains `goal-seam=advance`. RED on the pre-R3 code: no `goal (arc
+        freeze):` line was printed at all, and no `goal-seam=` token
+        reached the fire log."""
+        from lifecycle_core import firelog
+        repo = self._repo()
+        self._run(repo, *self.OPEN)  # OPEN's --goal is "g"
+        code, outp = self._run(repo, "arc", "advance", "freeze", "--to",
+                               "next", "--reason", "moving on")
+        self.assertEqual(code, 0, outp)
+        lines = outp.rstrip("\n").split("\n")
+        self.assertIn("goal (arc freeze): g", lines)
+        goal_idx = lines.index("goal (arc freeze): g")
+        adv_idx = next(i for i, l in enumerate(lines)
+                       if l.startswith(f"{arcs.ADVANCED_LINE}:"))
+        self.assertLess(goal_idx, adv_idx, outp)
+        rec = firelog.last_run("arc advance", repo=str(repo.dir))
+        self.assertIsNotNone(rec, "no fire-log record for 'arc advance'")
+        self.assertIn("goal-seam=advance", rec.get("detail") or "")
 
     def test_an_OUTWARD_stage_renders_its_STOP_AT_ENTRY(self):
         """astra's correction: a STOP printed when the stage CLOSES arrives
