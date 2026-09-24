@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 280
+added: 281
 compacted: 0
 
 ## lc-3
@@ -1561,3 +1561,12 @@ amended-requirement: 2026-09-24 Short ACTING FRAMES via main desk plus dispatch 
 amended-done-criterion: 2026-09-24 A pre-registered measurement of whether drift stratifies by acting-frame architecture (main+lanes vs long single frame), carried by the drift probe where it can be, with a falsifier and hard negatives (legitimate long work); no build before that result. Note: main+lanes has no control arm either (the-loop.md limit line), so the admission bar applies to it too.
 amended-evidence: 2026-09-24 OPERATOR CORRECTION 2026-09-24, RELAYED by lifecycle-64 (testimony; the operator can confirm first-hand): window LENGTH as the drift cause is not established, killing a running session costs in-flight continuity, and the proposal is a main session with subagents and/or peer sessions instead. lifecycle-64 grading: purpose.md blames the acting frame self-blindness, not length; governance-decay (rule absent from context raises violations) argues for more context present, not less; the residual lanes do not fix is main-desk frame-lock, so outside-reader seams on the MAIN desk are the load-bearing half.
 amended-blocked-by: 2026-09-24 decision does the drift probe carry the acting-frame-architecture stratification
+
+## lc-289
+grade: READY
+requirement: Refocus round R7: ledger add decision refuses a near-match with an existing decision line until the call disposes it (--join new --absence), reusing item add candidates() token machinery on the question text, so a re-decided question is seen before it is written twice. Narrow freeze exit granted by judge ruling 3. Record: docs/directives/2026-09-24-refocus-design-round.md R7, section 7 ruling 3.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_ledger.py
+done-criterion: ledger add decision whose question shares >= MATCH_MIN_TOKENS rarity-informative tokens with an existing decision question prints each match with its line and refuses with a registry row ledger_join_undisposed unless --join new --absence <text> is given; no match writes as today. The row fires red-first with a control; its prove-rows arrangement is admitted on the lc-142 pair. The over-fire rate is reported: the matcher replayed over this repo LEDGER.md decisions, each against the decisions before it, count of would-fire over total.
+evidence: MEASURED at desk d9 2026-09-24: verbs.py:290 candidates() and helpers requirement_tokens/document_frequency/informative_tokens (246-289), MATCH_MIN_TOKENS=2, MATCH_MAX_DOC_FRACTION=0.5; join_undisposed row at refusals.py:1475 and its arrangement at prove-rows.py:125; cmd_ledger_add at verbs.py:3284 has no match step. Judge ruling 3 conditions met: baseline 3de8ef7, wave 7 of 7 closed.
+blocked-by: NONE
