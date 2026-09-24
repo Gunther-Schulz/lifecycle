@@ -130,6 +130,7 @@ decision: when does the next design-arc decision round run, relative to the two 
 decision: run the drift probe treatment arm? → YES (operator 2026-09-20, answering the numbered round). 5 governed-repo sessions or 4 weeks; demand block + grading: docs/directives/2026-09-20-drift-treatment-arm-directive.md, log docs/audits/drift-treatment-log.tsv. Slot admission gated on its outcome.
 decision: open the O6 WHEN/reader-trigger design arc now or after the treatment arm? → NOW (operator 2026-09-20): erosion probe HEALTH cleared the instrument-accumulation objection; goal-question slot admission stays gated on the treatment arm. Arc delegated to peer desk lifecycle-ef; kickoff docs/directives/2026-09-20-o6-when-stage-arc-kickoff.md.
 decision: O6 surfacing round D1-D4: default moment, carrier, read verb, written record? → ALL FOUR as recommended (operator 2026-09-20): derived moments (verb=its run; session=home written), surfacing in the acting verb output, a recorded read verb, nothing new written. Binding copy: docs/directives/2026-09-20-o6-surfacing-design.md. lc-252 precedes counters.
+decision: lc-260: the 2026-09-18 audit arms that never returned - finish or drop? → DROPPED: self-initiated L2 part 3 and L4 (study consumed as-is by answerable-not-felt GATE 1; no arm moves it) and robustness Lane 2 run (output lost); Lane 2 QUESTION re-booked as lc-268. Basis and per-arm reasons in lc-260 done body. Operator GO 2026-09-24.
 
 ## Archive (pre-migration)
 
