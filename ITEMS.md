@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 271
+added: 272
 compacted: 0
 
 ## lc-3
@@ -1571,3 +1571,12 @@ done-criterion: A trigger or verb: reader naming a command group that is not its
 evidence: MEASURED at the desk 2026-09-24 with the roster fixtures: _decl_run with trigger verb item -> exit 0, no finding; control verb item clsoe -> exit 2 FINDING [trigger_verb_unknown]. RELAYED from the review: reader verb:item and verb:lane also CLEAN; lifecycle item prints COULD NOT VERIFY needs an action.
 blocked-by: decision is a command-group trigger ever legal, or always a finding
 not-derivable: 2026-09-24 the lc-268 review searched the declaration design and ledger for a ruling on group-level triggers and found none; the desk grep of LEDGER.md for group trigger returns nothing.
+
+## lc-280
+grade: READY
+requirement: closure_home_split compares the two closure-home spellings as plain strings, so ./ITEMS-DONE.md beside closure-home ITEMS-DONE.md fires the declaration names TWO closure homes over one file. Either the message is wrong or a one-spelling rule is intended and unstated; the row control is an exact-string match and cannot tell them apart. Record: lc-268 review defect D2; verbs.py string compare (per the review, near line 147).
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: closure_home_split compares normalised repo-relative paths: ./ITEMS-DONE.md and ITEMS-DONE.md are one home and stay silent; two different files still fire. The row gains a control carrying the ./ spelling. Verifier: plant (SOMEWHERE-ELSE.md) fires, ./ control silent; red-first on the ./ control.
+evidence: MEASURED at the desk 2026-09-24 with GOOD_FULL_DECLARATION: done bodies home ./ITEMS-DONE.md with closure-home ITEMS-DONE.md -> exit 2, FINDING [closure_home_split] names TWO closure homes; unmodified control -> exit 0.
+blocked-by: NONE
