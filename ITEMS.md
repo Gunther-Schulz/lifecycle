@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 268
+added: 269
 compacted: 0
 
 ## lc-3
@@ -1514,3 +1514,13 @@ done-criterion: A design decision is recorded (ledger + the answerable arc) answ
 evidence: MEASURED 2026-09-24: lifecycle audit SURFACED VS READ since 2026-09-20: 125 surfacing records, 8 read records, 8 of 9 surfaced kinds never read; the same table read 64/8 earlier the same day, before session 09020605 ran, which added ~61 surfacings and no read. The design doc section 8 names kill condition 1 in these words.
 blocked-by: decision which demand at which moment converts a surfaced due read into an act, or is surfacing withdrawn
 not-derivable: 2026-09-24 searched LEDGER.md for demand and surfacing decision lines: D1-D4 of 2026-09-20 decide the surfacing half only and explicitly defer the demand leg (D4 b), so no record answers it; it is a design-arc decision for the round.
+
+## lc-277
+grade: NEW
+requirement: The drift-trigger treatment arm is not being applied: the design assumed a directive in the brief suffices for N sessions, and both logged rows (2026-09-24) show the goal line written at a minority of seams (row 2: 1 of 4), self-graded. The arm therefore measures session memory, not the mechanism the probe asks about. Record: docs/audits/2026-09-20-direction-drift-trigger-probe-design.md TREATMENT; docs/audits/drift-treatment-log.tsv rows 1-2; arc drift-trigger belief B3.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A seam-fired goal question exists at named seams (at minimum: a dispatch, an item close, an arc advance): at each firing the live arc goal (or investigation-record GOAL) is printed with a one-line demand, and each firing is written to the fire log so the treatment log can count seams from the record rather than from memory. Verifier: a session exercising the three seams yields three fire-log lines and the treatment row is derived from them; red-first on today (zero such lines).
+evidence: MEASURED 2026-09-24: docs/audits/drift-treatment-log.tsv row 2 records seams 4, checks_written 1 for session 09020605; row 1 was graded by the treated session itself. Neither row was produced by an environment trigger; the probe design TREATMENT paragraph states a directive in the brief suffices.
+blocked-by: decision where the seam-fired goal question lives: lifecycle verbs, machine hooks, or both
+not-derivable: 2026-09-24 searched LEDGER.md and the probe design for a mechanism home: the design chose a brief directive precisely to avoid building one before admission, so no record decides the home.
