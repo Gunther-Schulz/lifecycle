@@ -1562,15 +1562,6 @@ amended-done-criterion: 2026-09-24 A pre-registered measurement of whether drift
 amended-evidence: 2026-09-24 OPERATOR CORRECTION 2026-09-24, RELAYED by lifecycle-64 (testimony; the operator can confirm first-hand): window LENGTH as the drift cause is not established, killing a running session costs in-flight continuity, and the proposal is a main session with subagents and/or peer sessions instead. lifecycle-64 grading: purpose.md blames the acting frame self-blindness, not length; governance-decay (rule absent from context raises violations) argues for more context present, not less; the residual lanes do not fix is main-desk frame-lock, so outside-reader seams on the MAIN desk are the load-bearing half.
 amended-blocked-by: 2026-09-24 decision does the drift probe carry the acting-frame-architecture stratification
 
-## lc-287
-grade: READY
-requirement: Refocus round R1: an act never surfaces a kind the acting verb is itself a declared reader of (377 of 379 surfacings in this repo were that tautology). Tier-2 surfacing, the counter and lc-276 falsifier stay. Record: docs/directives/2026-09-24-refocus-design-round.md section 0.1, R1, judge ruling 1.
-goal: lean-machinery-strict-checks
-write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py,test/
-done-criterion: A kind K is not surfaced (no due read line, no surfaced= token) when the declaration lists verb:<act> among K readers; arc open still surfaces arc index (positive control); kind moments derivation unchanged. Verifier: red-first test on item check surfacing items (red before, absent after) with the arc open control green both sides.
-evidence: MEASURED at desk d9 2026-09-24: fire.jsonl joined with .claude/lifecycle.json readers, 377 of 379 kind-surfacings came from a declared reader verb of that kind; the other 2 are arc open surfacing arc index.
-blocked-by: NONE
-
 ## lc-288
 grade: READY
 requirement: Refocus round R3: move the drift treatment arm trigger from the brief directive to the verbs. item close, arc advance and arc narrow print the live goal immediately before recording their already-required prose, and their fire line gains goal-seam=<seam>. No new flag, slot or schema. Record: docs/directives/2026-09-24-refocus-design-round.md R3, judge ruling 2; LEDGER.md:130 arm unchanged.

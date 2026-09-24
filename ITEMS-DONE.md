@@ -1929,5 +1929,16 @@ blocked-by: NONE
 closed-reason: 2026-09-24 2026-09-24 closure_home_split compares posixpath.normpath of both spellings; the row's control is now the ./-spelled declaration (it previously never exercised the compare); prove-rows anchor re-synced per lc-30. Red-first re-run at the desk on the pre-change tree.
 closed-ref: d6b9f8f, 8a2ffb1
 
+## lc-287
+grade: DONE
+requirement: Refocus round R1: an act never surfaces a kind the acting verb is itself a declared reader of (377 of 379 surfacings in this repo were that tautology). Tier-2 surfacing, the counter and lc-276 falsifier stay. Record: docs/directives/2026-09-24-refocus-design-round.md section 0.1, R1, judge ruling 1.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py,test/
+done-criterion: A kind K is not surfaced (no due read line, no surfaced= token) when the declaration lists verb:<act> among K readers; arc open still surfaces arc index (positive control); kind moments derivation unchanged. Verifier: red-first test on item check surfacing items (red before, absent after) with the arc open control green both sides.
+evidence: MEASURED at desk d9 2026-09-24: fire.jsonl joined with .claude/lifecycle.json readers, 377 of 379 kind-surfacings came from a declared reader verb of that kind; the other 2 are arc open surfacing arc index.
+blocked-by: NONE
+closed-reason: 2026-09-24 desk-verified: suite 1074 OK 0 skipped, --test 128/128, prove-rows 108 PROVEN 0 FAILED at c7fa13c; live item check prints no items notice; arc open control kept; the pinning tier-1 test was inverted in place
+closed-ref: 244d1e4
+
 ## Archive (pre-migration)
 
