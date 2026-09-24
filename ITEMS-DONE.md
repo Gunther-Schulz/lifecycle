@@ -1903,5 +1903,20 @@ blocker-moot: lc-56 (the blocker closed before this item did)
 closed-reason: 2026-09-24 2026-09-24 --no-commit on every ledger add leaf and the 9 arc line verbs, wired to commit_paths' existing skip branch; arc open/close excluded. Lane's counting red (flag accepted, skip un-wired: 15 red) reported, not re-run at the desk; desk re-ran the pre-change tree (argparse-rejection errors, the non-counting red). Suite 1054 OK, --test 128/128, prove-rows 107 held.
 closed-ref: db08197
 
+## lc-279
+grade: DONE
+requirement: A command GROUP passes as a verb: trigger: verb item (and lane, kind) and reader verb:item read CLEAN, while lifecycle item alone is COULD NOT VERIFY (needs an action) - so a WHEN nothing will ever fire reads as reachable, which trigger_verb_unknown and dangling_reference both claim to refuse. Record: lc-268 review (opus, 2026-09-24, pinned a011b01), defect D1; declaration.py _verb_exists and cli_verbs (per the review, read not executed).
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_declaration.py
+done-criterion: A trigger or verb: reader naming a command group that is not itself executable fires trigger_verb_unknown / dangling_reference, the message saying the name is a GROUP and listing its actions; a full verb path stays clean. trigger_verb_unknown gains a prove-rows arrangement (it has none) admitted on a pair. Verifier: the review plant (trigger: verb item) fires; control (verb item check) clean; red-first. Must-not-move: existing full-path triggers.
+evidence: MEASURED at the desk 2026-09-24 with the roster fixtures: _decl_run with trigger verb item -> exit 0, no finding; control verb item clsoe -> exit 2 FINDING [trigger_verb_unknown]. RELAYED from the review: reader verb:item and verb:lane also CLEAN; lifecycle item prints COULD NOT VERIFY needs an action.
+blocked-by: NONE
+not-derivable: 2026-09-24 the lc-268 review searched the declaration design and ledger for a ruling on group-level triggers and found none; the desk grep of LEDGER.md for group trigger returns nothing.
+amend-reason: 2026-09-24 2026-09-24 the fix turns this repo's own declaration into findings (kinds 'ledger lines' and 'arcs' name the command groups 'ledger add' and 'arc'); the operator's ruling leaves no exemption, so the declaration moves with the predicate (law 24, must-move-with; judgment desk d9 ruling, peer desk b4)
+amended-write-set: 2026-09-24 plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_declaration.py,.claude/lifecycle.json
+blocker-moot: is a command-group trigger ever legal, or always a finding (answered in the ledger before this item closed)
+closed-reason: 2026-09-24 2026-09-24 one arbitrary-depth predicate (_verb_lookup) answers leaf/group/unknown at the trigger and verb: reader sites; a GROUP fires trigger_verb_unknown / dangling_reference naming its actions; trigger_verb_unknown gained a prove-rows arrangement admitted on the lc-142 pair. Must-move-with f89c60d: this repo's own ledger lines / arcs kinds now name leaves, cli_verbs walks every depth. kind check CLEAN on main; suite 1066 OK 0 skipped; --test CLEAN; red-first re-run at the desk on the pre-change tree.
+closed-ref: f4e26a0, f89c60d
+
 ## Archive (pre-migration)
 
