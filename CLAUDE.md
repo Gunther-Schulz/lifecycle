@@ -134,6 +134,13 @@ journal pointer is where the incident lives.
     convention — §3.8b's homes table row for plugin-cache versions — rather
     than an incident earned in this repo. A fabricated pointer would be
     worse than the gap; left uncited until a real incident earns one.)
+    **MEASURED FALSE 2026-09-24, and that is its first incident:** on the
+    building machine the plugin is NOT installed (`installed_plugins.json`
+    carries no lifecycle entry) and `lifecycle` resolves on no PATH; the
+    only places holding the CLI's path are dotfiles' `session-scan.py` and
+    `dot`. Two CachyOS-Setup sessions each re-derived the path by hand the
+    same day, and one shipped carrier edits with the check unverified.
+    Repair and the law's rewording: lc-273.
 14. **`ITEMS.md` carries a schema line**; the tool refuses above its floor.
     (J8)
 15. **Every registered kind declares all its stages**, including the ones a
