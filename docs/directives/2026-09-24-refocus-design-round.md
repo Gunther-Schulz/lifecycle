@@ -322,3 +322,11 @@ the operator's own delegated ruling.
      own numbered question.
    - The `probe:` slot stays deferred.
    - R3 and R7 already satisfy the bar.
+
+**Ruling 3 sharpened (judge lifecycle-64, 2026-09-24, prompted by the first
+live fire).** The over-fire replay reports, PER FIRE, the tokens that carried
+the match. Matches carried by boilerplate tokens alone (session names, role
+words) are then countable as their own class. If that class dominates, the
+repair is a stop-list or weighting at the comparator (law 26), never a
+softened threshold (law 11). The ship condition is otherwise unchanged. The
+desk runs this attribution replay itself over the landed matcher.
