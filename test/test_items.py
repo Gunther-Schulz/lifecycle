@@ -716,6 +716,108 @@ class BlockerTargets(unittest.TestCase):
                       "population it read")
 
 
+class BlockerUntypedNoneSynonym(unittest.TestCase):
+    """lc-266 — an untyped `blocked-by` value that SPELLS "nothing here"
+
+    (`nothing`, `none` in any case, `n/a`, a bare dash) gets the one-token
+    repair `NONE` named in its `blocker_untyped` finding, at BOTH doors:
+    `item check` (`items.check_blocker_targets`) and the write path
+    (`verbs._check_blocker`, reached here through `item add`). Any OTHER
+    untyped value — the roster's own `we should think about it` plant —
+    keeps today's text unchanged; that is the control every arm below runs
+    beside its synonym arm, never assumed alone.
+    """
+
+    # --- the `item check` door ---------------------------------------------
+
+    def _check(self, blocked_by):
+        text = GOOD_ITEMS.replace("blocked-by: NONE",
+                                  f"blocked-by: {blocked_by}")
+        live = items.parse(text)
+        buf = []
+        code = items.check_blocker_targets(live, items.parse(EMPTY_DONE),
+                                           buf.append, "", prefix="xx")
+        return code, "\n".join(buf)
+
+    def test_check_door_names_the_repair_for_nothing(self):
+        code, out = self._check("nothing")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[blocker_untyped]", out)
+        self.assertIn("blocked-by: NONE", out)
+
+    def test_check_door_is_case_blind_and_takes_every_dash_glyph(self):
+        for value in ("None", "NoNe", "n/a", "N/A", "-", "–", "—"):
+            code, out = self._check(value)
+            self.assertEqual(code, exits.FINDING, f"{value!r}: {out}")
+            self.assertIn("blocked-by: NONE", out, f"{value!r}")
+
+    def test_check_door_control_keeps_todays_text_unchanged(self):
+        code, out = self._check("we should think about it")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[blocker_untyped]", out)
+        self.assertNotIn("blocked-by: NONE", out)
+        self.assertIn("reached the file by a path that did not pass it", out)
+
+    # --- the write-path door, reached through `item add` -------------------
+
+    def _repo(self, **kw):
+        r = refusals._Repo(**kw)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        here = os.getcwd()
+        try:
+            os.chdir(str(repo.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        finally:
+            os.chdir(here)
+        return code, buf.getvalue()
+
+    def _add(self, blocked_by):
+        return [
+            "item", "add",
+            "--requirement", "the deploy roster is hand-checked — LEDGER.md",
+            "--goal", "verify",
+            "--write-set", "tools/thing.py",
+            "--done-criterion", "the roster is declared, not hand-checked",
+            "--evidence", "MEASURED at the drainage desk",
+            "--absence", "the realizing write is another desk's",
+            "--blocked-by", blocked_by,
+        ]
+
+    def test_write_path_door_names_the_repair_for_nothing(self):
+        repo = self._repo()
+        code, out = self._run(repo, *self._add("nothing"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[blocker_untyped]", out)
+        self.assertIn("blocked-by: NONE", out)
+
+    def test_write_path_door_control_keeps_todays_text_unchanged(self):
+        repo = self._repo()
+        code, out = self._run(repo, *self._add("we should think about it"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[blocker_untyped]", out)
+        self.assertNotIn("blocked-by: NONE", out)
+        self.assertIn("is not a typed blocker", out)
+
+    def test_must_not_move_still_one_row_same_exit_code(self):
+        """MUST-NOT-MOVE: the finding stays `blocker_untyped`, one row,
+
+        `exits.FINDING` — never a new row, never a different code for the
+        synonym case."""
+        repo = self._repo()
+        code, out = self._run(repo, *self._add("nothing"))
+        self.assertEqual(code, exits.FINDING)
+        self.assertEqual(out.count("[blocker_untyped]"), 1, out)
+
+
 def _done_home_holding(ident, grade):
     """The done home with one closed body at the named GRADE.
 

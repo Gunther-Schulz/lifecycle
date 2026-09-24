@@ -1263,6 +1263,49 @@ def blocker_types_rendered(prefix: str | None) -> str:
     return ", ".join(blocker_type_spellings(prefix))
 BLOCKER_NONE = "NONE"
 
+#: A dash by itself, whatever glyph a hand-typed value used: plain hyphen,
+#: en dash, em dash. `is_blocker_none_synonym` treats all three the same,
+#: since a keyboard or an editor's autocorrect picks whichever one it likes.
+_BLOCKER_NONE_DASHES = ("-", "–", "—")
+
+
+def is_blocker_none_synonym(value: str) -> bool:
+    """Whether an UNTYPED `blocked-by` value SPELLS "nothing here" rather
+
+    than a genuinely unrecognised edge (lc-266). `classify_blocker` already
+    resolves the one true spelling, `NONE`, to the `"none"` type — this is
+    only ever asked about a value it left untyped. Case-blind, so `None`,
+    `NONE` written with a stray lowercase letter, and `n/a` all count; the
+    dash form takes a plain hyphen, an en dash or an em dash.
+
+    ONE FUNCTION, because it is called from both doors that refuse an
+    untyped blocker (`items.check_blocker_targets`, `verbs._check_blocker`)
+    and a second spelling of "reads as nothing" would drift from the first
+    exactly where it matters — the two doors disagreeing about which values
+    get the repair token.
+    """
+    v = (value or "").strip()
+    if not v:
+        return False
+    if v.lower() in ("nothing", "none", "n/a"):
+        return True
+    return v in _BLOCKER_NONE_DASHES
+
+
+#: The shared clause naming the repair for a NONE-synonym untyped value
+#: (lc-266), interpolated by both doors rather than spelled twice. It
+#: replaces the bypass-implying "reached the file by a path that did not
+#: pass it" framing for exactly this case: the two causes it cannot tell
+#: apart are a hand edit AROUND the door and an author with no access to
+#: the door at all, and naming only the first would accuse the second.
+BLOCKER_UNTYPED_SYNONYM_CLAUSE = (
+    "reads as \"nothing here\" but is not the one token the vocabulary "
+    "accepts for it — the repair is `blocked-by: NONE`. Either a hand "
+    "edit landed near the door instead of through it, or this came from "
+    "an author with no access to the door at all; the text does not say "
+    "which."
+)
+
 
 def classify_blocker(value: str, prefix: str | None):
     """`(type, detail)` — type in BLOCKER_TYPES, `"none"`, or None (untyped).
@@ -1840,6 +1883,17 @@ def check_blocker_targets(items_parsed: Parsed, done_parsed: Parsed | None,
         # path emits for the same input (`verbs._check_blocker`), reached by
         # the other door. A second row for one refusal would need its own
         # plant and control to say anything the first does not.
+        if is_blocker_none_synonym(raw):
+            # lc-266: a NONE-synonym gets the repair token instead of the
+            # bypass-implying framing below — "today's text" is kept for
+            # every OTHER untyped value, unchanged.
+            out(f"FINDING [blocker_untyped] line {it.line}: block "
+                f"{it.ident!r} is blocked by {raw!r}, which "
+                f"{BLOCKER_UNTYPED_SYNONYM_CLAUSE} It is a permanent silent "
+                "park either way: the block reads as blocked and never "
+                "surfaces in `item ready`, and nothing resolves a wait "
+                "nobody can type.")
+            continue
         out(f"FINDING [blocker_untyped] line {it.line}: block {it.ident!r} is "
             f"blocked by {raw!r}, which is not one of the closed edge types "
             f"({blocker_types_rendered(prefix)}, "

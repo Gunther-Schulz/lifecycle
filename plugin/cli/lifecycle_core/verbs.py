@@ -1124,6 +1124,12 @@ def _check_blocker(value: str, ctx: Ctx, parsed, done_parsed, done_why, out,
         judgment_detail = "blocker_untyped"
         firelog.fire("item blocker-untyped", repo=str(ctx.repo),
                      outcome=exits.FINDING, detail=judgment_detail)
+        if items_mod.is_blocker_none_synonym(value):
+            # lc-266: same repair-token clause as the `item check` door —
+            # every OTHER untyped value keeps the text below, unchanged.
+            out(f"FINDING [blocker_untyped] `--blocked-by {value!r}` "
+                f"{items_mod.BLOCKER_UNTYPED_SYNONYM_CLAUSE}")
+            return exits.FINDING
         out(f"FINDING [blocker_untyped] `--blocked-by {value!r}` is not a "
             f"typed blocker. The edge types are closed (§3.1): "
             f"{items_mod.blocker_types_rendered(ctx.prefix)}, or NONE. Prose "
