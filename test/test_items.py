@@ -2531,6 +2531,33 @@ class DecisionBlockerDerivabilityIsPersisted(unittest.TestCase):
                          f"the slot was accepted on a NONE blocker.\n{out}")
         self.assertIn("not_derivable_misplaced", out, out)
 
+    def _closed(self, moot):
+        """A DONE body as `item close` leaves a decision-blocked one: the base
+        blocker cleared to NONE, the statement kept, the moot record last."""
+        return (f"schema: {items.SCHEMA_FLOOR}\n\n" + DONE_BLOCK
+                + f"{self.SLOT}: {self.WHY}\nblocker-moot: {moot}\n")
+
+    def test_a_CLOSED_decision_keeps_its_statement_legally(self):
+        """lc-269, THE RED: a close moots the `decision` blocker and clears
+        `blocked-by:` to NONE, and the kept statement was then graded against
+        NONE — so every decision-blocked item carrying one was unclosable
+        (measured on lc-261, move left uncommitted). The moot record IS the
+        decision blocker the statement belongs beside."""
+        q = self.Q.split(" ", 1)[1]
+        for moot in (q, items.decision_moot_record(q)):
+            code, out = run_done_check(self._closed(moot))
+            self.assertNotIn("not_derivable_misplaced", out,
+                             f"moot record {moot!r}:\n{out}")
+
+    def test_an_ITEM_moot_record_still_refuses_the_statement(self):
+        """CONTROL: only a `decision` blocker asks a question. An item-id
+        blocker a close mooted never had one, so the statement beside its
+        record still fires — the widening is one blocker type, not 'any moot
+        line clears the slot'."""
+        code, out = run_done_check(
+            self._closed(items.item_moot_record("xx-9", abandoned=False)))
+        self.assertIn("not_derivable_misplaced", out, out)
+
     def test_UNKNOWN_does_not_un_READY_a_migrated_item(self):
         """MUST-NOT-MOVE, measured: 16 READY items carry a decision blocker."""
         code, out = run_check(self._block(self.Q, items.UNKNOWN))

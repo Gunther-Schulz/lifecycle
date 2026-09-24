@@ -268,9 +268,13 @@ MUTATIONS = [
     # which is the staleness half of the anchor rule working: an arrangement
     # whose source moved under it is a finding about THIS file, never a row
     # that stopped discriminating.
+    # RE-POINTED AGAIN 2026-09-24: the intersection moved into
+    # `_ids_in_both_homes`, shared with `duplicate_ident_count` (lc-267's
+    # count). Mutating the helper would also blank the number the OVER
+    # message subtracts, so the anchor is the FINDING site's own call —
+    # scoped to this row, the count left reading real input (lc-30's rule).
     ("duplicate_id_cross_home", "items.py",
-     "    both = [(ident, live[ident], line)\n"
-     "            for ident, line in done_side if ident in live]",
+     "    both = _ids_in_both_homes(items_parsed, done_parsed)",
      "    both = []",
      "the cross-home id intersection, over the done home AND its archive"),
 

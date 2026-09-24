@@ -1874,6 +1874,12 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
     if kind == "none":
         return "UNBLOCKED — no blocker recorded.", exits.CLEAN, ""
     if kind is None:
+        if items_mod.is_blocker_none_synonym(value):
+            # lc-266's THIRD door: the same clause both refusing doors print,
+            # here where the untyped blocker is read most.
+            return (f"FINDING [blocker_untyped] {value.strip()!r} "
+                    f"{items_mod.BLOCKER_UNTYPED_SYNONYM_CLAUSE}"),\
+                exits.FINDING, ""
         return ("FINDING [blocker_untyped] the blocker is prose, not a typed "
                 "edge, so nothing can re-evaluate it."), exits.FINDING, ""
     if kind == "external":

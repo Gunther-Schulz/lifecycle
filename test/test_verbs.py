@@ -1241,6 +1241,48 @@ class DecisionBlockerAtClose(unittest.TestCase):
         self.assertIn(ledger.moot_answer("xx-1"), c["LEDGER.md"],
                       c["LEDGER.md"])
 
+    def test_a_decision_with_a_DERIVABILITY_statement_is_closable(self):
+        """lc-269, end to end — the case measured on lc-261: the close wrote
+        a body its own commit gate refused (`not_derivable_misplaced`), and
+        the move stayed on disk uncommitted. The statement is history the
+        closure keeps, so it must survive the move AND commit."""
+        body = (refusals._blocked_block("xx-1", "READY",
+                                        f"decision {self.QUESTION}")
+                + "not-derivable: 2026-09-24 no ledger precedent names it\n")
+        r = refusals._Repo(items=("schema: 2\nbaseline: 1\nadded: 0\n"
+                                  "compacted: 0\n" + body))
+        self.addCleanup(r.close)
+        code, out = self._run(r, "item", "close", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("move_uncommitted", out, out)
+        done = self._carriers(r)["ITEMS-DONE.md"]
+        self.assertIn("not-derivable: 2026-09-24", done, done)
+        self.assertIn(f"blocker-moot: {self.QUESTION}\n", done, done)
+        # THE GATE THAT REFUSED IT is the repo's pre-commit hook, which this
+        # fixture repo does not install — so the close alone exits CLEAN here
+        # either way (measured: this test passed pre-fix without the lines
+        # below). `item check` grades both homes with the same shape check
+        # the hook runs, and is what discriminates.
+        code, out = self._run(r, "item", "check")
+        self.assertNotIn("not_derivable_misplaced", out, out)
+
+    def test_item_ready_names_the_NONE_repair_for_a_synonym(self):
+        """lc-266's THIRD door, found by its lane and not in its criterion:
+        `item ready`'s per-item render (`_blocker_state`) is where the
+        untyped blocker is READ most, and it offered no repair. Paired with a
+        prose blocker that must keep today's text."""
+        def ready(blocker):
+            r = refusals._Repo(items=(
+                "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n"
+                + refusals._blocked_block("xx-1", "READY", blocker)))
+            self.addCleanup(r.close)
+            return self._run(r, "item", "ready", "xx-1")[1]
+        out = ready("nothing")
+        self.assertIn("blocked-by: NONE", out, out)
+        out = ready("waiting on the vendor")
+        self.assertIn("the blocker is prose", out, out)
+        self.assertNotIn("blocked-by: NONE", out, out)
+
     def test_ANOTHER_items_moot_line_is_not_an_answer_here(self):
         """MUST-NOT-MOVE over the G4 scoping. A moot line says the question
         died with ONE item; read as an answer it would clear every other item

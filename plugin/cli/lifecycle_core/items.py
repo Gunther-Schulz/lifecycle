@@ -1040,6 +1040,16 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
             continue
         kind_, _detail = classify_blocker(item.slots.get("blocked-by", ""),
                                           None)
+        # A CLOSED BODY'S DECISION BLOCKER LIVES IN ITS MOOT RECORD (lc-269).
+        # `item close` clears `blocked-by:` to NONE and writes the mooted
+        # decision as `blocker-moot:`, so grading the kept `not-derivable:`
+        # against NONE refused the very body the close had just written —
+        # every decision-blocked item carrying a statement was unclosable.
+        # Only a moot record that is not an item-id one stands for a decision.
+        moot = item.slots.get("blocker-moot")
+        if (kind_ in (None, "none") and moot and want == "decision"
+                and not is_item_moot_record(moot)):
+            kind_ = "decision"
         if kind_ != want:
             out.problems.append((
                 row, item.line,
@@ -1767,11 +1777,27 @@ def duplicate_ident_count(items_parsed: Parsed, done_parsed: Parsed | None) -> i
     """
     if done_parsed is None:
         return 0
-    live = {it.ident for it in items_parsed.items}
-    done_side = ({d.ident for d in done_parsed.items}
-                 | {ident for ident, _line
-                    in getattr(done_parsed, "archive_idents", ())})
-    return len(live & done_side)
+    return len({ident for ident, _l, _d
+                in _ids_in_both_homes(items_parsed, done_parsed)})
+
+
+def _ids_in_both_homes(items_parsed: Parsed, done_parsed: Parsed) -> list:
+    """`(ident, live_line, done_line)` for every done-side entry whose id is
+    also live — the ONE computation behind `check_move_integrity`'s findings
+    and `duplicate_ident_count`'s number, so the finding and the count the
+    OVER message subtracts cannot disagree about what a duplicate is."""
+    live = {it.ident: it.line for it in items_parsed.items}
+    # THE ARCHIVE REGION COUNTS HERE TOO (lc-177). This check read
+    # `done_parsed.items`, which stops at the archive heading — so an id in
+    # the live carrier AND in an archived body printed
+    # `move integrity: CLEAN — no id in both homes`, a clean line over a
+    # region the verb never parsed. That is lc-172's rule at a site lc-172
+    # did not reach, which is why the CLEAN line below now states the
+    # archived count rather than implying the done count is the whole file.
+    done_side = ([(d.ident, d.line) for d in done_parsed.items]
+                 + list(getattr(done_parsed, "archive_idents", ())))
+    return [(ident, live[ident], line)
+            for ident, line in done_side if ident in live]
 
 
 def check_move_integrity(items_parsed: Parsed, done_parsed: Parsed | None,
@@ -1791,18 +1817,8 @@ def check_move_integrity(items_parsed: Parsed, done_parsed: Parsed | None,
         out("COULD NOT VERIFY: the done home could not be read, so an id "
             f"present in both homes would not be seen. {done_unreadable or ''}")
         return exits.COULD_NOT_VERIFY
-    live = {it.ident: it.line for it in items_parsed.items}
-    # THE ARCHIVE REGION COUNTS HERE TOO (lc-177). This check read
-    # `done_parsed.items`, which stops at the archive heading — so an id in
-    # the live carrier AND in an archived body printed
-    # `move integrity: CLEAN — no id in both homes`, a clean line over a
-    # region the verb never parsed. That is lc-172's rule at a site lc-172
-    # did not reach, which is why the CLEAN line below now states the
-    # archived count rather than implying the done count is the whole file.
-    done_side = ([(d.ident, d.line) for d in done_parsed.items]
-                 + list(getattr(done_parsed, "archive_idents", ())))
-    both = [(ident, live[ident], line)
-            for ident, line in done_side if ident in live]
+    live = {it.ident for it in items_parsed.items}
+    both = _ids_in_both_homes(items_parsed, done_parsed)
     for ident, live_line, done_line in both:
         out(f"FINDING [duplicate_id] id {ident!r} is in BOTH homes — live at "
             f"line {live_line}, done at line {done_line}. This is DUPLICATE "
@@ -2695,6 +2711,23 @@ def item_moot_record(ident: str, *, abandoned: bool) -> str:
     """
     shape = _ITEM_MOOT_ABANDONED if abandoned else _ITEM_MOOT_ANSWERED
     return shape.format(ident=ident)
+
+
+def is_item_moot_record(moot: str) -> bool:
+    """Is `moot` one of `item_moot_record`'s two shapes, for any id?
+
+    Read off the two templates rather than spelled a second time, so the
+    shape `verbs.cmd_item_close` writes and the shape recognised here have one
+    producer. Only `decision` and item-id blockers are ever mooted by a close
+    (the docstring at `verbs.move_to_done`'s caller), so a `blocker-moot:`
+    line that is NOT this shape records a mooted `decision` blocker (lc-269).
+    """
+    m = (moot or "").strip()
+    for shape in (_ITEM_MOOT_ANSWERED, _ITEM_MOOT_ABANDONED):
+        tail = shape.format(ident="")
+        if m.endswith(tail) and m[:-len(tail)] and " " not in m[:-len(tail)]:
+            return True
+    return False
 
 
 #: THE `blocker-moot:` RECORD FOR A `decision` BLOCKER THE LEDGER ALREADY
