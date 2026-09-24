@@ -1494,15 +1494,6 @@ done-criterion: A record carrying a `## CLOSED` heading is graded ONLY by the cl
 evidence: MEASURED 2026-09-24: after appending ## CLOSED with graduation pointers to lifecycle--answerable-arc-build.md and lifecycle--answerable-arc-design-round.md, record check still printed record_line_untagged (34 lines) and record_slot_missing for them; 11 findings across 9 records before and after. records.py grade path runs every shape finding before the CLOSED_SLOT branch, which adds only the two closure findings.
 blocked-by: NONE
 
-## lc-273
-grade: READY
-requirement: The `lifecycle` CLI resolves on no PATH and the plugin is not installed, so a session in any governed repo other than this one cannot run a verb without already knowing the dev checkout path: `command -v lifecycle` fails, `installed_plugins.json` has no lifecycle entry, and the path lives only in dotfiles `claude/hooks/session-scan.py:211` and `dot` (`manifest.lifecycle_cli()`). Law 13 of this repo claimed the opposite. Record: discovery lane sonnet-cs-discovery 2026-09-24 over CachyOS-Setup sessions bad016d0 and 3d4ee9d2; CLAUDE.md law 13 (corrected in place the same day).
-goal: enforce-the-invariants
-write-set: CLAUDE.md,dotfiles:dot,dotfiles:claude/hooks/session-scan.py
-done-criterion: In a fresh shell on this machine, `lifecycle --help` resolves by name from any directory (a PATH entry laid down by the machine's own deploy, `./dot apply`, derived from the same `manifest.lifecycle_cli()` the banner uses so there is one source of the path), and `./dot apply`'s doctor reports it drifted when the link is missing. Law 13 is reworded to state the deployment that actually exists, with a journal pointer. Verifier: `env -i HOME=$HOME PATH=<the login PATH> zsh -lc 'command -v lifecycle && lifecycle item check --repo <CachyOS-Setup>'` resolves and runs; red first on today's machine (command -v fails). Must-not-move: the banner hook's own invocation.
-evidence: MEASURED 2026-09-24 at this desk: command -v lifecycle claude-lifecycle -> rc 1 (control: command -v git resolves); grep lifecycle installed_plugins.json -> 0 of 9 installed plugins; session-scan.py:211 holds the hardcoded path. RELAYED from the discovery lane with verbatim excerpts: bad016d0 spent ~5 calls hunting and shipped carrier edits unverified; 3d4ee9d2 spent ~5-6 calls and found the path by grepping the hook source.
-blocked-by: NONE
-
 ## lc-274
 grade: READY
 requirement: The amendment and promotion date refusal (`item_shape`, items.py around the two `does not open with its ISO date` sites) states a false reason for a common near-miss: `2026-09-21, operator testimony ...` DOES open with its ISO date and fails only on the comma, yet the message says the date is missing and never states the accepted shape, and no repair verb covers the class. A session facing five of these on cs-63 gave up rather than guess the format. Record: CachyOS-Setup session 3d4ee9d2, 2026-09-24 ~10:24-10:48Z, via the discovery lane; regex `_AMEND_VALUE` verified at this desk.

@@ -1820,5 +1820,16 @@ blocker-moot: spend an opus review lane on the Lane 2 lens (answered in the ledg
 closed-reason: 2026-09-24 Lane 2 run at a011b01 by an opus read-only review lane; heading names the sha; per-row table covers exactly the 128 rows --test --list prints (desk set comparison: 0 missing, 0 extra); Lane 1 untouched. Result 47 reach / 60 axis / 21 no-proof; defects D1, D2 reproduced at the desk and booked lc-279, lc-280.
 closed-ref: 61b7d8d
 
+## lc-273
+grade: DONE
+requirement: The `lifecycle` CLI resolves on no PATH and the plugin is not installed, so a session in any governed repo other than this one cannot run a verb without already knowing the dev checkout path: `command -v lifecycle` fails, `installed_plugins.json` has no lifecycle entry, and the path lives only in dotfiles `claude/hooks/session-scan.py:211` and `dot` (`manifest.lifecycle_cli()`). Law 13 of this repo claimed the opposite. Record: discovery lane sonnet-cs-discovery 2026-09-24 over CachyOS-Setup sessions bad016d0 and 3d4ee9d2; CLAUDE.md law 13 (corrected in place the same day).
+goal: enforce-the-invariants
+write-set: CLAUDE.md,dotfiles:dot,dotfiles:claude/hooks/session-scan.py
+done-criterion: In a fresh shell on this machine, `lifecycle --help` resolves by name from any directory (a PATH entry laid down by the machine's own deploy, `./dot apply`, derived from the same `manifest.lifecycle_cli()` the banner uses so there is one source of the path), and `./dot apply`'s doctor reports it drifted when the link is missing. Law 13 is reworded to state the deployment that actually exists, with a journal pointer. Verifier: `env -i HOME=$HOME PATH=<the login PATH> zsh -lc 'command -v lifecycle && lifecycle item check --repo <CachyOS-Setup>'` resolves and runs; red first on today's machine (command -v fails). Must-not-move: the banner hook's own invocation.
+evidence: MEASURED 2026-09-24 at this desk: command -v lifecycle claude-lifecycle -> rc 1 (control: command -v git resolves); grep lifecycle installed_plugins.json -> 0 of 9 installed plugins; session-scan.py:211 holds the hardcoded path. RELAYED from the discovery lane with verbatim excerpts: bad016d0 spent ~5 calls hunting and shipped carrier edits unverified; 3d4ee9d2 spent ~5-6 calls and found the path by grepping the hook source.
+blocked-by: NONE
+closed-reason: 2026-09-24 Link row in dotfiles bootstrap/manifest.py (bfac708), sourced from lifecycle_cli(); red-first doctor 'deployed link missing', then 'deployed link in place'; lifecycle resolves by name in a fresh login zsh from /tmp (ran item check on CachyOS-Setup) and in fish; ./dot test all passed. Link laid down by hand identical to the row (full ./dot apply not run: it also updates plugins, the operator's act). Law 13 reworded. session-scan.py keeps its own literal (must-not-move: the banner's invocation).
+closed-ref: 0d38586
+
 ## Archive (pre-migration)
 
