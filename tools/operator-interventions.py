@@ -219,6 +219,15 @@ COMMAND_ECHO_PREFIXES = ("<local-command-stdout>", "<local-command-caveat>")
 COMMAND_NAME_WRAPPER_PREFIXES = ("<command-name>", "<command-message>")
 BARE_SLASH_COMMAND_RE = re.compile(r"/[A-Za-z0-9_-]+(?:\s+\S.*)?$", re.DOTALL)
 
+# lc-161 baseline, desk d9 (2026-09-24), from the stage-2 lane's gap 1: the
+# dotfiles route-gauge-reminder hook (a prompt-type hook grading the
+# assistant's OWN reply) lands as plain type:"user" text ending in this
+# sentence. 277 of stage1b's 1930 "operator" messages were this gate; it
+# is harness, never the operator. And a peer message can arrive bare as
+# "<cross-session-message ...>" with no relay prefix (1 residual row).
+ROUTE_GATE_SUFFIX = "Answer YES or NO on the first line."
+PEER_WRAPPER_PREFIX = "<cross-session-message"
+
 
 def classify_user_text(text: str) -> str:
     """"operator" | "command" | "peer" | "harness" for a type:"user" event's
@@ -230,8 +239,10 @@ def classify_user_text(text: str) -> str:
     interrupted markers, and a local command's own stdout/caveat echo —
     none of these carry any operator content (lc-161 stage 2 finding)."""
     t = text.lstrip()
-    if t.startswith(RELAY_TEXT_PREFIX):
+    if t.startswith(RELAY_TEXT_PREFIX) or t.startswith(PEER_WRAPPER_PREFIX):
         return "peer"
+    if t.rstrip().endswith(ROUTE_GATE_SUFFIX):
+        return "harness"
     if any(t.startswith(p) for p in HARNESS_TEXT_PREFIXES):
         return "harness"
     if t.startswith(COMPACTION_CONTINUATION_PREFIX):
