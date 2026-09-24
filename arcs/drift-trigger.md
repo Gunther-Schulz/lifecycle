@@ -7,3 +7,4 @@ narrowing: eliminative — nothing recorded yet
 premises: none recorded yet
 beliefs: none recorded yet
 yield: nothing produced yet
+premise: P1 2026-09-24 The probe design and its pre-registered criterion - docs/audits/2026-09-20-direction-drift-trigger-probe-design.md.
