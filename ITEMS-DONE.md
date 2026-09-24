@@ -1866,5 +1866,16 @@ amended-write-set: 2026-09-24 plugin/cli/lifecycle_core/items.py,plugin/cli/life
 closed-reason: 2026-09-24 2026-09-24 census splits stated / ANSWERED by the ledger (item ready's resolver) / unstated, and names normalised near-matches without resolving them. Red-first at the desk; suite 1041 OK, --test 128/128; live 22/11/0.
 closed-ref: e453c42
 
+## lc-286
+grade: DONE
+requirement: Every fire-log line names the session that wrote it (refocus round R2): the O6 counter could not attribute a single record, and two instruments over one window disagreed 114 vs 129 with no way to settle it. Record: docs/directives/2026-09-24-refocus-design-round.md section 0.2 and judge ruling 1.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/firelog.py,plugin/cli/lifecycle_core/desk.py,test/test_fire_session.py
+done-criterion: fire() writes session=<CLAUDE_CODE_SESSION_ID> or session=absent, never omitted; one env-name constant shared with desk.resolve_desk_id. Verifier: test_fire_session red on an assertion (not an import error) before the wiring, green after; a live verb run writes the key.
+evidence: MEASURED at desk d9 2026-09-24: firelog.fire wrote at/verb/repo/outcome/detail only (firelog.py:51-71 before the change).
+blocked-by: NONE
+closed-reason: 2026-09-24 fire lines carry session=<id> or session=absent; red-first on assertions, suite 1044 OK 0 skipped, --test CLEAN, live line verified
+closed-ref: 98fc752
+
 ## Archive (pre-migration)
 
