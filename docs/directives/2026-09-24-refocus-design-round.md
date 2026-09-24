@@ -330,3 +330,19 @@ words) are then countable as their own class. If that class dominates, the
 repair is a stop-list or weighting at the comparator (law 26), never a
 softened threshold (law 11). The ship condition is otherwise unchanged. The
 desk runs this attribution replay itself over the landed matcher.
+
+**R7 ruling: REPAIR FIRST (judge lifecycle-64, 2026-09-24).**
+- The repair is at the comparator: a per-corpus document-frequency cap for
+  decision questions, plus identifier stripping. Never MATCH_MIN_TOKENS.
+- The populations are PINNED BY IDENTITY from the pre-repair replay (matcher
+  at `1ad96e5`, LEDGER.md decisions each against those before it):
+  `docs/audits/2026-09-24-lc289-replay-pinned.jsonl`.
+  - 50 fires: STRONG 11 (best match has 4 or more shared tokens), WEAK 30
+    (exactly 2), MIDDLE 9 (3).
+  - Identity is the (fire line, best-match line) pair. LEDGER.md is
+    append-only, so those line numbers are stable.
+- PASS: the repaired matcher keeps all 11 STRONG and drops at least 20 of the
+  30 WEAK, with the K-sweep reported. Shipping also needs the rate and per-fire
+  attribution, the red-first plant, and the lane report plus prove-rows green.
+- FAIL: the gate is withdrawn, lc-289 closes DROPPED, and the narrow freeze
+  exit ends.

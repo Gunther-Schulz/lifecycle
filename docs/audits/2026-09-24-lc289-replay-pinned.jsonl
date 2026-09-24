@@ -1,0 +1,50 @@
+{"cls": "WEAK", "fire": 33, "best": 24, "shared": ["body", "item"], "n": 1, "q": "does the item BODY change (rewrite the path out of it) or does the foreign-path class scop"}
+{"cls": "WEAK", "fire": 37, "best": 33, "shared": ["path", "scope"], "n": 1, "q": "is merge-of-N-carriers a real path worth the dedup, or is --merge-twice out of scope"}
+{"cls": "STRONG", "fire": 39, "best": 36, "shared": ["cross-cutting", "declared", "drop", "give", "home", "re-confirm", "reasoning"], "n": 1, "q": "re-confirm: drop cross-cutting reasoning, or give it a declared home"}
+{"cls": "WEAK", "fire": 56, "best": 38, "shared": ["declared", "kind"], "n": 1, "q": "where do the 16 line-number citations into BACKLOG.md resolve once the legacy-backlog kind"}
+{"cls": "STRONG", "fire": 62, "best": 58, "shared": ["anchor", "approximate", "blob", "declare", "entry", "headline", "near", "plus", "pointer", "range", "readers", "search", "source", "text"], "n": 1, "q": "anchor on the source blob sha plus range, or on the entry headline text, or declare the po"}
+{"cls": "STRONG", "fire": 65, "best": 63, "shared": ["amend", "amended-blocked-by", "amendment", "append", "blocked-by", "exists", "governs", "item", "later", "line", "name", "park", "refuse", "write"], "n": 1, "q": "does item park APPEND an amended-blocked-by line so its write governs, or REFUSE when a la"}
+{"cls": "WEAK", "fire": 69, "best": 63, "shared": ["reason", "write"], "n": 2, "q": "widen the carrier check to match the write side, narrow the write side, or declare the asy"}
+{"cls": "WEAK", "fire": 70, "best": 58, "shared": ["declare", "range"], "n": 2, "q": "does the full body travel into the slot, or does the slot declare itself TRUNCATED with it"}
+{"cls": "WEAK", "fire": 71, "best": 68, "shared": ["carrier", "commit"], "n": 1, "q": "does every carrier verb COMMIT, or do the read-only-ish ones (desk state, item head) fall "}
+{"cls": "MIDDLE", "fire": 72, "best": 29, "shared": ["carriers", "init", "repo"], "n": 2, "q": "whether init seeds the three carriers on a greenfield repo, or the design assigns that act"}
+{"cls": "MIDDLE", "fire": 74, "best": 56, "shared": ["declared", "kind", "resolve"], "n": 4, "q": "whether a DECLARED CUSTOM with a named consumer becomes a fourth disposition beside the sw"}
+{"cls": "STRONG", "fire": 75, "best": 71, "shared": ["carrier", "desk", "item", "output", "verb", "whole"], "n": 3, "q": "the verb's spelling and output form: a new item slots verb versus a flag on item ready, pl"}
+{"cls": "MIDDLE", "fire": 76, "best": 26, "shared": ["home", "legacy", "repo"], "n": 2, "q": "the kind's slot schema and closed grade vocabulary, and where the LEGACY segment lives: a "}
+{"cls": "STRONG", "fire": 77, "best": 74, "shared": ["beside", "declared", "fourth", "kind", "three", "whether"], "n": 6, "q": "whether growth-exempt is a FOURTH value in the growth vocabulary or a separate declared fl"}
+{"cls": "WEAK", "fire": 78, "best": 26, "shared": ["home", "repo"], "n": 5, "q": "which of the three readings is right: (1) the audit should know a deletion record's shape "}
+{"cls": "WEAK", "fire": 79, "best": 67, "shared": ["unresolved", "value"], "n": 1, "q": "does an unresolved declaration value belong in init's EXIT CODE, or is the emitted COULD N"}
+{"cls": "STRONG", "fire": 80, "best": 75, "shared": ["bitten", "call", "carrier", "desk", "dropped", "flag", "form", "item", "lc-2", "lines", "machine-readable", "mode", "output", "plain", "ready", "repo", "reports", "slots", "spelling", "unspelled", "verb", "versus", "whether", "whole"], "n": 6, "q": "the verb's spelling and output form: a new item slots verb versus a flag on item ready, pl"}
+{"cls": "WEAK", "fire": 82, "best": 81, "shared": ["claude", "codex"], "n": 1, "q": "does the codex delegation survive the Claude credit reset, or was it interim"}
+{"cls": "MIDDLE", "fire": 83, "best": 81, "shared": ["codex", "drain", "lanes"], "n": 2, "q": "what becomes of wave 2's three in-flight codex lanes (lc-34, lc-119, lc-79) at the drain d"}
+{"cls": "WEAK", "fire": 84, "best": 83, "shared": ["drain", "wave"], "n": 1, "q": "what landed in wave A of the lifecycle drain, and under which shas"}
+{"cls": "WEAK", "fire": 86, "best": 63, "shared": ["carry", "line"], "n": 2, "q": "should lc-55's ANSWERED body record carry the answer text and the ledger line number"}
+{"cls": "MIDDLE", "fire": 92, "best": 83, "shared": ["desk", "drain", "wave"], "n": 4, "q": "drain wave 3: is the lc-120 lane CLOSED or HELD? The desk sent both answers and a later re"}
+{"cls": "STRONG", "fire": 100, "best": 99, "shared": ["build", "hold", "lc-157", "mechanism"], "n": 1, "q": "lc-157 mechanism #5, class-recurrence counter over the corrections carrier: build it now o"}
+{"cls": "STRONG", "fire": 101, "best": 99, "shared": ["build", "hold", "lc-157", "mechanism"], "n": 2, "q": "lc-157 mechanism #3, idle-is-answerable: build it now or hold it?"}
+{"cls": "WEAK", "fire": 103, "best": 75, "shared": ["carrier", "ready"], "n": 2, "q": "regrade: this was READY under the old carrier, and READY is judged rather than inherited"}
+{"cls": "WEAK", "fire": 104, "best": 58, "shared": ["declare", "source"], "n": 2, "q": "head-rule: declare a third READY grade, a lead goal, or neither, given 105 schedulable ite"}
+{"cls": "WEAK", "fire": 105, "best": 22, "shared": ["kind", "stage"], "n": 2, "q": "lc-224 reader-WHEN: a sub-field of the existing reader stage, or an eighth kind stage?"}
+{"cls": "WEAK", "fire": 110, "best": 38, "shared": ["kind", "mechanism"], "n": 4, "q": "arc: new registered kind, or the existing lane mechanism widened?"}
+{"cls": "WEAK", "fire": 111, "best": 38, "shared": ["mechanism", "shape"], "n": 1, "q": "does the schema get a general third-answer mechanism, and what shape?"}
+{"cls": "STRONG", "fire": 119, "best": 117, "shared": ["commit", "default", "supplies", "trailer"], "n": 1, "q": "D-9 re-ruled: what supplies the commit trailer default, after the attack round killed the "}
+{"cls": "WEAK", "fire": 120, "best": 115, "shared": ["bucket", "census"], "n": 1, "q": "D-7 mechanism revised: how is the predates-the-mechanism census bucket computed, after V1/"}
+{"cls": "STRONG", "fire": 122, "best": 110, "shared": ["existing", "kind", "lane", "mechanism", "registered", "widened"], "n": 5, "q": "is an ARC a new registered kind, or the existing lane mechanism widened to carry these sta"}
+{"cls": "WEAK", "fire": 124, "best": 25, "shared": ["hooks", "plugin"], "n": 1, "q": "lc-242's write-set names plugin/hooks/pre-commit (astra-a6): does the hook half ship with "}
+{"cls": "MIDDLE", "fire": 125, "best": 76, "shared": ["home", "inside", "kind"], "n": 2, "q": "the arc INDEX sits inside the arcs kind's own home glob, so four readers must skip it by n"}
+{"cls": "STRONG", "fire": 127, "best": 126, "shared": ["against", "closed", "design", "fixing", "round"], "n": 2, "q": "has the design round closed, fixing the trigger vocabulary these 26 kinds are authored aga"}
+{"cls": "MIDDLE", "fire": 128, "best": 126, "shared": ["closed", "design", "round"], "n": 9, "q": "has the design round closed, settling whether the index is a new kind, a widened digest, o"}
+{"cls": "WEAK", "fire": 132, "best": 68, "shared": ["carrier", "record"], "n": 6, "q": "O6 surfacing round D1-D4: default moment, carrier, read verb, written record?"}
+{"cls": "WEAK", "fire": 134, "best": 63, "shared": ["item", "line"], "n": 2, "q": "correction: the 2026-09-24 decision line headed lc-260 (6fff837) - which item does it disp"}
+{"cls": "WEAK", "fire": 135, "best": 78, "shared": ["dropped", "record"], "n": 2, "q": "finish the outstanding arms or record them dropped"}
+{"cls": "WEAK", "fire": 140, "best": 113, "shared": ["build", "round"], "n": 1, "q": "refocus round R4: build resume read-back now, or park it"}
+{"cls": "WEAK", "fire": 141, "best": 140, "shared": ["refocus", "round"], "n": 1, "q": "refocus round R5: when does /standort fire"}
+{"cls": "MIDDLE", "fire": 142, "best": 140, "shared": ["build", "refocus", "round"], "n": 3, "q": "refocus round R6: does lc-282 build freshness fingerprints"}
+{"cls": "WEAK", "fire": 143, "best": 71, "shared": ["desk", "ones"], "n": 4, "q": "who judges the refocus round open questions and future ones from desk lifecycle-d9"}
+{"cls": "WEAK", "fire": 144, "best": 140, "shared": ["refocus", "round"], "n": 4, "q": "refocus round R1 and R2: proceed now under the freeze as defect repairs"}
+{"cls": "WEAK", "fire": 145, "best": 127, "shared": ["round", "trigger"], "n": 7, "q": "refocus round R3: move the drift treatment arm trigger to the verbs"}
+{"cls": "MIDDLE", "fire": 146, "best": 144, "shared": ["freeze", "refocus", "round"], "n": 6, "q": "refocus round R7: freeze exit for the ledger add near-match gate"}
+{"cls": "WEAK", "fire": 147, "best": 140, "shared": ["refocus", "round"], "n": 7, "q": "refocus round: admission bar for new mechanisms"}
+{"cls": "WEAK", "fire": 148, "best": 126, "shared": ["design", "round"], "n": 12, "q": "has the refocus design round (lc-276, lc-277) settled what lifecycle enforces at a moment,"}
+{"cls": "WEAK", "fire": 149, "best": 129, "shared": ["baseline", "round"], "n": 10, "q": "is the lc-161 BEFORE baseline recorded for the refocus round"}
+{"cls": "WEAK", "fire": 150, "best": 143, "shared": ["desk", "lifecycle-d9"], "n": 1, "q": "when does desk lifecycle-d9 report to the judge lifecycle-64 on the answerable arc"}
