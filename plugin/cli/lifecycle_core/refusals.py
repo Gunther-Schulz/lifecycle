@@ -2103,39 +2103,6 @@ VERB_ROWS = [
         stage="wave 1, stage 6",
     ),
     Row(
-        ident="ledger_join_undisposed",
-        refusal="the ledger's own intake join (R7, lc-289): a `decision:` "
-                "question near-matching one already in the ledger, with no "
-                "disposition — the item carrier's `join_undisposed` (above), "
-                "one carrier over, and with only ONE accepted disposition: "
-                "`--join new --absence \"<why>\"`. A ledger line is "
-                "append-only prose, so there is no merge-into or supersede "
-                "here",
-        firing_input="`ledger add decision` whose `--question` shares "
-                     "`MATCH_MIN_TOKENS`-or-more informative tokens with an "
-                     "existing `decision:` line, with no `--join`",
-        expect=exits.FINDING,
-        fire=lambda: _cli(
-            ["ledger", "add", "decision", "--question",
-             "should the retirement pass run on a fixed cadence too",
-             "--answer", "yes"],
-            ledger_text=(ledger_mod.head_text()
-                         + "decision: is the retirement pass run on a "
-                           "fixed cadence → yes, monthly\n")),
-        # THE SAME ADD, over a ledger holding an UNRELATED decision: the
-        # join runs and finds nothing, so the refusal is the MATCH and not
-        # the verb — the same discriminating shape `join_undisposed`'s own
-        # control uses one carrier over.
-        control=lambda: _cli(
-            ["ledger", "add", "decision", "--question",
-             "should the retirement pass run on a fixed cadence too",
-             "--answer", "yes"],
-            ledger_text=(ledger_mod.head_text()
-                         + "decision: is the plugin cache versioned per "
-                           "pin → yes, three kept\n")),
-        stage="wave 1, stage 6 (refocus R7, lc-289)",
-    ),
-    Row(
         ident="closure_home_split",
         refusal="the declaration names TWO closure homes — one fact, one "
                 "home (§3.1's closure MOVE has one destination)",

@@ -44,7 +44,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
 from lifecycle_core import cli, exits  # noqa: E402
-from lifecycle_core import ledger as ledger_mod  # noqa: E402
 from lifecycle_core.refusals import (  # noqa: E402
     EMPTY_DONE, GOOD_FULL_DECLARATION, SEED_ITEMS)
 
@@ -334,121 +333,6 @@ class LedgerAddHonoursNoCommit(unittest.TestCase):
         blob = committed_ledger(d)
         self.assertIn("decision: q1", blob)
         self.assertIn("decision: q2", blob)
-
-
-class LedgerAddDecisionRunsTheIntakeJoin(unittest.TestCase):
-    """R7 (lc-289): `ledger add decision` runs the SAME rarity join `item
-    add` already runs (lc-46), pointed at the ledger's OWN decision
-    questions instead of an item's requirement line. `cmd_ledger_add` had NO
-    match step before this — a re-decided question could be written twice
-    with nobody the wiser.
-    """
-
-    #: Four informative tokens shared (retirement, pass, fixed, cadence),
-    #: well past `MATCH_MIN_TOKENS` — a discriminating margin, not a
-    #: boundary case.
-    QUESTION = "is the retirement pass run on a fixed cadence"
-    ANSWER = "yes, monthly"
-    NEAR_MATCH = "should the retirement pass run on a fixed cadence too"
-    #: Shares NO token with QUESTION/NEAR_MATCH — the control shape.
-    UNRELATED = "is the plugin cache versioned per pin"
-
-    def _seed(self, d: Path):
-        """Append one `decision:` line to the fixture's ledger and commit
-        it, so the join has something in the carrier to match against."""
-        line = ledger_mod.render(
-            "decision", {"question": self.QUESTION, "answer": self.ANSWER})
-        text = (d / "LEDGER.md").read_text(encoding="utf-8")
-        (d / "LEDGER.md").write_text(text + line + "\n", encoding="utf-8")
-        r = subprocess.run(["git", "-C", str(d), "commit", "-am",
-                            "seed a decision line"],
-                           capture_output=True, text=True)
-        self.assertEqual(r.returncode, 0, r.stderr)
-
-    def test_RED_FIRST_a_near_match_with_no_join_is_a_FINDING(self):
-        """THE RECORDED RED: run against the pre-R7 code (`cmd_ledger_add`
-        with no match step), this arm reaches only through names the OLD
-        build already had (`cli`, `exits`, the CLI surface) — no new symbol
-        this test needs is absent from the old build, so a red there is an
-        ASSERTION FAILURE at the defect (`code == exits.CLEAN`, no near-match
-        step ever ran) and never an import error. Confirmed by hand against
-        this file's HEAD~1 (verbs.py before `_check_decision_join` existed):
-        `code=0`, `"committed: lifecycle: ledger decision"` in `out`,
-        `"ledger_join_undisposed" not in out` — the exact failure this test
-        exists to catch.
-        """
-        d = build()
-        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        self._seed(d)
-        before = head(d)
-        code, out = run_cli(d, "ledger", "add", "decision", "--question",
-                            self.NEAR_MATCH, "--answer", "yes")
-        self.assertEqual(code, exits.FINDING, out)
-        self.assertIn("[ledger_join_undisposed]", out)
-        self.assertIn("match: LEDGER.md:", out)
-        self.assertIn(self.QUESTION, out)
-        self.assertEqual(head(d), before, "a refused add moved HEAD")
-        self.assertNotIn(self.NEAR_MATCH,
-                         (d / "LEDGER.md").read_text(encoding="utf-8"))
-
-    def test_no_match_writes_exactly_as_before(self):
-        """MUST NOT MOVE: an unrelated question sees no output added — the
-        join is silent where there is nothing to disclose."""
-        d = build()
-        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        self._seed(d)
-        before = head(d)
-        code, out = run_cli(d, "ledger", "add", "decision", "--question",
-                            self.UNRELATED, "--answer", "yes, three kept")
-        self.assertEqual(code, exits.CLEAN, out)
-        self.assertNotIn("ledger_join_undisposed", out)
-        self.assertIn("committed: lifecycle: ledger decision", out)
-        self.assertNotEqual(head(d), before, out)
-        self.assertIn(self.UNRELATED,
-                      committed_ledger(d))
-
-    def test_join_new_with_absence_writes(self):
-        d = build()
-        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        self._seed(d)
-        before = head(d)
-        code, out = run_cli(
-            d, "ledger", "add", "decision", "--question", self.NEAR_MATCH,
-            "--answer", "yes", "--join", "new", "--absence",
-            "a different scheduling window, not previously decided")
-        self.assertEqual(code, exits.CLEAN, out)
-        self.assertIn("committed: lifecycle: ledger decision", out)
-        self.assertNotEqual(head(d), before, out)
-        self.assertIn(self.NEAR_MATCH, committed_ledger(d))
-
-    def test_a_wrong_join_value_is_a_FINDING(self):
-        """UNLIKE `item add`, `merge-into` and `supersede` are not accepted
-        here — a ledger line is append-only prose, not a body another verb
-        can fold or move."""
-        d = build()
-        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        self._seed(d)
-        before = head(d)
-        code, out = run_cli(d, "ledger", "add", "decision", "--question",
-                            self.NEAR_MATCH, "--answer", "yes",
-                            "--join", "merge-into")
-        self.assertEqual(code, exits.FINDING, out)
-        self.assertIn("[ledger_join_undisposed]", out)
-        self.assertIn("only accepted disposition", out)
-        self.assertEqual(head(d), before, out)
-
-    def test_join_new_without_absence_is_a_FINDING(self):
-        d = build()
-        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        self._seed(d)
-        before = head(d)
-        code, out = run_cli(d, "ledger", "add", "decision", "--question",
-                            self.NEAR_MATCH, "--answer", "yes",
-                            "--join", "new")
-        self.assertEqual(code, exits.FINDING, out)
-        self.assertIn("[ledger_join_undisposed]", out)
-        self.assertIn("named absence", out)
-        self.assertEqual(head(d), before, out)
 
 
 if __name__ == "__main__":

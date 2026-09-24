@@ -1016,18 +1016,6 @@ def build_parser() -> argparse.ArgumentParser:
     dec = ladds.add_parser("decision")
     dec.add_argument("--question")
     dec.add_argument("--answer")
-    dec.add_argument("--join", help="the intake join's answer (R7, lc-289): "
-                                    "the ONLY accepted value is `new` — a "
-                                    "ledger line is append-only prose, not a "
-                                    "body another verb can merge or "
-                                    "supersede, so a near-match's only "
-                                    "question is whether this is genuinely a "
-                                    "new one. Required, with `--absence`, "
-                                    "only when the question near-matches an "
-                                    "existing decision line")
-    dec.add_argument("--absence", help="what makes this a NEW question "
-                                       "rather than one already decided; "
-                                       "required with `--join new`")
     dec.add_argument("--no-commit", dest="no_commit", action="store_true",
                      help=_NO_COMMIT_HELP)
 
