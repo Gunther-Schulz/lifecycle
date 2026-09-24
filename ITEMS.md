@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 277
+added: 278
 compacted: 0
 
 ## lc-3
@@ -1597,3 +1597,12 @@ amended-requirement: 2026-09-24 Short ACTING FRAMES via main desk plus dispatch 
 amended-done-criterion: 2026-09-24 A pre-registered measurement of whether drift stratifies by acting-frame architecture (main+lanes vs long single frame), carried by the drift probe where it can be, with a falsifier and hard negatives (legitimate long work); no build before that result. Note: main+lanes has no control arm either (the-loop.md limit line), so the admission bar applies to it too.
 amended-evidence: 2026-09-24 OPERATOR CORRECTION 2026-09-24, RELAYED by lifecycle-64 (testimony; the operator can confirm first-hand): window LENGTH as the drift cause is not established, killing a running session costs in-flight continuity, and the proposal is a main session with subagents and/or peer sessions instead. lifecycle-64 grading: purpose.md blames the acting frame self-blindness, not length; governance-decay (rule absent from context raises violations) argues for more context present, not less; the residual lanes do not fix is main-desk frame-lock, so outside-reader seams on the MAIN desk are the load-bearing half.
 amended-blocked-by: 2026-09-24 decision does the drift probe carry the acting-frame-architecture stratification
+
+## lc-286
+grade: READY
+requirement: Every fire-log line names the session that wrote it (refocus round R2): the O6 counter could not attribute a single record, and two instruments over one window disagreed 114 vs 129 with no way to settle it. Record: docs/directives/2026-09-24-refocus-design-round.md section 0.2 and judge ruling 1.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/firelog.py,plugin/cli/lifecycle_core/desk.py,test/test_fire_session.py
+done-criterion: fire() writes session=<CLAUDE_CODE_SESSION_ID> or session=absent, never omitted; one env-name constant shared with desk.resolve_desk_id. Verifier: test_fire_session red on an assertion (not an import error) before the wiring, green after; a live verb run writes the key.
+evidence: MEASURED at desk d9 2026-09-24: firelog.fire wrote at/verb/repo/outcome/detail only (firelog.py:51-71 before the change).
+blocked-by: NONE
