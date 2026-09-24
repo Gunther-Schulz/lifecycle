@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 269
+added: 270
 compacted: 0
 
 ## lc-3
@@ -1552,3 +1552,12 @@ done-criterion: A seam-fired goal question exists at named seams (at minimum: a 
 evidence: MEASURED 2026-09-24: docs/audits/drift-treatment-log.tsv row 2 records seams 4, checks_written 1 for session 09020605; row 1 was graded by the treated session itself. Neither row was produced by an environment trigger; the probe design TREATMENT paragraph states a directive in the brief suffices.
 blocked-by: decision where the seam-fired goal question lives: lifecycle verbs, machine hooks, or both
 not-derivable: 2026-09-24 searched LEDGER.md and the probe design for a mechanism home: the design chose a brief directive precisely to avoid building one before admission, so no record decides the home.
+
+## lc-278
+grade: READY
+requirement: The item check census counts a decision blocker the LEDGER ALREADY ANSWERS as UNSTATED (no not-derivable record), though an answered decision needs no derivability statement: on 2026-09-24 it printed 21 UNSTATED, of which 11 item ready reads as UNBLOCKED - the ledger ANSWERS this decision. The overstated count sends a session to write statements nobody needs, and it hides the one case worth surfacing: a blocker a ledger line answers in all but spelling (lc-99, one stripped apostrophe, BLOCKED for 11 days). Record: item check census line; lc-99 amendment 2026-09-24.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: The census reports decision blockers in THREE buckets - stated, answered by the ledger (the same resolution item ready uses, one reader), unstated - and names any unstated blocker for which a ledger decision line matches after whitespace and punctuation are normalised, as a near-match to check (never auto-resolved: equality stays the resolution rule). Verifier: fixture with one stated, one exactly answered, one unstated, and one differing from its ledger line by an apostrophe: buckets 1/1/2 and the apostrophe case named as a near-match; red-first against the pre-change census.
+evidence: MEASURED 2026-09-24: item check printed decision blockers: 6 stated, 21 UNSTATED; after the gap-fill 17 stated, 11 UNSTATED, and item ready reads all 11 (lc-8, 23, 32, 36, 41, 71, 76, 78, 235, 239, 240) as UNBLOCKED by the ledger. lc-99 blocked-by read deletion record shape while LEDGER.md:78 reads deletion record-apostrophe-s shape; item ready said BLOCKED until amended.
+blocked-by: NONE
