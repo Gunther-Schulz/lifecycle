@@ -246,6 +246,25 @@ after-measure is not over-read.
 | a `/standort` run happens | `ledger add decision` with the fixed prefix | the ledger line | exact-prefix count | the run itself; the trigger decision reads the count once 4 exist |
 | a ledger decision near-matches (R7, after freeze exit) | `ledger add` | the refusal, or `--join` disposition | red-first on a near-match plant | the verb invocation |
 
+## 6. Late input: lifecycle-64's levers memo, graded
+
+The memo is persisted verbatim at
+`docs/audits/2026-09-24-levers-memo-lifecycle-64.md`; the operator directed
+it into this round.
+
+| lever | grade at this desk | disposition |
+|---|---|---|
+| 0 kill test dangles | CONFIRMED (0 hits in ITEMS.md) | booked lc-283 (dev-17 raised the same, deduped) |
+| 1 measure the goal recurringly | ACCEPTED. One stale premise: the extractor is TRACKED (`fbd5ecd`), not untracked, and stage 2 is running | lc-161 stages 1-2; recurring kill drills ride lc-283 |
+| 2 withdraw surfacing | PARTLY REJECTED on the memo's own evidence: the 224/8 count is the same tautological population (§0.1, 377 of 379), so "firing harder" is the tier-1 volume growing | R1 removes tier-1; tier-2 withdrawal waits for evidence |
+| 3 demands ride existing verbs | ACCEPTED, and it is R3's shape | adds the rule to §1 (below); the verb × demand × miss-cost survey is booked as lc-284, blocked on the freeze exit |
+| 4 short sessions on purpose | ACCEPTED as a candidate; the memo names its own precondition | booked lc-285, PARKED, blocked by lc-283 (kill loss must measure low first) |
+| 5 pre-registered probe as the admission bar | ACCEPTED | operator question (a scope rule for every future mechanism) |
+
+§1 addendum, from lever 3: **at most one new demand per verb per round.**
+That caps the reuse principle so it cannot become the over-constraint that
+law 26 warns about.
+
 ## 5. What the attack changed (disposition per finding)
 
 | finding | disposition |
