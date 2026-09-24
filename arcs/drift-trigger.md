@@ -8,3 +8,4 @@ premises: none recorded yet
 beliefs: none recorded yet
 yield: nothing produced yet
 premise: P1 2026-09-24 The probe design and its pre-registered criterion - docs/audits/2026-09-20-direction-drift-trigger-probe-design.md.
+belief: B1 2026-09-24 The KNOWLEDGE leg holds: asked for the goal, a session names it correctly. | basis: Baseline arm 2026-09-20: 7 of 7 operator goal-question events read the goal correctly, rider-1 wrong-restatement class empty; local transcripts only (design doc, THE BASELINE ARM HAS RUN). | kill: A treatment or baseline event where the session restates the goal wrongly and the operator corrects it.
