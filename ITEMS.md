@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 259
+added: 260
 compacted: 0
 
 ## lc-3
@@ -1472,3 +1472,13 @@ write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py
 done-criterion: Where the surplus is not accounted for by ids present in both homes, the OVER finding says so and names the second cause - bodies admitted without passing item add - and the surplus count minus the duplicate count; where every surplus unit is a duplicate it keeps the interrupted-close attribution. Verifier: plant a carrier over by 2 with one duplicate and one hand-added body; the finding names 1 unaccounted and the hand-add cause; control with only duplicates keeps the current wording. Red-first against the pre-change tree. Must-not-move: SHORT and OVER stay two rows with opposite repairs; exit codes unchanged.
 evidence: RELAYED from cachyos-setup-33: CachyOS-Setup conservation read items 46 + done 11 = 57 against baseline 31 + added 22 = 53 (over 4) and moved to over 6 after that session hand-added two items; one real duplicate (cs-36) exists, so at least part of the surplus is not interrupted closes. MEASURED here: the interrupted-close attribution appears at five source sites, listed in the requirement.
 blocked-by: NONE
+
+## lc-268
+grade: READY
+requirement: The robustness review of 2026-09-18 commissioned a second lane over the INSTRUMENTS themselves - which recorded proofs prove less than they claim, under the lens: a pair proves the refusal AXIS and never its REACH; reach is proven by the arm that must stay SILENT - and that lane never returned; its output is unrecoverable and the question was never re-asked. Record: docs/audits/2026-09-18-robustness-clean-without-looking.md, heading Lane 2; lc-260 disposition.
+goal: lean-machinery-strict-checks
+write-set: docs/audits/2026-09-18-robustness-clean-without-looking.md
+done-criterion: A read-only review lane runs the Lane 2 lens at a pinned sha over tools/prove-rows.py arrangements and the refusals.py roster: for each recorded proof it states whether a silent arm exists that bounds the refusal reach, naming rows that prove axis only. Results are appended under the Lane 2 heading, which stops reading PENDING and names the sha. Verifier: the heading carries a sha and a per-row disposition table whose row count equals the roster row count printed by lifecycle --test --list at that sha (derived, not restated); a row with no disposition is the finding. Must-not-move: Lane 1 text and numbers unchanged.
+evidence: MEASURED 2026-09-24 at 2e75945: the audit file line 6 says lane 2 was still running at writing time; heading Lane 2 - PENDING at line 146 with its lens and no body; ugrep for robustness-clean-without-looking over ITEMS.md, ITEMS-DONE.md, LEDGER.md and docs finds only lc-260 and the decision-round grounding list - nothing re-ran the lens. The erosion probes of 2026-09-19/20 measured per-row proof SURVIVAL across history, not reach (from the-loop.md M6 summary; the probe design doc itself unopened here).
+blocked-by: decision spend an opus review lane on the Lane 2 lens
+not-derivable: 2026-09-24 a spend decision on an arm the operator GO did not cover; no ledger precedent for re-running a lost review lane
