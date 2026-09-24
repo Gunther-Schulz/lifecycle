@@ -1918,5 +1918,16 @@ blocker-moot: is a command-group trigger ever legal, or always a finding (answer
 closed-reason: 2026-09-24 2026-09-24 one arbitrary-depth predicate (_verb_lookup) answers leaf/group/unknown at the trigger and verb: reader sites; a GROUP fires trigger_verb_unknown / dangling_reference naming its actions; trigger_verb_unknown gained a prove-rows arrangement admitted on the lc-142 pair. Must-move-with f89c60d: this repo's own ledger lines / arcs kinds now name leaves, cli_verbs walks every depth. kind check CLEAN on main; suite 1066 OK 0 skipped; --test CLEAN; red-first re-run at the desk on the pre-change tree.
 closed-ref: f4e26a0, f89c60d
 
+## lc-280
+grade: DONE
+requirement: closure_home_split compares the two closure-home spellings as plain strings, so ./ITEMS-DONE.md beside closure-home ITEMS-DONE.md fires the declaration names TWO closure homes over one file. Either the message is wrong or a one-spelling rule is intended and unstated; the row control is an exact-string match and cannot tell them apart. Record: lc-268 review defect D2; verbs.py string compare (per the review, near line 147).
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: closure_home_split compares normalised repo-relative paths: ./ITEMS-DONE.md and ITEMS-DONE.md are one home and stay silent; two different files still fire. The row gains a control carrying the ./ spelling. Verifier: plant (SOMEWHERE-ELSE.md) fires, ./ control silent; red-first on the ./ control.
+evidence: MEASURED at the desk 2026-09-24 with GOOD_FULL_DECLARATION: done bodies home ./ITEMS-DONE.md with closure-home ITEMS-DONE.md -> exit 2, FINDING [closure_home_split] names TWO closure homes; unmodified control -> exit 0.
+blocked-by: NONE
+closed-reason: 2026-09-24 2026-09-24 closure_home_split compares posixpath.normpath of both spellings; the row's control is now the ./-spelled declaration (it previously never exercised the compare); prove-rows anchor re-synced per lc-30. Red-first re-run at the desk on the pre-change tree.
+closed-ref: d6b9f8f, 8a2ffb1
+
 ## Archive (pre-migration)
 
