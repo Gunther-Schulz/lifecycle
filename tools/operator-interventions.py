@@ -60,6 +60,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -192,15 +193,57 @@ def is_peer_event(event: dict) -> bool:
 RELAY_TEXT_PREFIX = "Another Claude session sent a message:"
 HARNESS_TEXT_PREFIXES = ("<task-notification>",)
 
+# lc-161 stage 2 (this desk, 2026-09-24): a second population of plain
+# type:"user" prompt-channel records carries no operator content at all —
+# the harness's own echo of a slash command's outcome, or of the harness
+# interrupting/compacting the session — mixed among genuine operator text
+# with no isMeta/origin signal to tell them apart, same as the two shapes
+# above. And a THIRD population is a real operator act, but a TOOLING one
+# (invoking the harness itself, not addressing the work): a bare
+# "/name ..." or the harness's own "<command-name>...</command-name>"
+# expansion of one. Neither population belongs in operator_messages —
+# the first carries nothing, the second is not an intervention in the
+# work — but only the second is still an operator act worth a count, so
+# it gets its own column (`operator_commands`) rather than being dropped.
+# Measured on the stage-1 baseline (lc161-2026-09-24-stage1.jsonl, 2327
+# message rows): compaction-continuation summaries 68, interrupted
+# markers 77, local-command stdout/caveat echoes 73, slash commands
+# (bare or wrapped) 165 — of which 14 (`/close-session`,
+# `/skill-craft:release-plugin`) wrap with `<command-message>` BEFORE
+# `<command-name>` rather than after, so both tag orderings are checked;
+# a `<command-name>`-only check silently missed all 14 (found re-checking
+# this same population, not by the brief).
+COMPACTION_CONTINUATION_PREFIX = "This session is being continued"
+INTERRUPTED_MARKER_PREFIX = "[Request interrupted by user"
+COMMAND_ECHO_PREFIXES = ("<local-command-stdout>", "<local-command-caveat>")
+COMMAND_NAME_WRAPPER_PREFIXES = ("<command-name>", "<command-message>")
+BARE_SLASH_COMMAND_RE = re.compile(r"/[A-Za-z0-9_-]+(?:\s+\S.*)?$", re.DOTALL)
+
 
 def classify_user_text(text: str) -> str:
-    """"operator" | "peer" | "harness" for a type:"user" event's own text,
-    on top of (never instead of) the isMeta/origin check above."""
+    """"operator" | "command" | "peer" | "harness" for a type:"user" event's
+    own text, on top of (never instead of) the isMeta/origin check above.
+
+    "command" is a slash-command invocation — an operator act, but a
+    TOOLING one, counted in operator_commands rather than operator_messages.
+    "harness" additionally covers compaction-continuation summaries,
+    interrupted markers, and a local command's own stdout/caveat echo —
+    none of these carry any operator content (lc-161 stage 2 finding)."""
     t = text.lstrip()
     if t.startswith(RELAY_TEXT_PREFIX):
         return "peer"
     if any(t.startswith(p) for p in HARNESS_TEXT_PREFIXES):
         return "harness"
+    if t.startswith(COMPACTION_CONTINUATION_PREFIX):
+        return "harness"
+    if t.startswith(INTERRUPTED_MARKER_PREFIX):
+        return "harness"
+    if any(t.startswith(p) for p in COMMAND_ECHO_PREFIXES):
+        return "harness"
+    if any(t.startswith(p) for p in COMMAND_NAME_WRAPPER_PREFIXES):
+        return "command"
+    if BARE_SLASH_COMMAND_RE.match(t.strip()):
+        return "command"
     return "operator"
 
 
@@ -235,6 +278,7 @@ class SessionResult:
     last_ts: str = None
     assistant_turns: int = 0
     operator_messages: int = 0
+    operator_commands: int = 0
     cross_session_inbound: int = 0
     messages: list = field(default_factory=list)
     unparseable_lines: int = 0
@@ -311,6 +355,9 @@ def extract_session(path: Path, repo: str, since: datetime, until: datetime):
                     continue
                 if cls == "peer":
                     res.cross_session_inbound += 1
+                    continue
+                if cls == "command":
+                    res.operator_commands += 1
                     continue
                 res.operator_messages += 1
                 res.messages.append({
@@ -457,6 +504,7 @@ def main() -> int:
                 "assistant_turns": res.assistant_turns,
                 "operator_messages": res.operator_messages,
                 "operator_per_100_turns": per100,
+                "operator_commands": res.operator_commands,
                 "cross_session_inbound": res.cross_session_inbound,
             }) + "\n")
             for m in res.messages:
