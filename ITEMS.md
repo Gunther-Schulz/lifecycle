@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 257
+added: 258
 compacted: 0
 
 ## lc-3
@@ -1457,4 +1457,13 @@ goal: lean-machinery-strict-checks
 write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
 done-criterion: item add and item amend accept each prose slot (requirement, done-criterion, evidence, absence, not-derivable, reason) from a file or from stdin as well as inline; a body read that way reaches the carrier byte-identical, backticks and single quotes included; a missing or unreadable file is COULD NOT VERIFY exit 3, never an empty slot. Verifier: a test booking a slot body containing a backtick-wrapped word and an embedded single quote via the file form and reading it back with item slots, red against the pre-change tree (the flag does not exist). Must-not-move: the inline flags and their semantics.
 evidence: RELAYED from cachyos-setup-33 (2026-09-24): its cs-67..69 bodies contained backtick-wrapped tokens and embedded single quotes, so it hand-edited ITEMS.md instead of calling item add. MEASURED here 2026-09-24: item add --help lists only inline string options for every slot; grep for stdin in cli.py returns 0 hits. This session booked lc-264 inline by stripping backticks and quotes from the prose, which is the degradation the finding names.
+blocked-by: NONE
+
+## lc-266
+grade: READY
+requirement: The blocker_untyped finding says a bad blocked-by value reached the file by a path that did not pass the door, but proposes no repair token and cannot distinguish a bypassed door from an author that has no door (an agent without the plugin): the bad values stay in the carrier as the visible idiom and neighbouring entries teach the defect faster than the check corrects it. Record: peer session cachyos-setup-33 reports 2026-09-24; plugin/cli/lifecycle_core/items.py:1843-1851.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,test/test_items.py
+done-criterion: Where an untyped blocked-by value is a NONE synonym (nothing, none in any case, n/a, a dash), both doors (item check and the write-path refusal) name the one-token repair NONE in the finding text; any other untyped value keeps today text. The message names both causes it cannot tell apart - a hand edit around the door, or an author with no access to it - rather than implying a bypass. Verifier: test with blocked-by nothing asserting the repair token appears, and a control with an unrelated untyped value asserting it does not; red-first against the pre-change tree. Must-not-move: the finding stays blocker_untyped, one row, same exit code; no auto-rewrite of the carrier.
+evidence: RELAYED from cachyos-setup-33 with git provenance it measured: CachyOS-Setup/ITEMS.md carries blocked-by: NONE from the CLI commit de01ca7 (2026-09-18) and blocked-by: nothing from two Claude-session hand-edit commits 0620159 and 53d3e01 (2026-09-19/20), plus three uncommitted lines the operator attributes to Codex sessions without the plugin (unverified). The last lifecycle-subject commit there is 2026-09-18. Five such entries silently park and the banner prints ready COULD NOT VERIFY. MEASURED here: the message text at items.py:1843-1851 names merge, hand edit, rename, and no repair.
 blocked-by: NONE
