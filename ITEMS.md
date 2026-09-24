@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 266
+added: 267
 compacted: 0
 
 ## lc-3
@@ -1494,4 +1494,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
 done-criterion: Both sites (amendment lines, promotion lines) state the required shape literally, `<YYYY-MM-DD> <text>` with a single space after the date, and, where the line begins with a valid ISO date followed by any other character, name that character and position ("the date is present; the character after it is ',' - the shape needs a space"). One shared message function for both sites. The accepted shape is NOT widened (one spelling, the closed-vocabulary rule). Verifier: a test with `2026-09-21, x` asserts the message names the comma and the literal shape; control `2026-09-21 x` stays clean; a line with no date keeps a message saying the date is missing; red-first against the pre-change tree. Must-not-move: item_shape stays one row, same exit code.
 evidence: MEASURED 2026-09-24 at this desk: _AMEND_VALUE matches 2026-09-21 x (True) and rejects 2026-09-21, x (False); both message sites (items.py ~1112 promotion, ~1191 amendment) print does not open with its ISO date. RELAYED from the discovery lane: session 3d4ee9d2 left 5 such findings on cs-63, quoting it could not derive the accepted date format; item repair --shape covers slot order only (cli.py docstring, read by the lane).
+blocked-by: NONE
+
+## lc-275
+grade: READY
+requirement: The duplicate check at item add fails in both directions: it did not flag lc-264 (surfaced-vs-read counter, booked 2026-09-24) against lc-256 (the same counter, booked 2026-09-20), so the booking even claimed no item carried it; and it flagged lc-266 as a match for lc-268 on two shared words (record, stay) that carry no meaning. A token-overlap join trains the booker to dismiss the prompt and still misses the real duplicate. Record: lc-256 amendment 2026-09-24; the item add output for lc-268 (match: shares 2 requirement token(s): record, stay).
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: At item add, a live item describing the same deliverable is offered as a join candidate and an unrelated item sharing only common words is not: with lc-256 live, booking lc-264 text offers lc-256; booking lc-268 text does not offer lc-266. Candidate reasons print the terms that matched, and stop-words (record, stay, and the carrier boilerplate every requirement shares) never count. Verifier: both pairs as a test over a fixture carrier holding the two real bodies; red-first against the pre-change predicate (it misses the first pair and offers the second).
+evidence: MEASURED 2026-09-24: item add for lc-268 printed match: shares 2 requirement token(s): record, stay against lc-266; lc-264 requirement said no item carries the counter while lc-256 (READY since 2026-09-20) carried it - found only by reading both at status time.
 blocked-by: NONE
