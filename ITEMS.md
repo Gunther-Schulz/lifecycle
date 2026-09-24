@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 275
+added: 276
 compacted: 0
 
 ## lc-3
@@ -1595,3 +1595,13 @@ done-criterion: A designed and run kill test: the kill moment chosen by rule, no
 evidence: MEASURED 2026-09-24 at desk lifecycle-d9: grep -ci on ITEMS.md for "kill test" and for "pilot arc" returns 0 and 0; lc-239 item slots show a PARKED schema-migration body with no kill-test text. RELAYED from dev-17 (credited there to lifecycle-64): lc-231 closed-reason says the KILL TEST and the ONE PILOT ARC belong to lc-239 beat 1. The pilot arc named beside it is in the same orphaned state (0 hits) and rides this item until split. It is the only measurement of whether the refocus round mechanisms reduce loss (docs/directives/2026-09-24-refocus-design-round.md), and it needs the fire-log session key (R2) to attribute acts to the killed and resumed sessions.
 blocked-by: decision how the kill test is run: which moment, which work, and who grades the loss
 not-derivable: 2026-09-24 searched ITEMS.md and LEDGER.md for kill test and pilot arc: no design or decision line exists; purpose.md states the criterion only.
+
+## lc-284
+grade: READY
+requirement: Survey every existing lifecycle verb for the demand it could carry at its own moment and the cost of the miss that demand prevents, so demands ride existing verbs before any new seam is built (at most one new demand per verb per round). Record: docs/audits/2026-09-24-levers-memo-lifecycle-64.md lever 3; docs/directives/2026-09-24-refocus-design-round.md sections 1 and 6.
+goal: lean-machinery-strict-checks
+write-set: docs/audits/
+done-criterion: An audit enumerating every verb in cli.py action table (derived from the running parser, not a text scan) with, per verb: the demand it could carry, the miss it prevents with an observed instance or none, and whether it already demands prose; the enumeration count equals the parser count.
+evidence: RELAYED from lifecycle-64 memo lever 3, graded ACCEPTED at desk lifecycle-d9 2026-09-24. Existing prose demands at item close --reason, arc advance --reason, arc narrow --text (cli.py:714-727, relayed by the opus attack arm).
+blocked-by: decision is the freeze on new mechanism lifted for demand work
+not-derivable: 2026-09-24 LEDGER.md:138 freezes new mechanism and names no exit; the exit is the operator question in the refocus round.
