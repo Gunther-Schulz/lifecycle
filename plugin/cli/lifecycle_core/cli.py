@@ -181,6 +181,11 @@ def cmd_kind(args, out) -> int:
         # inside a pure function over the declaration.
         for line in decl.render_moments_line(repo):
             out(line)
+        # lc-264 — the surfaced-vs-read line, same reasoning as the moments
+        # line: a machine-local read of past runs, kept out of the pure
+        # function, and never an exit-code contributor.
+        for line in decl.render_surfacing_line(repo):
+            out(line)
         if res.findings or res.unverified:
             out("")
             _report(res, out)

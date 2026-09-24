@@ -2887,3 +2887,37 @@ def render_moments_line(repo) -> list[str]:
                 f"{malformed} malformed{reach}{age}"]
     return [f"moments: LAST RUN {day} clean — 0 broken, 0 malformed"
             f"{reach}{age}"]
+
+
+def never_read(tally: dict) -> list[str]:
+    """Kinds surfaced at least once and never read through `kind read`."""
+    return sorted(k for k, (s, r) in tally["kinds"].items() if s and not r)
+
+
+def render_surfacing_line(repo) -> list[str]:
+    """The banner's surfaced-vs-read line (lc-264, O6 §7 row 3's observer).
+
+    A READOUT, never a refusal, and machine-local for the same reason as the
+    moments line above: the fire log does not travel with the repo. The
+    never-read list is the §6 over-trigger CANDIDATE list and nothing more —
+    whether a kind is over-triggered, or surfaced into a session that did not
+    act (§8 kill condition 1), is review judgment. The proxy bound travels in
+    the line: a direct file open is not a read here.
+    """
+    tally = firelog.surfacing_tally(repo)
+    if tally is None:
+        return ["surfacing: no readable fire log on this machine — a fact "
+                "about THIS machine, not about the repo."]
+    if not tally["surfacings"]:
+        return ["surfacing: no due read has been surfaced for this repo on "
+                "this machine — a recorder not reaching and a quiet repo "
+                "print this alike."]
+    cold = never_read(tally)
+    surfaced_kinds = sum(1 for s, _r in tally["kinds"].values() if s)
+    line = (f"surfacing: since {tally['first']} — {tally['surfacings']} "
+            f"surfacing(s) over {surfaced_kinds} kind(s), {tally['reads']} "
+            f"read(s) through `kind read`")
+    line += (f"; never read: {', '.join(cold)}" if cold
+             else "; every surfaced kind read at least once")
+    line += " (direct file opens are not counted)"
+    return [line]

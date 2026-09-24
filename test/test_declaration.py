@@ -1157,3 +1157,107 @@ class MomentsBannerLineTest(unittest.TestCase):
                                     declared=9, executed=5))
         self.assertIn("2 broken", line)
         self.assertIn("1 malformed", line)
+
+
+class SurfacingBannerLineTest(unittest.TestCase):
+    """The surfaced-vs-read banner line (lc-264, O6 §7 row 3's observer).
+
+    Driven through a REAL fire log under a scratch `XDG_STATE_HOME`, never a
+    stubbed tally: the parser is the part that can drift silently (a compound
+    detail, another repo's records, a torn line), and a stub would pass over
+    exactly that. One arm runs the CLI itself, the surface the banner reads.
+    """
+
+    REPO = "/repo/under/test"
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.old = os.environ.get("XDG_STATE_HOME")
+        os.environ["XDG_STATE_HOME"] = str(self.tmp)
+
+    def tearDown(self):
+        if self.old is None:
+            os.environ.pop("XDG_STATE_HOME", None)
+        else:
+            os.environ["XDG_STATE_HOME"] = self.old
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _log(self, *recs, raw=()):
+        path = decl.firelog.log_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            for r in recs:
+                fh.write(json.dumps(r) + "\n")
+            for line in raw:
+                fh.write(line + "\n")
+
+    def _rec(self, detail, repo=None, at="2026-09-21T10:00:00+00:00"):
+        return {"at": at, "verb": "item check",
+                "repo": repo or self.REPO, "detail": detail}
+
+    def _line(self, repo=None):
+        return "\n".join(decl.render_surfacing_line(repo or self.REPO))
+
+    def test_NO_LOG_is_a_fact_about_the_machine(self):
+        line = self._line()
+        self.assertIn("no readable fire log on this machine", line)
+        self.assertNotIn("never read", line)
+
+    def test_a_log_with_no_surfacing_for_THIS_repo_says_so(self):
+        """Another repo's surfacing must not count here: the partition is
+        the repo field, and a log full of foreign lines is still zero."""
+        self._log(self._rec("surfaced=items", repo="/other/repo"))
+        line = self._line()
+        self.assertIn("no due read has been surfaced for this repo", line)
+        self.assertNotIn("since", line)
+
+    def test_the_COMPOUND_detail_is_parsed_whole(self):
+        """cli.py APPENDS the surfacing with `; ` after a verb's own detail,
+        so a parser keyed to the field's start misses every closing line."""
+        self._log(
+            self._rec("close lc-9 DONE; surfaced=done bodies,items",
+                      at="2026-09-22T10:00:00+00:00"),
+            self._rec("surfaced=items", at="2026-09-20T10:00:00+00:00"),
+            self._rec("read=items"),
+            raw=['{"torn": ', ""])
+        tally = decl.firelog.surfacing_tally(self.REPO)
+        self.assertEqual(tally["kinds"], {"done bodies": [1, 0],
+                                          "items": [2, 1]})
+        self.assertEqual((tally["surfacings"], tally["reads"]), (2, 1))
+        self.assertEqual(tally["first"], "2026-09-20")
+        self.assertEqual(
+            self._line(),
+            "surfacing: since 2026-09-20 — 2 surfacing(s) over 2 kind(s), "
+            "1 read(s) through `kind read`; never read: done bodies "
+            "(direct file opens are not counted)")
+
+    def test_a_READ_NOT_surfaced_is_not_listed_as_never_read(self):
+        self._log(self._rec("surfaced=items"), self._rec("read=items"),
+                  self._rec("read=git config"))
+        line = self._line()
+        self.assertIn("every surfaced kind read at least once", line)
+        self.assertIn("over 1 kind(s)", line)
+
+    def test_the_CLI_banner_carries_the_line_and_keeps_its_exit(self):
+        """Through the verb the session-start banner calls, not the function:
+        wiring is where a green unit arm and a dark banner part company."""
+        cmd = [sys.executable, str(ROOT / "plugin" / "cli" / "lifecycle"),
+               "--repo", str(ROOT), "kind", "list", "--structure"]
+        # THE EXIT IS COMPARED AGAINST A PAIRED RUN, not against "not a
+        # finding": a usage error exits 3 and passes that test, which is how
+        # this arm's first draft read green over a command that never ran.
+        bare = subprocess.run(cmd, capture_output=True, text=True,
+                              env=dict(os.environ))
+        self._log(self._rec("surfaced=ledger lines", repo=str(ROOT)))
+        run = subprocess.run(cmd, capture_output=True, text=True,
+                             env=dict(os.environ))
+        self.assertIn("kinds registered:", run.stdout, run.stderr)
+        self.assertEqual(run.returncode, bare.returncode, run.stdout)
+        lines = run.stdout.splitlines()
+        surf = [ln for ln in lines if ln.startswith("surfacing:")]
+        self.assertEqual(len(surf), 1, run.stdout + run.stderr)
+        self.assertIn("never read: ledger lines", surf[0])
+        moments = [i for i, ln in enumerate(lines) if ln.startswith("moments:")]
+        self.assertEqual(moments and moments[0] + 1,
+                         lines.index(surf[0]), run.stdout)
+        self.assertIn("no readable fire log", bare.stdout)

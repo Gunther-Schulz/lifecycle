@@ -118,3 +118,82 @@ def last_run(verb: str, repo=None):
     except OSError:
         return None
     return best
+
+
+def detail_tokens(detail: str, key: str) -> list[str]:
+    """Every `<key>=<value>` token in one record's `detail` field.
+
+    The field is COMPOUND: the surfacing is APPENDED to a verb's own detail
+    with `; ` (cli.py, "APPENDED, never overwritten"), so `close lc-9 DONE;
+    surfaced=items` carries its surfacing second. A parser keyed to the
+    field's START would miss exactly the lines that close something, so this
+    splits on the separator and matches each part whole.
+    """
+    out = []
+    for part in str(detail or "").split("; "):
+        part = part.strip()
+        if part.startswith(key + "="):
+            out.append(part[len(key) + 1:])
+    return out
+
+
+def surfacing_tally(repo):
+    """Surfaced-vs-read per kind, from this repo's fire-log records (lc-264).
+
+    O6 §7 row 3's observer: a moment surfaced and never read leaves no line
+    of its own, so the only record of it is the ABSENCE of a `read=` beside
+    the `surfaced=` — and an absence is countable only by something that
+    counts. `surfaced=` carries a comma-separated kind list (one per due
+    read the acting verb printed); `read=` carries the one kind `kind read`
+    was invoked on.
+
+    Returns None where there is NO LOG TO READ — never an empty tally, which
+    is a different answer (a log holding no surfacing for this repo), and
+    the two must not render alike: the first says nothing about the repo.
+    Otherwise `{"kinds": {kind: [surfaced, read]}, "first": <day or None>,
+    "surfacings": <records carrying surfaced=>, "reads": <records carrying
+    read=>}`.
+
+    The pre-filter on the raw line is a speed measure only (the log is every
+    invocation on the machine): a line carrying neither token cannot
+    contribute, and every line that passes is still parsed and matched whole.
+    """
+    path = log_path()
+    if not path.is_file():
+        return None
+    want = str(repo)
+    kinds: dict = {}
+    first = None
+    surfacings = reads = 0
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                if "surfaced=" not in line and "read=" not in line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue
+                if not isinstance(rec, dict) or str(rec.get("repo", "")) != want:
+                    continue
+                detail = rec.get("detail")
+                surfaced = detail_tokens(detail, "surfaced")
+                read = detail_tokens(detail, "read")
+                if surfaced:
+                    surfacings += 1
+                    day = str(rec.get("at", "")).split("T")[0]
+                    if day and (first is None or day < first):
+                        first = day
+                for group in surfaced:
+                    for kind in group.split(","):
+                        if kind:
+                            kinds.setdefault(kind, [0, 0])[0] += 1
+                if read:
+                    reads += 1
+                for kind in read:
+                    if kind:
+                        kinds.setdefault(kind, [0, 0])[1] += 1
+    except (OSError, UnicodeDecodeError):
+        return None
+    return {"kinds": kinds, "first": first,
+            "surfacings": surfacings, "reads": reads}

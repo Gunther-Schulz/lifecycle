@@ -821,10 +821,52 @@ def cmd_audit(args, out, repo: Path, doc: dict) -> int:
         code = exits.worst([code, exits.COULD_NOT_VERIFY])
 
     code = exits.worst([code, judgment.report(out, read_fire_log())])
+    code = exits.worst([code, surfacing_report(repo, out)])
 
     out("")
     out(f"lifecycle audit: {exits.word(code)}")
     return code
+
+
+def surfacing_report(repo: Path, out) -> int:
+    """Surfaced-vs-read per kind — O6 §7 row 3's counter (lc-264).
+
+    Three answers, and none is a FINDING. No readable log, or no surfacing
+    recorded for this repo, is COULD NOT VERIFY: a recorder that is not
+    reaching reads exactly like a repo where nothing was ever due, the same
+    distinction `judgment.report` draws for an unobserved rule. Otherwise
+    CLEAN, with every never-read kind LISTED: the §6 over-trigger candidate,
+    whose disposition (move the moment, or accept presence-without-demand as
+    §8's kill condition 1 arriving) is the review's.
+    """
+    out("")
+    out("SURFACED VS READ (O6 §7 row 3) — per kind, this repo's fire-log "
+        "records. read = invoked through `kind read`; a direct file open is "
+        "not counted.")
+    tally = firelog.surfacing_tally(repo)
+    if tally is None:
+        out("    COULD NOT VERIFY: no readable fire log on this machine.")
+        return exits.COULD_NOT_VERIFY
+    if not tally["surfacings"]:
+        out("    COULD NOT VERIFY: no due read has been surfaced for this "
+            "repo in the log — a recorder not reaching and a repo with "
+            "nothing due print this alike.")
+        return exits.COULD_NOT_VERIFY
+    out(f"    since {tally['first']}: {tally['surfacings']} surfacing "
+        f"record(s), {tally['reads']} read record(s)")
+    width = max(len(k) for k in tally["kinds"])
+    for kind in sorted(tally["kinds"]):
+        s, r = tally["kinds"][kind]
+        mark = "   <- surfaced, never read" if s and not r else ""
+        out(f"    {kind.ljust(width)}  surfaced {s:>5}  read {r:>4}{mark}")
+    cold = decl.never_read(tally)
+    out(f"    never read: {len(cold)} of "
+        f"{sum(1 for s, _r in tally['kinds'].values() if s)} surfaced kind(s)")
+    out("    PROSE-REST: whether a never-read kind is over-triggered or "
+        "surfaced into sessions that did not act is the review's judgment "
+        "(design §6/§8); the ratio is not a usefulness measure (§6, "
+        "DECLARED UNDETECTED).")
+    return exits.CLEAN
 
 
 def cmd_kind_sweep(args, out, repo: Path, doc: dict) -> int:

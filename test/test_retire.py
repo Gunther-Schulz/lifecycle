@@ -842,3 +842,69 @@ class GrowthExitVerbsAreKindAware(unittest.TestCase):
     def test_an_item_close_does_NOT_satisfy_the_ARCS_kind(self):
         code, state, outp = self._check("arcs", "move", 2, self.ITEM_LOG)
         self.assertEqual(code, exits.FINDING, outp)
+
+
+class SurfacedVsReadInTheAudit(unittest.TestCase):
+    """lc-264: the audit's per-kind surfaced-vs-read table and its answers.
+
+    None of the three answers is a FINDING — a never-read kind is a review
+    candidate (O6 §6), so the arms pin that it is LISTED and that the exit
+    stays CLEAN, and that both empty states are COULD NOT VERIFY rather than
+    a clean zero.
+    """
+
+    REPO = Path("/repo/under/audit")
+
+    def setUp(self):
+        import os
+        self.os = os
+        self.tmp = Path(tempfile.mkdtemp())
+        self.old = os.environ.get("XDG_STATE_HOME")
+        os.environ["XDG_STATE_HOME"] = str(self.tmp)
+
+    def tearDown(self):
+        if self.old is None:
+            self.os.environ.pop("XDG_STATE_HOME", None)
+        else:
+            self.os.environ["XDG_STATE_HOME"] = self.old
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _run(self, *details):
+        if details:
+            path = retire.firelog.log_path()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("".join(
+                json.dumps({"at": "2026-09-21T10:00:00+00:00",
+                            "verb": "item check", "repo": str(self.REPO),
+                            "detail": d}) + "\n" for d in details),
+                encoding="utf-8")
+        lines = []
+        code = retire.surfacing_report(self.REPO, lines.append)
+        return code, "\n".join(lines)
+
+    def test_no_log_is_COULD_NOT_VERIFY(self):
+        code, outp = self._run()
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, outp)
+        self.assertIn("no readable fire log", outp)
+
+    def test_no_surfacing_is_COULD_NOT_VERIFY_not_a_clean_zero(self):
+        code, outp = self._run("read=items")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, outp)
+        self.assertIn("no due read has been surfaced", outp)
+
+    def test_a_never_read_kind_is_LISTED_and_the_exit_stays_CLEAN(self):
+        code, outp = self._run("surfaced=items,ledger lines",
+                               "close lc-1 DONE; surfaced=items", "read=items")
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("2 surfacing record(s), 1 read record(s)", outp)
+        ledger = [ln for ln in outp.splitlines() if "ledger lines" in ln
+                  and "surfaced" in ln]
+        self.assertEqual(len(ledger), 1, outp)
+        self.assertIn("<- surfaced, never read", ledger[0])
+        items_row = [ln for ln in outp.splitlines()
+                     if ln.strip().startswith("items ")]
+        self.assertEqual(len(items_row), 1, outp)
+        self.assertNotIn("never read", items_row[0])
+        self.assertIn("never read: 1 of 2 surfaced kind(s)", outp)
+        self.assertIn("PROSE-REST", outp)
+        self.assertNotIn("FINDING", outp)
