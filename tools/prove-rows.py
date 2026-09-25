@@ -1246,6 +1246,51 @@ MUTATIONS = [
      "executed then folds back into the absent-moment default at the one "
      "surface built to tell them apart, which is the exact collapse this "
      "row exists to refuse"),
+
+    # lc-294, the STANDBY family. Each anchor is the ONE branch that decides
+    # its refusal; each was admitted on a PAIR (lc-142) — PROVEN at this
+    # anchor, "rows changed: NONE" re-pointed at an inert comment line.
+    ("standby_undeclared", "items.py",
+     "    elif standby and STANDBY not in grades_extra:",
+     "    elif False:",
+     "the per-repo opt-in test over a STANDBY block — an undeclared third "
+     "READY grade is then counted OPEN and waved through the check"),
+
+    ("bench_undeclared", "verbs.py",
+     "    if not decl.declares_standby(ctx.declaration):\n"
+     "        out(f\"FINDING [bench_undeclared] this repo's declaration does not opt \"",
+     "    if False:\n"
+     "        out(f\"FINDING [bench_undeclared] this repo's declaration does not opt \"",
+     "`item bench`'s declaration test — the verb then writes a grade the "
+     "repo's own `item check` refuses"),
+
+    ("bench_without_reason", "verbs.py",
+     "    if not reason:\n"
+     "        out(\"FINDING [bench_without_reason] `item bench` needs `--reason`: \"",
+     "    if False:\n"
+     "        out(\"FINDING [bench_without_reason] `item bench` needs `--reason`: \"",
+     "`item bench`'s demand for a reason — a judged move off the head then "
+     "records no why"),
+
+    ("bench_not_ready", "verbs.py",
+     "    if it.grade != \"READY\":",
+     "    if False:",
+     "`item bench`'s READY-only source test — a NEW item is then graded "
+     "decision-complete without anyone judging so"),
+
+    ("ready_outgrows_head", "verbs.py",
+     "    if len(ready - head) > len(left):",
+     "    if False:",
+     "the demote trigger's comparison — READY outgrowing the scheduled head "
+     "then reads clean"),
+
+    ("head_draining", "verbs.py",
+     "    if not head:\n"
+     "        out(f\"FINDING [head_draining] the scheduled head is EMPTY while \"",
+     "    if False:\n"
+     "        out(f\"FINDING [head_draining] the scheduled head is EMPTY while \"",
+     "the return trigger's empty-head arm — a head emptied while STANDBY "
+     "holds work then reads clean"),
 ]
 
 

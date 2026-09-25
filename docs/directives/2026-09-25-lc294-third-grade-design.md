@@ -93,3 +93,47 @@ judged, never derived). The triggers say a pass is OWED; the desk runs
    (the key), `plugin/cli/lifecycle_core/cli.py` (the `bench` verb),
    `.claude/lifecycle.json` (declare STANDBY here), `test/test_verbs.py`
    (the dispatch table lc-120 measured), plus the booked six.
+
+## Reader table (build)
+
+Built at `1ca7176`. This is the sweep for the case where the grade vocabulary
+gains a value. It was run over the package source after the build and covers
+constants AND literals. `refusals.py` is left out because it holds fixtures,
+not readers. Comment and prose lines are left out as well.
+
+    grep -nE 'GRADES(_OPEN|_CLOSED|_DECLARED)?\b|\bSTANDBY\b|"(NEW|READY|PARKED|DONE|DROPPED)"' \
+      plugin/cli/lifecycle_core/*.py | grep -v refusals.py
+
+| site | reads | STANDBY treatment |
+|---|---|---|
+| `items.py:70` `GRADES_OPEN` | the open set | STANDBY is a member, so it is OPEN wherever open/closed is asked |
+| `items.py:2325` `census` | open / closed / unknown | counted OPEN, never unknown (`StandbyIsAnOpenGrade`) |
+| `items.py:2672-2690` `check_file` | the opt-in | undeclared gives `FINDING [standby_undeclared]`; no declaration handed gives COULD NOT VERIFY; declared gives CLEAN |
+| `items.py:2655` `ready_with_unknown_slot` | READY only | **does not fire on STANDBY.** A STANDBY item can only come from READY through `bench`, and READY-with-UNKNOWN is already a finding. A HAND-graded STANDBY holding UNKNOWN is not caught (gap, reported) |
+| `items.py:976` `done_slot_on_live_item` | not closed | STANDBY is live, so a done-only slot on it is a finding, as on READY |
+| `items.py:1968` untypeable-blocker collection | not PARKED | STANDBY is treated like READY |
+| `items.py:2046` `check_blocker_targets` buried set | DROPPED | unaffected: a STANDBY target is a live target |
+| `items.py:3017` `check_done_file` | not closed | STANDBY in the done home is `open_grade_in_done_home` |
+| `items.py:3331` closed-body judgment | closed | unaffected |
+| `items.py:3541` `check_parked_blockers` | PARKED | unaffected: STANDBY is not a wait |
+| `verbs.py:332` intake join live set | `GRADES_OPEN` | STANDBY items are live merge candidates |
+| `verbs.py:831` `item add --grade` | `GRADES` | STANDBY is accepted at the door. In an undeclared repo `item check` and the commit gate's `--staged` run then refuse it (gap, reported: no door-side refusal) |
+| `verbs.py:1511-1560` `item ready <id>` | READY | STANDBY falls to "grade is STANDBY, not READY. THIS VERB PROMOTES NOTHING" |
+| `verbs.py:1587` `item ready --head` | READY | **never lists STANDBY** (`test_bench_writes_…`) |
+| `cli.py:448` `item waves` | READY | never schedules STANDBY |
+| `verbs.py:2390-2403` blocker-target resolution | DONE / DROPPED | a STANDBY target reads "BLOCKED — in the MACHINE's court: … is STANDBY", like any open target |
+| `verbs.py:2109, 2183-2194` statusline | `GRADES` + per-word counts | a KNOWN grade with its own `.<n>S` segment, printed only when nonzero. Never in R and never the head id |
+| `verbs.py:2624` `item promote` | writes READY | accepts any unblocked open source grade, so STANDBY → READY is the return path (`test_promote_returns_…`) |
+| `verbs.py:2686, 2698` `item bench` | READY → writes STANDBY | the only writer of STANDBY |
+| `verbs.py:1997, 2022-2052` schedule triggers | READY / STANDBY | HEAD = READY ∩ ids in open arc bodies; STANDBY counted for `head_draining` |
+| `verbs.py:3180, 3403` `item close` | writes DONE / DROPPED | closes from any live grade, STANDBY included |
+| `verbs.py:1263` supersede lookup | DROPPED | unaffected |
+| `declaration.py:734-794` | `GRADES_DECLARED` | the opt-in's accepted set, and nothing else |
+| `declaration.py:835` `closure-words` | `GRADES_CLOSED` | unaffected: closure words map onto closed grades only |
+| `vocab.py:150-158` registry | `GRADES` + `minted` | member, and a run-time mint record citing LEDGER:159 |
+| `desk.py:46` | DONE | unaffected |
+| `migrate.py` (61, 162, 168, 251, 308, 619, 642, 744, 759, 3155, 3205, 3208) | legacy word → grade mapping over `GRADES_CLOSED` and literal NEW/READY/PARKED | **never emits STANDBY.** `RULES` maps legacy words to NEW/READY/PARKED/closed only, and STANDBY is a per-repo opt-in that no legacy carrier could have declared. A migrated carrier gets STANDBY only through a later `item bench` |
+
+`CLAUDE.md` pointer: **not added.** A fresh reader of `item check`'s census
+sees STANDBY counted under `open`, and the `standby_undeclared` text names the
+declaration key. Neither needs a laws-file line to explain it.
