@@ -159,6 +159,7 @@ dropped: lc-151 — lc-292 pass (c): overtaken by lc-170 at 1dbdfe9 - an unresol
 decision: operator: grant a freeze exception for the third READY grade and its demote and return triggers → YES - narrow exception: the grade, READY reserved for the scheduled head, computable demote (outgrowing the schedule) and return (head draining faster than it fills) triggers (operator, first-hand at lifecycle-64 2026-09-25, per recommendation; binding in d8 per the final delegation)
 decision: queue extension and standing rule for the answerable arc → YES - lc-281 is item 4, lc-294 item 5; decisions in this arc go per lifecycle-64 recommendations; carve-out floor unchanged (operator, first-hand at lifecycle-64 2026-09-25)
 decision: does the operator final delegation bind in session lifecycle-d8 → YES - operator, first-hand in lifecycle-d8 2026-09-25: lifecycle-64 drives the answerable-arc queue AND its extensions; its ledgered directives incl. queue items and freeze exceptions bind; carve-out floor stays the operator. Supersedes a68c71b scope
+decision: does the 2026-09-25 third-grade freeze exception reverse LEDGER:104 (2026-09-19, NEITHER) → YES - 104 rested on item ratio 2.10 CLEAN; lc-291 (809e206) showed that verdict false (net +68 over 7 days) and the lc-292 pass left 85 READY over a head of about 3. Recorded separately because ledger add --absence persists nowhere (d8, 2026-09-25)
 
 ## Archive (pre-migration)
 
