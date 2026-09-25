@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 290
+added: 291
 compacted: 0
 
 ## lc-3
@@ -1642,3 +1642,12 @@ done-criterion: item add/amend refuse a MEASURED evidence claim that names no co
 evidence: MEASURED 2026-09-25: evidence_unmarked refuses an unmarked slot but accepts MEASURED followed by any prose. DERIVED: extending the mark check to demand its basis is an act-time refusal, R9 class (b).
 blocked-by: decision freeze release - does the lc-161 after-measurement verdict, under the admission bar, release the new mechanisms parked by the lc-292 pass
 not-derivable: 2026-09-25 Not derivable: the freeze (LEDGER decision 2026-09-24) holds new mechanisms until the lc-161 after-measurement reports, and the admission bar needs a pre-registered probe; one answer releases every item parked on this exact question.
+
+## lc-299
+grade: READY
+requirement: lc-294 shipped with three reader gaps, named in its closed-reason (ITEMS-DONE.md lc-294, fe7e5cc) and the design reader table
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py,test/test_verbs.py
+done-criterion: (1) item check refuses a STANDBY block holding an UNKNOWN slot, as it refuses READY (ready_with_unknown_slot widened, its route text naming STANDBY); (2) item add --grade STANDBY in a repo not declaring grades-extra exits 2 at the door naming standby_undeclared, and exits 0 in a declaring repo; (3) head_draining has a dated fixture where the head shrinks in both halves with a non-empty head and STANDBY non-empty, and it fires. Each red-first; prove-rows green; --test CLEAN.
+evidence: MEASURED at a67b80f: items.py ready_with_unknown_slot tests grade READY only (reader table row items.py:2655); verbs.py item add --grade accepts any member of GRADES (reader table row verbs.py:831); head_draining rows in refusals.py fire only the empty-head arm (lane report, desk-verified)
+blocked-by: NONE
