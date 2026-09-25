@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 284
+added: 285
 compacted: 0
 
 ## lc-3
@@ -1601,4 +1601,13 @@ goal: lean-machinery-strict-checks
 write-set: ITEMS.md,LEDGER.md
 done-criterion: One demotion pass over every open READY item, each classed and moved by tool verbs, never hand edits: (a) defect repair to a shipped instrument, or already-scheduled head work, stays READY; (b) new mechanism, or work whose worth the lc-161 verdict decides, goes PARKED with the ONE shared named blocker - freeze (LEDGER decision line 2026-09-24) + admission bar + lc-161 after-measurement verdict - so a single ledger answer re-releases the whole class; (c) overtaken or duplicate takes a recorded DROP with a one-line reason. The close reports counts per class, quotes the post-pass READY head in full, and item ratio drop count moves off zero where (c) applied. Runs BEFORE the lc-161 after-measurement, so the after-number is read over a carrier whose head means something.
 evidence: PERISHABLE(2026-09-24, re-derive: lifecycle item ready --head): 116 listed plus head, 117 READY total, head-rule source order, no lead goal. MEASURED: freeze pin, admission bar, and baseline are ledger decision lines read this session. DERIVED: the about-3 live head follows from the freeze - everything else waits on the verdict by decisions already made.
+blocked-by: NONE
+
+## lc-293
+grade: READY
+requirement: item ratio lifetime tripwire reads drain as closed bodies only, excluding the carrier head compacted counter, so after an item compact the ratio inflates and capture_dominated fires falsely (10 added, 8 closed, 6 compacted reads 10:2 = 5:1). Record: found 2026-09-25 by lc-291 compaction test at 809e206, desk lifecycle-d8.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_schema.py
+done-criterion: cmd_item_ratio drain side = done-home bodies + head compacted (conservation: open + done = baseline + added - compacted); a compacted carrier under the tripwire reads CLEAN, red-first on the 10/8/6 plant (fires capture_dominated before, silent after); capture_dominated row and arrangement still PROVEN; suite and --test green.
+evidence: MEASURED 2026-09-25: plant 10 added / 8 closed / 6 compacted printed ratio 10:2 = 5.00:1 FINDING [capture_dominated] (lc-291 test run before its fixture was narrowed); every governed carrier reads compacted: 0 today, so the defect is latent, not live.
 blocked-by: NONE
