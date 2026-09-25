@@ -1562,7 +1562,7 @@ evidence: MEASURED 2026-09-25 at d8: after a disposed write, grep -c on the abse
 blocked-by: NONE
 
 ## lc-296
-grade: NEW
+grade: PARKED
 requirement: An ask queued for the operator has NO CARRIER: a session idle on a human answer renders identically to a session with nothing owed. Incident 2026-09-25 ~15:20: the lc-281/lc-294 confirmation sat invisible across two terminals while the operator asked the driving desk why the peer was idle. Record: operator-raised first-hand at lifecycle-64; the purpose doc says every ask queued for the operator is one only they could answer, and nothing holds that queue.
 goal: lean-machinery-strict-checks
 write-set: UNKNOWN
