@@ -56,12 +56,24 @@ from . import grammar
 #: lives there and `test_schema.py` already pointed at it.
 SCHEMA_FLOOR = decl.SCHEMA_FLOOR
 
-#: §3.1 — five grades, closed. A repo's declared EXTRA grade words are not
-#: accepted; the migration maps their meanings and its report says so per
-#: entry.
-GRADES_OPEN = ("NEW", "READY", "PARKED")
+#: §3.1 — five grades, closed, plus the one OPT-IN grade below. A repo's
+#: declared EXTRA grade words are not accepted; the migration maps their
+#: meanings and its report says so per entry.
+#:
+#: STANDBY (lc-294) — decision-complete like READY, and NOT on the scheduled
+#: head. Minted from a recorded decision, never guessed: the reason travels in
+#: the vocabulary registry (`vocab.registry()`, "grades", `minted`). It is an
+#: OPEN grade everywhere a reader asks open/closed, and a repo carries it only
+#: by declaring it (`GRADES_DECLARED`, the declaration's `grades_extra`); a
+#: STANDBY block in a repo that does not is `standby_undeclared`.
+STANDBY = "STANDBY"
+GRADES_OPEN = ("NEW", "READY", "PARKED", STANDBY)
 GRADES_CLOSED = ("DONE", "DROPPED")
 GRADES = GRADES_OPEN + GRADES_CLOSED
+
+#: The grades a repo must OPT INTO before its carrier may hold them — the
+#: whole accepted value set of the declaration's `grades_extra` key.
+GRADES_DECLARED = (STANDBY,)
 
 #: The slots, in order. Fixed: a block carries exactly these, exactly once,
 #: in this sequence. Order is part of the shape rather than decoration — a
@@ -619,7 +631,12 @@ def opens_with_date(value: str) -> bool:
 #: desk had ever changed its mind.
 PROMOTE_REASON = "promote-reason"
 PROMOTED_BY = "promoted-by"
-PROMOTION_LINES = (PROMOTE_REASON, PROMOTED_BY)
+#: `item bench`'s record (lc-294): READY → STANDBY is the same kind of act as
+#: a promotion — a judged grade move — so its dated reason rides the SAME
+#: appended-record route rather than a fourth one: it repeats, it is dated,
+#: and it sits after the block's fixed slots.
+BENCH_REASON = "bench-reason"
+PROMOTION_LINES = (PROMOTE_REASON, PROMOTED_BY, BENCH_REASON)
 
 #: Head lines the carrier understands. `schema` is required and first;
 #: the conservation trio is optional here because the identity that uses it
@@ -1449,6 +1466,18 @@ def append_promotion(text: str, ident: str, date: str, by: str, reason: str):
     judgment of a grade that never moved.
     """
     return _append_to_block(text, ident, render_promotion(date, by, reason))
+
+
+def render_bench(date: str, reason: str) -> list:
+    """The line ONE bench act appends (lc-294). The only place it is spelled."""
+    return [f"{BENCH_REASON}: {date} {reason}"]
+
+
+def append_bench(text: str, ident: str, date: str, reason: str):
+    """Append one dated bench record to a LIVE block. `(text, found)` — the
+    grade is moved by `item bench` in the same buffer, as `append_promotion`
+    says of its own act."""
+    return _append_to_block(text, ident, render_bench(date, reason))
 
 
 def render_closure_pointer(date: str, ref: str, line: str) -> str:
@@ -2381,8 +2410,13 @@ def _owning_ident(parsed: Parsed, line: int) -> str | None:
 
 def check_file(path: Path, out, prefix: str | None = None, *,
                text: str | None = None, collect: list | None = None,
-               ledger_path: Path | None = None) -> int:
+               ledger_path: Path | None = None,
+               grades_extra: tuple | None = None) -> int:
     """The pre-commit shape check over one carrier file.
+
+    `grades_extra` is the declaration's opt-in grade list (lc-294), passed by
+    every caller holding the declaration; `None` means "not handed one", and a
+    STANDBY block then answers COULD NOT VERIFY rather than either verdict.
 
     `text` runs the check over a body that is not on disk — the git INDEX's,
     for `--staged`. `collect` receives every `Finding` the run produced, in
@@ -2630,8 +2664,31 @@ def check_file(path: Path, out, prefix: str | None = None, *,
     if ready_unknown:
         code = exits.worst([code, exits.FINDING])
 
+    # STANDBY IS OPT-IN PER REPO (lc-294). The census above counts it OPEN,
+    # because it is; whether THIS repo agreed to carry it is the declaration's
+    # to say, and a caller that handed no declaration gets the third answer
+    # rather than a guess in either direction — CLEAN would wave an undeclared
+    # grade through, FINDING would refuse a declaring repo's legitimate work.
+    standby = [it for it in parsed.items if it.grade == STANDBY]
+    standby_undeclared = []
+    if standby and grades_extra is None:
+        out(f"COULD NOT VERIFY: {len(standby)} block(s) graded {STANDBY}, and "
+            "this check was handed no declaration, so whether the repo opts "
+            "into that grade (`grades_extra`) is unknown.")
+        code = exits.worst([code, exits.COULD_NOT_VERIFY])
+    elif standby and STANDBY not in grades_extra:
+        standby_undeclared = standby
+        for it in standby:
+            finding("standby_undeclared", it.line,
+                    f"block {it.ident!r} is graded {STANDBY}, and this repo's "
+                    "declaration does not opt into it — `grades_extra` does "
+                    f"not list {STANDBY}. It is the off-head twin of READY and "
+                    "exists per repo; declare it, or re-grade the block.",
+                    it.ident)
+        code = exits.worst([code, exits.FINDING])
+
     out(f"item check: {exits.word(code)} — "
-        f"{len(parsed.problems) + len(bad_ids) + len(untyped) + len(unk_misplaced) + len(ready_unknown)}"
+        f"{len(parsed.problems) + len(bad_ids) + len(untyped) + len(unk_misplaced) + len(ready_unknown) + len(standby_undeclared)}"
         f" shape finding(s), {len(c['unknown'])} unclassifiable grade word(s).")
     return code
 

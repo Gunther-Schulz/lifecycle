@@ -1769,6 +1769,7 @@ class TheCarrierVerbDispatchHasNoDefault(unittest.TestCase):
         "promote": "cmd_item_promote",
         "ready": "cmd_item_ready",
         "park": "cmd_item_park",
+        "bench": "cmd_item_bench",
         "close": "cmd_item_close",
         "compact": "cmd_item_compact",
         "ratio": "cmd_item_ratio",
@@ -2883,3 +2884,99 @@ class ProseSlotsFromFileOrStdin(unittest.TestCase):
                              "xx-1", "--absence-file", "-",
                              "--reason", "x"])
         self.assertEqual(cm.exception.code, exits.COULD_NOT_VERIFY)
+
+
+def _pair(fired):
+    """`(code, output)` off a roster `Fired`."""
+    return fired.code, fired.output
+
+
+class TheStandbyGrade(unittest.TestCase):
+    """lc-294: `item bench`, its return path, and the two schedule triggers.
+
+    The refusals live in the roster (`refusals.STANDBY_ROWS`); these arms
+    hold the SUCCESS paths and the answers a roster row cannot carry — the
+    third answer on missing arc history, and the idle rule."""
+
+    def test_bench_writes_the_grade_and_its_dated_reason_in_one_commit(self):
+        with refusals._Repo(items=refusals.SEED_ITEMS,
+                            declaration=refusals.STANDBY_DECLARATION) as r:
+            code, out = _pair(refusals._cli_in(
+                r, ["item", "bench", "xx-1", "--reason", "off the head"]))
+            self.assertEqual(code, exits.CLEAN, out)
+            parsed = items.parse((r.dir / "ITEMS.md").read_text("utf-8"))
+            it = parsed.items[0]
+            self.assertEqual(it.grade, items.STANDBY)
+            self.assertEqual(
+                [(n, v.split(" ", 1)[1]) for n, v, _ in it.promotions],
+                [(items.BENCH_REASON, "off the head")])
+            self.assertEqual(parsed.problems, [])
+            code, out = _pair(refusals._cli_in(r, ["item", "check"]))
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertIn("census: open 1", out)
+            code, out = _pair(refusals._cli_in(r, ["item", "ready", "--head"]))
+            self.assertNotIn("xx-1", out)
+            self.assertIn("head: 0 READY", out)
+            code, out = _pair(refusals._cli_in(r, ["item", "statusline"]))
+            self.assertEqual(out.strip(), "0R.0P.1S head -")
+
+    def test_promote_returns_a_STANDBY_item_to_READY(self):
+        with refusals._Repo(items=refusals.STANDBY_SEED,
+                            declaration=refusals.STANDBY_DECLARATION) as r:
+            code, out = _pair(refusals._cli_in(
+                r, ["item", "promote", "xx-1", "--by", "the desk",
+                    "--reason", "an open arc takes it up"]))
+            self.assertEqual(code, exits.CLEAN, out)
+            parsed = items.parse((r.dir / "ITEMS.md").read_text("utf-8"))
+            self.assertEqual(parsed.items[0].grade, "READY")
+
+    def test_a_check_handed_no_declaration_answers_the_third_answer(self):
+        """`check_file` without `grades_extra` neither waves a STANDBY block
+        through nor refuses it: it cannot know, and says so."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "ITEMS.md"
+            p.write_text(refusals.STANDBY_SEED, encoding="utf-8")
+            buf = []
+            code = items.check_file(p, buf.append, prefix="xx")
+            self.assertEqual(code, exits.COULD_NOT_VERIFY, "\n".join(buf))
+            buf = []
+            code = items.check_file(p, buf.append, prefix="xx",
+                                    grades_extra=(items.STANDBY,))
+            self.assertEqual(code, exits.CLEAN, "\n".join(buf))
+
+    def test_an_arc_id_is_read_whole_never_as_a_prefix(self):
+        self.assertEqual(verbs._ids_in("see lc-281 and lc-28.", "lc"),
+                         {"lc-281", "lc-28"})
+        self.assertEqual(verbs._ids_in("see lc-281", "lc"), {"lc-281"})
+        self.assertEqual(verbs._ids_in("xlc-5 lc-5x", "lc"), {"lc-5"})
+
+    def test_head_draining_without_arc_history_is_COULD_NOT_VERIFY(self):
+        """A non-empty head, STANDBY holding work, and no arcs home at the
+        window's start cut: whether the head shrank cannot be read."""
+        cuts = [("before", {"xx-1": "READY", "xx-2": "STANDBY",
+                            "xx-3": "READY"}, 1, (), {}),
+                ("now", {"xx-1": "READY", "xx-2": "STANDBY"}, 1, ("xx-3",),
+                 {"sched": "## sched\ngoal: xx-1\n"})]
+        fired = refusals._standby_history(cuts)
+        self.assertEqual(fired.code, exits.COULD_NOT_VERIFY, fired.output)
+        self.assertIn("COULD NOT VERIFY [head_draining]", fired.output)
+        self.assertIn("arc history does not cover the window", fired.output)
+
+    def test_an_idle_repo_is_neither_outgrown_nor_draining(self):
+        """Ruling (a): three READY, nothing on the head, one STANDBY — every
+        predicate would fire, and no flow over the window answers CLEAN."""
+        grades = {"xx-1": "READY", "xx-2": "READY", "xx-3": "READY",
+                  "xx-4": "STANDBY"}
+        cuts = [("before", grades, 1, ("xx-9",), {}),
+                ("now", grades, 1, ("xx-9",), {})]
+        fired = refusals._standby_history(cuts)
+        self.assertEqual(fired.code, exits.CLEAN, fired.output)
+        self.assertIn("no flow over the window", fired.output)
+        self.assertNotIn("[ready_outgrows_head]", fired.output)
+        self.assertNotIn("[head_draining]", fired.output)
+
+    def test_an_undeclared_repo_never_prints_the_schedule(self):
+        fired = refusals._ratio_history(refusals.NET_GROWTH_DRAINING)
+        self.assertNotIn("schedule:", fired.output)
+        self.assertNotIn("head_draining", fired.output)

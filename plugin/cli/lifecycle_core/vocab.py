@@ -114,6 +114,11 @@ class Vocabulary:
     oov_form: str
     consumer: str
     proof_path: str
+    #: Members minted AFTER the vocabulary was registered, each as
+    #: `(member, date, recorded reason)`. D-3 says new members are minted from
+    #: recorded reasons; this is where the reason stays readable at run time
+    #: instead of only in a commit message.
+    minted: tuple = ()
 
     def renders_distinctly(self, rendered_oov: str) -> bool:
         """Is this rendering distinct from every member's own spelling?
@@ -149,6 +154,15 @@ def registry() -> tuple:
                         "counted by `items.census`, rendered by `item ready` "
                         "as unschedulable-with-reason, and refused by the "
                         "move at `item close`"),
+            minted=(
+                (items_mod.STANDBY, "2026-09-25",
+                 "LEDGER.md decision \"operator: grant a freeze exception "
+                 "for the third READY grade and its demote and return "
+                 "triggers\" (LEDGER:159): decision-complete but not on "
+                 "the scheduled head. Opt-in per repo via `grades_extra`; "
+                 "written by `item bench`, returned by `item promote` "
+                 "(lc-294)"),
+            ),
         ),
         Vocabulary(
             name="reader-when modes",

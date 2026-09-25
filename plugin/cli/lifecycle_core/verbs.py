@@ -1689,6 +1689,31 @@ NET_GROWTH_WINDOW_STATUS = ("PLACEHOLDER — lc-291 chose seven days without a "
                             "justifies replaces it")
 
 
+def _show_at(ctx: Ctx, rel: str, rev: str):
+    """`(text, why-not)` — one repo-relative file's body at a commit."""
+    try:
+        r = subprocess.run(["git", "-C", str(ctx.repo), "show",
+                            f"{rev}:{rel}"],
+                           capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, f"git could not be run ({exc!r})"
+    if r.returncode == 0:
+        return r.stdout, None
+    return None, f"{rel} does not exist at {rev[:12]}"
+
+
+def _parsed_at(ctx: Ctx, path, rev: str):
+    """`(Parsed, why-not)` — one carrier home as it stood at a commit."""
+    try:
+        rel = path.resolve().relative_to(ctx.repo.resolve()).as_posix()
+    except ValueError:
+        return None, f"{path} is outside the repo, so git holds no history of it"
+    text, why = _show_at(ctx, rel, rev)
+    if text is None:
+        return None, why
+    return items_mod.parse(text), None
+
+
 def _carrier_flow_at(ctx: Ctx, rev: str):
     """`((added, compacted, closed), why-not)` for both carrier homes AT A
     COMMIT, read from git rather than from any cache of past counts.
@@ -1703,19 +1728,10 @@ def _carrier_flow_at(ctx: Ctx, rev: str):
     carrier that captured nothing."""
     counts = []
     for path in (ctx.items_path, ctx.done_path):
-        try:
-            rel = path.resolve().relative_to(ctx.repo.resolve()).as_posix()
-        except ValueError:
-            return None, f"{path} is outside the repo, so git holds no history of it"
-        try:
-            r = subprocess.run(["git", "-C", str(ctx.repo), "show",
-                                f"{rev}:{rel}"],
-                               capture_output=True, text=True)
-        except (OSError, subprocess.SubprocessError) as exc:
-            return None, f"git could not be run ({exc!r})"
-        if r.returncode != 0:
-            return None, f"{rel} does not exist at {rev[:12]}"
-        counts.append(items_mod.parse(r.stdout))
+        parsed, why = _parsed_at(ctx, path, rev)
+        if parsed is None:
+            return None, why
+        counts.append(parsed)
     items_p, done_p = counts
     added = items_p.head.get("added")
     if added is None:
@@ -1736,6 +1752,28 @@ def _rev_at_or_before(ctx: Ctx, when) -> str | None:
     return rev if r.returncode == 0 and rev else None
 
 
+def _window_cuts(ctx: Ctx):
+    """`(start_rev, mid_rev)` — the lc-291 window's two cuts, each the newest
+    commit at or before it. ONE home for the window, read by `_net_growth`
+    and by the STANDBY triggers (lc-294): a second window constant would let
+    two verdicts printed together disagree about which week they measured."""
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+    window = timedelta(days=NET_GROWTH_WINDOW_DAYS)
+    return (_rev_at_or_before(ctx, now - window),
+            _rev_at_or_before(ctx, now - window / 2))
+
+
+def _window_moved(start, mid, now_flow) -> bool:
+    """Did anything move over the window — captured or drained, in either
+    half? `_net_growth`'s idle test, over the same `(added, compacted,
+    closed)` flows; IDLE IS NOT DRAINING, and it is not decaying either."""
+    for (a0, c0, d0), (a1, c1, d1) in ((start, mid), (mid, now_flow)):
+        if (a1 - a0) or (d1 - d0) + (c1 - c0):
+            return True
+    return False
+
+
 def _net_growth(ctx: Ctx, now_flow, out) -> int:
     """The DIVERGENCE verdict (lc-291): did the open count grow over the
     window, in BOTH of its halves?
@@ -1749,11 +1787,7 @@ def _net_growth(ctx: Ctx, now_flow, out) -> int:
     is not a finding. Drain counts compaction too: `compacted` leaves the done
     home by a recorded exit, and by conservation `Δopen = Δadded − Δdone −
     Δcompacted`, so without it a compaction would read as growth."""
-    from datetime import datetime, timedelta, timezone
-    now = datetime.now(timezone.utc)
-    window = timedelta(days=NET_GROWTH_WINDOW_DAYS)
-    start_rev = _rev_at_or_before(ctx, now - window)
-    mid_rev = _rev_at_or_before(ctx, now - window / 2)
+    start_rev, mid_rev = _window_cuts(ctx)
     out(f"window: {NET_GROWTH_WINDOW_DAYS} days ({NET_GROWTH_WINDOW_STATUS})")
     if start_rev is None:
         out("COULD NOT VERIFY [net_growth]: no commit is older than the "
@@ -1772,15 +1806,14 @@ def _net_growth(ctx: Ctx, now_flow, out) -> int:
         return exits.COULD_NOT_VERIFY
 
     halves = []
-    moved = False
     for label, (a0, c0, d0), (a1, c1, d1) in (
             ("first half ", start, mid), ("second half", mid, now_flow)):
         captured = a1 - a0
         drained = (d1 - d0) + (c1 - c0)
         halves.append(captured - drained)
-        moved = moved or bool(captured or drained)
         out(f"{label}: +{captured} captured, {drained} drained, "
             f"net {captured - drained:+d}")
+    moved = _window_moved(start, mid, now_flow)
     net = sum(halves)
     if all(h > 0 for h in halves):
         out(f"FINDING [net_growth] the open count grew in BOTH halves of the "
@@ -1808,7 +1841,7 @@ def _net_growth(ctx: Ctx, now_flow, out) -> int:
     return exits.CLEAN
 
 
-def cmd_item_ratio(args, out, ctx: Ctx) -> int:
+def _ratio_flow(args, out, ctx: Ctx, final: bool = True) -> int:
     """`item ratio` — capture against drain, the only growth alarm R22 allows.
 
     BOTH SIDES ARE FLOWS SINCE THE SAME INSTANT, which is the half that gets
@@ -1855,7 +1888,8 @@ def cmd_item_ratio(args, out, ctx: Ctx) -> int:
             "admitted and nothing closed since this carrier was created. A "
             "ratio here would be an arithmetic accident, and printing 0 would "
             "read exactly like a carrier draining perfectly.")
-        out(f"item ratio: {exits.word(exits.COULD_NOT_VERIFY)}")
+        if final:
+            out(f"item ratio: {exits.word(exits.COULD_NOT_VERIFY)}")
         return exits.COULD_NOT_VERIFY
     if closed == 0:
         out(f"ratio: {added}:0 — capture with NO drain at all.")
@@ -1865,7 +1899,8 @@ def cmd_item_ratio(args, out, ctx: Ctx) -> int:
             "small carrier that never drains is exactly the case a cap would "
             "have missed. A recorded DROP clears this as well as a closure "
             "does — the goal is to lose nothing SILENTLY.")
-        out(f"item ratio: {exits.word(exits.FINDING)}")
+        if final:
+            out(f"item ratio: {exits.word(exits.FINDING)}")
         return exits.FINDING
     ratio = added / closed
     out(f"ratio: {added}:{closed} = {ratio:.2f}:1   (tripwire "
@@ -1876,11 +1911,194 @@ def cmd_item_ratio(args, out, ctx: Ctx) -> int:
             "this repo owes a retirement pass before new bookings: re-check "
             "stale-risk items against the world, drop the overtaken, merge "
             "duplicates. The trigger reads the RATIO and never the size.")
-        out(f"item ratio: {exits.word(exits.FINDING)}")
+        if final:
+            out(f"item ratio: {exits.word(exits.FINDING)}")
         return exits.FINDING
     code = _net_growth(ctx, (added, parsed.head.get("compacted") or 0, closed),
                        out)
+    if final:
+        out(f"item ratio: {exits.word(code)}")
+    return code
+
+
+def cmd_item_ratio(args, out, ctx: Ctx) -> int:
+    """`item ratio` — the flow verdicts, and in a repo declaring STANDBY the
+    two schedule triggers beside them (lc-294).
+
+    A repo declaring nothing runs `_ratio_flow` alone, byte for byte as
+    before. A declaring repo runs the same flow body with its verdict line
+    held back, then the triggers, then ONE verdict over all of them — the
+    worst answer, `exits.worst`'s ordering, never the last one printed.
+    """
+    if not decl.declares_standby(ctx.declaration):
+        return _ratio_flow(args, out, ctx)
+    code = _ratio_flow(args, out, ctx, final=False)
+    code = exits.worst([code, _standby_triggers(ctx, out)])
     out(f"item ratio: {exits.word(code)}")
+    return code
+
+
+def _ids_in(text: str, prefix: str) -> set:
+    """Every `<prefix>-<n>` id a text names, as a SET of parsed ids.
+
+    Anchored both ends so `lc-28` is not read out of `lc-281`: a substring
+    test here would be a prefix match in an equality's costume, and it would
+    put an item on the head because a longer id began with its digits."""
+    pat = re.compile(r"(?<![A-Za-z0-9-])" + re.escape(prefix) + r"-(\d+)(?!\d)")
+    return {f"{prefix}-{m.group(1)}" for m in pat.finditer(text or "")}
+
+
+def _open_arc_texts_now(ctx: Ctx) -> list:
+    """The bodies of every OPEN arc — `arcs.live_slugs`, the set `arc
+    status` walks. The closed home is not an open arc and is not read."""
+    texts = []
+    for slug in arcs.live_slugs(ctx.repo):
+        try:
+            texts.append((ctx.repo / arcs.ARCS_DIR / f"{slug}.md")
+                         .read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError):
+            continue
+    return texts
+
+
+def _open_arc_texts_at(ctx: Ctx, rev: str):
+    """The OPEN arc bodies at a commit, or None where the arcs home held no
+    body there — the "arc history does not cover this cut" answer, kept
+    apart from an empty list, which would read as "no arc cited anything"."""
+    try:
+        r = subprocess.run(["git", "-C", str(ctx.repo), "ls-tree", rev, "--",
+                            f"{arcs.ARCS_DIR}/"],
+                           capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    rels = []
+    if r.returncode:
+        return None
+    for line in r.stdout.splitlines():
+        meta, _, rel = line.partition("\t")
+        if meta.split()[1:2] == ["blob"] and rel.endswith(".md"):
+            rels.append(rel)
+    if not rels:
+        return None
+    texts = []
+    for rel in rels:
+        text, _why = _show_at(ctx, rel, rev)
+        if text is not None:
+            texts.append(text)
+    return texts
+
+
+def _head_of(parsed, arc_texts, prefix: str) -> set:
+    """HEAD := READY items whose id appears in the body of an OPEN arc."""
+    cited = set()
+    for t in arc_texts:
+        cited |= _ids_in(t, prefix)
+    return {it.ident for it in parsed.items
+            if it.grade == "READY" and it.ident in cited}
+
+
+def _standby_triggers(ctx: Ctx, out) -> int:
+    """`ready_outgrows_head` and `head_draining` (lc-294) — FINDINGS that a
+    pass is owed. NEITHER MOVES ANYTHING: READY is judged (law 10), so the
+    trigger names the pass and the desk runs `item bench` / `item promote`,
+    each with its reason.
+
+    OVER `_net_growth`'s OWN CUTS (`_window_cuts`) and its own idle test
+    (`_window_moved`): a repo that captured nothing and drained nothing over
+    the window is CLEAN "no flow", never either finding — an idle repo is not
+    a decaying one."""
+    parsed, why = _load(ctx.items_path)
+    if parsed is None:
+        out(f"COULD NOT VERIFY: the STANDBY triggers could not read the "
+            f"carrier. {why}")
+        return exits.COULD_NOT_VERIFY
+    done_parsed, done_why = _load(ctx.done_path)
+    if done_parsed is None or parsed.head.get("added") is None:
+        out("COULD NOT VERIFY: the STANDBY triggers need the carrier's flow "
+            "(its `added` head and the done home), and one is unreadable. "
+            f"{done_why or ''}")
+        return exits.COULD_NOT_VERIFY
+
+    ready = {it.ident for it in parsed.items if it.grade == "READY"}
+    standby = {it.ident for it in parsed.items
+               if it.grade == items_mod.STANDBY}
+    head = _head_of(parsed, _open_arc_texts_now(ctx), ctx.prefix)
+    out(f"schedule: {len(ready)} READY, {len(head)} on the scheduled head "
+        f"(READY cited by an open arc), {len(ready - head)} unscheduled, "
+        f"{len(standby)} STANDBY")
+
+    start_rev, mid_rev = _window_cuts(ctx)
+    if start_rev is None:
+        out("COULD NOT VERIFY [ready_outgrows_head]: no commit is older than "
+            "the window, so there is no start cut to count READY exits from.")
+        return exits.COULD_NOT_VERIFY
+    start, why = _carrier_flow_at(ctx, start_rev)
+    mid, why_mid = (_carrier_flow_at(ctx, mid_rev) if start is not None
+                    else (None, why))
+    if start is None or mid is None:
+        out(f"COULD NOT VERIFY [ready_outgrows_head]: a window cut is "
+            f"unreadable — {why if start is None else why_mid}.")
+        return exits.COULD_NOT_VERIFY
+    now_flow = (parsed.head.get("added"), parsed.head.get("compacted") or 0,
+                len(done_parsed.items))
+    if not _window_moved(start, mid, now_flow):
+        out("schedule: CLEAN — no flow over the window: nothing captured and "
+            "nothing drained, so neither schedule trigger is read. An idle "
+            "repo is not a decaying one.")
+        return exits.CLEAN
+
+    start_parsed, _ = _parsed_at(ctx, ctx.items_path, start_rev)
+    ready_start = {it.ident for it in start_parsed.items
+                   if it.grade == "READY"}
+    left = ready_start - ready
+    code = exits.CLEAN
+    if len(ready - head) > len(left):
+        out(f"FINDING [ready_outgrows_head] {len(ready - head)} READY item(s) "
+            f"sit outside every open arc, and only {len(left)} left READY "
+            f"over the last {NET_GROWTH_WINDOW_DAYS} days (closed, dropped, "
+            "parked or benched). READY is outgrowing the scheduled head, so "
+            "the grade asserts a schedule nobody holds. A BENCH PASS is "
+            "owed: `item bench <id> --reason <why>` for each READY item no "
+            "open arc will take up this window. Nothing was moved.")
+        code = exits.FINDING
+    else:
+        out(f"ready_outgrows_head: CLEAN — {len(ready - head)} unscheduled "
+            f"READY against {len(left)} READY exit(s) over the window.")
+
+    if not standby:
+        out("head_draining: CLEAN — no STANDBY item, so there is nothing a "
+            "draining head could owe a return of.")
+        return code
+    if not head:
+        out(f"FINDING [head_draining] the scheduled head is EMPTY while "
+            f"{len(standby)} item(s) sit in STANDBY. A RETURN PASS is owed: "
+            "`item promote <id> --by <desk> --reason <why>` for the STANDBY "
+            "items an open arc will take up, or an arc citing READY work. "
+            "Nothing was moved.")
+        return exits.FINDING
+    arcs_start = _open_arc_texts_at(ctx, start_rev)
+    arcs_mid = _open_arc_texts_at(ctx, mid_rev)
+    if arcs_start is None or arcs_mid is None:
+        out("COULD NOT VERIFY [head_draining]: arc history does not cover the "
+            f"window — the arcs home holds no body at the window's "
+            f"{'start' if arcs_start is None else 'mid'} cut, so whether the "
+            "head shrank in both halves cannot be read. The answers are "
+            "clean, finding, and could not verify; this is the third, never "
+            "a clean.")
+        return exits.worst([code, exits.COULD_NOT_VERIFY])
+    mid_parsed, _ = _parsed_at(ctx, ctx.items_path, mid_rev)
+    h0 = _head_of(start_parsed, arcs_start, ctx.prefix)
+    h1 = _head_of(mid_parsed, arcs_mid, ctx.prefix)
+    if len(h0) > len(h1) > len(head):
+        out(f"FINDING [head_draining] the scheduled head shrank in BOTH "
+            f"halves of the window ({len(h0)} → {len(h1)} → {len(head)}) "
+            f"while {len(standby)} item(s) sit in STANDBY — it is draining "
+            "faster than it fills. A RETURN PASS is owed: `item promote "
+            "<id> --by <desk> --reason <why>` for the STANDBY items an open "
+            "arc will take up. Nothing was moved.")
+        return exits.FINDING
+    out(f"head_draining: CLEAN — head {len(h0)} → {len(h1)} → {len(head)} "
+        "over the window, not shrinking in both halves.")
     return code
 
 
@@ -1949,14 +2167,14 @@ def cmd_item_statusline(args, out, ctx: Ctx) -> int:
         out(f"n/a (cannot read {ctx.items_path.name}: {exc!r})")
         return exits.COULD_NOT_VERIFY
 
-    ready = parked = unknown = 0
+    ready = parked = standby = unknown = 0
     head_id = None
     saw_item = False
     malformed = []
     cur_id = cur_grade = cur_blocked = None
 
     def _flush():
-        nonlocal ready, parked, unknown, head_id
+        nonlocal ready, parked, standby, unknown, head_id
         if cur_id is None:
             return
         if cur_grade is None:
@@ -1968,6 +2186,11 @@ def cmd_item_statusline(args, out, ctx: Ctx) -> int:
                 head_id = cur_id
         elif cur_grade == "PARKED":
             parked += 1
+        elif cur_grade == items_mod.STANDBY:
+            # lc-294: a KNOWN grade, counted in its own segment and never in
+            # R — STANDBY is off the head by definition, so it can never be
+            # the head id either.
+            standby += 1
         elif (cur_grade not in _STATUSLINE_KNOWN_GRADES
                 and not vocab.is_oov(cur_grade)):
             # THE ARM IS NOT AN UNKNOWN WORD (D-3). This counter means
@@ -2023,7 +2246,10 @@ def cmd_item_statusline(args, out, ctx: Ctx) -> int:
             f"before the next heading: {shown})")
         return exits.COULD_NOT_VERIFY
 
-    line = f"{ready}R.{parked}P head {head_id or '-'}"
+    # THE `S` SEGMENT PRINTS ONLY WHEN NONZERO (lc-294), so a repo that
+    # never benches keeps the line it has always rendered, byte for byte.
+    line = (f"{ready}R.{parked}P" + (f".{standby}S" if standby else "")
+            + f" head {head_id or '-'}")
     if unknown:
         out(f"{line} !{unknown}?")
         return exits.FINDING
@@ -2410,6 +2636,79 @@ def cmd_item_promote(args, out, ctx: Ctx) -> int:
                         f"lifecycle: promote {args.ident} to READY", out,
                         skip=args.no_commit, what="the promotion")
     args.fire_detail = f"promote {args.ident}"
+    return code
+
+
+# --- `item bench` (lc-294) ----------------------------------------------------
+
+def cmd_item_bench(args, out, ctx: Ctx) -> int:
+    """READY → STANDBY: the desk's judged move OFF the scheduled head.
+
+    THE MIRROR OF `item promote`, which is the return path (it accepts any
+    unblocked open grade as its source, STANDBY included). Modeled on `item
+    park`'s in-place grade move and on promote's record: the grade moves in
+    the same buffer as a dated `bench-reason:` line, one write, then one
+    commit through `commit_paths`.
+
+    THREE REFUSALS, each a FINDING: the repo does not declare STANDBY (the
+    verb would write a grade the repo's own check refuses); no reason (a
+    judgment nobody reasoned is a grade that moved); the item is not READY
+    (STANDBY promises everything READY promises, and benching a NEW or
+    PARKED item would grade it decision-complete without anyone judging so).
+    """
+    if not decl.declares_standby(ctx.declaration):
+        out(f"FINDING [bench_undeclared] this repo's declaration does not opt "
+            f"into {items_mod.STANDBY} (`\"{decl.GRADES_EXTRA_KEY}\": "
+            f"[\"{items_mod.STANDBY}\"]`), so `item bench` would write a grade "
+            "its own `item check` refuses. Nothing was written.")
+        return exits.FINDING
+    reason = (getattr(args, "reason", None) or "").strip()
+    if not reason:
+        out("FINDING [bench_without_reason] `item bench` needs `--reason`: "
+            "why this item leaves the scheduled head. Moving it is a judgment "
+            "(law 10), and the next reader cannot ask why if the carrier does "
+            "not say. Nothing was written.")
+        return exits.FINDING
+    problem = items_mod.slot_value_problem(items_mod.BENCH_REASON, reason)
+    if problem:
+        out(f"FINDING [item_shape] {problem}")
+        return exits.FINDING
+
+    parsed, why = _load(ctx.items_path)
+    if parsed is None:
+        out(f"COULD NOT VERIFY: {why}")
+        return exits.COULD_NOT_VERIFY
+    it = next((i for i in parsed.items if i.ident == args.ident), None)
+    if it is None:
+        out(f"FINDING [unknown_item] no live block {args.ident!r} in "
+            f"{ctx.items_path.name}.")
+        return exits.FINDING
+    if it.grade != "READY":
+        out(f"FINDING [bench_not_ready] {it.ident} is {it.grade or '(none)'}, "
+            f"not READY. {items_mod.STANDBY} is READY's off-head twin and "
+            "promises everything READY does; only a READY item can be "
+            "benched. Nothing was written.")
+        return exits.FINDING
+
+    date = _today()
+    with items_mod.carrier_lock(ctx.items_path):
+        text = ctx.items_path.read_text(encoding="utf-8")
+        new, ok = items_mod.append_bench(text, args.ident, date, reason)
+        if ok:
+            new, ok = _set_slots(new, args.ident, {"grade": items_mod.STANDBY})
+        if not ok:
+            out(f"FINDING [unknown_item] no live block {args.ident!r} in "
+                f"{ctx.items_path.name}.")
+            return exits.FINDING
+        atomic.write_text(ctx.items_path, new, encoding="utf-8")
+    out(f"{args.ident} → {items_mod.STANDBY}, benched on {date}.")
+    for line in items_mod.render_bench(date, reason):
+        out(f"    {line}")
+    out("`item ready --head` no longer lists it; `item promote` returns it.")
+    code = commit_paths(ctx, (ctx.items_path,),
+                        f"lifecycle: bench {args.ident} to {items_mod.STANDBY}",
+                        out, skip=args.no_commit, what="the bench")
+    args.fire_detail = f"bench {args.ident}"
     return code
 
 

@@ -6,6 +6,7 @@
   "closure-home": "ITEMS-DONE.md",
   "trigger-policy": "on-demand",
   "head-rule": "none",
+  "grades_extra": ["STANDBY"],
   "goals": [
     "enforce-the-invariants",
     "one-home-per-kind",

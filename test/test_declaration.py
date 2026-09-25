@@ -1340,3 +1340,38 @@ class CommandGroupIsNotAVerb(unittest.TestCase):
     def test_the_predicate_still_answers_leaf_and_unknown(self):
         self.assertEqual(decl._verb_lookup("item ready")[0], "leaf")
         self.assertEqual(decl._verb_lookup("item nope-nope")[0], "unknown")
+
+
+class GradesExtraKey(unittest.TestCase):
+    """lc-294: the optional `grades_extra` opt-in. Absent is today's
+    behaviour; present, it accepts `items.GRADES_DECLARED` and nothing else."""
+
+    def _findings(self, value):
+        d = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        d[decl.GRADES_EXTRA_KEY] = value
+        res = decl.Result(code=exits.CLEAN)
+        decl.validate(d, res)
+        return [f.message for f in res.findings
+                if decl.GRADES_EXTRA_KEY in f.message]
+
+    def test_absent_is_no_finding_and_declares_nothing(self):
+        d = json.loads(json.dumps(refusals.GOOD_FULL_DECLARATION))
+        res = decl.Result(code=exits.CLEAN)
+        decl.validate(d, res)
+        self.assertEqual([f for f in res.findings
+                          if decl.GRADES_EXTRA_KEY in f.message], [])
+        self.assertFalse(decl.declares_standby(d))
+
+    def test_STANDBY_is_accepted_and_read(self):
+        self.assertEqual(self._findings(["STANDBY"]), [])
+        self.assertTrue(decl.declares_standby(refusals.STANDBY_DECLARATION))
+
+    def test_anything_else_is_a_declaration_finding(self):
+        self.assertTrue(self._findings(["BACKLOG"]))
+        self.assertTrue(self._findings("STANDBY"))
+        self.assertTrue(self._findings(["STANDBY", "STANDBY"]))
+
+    def test_a_malformed_value_reads_as_declaring_nothing(self):
+        for bad in ("STANDBY", ["BACKLOG"], {"STANDBY": {}}):
+            self.assertEqual(decl.grades_extra({decl.GRADES_EXTRA_KEY: bad}),
+                             ())

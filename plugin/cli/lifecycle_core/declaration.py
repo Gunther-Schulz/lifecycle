@@ -295,6 +295,15 @@ DELEGATION_VALUES = ("none", "active")
 #: a declared rule, never a looser matcher (lc-19's own sentence).
 CLOSURE_WORDS_KEY = "closure-words"
 
+#: THE OPT-IN GRADES (lc-294): `"grades_extra": ["STANDBY"]`. OPTIONAL for
+#: `closure-words`' reason — a repo declaring nothing behaves exactly as it
+#: did, so no schema bump (§3.8c). Unlike `closure-words` it DOES widen what a
+#: carrier may hold: the members it accepts are `items.GRADES_DECLARED`, and a
+#: STANDBY block in a repo that does not list it is `standby_undeclared`.
+#: Spelled with an underscore because the lc-294 brief spells it so; every
+#: other key here is hyphenated.
+GRADES_EXTRA_KEY = "grades_extra"
+
 #: Keys a declaration may NOT carry any more, each with what replaced it.
 #: Named rather than ignored: a withdrawn key left in a file reads exactly
 #: like a live one, and silently dropping it would leave the writer believing
@@ -615,6 +624,8 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
     # nowhere else, for the reason the `delegation` comment below gives.
     if CLOSURE_WORDS_KEY in doc:
         _validate_closure_words(doc[CLOSURE_WORDS_KEY], res)
+    if GRADES_EXTRA_KEY in doc:
+        _validate_grades_extra(doc[GRADES_EXTRA_KEY], res)
 
     if "delegation" in doc and doc["delegation"] not in DELEGATION_VALUES:
         res.add("declaration_malformed",
@@ -707,6 +718,28 @@ def closure_words(doc) -> dict:
     return {w: g for w, g in cw.items() if isinstance(g, str)}
 
 
+def grades_extra(doc) -> tuple:
+    """The repo's declared opt-in grades, or `()` where none (lc-294).
+
+    READ IN ONE PLACE, like `closure_words` above, and for its reason a
+    malformed value reads as EMPTY: `validate` has already reported it, and a
+    half-read opt-in would let a verb write a grade the declaration never
+    validly granted. Only accepted members survive.
+    """
+    from . import items as items_mod
+
+    ge = (doc or {}).get(GRADES_EXTRA_KEY) if isinstance(doc, dict) else None
+    if not isinstance(ge, list):
+        return ()
+    return tuple(g for g in ge if g in items_mod.GRADES_DECLARED)
+
+
+def declares_standby(doc) -> bool:
+    """Does this declaration opt into STANDBY (lc-294)?"""
+    from . import items as items_mod
+    return items_mod.STANDBY in grades_extra(doc)
+
+
 def effective_goals(doc) -> list:
     """The goal vocabulary an ITEM may carry: the declared set ∪ {`tend`}.
 
@@ -739,6 +772,36 @@ def effective_goals(doc) -> list:
     # merge can still put it in the list, and a doubled entry would render
     # twice in every message that prints the vocabulary.
     return goals + ([RESERVED_GOAL] if RESERVED_GOAL not in goals else [])
+
+
+def _validate_grades_extra(ge, res: Result) -> None:
+    """`grades_extra` (lc-294): a list drawn from `items.GRADES_DECLARED`.
+
+    Anything else is a declaration that states a grade the tool will not
+    honour — the `closure-words` refusal's shape. The member set is FETCHED
+    from `items`, never restated here, for that function's reason.
+    """
+    from . import items as items_mod
+
+    allowed = ", ".join(items_mod.GRADES_DECLARED)
+    if not isinstance(ge, list):
+        res.add("declaration_malformed",
+                f"`{GRADES_EXTRA_KEY}` must be a list of opt-in grades drawn "
+                f"from ({allowed}), e.g. [\"STANDBY\"]. Got "
+                f"{type(ge).__name__}.")
+        return
+    for g in ge:
+        if g not in items_mod.GRADES_DECLARED:
+            res.add("declaration_malformed",
+                    f"`{GRADES_EXTRA_KEY}` lists {g!r}, which is not an "
+                    f"opt-in grade this tool knows ({allowed}). The key "
+                    "widens the carrier by exactly the grades the tool "
+                    "reads; an unknown word here would read as live while "
+                    "every verb ignored it.")
+    words = [x for x in ge if isinstance(x, str)]
+    if len(set(words)) != len(words):
+        res.add("declaration_malformed",
+                f"`{GRADES_EXTRA_KEY}` contains duplicates.")
 
 
 def _validate_closure_words(cw, res: Result) -> None:

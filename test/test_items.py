@@ -3028,3 +3028,25 @@ class NetGrowthIsAFlowOverAWindow(unittest.TestCase):
         fired, ctrl = row.fire(), row.control()
         self.assertEqual(fired.code, row.expect, fired.output)
         self.assertNotEqual(ctrl.code, row.expect, ctrl.output)
+
+
+class StandbyIsAnOpenGrade(unittest.TestCase):
+    """lc-294: STANDBY counts OPEN in the census, and its reason is readable
+    from the vocabulary registry at run time."""
+
+    def test_the_census_counts_STANDBY_open_never_unknown(self):
+        from lifecycle_core.refusals import STANDBY_SEED
+        c = items.census(items.parse(STANDBY_SEED))
+        self.assertEqual((c["open"], c["unknown"]), (1, {}))
+
+    def test_the_mint_reason_is_in_the_registry(self):
+        from lifecycle_core import vocab
+        v = vocab.by_name("grades")
+        self.assertIn(items.STANDBY, v.members)
+        minted = {m: (d, why) for m, d, why in v.minted}
+        self.assertEqual(minted[items.STANDBY][0], "2026-09-25")
+        self.assertIn("LEDGER:159", minted[items.STANDBY][1])
+
+    def test_only_STANDBY_is_opt_in(self):
+        self.assertEqual(items.GRADES_DECLARED, (items.STANDBY,))
+        self.assertIn(items.STANDBY, items.GRADES_OPEN)

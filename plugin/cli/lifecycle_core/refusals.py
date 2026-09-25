@@ -4732,10 +4732,200 @@ MOMENT_ROWS = [
     ),
 ]
 
+
+# --- lc-294: the third READY grade, STANDBY, and its two triggers ------------
+#
+# STANDBY is decision-complete work that is NOT on the scheduled head. A repo
+# opts in with `"grades_extra": ["STANDBY"]`; every row below pairs an arm in
+# a declaring repo against one in a repo that declares nothing, or pairs two
+# declaring repos that differ in the one property the refusal reads.
+
+#: GOOD_FULL_DECLARATION plus the opt-in, and nothing else.
+STANDBY_DECLARATION = dict(json.loads(json.dumps(GOOD_FULL_DECLARATION)),
+                           grades_extra=["STANDBY"])
+
+#: The seed block, graded STANDBY. The arms of `standby_undeclared` carry
+#: THIS SAME carrier and differ in the declaration alone.
+STANDBY_SEED = SEED_ITEMS.replace("grade: READY", "grade: STANDBY", 1)
+
+
+def _block(ident: str, grade: str) -> str:
+    """One valid live block: the seed's slots under another id and grade."""
+    body = SEED_ITEMS.split("## xx-1", 1)[1]
+    return f"## {ident}" + body.replace("grade: READY", f"grade: {grade}", 1)
+
+
+def _standby_carrier(grades: dict, added: int, closed: tuple):
+    """(ITEMS.md, ITEMS-DONE.md): live blocks `{ident: grade}`, `added` in
+    the head, and a done home holding one DONE body per id in `closed`."""
+    head = SEED_ITEMS.split("## xx-1", 1)[0].replace(
+        "baseline: 1", f"baseline: {len(grades) + len(closed) - added}", 1
+    ).replace("added: 0", f"added: {added}", 1)
+    items = head + "\n".join(_block(i, g) for i, g in grades.items())
+    done = EMPTY_DONE + "".join(
+        "\n" + DONE_BLOCK.replace("## xx-1", f"## {i}") for i in closed)
+    return items, done
+
+
+def _standby_history(cuts) -> Fired:
+    """`item ratio` in a STANDBY-declaring repo with a DATED history.
+
+    `cuts` is `[(age, grades, added, closed, arcs), ...]`, oldest first —
+    `arcs` maps an arc slug to its body text, and an EMPTY map means the arcs
+    home does not exist at that cut. Ages are `_ratio_history`'s: fractions of
+    the verb's own window, so a moved placeholder moves every fixture."""
+    from . import verbs as verbs_mod
+
+    w = verbs_mod.NET_GROWTH_WINDOW_DAYS
+    ages = {"before": w + 1, "first-half": w * 0.7, "second-half": w * 0.2,
+            "now": 0}
+    with _Repo(declaration=STANDBY_DECLARATION) as r:
+        for n, (age, grades, added, closed, arcs) in enumerate(cuts):
+            items, done = _standby_carrier(grades, added, closed)
+            (r.dir / "ITEMS.md").write_text(items, encoding="utf-8")
+            (r.dir / "ITEMS-DONE.md").write_text(done, encoding="utf-8")
+            shutil.rmtree(r.dir / "arcs", ignore_errors=True)
+            for slug, body in arcs.items():
+                (r.dir / "arcs").mkdir(exist_ok=True)
+                (r.dir / "arcs" / f"{slug}.md").write_text(body,
+                                                          encoding="utf-8")
+            days = ages.get(age, age)
+            _git_dated(r.dir, ["add", "-A"], days)
+            _git_dated(r.dir, ["commit", "-qm", f"cut {n}"], days)
+        return _cli_in(r, ["item", "ratio"])
+
+
+#: `ready_outgrows_head`'s pair. Both end in the SAME live carrier — three
+#: READY, one of them cited by an open arc — and differ in what LEFT READY
+#: over the window: a NEW item only (plant), or three READY items (control).
+#: Both arms capture one and drain at least one, so neither is idle and
+#: neither trips the 3:1 spike test that would answer before these do.
+_OUTGROWS_ARC = {"sched": "## sched\ngoal: ship xx-1 first\n"}
+OUTGROWS_PLANT = [
+    ("before", {"xx-1": "READY", "xx-2": "READY", "xx-3": "READY",
+                "xx-8": "NEW"}, 1, (), _OUTGROWS_ARC),
+    ("now", {"xx-1": "READY", "xx-2": "READY", "xx-3": "READY",
+             "xx-7": "NEW"}, 2, ("xx-8",), _OUTGROWS_ARC),
+]
+OUTGROWS_CONTROL = [
+    ("before", {"xx-1": "READY", "xx-2": "READY", "xx-3": "READY",
+                "xx-4": "READY", "xx-5": "READY", "xx-6": "READY"}, 1, (),
+     _OUTGROWS_ARC),
+    ("now", {"xx-1": "READY", "xx-2": "READY", "xx-3": "READY",
+             "xx-7": "NEW"}, 2, ("xx-4", "xx-5", "xx-6"), _OUTGROWS_ARC),
+]
+
+#: `head_draining`'s pair. Both hold one STANDBY item and one READY item, and
+#: one READY item left over the window by a close (so `ready_outgrows_head`
+#: stays silent in both: READY−HEAD ≤ 1 exit). They differ in the ARC alone:
+#: the plant's arc cites nothing, so the head is EMPTY while STANDBY holds
+#: work; the control's cites xx-1 at every cut, so the head never shrank.
+_DRAIN_START = {"xx-1": "READY", "xx-2": "STANDBY", "xx-3": "READY"}
+_DRAIN_NOW = {"xx-1": "READY", "xx-2": "STANDBY"}
+DRAIN_PLANT = [
+    ("before", _DRAIN_START, 1, (), {"sched": "## sched\ngoal: x\n"}),
+    ("now", _DRAIN_NOW, 1, ("xx-3",), {"sched": "## sched\ngoal: x\n"}),
+]
+DRAIN_CONTROL = [
+    ("before", _DRAIN_START, 1, (), {"sched": "## sched\ngoal: xx-1\n"}),
+    ("now", _DRAIN_NOW, 1, ("xx-3",), {"sched": "## sched\ngoal: xx-1\n"}),
+]
+
+_BENCH_REASON = ("decision-complete, and no open arc schedules it this "
+                 "window")
+
+STANDBY_ROWS = [
+    Row(
+        ident="standby_undeclared",
+        refusal="a block graded STANDBY in a repo whose declaration does not "
+                "opt in with `grades_extra` — the third READY grade is "
+                "per-repo, and an undeclared one is a grade this repo never "
+                "agreed to read",
+        firing_input="`item check` over a STANDBY block, declaration without "
+                     "`grades_extra`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "check"], items=STANDBY_SEED),
+        # The SAME carrier, the declaration opting in: the arms differ in the
+        # declaration alone.
+        control=lambda: _cli(["item", "check"], items=STANDBY_SEED,
+                             declaration=STANDBY_DECLARATION),
+        stage="lc-294",
+    ),
+    Row(
+        ident="bench_undeclared",
+        refusal="`item bench` in a repo that does not declare STANDBY — the "
+                "verb would write a grade the repo's own check then refuses",
+        firing_input="`item bench <id> --reason <why>` with no `grades_extra`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "bench", "xx-1", "--reason",
+                           _BENCH_REASON], items=SEED_ITEMS),
+        control=lambda: _cli(["item", "bench", "xx-1", "--reason",
+                              _BENCH_REASON], items=SEED_ITEMS,
+                             declaration=STANDBY_DECLARATION),
+        stage="lc-294",
+    ),
+    Row(
+        ident="bench_not_ready",
+        refusal="`item bench` on an item that is not READY — STANDBY is "
+                "READY's off-head twin, and benching a NEW or PARKED item "
+                "would grade it decision-complete without anyone judging so",
+        firing_input="`item bench <id>` on a NEW item, STANDBY declared",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "bench", "xx-1", "--reason",
+                           _BENCH_REASON],
+                          items=SEED_ITEMS.replace("grade: READY",
+                                                   "grade: NEW", 1),
+                          declaration=STANDBY_DECLARATION),
+        control=lambda: _cli(["item", "bench", "xx-1", "--reason",
+                              _BENCH_REASON], items=SEED_ITEMS,
+                             declaration=STANDBY_DECLARATION),
+        stage="lc-294",
+    ),
+    Row(
+        ident="bench_without_reason",
+        refusal="`item bench` with no recorded WHY — moving an item off the "
+                "head is a judgment (law 10), and one nobody reasoned is a "
+                "grade that moved",
+        firing_input="`item bench <id>` with no `--reason`, STANDBY declared",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "bench", "xx-1"], items=SEED_ITEMS,
+                          declaration=STANDBY_DECLARATION),
+        control=lambda: _cli(["item", "bench", "xx-1", "--reason",
+                              _BENCH_REASON], items=SEED_ITEMS,
+                             declaration=STANDBY_DECLARATION),
+        stage="lc-294",
+    ),
+    Row(
+        ident="ready_outgrows_head",
+        refusal="READY outgrowing the scheduled head — more READY items sit "
+                "outside every open arc than left READY over the window, so "
+                "the grade asserts a schedule nobody holds; a bench pass is "
+                "owed",
+        firing_input="a dated STANDBY-declaring history: three READY, one "
+                     "arc-cited, nothing left READY over the window",
+        expect=exits.FINDING,
+        fire=lambda: _standby_history(OUTGROWS_PLANT),
+        control=lambda: _standby_history(OUTGROWS_CONTROL),
+        stage="lc-294",
+    ),
+    Row(
+        ident="head_draining",
+        refusal="the scheduled head draining while STANDBY holds work — the "
+                "head is empty, or shrank in both halves of the window; a "
+                "return pass (`item promote`) is owed",
+        firing_input="a dated STANDBY-declaring history whose open arc cites "
+                     "no READY item while one item is STANDBY",
+        expect=exits.FINDING,
+        fire=lambda: _standby_history(DRAIN_PLANT),
+        control=lambda: _standby_history(DRAIN_CONTROL),
+        stage="lc-294",
+    ),
+]
+
 ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
         + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS + GOAL_ROWS
         + RECORDS_KIND_ROWS + HOME_ROWS + MOMENT_ROWS
-        + MARK_ROWS + ROSTER_POPULATION_ROWS)
+        + MARK_ROWS + ROSTER_POPULATION_ROWS + STANDBY_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #

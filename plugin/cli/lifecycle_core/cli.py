@@ -9,6 +9,7 @@ verify — for every verb here, without exception.
 """
 
 import argparse
+import functools
 import subprocess
 import sys
 from pathlib import Path
@@ -251,19 +252,24 @@ def cmd_item_check(args, out, err=None) -> int:
     # about the two homes' relationship, which a staged diff of one body at a
     # time cannot see — so they stay on the plain path rather than being run
     # over index text that has no matching second home.
+    # THE OPT-IN GRADES REACH BOTH PATHS (lc-294): the commit gate runs the
+    # staged form, and a STANDBY block judged there without the declaration
+    # would answer differently from the plain check over the same bytes.
+    check_items = functools.partial(
+        items_mod.check_file, grades_extra=decl.grades_extra(ctx.declaration))
     if getattr(args, "staged", False):
         if err is None:
             err = lambda s: sys.stderr.write(f"{s}\n")  # noqa: E731
         return items_mod.check_staged(
             ctx.repo,
             [(items_mod.rel_to(ctx.repo, ctx.items_path), ctx.items_path,
-              items_mod.check_file, ctx.prefix),
+              check_items, ctx.prefix),
              (items_mod.rel_to(ctx.repo, ctx.done_path), ctx.done_path,
               items_mod.check_done_file, ctx.prefix)],
             out, err)
 
-    code = items_mod.check_file(ctx.items_path, out, prefix=ctx.prefix,
-                                ledger_path=ctx.ledger_path)
+    code = check_items(ctx.items_path, out, prefix=ctx.prefix,
+                       ledger_path=ctx.ledger_path)
 
     # THE MOVE'S OWN WINDOW. `check_file` reads one home; an id sitting in
     # BOTH is invisible to it by construction, and that is exactly what an
@@ -930,6 +936,18 @@ def build_parser() -> argparse.ArgumentParser:
                          help="write the carrier without committing it — a "
                               "caller batching promotions owns that commit")
 
+    # `item bench` (lc-294) — READY → STANDBY, the judged move OFF the
+    # scheduled head. `--reason` is verb-checked, not argparse-required, for
+    # `promote`'s reason above: a missing judgment is a refusal (exit 2).
+    bench = its.add_parser("bench", help="READY → STANDBY: decision-complete, "
+                                         "off the scheduled head — an ACT")
+    bench.add_argument("ident")
+    bench.add_argument("--reason", help="the SESSION's prose: why this item "
+                                        "leaves the head. REQUIRED")
+    bench.add_argument("--no-commit", dest="no_commit", action="store_true",
+                       help="write the carrier without committing it — a "
+                            "caller batching a bench pass owns that commit")
+
     park = its.add_parser("park", help="PARKED, with a typed blocker")
     park.add_argument("ident")
     park.add_argument("--blocked-by", dest="blocked_by", help="TYPED; required")
@@ -1282,8 +1300,8 @@ def main(argv=None) -> int:
         elif args.item_action == "waves":
             code = cmd_item_waves(args, out)
         elif args.item_action in ("add", "amend", "promote", "ready", "park",
-                                  "close", "compact", "ratio", "statusline",
-                                  "supersede-closure"):
+                                  "bench", "close", "compact", "ratio",
+                                  "statusline", "supersede-closure"):
             code = _carrier_verb(args, out)
         else:
             stage = NOT_YET_BUILT.get(path, "a later wave")
@@ -1501,6 +1519,8 @@ def _carrier_verb(args, out) -> int:
         return verbs.cmd_item_statusline(args, out, ctx)
     if args.item_action == "park":
         return verbs.cmd_item_park(args, out, ctx)
+    if args.item_action == "bench":
+        return verbs.cmd_item_bench(args, out, ctx)
     if args.item_action == "compact":
         return retire_mod.cmd_item_compact(args, out, ctx)
     if args.item_action == "close":
