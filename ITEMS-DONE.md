@@ -2020,5 +2020,16 @@ done-criterion: list_home distinguishes THREE answers where it now gives two: re
 evidence: Desk integration verification of wave 3 at db50df2, live tree, read-only audit run. Contradiction inside ONE report is what surfaced it: the audit header reads `exit events read from the fire log: 2 record(s) for this repo` — so read_fire_log resolves the path — while the fire-log KIND in the same walk reports its home `is not present`. read_fire_log is the existing instance the repair reuses; list_home is the site that does not.
 blocked-by: NONE
 
+## lc-186
+grade: DONE
+requirement: AN UNTYPEABLE BLOCKER IS DROPPED BY THE CHECK THAT EXISTS TO CATCH IT. check_blocker_targets (items.py) classifies every blocked-by value and counts the item-id ones; classify_blocker returns (None, empty) for anything it does not recognise, and with a prefix present that value falls through BOTH arms and is counted nowhere. Measured by the review lane: a READY item carrying a mistyped id produced "blocker targets: CLEAN — 4 item-id blocker(s)" with the fifth in neither the count nor the output, while the well-formed spelling of the same blocker correctly FINDS dangling_reference. check_parked_blockers covers PARKED only, so a READY item has nothing at all. This misses precisely the failure its own docstring names, a permanent silent park.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: an untypeable blocker on an item of ANY grade is reported rather than dropped, and the verb never returns a verdict with no output. RED-FIRST: the mistyped-id input above, on a READY item, must produce a finding naming that item; the well-formed spelling keeps producing dangling_reference unchanged. SECOND HALF, same repair: with no typed blockers at all the verb returns CLEAN having PRINTED NOTHING — an absent line is not readable as a verdict, so the clean path states what it examined, which is lc-172 at a site lc-172 did not reach. MUST-NOT-MOVE: a correctly typed blocker of each of the three kinds keeps its current verdict, and PARKED items keep being covered by check_parked_blockers rather than being reported twice.
+evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs and graded by them as the highest of the remainder: the mistyped-id input, the CLEAN-with-4 output, and the well-formed control that finds dangling_reference. DERIVED from their report: the drop happens because an unrecognised value matches neither the item-id arm nor the prose arm, so it is invisible to a count that only sums what it recognised. MEASURED at this desk before booking: items.py check_blocker_targets is the function they name and check_parked_blockers is PARKED-only, so no other check covers a READY item carrying one.
+blocked-by: NONE
+closed-reason: 2026-09-25 lc-292 pass (d), criterion re-run at HEAD 5dcfaf1 by d8: mistyped xx 2 blocker on a READY block -> exit 2 FINDING [blocker_untyped] naming xx-1; no typed blockers -> exit 0 "blocker targets: CLEAN - 0 item-id blocker(s) among 1 block(s) examined"; BlockerTargets 7 tests OK
+closed-ref: 0abae11
+
 ## Archive (pre-migration)
 
