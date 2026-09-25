@@ -78,6 +78,18 @@ MATCH_MIN_TOKENS = 2
 #: one that can be stated without the measurement in front of you.
 MATCH_MAX_DOC_FRACTION = 0.5
 
+#: THE LEDGER'S DECISION JOIN TAKES A TIGHTER CAP (lc-289, judge ruling
+#: "R7 REPAIR FIRST", 2026-09-24). Decision questions are short and share a
+#: register — "is", "should", the arc's own nouns — so at the item join's
+#: majority line two decisions matched on two boilerplate tokens: 30 of the
+#: 50 pre-repair fires were WEAK pairs sharing exactly two. The pinned replay
+#: (docs/audits/2026-09-24-lc289-replay-pinned.jsonl) swept the cap and 0.05
+#: kept all 11 STRONG pairs while dropping 21 of the 30 WEAK. MEASURED, so
+#: unlike the majority line above this IS a fit, to that one population —
+#: the replay is its falsifier and a re-run that diverges is a finding.
+#: Never a change to MATCH_MIN_TOKENS: the threshold is not what floods.
+DECISION_MATCH_MAX_DOC_FRACTION = 0.05
+
 #: Words that carry no discriminating power in a requirement line. Kept
 #: short on purpose: a long stopword list is a second vocabulary to maintain,
 #: and `MATCH_MAX_DOC_FRACTION` above — not this list and not the token
@@ -248,23 +260,32 @@ def requirement_tokens(value: str) -> set:
             if t not in STOPWORDS}
 
 
-def document_frequency(live: list) -> dict:
-    """`{token: how many of these items' requirement lines carry it}`.
+def document_frequency(live: list, key: str = "requirement") -> dict:
+    """`{token: how many of these bodies' `key` slot carry it}`.
 
     Read off the CARRIER every call, never a stored or restated list: a
     frequency table cached beside the carrier would age apart from it
     silently, and the whole point of asking rarity instead of a stopword list
     is that the answer maintains itself.
+
+    `key` DEFAULTS TO `requirement`, the item-intake join's own slot, so
+    every existing caller — `candidates()` below, and `test_verbs.py`'s
+    direct call over `parsed.items` — reads unchanged. R7 (lc-289) is the
+    second caller: the ledger's decision join asks the SAME rarity question
+    of `decision:` lines, whose slot is `question` rather than `requirement`,
+    over a body that is a `ledger.Line` rather than an item — both expose
+    `.slots`, which is the only shape this function reads.
     """
     freq: dict = {}
     for it in live:
-        for t in requirement_tokens(it.slots.get("requirement", "")):
+        for t in requirement_tokens(it.slots.get(key, "")):
             freq[t] = freq.get(t, 0) + 1
     return freq
 
 
 def informative_tokens(tokens: set, freq: dict, live_count: int,
-                       carried_by_this_one: set) -> set:
+                       carried_by_this_one: set,
+                       max_fraction: float | None = None) -> set:
     """`tokens` minus the ones most of the REST of the carrier also carries.
 
     THE REST, not the whole carrier, and the exclusion is what keeps a small
@@ -275,14 +296,20 @@ def informative_tokens(tokens: set, freq: dict, live_count: int,
     with no other items there is nothing to compare against and no token can
     be shown uninformative, so every one is kept. Keeping is the join's
     conservative direction: it lists a candidate for a human to read.
+
+    `max_fraction` is the cap. None — every item-intake caller — reads
+    MATCH_MAX_DOC_FRACTION AT CALL TIME rather than as a bound default, so
+    a rebinding of the module constant still reaches the item join. The
+    ledger's decision join passes DECISION_MATCH_MAX_DOC_FRACTION (lc-289).
     """
+    cap = MATCH_MAX_DOC_FRACTION if max_fraction is None else max_fraction
     others = live_count - 1
     if others <= 0:
         return set(tokens)
     keep = set()
     for t in tokens:
         elsewhere = freq.get(t, 0) - (1 if t in carried_by_this_one else 0)
-        if elsewhere / others <= MATCH_MAX_DOC_FRACTION:
+        if elsewhere / others <= cap:
             keep.add(t)
     return keep
 
@@ -3410,6 +3437,112 @@ def cmd_item_supersede_closure(args, out, ctx: Ctx) -> int:
     return code
 
 
+# --- the ledger's own intake join (R7, lc-289) --------------------------------
+
+def decision_candidates(parsed, question: str) -> list:
+    """`[(Line, [shared tokens])]` — existing `decision:` lines this question
+    may already be.
+
+    SAME RARITY MACHINERY AS THE ITEM INTAKE JOIN (lc-46), pointed at the
+    ledger's own decision QUESTIONS instead of an item's requirement line:
+    a token carried by most of the ledger's decisions has no discriminating
+    power by definition, whichever carrier is asking. There is no write-set
+    half here — a `decision:` line carries no write-set slot, so the join is
+    token-only. SCOPED TO `decision` LINES ALONE: `superseded` / `rejected` /
+    `dropped` reference an id, never a claim that can be re-decided by
+    accident, so they get no join (the settled design, R7).
+    """
+    want_tokens = requirement_tokens(question)
+    decisions = [ln for ln in parsed.lines if ln.kind == "decision"]
+    freq = document_frequency(decisions, key="question")
+    found = []
+    for ln in decisions:
+        its_tokens = requirement_tokens(ln.slots.get("question", ""))
+        shared = informative_tokens(
+            want_tokens & its_tokens, freq, len(decisions), its_tokens,
+            max_fraction=DECISION_MATCH_MAX_DOC_FRACTION)
+        if len(shared) >= MATCH_MIN_TOKENS:
+            found.append((ln, sorted(shared)))
+    return found
+
+
+def print_decision_candidates(ctx: Ctx, found: list, out) -> None:
+    """The ledger join's own screen: every matching decision line, its
+    location and the tokens that triggered the match — `print_candidates`'s
+    sibling, one carrier over."""
+    for ln, shared in found:
+        out(f"  match: {ctx.ledger_path.name}:{ln.lineno}  decision: "
+            f"{ln.slots.get('question', '')}{ledger.ARROW}"
+            f"{ln.slots.get('answer', '')}")
+        out(f"      shares {len(shared)} token(s): " + ", ".join(shared))
+
+
+def _check_decision_join(args, ctx: Ctx, out) -> int:
+    """R7 (lc-289): `ledger add decision` runs the intake join on its
+    QUESTION before the line is written.
+
+    `cmd_ledger_add` had NO match step at all: a re-decided question could
+    be written twice with nobody the wiser, which is the same
+    accumulation-by-insert the item carrier's intake join exists to close
+    (§3.2), one carrier over. WITH NO MATCH, THIS RETURNS CLEAN AND PRINTS
+    NOTHING — behaviour is exactly what it was before this existed, which is
+    what keeps an ordinary decision line as cheap as it always was.
+
+    THE ONLY ACCEPTED DISPOSITION IS `--join new --absence "<why>"`. Unlike
+    `item add`'s three-way join, there is no `merge-into` or `supersede`
+    here: a ledger line is APPEND-ONLY prose, not a body another verb can
+    fold two records into or move to a closure home, so the only question a
+    match ever raises is whether this is genuinely a NEW question — the same
+    named-absence discipline `item add`'s `new` already demands, reused
+    rather than restated.
+
+    AN ABSENT LEDGER IS NOT COULD-NOT-VERIFY HERE, unlike `item add`'s
+    missing-carrier read: `ledger.append` itself CREATES the head when the
+    file does not exist yet (its own docstring), so a not-yet-existing
+    ledger has, by construction, no decision lines to near-match — the same
+    answer as an existing one with none. Refusing here over `item add`'s
+    absent-carrier rule would block the ledger's very first line and would
+    have changed `test_an_UNCOMMITTABLE_write_is_a_FINDING_and_never_a_CLEAN`
+    (lc-56)'s fixture, whose whole point is that the WRITE still lands and
+    only the COMMIT fails when the ledger is untracked.
+    """
+    parsed, _why = ledger.read(ctx.ledger_path)
+    if parsed is None:
+        return exits.CLEAN
+    found = decision_candidates(parsed, args.question or "")
+    if not found:
+        return exits.CLEAN
+    join = getattr(args, "join", None)
+    if not join:
+        out(f"FINDING [ledger_join_undisposed] this question shares "
+            f"informative tokens with {len(found)} existing decision "
+            "line(s) in the ledger. Answer with `--join new --absence "
+            "\"<why this is a new question>\"` — the only accepted "
+            "disposition — or answer the existing line instead. Nothing "
+            "was written.")
+        print_decision_candidates(ctx, found, out)
+        return exits.FINDING
+    if join != "new":
+        out(f"FINDING [ledger_join_undisposed] `--join {join!r}` is not "
+            "accepted here — the only accepted disposition is `--join new "
+            "--absence \"<why this is a new question>\"`. Nothing was "
+            "written.")
+        return exits.FINDING
+    # NAMED `join_absence`, NOT `absence` (prove-rows.py's own anchor test):
+    # `item add`'s `_do_new` already has a line `if not absence:` at its
+    # own site, and an anchor is a WHOLE-LINE match — a second identical
+    # line here would make that existing row's anchor occupy the file
+    # twice, unproven by construction (the anchor-uniqueness test this
+    # collision was caught by).
+    join_absence = (getattr(args, "absence", None) or "").strip()
+    if not join_absence:
+        out("FINDING [ledger_join_undisposed] `--join new` needs a named "
+            "absence (`--absence \"…\"`): why this is a new question rather "
+            "than one of the matches above. Nothing was written.")
+        return exits.FINDING
+    return exits.CLEAN
+
+
 # --- `ledger add` (stage 6) ---------------------------------------------------
 
 def cmd_ledger_add(args, out, ctx: Ctx) -> int:
@@ -3459,6 +3592,11 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
         if problem:
             out(f"FINDING [ledger_body] {problem}")
             return exits.FINDING
+
+    if args.line_kind == "decision":
+        code = _check_decision_join(args, ctx, out)
+        if code != exits.CLEAN:
+            return code
 
     line = ledger.append(ctx.ledger_path, args.line_kind,
                          {k: str(v).strip() for k, v in slots.items()})

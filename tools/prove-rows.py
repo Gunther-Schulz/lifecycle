@@ -326,6 +326,18 @@ MUTATIONS = [
      "    if False:",
      "the ledger's one-line rule — the NO BODIES half"),
 
+    # R7 (lc-289). ANCHORED ON THE SINGLE EARLY RETURN THAT DECIDES WHETHER
+    # THE JOIN HAS ANYTHING TO SAY, not on any of the three FINDING branches
+    # below it: disabling this one collapses `_check_decision_join` to an
+    # unconditional CLEAN, which is the refusal's OFF switch — the same
+    # relationship `join_undisposed`'s own anchor (`if found and not join:`
+    # -> `if False:`) has to `item add`'s join, one carrier over.
+    ("ledger_join_undisposed", "verbs.py",
+     "    if not found:\n        return exits.CLEAN",
+     "    if True:\n        return exits.CLEAN",
+     "the ledger's own intake join — removed, a near-match question is "
+     "written exactly like an unmatched one"),
+
     ("closure_home_split", "verbs.py",
      "    if (done_home\n"
      "            and posixpath.normpath(done_home) != posixpath.normpath(closure)):",
