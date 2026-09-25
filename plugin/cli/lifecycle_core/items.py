@@ -64,7 +64,7 @@ SCHEMA_FLOOR = decl.SCHEMA_FLOOR
 #: head. Minted from a recorded decision, never guessed: the reason travels in
 #: the vocabulary registry (`vocab.registry()`, "grades", `minted`). It is an
 #: OPEN grade everywhere a reader asks open/closed, and a repo carries it only
-#: by declaring it (`GRADES_DECLARED`, the declaration's `grades_extra`); a
+#: by declaring it (`GRADES_DECLARED`, the declaration's `grades-extra`); a
 #: STANDBY block in a repo that does not is `standby_undeclared`.
 STANDBY = "STANDBY"
 GRADES_OPEN = ("NEW", "READY", "PARKED", STANDBY)
@@ -72,7 +72,7 @@ GRADES_CLOSED = ("DONE", "DROPPED")
 GRADES = GRADES_OPEN + GRADES_CLOSED
 
 #: The grades a repo must OPT INTO before its carrier may hold them — the
-#: whole accepted value set of the declaration's `grades_extra` key.
+#: whole accepted value set of the declaration's `grades-extra` key.
 GRADES_DECLARED = (STANDBY,)
 
 #: The slots, in order. Fixed: a block carries exactly these, exactly once,
@@ -2414,7 +2414,7 @@ def check_file(path: Path, out, prefix: str | None = None, *,
                grades_extra: tuple | None = None) -> int:
     """The pre-commit shape check over one carrier file.
 
-    `grades_extra` is the declaration's opt-in grade list (lc-294), passed by
+    `grades-extra` is the declaration's opt-in grade list (lc-294), passed by
     every caller holding the declaration; `None` means "not handed one", and a
     STANDBY block then answers COULD NOT VERIFY rather than either verdict.
 
@@ -2674,14 +2674,14 @@ def check_file(path: Path, out, prefix: str | None = None, *,
     if standby and grades_extra is None:
         out(f"COULD NOT VERIFY: {len(standby)} block(s) graded {STANDBY}, and "
             "this check was handed no declaration, so whether the repo opts "
-            "into that grade (`grades_extra`) is unknown.")
+            "into that grade (`grades-extra`) is unknown.")
         code = exits.worst([code, exits.COULD_NOT_VERIFY])
     elif standby and STANDBY not in grades_extra:
         standby_undeclared = standby
         for it in standby:
             finding("standby_undeclared", it.line,
                     f"block {it.ident!r} is graded {STANDBY}, and this repo's "
-                    "declaration does not opt into it — `grades_extra` does "
+                    "declaration does not opt into it — `grades-extra` does "
                     f"not list {STANDBY}. It is the off-head twin of READY and "
                     "exists per repo; declare it, or re-grade the block.",
                     it.ident)

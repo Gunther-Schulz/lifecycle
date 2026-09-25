@@ -1343,7 +1343,7 @@ class CommandGroupIsNotAVerb(unittest.TestCase):
 
 
 class GradesExtraKey(unittest.TestCase):
-    """lc-294: the optional `grades_extra` opt-in. Absent is today's
+    """lc-294: the optional `grades-extra` opt-in. Absent is today's
     behaviour; present, it accepts `items.GRADES_DECLARED` and nothing else."""
 
     def _findings(self, value):

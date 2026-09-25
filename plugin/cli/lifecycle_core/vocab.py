@@ -159,7 +159,7 @@ def registry() -> tuple:
                  "LEDGER.md decision \"operator: grant a freeze exception "
                  "for the third READY grade and its demote and return "
                  "triggers\" (LEDGER:159): decision-complete but not on "
-                 "the scheduled head. Opt-in per repo via `grades_extra`; "
+                 "the scheduled head. Opt-in per repo via `grades-extra`; "
                  "written by `item bench`, returned by `item promote` "
                  "(lc-294)"),
             ),

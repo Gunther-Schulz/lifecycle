@@ -4736,13 +4736,13 @@ MOMENT_ROWS = [
 # --- lc-294: the third READY grade, STANDBY, and its two triggers ------------
 #
 # STANDBY is decision-complete work that is NOT on the scheduled head. A repo
-# opts in with `"grades_extra": ["STANDBY"]`; every row below pairs an arm in
+# opts in with `"grades-extra": ["STANDBY"]`; every row below pairs an arm in
 # a declaring repo against one in a repo that declares nothing, or pairs two
 # declaring repos that differ in the one property the refusal reads.
 
 #: GOOD_FULL_DECLARATION plus the opt-in, and nothing else.
-STANDBY_DECLARATION = dict(json.loads(json.dumps(GOOD_FULL_DECLARATION)),
-                           grades_extra=["STANDBY"])
+STANDBY_DECLARATION = {**json.loads(json.dumps(GOOD_FULL_DECLARATION)),
+                       decl.GRADES_EXTRA_KEY: ["STANDBY"]}
 
 #: The seed block, graded STANDBY. The arms of `standby_undeclared` carry
 #: THIS SAME carrier and differ in the declaration alone.
@@ -4838,11 +4838,11 @@ STANDBY_ROWS = [
     Row(
         ident="standby_undeclared",
         refusal="a block graded STANDBY in a repo whose declaration does not "
-                "opt in with `grades_extra` — the third READY grade is "
+                "opt in with `grades-extra` — the third READY grade is "
                 "per-repo, and an undeclared one is a grade this repo never "
                 "agreed to read",
         firing_input="`item check` over a STANDBY block, declaration without "
-                     "`grades_extra`",
+                     "`grades-extra`",
         expect=exits.FINDING,
         fire=lambda: _cli(["item", "check"], items=STANDBY_SEED),
         # The SAME carrier, the declaration opting in: the arms differ in the
@@ -4855,7 +4855,7 @@ STANDBY_ROWS = [
         ident="bench_undeclared",
         refusal="`item bench` in a repo that does not declare STANDBY — the "
                 "verb would write a grade the repo's own check then refuses",
-        firing_input="`item bench <id> --reason <why>` with no `grades_extra`",
+        firing_input="`item bench <id> --reason <why>` with no `grades-extra`",
         expect=exits.FINDING,
         fire=lambda: _cli(["item", "bench", "xx-1", "--reason",
                            _BENCH_REASON], items=SEED_ITEMS),

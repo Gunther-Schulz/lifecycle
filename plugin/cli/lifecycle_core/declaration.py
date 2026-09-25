@@ -295,14 +295,14 @@ DELEGATION_VALUES = ("none", "active")
 #: a declared rule, never a looser matcher (lc-19's own sentence).
 CLOSURE_WORDS_KEY = "closure-words"
 
-#: THE OPT-IN GRADES (lc-294): `"grades_extra": ["STANDBY"]`. OPTIONAL for
+#: THE OPT-IN GRADES (lc-294): `"grades-extra": ["STANDBY"]`. OPTIONAL for
 #: `closure-words`' reason — a repo declaring nothing behaves exactly as it
 #: did, so no schema bump (§3.8c). Unlike `closure-words` it DOES widen what a
 #: carrier may hold: the members it accepts are `items.GRADES_DECLARED`, and a
 #: STANDBY block in a repo that does not list it is `standby_undeclared`.
-#: Spelled with an underscore because the lc-294 brief spells it so; every
-#: other key here is hyphenated.
-GRADES_EXTRA_KEY = "grades_extra"
+#: Hyphenated like every other key here (the brief's underscore was a
+#: defect, ruled at the desk 2026-09-25).
+GRADES_EXTRA_KEY = "grades-extra"
 
 #: Keys a declaration may NOT carry any more, each with what replaced it.
 #: Named rather than ignored: a withdrawn key left in a file reads exactly
@@ -775,7 +775,7 @@ def effective_goals(doc) -> list:
 
 
 def _validate_grades_extra(ge, res: Result) -> None:
-    """`grades_extra` (lc-294): a list drawn from `items.GRADES_DECLARED`.
+    """`grades-extra` (lc-294): a list drawn from `items.GRADES_DECLARED`.
 
     Anything else is a declaration that states a grade the tool will not
     honour — the `closure-words` refusal's shape. The member set is FETCHED

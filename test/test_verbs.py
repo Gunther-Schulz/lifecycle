@@ -2931,7 +2931,7 @@ class TheStandbyGrade(unittest.TestCase):
             self.assertEqual(parsed.items[0].grade, "READY")
 
     def test_a_check_handed_no_declaration_answers_the_third_answer(self):
-        """`check_file` without `grades_extra` neither waves a STANDBY block
+        """`check_file` without `grades-extra` neither waves a STANDBY block
         through nor refuses it: it cannot know, and says so."""
         import tempfile
         with tempfile.TemporaryDirectory() as td:
