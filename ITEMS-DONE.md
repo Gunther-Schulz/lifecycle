@@ -1951,5 +1951,18 @@ blocked-by: NONE
 closed-reason: 2026-09-24 desk-verified as lc-287; live arc narrow printed the arc goal and fired goal-seam=narrow with session; item-close tests written after the build, red shown by disabling the call sites (3 of 4 red on assertions, the 4th a negative control)
 closed-ref: c7fa13c
 
+## lc-291
+grade: DONE
+requirement: item ratio grades 1.87:1 CLEAN with the text "the carrier is draining" over a carrier that gained net +131 items since birth. The tripwire (3:1) detects capture-domination spikes only, so any SUSTAINED ratio between 1:1 and 3:1 grows without bound while the alarm prints CLEAN - the verdict text asserts the opposite of the arithmetic (law 26 silent-toward-passing class, on the growth invariant own instrument). Record: measured 2026-09-24 at the live carrier (282 booked / 151 closed / open 139), session lifecycle-64, operator escalation the same evening.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py
+done-criterion: cmd_item_ratio (verbs.py:1653) gains a DIVERGENCE verdict beside the spike tripwire: net growth - capture minus closed-plus-dropped - positive and sustained over a declared window prints a FINDING (exit 2) naming the net gain and the window, and the CLEAN text never prints over a carrier whose open count grew across that window. Registered as a refusals.py row with its firing input, red-first via a prove-rows arrangement admitted on the lc-142 pair; the natural red is the live carrier itself (282:151, net +131) - the repaired verb MUST fire on it and that firing is quoted beside the close. Defect repair to a shipped instrument: inside the freeze, no admission-bar probe owed (LEDGER decision line, admission bar exempts defect repairs).
+evidence: PERISHABLE(2026-09-24, re-derive: lifecycle item ratio): the verb printed "ratio: CLEAN - the carrier is draining" at 282:151 = 1.87:1, open 139. MEASURED: code read this session at verbs.py:1646-1723, tripwire constant and CLEAN branch at 1713-1723. DERIVED: the (1,3) dead zone follows from the arithmetic - no window in that band ever fires the 3:1 spike test.
+blocked-by: NONE
+amend-reason: 2026-09-25 2026-09-25 d8: test_schema.py FlowNotSize pinned 60:40 at one snapshot as draining - the verdict this item finds false - so it must move with the change (law 24 must-move-with). Window ruled by judge lifecycle-64: git cuts, 7 days PLACEHOLDER, both halves.
+amended-write-set: 2026-09-25 plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py,test/test_schema.py
+closed-reason: 2026-09-25 d8 desk-verified at ddb5938: suite 1082 OK, --test 129/129 CLEAN, prove-rows 109 PROVEN incl net_growth (real anchor PROVEN, inert anchor rows changed NONE FAILED), node leak bites + scan clean; audit rc=3 pre-existing (3 at base a68c71b). NATURAL RED live 285:151 = 1.89:1 FINDING [net_growth] halves +56/+12 net +68 (old verb: CLEAN draining). NEGATIVE: burst-then-drain +15/-12 reads CLEAN not-draining; draining history -1/+0 CLEAN; compaction case red-first.
+closed-ref: 809e206
+
 ## Archive (pre-migration)
 
