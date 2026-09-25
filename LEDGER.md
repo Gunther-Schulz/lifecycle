@@ -154,6 +154,7 @@ decision: is the lifecycle-64 judge role live again for the d8 execution queue (
 dropped: lc-197 — lc-292 pass (c): overtaken by lc-251 at 6213abf, which folded capture_dominated verdict instead of mutating the zero guard; capture_dominated PROVEN in prove-rows at ddb5938 (d8, 2026-09-25); judge lifecycle-64 approved
 dropped: lc-100 — lc-292 pass (c): overtaken by lc-163 at f4db0ec - prove-rows mutates a COPY, the checkout is never written (tools/prove-rows.py:1461-1462 at f02cd76); d8 2026-09-25
 dropped: lc-113 — lc-292 pass (c): overtaken by lc-130 at b23ad25 - mint-time predicate lint refuses an evidence blocker whose predicate cannot work (verbs.py _predicate_lint, FINDING blocker_predicate_broken); d8 2026-09-25
+dropped: lc-121 — lc-292 pass (c): overtaken by lc-177 at a473b5f - the archive region IDS are read into archive_idents and feed the allocator and duplicate lane (items.py:850-857, 1588); d8 2026-09-25
 
 ## Archive (pre-migration)
 

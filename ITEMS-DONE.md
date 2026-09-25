@@ -2000,5 +2000,16 @@ done-criterion: the write path (item add / park / amend) REFUSES an evidence blo
 evidence: Executed at the drain desk 2026-09-13. Enumerated all 10 evidence blockers in ITEMS.md with their grades: 2 executable ('false  # <reason>', lc-3 and lc-7), 8 prose. Of the 8, the FOUR that were READY each rendered 'FINDING [trigger_broken] ... is BROKEN — exit 127, which §3.3 RESERVES for broken' on item ready --head — lc-30, lc-47, lc-53, lc-94. The other four were quiet only because PARKED and NEW items are not evaluated, which is latency, not safety: a promote surfaces the 127. MOVER/CONTROL pair drawn from the data, never constructed: prose predicates exit 127, while lc-3's 'false  # ...' exits 1 and renders as an ordinary blocked item. CONSEQUENCE MEASURED, and it is the reason this is worth a guard rather than a cleanup: lc-30's blocking evidence had ARRIVED — the roster row it waited on exists at refusals.py:1521 and its own stage note names the item, 'unblocks lc-30' — and the item sat READY-but-broken instead of draining, because a BROKEN line reads as a defect in the TOOLING rather than as work. The third answer wearing the first answer's costume. AUTHORSHIP, since it prices the guard: three of the eight were written by this desk today, in the same hour it flagged the defect in someone else's entry.
 blocked-by: NONE
 
+## lc-121
+grade: DROPPED
+requirement: the done-home parser excludes everything past the archive heading, and TWO consumers inherit the blindness: next_ident() reissues a live id (its docstring claims both homes are scanned to prevent reuse — assurance wider than predicate), and the duplicate/move-integrity lane misses the same id twice within one home when one copy sits past the marker. Measured 2026-09-13 in the dotfiles carrier: the first df-176 body hand-placed past the heading (ec7c27e), next_ident reissued df-176 for an unrelated item (2c2f4ee) the same hour, check reported CLEAN throughout. Fix at the parser or at both consumers; a planted post-archive body with a live id is the red case. Booked, not done now: the booking desk (statiker-fd) is mid-drain in another repo and this repo's method/battery conventions warrant its own lane
+goal: enforce-the-invariants
+write-set: plugin (items parser / next_ident / check duplicate lane) + battery
+done-criterion: a body past the archive heading still blocks its id from reissue AND surfaces in the duplicate lane; red-first on the planted post-archive body; battery green
+evidence: dotfiles df-193 diagnosis (closed body in its ITEMS-DONE.md) and repair 53a692c; the double-allocation commits d96fc32/2c2f4ee
+blocked-by: NONE
+amend-reason: 2026-09-18 2026-09-18 write-set repaired to PATHS ONLY. The slot carried a real path with a parenthetical glued to it, which does not parse as a path and made item waves exit COULD NOT VERIFY for the whole carrier. The doctrine demote-to-parked clause is for a boundary genuinely UNKNOWN; this was the inverse, a known path made unparseable by commentary. The commentary is not lost: it restates what the requirement already says. Found by the build desk, ruled by this desk.
+amended-write-set: 2026-09-18 plugin/cli/lifecycle_core/items.py,test/
+
 ## Archive (pre-migration)
 
