@@ -3497,6 +3497,20 @@ SCHEMA_ROWS = [
         stage="wave 1d, the schema wave",
     ),
     Row(
+        ident="net_growth",
+        refusal="the open count grew in BOTH halves of the window while the "
+                "ratio sat under the 3:1 tripwire — the band the spike test "
+                "never fires in, and one that grows without bound (lc-291)",
+        firing_input="a dated carrier history netting positive in each half "
+                     "of the window at a ratio near 2:1",
+        expect=exits.FINDING,
+        fire=lambda: _ratio_history(NET_GROWTH_SUSTAINED),
+        # The SAME capture at every cut: the arms differ in the DRAIN alone,
+        # and both sit under the tripwire.
+        control=lambda: _ratio_history(NET_GROWTH_DRAINING),
+        stage="lc-291",
+    ),
+    Row(
         ident="kind_grew_without_exit",
         refusal="a kind that GREW WITHOUT AN EXIT EVENT (the design's own "
                 "replacement for a cap) — its home holds instances, it "
@@ -3696,6 +3710,90 @@ WORKFLOW_ROWS = [
 ]
 
 
+def _net_growth_older() -> float:
+    """Days back for a cut OUTSIDE the net-growth window. Derived from the
+    verb's own constant, so moving the placeholder moves every fixture."""
+    from . import verbs as verbs_mod
+    return verbs_mod.NET_GROWTH_WINDOW_DAYS + 1
+
+
+def _git_dated(repo: Path, argv, days_ago: float):
+    """Run git with author AND committer dates `days_ago` in the past —
+    `rev-list --before` reads the committer date, so both are set."""
+    from datetime import datetime, timedelta, timezone
+    when = (datetime.now(timezone.utc)
+            - timedelta(days=days_ago)).isoformat(timespec="seconds")
+    env = dict(os.environ, GIT_AUTHOR_DATE=when, GIT_COMMITTER_DATE=when)
+    subprocess.run(["git", "-C", str(repo)] + list(argv), env=env,
+                   capture_output=True, text=True)
+
+
+def _backdate_head(repo: Path, days_ago=None):
+    _git_dated(repo, ["commit", "-q", "--amend", "--no-edit",
+                      "--reset-author"],
+               _net_growth_older() if days_ago is None else days_ago)
+
+
+def _flow_carrier(added: int, closed: int) -> tuple[str, str]:
+    """(ITEMS.md, ITEMS-DONE.md) whose head says `added` and whose done home
+    holds `closed` bodies. `item ratio` reads flows and never conservation,
+    so the live body stays the one seed block."""
+    items = SEED_ITEMS.replace("added: 0", f"added: {added}")
+    done = EMPTY_DONE + "".join(
+        "\n" + DONE_BLOCK.replace("## xx-1", f"## xx-{100 + i}")
+        for i in range(closed))
+    return items, done
+
+
+def _ratio_history(cuts) -> Fired:
+    """`item ratio` over a carrier with a DATED history (lc-291).
+
+    `cuts` is `[(age, added, closed), ...]`, oldest first; each becomes one
+    commit dated that far back, and the last one is the working tree the verb
+    reads. An age is days, or one of `_CUT_AGES`' names, which are FRACTIONS
+    OF THE VERB'S WINDOW so a moved placeholder cannot strand a fixture on
+    the wrong side of a cut. The window's two cuts land on whichever commit
+    is the newest at or before them — the same resolution the verb uses."""
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+    from . import verbs as verbs_mod
+
+    w = verbs_mod.NET_GROWTH_WINDOW_DAYS
+    ages = {"before": w + 1, "first-half": w * 0.7, "now": 0}
+    cuts = [(ages.get(a, a), added, closed) for a, added, closed in cuts]
+    (d0, a0, c0), rest = cuts[0], cuts[1:]
+    items, done = _flow_carrier(a0, c0)
+    with _Repo(items=items, done=done) as r:
+        _backdate_head(r.dir, d0)
+        for days, added, closed in rest:
+            items, done = _flow_carrier(added, closed)
+            (r.dir / "ITEMS.md").write_text(items, encoding="utf-8")
+            (r.dir / "ITEMS-DONE.md").write_text(done, encoding="utf-8")
+            _git_dated(r.dir, ["add", "-A"], days)
+            _git_dated(r.dir, ["commit", "-qm", f"flow {added}:{closed}"],
+                       days)
+        here = os.getcwd()
+        try:
+            os.chdir(str(r.dir))
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(r.dir), "item", "ratio"])
+            return Fired(code, buf.getvalue())
+        finally:
+            os.chdir(here)
+
+
+#: The two histories the `net_growth` row pairs. SAME SIZE AT EVERY CUT and
+#: the same capture; they differ in the DRAIN alone. Both stay under the 3:1
+#: tripwire, which is the band the row exists for: the spike test is silent
+#: over both, so only the net-growth verdict can tell them apart.
+NET_GROWTH_SUSTAINED = [("before", 10, 5), ("first-half", 20, 9),
+                        ("now", 30, 14)]
+NET_GROWTH_DRAINING = [("before", 10, 5), ("first-half", 20, 16),
+                       ("now", 30, 26)]
+
+
 def _ratio_after_close() -> Fired:
     """`item ratio` over a scratch repo that has actually closed something."""
     import io
@@ -3703,6 +3801,11 @@ def _ratio_after_close() -> Fired:
     from . import cli as cli_mod
 
     with _Repo(items=NO_DRAIN_ITEMS) as r:
+        # The seed is BACK-DATED past the net-growth window (lc-291). Seeded
+        # now, the carrier is born inside the window and the ratio answers
+        # COULD NOT VERIFY — still different from the plant, but then this
+        # control no longer shows that a real closure is what reads clean.
+        _backdate_head(r.dir)
         here = os.getcwd()
         try:
             os.chdir(str(r.dir))

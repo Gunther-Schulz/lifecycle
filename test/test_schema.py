@@ -262,9 +262,16 @@ class FlowNotSize(unittest.TestCase):
         return run_cli(d, "item", "ratio")
 
     def test_a_LARGE_carrier_that_drains_is_clean(self):
-        code, out = self._ratio(added=60, closed_n=40)
-        self.assertEqual(code, exits.CLEAN, out)
-        self.assertIn("ratio: CLEAN", out)
+        """DRAINS is a property of a HISTORY, not of one snapshot (lc-291).
+        This case once read 60:40 at a single commit as draining, and that
+        snapshot is the very verdict lc-291 found false: a 1.5:1 carrier may
+        be growing without bound. So the carrier here is large at every cut
+        and its open count falls over the window."""
+        from lifecycle_core import refusals
+        f = refusals._ratio_history(
+            [("before", 60, 30), ("first-half", 60, 35), ("now", 60, 40)])
+        self.assertEqual(f.code, exits.CLEAN, f.output)
+        self.assertIn("ratio: CLEAN — the carrier is draining", f.output)
 
     def test_a_SMALL_carrier_that_never_drains_is_a_finding(self):
         code, out = self._ratio(added=3, closed_n=0)

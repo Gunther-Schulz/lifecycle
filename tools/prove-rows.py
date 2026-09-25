@@ -771,6 +771,16 @@ MUTATIONS = [
      "reads as though it drained, which is the one case a size-based cap "
      "also missed"),
 
+    # The branch's OWN verdict folded, for the reason `capture_dominated`
+    # above gives: the tag still prints, so only the RETURN moves. The
+    # trailing `if net > 0:` makes the anchor unique and is never reached.
+    ("net_growth", "verbs.py",
+     "        return exits.FINDING\n    if net > 0:",
+     "        return exits.CLEAN\n    if net > 0:",
+     "the net-growth verdict (lc-291) — a carrier whose open count grew in "
+     "both halves of the window under the 3:1 tripwire then reads clean, "
+     "which is the dead band the spike test never fires in"),
+
     ("kind_grew_without_exit", "retire.py",
      "    if count and not events:",
      "    if False:",

@@ -2903,3 +2903,128 @@ class ClosureHomeSplitComparesNormalisedPaths(unittest.TestCase):
         ctrl = row.control()
         self.assertEqual(fired.code, row.expect, fired.output)
         self.assertNotEqual(ctrl.code, row.expect, ctrl.output)
+
+
+class NetGrowthIsAFlowOverAWindow(unittest.TestCase):
+    """lc-291 — `item ratio` graded 1.87:1 CLEAN, "the carrier is draining",
+    over a carrier that gained net +131 since birth. The 3:1 tripwire catches
+    SPIKES only, so any sustained ratio between 1:1 and 3:1 grew without
+    bound under a CLEAN verdict. The repair reads NET growth between two git
+    cuts, in both halves of a window.
+
+    Every history here is built with DATED commits (refusals._ratio_history),
+    because the window reads the carrier's own git history and a fixture
+    seeded "now" is a carrier born inside the window."""
+
+    def test_sustained_growth_under_the_tripwire_is_a_finding(self):
+        f = refusals._ratio_history(refusals.NET_GROWTH_SUSTAINED)
+        self.assertEqual(f.code, exits.FINDING, f.output)
+        self.assertIn("[net_growth]", f.output)
+        self.assertNotIn("draining", f.output)
+
+    def test_a_draining_history_of_the_same_capture_is_clean(self):
+        f = refusals._ratio_history(refusals.NET_GROWTH_DRAINING)
+        self.assertEqual(f.code, exits.CLEAN, f.output)
+        self.assertIn("the carrier is draining", f.output)
+        self.assertNotIn("[net_growth]", f.output)
+
+    def test_a_burst_that_drains_is_not_sustained_growth(self):
+        """The NEGATIVE the judge asked to ship beside the natural red: a
+        booking burst in the first half, drained in the second, is not a
+        finding — but where it still nets positive, the verdict must not
+        claim the carrier is draining."""
+        f = refusals._ratio_history(
+            [("before", 10, 5), ("first-half", 25, 5), ("now", 26, 18)])
+        self.assertEqual(f.code, exits.CLEAN, f.output)
+        self.assertIn("net +15", f.output)
+        self.assertIn("net -12", f.output)
+        self.assertIn("not draining", f.output)
+        self.assertNotIn("the carrier is draining", f.output)
+        self.assertNotIn("[net_growth]", f.output)
+
+    def test_no_movement_is_clean_and_never_called_draining(self):
+        f = refusals._ratio_history(
+            [("before", 20, 10), ("first-half", 20, 10), ("now", 20, 10)])
+        self.assertEqual(f.code, exits.CLEAN, f.output)
+        self.assertIn("no flow over the window", f.output)
+        self.assertNotIn("draining", f.output)
+
+    def test_compaction_counts_as_drain_not_as_shrinkage(self):
+        """By conservation Δopen = Δadded − Δdone − Δcompacted. A compaction
+        empties the done home by a recorded exit; read without the counter it
+        would look like closures being UN-done, i.e. growth."""
+        from lifecycle_core.refusals import _Repo, _backdate_head, _git_dated
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli
+        items_old, done_old = refusals._flow_carrier(10, 8)
+        with _Repo(items=items_old, done=done_old) as r:
+            _backdate_head(r.dir)
+            # Mid-window: nothing new; 2 of the 8 done bodies compacted away.
+            # Kept to TWO so the lifetime ratio stays under the tripwire even
+            # with the drain side short by the compacted count — that side's
+            # own blindness to `compacted` is a separate, booked defect, and
+            # this case isolates the WINDOW's handling from it.
+            items_mid, done_mid = refusals._flow_carrier(10, 6)
+            items_mid = items_mid.replace("compacted: 0", "compacted: 2")
+            (r.dir / "ITEMS.md").write_text(items_mid, encoding="utf-8")
+            (r.dir / "ITEMS-DONE.md").write_text(done_mid, encoding="utf-8")
+            _git_dated(r.dir, ["commit", "-qam", "compact"], 5)
+            here = os.getcwd()
+            try:
+                os.chdir(str(r.dir))
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    code = cli.main(["--repo", str(r.dir), "item", "ratio"])
+            finally:
+                os.chdir(here)
+        out = buf.getvalue()
+        self.assertNotIn("[net_growth]", out)
+        # The FIRST half holds the compaction; the second half is idle and
+        # prints the same counts either way, so only this line discriminates.
+        self.assertIn("first half : +0 captured, 0 drained, net +0", out)
+        self.assertNotIn("not draining", out)
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_a_carrier_born_inside_the_window_could_not_verify(self):
+        """Its lifetime difference is a STOCK. Grading it would be the size
+        alarm R22 forbids, so the answer is the third one."""
+        from lifecycle_core.refusals import _Repo, _git_dated
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli
+        with _Repo() as r:
+            # An old commit that holds NO carrier, then the carrier arrives.
+            (r.dir / "ITEMS.md").unlink()
+            (r.dir / "ITEMS-DONE.md").unlink()
+            _git_dated(r.dir, ["commit", "-q", "--amend", "-a", "--no-edit"],
+                       refusals._net_growth_older())
+            items_now, done_now = refusals._flow_carrier(30, 14)
+            (r.dir / "ITEMS.md").write_text(items_now, encoding="utf-8")
+            (r.dir / "ITEMS-DONE.md").write_text(done_now, encoding="utf-8")
+            _git_dated(r.dir, ["add", "-A"], 0)
+            _git_dated(r.dir, ["commit", "-qm", "carrier"], 0)
+            here = os.getcwd()
+            try:
+                os.chdir(str(r.dir))
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    code = cli.main(["--repo", str(r.dir), "item", "ratio"])
+            finally:
+                os.chdir(here)
+        out = buf.getvalue()
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("born inside the window", out)
+
+    def test_no_commit_older_than_the_window_could_not_verify(self):
+        f = refusals._ratio_history([("now", 30, 14)])
+        self.assertEqual(f.code, exits.COULD_NOT_VERIFY, f.output)
+        self.assertIn("no commit is older than the window", f.output)
+
+    def test_the_row_pair_separates(self):
+        row = next(r for r in refusals.ROWS if r.ident == "net_growth")
+        fired, ctrl = row.fire(), row.control()
+        self.assertEqual(fired.code, row.expect, fired.output)
+        self.assertNotEqual(ctrl.code, row.expect, ctrl.output)

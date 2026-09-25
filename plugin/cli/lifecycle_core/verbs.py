@@ -1649,6 +1649,137 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
 #: draining does.
 RATIO_TRIPWIRE = 3.0
 
+#: The window the NET-GROWTH verdict reads flows over (lc-291). The tripwire
+#: above catches capture-domination SPIKES only: any sustained ratio between
+#: 1:1 and 3:1 grows without bound while it answers CLEAN, which is the
+#: silent-toward-passing direction on the growth invariant's own instrument.
+#: Seven days is a number nobody has measured, so it is printed as a
+#: placeholder rather than as a threshold — the same idiom as retire.py's
+#: STALE_PASSES_N.
+NET_GROWTH_WINDOW_DAYS = 7
+NET_GROWTH_WINDOW_STATUS = ("PLACEHOLDER — lc-291 chose seven days without a "
+                            "measurement; a window the carrier's own history "
+                            "justifies replaces it")
+
+
+def _carrier_flow_at(ctx: Ctx, rev: str):
+    """`((added, compacted, closed), why-not)` for both carrier homes AT A
+    COMMIT, read from git rather than from any cache of past counts.
+
+    THE FLOW IS READ OFF THE CARRIER'S OWN HISTORY because it is the one
+    record every clone holds. The fire log is machine-local and its own
+    docstring says a lost line is not a verdict, so a window built on it would
+    read a clean zero on every machine that did not run the verbs.
+
+    A home absent at `rev` is reported as such: at a cut before the carrier
+    existed there is no flow to compare, and a zero there would read as a
+    carrier that captured nothing."""
+    counts = []
+    for path in (ctx.items_path, ctx.done_path):
+        try:
+            rel = path.resolve().relative_to(ctx.repo.resolve()).as_posix()
+        except ValueError:
+            return None, f"{path} is outside the repo, so git holds no history of it"
+        try:
+            r = subprocess.run(["git", "-C", str(ctx.repo), "show",
+                                f"{rev}:{rel}"],
+                               capture_output=True, text=True)
+        except (OSError, subprocess.SubprocessError) as exc:
+            return None, f"git could not be run ({exc!r})"
+        if r.returncode != 0:
+            return None, f"{rel} does not exist at {rev[:12]}"
+        counts.append(items_mod.parse(r.stdout))
+    items_p, done_p = counts
+    added = items_p.head.get("added")
+    if added is None:
+        return None, f"the carrier head at {rev[:12]} declares no `added: <n>`"
+    return (added, items_p.head.get("compacted") or 0,
+            len(done_p.items)), None
+
+
+def _rev_at_or_before(ctx: Ctx, when) -> str | None:
+    """The newest commit whose COMMITTER date is at or before `when`."""
+    try:
+        r = subprocess.run(["git", "-C", str(ctx.repo), "rev-list", "-1",
+                            f"--before={when.isoformat()}", "HEAD"],
+                           capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    rev = r.stdout.strip()
+    return rev if r.returncode == 0 and rev else None
+
+
+def _net_growth(ctx: Ctx, now_flow, out) -> int:
+    """The DIVERGENCE verdict (lc-291): did the open count grow over the
+    window, in BOTH of its halves?
+
+    NET, NEVER THE LIFETIME DIFFERENCE. Capture minus drain since the
+    carrier's birth is the open count minus its baseline — a STOCK — so
+    grading it would fire forever on any carrier holding work, which is the
+    size alarm R22 forbids. Only a delta between two cuts is a flow.
+
+    SUSTAINED MEANS BOTH HALVES, so a single booking burst that later drains
+    is not a finding. Drain counts compaction too: `compacted` leaves the done
+    home by a recorded exit, and by conservation `Δopen = Δadded − Δdone −
+    Δcompacted`, so without it a compaction would read as growth."""
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+    window = timedelta(days=NET_GROWTH_WINDOW_DAYS)
+    start_rev = _rev_at_or_before(ctx, now - window)
+    mid_rev = _rev_at_or_before(ctx, now - window / 2)
+    out(f"window: {NET_GROWTH_WINDOW_DAYS} days ({NET_GROWTH_WINDOW_STATUS})")
+    if start_rev is None:
+        out("COULD NOT VERIFY [net_growth]: no commit is older than the "
+            "window, so git holds no cut to read the start flow from — the "
+            "repo has no history, or all of it is younger than the window.")
+        return exits.COULD_NOT_VERIFY
+    start, why = _carrier_flow_at(ctx, start_rev)
+    if start is None:
+        out(f"COULD NOT VERIFY [net_growth]: the carrier was born inside the "
+            f"window — {why}. Its lifetime difference is a stock, never a flow.")
+        return exits.COULD_NOT_VERIFY
+    mid, why = _carrier_flow_at(ctx, mid_rev)
+    if mid is None:
+        out(f"COULD NOT VERIFY [net_growth]: the mid-window cut is unreadable "
+            f"— {why}.")
+        return exits.COULD_NOT_VERIFY
+
+    halves = []
+    moved = False
+    for label, (a0, c0, d0), (a1, c1, d1) in (
+            ("first half ", start, mid), ("second half", mid, now_flow)):
+        captured = a1 - a0
+        drained = (d1 - d0) + (c1 - c0)
+        halves.append(captured - drained)
+        moved = moved or bool(captured or drained)
+        out(f"{label}: +{captured} captured, {drained} drained, "
+            f"net {captured - drained:+d}")
+    net = sum(halves)
+    if all(h > 0 for h in halves):
+        out(f"FINDING [net_growth] the open count grew in BOTH halves of the "
+            f"last {NET_GROWTH_WINDOW_DAYS} days, net {net:+d}, while the "
+            f"ratio sits under the {RATIO_TRIPWIRE:.0f}:1 tripwire. That band "
+            "grows without bound and the spike test never fires in it. The "
+            "repair is the same as the tripwire's: a retirement pass — drop "
+            "the overtaken, merge duplicates, park what no one will schedule.")
+        return exits.FINDING
+    if net > 0:
+        out(f"ratio: not draining — net {net:+d} over the window, but the "
+            "growth is not sustained across both halves, so it is not a "
+            "finding yet.")
+        return exits.CLEAN
+    if not moved:
+        # IDLE IS NOT DRAINING. Nothing captured and nothing closed is clean
+        # for this trigger, but saying "draining" over it is the verdict text
+        # asserting a flow the arithmetic does not contain.
+        out("ratio: CLEAN — no flow over the window: nothing captured and "
+            "nothing drained, so the open count held.")
+        return exits.CLEAN
+    out("ratio: CLEAN — the carrier is draining: the open count did not grow "
+        "over the window. A large carrier draining steadily owes nothing; "
+        "this trigger reads flow, never size.")
+    return exits.CLEAN
+
 
 def cmd_item_ratio(args, out, ctx: Ctx) -> int:
     """`item ratio` — capture against drain, the only growth alarm R22 allows.
@@ -1720,10 +1851,10 @@ def cmd_item_ratio(args, out, ctx: Ctx) -> int:
             "duplicates. The trigger reads the RATIO and never the size.")
         out(f"item ratio: {exits.word(exits.FINDING)}")
         return exits.FINDING
-    out("ratio: CLEAN — the carrier is draining. A large carrier draining "
-        "steadily owes nothing; this trigger reads flow, never size.")
-    out(f"item ratio: {exits.word(exits.CLEAN)}")
-    return exits.CLEAN
+    code = _net_growth(ctx, (added, parsed.head.get("compacted") or 0, closed),
+                       out)
+    out(f"item ratio: {exits.word(code)}")
+    return code
 
 
 #: The closed vocabulary a `grade:` line may carry (lc-45). Reused from
