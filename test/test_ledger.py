@@ -421,6 +421,63 @@ class LedgerAddDecisionRunsTheIntakeJoin(unittest.TestCase):
         self.assertNotEqual(head(d), before, out)
         self.assertIn(self.NEAR_MATCH, committed_ledger(d))
 
+    def test_the_join_disposition_PERSISTS_in_the_ledger(self):
+        """lc-295 — the absence was validated and then written NOWHERE, so a
+        disposition that re-decided an earlier question left no record of
+        it (measured 2026-09-25: grep of the absence in LEDGER.md and in the
+        commit body both 0). The disposition now lands as a companion
+        `decision:` line naming the new line and the lines it matched, in
+        the same commit."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self._seed(d)
+        absence = "a different scheduling window, not previously decided"
+        code, out = run_cli(
+            d, "ledger", "add", "decision", "--question", self.NEAR_MATCH,
+            "--answer", "yes", "--join", "new", "--absence", absence)
+        self.assertEqual(code, exits.CLEAN, out)
+        text = committed_ledger(d)
+        self.assertIn(absence, text)
+        parsed = ledger_mod.parse(text)
+        new = next(ln for ln in parsed.lines if ln.kind == "decision"
+                   and ln.slots.get("question") == self.NEAR_MATCH)
+        comp = [ln for ln in parsed.lines if ln.kind == "decision"
+                and absence in ln.slots.get("answer", "")]
+        self.assertEqual(len(comp), 1, text)
+        q = comp[0].slots["question"]
+        self.assertIn(f"LEDGER:{new.lineno}", q)
+        self.assertRegex(q, r"beside LEDGER:\d+")
+
+    def test_a_disposition_record_is_never_itself_a_join_candidate(self):
+        """Every companion line shares its opening vocabulary, so a join
+        that read them would match its own bookkeeping and demand a
+        disposition for a question about dispositions."""
+        from types import SimpleNamespace
+        from lifecycle_core import verbs
+        comp = ledger_mod.parse(
+            f"schema: 1\ndecision: {verbs.JOIN_DISPOSITION_PREFIX}7 beside "
+            "LEDGER:3 → new: a different scheduling window\n").lines
+        found = verbs.decision_candidates(
+            SimpleNamespace(lines=comp),
+            "join disposition beside a different scheduling window")
+        self.assertEqual(found, [])
+
+    def test_an_over_cap_absence_writes_NOTHING(self):
+        """The absence becomes a ledger line, so it is judged by the same
+        body cap BEFORE the question line is written — never half a write."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self._seed(d)
+        before = head(d)
+        code, out = run_cli(
+            d, "ledger", "add", "decision", "--question", self.NEAR_MATCH,
+            "--answer", "yes", "--join", "new", "--absence", "x " * 200)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[ledger_body]", out)
+        self.assertEqual(head(d), before, out)
+        self.assertNotIn(self.NEAR_MATCH,
+                         (d / "LEDGER.md").read_text(encoding="utf-8"))
+
     def test_a_wrong_join_value_is_a_FINDING(self):
         """UNLIKE `item add`, `merge-into` and `supersede` are not accepted
         here — a ledger line is append-only prose, not a body another verb

@@ -3453,7 +3453,9 @@ def decision_candidates(parsed, question: str) -> list:
     accident, so they get no join (the settled design, R7).
     """
     want_tokens = requirement_tokens(question)
-    decisions = [ln for ln in parsed.lines if ln.kind == "decision"]
+    decisions = [ln for ln in parsed.lines if ln.kind == "decision"
+                 and not ln.slots.get("question", "").startswith(
+                     JOIN_DISPOSITION_PREFIX)]
     freq = document_frequency(decisions, key="question")
     found = []
     for ln in decisions:
@@ -3540,7 +3542,41 @@ def _check_decision_join(args, ctx: Ctx, out) -> int:
             "absence (`--absence \"…\"`): why this is a new question rather "
             "than one of the matches above. Nothing was written.")
         return exits.FINDING
+    # THE ABSENCE BECOMES A LEDGER LINE (lc-295), so it is judged by the
+    # ledger's own body rule HERE, before the question line is written: a
+    # refusal after the first append would leave half a disposition.
+    problem = ledger.check_prose(join_absence, "the join absence")
+    if problem:
+        out(f"FINDING [ledger_body] {problem}")
+        return exits.FINDING
+    args.join_disposition = ([ln.lineno for ln, _ in found], join_absence)
     return exits.CLEAN
+
+
+#: The companion line's question opens with this, so the join never offers a
+#: disposition record as a near-match for a new question: every such line
+#: shares this vocabulary, and a join that matched its own bookkeeping would
+#: demand a disposition for writing one.
+JOIN_DISPOSITION_PREFIX = "join disposition of LEDGER:"
+
+
+def _append_join_disposition(ctx: Ctx, written: str, disposition, out) -> None:
+    """lc-289's `--absence` was validated and then persisted NOWHERE — not in
+    the ledger line and not in the commit (lc-295, measured on the join's
+    first live fire, a line that reversed an earlier decision). The
+    disposition is a decision in its own right, so it lands as one: a
+    companion `decision:` line naming the line just written and the lines it
+    was judged against, answered with the absence. Same file, same commit."""
+    matched, absence = disposition
+    parsed, _why = ledger.read(ctx.ledger_path)
+    lineno = next((ln.lineno for ln in reversed(parsed.lines)
+                   if ln.raw.strip() == written), None) if parsed else None
+    at = f"{lineno}" if lineno is not None else "?"
+    beside = ", ".join(f"LEDGER:{n}" for n in matched)
+    line = ledger.append(ctx.ledger_path, "decision", {
+        "question": f"{JOIN_DISPOSITION_PREFIX}{at} beside {beside}",
+        "answer": f"new: {absence}"})
+    out(f"ledger: {line}")
 
 
 # --- `ledger add` (stage 6) ---------------------------------------------------
@@ -3601,6 +3637,9 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
     line = ledger.append(ctx.ledger_path, args.line_kind,
                          {k: str(v).strip() for k, v in slots.items()})
     out(f"ledger: {line}")
+    disposition = getattr(args, "join_disposition", None)
+    if disposition:
+        _append_join_disposition(ctx, line, disposition, out)
     # ONE COMMIT PATH, not a second spelling: `commit_paths` is what every
     # other carrier write in this file calls, and it commits BY PATHSPEC
     # because the index is shared. EVERY line kind reaches this line — a
