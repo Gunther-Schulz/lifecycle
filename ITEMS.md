@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 285
+added: 286
 compacted: 0
 
 ## lc-3
@@ -1544,15 +1544,6 @@ evidence: RELAYED from judge lifecycle-64 2026-09-24 (operator observation there
 blocked-by: decision which waking event, if any, is worth a pre-registered probe for a desk that ends its turn with a non-empty queue
 not-derivable: 2026-09-24 no ledger line or item designs a waking event; the admission bar requires a probe design before any build, and the choice of event is design judgment for a live desk.
 
-## lc-292
-grade: READY
-requirement: READY has decayed into a label nobody believes: 117 READY items over a carrier whose actually-scheduled head is about 3 (lc-289, lc-290, the lc-161 after-measurement). The accretion doctrine names the decay - when the ready set outgrows what the repo will ever schedule, the grade asserts an intent nobody holds and the head is indistinguishable from the tail. Most READY bodies are new mechanisms that three standing decisions already gate: the freeze, the admission bar, and the lc-161 verdict structure. Record: operator escalation 2026-09-24, session lifecycle-64.
-goal: lean-machinery-strict-checks
-write-set: ITEMS.md,LEDGER.md
-done-criterion: One demotion pass over every open READY item, each classed and moved by tool verbs, never hand edits: (a) defect repair to a shipped instrument, or already-scheduled head work, stays READY; (b) new mechanism, or work whose worth the lc-161 verdict decides, goes PARKED with the ONE shared named blocker - freeze (LEDGER decision line 2026-09-24) + admission bar + lc-161 after-measurement verdict - so a single ledger answer re-releases the whole class; (c) overtaken or duplicate takes a recorded DROP with a one-line reason. The close reports counts per class, quotes the post-pass READY head in full, and item ratio drop count moves off zero where (c) applied. Runs BEFORE the lc-161 after-measurement, so the after-number is read over a carrier whose head means something.
-evidence: PERISHABLE(2026-09-24, re-derive: lifecycle item ready --head): 116 listed plus head, 117 READY total, head-rule source order, no lead goal. MEASURED: freeze pin, admission bar, and baseline are ledger decision lines read this session. DERIVED: the about-3 live head follows from the freeze - everything else waits on the verdict by decisions already made.
-blocked-by: NONE
-
 ## lc-293
 grade: READY
 requirement: item ratio lifetime tripwire reads drain as closed bodies only, excluding the carrier head compacted counter, so after an item compact the ratio inflates and capture_dominated fires falsely (10 added, 8 closed, 6 compacted reads 10:2 = 5:1). Record: found 2026-09-25 by lc-291 compaction test at 809e206, desk lifecycle-d8.
@@ -1561,3 +1552,13 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals
 done-criterion: cmd_item_ratio drain side = done-home bodies + head compacted (conservation: open + done = baseline + added - compacted); a compacted carrier under the tripwire reads CLEAN, red-first on the 10/8/6 plant (fires capture_dominated before, silent after); capture_dominated row and arrangement still PROVEN; suite and --test green.
 evidence: MEASURED 2026-09-25: plant 10 added / 8 closed / 6 compacted printed ratio 10:2 = 5.00:1 FINDING [capture_dominated] (lc-291 test run before its fixture was narrowed); every governed carrier reads compacted: 0 today, so the defect is latent, not live.
 blocked-by: NONE
+
+## lc-294
+grade: PARKED
+requirement: After the lc-292 pass READY still holds 85 items (81 genuine defect repairs to shipped instruments, class a) over a scheduled head of about 3, so the grade still asserts an intent nobody holds and the head is indistinguishable from the tail. Parking does not fit defect repairs; the accretion doctrine answer is a THIRD grade reserving READY for the scheduled head. Record: lc-292 close 2026-09-25, desk lifecycle-d8, judge lifecycle-64 ruling 4.
+goal: lean-machinery-strict-checks
+write-set: CLAUDE.md,plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py
+done-criterion: This repo declares a third grade beside READY/PARKED in CLAUDE.md and the carrier closed vocabulary, READY is reserved for the scheduled head, and the grade carries a computable trigger BOTH ways: DEMOTE when the READY set outgrows the schedule, RETURN when the head drains faster than it fills (scheduled out vs booked in, over the window item ratio already reads). Each trigger is a roster row proven red-first; the 81 class-(a) items from the lc-292 pass are graded by the new rule, not by hand.
+evidence: MEASURED 2026-09-25 at 4718f3f: item ready --head prints head: 85 READY, 79 schedulable now, 134 live; the lc-292 pass classed 81 of those READY as defect repairs (per-class table in the lc-292 closure). DERIVED: parking them on the freeze blocker would be false, because the freeze does not gate defect repairs.
+blocked-by: decision operator: grant a freeze exception for the third READY grade and its demote and return triggers
+not-derivable: 2026-09-25 The freeze (LEDGER decision 2026-09-24) is an operator-pinned decision, and reversing a pinned decision is never derivable by the driving desk whatever its delegation (judge lifecycle-64 ruling 4, 2026-09-25); the question is travelling to the operator with a YES recommendation.
