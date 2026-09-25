@@ -158,6 +158,7 @@ dropped: lc-121 — lc-292 pass (c): overtaken by lc-177 at a473b5f - the archiv
 dropped: lc-151 — lc-292 pass (c): overtaken by lc-170 at 1dbdfe9 - an unresolvable home answers COULD NOT VERIFY, never an empty count (retire.py:244-250); d8 2026-09-25
 decision: operator: grant a freeze exception for the third READY grade and its demote and return triggers → YES - narrow exception: the grade, READY reserved for the scheduled head, computable demote (outgrowing the schedule) and return (head draining faster than it fills) triggers (operator, first-hand at lifecycle-64 2026-09-25, per recommendation; binding in d8 per the final delegation)
 decision: queue extension and standing rule for the answerable arc → YES - lc-281 is item 4, lc-294 item 5; decisions in this arc go per lifecycle-64 recommendations; carve-out floor unchanged (operator, first-hand at lifecycle-64 2026-09-25)
+decision: does the operator final delegation bind in session lifecycle-d8 → YES - operator, first-hand in lifecycle-d8 2026-09-25: lifecycle-64 drives the answerable-arc queue AND its extensions; its ledgered directives incl. queue items and freeze exceptions bind; carve-out floor stays the operator. Supersedes a68c71b scope
 
 ## Archive (pre-migration)
 
