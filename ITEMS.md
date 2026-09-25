@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 286
+added: 287
 compacted: 0
 
 ## lc-3
@@ -1551,3 +1551,12 @@ done-criterion: This repo declares a third grade beside READY/PARKED in CLAUDE.m
 evidence: MEASURED 2026-09-25 at 4718f3f: item ready --head prints head: 85 READY, 79 schedulable now, 134 live; the lc-292 pass classed 81 of those READY as defect repairs (per-class table in the lc-292 closure). DERIVED: parking them on the freeze blocker would be false, because the freeze does not gate defect repairs.
 blocked-by: decision operator: grant a freeze exception for the third READY grade and its demote and return triggers
 not-derivable: 2026-09-25 The freeze (LEDGER decision 2026-09-24) is an operator-pinned decision, and reversing a pinned decision is never derivable by the driving desk whatever its delegation (judge lifecycle-64 ruling 4, 2026-09-25); the question is travelling to the operator with a YES recommendation.
+
+## lc-295
+grade: READY
+requirement: ledger add decision --join new --absence validates the absence and then persists it NOWHERE (not in the ledger line, not in the commit message), so a disposition that REVERSES an earlier decision leaves no record of the reversal. Record: first live fire 2026-09-25, LEDGER:104 reversed by the third-grade exception line, desk lifecycle-d8.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_ledger.py
+done-criterion: A --join new disposition on ledger add decision leaves its absence and the matched line numbers where the next reader of the ledger finds them (on the written line or a companion line), red-first: today the absence string is absent from LEDGER.md and git log after a disposed write; after, it is present. MUST-NOT-MOVE: an unmatched decision writes exactly as before.
+evidence: MEASURED 2026-09-25 at d8: after a disposed write, grep -c on the absence text in LEDGER.md = 0 and the commit body carries only the trailer; the reversal had to be recorded as its own decision line.
+blocked-by: NONE
