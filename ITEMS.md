@@ -1533,14 +1533,18 @@ evidence: MEASURED 2026-09-25: plant 10 added / 8 closed / 6 compacted printed r
 blocked-by: NONE
 
 ## lc-294
-grade: PARKED
+grade: READY
 requirement: After the lc-292 pass READY still holds 85 items (81 genuine defect repairs to shipped instruments, class a) over a scheduled head of about 3, so the grade still asserts an intent nobody holds and the head is indistinguishable from the tail. Parking does not fit defect repairs; the accretion doctrine answer is a THIRD grade reserving READY for the scheduled head. Record: lc-292 close 2026-09-25, desk lifecycle-d8, judge lifecycle-64 ruling 4.
 goal: lean-machinery-strict-checks
 write-set: CLAUDE.md,plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py
 done-criterion: This repo declares a third grade beside READY/PARKED in CLAUDE.md and the carrier closed vocabulary, READY is reserved for the scheduled head, and the grade carries a computable trigger BOTH ways: DEMOTE when the READY set outgrows the schedule, RETURN when the head drains faster than it fills (scheduled out vs booked in, over the window item ratio already reads). Each trigger is a roster row proven red-first; the 81 class-(a) items from the lc-292 pass are graded by the new rule, not by hand.
 evidence: MEASURED 2026-09-25 at 4718f3f: item ready --head prints head: 85 READY, 79 schedulable now, 134 live; the lc-292 pass classed 81 of those READY as defect repairs (per-class table in the lc-292 closure). DERIVED: parking them on the freeze blocker would be false, because the freeze does not gate defect repairs.
 blocked-by: decision operator: grant a freeze exception for the third READY grade and its demote and return triggers
-not-derivable: 2026-09-25 The freeze (LEDGER decision 2026-09-24) is an operator-pinned decision, and reversing a pinned decision is never derivable by the driving desk whatever its delegation (judge lifecycle-64 ruling 4, 2026-09-25); the question is travelling to the operator with a YES recommendation.
+amend-reason: 2026-09-25 blocker answered by LEDGER:159; write-set per the judge ruling on the lc-294 design (docs/directives/2026-09-25-lc294-third-grade-design.md, 3f78acb), incl. ITEMS.md for the first bench pass
+amended-write-set: 2026-09-25 CLAUDE.md,.claude/lifecycle.json,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py,test/test_verbs.py,ITEMS.md
+amended-blocked-by: 2026-09-25 NONE
+promote-reason: 2026-09-25 design ruled GO by judge lifecycle-64 2026-09-25 (STANDBY, arc-cited HEAD, find-not-move triggers, no migration with an undeclared-repo read-back and a gains-a-value reader sweep)
+promoted-by: 2026-09-25 lifecycle-d8
 
 ## lc-296
 grade: PARKED
