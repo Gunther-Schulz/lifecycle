@@ -155,6 +155,7 @@ dropped: lc-197 — lc-292 pass (c): overtaken by lc-251 at 6213abf, which folde
 dropped: lc-100 — lc-292 pass (c): overtaken by lc-163 at f4db0ec - prove-rows mutates a COPY, the checkout is never written (tools/prove-rows.py:1461-1462 at f02cd76); d8 2026-09-25
 dropped: lc-113 — lc-292 pass (c): overtaken by lc-130 at b23ad25 - mint-time predicate lint refuses an evidence blocker whose predicate cannot work (verbs.py _predicate_lint, FINDING blocker_predicate_broken); d8 2026-09-25
 dropped: lc-121 — lc-292 pass (c): overtaken by lc-177 at a473b5f - the archive region IDS are read into archive_idents and feed the allocator and duplicate lane (items.py:850-857, 1588); d8 2026-09-25
+dropped: lc-151 — lc-292 pass (c): overtaken by lc-170 at 1dbdfe9 - an unresolvable home answers COULD NOT VERIFY, never an empty count (retire.py:244-250); d8 2026-09-25
 
 ## Archive (pre-migration)
 
