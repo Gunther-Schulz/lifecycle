@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 288
+added: 289
 compacted: 0
 
 ## lc-3
@@ -1572,5 +1572,15 @@ goal: lean-machinery-strict-checks
 write-set: UNKNOWN
 done-criterion: A registered operator-asks kind: writer the session at the ask moment through a verb, a small carrier home, reader the session-start banner and /standort (N asks wait on the operator, oldest ...), exit the answering ledger line or an answered mark; family of the lc-276 demand leg. DESIGN LATER: booked now, designed after the freeze release.
 evidence: RELAYED from lifecycle-64 2026-09-25 (operator-raised first-hand there). MEASURED at d8: this session held the confirmation question across three turns with no carrier holding it; the operator answered only after lifecycle-64 surfaced it.
+blocked-by: decision freeze release - does the lc-161 after-measurement verdict, under the admission bar, release the new mechanisms parked by the lc-292 pass
+not-derivable: 2026-09-25 Not derivable: the freeze (LEDGER decision 2026-09-24) holds new mechanisms until the lc-161 after-measurement reports, and the admission bar needs a pre-registered probe; one answer releases every item parked on this exact question.
+
+## lc-297
+grade: READY
+requirement: lc-281 survey class (b), corpus fixing.md:387 + :568 (ethos 2fbc442): an instrument is unproven until it has gone red on its defect, yet lifecycle --test admits a roster row that has no recorded prove-rows arrangement; prove-rows only LISTS such rows. Record: docs/audits/2026-09-25-lc281-corpus-migration-survey.md.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/roster.py,tools/prove-rows.py,plugin/cli/lifecycle_core/refusals.py,test/test_prove_rows.py
+done-criterion: lifecycle --test refuses (FINDING) a roster row with no recorded arrangement unless it is declared PROSE-REST or carries a declared, dated exemption the check verifies; red-first on a planted row with no arrangement.
+evidence: MEASURED 2026-09-25: prove-rows prints rows with no recorded mutation at the end of its run and exits 0 for them; --test has no such check. DERIVED: the corpus rule is an act lifecycle owns (row admission), so a refusal fits R9 class (b).
 blocked-by: decision freeze release - does the lc-161 after-measurement verdict, under the admission bar, release the new mechanisms parked by the lc-292 pass
 not-derivable: 2026-09-25 Not derivable: the freeze (LEDGER decision 2026-09-24) holds new mechanisms until the lc-161 after-measurement reports, and the admission bar needs a pre-registered probe; one answer releases every item parked on this exact question.
