@@ -156,6 +156,7 @@ dropped: lc-100 — lc-292 pass (c): overtaken by lc-163 at f4db0ec - prove-rows
 dropped: lc-113 — lc-292 pass (c): overtaken by lc-130 at b23ad25 - mint-time predicate lint refuses an evidence blocker whose predicate cannot work (verbs.py _predicate_lint, FINDING blocker_predicate_broken); d8 2026-09-25
 dropped: lc-121 — lc-292 pass (c): overtaken by lc-177 at a473b5f - the archive region IDS are read into archive_idents and feed the allocator and duplicate lane (items.py:850-857, 1588); d8 2026-09-25
 dropped: lc-151 — lc-292 pass (c): overtaken by lc-170 at 1dbdfe9 - an unresolvable home answers COULD NOT VERIFY, never an empty count (retire.py:244-250); d8 2026-09-25
+decision: operator: grant a freeze exception for the third READY grade and its demote and return triggers → YES - narrow exception: the grade, READY reserved for the scheduled head, computable demote (outgrowing the schedule) and return (head draining faster than it fills) triggers (operator, first-hand at lifecycle-64 2026-09-25, per recommendation; binding in d8 per the final delegation)
 
 ## Archive (pre-migration)
 
