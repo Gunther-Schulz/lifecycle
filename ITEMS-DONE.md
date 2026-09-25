@@ -1964,5 +1964,14 @@ amended-write-set: 2026-09-25 plugin/cli/lifecycle_core/verbs.py,plugin/cli/life
 closed-reason: 2026-09-25 d8 desk-verified at ddb5938: suite 1082 OK, --test 129/129 CLEAN, prove-rows 109 PROVEN incl net_growth (real anchor PROVEN, inert anchor rows changed NONE FAILED), node leak bites + scan clean; audit rc=3 pre-existing (3 at base a68c71b). NATURAL RED live 285:151 = 1.89:1 FINDING [net_growth] halves +56/+12 net +68 (old verb: CLEAN draining). NEGATIVE: burst-then-drain +15/-12 reads CLEAN not-draining; draining history -1/+0 CLEAN; compaction case red-first.
 closed-ref: 809e206
 
+## lc-197
+grade: DROPPED
+requirement: THE ARRANGEMENT FOR capture_dominated CANNOT BE REPAIRED WITHOUT SPLITTING THE CONDITION IT MUTATES. Its mutation makes the ratio path divide by zero, so the arm crashes rather than answering — and since today a crash is honestly reported as COULD NOT VERIFY, the row is now openly unproven rather than falsely proven. The cause is in the CODE, not the arrangement: the zero guard also guards the division, so every mutation of it crashes by construction. This is the lc-164 shape exactly — two firing inputs of ONE refusal decided at two branches, where the honest repair is one composed verdict tested at a single condition.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,tools/prove-rows.py,test/test_items.py
+done-criterion: capture_dominated has ONE deciding condition that a mutation can disable without crashing, and prove-rows answers PROVEN for it at a real anchor and FAILED at an inert one. RED-FIRST: today the recorded arrangement yields RAISED ZeroDivisionError and the row reads COULD NOT VERIFY. MUST-NOT-MOVE: both firing inputs keep their OWN messages — a carrier that never drains and one past the tripwire are different things to be told — and the zero-drain path still never divides. The ratio arithmetic and the tripwire value do not change.
+evidence: MEASURED at this desk 2026-09-18 immediately after repairing the crash-reads-as-proof defect: a full prove-rows walk returned exactly ONE could-not-verify row, capture_dominated, so this is the entire residue of that repair. DERIVED: any mutation of the zero guard reaches the division on the next line, so no anchor on that condition can both darken the row and let the arm answer — the split has to happen in the code. RELAYED from review lane 2 via lifecycle-6f, carried as theirs: they found the crash and graded it critical.
+blocked-by: NONE
+
 ## Archive (pre-migration)
 
