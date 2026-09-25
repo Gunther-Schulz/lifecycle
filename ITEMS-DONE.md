@@ -2099,5 +2099,16 @@ amended-done-criterion: 2026-09-25 A survey artifact in docs/audits/ classifies 
 closed-reason: 2026-09-25 d8 2026-09-25: survey at docs/audits/2026-09-25-lc281-corpus-migration-survey.md. VERIFIER: 77 bullets derived by two instruments (Python scan = per-module grep for all 8 modules); class counts (a) 16 + (b) 3 + (c) 58 = 77, one class each; every (a) row ident resolves in lifecycle --test --list (26 of 26). Pins ethos 2fbc442 + dotfiles 78df677. (b) booked lc-297, lc-298 PARKED on the shared blocker. Corpus edits for (a) are out of scope (their own mint gate).
 closed-ref: 7a566a8
 
+## lc-295
+grade: DONE
+requirement: ledger add decision --join new --absence validates the absence and then persists it NOWHERE (not in the ledger line, not in the commit message), so a disposition that REVERSES an earlier decision leaves no record of the reversal. Record: first live fire 2026-09-25, LEDGER:104 reversed by the third-grade exception line, desk lifecycle-d8.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_ledger.py
+done-criterion: A --join new disposition on ledger add decision leaves its absence and the matched line numbers where the next reader of the ledger finds them (on the written line or a companion line), red-first: today the absence string is absent from LEDGER.md and git log after a disposed write; after, it is present. MUST-NOT-MOVE: an unmatched decision writes exactly as before.
+evidence: MEASURED 2026-09-25 at d8: after a disposed write, grep -c on the absence text in LEDGER.md = 0 and the commit body carries only the trailer; the reversal had to be recorded as its own decision line.
+blocked-by: NONE
+closed-reason: 2026-09-25 d8 desk-verified at 0672c80: suite 1094 OK, --test 130/130, prove-rows 110 PROVEN 0 FAILED, node 62/62, scan clean, audit rc=3 pre-existing. RED-FIRST on the previous code: the persistence arm failed (absence not found in LEDGER.md) and the over-cap arm failed (the line was written with a 400-char absence); the companion-exclusion arm failed with its filter removed. After: a disposed write adds a companion decision line naming LEDGER:<new> beside LEDGER:<matched>, in the same commit.
+closed-ref: 0672c80
+
 ## Archive (pre-migration)
 
