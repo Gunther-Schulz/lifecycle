@@ -1576,7 +1576,7 @@ blocked-by: decision freeze release - does the lc-161 after-measurement verdict,
 not-derivable: 2026-09-25 Not derivable: the freeze (LEDGER decision 2026-09-24) holds new mechanisms until the lc-161 after-measurement reports, and the admission bar needs a pre-registered probe; one answer releases every item parked on this exact question.
 
 ## lc-297
-grade: READY
+grade: PARKED
 requirement: lc-281 survey class (b), corpus fixing.md:387 + :568 (ethos 2fbc442): an instrument is unproven until it has gone red on its defect, yet lifecycle --test admits a roster row that has no recorded prove-rows arrangement; prove-rows only LISTS such rows. Record: docs/audits/2026-09-25-lc281-corpus-migration-survey.md.
 goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/roster.py,tools/prove-rows.py,plugin/cli/lifecycle_core/refusals.py,test/test_prove_rows.py
@@ -1586,7 +1586,7 @@ blocked-by: decision freeze release - does the lc-161 after-measurement verdict,
 not-derivable: 2026-09-25 Not derivable: the freeze (LEDGER decision 2026-09-24) holds new mechanisms until the lc-161 after-measurement reports, and the admission bar needs a pre-registered probe; one answer releases every item parked on this exact question.
 
 ## lc-298
-grade: READY
+grade: PARKED
 requirement: lc-281 survey class (b), corpus reporting.md:75 (ethos 2fbc442): a ruling about artifact state is written as a condition plus the measurement that decides it; item evidence accepts a MEASURED mark with no command or output beside it. Record: docs/audits/2026-09-25-lc281-corpus-migration-survey.md.
 goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
