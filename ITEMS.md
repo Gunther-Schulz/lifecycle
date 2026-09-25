@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 287
+added: 288
 compacted: 0
 
 ## lc-3
@@ -1560,3 +1560,13 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals
 done-criterion: A --join new disposition on ledger add decision leaves its absence and the matched line numbers where the next reader of the ledger finds them (on the written line or a companion line), red-first: today the absence string is absent from LEDGER.md and git log after a disposed write; after, it is present. MUST-NOT-MOVE: an unmatched decision writes exactly as before.
 evidence: MEASURED 2026-09-25 at d8: after a disposed write, grep -c on the absence text in LEDGER.md = 0 and the commit body carries only the trailer; the reversal had to be recorded as its own decision line.
 blocked-by: NONE
+
+## lc-296
+grade: NEW
+requirement: An ask queued for the operator has NO CARRIER: a session idle on a human answer renders identically to a session with nothing owed. Incident 2026-09-25 ~15:20: the lc-281/lc-294 confirmation sat invisible across two terminals while the operator asked the driving desk why the peer was idle. Record: operator-raised first-hand at lifecycle-64; the purpose doc says every ask queued for the operator is one only they could answer, and nothing holds that queue.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A registered operator-asks kind: writer the session at the ask moment through a verb, a small carrier home, reader the session-start banner and /standort (N asks wait on the operator, oldest ...), exit the answering ledger line or an answered mark; family of the lc-276 demand leg. DESIGN LATER: booked now, designed after the freeze release.
+evidence: RELAYED from lifecycle-64 2026-09-25 (operator-raised first-hand there). MEASURED at d8: this session held the confirmation question across three turns with no carrier holding it; the operator answered only after lifecycle-64 surfaced it.
+blocked-by: decision freeze release - does the lc-161 after-measurement verdict, under the admission bar, release the new mechanisms parked by the lc-292 pass
+not-derivable: 2026-09-25 Not derivable: the freeze (LEDGER decision 2026-09-24) holds new mechanisms until the lc-161 after-measurement reports, and the admission bar needs a pre-registered probe; one answer releases every item parked on this exact question.
