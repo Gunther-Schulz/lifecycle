@@ -389,6 +389,14 @@ does not say.
 - `ITEMS.md` / `ITEMS-DONE.md` — the item carrier and its closure home.
   `lifecycle item add` is the only admission path; the tool is their
   only writer (law 8).
+  **This repo declares a THIRD open grade, `STANDBY`** (lc-294, LEDGER:159;
+  the declaration's `grades-extra` key is the executable half). It means
+  decision-complete and not on the schedule. **READY is reserved for the
+  scheduled head: the READY items an open arc cites.** `item bench` moves
+  an item READY → STANDBY and `item promote` moves it back, each with a
+  reason. `item ratio` says when a pass is owed: `ready_outgrows_head`
+  (demote) and `head_draining` (return). Both triggers FIND and never move
+  anything, because READY is judged (law 10).
 - `BACKLOG.md` — RETIRED 2026-09-12, the legacy-backlog kind taking its
   declared `delete` exit. Every entry had its ITEMS.md successor
   (`lc-1`..`lc-8`): five were dropped as overtaken and three had their
