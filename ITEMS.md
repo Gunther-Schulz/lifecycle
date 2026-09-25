@@ -1654,11 +1654,11 @@ blocked-by: NONE
 bench-reason: 2026-09-25 lc-294 residue, decision-complete; no open arc schedules it this window (head lc-161, lc-256); returns by promote when the judge schedules it
 
 ## lc-300
-grade: NEW
+grade: PARKED
 requirement: Reflection triggers: a closed set of diagnostic events (a bound firing, a budget exhausting, a guard refusing) each owing a named written slot - structural cause: / generalization: / next-step: - so the reflection is a computable absence, not a remembered duty (law 26). Directive from lifecycle-64, 2026-09-25
 goal: lean-machinery-strict-checks
 write-set: UNKNOWN
 done-criterion: A registered closed set of diagnostic events, each firing site writing a record with the three named slots, and a refusal when a fired event carries an empty slot; DESIGN LATER: booked now, designed after the freeze release.
 evidence: RELAYED from lifecycle-64, sourced to statiker-c2. OPENED at d8: statiker 54507f6 (2026-09-25, dev-notes/OBSERVATIONS.md, THE BUDGET IS A CANARY) records an operator decision that a rounds-budget fire owes a NAMED structural cause before any raise, and cites an existing lens line calling a bound firing a diagnostic event owing a named cause. The three-slot form (generalization, next-step) is NOT in that commit - unverified
-blocked-by: decision decision freeze release - does the lc-161 after-measurement verdict, under the admission bar, release the new mechanisms parked by the lc-292 pass
-not-derivable: 2026-09-25 Not derivable: the freeze (LEDGER decision 2026-09-24) holds new mechanisms until the lc-161 after-measurement reports, and the admission bar needs a pre-registered probe; one answer releases every item parked on this exact question.
+blocked-by: decision freeze release - does the lc-161 after-measurement verdict, under the admission bar, release the new mechanisms parked by the lc-292 pass
+not-derivable: 2026-09-25 Not derivable: the freeze (LEDGER decision 2026-09-24) holds new mechanisms until the lc-161 after-measurement reports; one answer releases every item parked on this exact question.
