@@ -2110,5 +2110,21 @@ blocked-by: NONE
 closed-reason: 2026-09-25 d8 desk-verified at 0672c80: suite 1094 OK, --test 130/130, prove-rows 110 PROVEN 0 FAILED, node 62/62, scan clean, audit rc=3 pre-existing. RED-FIRST on the previous code: the persistence arm failed (absence not found in LEDGER.md) and the over-cap arm failed (the line was written with a 400-char absence); the companion-exclusion arm failed with its filter removed. After: a disposed write adds a companion decision line naming LEDGER:<new> beside LEDGER:<matched>, in the same commit.
 closed-ref: 0672c80
 
+## lc-294
+grade: DONE
+requirement: After the lc-292 pass READY still holds 85 items (81 genuine defect repairs to shipped instruments, class a) over a scheduled head of about 3, so the grade still asserts an intent nobody holds and the head is indistinguishable from the tail. Parking does not fit defect repairs; the accretion doctrine answer is a THIRD grade reserving READY for the scheduled head. Record: lc-292 close 2026-09-25, desk lifecycle-d8, judge lifecycle-64 ruling 4.
+goal: lean-machinery-strict-checks
+write-set: CLAUDE.md,plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py
+done-criterion: This repo declares a third grade beside READY/PARKED in CLAUDE.md and the carrier closed vocabulary, READY is reserved for the scheduled head, and the grade carries a computable trigger BOTH ways: DEMOTE when the READY set outgrows the schedule, RETURN when the head drains faster than it fills (scheduled out vs booked in, over the window item ratio already reads). Each trigger is a roster row proven red-first; the 81 class-(a) items from the lc-292 pass are graded by the new rule, not by hand.
+evidence: MEASURED 2026-09-25 at 4718f3f: item ready --head prints head: 85 READY, 79 schedulable now, 134 live; the lc-292 pass classed 81 of those READY as defect repairs (per-class table in the lc-292 closure). DERIVED: parking them on the freeze blocker would be false, because the freeze does not gate defect repairs.
+blocked-by: NONE
+amend-reason: 2026-09-25 blocker answered by LEDGER:159; write-set per the judge ruling on the lc-294 design (docs/directives/2026-09-25-lc294-third-grade-design.md, 3f78acb), incl. ITEMS.md for the first bench pass
+amended-write-set: 2026-09-25 CLAUDE.md,.claude/lifecycle.json,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py,test/test_verbs.py,ITEMS.md
+amended-blocked-by: 2026-09-25 NONE
+promote-reason: 2026-09-25 design ruled GO by judge lifecycle-64 2026-09-25 (STANDBY, arc-cited HEAD, find-not-move triggers, no migration with an undeclared-repo read-back and a gains-a-value reader sweep)
+promoted-by: 2026-09-25 lifecycle-d8
+closed-reason: 2026-09-25 criterion re-run at a67b80f by d8. Third grade STANDBY declared in CLAUDE.md (a67b80f) and the carrier vocabulary (.claude/lifecycle.json grades-extra, vocab registry LEDGER:159). READY = READY cited by an open arc. DEMOTE ready_outgrows_head fired on the live carrier (82 unscheduled vs 29 READY exits over 7 days, the pre-registered natural red); RETURN head_draining is red-first on a dated fixture and is COULD NOT VERIFY live until arc history covers the window. Six rows PROVEN in prove-rows (all arrangements held); the 81 class-(a) items were benched by the verb, each with its bench-reason (20a5c6d); after: 3 READY, 81 STANDBY, ready_outgrows_head CLEAN. Hard negative: dispatch-guards item ratio byte-identical to the pre capture. Residue fixed here: the commit gate omitted the opt-in (5cfe286, red-first). Residue open: a hand-graded STANDBY with UNKNOWN slots is not refused; item add --grade STANDBY is not refused at the door in an undeclared repo; head_draining shrink arm has no firing fixture. Reader table: docs/directives/2026-09-25-lc294-third-grade-design.md
+closed-ref: 2cd94e9, 9faba1f, 8db8568, 20a5c6d, 5cfe286, a67b80f
+
 ## Archive (pre-migration)
 
