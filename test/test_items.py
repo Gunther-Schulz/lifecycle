@@ -3050,3 +3050,42 @@ class StandbyIsAnOpenGrade(unittest.TestCase):
     def test_only_STANDBY_is_opt_in(self):
         self.assertEqual(items.GRADES_DECLARED, (items.STANDBY,))
         self.assertIn(items.STANDBY, items.GRADES_OPEN)
+
+
+class TheCommitGateReadsTheOptIn(unittest.TestCase):
+    """lc-294 residue, measured on the first bench pass (20a5c6d): the plugin
+    pre-commit hook called `check_file` without the declaration's opt-in, so
+    every commit over a STANDBY carrier answered COULD NOT VERIFY — in a repo
+    that declares the grade, and equally in one that does not. The pair runs
+    the HOOK itself over staged bytes, differing in the declaration alone."""
+
+    HOOK = Path(__file__).resolve().parents[1] / "plugin" / "hooks" / "pre-commit"
+
+    def _hook_over_standby(self, doc):
+        import json
+        import subprocess
+        from lifecycle_core.refusals import STANDBY_SEED
+        d = Path(tempfile.mkdtemp(prefix="lifecycle-standbyhook-"))
+        run = lambda *a: subprocess.run(a, cwd=str(d), capture_output=True,  # noqa: E731
+                                        text=True)
+        run("git", "init", "-q", "-b", "main")
+        run("git", "config", "core.hooksPath", str(d / ".nohooks"))
+        (d / ".claude").mkdir()
+        (d / ".claude" / "lifecycle.json").write_text(json.dumps(doc),
+                                                      encoding="utf-8")
+        (d / "ITEMS.md").write_text(STANDBY_SEED, encoding="utf-8")
+        run("git", "add", "ITEMS.md")
+        return subprocess.run([sys.executable, str(self.HOOK)], cwd=str(d),
+                              capture_output=True, text=True)
+
+    def test_a_declaring_repo_grades_STANDBY_rather_than_giving_up(self):
+        from lifecycle_core.refusals import STANDBY_DECLARATION
+        got = self._hook_over_standby(STANDBY_DECLARATION)
+        self.assertEqual(got.returncode, 0, got.stderr)
+        self.assertNotIn("handed no declaration", got.stderr)
+
+    def test_an_undeclared_repo_is_REFUSED_not_waved_through(self):
+        from lifecycle_core.refusals import GOOD_FULL_DECLARATION
+        got = self._hook_over_standby(GOOD_FULL_DECLARATION)
+        self.assertEqual(got.returncode, 1, got.stderr)
+        self.assertIn("standby_undeclared", got.stderr)

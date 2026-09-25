@@ -169,7 +169,12 @@ def main() -> int:
                     buf.append(f"FINDING [{row}] {msg}")
                 code = exits.FINDING if problems else exits.CLEAN
             elif kind == "items":
-                code = items_mod.check_file(target, buf.append, prefix=prefix)
+                # The opt-in grades travel with the check (lc-294): without
+                # them a STANDBY block answers COULD NOT VERIFY in every repo,
+                # declaring or not, and this gate grades nothing about it.
+                code = items_mod.check_file(
+                    target, buf.append, prefix=prefix,
+                    grades_extra=decl.grades_extra(doc))
             elif kind == "done":
                 code = items_mod.check_done_file(target, buf.append,
                                                  prefix=prefix)
