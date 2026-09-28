@@ -103,6 +103,63 @@ content anchor beside it.
    changes, not coverage; O6 is the named central gap). No control arm
    exists. This is a specimen, not a trial.
 
+## Specimen 2 — same session, hours later: the deferral seam
+
+Added same day, operator-pasted from the still-live session and
+re-anchored at the transcript (lines 2767/2770/2804, desk-read).
+
+**The exchange.** The peer's deploy report contained, in writing, a
+deferral of a decided and cheap act — trying an alternative probe-attach
+form after the kernel refused the firmware-call probes — with its reason:
+*"It will ride along with the next install we need anyway, not an extra
+sudo just for this."* The operator's entire trigger was quoting that line
+back with one word: *"--> why?"* (line 2770). The flip was immediate and
+total: *"Waiting contradicts this repo's own rule: build the next capture
+now, because a freeze without it costs a whole round. I was saving you
+one sudo at the risk of losing a freeze, which is the wrong trade. Doing
+it now."* The correction executed in the same turn — built, tested,
+pushed (`e3d3715`), with the closing admission *"There was no good
+reason... A sudo costs you a minute"* (line 2804).
+
+**Class mapping, each element already named in the corpus or here:**
+
+- **The named-deferral costume.** The hold named its release event
+  ("the next install we need anyway"), satisfying the letter of the
+  release-event convention — while the arithmetic refuted it: the
+  release event is UNORDERED relative to the next consumer (a freeze can
+  arrive before any next install), so the deferral handed the ordering
+  to chance. A named deferral that the repo's own standing rule already
+  priced wrong is the wan2gp 2026-09-20 specimen's exact shape
+  (a cheap decided act deferred, the deferral reading as diligence).
+- **The collapse test, run by the operator, at one-word cost.** The
+  basis collapsed under a single question, which is the corpus's own
+  definition of a rationalization. The knowledge was fully in-context —
+  the peer articulated the rule, the trade, and the repair perfectly
+  once asked — so the failure was again the TRIGGER, not the knowledge:
+  the adherence split replicated a further time inside one arc.
+- **Priced units, sign backwards at the peer's own seam:** one operator
+  interaction (a sudo, "a minute") was saved at the risk of one freeze
+  round (the arc's scarce, rate-limiting unit).
+
+**The genuinely new datum: the catch-cost gradient.** Specimen 1's miss
+was an ABSENCE nothing had written (no enumeration existed), and it took
+the operator's largest question of the day to surface. Specimen 2's miss
+was WRITTEN in the report beside its reason — and the catch cost one
+word. Same operator, same session, same trigger pathology; detection
+cost collapsed by roughly an order of magnitude because the decision was
+legible. This is in-the-wild evidence for law 26's ordering (what must
+be WRITTEN comes before what must be decided well) and for the
+required-slots lever, with the boundary stated honestly: writing did not
+PREVENT the error — the peer wrote the deferral and still had the trade
+wrong — it converted the operator's detection from divination over an
+invisible absence into a glance over a stated reason. The demand leg's
+payoff is the veto surface it creates, not error prevention.
+
+**Updated trigger tally for the arc:** 9 operator-fired catches
+pre-anchor, plus the anchor itself (2562), the method question (2649),
+and the deferral veto (2770) — 12 operator-fired, 0 self-fired, with the
+session's post-catch conduct each time correct and same-turn.
+
 ## Instrument finding (transcript mining)
 
 A `type=="user"` filter over session JSONL is BLIND to operator mid-turn
