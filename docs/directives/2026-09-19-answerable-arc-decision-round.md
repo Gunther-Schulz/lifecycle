@@ -1258,3 +1258,32 @@ export booking); corpus mints; the lc-239 pilot (beat 1 fires at ROUND
 close, not wave close); anything irreversible/outward. **Horizons:** the
 round desk arms a recurring ~30 min artifact watch per active wave; no
 work before the operator-confirmation ack.
+
+## Addendum 11 — evidence update for M1 and the round (2026-09-29, lifecycle desk 1d7693d0)
+
+Written so the round desk meets tonight's evidence without hunting it.
+The round has been unblocked since 2026-09-20 (both ledgered probes in);
+this addendum adds evidence, changes no agenda item, and settles nothing.
+
+- **For M1 (O6 reader-trigger), live field evidence:**
+  `docs/audits/2026-09-29-operator-trigger-specimen-cachyos-setup-71.md`
+  — a governed ~17h arc measured 12 operator-fired catches / 0
+  self-fired, every answer derivable from held state; the method
+  question's deciding fact sat ledgered and unapplied (O6's shape,
+  out-of-repo). Same night: the arc adopted a hand-installed per-freeze
+  derivation demand and its FIRST firing joined a READY item (cs-33)
+  the record had held since the freezes began — the read-seam demand
+  working, once, by hand. The generalization experiment is booked as
+  lc-301 (blocked on the arc's treatment span; push-rate before/after
+  is the criterion).
+- **Criterion now stated in the design doc** (operator GO, 2026-09-29):
+  the consult-act is gated on felt insufficiency and fluency suppresses
+  it, so a check wires to a SEAM, never to the model's sense of needing
+  one (`docs/answerable-not-felt.md`, the moments-of-application
+  section; corpus twin widened into fixing.md the same date, ethos
+  c9067ee). Bears directly on M1's design: the trigger vocabulary must
+  not include any self-assessed form.
+- **Operator's frame, first-hand, same date:** "the process needs to
+  drive itself via the process" — spontaneous invocation is neither
+  required nor wanted; drive belongs to the process, reasoning inside
+  the demanded steps.
