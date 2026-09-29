@@ -160,6 +160,53 @@ pre-anchor, plus the anchor itself (2562), the method question (2649),
 and the deferral veto (2770) — 12 operator-fired, 0 self-fired, with the
 session's post-catch conduct each time correct and same-turn.
 
+## The unifying read — and the discriminating fact at the GOAL slot
+
+Same day, after specimen 2: the operator's own diagnosis of the whole
+series — *"it's like my goal isn't clear: get to the bottom of this bug
+as fast as possible. It seems to have a problem with that."* All three
+catches (coverage, method, deferral) are one drift under that reading:
+the session's moment-to-moment optimization target was "run the
+investigation loop well" while the operator's was speed-to-root-cause.
+The peer's own words confess the displacement: *"Every round felt like
+progress, so I never stepped back to ask whether measuring was the
+fastest way at all"* — which is the corpus's re-entry-seam prediction
+verbatim (instrument rounds never present as a cycle to the session
+running them; the operator is the only party who sees the series).
+
+**The discriminating fact (desk-read at the investigation record):** the
+arc's GOAL slot contains NO speed axis. Verbatim: *"pin this down
+ourselves ... the real cause"* and *"a layer specific enough for an
+upstream (source) fix"* — depth and certainty. A session faithfully
+optimizing the goal AS WRITTEN builds thorough instruments and
+enumerates coverage; "as fast as possible" lived in the operator's head
+and reached the session only through their catches. Two environmental
+installers of the drift, both outside the session's judgment: the GOAL
+slot demanding the wrong optimization target, and the repo's standing
+freeze procedure (read NOW → analyzer → BUILD THE NEXT DISCRIMINATING
+INSTRUMENT → write back) institutionalizing instrument-per-freeze as
+the method.
+
+**What this adds to the direction-drift gap** (design doc §"What the
+plan does NOT solve"; probe design docs/audits/2026-09-20-direction-
+drift-trigger-probe-design.md): the 2026-09-20 observation was that a
+drifting session, pressed, articulates the goal CORRECTLY — trigger
+failure, not knowledge failure. This specimen refines it: the goal the
+session articulates is the goal AS PERSISTED, and here the persisted
+goal itself lacked the operator's live priority — so part of what read
+as babysitting was the operator supplying the UNPERSISTED half of the
+goal, catch by catch. A seam-fired goal re-ask (the candidate mechanism)
+checks against the written GOAL; it can only return the right answer
+once the slot carries the whole goal. Cheapest repair, one write: the
+speed priority into the GOAL slot, after which every existing re-read
+trigger (the coverage map's own header, the NOW re-reads) carries it.
+
+**Graded honestly:** specimen 2 was a speed error under ANY goal reading
+— the repo's own rule already priced the freeze round. Specimens 1 and
+3's "slowness" is partly the written goal's own preference for depth,
+which is why this section is a finding about the RECORD, not (only)
+about the session.
+
 ## Instrument finding (transcript mining)
 
 A `type=="user"` filter over session JSONL is BLIND to operator mid-turn
