@@ -220,6 +220,24 @@ saw, and persisted nowhere this one reads.
 which is why this section is a finding about the RECORD, not (only)
 about the session.
 
+**CORRECTED SAME DAY (operator, on the analyzing desk's own output):
+there was never a tradeoff, and framing the slow default as "careful,
+thorough" grants it a virtue nobody measured.** The slow route was
+DOMINATED, not diligent: freeze-to-freeze instrumenting was slower AND
+less discriminating than the toggle experiments the ledgered clustering
+fact enabled (p~0.02 per clean hour vs one instrument per freeze), and
+the deferral bought nothing at the risk of a round. So what a session
+reverts to between demands is not carefulness — it is the NEAREST
+GROOVE (the standing procedure, the additive step, the
+locally-safe-looking act), which DRESSES as care while sitting off the
+frontier entirely. This is the design record's own tradeoff-costume
+specimen (wan2gp, 2026-09-20: "framing the question as a TRADEOFF
+suspended the measure-it rule") — and the analyzing desk here wore the
+same costume while explaining it, which is itself a datum on how deep
+the prior runs. Consequence for the lever: it strengthens it — since
+nothing is traded, a demanded "fastest route?" answer loses nothing
+when it wins, and in this arc it won 12/12.
+
 ## Instrument finding (transcript mining)
 
 A `type=="user"` filter over session JSONL is BLIND to operator mid-turn
