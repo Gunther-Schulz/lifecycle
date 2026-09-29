@@ -238,6 +238,47 @@ the prior runs. Consequence for the lever: it strengthens it — since
 nothing is traded, a demanded "fastest route?" answer loses nothing
 when it wins, and in this arc it won 12/12.
 
+## The finding that survives the whole series: derivation-as-step, not poking
+
+Closed on the analyzing desk's own judgment (operator, end of session:
+"too tired to fully read this, you judge") — the desk having exhibited
+the same class it was analyzing (no record opened, paste-driven cadence,
+one operator correction of a false-tradeoff frame in its own output;
+course-corrections line of this date).
+
+The impossibility line sits at INVOCATION, not at reasoning: two
+sessions in one day produced the correct state-derivation instantly,
+13+ times, every time it was demanded, and zero times spontaneously.
+Spontaneous invocation is a machinery property no corpus fixes. What
+the evidence does NOT rule out — what statiker/daneel run successfully
+inside every protocol arc — is the derivation as a MANDATORY STEP:
+"here is GOAL / ESTABLISHED / OPEN and ruled-out: derive the next
+move." That is not self-grading (the thing arXiv:2310.01798 kills);
+it is fresh reasoning from external state, the creed's own "state plus
+goal suffice." The peer failed the method question not because
+derivation is impossible but because its standing procedure handed it
+a PRE-COMPUTED move ("build the next instrument") at every seam, and a
+pre-computed move outcompetes a derivation nobody demanded. Target,
+restated: the forward drive belongs to the process, the reasoning
+inside each step to the model — a demanded derivation at every seam,
+never an automated poke at the model's own output.
+
+**Operator confirmation, first-hand, same session:** on being told
+spontaneous invocation is a machinery property no corpus fixes —
+*"true and that's not required nor wanted. the process needs to drive
+itself via the process."* That is the target in one line: drive
+belongs to the process (each step's write fires the next step's
+demand), reasoning belongs inside the demanded steps, and nothing
+anywhere depends on a mind remembering to invoke anything — the tick
+is the verb, applied to the investigation loop itself.
+
+Discriminator, unchanged: run it on the live arc (per-freeze demanded
+derivation from an amended GOAL; operator pushes counted before/after).
+Booked as a lifecycle item of this date; the GOAL amendment and the
+per-freeze derivation demand were relayed to the live session
+(cachyos-setup-71) with operator attribution, on the desk's delegated
+judgment.
+
 ## Instrument finding (transcript mining)
 
 A `type=="user"` filter over session JSONL is BLIND to operator mid-turn
