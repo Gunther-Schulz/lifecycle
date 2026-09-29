@@ -201,6 +201,19 @@ once the slot carries the whole goal. Cheapest repair, one write: the
 speed priority into the GOAL slot, after which every existing re-read
 trigger (the coverage map's own header, the NOW re-reads) carries it.
 
+**Cross-session verification (desk-run, with positive control):** the
+operator reports having stated their speed frustration "a few times."
+A two-channel filter (user records + queued_command attachments) over
+THIS session's transcript finds ZERO operator speed/frustration
+statements — control: the same filter finds all 13 known operator
+freeze messages — so those statements live in EARLIER sessions of the
+arc, and the only carrier that crossed the session boundary (the GOAL
+slot) lacks the axis. The session also compacted repeatedly (3
+continuation summaries in the file), flattening register even within
+session. The "why do I keep having to push" question therefore
+decomposes cleanly: the priority was stated, in sessions this one never
+saw, and persisted nowhere this one reads.
+
 **Graded honestly:** specimen 2 was a speed error under ANY goal reading
 — the repo's own rule already priced the freeze round. Specimens 1 and
 3's "slowness" is partly the written goal's own preference for depth,
