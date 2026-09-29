@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 292
+added: 293
 compacted: 0
 
 ## lc-3
@@ -1662,3 +1662,13 @@ done-criterion: A registered closed set of diagnostic events, each firing site w
 evidence: RELAYED from lifecycle-64, sourced to statiker-c2. OPENED at d8: statiker 54507f6 (2026-09-25, dev-notes/OBSERVATIONS.md, THE BUDGET IS A CANARY) records an operator decision that a rounds-budget fire owes a NAMED structural cause before any raise, and cites an existing lens line calling a bound firing a diagnostic event owing a named cause. The three-slot form (generalization, next-step) is NOT in that commit - unverified
 blocked-by: decision freeze release - does the lc-161 after-measurement verdict, under the admission bar, release the new mechanisms parked by the lc-292 pass
 not-derivable: 2026-09-25 Not derivable: the freeze (LEDGER decision 2026-09-24) holds new mechanisms until the lc-161 after-measurement reports; one answer releases every item parked on this exact question.
+
+## lc-301
+grade: NEW
+requirement: Run the direction-drift treatment arm on the live freeze arc: does an environment-fired, content-free derivation demand at each freeze replace the operator's pushes? Designed 2026-09-20, treatment arm never run; today's specimen supplies the live arc and 12/12 content-free-trigger evidence (docs/audits/2026-09-29-operator-trigger-specimen-cachyos-setup-71.md, closing section)
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: Treatment-arm result booked in docs/audits/ with operator push-rate before/after over comparable spans, and the 2026-09-20 probe design doc's header updated to state the arm has run
+evidence: MEASURED: 12/12 operator-fired catches with zero self-fired enumerations in the cachyos-setup-71 transcript, desk-verified citations (docs/audits/2026-09-29-operator-trigger-specimen-cachyos-setup-71.md). RECALLED: the probe design doc exists at docs/audits/2026-09-20-direction-drift-trigger-probe-design.md and its treatment arm is unrun — from this session's read of answerable-not-felt.md and the ledger tail, the design doc itself UNREAD at this desk; re-read is the first act of pickup. DERIVED: the freeze arc is the natural treatment population, from the specimen's own trigger tally
+blocked-by: decision does the freeze-arc desk adopt the per-freeze derivation demand (GOAL amendment + demand relayed to cachyos-setup-71 on 2026-09-29, operator attribution; operator confirmation lives in that session)
+not-derivable: 2026-09-29 constitutively the receiving arc's: adoption changes the conduct of a live investigation another desk drives, and a relayed directive is testimony until the operator or that desk takes it first-hand — no record here can substitute for their acceptance
