@@ -773,6 +773,27 @@ precipitates in THIS repo is the computable slice specimen 1 exposes in the
 carrier's own vocabulary: an `evidence` blocker whose clearing decides
 nothing — the mirror of blocker_softlock — booked as lc-250.
 
+**SPECIMENS 3 AND 4 — 2026-09-29, one arc, and the second is the
+analyzing desk itself** (operator GO for this addition, stated at that
+desk; full study
+`docs/audits/2026-09-29-operator-trigger-specimen-cachyos-setup-71.md`):
+the freeze arc ran ~16h under full governance with 12 operator-fired
+catches and zero self-fired enumerations, the deciding fact for its
+method question sitting ledgered and unapplied; and the desk ANALYZING
+that transcript exhibited the class in its own output the same day
+(a false-tradeoff frame, operator-caught). The audit's closing section
+carries what survived: derivation-as-step, not poking — and the first
+demanded derivation in that arc joined a READY item the record already
+held. **THE MECHANISM UNDER THIS SECTION, now stated rather than left
+as taste** (operator GO, same date): the CONSULT-ACT is gated on FELT
+INSUFFICIENCY — a session looks things up when its answer feels
+incomplete — and fluency suppresses that feeling, so the more
+confident and well-formed a wrong answer is, the LESS likely any check
+fires on it. That is why presence fails at moments of application
+beyond salience decay, and it yields the criterion the research
+companion asked for: a check is wired to a SEAM, never to the model's
+own sense of needing one.
+
 ### 2. Sessions maintain a NARROWING as they work — THE REAL GAP
 
 **IT IS NOT A LOG. It is a live picture of what is still open and what has

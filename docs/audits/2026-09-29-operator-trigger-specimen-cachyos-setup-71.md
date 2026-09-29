@@ -279,7 +279,20 @@ per-freeze derivation demand were relayed to the live session
 (cachyos-setup-71) with operator attribution, on the desk's delegated
 judgment.
 
-## Instrument finding (transcript mining)
+## First treatment datum — same night
+
+The freeze desk adopted both relayed items (neither stale) and the
+FIRST demanded derivation, run within the hour, surfaced a
+never-eliminated root-cause candidate sitting as a READY item in the
+arc's own carrier: cs-33 — a stale V/F profile (offsets computed
+against an older driver's curve) applied at every boot since
+2026-09-14 02:11, the first freeze log 09-14 21:32, SAME DAY.
+Desk-verified at the CachyOS-Setup artifacts: LEDGER.md:7 and ITEMS.md
+cs-33 (grade READY, "stale offsets ... must not be applied"). The
+derivation run itself, the 315-MHz figure, and the planned live toggle
+are the freeze desk's report, RELAYED. One datum, not a verdict — but
+the demand's first firing did the thing twelve operator pushes had
+each done by hand: it JOINED state the record already held.
 
 A `type=="user"` filter over session JSONL is BLIND to operator mid-turn
 interjections, which arrive as `attachment` records
