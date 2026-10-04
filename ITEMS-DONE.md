@@ -2197,5 +2197,16 @@ blocker-moot: how seam content reaches a session whose callers filter verb outpu
 closed-reason: 2026-10-04 MEASURED 2026-10-04: design round graded by judge tmp-ad and ledgered; the line now leaves last on stderr under the trial arm. Falsifier is on deliveries: tools/verb-delivery.py counts arrivals, tools/fire-window-tally.py says it counts emissions. Live in a scratch repo: delivered under merged tail, cut under merged grep (the named residual), withheld for an OFF session. The drift log rows 3-4 already count deliveries; rows after this change are marked POST-DELIVERY.
 closed-ref: 50ffc11
 
+## lc-307
+grade: DONE
+requirement: lifecycle migrate reads a carrier whose entries are level-3 headings: under a declared --entry-shape heading it migrates one item or one archived closure per heading, the bullets being that entry body, and a carrier migrated as bullets keeps its behaviour. Record: the wan2gp repo, docs/directives/2026-10-05-lifecycle-heading-entry-migration-brief.md
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,test/test_migrate.py,tools/prove-rows.py
+done-criterion: test/test_migrate.py carries a case each for: one entry per heading with its bullets as body; the section deciding the grade for an open, a closure and an unknown section; a level-4 heading as body; the zero-heading COULD NOT VERIFY; the bullet-shape note; the default unchanged on an existing bullet fixture. RED-FIRST: disabling the shape dispatch, the zero-heading guard and the note each turns its own case red. The zero-heading refusal has a roster row admitted on the lc-142 pair.
+evidence: MEASURED 2026-10-05 on a scratch copy of the motivating carrier, which holds 145 level-3 headings: read as bullets the migrator answers 241 entries, 65 items, 159 closures and 17 unclassified, every unclassified one a bullet from inside an entry body.
+blocked-by: NONE
+closed-reason: 2026-10-05 MEASURED 2026-10-05 at 458f3e2: test_migrate 148 passed with 31 new cases; on a copy, the shape dispatch off turns 16 red, the zero-heading guard folded 2, the note folded 1. Roster row migration_heading_shape_empty admitted on the lc-142 pair (real anchor: rows changed migration_heading_shape_empty; inert comment anchor: rows changed NONE, FAILED). Scratch copy of the motivating carrier: 145 read, 76 written, 69 closed, 0 unclassified, all 145 citation ranges resolve. Built on a worktree branch; integration is the dispatching desk act.
+closed-ref: 458f3e2
+
 ## Archive (pre-migration)
 
