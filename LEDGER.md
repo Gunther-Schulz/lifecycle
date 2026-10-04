@@ -182,6 +182,8 @@ decision: integrate the lc-307 lane commits bda8f6b0b4b2, 458f3e2 and 035765aed9
 decision: join disposition of LEDGER:181 beside LEDGER:57 → new: LEDGER:57 cleared the wave-2 R1 lane of 2026-08; this is a different lane, lc-307, built 2026-10-05, with its own commits
 decision: does lc-307 need an operator freeze exit → NO - LEDGER:147 exempts defect repairs from the admission bar and LEDGER:177 keys release per mechanism with a pre-registered probe; lc-307 repairs a silent misread in carrier tooling, beside lc-303 and lc-304. Derived at the wan2gp desk; the operator word overrides
 decision: join disposition of LEDGER:183 beside LEDGER:146, LEDGER:159 → new: LEDGER:181 recorded the integration with its freeze reading left unanswered; this line answers that reading from the record
+decision: where does a migrated entry body travel when it is a multi-paragraph body that one slot line cannot hold without flattening → INTO ITS OWN RECORD FILE, verbatim, the item pointing at it; an entry that fits one line still travels whole into the slot (LEDGER:70 stands for those). Refines LEDGER:70, keeps its no-loss reason. Derived at the wan2gp desk 2026-10-05, the operator unable to judge; their word overrides
+decision: join disposition of LEDGER:185 beside LEDGER:70, LEDGER:86 → new: LEDGER:70 chose between the whole body in the slot and a TRUNCATED mark, for bodies that fit a slot; it never asked what happens to a body with paragraphs, tables and code that a single line destroys. LEDGER:86 concerns lc-55 answered-body records, a different subject
 
 ## Archive (pre-migration)
 
