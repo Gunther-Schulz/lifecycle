@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 299
+added: 302
 compacted: 0
 
 ## lc-3
@@ -1768,3 +1768,30 @@ blocked-by: decision which retrieval, if any, is worth a pre-registered replay f
 not-derivable: 2026-10-04 searched LEDGER.md for retrieval and comparator decisions: the lc-289 lines decide the token comparator for ledger-to-ledger questions only, and the D3 decline of this date rules token overlap out here without naming a replacement; the freeze and the admission bar hold any new mechanism, so the choice is a design decision for a later round.
 amend-reason: 2026-10-04 the judgment desk asked for the live false fire at the shipped seam to be carried on the item, and its regrade result changed from one dissent to none
 amended-evidence: 2026-10-04 MEASURED 2026-10-04 (tools/decision-blocker-replay.py; grades in the XDG baselines directory, d3-replay-2026-10-04-grades.jsonl): 179 exercisable, 41 distinct fires, 9 TRUE / 25 FALSE / 5 clearing acts. The three strong specimens by item and booking commit: statiker st-46 at 9dfbd0050d, lifecycle lc-294 at 16f6eb68bd, statiker st-78 at eae13925ad. MEASURED at this desk the same day, at the one seam where the comparator is shipped: `ledger add decision` refused the D3 decline line itself on three unrelated ledger lines sharing only the tokens park, amend and build (disposed --join new; the disposition line sits beside the decline in LEDGER.md). RELAYED from judge tmp-ad: 17 rows re-graded there, 17 agree, its one subgrade dissent withdrawn; D3 and D4 declined.
+
+## lc-308
+grade: READY
+requirement: migrate writes the blocker `evidence false` for a PARKED source entry whose body names missing evidence, and item check then reports blocker_softlock on the migrator own output: 16 on a copy of the wan2gp carrier in heading shape, 1 on base code with one parked bullet (2026-10-05) — record: LEDGER.md decision of 2026-10-05 on the lc-307 integration
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a migrated PARKED entry never carries the literal predicate false: migrate writes the decision-typed blocker the 2026-09-19 pass applied by hand, and item check exits clean on the migrated carrier; red-first on a parked source entry naming missing evidence
+evidence: MEASURED at the wan2gp desk 2026-10-05: the trial ITEMS.md from the heading run holds 16 lines blocked-by evidence false (grep over the migrated carrier). RELAYED from the lc-307 lane report, not re-run at the desk: item check exits 2 with 16 blocker_softlock on that carrier, and base code reproduces 1 with a single parked bullet
+blocked-by: NONE
+
+## lc-309
+grade: READY
+requirement: a second `migrate --merge` run over a carrier that keeps its closures in its own Done section re-archives those closures and then fails the per-source arithmetic, in bullet and heading shape alike; the lc-307 merge test covers open entries only — record: LEDGER.md decision of 2026-10-05 on the lc-307 integration
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a repeated --merge over a carrier with an in-carrier closure section archives each closure once and the per-source conservation holds; red-first on two consecutive --merge runs over such a fixture
+evidence: RELAYED from the lc-307 lane closing report 2026-10-05, gap 3, stated there as pre-existing; not reproduced at the booking desk
+blocked-by: NONE
+
+## lc-310
+grade: READY
+requirement: `migrate --entry-shape` passed together with `--schema-from` is silently ignored: the schema path never reads it, so a caller gets no word that the option did nothing — record: LEDGER.md decision of 2026-10-05 on the lc-307 integration
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py,test/test_migrate.py
+done-criterion: migrate --schema-from with --entry-shape either honours the option or refuses the combination by name, and never accepts it silently; red-first on the combined invocation
+evidence: RELAYED from the lc-307 lane closing report 2026-10-05, gap 4; not reproduced at the booking desk
+blocked-by: NONE
