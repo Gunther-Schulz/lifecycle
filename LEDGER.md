@@ -180,6 +180,8 @@ decision: how seam content reaches a session whose callers filter verb output: a
 decision: join disposition of LEDGER:179 beside LEDGER:71, LEDGER:75, LEDGER:80, LEDGER:166 → new: LEDGER:166 decides what converts a due read; none of the four decides the delivery channel of the goal line, which LEDGER:145 left open and lc-306 asked
 decision: integrate the lc-307 lane commits bda8f6b0b4b2, 458f3e2 and 035765aed9a8 (dispatched from wan2gp-6d) into main → YES - fast-forward from bce7dbc, verified in main 2026-10-05 (unittest 1157 OK, --test 138 of 138, prove-rows held, leak scan clean). Read as a defect repair inside the 2026-09-24 freeze; desk reading, surfaced to the operator, unanswered. lc-307 verbs logged to scratch, not the live fire log
 decision: join disposition of LEDGER:181 beside LEDGER:57 → new: LEDGER:57 cleared the wave-2 R1 lane of 2026-08; this is a different lane, lc-307, built 2026-10-05, with its own commits
+decision: does lc-307 need an operator freeze exit → NO - LEDGER:147 exempts defect repairs from the admission bar and LEDGER:177 keys release per mechanism with a pre-registered probe; lc-307 repairs a silent misread in carrier tooling, beside lc-303 and lc-304. Derived at the wan2gp desk; the operator word overrides
+decision: join disposition of LEDGER:183 beside LEDGER:146, LEDGER:159 → new: LEDGER:181 recorded the integration with its freeze reading left unanswered; this line answers that reading from the record
 
 ## Archive (pre-migration)
 
