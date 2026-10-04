@@ -168,6 +168,8 @@ decision: join disposition of LEDGER:166 beside LEDGER:132 → new: LEDGER:132 d
 dropped: lc-256 — Round 2 D2 (judge tmp-ad, its own booking): the surfacing channel is starved after R1 - 1 informative surfacing in 1246 verb runs, 2026-09-25..10-04 (tools/fire-window-tally.py) - so a named window over it measures nothing. The malformed-line finding is re-booked alone.
 decision: does the lc-161 AFTER-1 measurement for the 2026-09-24 ship set show the drop the freeze release asks for → NO. AFTER-1 (2026-09-25..10-04): 11.64 operator messages per 100 turns against 5.75 (session-bootstrap 95% intervals 7.40-16.60 vs 4.26-7.36); no drop, so nothing is released. Five sessions carry 311 of 514 messages; class shares not comparable. docs/audits/2026-10-04-lc161-after1.md
 decision: join disposition of LEDGER:169 beside LEDGER:165 → new: LEDGER:165 ordered the measurement; this line records its result. It is deliberately NOT worded as the freeze-release blocker question, which only the operator answers
+decision: refocus round 2 D3: build the decision-blocker ledger join at the door (item add, park, amend) → DECLINED, with D4, no comparator repair spent (judge tmp-ad): replay 9 TRUE vs 25 FALSE of 179 exercisable; token overlap is the wrong retrieval for blocker-to-ledger. Bought: seam rate 3.4% (1.7% strong) and 3 specimens with commit refs. docs/audits/2026-10-04-d3-decision-blocker-replay.md
+decision: join disposition of LEDGER:171 beside LEDGER:63, LEDGER:65, LEDGER:140 → new: the matched lines share only the verb names park, amend and build; none decides a ledger join for decision blockers. Round 2 D3 was proposed and probed today for the first time
 
 ## Archive (pre-migration)
 

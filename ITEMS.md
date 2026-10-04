@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 296
+added: 297
 compacted: 0
 
 ## lc-3
@@ -1679,3 +1679,13 @@ write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.p
 done-criterion: A --test run binds XDG_STATE_HOME to scratch for the rows it drives (the form tools/prove-rows.py:1507 already uses) while its OWN --test fire line still lands in the live log; verifier: tools/fire-window-tally.py NOT ROSTER count is unchanged across one --test run, red-first on today (169 added per run).
 evidence: MEASURED 2026-10-04 at this desk: NOT ROSTER count 169 before, 338 after one `lifecycle --test`, 338 after a unittest run of test_ledger.py (0 added). Todays non-roster records are lane list with an empty repo (16), --test (2) and verbs under scratch lifecycle-verb-* repos. prove-rows.py:1507-1509 sets XDG_STATE_HOME when unset (opened).
 blocked-by: NONE
+
+## lc-305
+grade: PARKED
+requirement: What retrieval finds a ledger ANSWER to a differently-worded question? The D3 replay ruled token overlap out for blocker-to-ledger: 9 TRUE against 25 FALSE fires, the strongest true case sharing four tokens while noise reaches five. Three strong specimens of a session booking "needs a decision" while the ledger held the decision would otherwise leave with the decline. Record: docs/audits/2026-10-04-d3-decision-blocker-replay.md sections 2 and 4.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A retrieval design that is not token overlap is proposed and REPLAYED over the same population with tools/decision-blocker-replay.py as the harness (179 exercisable bookings, the graded fires as the reference set, graded by a desk other than the designer): it must recover the 3 strong specimens and fire TRUE more often than FALSE. Or a recorded decline naming why no such retrieval is worth its cost at a 1.7 to 3.4 percent seam.
+evidence: MEASURED 2026-10-04 (tools/decision-blocker-replay.py; grades in the XDG baselines directory, d3-replay-2026-10-04-grades.jsonl): 179 exercisable, 41 distinct fires, 9 TRUE / 25 FALSE / 5 clearing acts. The three strong specimens by item and booking commit: statiker st-46 at 9dfbd0050d, lifecycle lc-294 at 16f6eb68bd, statiker st-78 at eae13925ad. RELAYED from judge tmp-ad: 17 rows re-graded there, 17 agree at the TRUE/FALSE boundary; D3 and D4 declined.
+blocked-by: decision which retrieval, if any, is worth a pre-registered replay for finding a ledger answer to a differently-worded blocker question
+not-derivable: 2026-10-04 searched LEDGER.md for retrieval and comparator decisions: the lc-289 lines decide the token comparator for ledger-to-ledger questions only, and the D3 decline of this date rules token overlap out here without naming a replacement; the freeze and the admission bar hold any new mechanism, so the choice is a design decision for a later round.

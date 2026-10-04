@@ -10,8 +10,23 @@ D3 is not built as designed. Section 4 says what the probe found that is
 worth keeping.
 
 The grades in section 2 are this desk's own reading and this desk also
-designed D3. They are a claim for the judgment desk to check at the data
-file, not a settled count.
+designed D3. **Checked 2026-10-04 by the judgment desk (tmp-ad), RELAYED
+from its ruling:** it re-graded 17 rows at the matched ledger lines, all 9
+TRUE and 8 sampled FALSE, and agreed on all 17 at the TRUE/FALSE boundary.
+It reads three FALSE rows (the "has the design round closed" questions) as
+borderline; flipped, the count is 12 against 22 and still fails. It also
+read one pair of TRUE subgrades the other way round: it takes the second
+statiker containment question as the strong one and the first as bounding.
+This desk's strong grade for the first rests on the third of its six
+matched lines, the ruling on which stage owns containment; the two
+readings differ on which question that ruling answers, and no count moves
+either way. **D3 and D4 are DECLINED by that ruling, with no comparator
+repair spent.**
+
+Matched line numbers are positions in the ledger as of the booking
+commit. They equal today's line numbers only because the ledger is
+append-only above its archive section; that is assumed here, not checked
+per row.
 
 ## 1. The instrument
 
