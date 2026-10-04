@@ -1757,24 +1757,6 @@ done-criterion: A pre-registered experiment design exists (criterion named befor
 evidence: RELAYED 2026-10-04 from the research report (lane abstracts): no published counterpart found by four lanes within their search budgets; absence not proven. DERIVED: the design depends on the seam trigger existing first, so this parks behind the lc-276/lc-277 design round.
 blocked-by: lc-277
 
-## lc-303
-grade: READY
-requirement: A malformed fire-log line is skipped silently by the surfacing tally, so a damaged log reads like a clean one. Residue of lc-256, dropped 2026-10-04 (round 2 D2); the one defect-shaped part of that item, re-booked alone on the judgment desk ruling. Record: lc-256 in ITEMS-DONE.md.
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/firelog.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_retire.py
-done-criterion: firelog.surfacing_tally reports a malformed line inside what it reads as a FINDING with its own roster row, admitted on the lc-142 pair; a log with no malformed line renders as today. RED-FIRST: a planted log with one malformed line and one without render differently.
-evidence: RELAYED from lc-256 (measured there 2026-09-24 at bef29a6): ugrep over firelog.py for malformed returns 0 hits. MEASURED 2026-10-04 (tools/fire-window-tally.py): the live log holds 0 malformed lines in 1,397,978, so nothing is currently hidden; the defect is latent.
-blocked-by: NONE
-
-## lc-304
-grade: READY
-requirement: lifecycle --test writes its scratch-repo verb runs into the live machine-wide fire log: 169 records per run. lc-183 isolated the unittest suite and prove-rows isolates itself; the roster self-test is the one runner left. Record: docs/directives/2026-10-04-refocus-design-round-2.md section 4; test/_isolation.py docstring.
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,test/
-done-criterion: A --test run binds XDG_STATE_HOME to scratch for the rows it drives (the form tools/prove-rows.py:1507 already uses) while its OWN --test fire line still lands in the live log; verifier: tools/fire-window-tally.py NOT ROSTER count is unchanged across one --test run, red-first on today (169 added per run).
-evidence: MEASURED 2026-10-04 at this desk: NOT ROSTER count 169 before, 338 after one `lifecycle --test`, 338 after a unittest run of test_ledger.py (0 added). Todays non-roster records are lane list with an empty repo (16), --test (2) and verbs under scratch lifecycle-verb-* repos. prove-rows.py:1507-1509 sets XDG_STATE_HOME when unset (opened).
-blocked-by: NONE
-
 ## lc-305
 grade: PARKED
 requirement: What retrieval finds a ledger ANSWER to a differently-worded question? The D3 replay ruled token overlap out for blocker-to-ledger: 9 TRUE against 25 FALSE fires, the strongest true case sharing four tokens while noise reaches five. Three strong specimens of a session booking "needs a decision" while the ledger held the decision would otherwise leave with the decline. Record: docs/audits/2026-10-04-d3-decision-blocker-replay.md sections 2 and 4.

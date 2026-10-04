@@ -2162,5 +2162,27 @@ blocker-moot: which demand at which moment converts a surfaced due read into an 
 closed-reason: 2026-10-04 Decision recorded: LEDGER (the lc-276 question, answered 2026-10-04, with its join disposition beside LEDGER:132) and the answerable arc narrowing of the same date, both citing the kill-condition measurement (1246 verb runs, 1 informative surfacing, 0 kind reads, 2026-09-25..10-04, tools/fire-window-tally.py). Falsifier named in round 2 D1: an informative notice followed by a read at the 1-in-10 rate on any window reaching 30; the counter stays in place. Graded by judge tmp-ad.
 closed-ref: 0a10d9e
 
+## lc-304
+grade: DONE
+requirement: lifecycle --test writes its scratch-repo verb runs into the live machine-wide fire log: 169 records per run. lc-183 isolated the unittest suite and prove-rows isolates itself; the roster self-test is the one runner left. Record: docs/directives/2026-10-04-refocus-design-round-2.md section 4; test/_isolation.py docstring.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,test/
+done-criterion: A --test run binds XDG_STATE_HOME to scratch for the rows it drives (the form tools/prove-rows.py:1507 already uses) while its OWN --test fire line still lands in the live log; verifier: tools/fire-window-tally.py NOT ROSTER count is unchanged across one --test run, red-first on today (169 added per run).
+evidence: MEASURED 2026-10-04 at this desk: NOT ROSTER count 169 before, 338 after one `lifecycle --test`, 338 after a unittest run of test_ledger.py (0 added). Todays non-roster records are lane list with an empty repo (16), --test (2) and verbs under scratch lifecycle-verb-* repos. prove-rows.py:1507-1509 sets XDG_STATE_HOME when unset (opened).
+blocked-by: NONE
+closed-reason: 2026-10-04 MEASURED at the live log 2026-10-04: one --test run adds 1 record, its own, where it added 169. The criterion said the NOT ROSTER count is unchanged; it rises by that one line, which carries no repo and which the same criterion requires to land live. Red-first arm in test_fire_log_isolation.py.
+closed-ref: f31d740
+
+## lc-303
+grade: DONE
+requirement: A malformed fire-log line is skipped silently by the surfacing tally, so a damaged log reads like a clean one. Residue of lc-256, dropped 2026-10-04 (round 2 D2); the one defect-shaped part of that item, re-booked alone on the judgment desk ruling. Record: lc-256 in ITEMS-DONE.md.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/firelog.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_retire.py
+done-criterion: firelog.surfacing_tally reports a malformed line inside what it reads as a FINDING with its own roster row, admitted on the lc-142 pair; a log with no malformed line renders as today. RED-FIRST: a planted log with one malformed line and one without render differently.
+evidence: RELAYED from lc-256 (measured there 2026-09-24 at bef29a6): ugrep over firelog.py for malformed returns 0 hits. MEASURED 2026-10-04 (tools/fire-window-tally.py): the live log holds 0 malformed lines in 1,397,978, so nothing is currently hidden; the defect is latent.
+blocked-by: NONE
+closed-reason: 2026-10-04 MEASURED 2026-10-04: roster row fire_log_malformed, admitted on the lc-142 pair (real anchor: rows changed fire_log_malformed; inert comment anchor: rows changed NONE, FAILED). Three new arms red on the old tally, the no-damage control green before and after. Live audit prints no finding: the live log holds none.
+closed-ref: 2e79713
+
 ## Archive (pre-migration)
 
