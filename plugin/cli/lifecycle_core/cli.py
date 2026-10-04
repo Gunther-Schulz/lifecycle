@@ -10,8 +10,11 @@ verify — for every verb here, without exception.
 
 import argparse
 import functools
+import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from . import desk as desk_mod
@@ -1226,7 +1229,24 @@ def main(argv=None) -> int:
 
     if "--test" in argv:
         from . import roster as roster_mod
-        code = roster_mod.cmd_test(out, list_only="--list" in argv)
+        # THE ROWS' FIRE LINES GO TO SCRATCH (lc-304). Every row that drives
+        # a real verb appends a record, and with no `XDG_STATE_HOME` set
+        # `firelog.state_dir` falls back to the operator's own log: 169
+        # scratch-repo records per run, measured. Same form as
+        # `tools/prove-rows.py` and `test/_isolation.py` — bound only when
+        # unset, so a caller that already isolated is left alone — and
+        # RESTORED before this run's own line is written, which is the one
+        # record of a `--test` the live log should hold.
+        scratch = None
+        if not os.environ.get("XDG_STATE_HOME"):
+            scratch = tempfile.mkdtemp(prefix="lifecycle-test-state-")
+            os.environ["XDG_STATE_HOME"] = scratch
+        try:
+            code = roster_mod.cmd_test(out, list_only="--list" in argv)
+        finally:
+            if scratch is not None:
+                os.environ.pop("XDG_STATE_HOME", None)
+                shutil.rmtree(scratch, ignore_errors=True)
         firelog.fire("--test", outcome=code)
         return code
 

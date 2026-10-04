@@ -101,3 +101,66 @@ class TheLogStillRecordsRealRuns(unittest.TestCase):
         agree with the machine."""
         real = Path.home() / ".local" / "state" / "lifecycle" / "fire.jsonl"
         self.assertNotEqual(firelog.log_path().resolve(), real.resolve())
+
+
+class TheRosterSelfTestKeepsItsRowsOutOfTheLiveLog(unittest.TestCase):
+    """lc-304: `lifecycle --test` drives every roster row, and each row that
+    runs a real verb appends a record. Measured 2026-10-04: 169 per run, into
+    the operator's machine-wide log.
+
+    The live log is stood in for by a scratch HOME with `XDG_STATE_HOME`
+    UNSET, which is the production arrangement: the suite's own isolation
+    sets the variable, so an arm that left it set would test the fixture and
+    never the fallback the defect lives in. The roster is replaced by one
+    stub row that fires one record, so the arm costs nothing and still
+    separates "rows land live" from "rows land in scratch".
+    """
+
+    def setUp(self):
+        import shutil
+        import tempfile
+        from lifecycle_core import roster
+        self.roster = roster
+        self.home = Path(tempfile.mkdtemp(prefix="lc304-home-"))
+        self.addCleanup(shutil.rmtree, self.home, ignore_errors=True)
+        self.env = {k: os.environ.get(k) for k in ("HOME", "XDG_STATE_HOME")}
+        self.cmd_test = roster.cmd_test
+
+        def stub(out, list_only=False):
+            firelog.fire("stub-row", repo="/scratch/lifecycle-verb-x")
+            return 0
+        roster.cmd_test = stub
+        os.environ["HOME"] = str(self.home)
+
+    def tearDown(self):
+        self.roster.cmd_test = self.cmd_test
+        for k, v in self.env.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+    def _verbs(self, log):
+        import json
+        if not log.is_file():
+            return []
+        return [json.loads(ln)["verb"]
+                for ln in log.read_text(encoding="utf-8").splitlines()]
+
+    def test_with_no_state_home_set_only_the_run_itself_is_logged_live(self):
+        from lifecycle_core import cli
+        os.environ.pop("XDG_STATE_HOME", None)
+        live = firelog.log_path()
+        self.assertTrue(str(live).startswith(str(self.home)), live)
+        self.assertEqual(cli.main(["--test"]), 0)
+        self.assertEqual(self._verbs(live), ["--test"])
+        self.assertNotIn("XDG_STATE_HOME", os.environ)
+
+    def test_a_state_home_the_caller_set_is_left_alone(self):
+        from lifecycle_core import cli
+        state = self.home / "callers-state"
+        os.environ["XDG_STATE_HOME"] = str(state)
+        self.assertEqual(cli.main(["--test"]), 0)
+        self.assertEqual(self._verbs(state / "lifecycle" / "fire.jsonl"),
+                         ["stub-row", "--test"])
+        self.assertEqual(os.environ["XDG_STATE_HOME"], str(state))
