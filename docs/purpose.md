@@ -62,6 +62,49 @@ window over-supplied with itself — a wrong frame compounds turn over turn,
 and nothing generated inside the frame can break the frame; the way out is
 by construction an input from outside it). Daneel was born from the second.
 
+## SUBSTITUTION — the failure in one line (operator, 2026-10-04)
+
+**Distilled with the operator from a live specimen** (a conversation in
+which the desk produced the failure repeatedly while the operator named
+it); operator-graded as possibly the most important distillation, and
+previously stated nowhere in these docs — the cache line above names the
+remedy without naming the failure.
+
+**The failure: the model answers its own loaded context instead of the
+actual input.** Not deviation by randomness and not failure to extend —
+extending, connecting and proposing are wanted. The defect is the SOURCE:
+the model builds its next step from whatever its window already holds
+(prior framings, research it just read, material wanting to be used) and
+reads the new input THROUGH that, substituting its own picture for what
+was actually said or what the record actually holds. The richer the
+window, the stronger the pull — more loaded material to substitute with.
+And the output arrives fluent and confident, shaped exactly like a
+grounded response, so the receiving party must diff every reply against
+what they actually said: the operator's word for that cost is
+BABYSITTING, and it is the per-message tax that makes AI work burn them
+out.
+
+One failure, two scales, one fix:
+
+- **In conversation**, the model substitutes its context for the
+  operator's sentence (the paraphrase-hell class, measured on three AIs
+  in one day over a spray instruction).
+- **In work**, a session substitutes its context for the project's state:
+  re-deriving what a tracked file holds, re-proposing the ruled-out,
+  booking against a premise the repo already killed (the three-instances
+  table, the moments-of-application finding).
+
+**Lifecycle's whole purpose, restated through this lens: force the
+building-on to happen against the RECORD instead of against the model's
+own loaded impressions.** Self-driven next steps are only safe when
+derived from what is actually known and done — queried, not felt — and
+the checking moves off the operator only when the environment refuses an
+ungrounded step by construction. This is why presence alone under-fires
+(the adherence split) and the demand leg exists: substitution is not
+suppressed by the model trying — each turn regenerates the pull — it is
+displaced only by a seam that demands the record be consulted at the
+moment of application (O6).
+
 ## The creed — the division of labor
 
 > **The model supplies INTERPRETATION. The environment supplies PRESENCE,
