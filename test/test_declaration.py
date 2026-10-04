@@ -1342,6 +1342,52 @@ class CommandGroupIsNotAVerb(unittest.TestCase):
         self.assertEqual(decl._verb_lookup("item nope-nope")[0], "unknown")
 
 
+class TheParserIsBuiltOncePerProcess(unittest.TestCase):
+    """The verb predicates walk the live parser, and building it is the
+    expensive part: every `add_parser` constructs an ArgumentParser.
+
+    MEASURED 2026-10-04: `item check` on this repo built the parser 103
+    times — once per `_verb_lookup` call — and took 0.56 s against the
+    session-start hook's 0.5 s timeout, so every session in a governed repo
+    opened on `item carrier: COULD NOT VERIFY — the lifecycle CLI did not
+    run`. The carrier was fine; the instrument reading it was slow.
+    """
+
+    def _counting(self):
+        from lifecycle_core import cli as cli_mod
+        real = cli_mod.build_parser
+        calls = []
+
+        def counted():
+            calls.append(1)
+            return real()
+        return cli_mod, counted, calls
+
+    def test_many_lookups_build_the_parser_at_most_once(self):
+        cli_mod, counted, calls = self._counting()
+        decl._live_parser.cache_clear()
+        with mock.patch.object(cli_mod, "build_parser", counted):
+            for spelled in ("item", "item ready", "item nope-nope",
+                            "ledger add decision", "arc narrow"):
+                decl._verb_lookup(spelled)
+            decl.cli_verbs()
+        decl._live_parser.cache_clear()
+        self.assertEqual(len(calls), 1, calls)
+
+    def test_a_parser_that_cannot_be_built_is_not_remembered(self):
+        """The broken-parser lane answers `leaf` and must stay retryable: a
+        cached failure would turn one bad build into a permanent answer."""
+        from lifecycle_core import cli as cli_mod
+
+        def broken():
+            raise RuntimeError("no parser")
+        decl._live_parser.cache_clear()
+        with mock.patch.object(cli_mod, "build_parser", broken):
+            self.assertEqual(decl._verb_lookup("item"), ("leaf", None))
+        self.assertEqual(decl._verb_lookup("item")[0], "group")
+        decl._live_parser.cache_clear()
+
+
 class GradesExtraKey(unittest.TestCase):
     """lc-294: the optional `grades-extra` opt-in. Absent is today's
     behaviour; present, it accepts `items.GRADES_DECLARED` and nothing else."""

@@ -35,6 +35,7 @@ not a finding. A declaration whose bytes are present and wrong is a finding.
 The two never share an exit code — that is the contract in `exits.py`.
 """
 
+import functools
 import json
 import subprocess
 from dataclasses import dataclass, field
@@ -1159,6 +1160,24 @@ def check_desk_state_kind_declared(repo, doc, res: Result) -> None:
             "XDG home declared as a per-repo kind.")
 
 
+@functools.lru_cache(maxsize=1)
+def _live_parser():
+    """The live CLI parser, built ONCE per process.
+
+    Both verb predicates below walk it and neither changes it, and building
+    it is the whole cost: every `add_parser` constructs an ArgumentParser.
+    Measured 2026-10-04 on this repo's own declaration: 103 builds in one
+    `item check`, 0.56 s wall against the session-start hook's 0.5 s
+    timeout — the banner answered COULD NOT VERIFY over a healthy carrier.
+
+    A build that RAISES is not remembered (`lru_cache` stores results, never
+    exceptions), so `_verb_lookup`'s broken-parser lane stays retryable.
+    The import is deferred because `cli` imports this module.
+    """
+    from . import cli as cli_mod
+    return cli_mod.build_parser()
+
+
 def _verb_lookup(spelled: str) -> tuple:
     """`(status, group_actions)` for `spelled` against the live PARSER.
 
@@ -1195,8 +1214,7 @@ def _verb_lookup(spelled: str) -> tuple:
     if spelled == "--test":
         return ("leaf", None)
     try:
-        from . import cli as cli_mod
-        parser = cli_mod.build_parser()
+        parser = _live_parser()
     except Exception:
         return ("leaf", None)
 
@@ -1474,9 +1492,8 @@ def cli_verbs() -> frozenset:
     have goes red without anyone updating anything here.
     """
     import argparse as _ap
-    from . import cli as cli_mod
     out = set()
-    parser = cli_mod.build_parser()
+    parser = _live_parser()
 
     # EVERY DEPTH, not two levels (lc-279). `ledger add decision` is a real
     # leaf three levels down; a walk that stopped at `<verb> <action>` handed
