@@ -105,3 +105,32 @@ One line each, for a deliberate pass.
 Tree clean and nothing unpushed after this commit; no lane awaiting a
 return (the three classification lanes reported and closed); no timer
 armed.
+
+## 7. Wave 4 addendum (same day)
+
+The close above was superseded: the operator continued the session and the
+judgment desk reopened this desk for one more wave. Sections 1 to 6 stand
+as the record of the span they describe.
+
+| act | result | home |
+|---|---|---|
+| lc-304 | `lifecycle --test` adds 1 record to the live fire log, its own; it added 169 | `f31d740` |
+| lc-303 | a damaged fire-log line is a finding beside the audit's table | `2e79713` |
+| lc-306 design round | graded; the evidence showed a refusal survives filters by position, not by its exit code | `docs/directives/2026-10-04-lc306-delivery-round.md` |
+| the goal line moved | last, on stderr, stdout flushed first, under the trial arm. The first mechanism shipped under the per-mechanism release rule | `50ffc11`, LEDGER:179 |
+
+Residue changes against section 4:
+- lc-304 and lc-306 are closed and leave the table.
+- lc-161 now has one trialed mechanism. Its grading run, and the arc scan
+  that run needs, are still unbuilt and still the first grading wave's.
+- The refusal form of the goal seam is held with a written trigger: 20
+  delivered lines with no goal-check. The drift log's writer observes it.
+- Drift rows written from now on are POST-DELIVERY.
+- New: any session whose id hashes to the OFF arm sees no goal line. That
+  is the design, and it includes this desk.
+
+Decisions carried without asking, wave 4: lc-303 was made a finding with a
+roster row (the item's criterion) and not a warning; an unterminated last
+log line is exempt; a run with no session id is `arm=unassigned` and still
+gets the line; the probe was re-run over the registered window after a
+first run over the wrong one.

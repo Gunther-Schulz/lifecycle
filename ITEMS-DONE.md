@@ -2184,5 +2184,18 @@ blocked-by: NONE
 closed-reason: 2026-10-04 MEASURED 2026-10-04: roster row fire_log_malformed, admitted on the lc-142 pair (real anchor: rows changed fire_log_malformed; inert comment anchor: rows changed NONE, FAILED). Three new arms red on the old tally, the no-damage control green before and after. Live audit prints no finding: the live log holds none.
 closed-ref: 2e79713
 
+## lc-306
+grade: DONE
+requirement: The goal print at the verb seams (R3, lc-288) is filter-mortal: it goes to stdout, and callers habitually pipe a verb through grep or tail, which cuts the line before the session sees it. The fire log counts PRINTS, so the drift treatment arm has been counting a treatment that mostly did not arrive. Record: docs/audits/drift-treatment-log.tsv rows 3-4; round 2 principle, docs/directives/2026-10-04-refocus-design-round-2.md section 1.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A design decision, ledgered, on how the seam content reaches the session through a channel the caller cannot discard (or a recorded decline withdrawing the print), with a falsifier stated on DELIVERIES rather than prints; and the treatment log and tools/fire-window-tally.py say which of the two they count. No build before that decision.
+evidence: RELAYED from judge tmp-ad 2026-10-04 (two read-only extraction lanes over the transcripts, graded there): the printed goal line reached the session at 2 of 14 seams in lifecycle session e915f8e8 and 0 of 4 in statiker session be854dae; the other 16 invocations piped the verb through grep or tail. MEASURED at this desk the same day, on its own three goal-seam acts: each was piped through tail, and the goal line survived in 2 (item close lc-256, arc narrow) and was cut in 1 (item close lc-276, tail -5). DERIVED: the fire log records the print at the verb, so goal-seam counts are an upper bound on deliveries.
+blocked-by: NONE
+not-derivable: 2026-10-04 searched LEDGER.md for the goal print: LEDGER:145 (R3) decides the print at the verb seams and nothing decides its delivery channel; round 2 D5 rules no mechanism change inside the arm window (closes 2026-10-18), and the freeze holds new mechanism, so the channel is a design decision for the round after the arm reports.
+blocker-moot: how seam content reaches a session whose callers filter verb output: a channel the caller cannot discard, a demand in place of the print, or the print withdrawn (answered in the ledger before this item closed)
+closed-reason: 2026-10-04 MEASURED 2026-10-04: design round graded by judge tmp-ad and ledgered; the line now leaves last on stderr under the trial arm. Falsifier is on deliveries: tools/verb-delivery.py counts arrivals, tools/fire-window-tally.py says it counts emissions. Live in a scratch repo: delivered under merged tail, cut under merged grep (the named residual), withheld for an OFF session. The drift log rows 3-4 already count deliveries; rows after this change are marked POST-DELIVERY.
+closed-ref: 50ffc11
+
 ## Archive (pre-migration)
 

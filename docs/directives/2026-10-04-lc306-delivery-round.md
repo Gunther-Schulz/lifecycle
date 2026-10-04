@@ -2,8 +2,21 @@
 
 **Desk:** lifecycle-4f, wave 4 of
 `docs/directives/2026-10-04-refocus-opus-desk-handoff.md`.
-**Status:** PROPOSAL, UNGRADED. Returns to the judgment desk (tmp-ad)
-before any probe runs or anything is built.
+**Status:** GRADED AND SHIPPED (LEDGER:179, build `50ffc11`). The judgment
+desk (tmp-ad) approved D1 to D4 as written, with one condition, and ruled
+D5: allowed. The probe of section 4 passed and section 8 records it. The
+text below section 8 stands as proposed.
+
+**The condition, now part of D1:** "last" across two streams is a claim
+about FLUSH order, not print order. Under `2>&1` both streams share one
+pipe and stdout is block-buffered into it, so the run flushes stdout before
+it writes the goal line. A test runs the verb in a child process with both
+streams on one pipe; removing the flush alone turns it red.
+
+**D5 as ruled:** the change ships inside the drift-arm window. Rows after
+it are marked POST-DELIVERY and never pooled. The arm's report states the
+mid-window change and that the arm switch halves treated sessions from
+that date.
 
 **Recommendation in one line:** move the goal line to where filters do not
 cut it (last line of the run, on stderr), ship that with the arm switch as
@@ -175,3 +188,37 @@ Home: this file. No row is built before grading and a probe pass.
 ```
 python3 tools/verb-delivery.py --since 2026-09-25 --out <file outside the repo>
 ```
+
+## 8. The probe as run, and the first live calls (2026-10-04)
+
+`python3 tools/verb-delivery.py --since 2026-09-25 --until <the commit
+time of 63bd5e2> --replay`. Machine-computed.
+
+| arm | threshold | expected | result |
+|---|---|---|---|
+| goal-seam calls delivered | at least 18 of 22 | 22 | 22: PASS |
+| write-verb calls delivered | at least 53 of 75 | 58 | 60: PASS |
+| control: line first, on stdout | at most 5 of 22 | 3 | 3: PASS |
+
+The write-verb arm came in 2 over the expectation. Derived, not checked
+row by row: merged `head` or `grep` calls whose arguments happen to keep
+the modelled line. The model is six
+stdout lines, so that arm depends on the model's length; the goal-seam arm
+and the control do not.
+
+A first run used a shorter window by mistake (18 and 68 joined calls) and
+is not the result. The figures above are over the window the thresholds
+were registered on.
+
+Live, through real shell pipelines in a scratch repo after the build:
+
+| call shape | session arm | goal line in the output |
+|---|---|---|
+| `2>&1 \| tail -1` | ON | yes, the one line kept |
+| `2>&1 \| grep narrowed` | ON | no (the named residual) |
+| `\| grep narrowed`, stderr free | ON | yes |
+| bare | OFF | no; the fire line reads `arm=off; withheld=goal-seam` |
+
+The desk that built this is itself in the OFF arm, so its own seams
+withhold the line. The first live roster record of that is the close of
+lc-306.

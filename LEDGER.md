@@ -176,6 +176,8 @@ decision: what is the per-arc form of lc-161: the arc, the assignment, the deliv
 decision: join disposition of LEDGER:175 beside LEDGER:173 → new: the earlier line of this date records the operator choosing the per-arc form; this line records the graded design that realizes it
 decision: what releases a frozen or future mechanism now that the per-arc form leaves no single lc-161 after-measurement verdict → PER MECHANISM: each releases on its own pre-registered probe pass plus the operator narrow exit at ship time, arm switch in the ship set. No blanket release. Ruled by judge tmp-ad under a session-scoped operator delegation stated first-hand at that desk 2026-10-04; per-arc design s7 Q3
 decision: join disposition of LEDGER:177 beside LEDGER:173, LEDGER:175 → new: LEDGER:173 and LEDGER:175 fix the form of the measurement; neither says what releases the parked mechanisms, which the design left open as section 7 question 3
+decision: how seam content reaches a session whose callers filter verb output: a channel the caller cannot discard, a demand in place of the print, or the print withdrawn → SHIPPED 50ffc11: goal line last on stderr, stdout flushed first, arm switch in the ship set. Probe PASS: 22/22 seam calls, 60/75 write-verb calls, control 3/22. Narrow exit pre-granted by the operator first-hand at judge desk tmp-ad 2026-10-04 (its session record); graded there, round 2 D5 lifted
+decision: join disposition of LEDGER:179 beside LEDGER:71, LEDGER:75, LEDGER:80, LEDGER:166 → new: LEDGER:166 decides what converts a due read; none of the four decides the delivery channel of the goal line, which LEDGER:145 left open and lc-306 asked
 
 ## Archive (pre-migration)
 
