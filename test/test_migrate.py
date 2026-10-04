@@ -2475,5 +2475,475 @@ class RepeatedFromRefuses(unittest.TestCase):
         self.assertIsNone(ns.from_carrier)
 
 
+#: A carrier whose ENTRIES ARE ITS LEVEL-3 HEADINGS — the shape `bullet`
+#: misreads. Every entry carries bullets in its body, two of them shaped like
+#: bullet-entries (bold, grade-led), because the misread is exactly a body
+#: bullet admitted as an entry. Five headings: two under an open section, one
+#: parked, one under a section no rule names, one closed.
+HEADING_CARRIER = """# old carrier
+
+A preamble paragraph.
+
+- a bullet before any heading
+
+## Ready
+
+- a bullet in the section's own preamble
+
+### First ready entry
+
+**Booked 2026-01-01.** A prose body.
+
+- a body bullet
+- **READY 2026-01-01 — a body bullet shaped like a bullet entry.** x
+
+#### A deeper heading is body
+
+- a bullet under the deeper heading
+
+### Second ready entry whose title says DONE mid-way
+
+A body with no bullet at all.
+
+## Parked
+
+### A parked entry
+
+**PARKED.** Missing evidence: a measurement nobody has taken.
+
+## Notes
+
+### A heading under a section no rule names
+
+- **READY 2026-01-01 — the body leads with a grade word.** x
+
+## Done
+
+### A closed entry
+
+**Shipped.** Closed long ago.
+
+- a closing bullet
+"""
+
+HEADING_TITLES = ["First ready entry",
+                  "Second ready entry whose title says DONE mid-way",
+                  "A parked entry",
+                  "A heading under a section no rule names",
+                  "A closed entry"]
+
+
+def heading_read(text: str = HEADING_CARRIER) -> migrate.Read:
+    """The carrier through the real reader AND the real classifier, in the
+    `heading` shape — the pair `run` applies, never an Entry built by hand."""
+    read = migrate.read_carrier(text, entry_shape=migrate.ENTRY_SHAPE_HEADING)
+    for e in read.entries:
+        migrate.classify_heading(e)
+    return read
+
+
+def heading_run(repo: Path, *extra):
+    return migrate_run(repo, "--entry-shape", "heading", *extra)
+
+
+class HeadingEntriesAreOnePerHeading(unittest.TestCase):
+    """`--entry-shape heading`: an entry is a level-3 heading and every bullet
+    beneath it is its BODY. Read as bullets, this carrier yields the body
+    bullets as entries and none of the headings."""
+
+    def test_one_entry_per_heading_and_the_bullets_are_body(self):
+        read = heading_read()
+        self.assertEqual([migrate.headline_of(e) for e in read.entries],
+                         HEADING_TITLES)
+        self.assertTrue(all(e.heading for e in read.entries))
+        # Four bullets sit inside entry bodies and two sit outside any entry
+        # (before the first heading, and in `## Ready`'s own preamble).
+        self.assertEqual(read.body_bullets, 5)
+        self.assertEqual(len(read.outside_bullets), 2)
+        self.assertEqual(read.total_bullets, 7)
+        self.assertEqual(read.non_entry_bullets, [])
+
+    def test_the_same_carrier_read_as_bullets_is_the_misread(self):
+        """THE CONTRAST, so the case above is not green for a reader that
+        ignores the shape: `bullet` admits the two bullet-shaped body bullets
+        and none of the five headings."""
+        read = migrate.read_carrier(HEADING_CARRIER)
+        self.assertEqual(len(read.entries), 2)
+        self.assertFalse(any(e.heading for e in read.entries))
+        self.assertTrue(all(e.raw_first.startswith("**READY")
+                            for e in read.entries))
+
+    def test_the_headline_is_the_heading_and_nothing_from_the_body(self):
+        first = heading_read().entries[0]
+        self.assertEqual(migrate.headline_of(first), "First ready entry")
+        self.assertEqual(migrate.title_of(first), "First ready entry")
+        # ... while the body IS carried in `text`, which is what the existing
+        # write-rules read.
+        self.assertIn("a body bullet", first.text)
+
+    def test_the_requirement_cap_applies_unchanged(self):
+        long_title = "x" * (migrate.REQUIREMENT_CAP + 40)
+        read = heading_read(f"# c\n\n## Ready\n\n### {long_title}\n\nbody\n")
+        self.assertEqual(len(migrate.title_of(read.entries[0])),
+                         migrate.REQUIREMENT_CAP)
+        self.assertEqual(migrate.headline_of(read.entries[0]), long_title)
+
+    def test_the_range_runs_from_the_heading_to_the_line_before_the_next(self):
+        read = heading_read()
+        lines = HEADING_CARRIER.split("\n")
+        for e, title in zip(read.entries, HEADING_TITLES):
+            self.assertEqual(lines[e.line - 1], f"### {title}")
+        first, second = read.entries[0], read.entries[1]
+        self.assertEqual(first.end_line, second.line - 1)
+        # The second entry ends on the line before `## Parked`, a SHALLOWER
+        # heading — a body never runs across a section.
+        self.assertEqual(lines[second.end_line + 1 - 1], "## Parked")
+        # The last entry ends at the file's last line, not one past it.
+        self.assertEqual(read.entries[-1].end_line,
+                         len(HEADING_CARRIER.rstrip("\n").split("\n")))
+
+    def test_a_level_four_heading_is_body_not_an_entry(self):
+        read = heading_read()
+        self.assertNotIn("A deeper heading is body",
+                         [migrate.headline_of(e) for e in read.entries])
+        first = read.entries[0]
+        lines = HEADING_CARRIER.split("\n")
+        deeper = lines.index("#### A deeper heading is body") + 1
+        self.assertTrue(first.line < deeper <= first.end_line)
+        self.assertIn("#### A deeper heading is body", first.text)
+        # ... and the bullet UNDER it is that entry's body too.
+        self.assertIn("a bullet under the deeper heading", first.text)
+
+    def test_the_heading_count_is_taken_without_the_reader(self):
+        """The identity's independent side: counted off the text by its own
+        expression, and a level-4 line is not one."""
+        self.assertEqual(migrate.level3_lines(HEADING_CARRIER), 5)
+        self.assertEqual(heading_read().level3_headings, 5)
+        self.assertEqual(migrate.level3_lines("#### deeper\n## two\n###x\n"),
+                         0)
+
+
+class TheSectionGradesAHeadingEntry(unittest.TestCase):
+    """In this shape the SECTION is the carrier's only grading statement. The
+    body's lead word is not read and the title is not scanned."""
+
+    def by_title(self, title):
+        return next(e for e in heading_read().entries
+                    if migrate.headline_of(e) == title)
+
+    def test_an_open_section_grades_by_its_first_word_upper_cased(self):
+        e = self.by_title("First ready entry")
+        self.assertEqual(e.grade_word, "READY")
+        self.assertEqual(e.grade, migrate.RULES["READY"][0])
+        self.assertEqual(e.rule, migrate.RULES["READY"][1])
+        self.assertFalse(e.closure)
+        # `Parked` reads as PARKED and takes that word's EXISTING rule whole,
+        # NEW-branch sentence included — no mapping is added for this shape.
+        p = self.by_title("A parked entry")
+        self.assertEqual(p.grade_word, "PARKED")
+        self.assertEqual(p.grade, "NEW")
+        self.assertTrue(p.rule.startswith(migrate.RULES["PARKED"][1]))
+
+    def test_a_closure_section_archives_and_grades_nothing(self):
+        e = self.by_title("A closed entry")
+        self.assertTrue(e.closure)
+        self.assertIsNone(e.grade)
+        self.assertIsNone(e.grade_word)
+        self.assertEqual(e.rule, migrate.SECTION_CLOSURE_RULE)
+
+    def test_an_unknown_section_is_ungraded_whatever_its_body_leads_with(self):
+        """The body opens with a bold `READY` bullet. Read for a grade, this
+        entry would take READY's rule and its regrade blocker; the section
+        says nothing, so it is ungraded."""
+        e = self.by_title("A heading under a section no rule names")
+        self.assertIsNone(e.grade_word)
+        self.assertEqual((e.grade, e.rule), migrate.UNGRADED_RULE)
+        self.assertFalse(e.closure)
+
+    def test_a_closure_word_in_the_title_is_ordinary_language(self):
+        """The bullet shape REFUSES a closure word standing alone later in an
+        ungraded title. A heading title is prose, so here it migrates."""
+        e = self.by_title("Second ready entry whose title says DONE mid-way")
+        self.assertEqual(e.grade, migrate.RULES["READY"][0])
+        self.assertEqual(e.unclassified_why, "")
+        self.assertFalse(e.closure)
+
+    def test_a_heading_in_a_cut_section_is_counted_and_not_migrated(self):
+        read = heading_read(
+            "# c\n\n## Grades and what they mean\n\n### READY\n\n- prose\n\n"
+            "## Ready\n\n### a real entry\n\nbody\n")
+        self.assertEqual([migrate.headline_of(e) for e in read.entries],
+                         ["a real entry"])
+        self.assertEqual(len(read.cut_headings), 1)
+        self.assertEqual(read.level3_headings,
+                         len(read.entries) + len(read.cut_headings))
+        # The cut heading's bullet belongs to no entry.
+        self.assertEqual(read.body_bullets, 0)
+        self.assertEqual(len(read.outside_bullets), 1)
+
+
+class HeadingShapeEndToEnd(unittest.TestCase):
+    """The same carrier through the CLI: what lands in each successor home,
+    and what the run and the report say about the shape they read."""
+
+    def setUp(self):
+        self.d = build(HEADING_CARRIER)
+        self.addCleanup(shutil.rmtree, self.d, ignore_errors=True)
+        self.code, self.out = heading_run(self.d)
+        self.items = (self.d / "ITEMS.md").read_text(encoding="utf-8")
+        self.done = (self.d / "ITEMS-DONE.md").read_text(encoding="utf-8")
+        self.report = (self.d / REPORT).read_text(encoding="utf-8")
+
+    def test_one_item_per_open_heading_and_one_archived_closure(self):
+        self.assertEqual(self.code, exits.CLEAN, self.out)
+        parsed = items.parse(self.items)
+        self.assertEqual(
+            [migrate.requirement_title(it.slots["requirement"])
+             for it in parsed.items], HEADING_TITLES[:4])
+        self.assertIn("source entries read:      5", self.out)
+        self.assertIn("items written:            4 ", self.out)
+        self.assertIn("CLOSURES routed to the done home: 1 ", self.out)
+        self.assertIn("UNCLASSIFIED (reported):  0", self.out)
+        # The closure is in the done home VERBATIM, body included, and in the
+        # open carrier not at all.
+        self.assertIn("### A closed entry\n\n**Shipped.** Closed long ago.\n"
+                      "\n- a closing bullet", self.done)
+        self.assertNotIn("A closed entry", self.items)
+        # No body bullet became an item.
+        self.assertNotIn("a body bullet shaped like a bullet entry",
+                         self.items)
+
+    def test_the_evidence_range_is_the_heading_through_its_last_body_line(self):
+        """Resolved against the file ON DISK — the frozen one, whose lines the
+        citations index."""
+        src = (self.d / "BACKLOG.md").read_text(encoding="utf-8").split("\n")
+        parsed = items.parse(self.items)
+        for it, title in zip(parsed.items, HEADING_TITLES):
+            m = re.match(r"BACKLOG\.md:(\d+)-(\d+) at blob [0-9a-f]{40}$",
+                         it.slots["evidence"])
+            self.assertIsNotNone(m, it.slots["evidence"])
+            start, end = int(m.group(1)), int(m.group(2))
+            self.assertEqual(src[start - 1], f"### {title}")
+            self.assertFalse(any(re.match(r"#{1,3}\s", ln)
+                                 for ln in src[start:end]))
+            self.assertRegex(src[end], r"^#{1,3}\s")
+
+    def test_the_section_decides_the_blocker_the_existing_rules_write(self):
+        blockers = [it.slots["blocked-by"]
+                    for it in items.parse(self.items).items]
+        self.assertEqual(blockers[0], migrate.REGRADE_BLOCKER)
+        self.assertEqual(blockers[1], migrate.REGRADE_BLOCKER)
+        self.assertEqual(blockers[2],
+                         "evidence " + migrate.PARKED_EVIDENCE_PREDICATE)
+        # The unknown-section entry's body LEADS with `READY`; it carries the
+        # ungraded blocker and not the regrade one.
+        self.assertEqual(blockers[3],
+                         "decision " + migrate.INCOMPLETE_DECISION)
+
+    def test_the_run_and_the_report_both_state_the_shape_they_read(self):
+        self.assertIn("    entry shape:              heading — ", self.out)
+        self.assertIn("Entry shape read: `heading`", self.report)
+
+    def test_the_heading_accounting_is_printed_as_an_identity(self):
+        self.assertIn("level-3 headings read:    5 == 5 entries + 0 cut",
+                      self.out)
+        self.assertIn("top-level bullets:        5 inside an entry's body, "
+                      "2 outside any entry", self.out)
+        self.assertIn("**Heading identity:** 5 level-3 headings = 5 entries "
+                      "+ 0 cut — HOLDS", self.report)
+        self.assertNotIn("Bullet identity", self.report)
+
+    def test_a_reader_that_loses_a_heading_could_not_verify(self):
+        """The identity is CHECKED: with the reader's count and the text's
+        made to disagree, the run answers COULD NOT VERIFY."""
+        d = build(HEADING_CARRIER)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        real = migrate.level3_lines
+        migrate.level3_lines = lambda text: real(text) + 1
+        self.addCleanup(setattr, migrate, "level3_lines", real)
+        code, out = heading_run(d)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("the heading arithmetic disagrees", out)
+
+    def test_report_only_takes_the_option_like_any_other_run(self):
+        d = build(HEADING_CARRIER)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        before = (d / "BACKLOG.md").read_bytes()
+        code, out = heading_run(d, "--report-only")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("source entries read:      5", out)
+        self.assertFalse((d / "ITEMS.md").exists())
+        self.assertEqual((d / "BACKLOG.md").read_bytes(), before)
+
+    def test_a_merge_re_run_recognises_every_heading_entry_it_wrote(self):
+        """`--merge` behaves as it does today: the provenance this shape
+        writes is what the re-import detector reads. Over the OPEN entries
+        only — a closure in the `--from` carrier is re-archived by every
+        merge re-run in either shape, which is not this option's to change."""
+        d = build(HEADING_CARRIER[:HEADING_CARRIER.index("## Done")])
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(heading_run(d)[0], exits.CLEAN)
+        commit_all(d, "migrated")
+        code, out = heading_run(d, "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("RE-IMPORTS skipped:       4 ", out)
+        self.assertIn("items written:            0 ", out)
+
+
+class HeadingShapeOverNoHeadings(unittest.TestCase):
+    """The declared shape matching nothing in the file. Zero entries reads
+    exactly like a clean migration, so it is the third answer."""
+
+    BULLETS = ("# old\n\n## Open\n\n- **READY 2026-01-01 — an ordinary "
+               "entry.** body\n")
+
+    def test_it_could_not_verify_and_writes_nothing(self):
+        d = build(self.BULLETS)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        before = (d / "BACKLOG.md").read_bytes()
+        code, out = heading_run(d)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("COULD NOT VERIFY [migration_heading_shape_empty]", out)
+        self.assertFalse((d / "ITEMS.md").exists())
+        self.assertFalse((d / "ITEMS-DONE.md").exists())
+        self.assertFalse((d / REPORT).exists())
+        self.assertEqual((d / "BACKLOG.md").read_bytes(), before)
+
+    def test_one_level_three_heading_is_enough_to_answer(self):
+        """MUST-NOT-MOVE: the guard keys on the heading count, so the same
+        carrier with one heading migrates."""
+        d = build(self.BULLETS.replace("## Open\n\n",
+                                       "## Open\n\n### a heading\n\n"))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = heading_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("migration_heading_shape_empty", out)
+        self.assertIn("source entries read:      1", out)
+
+    def test_the_refusal_has_its_own_roster_row(self):
+        from lifecycle_core import refusals
+        row = next(r for r in refusals.ROWS
+                   if r.ident == "migration_heading_shape_empty")
+        self.assertEqual(row.expect, exits.COULD_NOT_VERIFY)
+        fired, control = row.fire(), row.control()
+        self.assertEqual(fired.code, exits.COULD_NOT_VERIFY, fired.output)
+        self.assertIn("[migration_heading_shape_empty]", fired.output)
+        self.assertNotIn("[migration_heading_shape_empty]", control.output)
+        self.assertNotEqual(control.code, fired.code)
+
+
+class BulletShapeNote(unittest.TestCase):
+    """The other direction of the silent misread: a `bullet` read over a
+    carrier whose entries sit beneath level-3 headings says so in ONE line,
+    names the option, and changes nothing else."""
+
+    GROUPED = ("# old\n\n## Open\n\n### a group\n\n"
+               "- **READY 2026-01-01 — an entry beneath a heading.** body\n\n"
+               "### another group\n\n"
+               "- **READY 2026-01-02 — a second one.** body\n")
+    FLAT = GROUPED.replace("### a group\n\n", "").replace(
+        "### another group\n\n", "")
+
+    def run_over(self, text, *extra):
+        d = build(text)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d, *extra)
+        return d, code, out
+
+    def test_one_note_line_on_stdout_and_in_the_report(self):
+        d, code, out = self.run_over(self.GROUPED)
+        notes = [ln for ln in out.split("\n") if "NOTE: " in ln]
+        self.assertEqual(len(notes), 1, out)
+        self.assertIn("2 level-3 heading(s) in BACKLOG.md", notes[0])
+        self.assertIn("2 of the 2 entries read sit beneath one", notes[0])
+        self.assertIn("--entry-shape heading", notes[0])
+        report = (d / REPORT).read_text(encoding="utf-8")
+        self.assertEqual(
+            len([ln for ln in report.split("\n") if ln.startswith("NOTE: ")]),
+            1)
+        self.assertIn(notes[0].strip(), report)
+
+    def test_the_note_changes_no_exit_code_and_no_successor_byte(self):
+        """Against the SAME entries with the two heading lines removed: the
+        verdict is the same, and so is every item slot but the line numbers
+        the headings moved."""
+        d1, code1, out1 = self.run_over(self.GROUPED)
+        d2, code2, out2 = self.run_over(self.FLAT)
+        self.assertEqual(code1, code2)
+        self.assertEqual(code1, exits.CLEAN, out1)
+        strip = lambda t: re.sub(r"BACKLOG\.md:\d+(-\d+)? at blob [0-9a-f]+",  # noqa: E731
+                                 "BACKLOG.md:N", t)
+        self.assertEqual(strip((d1 / "ITEMS.md").read_text(encoding="utf-8")),
+                         strip((d2 / "ITEMS.md").read_text(encoding="utf-8")))
+        self.assertNotIn("NOTE: ", out2)
+        self.assertNotIn("NOTE: ", (d2 / REPORT).read_text(encoding="utf-8"))
+
+    def test_a_heading_no_entry_sits_beneath_prints_no_note(self):
+        """The trigger is an ENTRY beneath a level-3 heading, not a level-3
+        heading existing: one over prose alone is not this carrier's
+        structure."""
+        text = self.FLAT + "\n### a closing remark\n\nprose, no bullet\n"
+        d, code, out = self.run_over(text)
+        self.assertNotIn("NOTE: ", out)
+
+    def test_the_heading_shape_prints_no_note(self):
+        d, code, out = self.run_over(self.GROUPED, "--entry-shape", "heading")
+        self.assertNotIn("NOTE: ", out)
+
+
+class BulletShapeIsUnchanged(unittest.TestCase):
+    """MUST-NOT-MOVE: without the option, and with `--entry-shape bullet`,
+    a bullet carrier migrates as it did. `LIVE_HEAD` is an existing fixture
+    of this file."""
+
+    def outputs(self, *extra):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d, *extra)
+        files = {name: (d / name).read_bytes()
+                 for name in ("ITEMS.md", "ITEMS-DONE.md", "BACKLOG.md",
+                              REPORT)}
+        return code, out, files
+
+    def test_the_explicit_default_is_the_omitted_option_byte_for_byte(self):
+        self.assertEqual(self.outputs(), self.outputs("--entry-shape",
+                                                      "bullet"))
+
+    def test_a_bullet_run_says_nothing_about_shapes(self):
+        """The shape line belongs to a `heading` read and the note to entries
+        beneath a level-3 heading; this carrier has neither, so its output
+        carries no line this option introduced."""
+        code, out, files = self.outputs()
+        self.assertEqual(code, exits.CLEAN, out)
+        report = files[REPORT].decode("utf-8")
+        for text in (out, report):
+            self.assertNotIn("entry shape", text.lower())
+            self.assertNotIn("NOTE: ", text)
+            self.assertNotIn("level-3", text)
+        self.assertIn("**Bullet identity:**", report)
+
+    def test_the_bullet_reader_reads_what_it_read(self):
+        """The existing reader's own figures over the existing fixture, with
+        the new counters at rest."""
+        read = migrate.read_carrier(LIVE_HEAD)
+        self.assertEqual(read.entry_shape, migrate.ENTRY_SHAPE_BULLET)
+        self.assertEqual(read.total_bullets,
+                         len(read.entries) + len(read.non_entry_bullets)
+                         + len(read.cut_bullets))
+        self.assertEqual((read.level3_headings, read.entries_under_level3,
+                          read.body_bullets), (0, 0, 0))
+        self.assertFalse(any(e.heading for e in read.entries))
+
+    def test_the_option_is_declared_with_a_closed_set_and_a_default(self):
+        parse = cli.build_parser().parse_args
+        self.assertEqual(parse(["migrate"]).entry_shape, "bullet")
+        self.assertEqual(
+            parse(["migrate", "--entry-shape", "heading"]).entry_shape,
+            "heading")
+        self.assertEqual(migrate.ENTRY_SHAPES, ("bullet", "heading"))
+        with self.assertRaises(ValueError):
+            migrate.read_carrier("# c\n", entry_shape="paragraph")
+
+
 if __name__ == "__main__":
     unittest.main()

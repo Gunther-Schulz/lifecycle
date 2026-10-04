@@ -623,6 +623,19 @@ MUTATIONS = [
      "is the silent half of the defect: a finished entry lands in the "
      "successor looking exactly like work nobody has started"),
 
+    # THE GUARD'S OWN TEST, folded rather than removed. With it off the plant
+    # reads zero entries, writes an empty successor carrier and answers CLEAN
+    # — the silent misread the row exists for — so the darkening is the
+    # verdict moving 3 -> 0 and not a crash proving only that the branch is
+    # reached. The control holds a level-3 heading and never enters the
+    # branch, so it is untouched either way.
+    ("migration_heading_shape_empty", "migrate.py",
+     "    if shape == ENTRY_SHAPE_HEADING and read.level3_headings == 0:",
+     "    if False:",
+     "the refusal of a `heading` read that found no level-3 heading — the "
+     "run then writes an empty successor carrier and reports a clean "
+     "migration of a carrier whose entries it never saw"),
+
     ("migration_unclassified", "migrate.py",
      '        out(f"FINDING [migration_unclassified] {len(unclassified)} '
      'entry/ies "',

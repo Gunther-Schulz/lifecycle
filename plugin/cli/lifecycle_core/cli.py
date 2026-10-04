@@ -1187,6 +1187,15 @@ def build_parser() -> argparse.ArgumentParser:
                           "and carriers FROM schema <n> to this build's. A "
                           "different question from --from, so a different "
                           "spelling")
+    mig.add_argument("--entry-shape", dest="entry_shape",
+                     choices=migrate_mod.ENTRY_SHAPES,
+                     default=migrate_mod.ENTRY_SHAPE_BULLET,
+                     help="what an ENTRY is in the old carrier. DECLARED, "
+                          "never detected. `bullet` (the default): a "
+                          "top-level bullet that is bold or led by a grade "
+                          "word. `heading`: a level-3 heading, whose bullets "
+                          "and deeper headings are its body and whose "
+                          "SECTION grades it. The carrier path only")
     mig.add_argument("--report", help="where the classification report is "
                                       "written")
     mig.add_argument("--apply", action="store_true",

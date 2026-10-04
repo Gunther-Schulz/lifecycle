@@ -2612,6 +2612,37 @@ LANE_ROWS = [
               "reach; unblocks lc-30)",
     ),
     Row(
+        ident="migration_heading_shape_empty",
+        refusal="`migrate --entry-shape heading` over a source carrier that "
+                "holds NO level-3 heading. In that shape an entry IS a "
+                "level-3 heading, so the read holds zero entries, and zero "
+                "entries is a number shaped exactly like a clean migration: "
+                "the run would write an empty successor carrier and report "
+                "CLEAN over a carrier whose entries it never saw. COULD NOT "
+                "VERIFY, and nothing is written — the shape is DECLARED by "
+                "the caller and never detected, so a declaration that "
+                "matches nothing in the file is the one case the tool can "
+                "see is wrong",
+        firing_input="`migrate --entry-shape heading` over a carrier whose "
+                     "one entry is a bold bullet under a level-2 heading — no "
+                     "`### ` line anywhere in the file",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _migrate_run(
+            entry_shape="heading",
+            backlog="# old\n\n## Open\n\n- **READY 2026-01-01 — an ordinary "
+                    "entry.** body\n"),
+        # THE SAME FLAG over the SAME carrier with ONE level-3 heading line
+        # added above the bullet: the arms differ in whether the declared
+        # shape finds a heading, and in nothing else. A control that dropped
+        # the flag would pass against a build that refuses every `heading`
+        # run identically.
+        control=lambda: _migrate_run(
+            entry_shape="heading",
+            backlog="# old\n\n## Open\n\n### an ordinary heading entry\n\n"
+                    "- **READY 2026-01-01 — an ordinary entry.** body\n"),
+        stage="heading-shaped entries (`--entry-shape heading`)",
+    ),
+    Row(
         ident="merge_duplicate_body",
         refusal="`migrate --merge` where a source entry's HEADLINE is already "
                 "carried by a body in the successor homes — the live carrier "
@@ -2880,7 +2911,7 @@ MERGE_SOURCE_SELF_DUPLICATE_OTHER = MERGE_SOURCE_SELF_DUPLICATE.replace(
 
 
 def _migrate_run(*, backlog=None, force=False, merge=False,
-                 from_sources=(), **repo_kw) -> Fired:
+                 from_sources=(), entry_shape=None, **repo_kw) -> Fired:
     """Run `migrate` in a scratch repo carrying an old carrier."""
     import io
     from contextlib import redirect_stdout
@@ -2912,6 +2943,10 @@ def _migrate_run(*, backlog=None, force=False, merge=False,
             argv.append("--force")
         if merge:
             argv.append("--merge")
+        # Appended only where a row names a shape, so every other row's argv
+        # stays byte-identical — the same rule `from_sources` follows above.
+        if entry_shape is not None:
+            argv += ["--entry-shape", entry_shape]
         here = os.getcwd()
         try:
             os.chdir(str(r.dir))

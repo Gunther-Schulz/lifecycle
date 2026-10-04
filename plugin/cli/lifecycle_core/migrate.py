@@ -66,6 +66,20 @@ exactly like work nobody has started.
   * a closure word LATER in the title of an otherwise ungraded bullet — which
     is the AMBIGUOUS shape, and it REFUSES rather than choosing.
 
+WHAT AN ENTRY IS, IS DECLARED (`--entry-shape`), never detected. Everything
+above describes the `bullet` shape, which is the default and reads exactly as
+it did before the option existed. Under `heading` an entry is a LEVEL-3
+HEADING: its bullets and deeper headings are its body, its headline is the
+heading's text, and its grade comes from the SECTION it sits under — in that
+shape the section is the carrier's only grading statement, and its titles are
+prose headings in which a closure word is ordinary language, so neither the
+body's lead word nor the title is read for a grade. The two shapes guard each
+other's silent misread: `heading` over a carrier holding no level-3 heading
+answers COULD NOT VERIFY, because zero entries reads exactly like a clean
+migration; `bullet` over a carrier whose entries sit beneath level-3 headings
+prints one NOTE naming the option, and no more than a note, because a bullet
+carrier that merely groups its entries that way is legitimate.
+
 REFUSAL IS THE ANSWER WHERE THE SOURCE IS AMBIGUOUS, and it is the same
 answer class D-f already gives an uncovered grade word: the entry is NOT
 written, it is reported with its line and the reason, and the run exits
@@ -258,6 +272,25 @@ _CLOSURE_WORD = re.compile(
 #: the heading has already said "closed" (lc-72).
 _DATE_LED = re.compile(r"^\d{4}-\d{2}-\d{2}\s*[—–-]\s*")
 
+#: THE ENTRY SHAPES a source carrier can be read in. DECLARED by the caller
+#: (`--entry-shape`), never detected: a carrier that groups its bullet entries
+#: under level-3 headings and one whose level-3 headings ARE its entries look
+#: the same to any detector, and a detector that guessed would be a
+#: classification rule invented here. `bullet` is the default and is every
+#: carrier this migration read before the option existed.
+ENTRY_SHAPE_BULLET = "bullet"
+ENTRY_SHAPE_HEADING = "heading"
+ENTRY_SHAPES = (ENTRY_SHAPE_BULLET, ENTRY_SHAPE_HEADING)
+
+#: The heading level that IS an entry under `heading`. Exactly this level:
+#: shallower headings are sections, deeper ones are body.
+HEADING_ENTRY_LEVEL = 3
+#: A level-3 heading line, counted over the source text WITHOUT the reader —
+#: the independent side of the heading identity `run` checks. `_HEADING`
+#: takes every leading `#` greedily, so a line is level 3 exactly when
+#: whitespace follows its third one.
+_LEVEL3_LINE = re.compile(r"^###\s")
+
 
 def grade_word_shaped(word: str) -> bool:
     """Is `word` one `_GRADE_WORD` could actually yield from a carrier?
@@ -364,6 +397,12 @@ class Entry:
     #: counts §3.1 asks for — a total is the number that hides the untyped one.
     blocker: str = ""
     blocker_rule: str = ""
+    #: READ UNDER `--entry-shape heading`: the entry IS a level-3 heading,
+    #: `raw_first` is the heading's text, and `text` is that title followed by
+    #: the whole body. A FIELD because `headline_of` must take the headline
+    #: from the heading alone — the body here is paragraphs and bullets, and a
+    #: headline that ran into it would be a requirement nobody wrote.
+    heading: bool = False
 
 
 @dataclass
@@ -384,6 +423,24 @@ class Read:
     #: heading name" produce the same zero.
     closure_sections: tuple = ()
     closure_sections_why: str = ""
+    #: The shape this read was made in — carried so the report and the run
+    #: state it from the read itself rather than from the flag beside it.
+    entry_shape: str = ENTRY_SHAPE_BULLET
+    #: Level-3 headings the reader met, in EITHER shape. Under `heading` each
+    #: one is an entry or a cut; under `bullet` none is structure, and the
+    #: count exists for the note `run` prints when entries sit beneath one.
+    level3_headings: int = 0
+    #: `bullet` only: admitted entries sitting beneath a level-3 heading.
+    entries_under_level3: int = 0
+    #: `heading` only: `(lineno, section)` of every level-3 heading inside a
+    #: section §4 row 1 CUTS — counted, never migrated.
+    cut_headings: list = field(default_factory=list)
+    #: `heading` only: top-level bullets INSIDE an entry's body (a count —
+    #: they are the entry's own prose), and `(lineno, section)` of every
+    #: top-level bullet OUTSIDE any entry. Two counts, because "a bullet the
+    #: entry carried" and "a bullet nothing carried" are different facts.
+    body_bullets: int = 0
+    outside_bullets: list = field(default_factory=list)
 
 
 def closure_sections_for(text: str) -> tuple:
@@ -418,13 +475,21 @@ def closure_sections_for(text: str) -> tuple:
         f"`{word}`, beside the default {default_why}")
 
 
-def read_carrier(text: str, closure_sections: tuple | None = None) -> Read:
+def read_carrier(text: str, closure_sections: tuple | None = None,
+                 entry_shape: str = ENTRY_SHAPE_BULLET) -> Read:
     """Parse a source carrier.
 
     `closure_sections` defaults to this carrier's OWN — derived from its
     `Closure-home:` line, or the default heading where it declares none.
+
+    `entry_shape` is DECLARED by the caller and defaults to `bullet`, under
+    which this function reads exactly what it read before the parameter
+    existed. `heading` hands the lines to `_read_heading_entries`.
     """
-    out = Read()
+    if entry_shape not in ENTRY_SHAPES:
+        raise ValueError(f"unknown entry shape {entry_shape!r}; the shapes "
+                         f"are {', '.join(ENTRY_SHAPES)}")
+    out = Read(entry_shape=entry_shape)
     if closure_sections is None:
         out.closure_sections, out.closure_sections_why = \
             closure_sections_for(text)
@@ -432,8 +497,15 @@ def read_carrier(text: str, closure_sections: tuple | None = None) -> Read:
         out.closure_sections = tuple(closure_sections)
         out.closure_sections_why = "supplied by the caller"
     lines = text.split("\n")
+    if entry_shape == ENTRY_SHAPE_HEADING:
+        _read_heading_entries(lines, out)
+        return out
     section = "(before any heading)"
     pending = None
+    #: Is the reader currently beneath a level-3 heading? COUNTED, never
+    #: acted on: in this shape such a heading is not structure, and the line
+    #: itself still falls through to the body rule below exactly as before.
+    under_level3 = False
 
     def close(end):
         if pending is None:
@@ -451,7 +523,11 @@ def read_carrier(text: str, closure_sections: tuple | None = None) -> Read:
             pending = None
             section = m.group(2).strip()
             out.sections.setdefault(section, 0)
+            under_level3 = False
             continue
+        if m and len(m.group(1)) == HEADING_ENTRY_LEVEL:
+            out.level3_headings += 1
+            under_level3 = True
         b = _BULLET.match(raw)
         if b:
             close(lineno - 1)
@@ -480,11 +556,78 @@ def read_carrier(text: str, closure_sections: tuple | None = None) -> Read:
                             raw_first=content, text=stripped, bold=bold,
                             in_closure_section=in_closure)
             out.sections[section] = out.sections.get(section, 0) + 1
+            if under_level3:
+                out.entries_under_level3 += 1
             continue
         if pending is not None:
             pending.text += " " + raw.strip()
     close(len(lines))
     return out
+
+
+def _read_heading_entries(lines: list, out: Read) -> None:
+    """`read_carrier` under `--entry-shape heading`: ONE ENTRY PER LEVEL-3
+    HEADING.
+
+    The entry's body runs to the line before the next heading of level 3 or
+    shallower, or to the end of the file. Headings of level 4 and deeper, and
+    EVERY bullet, are body: in this shape a bullet is the entry's own prose,
+    and admitting one as an entry is the measured misread — 241 "entries"
+    over a carrier that holds 145.
+
+    THE SECTION IS RECORDED AND THE BODY IS NOT GRADED HERE. Which grade an
+    entry takes is `classify_heading`'s question, and it answers from the
+    section alone.
+
+    A level-3 heading inside a section §4 row 1 CUTS is counted in
+    `cut_headings` and its body belongs to no entry — the same rule the
+    bullet shape applies to a bullet there.
+    """
+    section = "(before any heading)"
+    pending = None
+
+    def close(end):
+        if pending is None:
+            return
+        pending.end_line = end
+        pending.text = " ".join(pending.text.split())
+        out.entries.append(pending)
+
+    # A file ending in a newline splits into a final EMPTY element that is no
+    # line of the file; the last entry's range ends at the last real line.
+    last = len(lines) - 1 if lines and lines[-1] == "" else len(lines)
+    for i, raw in enumerate(lines):
+        lineno = i + 1
+        m = _HEADING.match(raw)
+        if m and len(m.group(1)) <= HEADING_ENTRY_LEVEL:
+            close(lineno - 1)
+            pending = None
+            if len(m.group(1)) < HEADING_ENTRY_LEVEL:
+                section = m.group(2).strip()
+                out.sections.setdefault(section, 0)
+                continue
+            out.level3_headings += 1
+            first_word = section.split()[0] if section.split() else ""
+            if first_word in CUT_SECTIONS:
+                out.cut_headings.append((lineno, section))
+                continue
+            title = m.group(2).strip()
+            pending = Entry(line=lineno, end_line=lineno, section=section,
+                            raw_first=title, text=title, bold=False,
+                            in_closure_section=first_word
+                            in out.closure_sections,
+                            heading=True)
+            out.sections[section] = out.sections.get(section, 0) + 1
+            continue
+        if _BULLET.match(raw):
+            out.total_bullets += 1
+            if pending is not None:
+                out.body_bullets += 1
+            else:
+                out.outside_bullets.append((lineno, section))
+        if pending is not None:
+            pending.text += " " + raw.strip()
+    close(max(last, pending.line) if pending is not None else last)
 
 
 def headline_of(entry: Entry) -> str:
@@ -502,7 +645,12 @@ def headline_of(entry: Entry) -> str:
     a title with no closure word returns.
     """
     text = entry.text
-    if entry.bold:
+    if entry.heading:
+        # THE HEADING'S TEXT AND NOTHING FROM THE BODY. A heading entry is
+        # neither bold nor grade-led, so the branches below would return the
+        # whole body as its headline.
+        headline = entry.raw_first
+    elif entry.bold:
         end = text.find("**")
         headline = text[:end] if end != -1 else text
     else:
@@ -615,6 +763,15 @@ def classify(entry: Entry, closure_words=None) -> None:
             f"with no declared rule stays UNCLASSIFIED — the repair is a "
             f"declared rule, never a looser matcher")
         return
+    _apply_rule(entry, rule)
+
+
+def _apply_rule(entry: Entry, rule: tuple) -> None:
+    """What a rule-table hit writes onto an entry — ONE body for both entry
+    shapes. `classify` reaches it with the word at the bullet start and
+    `classify_heading` with the section's; whatever a rule then writes for a
+    migrated entry is the same sentence either way, and a copy of it beside
+    the heading reader would be the one that drifts."""
     grade, why = rule
     if grade in items_mod.GRADES_CLOSED:
         # A CLOSURE WHEREVER IT SITS. The word is the tool's own, and it says
@@ -646,6 +803,41 @@ def classify(entry: Entry, closure_words=None) -> None:
                            "branch is taken"
         return
     entry.grade, entry.rule = grade, why
+
+
+def classify_heading(entry: Entry) -> None:
+    """`classify` for an entry read under `--entry-shape heading`: THE SECTION
+    GRADES IT, and nothing else does.
+
+    In this shape the section — the level-1/2 heading the entry sits under —
+    is the carrier's ONLY grading statement, and its entry titles are prose
+    headings in which a closure word is ordinary language. So the body's lead
+    word is NOT read for a grade and the title is NOT scanned for a closure
+    word: measured on the motivating carrier, the first body word under
+    `## Ready` is `Booked`, `READY`, `Found` and others, which is a narrative
+    opening and not a vocabulary.
+
+    The order is the reader's own: a closure section first (the existing
+    section-closure route, body archived verbatim); a CUT section never
+    reaches here, because `_read_heading_entries` counts it instead of
+    admitting it; then the section's first word, UPPER-CASED, looked up in
+    `RULES` — `Ready` reads as `READY`, `Parked` as `PARKED` — and handed to
+    the same `_apply_rule` a bullet's grade word is; anything else is
+    ungraded. NO grade mapping is added here: the table is `RULES`, whole.
+    """
+    first_word = entry.section.split()[0] if entry.section.split() else ""
+    entry.grade_word = None
+    if entry.in_closure_section:
+        entry.closure = True
+        entry.grade = None
+        entry.rule = SECTION_CLOSURE_RULE
+        return
+    rule = RULES.get(first_word.upper())
+    if rule is None:
+        entry.grade, entry.rule = UNGRADED_RULE
+        return
+    entry.grade_word = first_word.upper()
+    _apply_rule(entry, rule)
 
 
 #: §3.1's MIGRATION WRITE-RULES, blocking and fixed. The blocker a migrated
@@ -2182,6 +2374,40 @@ def run_schema(args, out, ctx) -> int:
     return exits.CLEAN
 
 
+def level3_lines(text: str) -> int:
+    """Level-3 heading lines in `text`, counted WITHOUT the reader.
+
+    The independent side of the heading identity: `_read_heading_entries`
+    sorts each such line into an entry or a cut, and a figure the sorting
+    loop handed its own checker would be exact by construction (law 22). This
+    one is read off the same text by a different expression, so a heading the
+    reader walked past shows as a gap in the sum.
+    """
+    return sum(1 for ln in text.split("\n") if _LEVEL3_LINE.match(ln))
+
+
+def bullet_shape_note(read: Read, src_name: str) -> str:
+    """The ONE line a `bullet` read prints when entries sit beneath a level-3
+    heading, or "" where none does.
+
+    A NOTE AND NOT A FINDING, deliberately: a bullet carrier that groups its
+    entries under level-3 headings is legitimate, and a guard firing on it
+    would train the override reflex. It changes no exit code and writes
+    nothing beyond itself. It exists because the opposite case — a carrier
+    whose level-3 headings ARE its entries, read as bullets — migrates every
+    body bullet as an item and reports clean.
+    """
+    if read.entry_shape != ENTRY_SHAPE_BULLET or not read.entries_under_level3:
+        return ""
+    return (f"NOTE: {read.level3_headings} level-3 heading(s) in {src_name}, "
+            f"and {read.entries_under_level3} of the {len(read.entries)} "
+            f"entries read sit beneath one. Read as `bullet`, a level-3 "
+            f"heading is not structure. If this carrier's entries ARE its "
+            f"level-3 headings, re-run with `--entry-shape heading`; a bullet "
+            f"carrier that only GROUPS its entries under such headings is "
+            f"read correctly as it is.")
+
+
 def run(args, out, ctx) -> int:
     retire = getattr(args, "retire_source", False)
     if args.schema_from is not None:
@@ -2404,13 +2630,36 @@ def run(args, out, ctx) -> int:
             out(f"FINDING [{row}] {why}")
             return exits.FINDING
 
-    read = read_carrier(src_text)
+    #: THE ENTRY SHAPE IS DECLARED, never detected. `getattr` because a
+    #: caller holding a namespace built before the option existed still means
+    #: `bullet`, which is what every such caller got.
+    shape = getattr(args, "entry_shape", None) or ENTRY_SHAPE_BULLET
+    read = read_carrier(src_text, entry_shape=shape)
+    if shape == ENTRY_SHAPE_HEADING and read.level3_headings == 0:
+        # NOTHING HAS BEEN WRITTEN YET — the banner above is computed bytes,
+        # the successor homes and the report are all below — so this refusal
+        # leaves the repo exactly as it was found.
+        out(f"COULD NOT VERIFY [migration_heading_shape_empty] "
+            f"`--entry-shape heading` over {src_name}, which holds NO level-3 "
+            "heading. In this shape an entry IS a level-3 heading (`### `), "
+            "so this read holds zero entries — and zero entries is a number "
+            "shaped exactly like a clean migration. Nothing was written. "
+            "Either this carrier's entries are bullets (drop the option), or "
+            "they sit at another heading level, which this shape does not "
+            "read.")
+        return exits.COULD_NOT_VERIFY
+    #: Counted off the text the reader was handed, by a different expression
+    #: than the reader's — the independent side of the heading identity.
+    n_level3 = level3_lines(src_text)
     #: THE REPO'S OWN CLOSURE WORDS (lc-91), read from the declaration once
     #: and handed to every entry — a per-entry read would ask the same file
     #: the same question N times and could answer differently mid-run.
     declared_words = decl.closure_words(ctx.declaration)
     for e in read.entries:
-        classify(e, declared_words)
+        if shape == ENTRY_SHAPE_HEADING:
+            classify_heading(e)
+        else:
+            classify(e, declared_words)
     done_read = read_carrier(done_text)
 
     # --- MERGE (lc-17): the homes already in place decide the id space and
@@ -2689,7 +2938,8 @@ def run(args, out, ctx) -> int:
                       unclassified, archive_count, baseline, ledger_count,
                       lwhy, report_rel, closures, anchor_blob, done_blob,
                       carried_src, carried_done, readers, readers_why,
-                      src_label, n_residue, reimported, disposition),
+                      src_label, n_residue, reimported, disposition,
+                      n_level3=n_level3),
         encoding="utf-8")
 
     # --- the run's own answer
@@ -2712,6 +2962,19 @@ def run(args, out, ctx) -> int:
     out(f"    source blob:              {anchor_blob}  ({src_name})")
     out(f"    source done-home blob:    {done_blob}  ({done_name})")
     out(f"    source entries read:      {len(read.entries)}")
+    if shape == ENTRY_SHAPE_HEADING:
+        out("    entry shape:              heading — DECLARED by "
+            "`--entry-shape heading`, never detected. An entry is a level-3 "
+            "heading; its bullets and deeper headings are its body, and its "
+            "SECTION grades it.")
+        out(f"    level-3 headings read:    {n_level3} == "
+            f"{len(read.entries)} entries + {len(read.cut_headings)} cut")
+        out(f"    top-level bullets:        {read.body_bullets} inside an "
+            f"entry's body, {len(read.outside_bullets)} outside any entry — "
+            "none is an entry in this shape")
+    note = bullet_shape_note(read, src_name)
+    if note:
+        out(f"    {note}")
     out(f"    items written:            {n_items} → {ctx.items_path.name}")
     out(f"    CLOSURES routed to the done home: {len(closures)} → "
         f"{ctx.done_path.name}, verbatim")
@@ -2795,6 +3058,18 @@ def run(args, out, ctx) -> int:
             f"{len(closures)} closed, {len(unclassified)} unclassified, "
             f"{len(reimported)} re-imported. "
             "Nothing below is a complete list.")
+        code = exits.COULD_NOT_VERIFY
+    if (shape == ENTRY_SHAPE_HEADING
+            and n_level3 != len(read.entries) + len(read.cut_headings)):
+        # NOT A REGISTERED ROW, for the reason the identity above is not one:
+        # no INPUT falsifies it, only a defect in the reader does. What makes
+        # it a check rather than a narration is that `n_level3` is counted
+        # off the text by a different expression than the reader's.
+        out("COULD NOT VERIFY: the heading arithmetic disagrees — "
+            f"{n_level3} level-3 heading line(s) in {src_name}, "
+            f"{len(read.entries)} entries, {len(read.cut_headings)} cut. A "
+            "heading the reader walked past is an entry nobody migrated. "
+            "Nothing above is a complete list.")
         code = exits.COULD_NOT_VERIFY
     if ledger_count is None:
         out(f"COULD NOT VERIFY: the ledger could not be read, so 'zero "
@@ -2952,7 +3227,8 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
                   lwhy, report_rel="", closures=(), src_blob="",
                   done_blob="", carried_src=None, carried_done=None,
                   readers=(), readers_why="", src_label="", n_residue=0,
-                  reimported=(), disposition=DISPOSED_UNTOUCHED) -> str:
+                  reimported=(), disposition=DISPOSED_UNTOUCHED,
+                  n_level3=0) -> str:
     """The classification report.
 
     IT DESCRIBES ENTRIES; IT DOES NOT QUOTE THEM. Every entry appears as its
@@ -2963,6 +3239,7 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     """
     L = []
     a = L.append
+    heading_shape = read.entry_shape == ENTRY_SHAPE_HEADING
     a(f"# Migration report — {src_name} → {ctx.items_path.name} "
       f"({date.today().isoformat()})")
     a("")
@@ -2994,6 +3271,18 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     a("This report DESCRIBES entries — line number, grade word, rule "
       "applied. It does not quote their prose.")
     a("")
+    if heading_shape:
+        a("**Entry shape read: `heading`** — DECLARED by the caller "
+          "(`--entry-shape heading`), never detected. An entry is a heading "
+          f"of exactly level {HEADING_ENTRY_LEVEL}; its body runs to the line "
+          "before the next heading of that level or shallower. Every bullet "
+          "and every deeper heading is BODY, and the entry's grade comes "
+          "from the SECTION it sits under, never from its body or its title.")
+        a("")
+    shape_note = bullet_shape_note(read, src_name)
+    if shape_note:
+        a(shape_note)
+        a("")
     a("## The sources this run read, PINNED BY BLOB")
     a("")
     a("The git blob sha of every source, so a later run can tell whether it "
@@ -3029,13 +3318,24 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     a("")
     a("| quantity | count |")
     a("|---|---|")
-    a(f"| top-level bullets in `{src_name}` | {read.total_bullets} |")
-    a(f"| of those, ENTRIES (bold, or led by a grade-shaped word) | "
-      f"{len(read.entries)} |")
-    a(f"| of those, non-entry prose bullets (not migrated) | "
-      f"{len(read.non_entry_bullets)} |")
-    a(f"| of those, bullets in a section §4 row 1 CUTS | "
-      f"{len(read.cut_bullets)} |")
+    if heading_shape:
+        a(f"| level-{HEADING_ENTRY_LEVEL} headings in `{src_name}` | "
+          f"{n_level3} |")
+        a(f"| of those, ENTRIES (one per heading) | {len(read.entries)} |")
+        a(f"| of those, headings in a section §4 row 1 CUTS | "
+          f"{len(read.cut_headings)} |")
+        a(f"| top-level bullets INSIDE an entry's body (body, not entries) | "
+          f"{read.body_bullets} |")
+        a(f"| top-level bullets OUTSIDE any entry (not migrated) | "
+          f"{len(read.outside_bullets)} |")
+    else:
+        a(f"| top-level bullets in `{src_name}` | {read.total_bullets} |")
+        a(f"| of those, ENTRIES (bold, or led by a grade-shaped word) | "
+          f"{len(read.entries)} |")
+        a(f"| of those, non-entry prose bullets (not migrated) | "
+          f"{len(read.non_entry_bullets)} |")
+        a(f"| of those, bullets in a section §4 row 1 CUTS | "
+          f"{len(read.cut_bullets)} |")
     a(f"| items written to `{ctx.items_path.name}` | {n_items} |")
     a(f"| of those, CLOSURES routed to `{ctx.done_path.name}` instead | "
       f"{len(closures)} |")
@@ -3071,16 +3371,32 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
             a(f"| {title_of(e)} | `{src_name}:{e.line}-{e.end_line}` | "
               f"{ident} |")
         a("")
-    bullets_ok = (read.total_bullets == len(read.entries)
-                  + len(read.non_entry_bullets) + len(read.cut_bullets))
-    a(f"**Bullet identity:** {read.total_bullets} top-level bullets = "
-      f"{len(read.entries)} entries + {len(read.non_entry_bullets)} prose + "
-      f"{len(read.cut_bullets)} cut — {'HOLDS' if bullets_ok else 'FAILS'}. "
-      "This is the identity that makes 'not migrated' visible: every bullet "
-      "in the source is in exactly one of the three columns, so a bullet the "
-      "migration simply did not see would show up as a gap in the sum rather "
-      "than as nothing at all.")
-    a("")
+    if heading_shape:
+        headings_ok = (n_level3 == len(read.entries)
+                       + len(read.cut_headings))
+        a(f"**Heading identity:** {n_level3} level-{HEADING_ENTRY_LEVEL} "
+          f"headings = {len(read.entries)} entries + "
+          f"{len(read.cut_headings)} cut — "
+          f"{'HOLDS' if headings_ok else 'FAILS'}. The left side is counted "
+          "off the source text WITHOUT the reader, so a heading the reader "
+          "walked past shows up as a gap in the sum rather than as nothing "
+          f"at all. The {read.total_bullets} top-level bullets are reported "
+          f"as two counts and are in neither column: {read.body_bullets} "
+          "inside an entry's body, which travel with that entry's line "
+          f"range, and {len(read.outside_bullets)} outside any entry, which "
+          "nothing carries and which are listed below.")
+        a("")
+    else:
+        bullets_ok = (read.total_bullets == len(read.entries)
+                      + len(read.non_entry_bullets) + len(read.cut_bullets))
+        a(f"**Bullet identity:** {read.total_bullets} top-level bullets = "
+          f"{len(read.entries)} entries + {len(read.non_entry_bullets)} prose + "
+          f"{len(read.cut_bullets)} cut — {'HOLDS' if bullets_ok else 'FAILS'}. "
+          "This is the identity that makes 'not migrated' visible: every bullet "
+          "in the source is in exactly one of the three columns, so a bullet the "
+          "migration simply did not see would show up as a gap in the sum rather "
+          "than as nothing at all.")
+        a("")
     a(f"**Conservation (§3.1), computed on the produced files:** "
       f"items {n_items + n_residue} (of which {n_residue} residue) + done "
       f"{archive_count} = {n_items + n_residue + archive_count}; "
@@ -3142,48 +3458,77 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
       "the verbatim archive, so the property holds by construction — and it "
       "is CHECKED by the done home's own shape check rather than assumed.")
     a("")
-    a("## What a CLOSED entry is (lc-18, lc-19, lc-21)")
-    a("")
-    a("A source carrier states a closure in three shapes, and this run read "
-      "all three. A closure written back into the open carrier is the one "
-      "migration defect that is SILENT — the entry lands looking exactly "
-      "like work nobody has started.")
-    a("")
-    a("| shape | disposition |")
-    a("|---|---|")
-    a("| a CLOSURE GRADE WORD at the bullet start (`"
-      + "`, `".join(items_mod.GRADES_CLOSED)
-      + "`) | archived verbatim to the done home |")
-    a("| an entry under the carrier's own CLOSURE HEADING | archived "
-      "verbatim to the done home |")
-    a("| a closure word standing alone LATER in an ungraded title | "
-      "**REFUSED** — reported, never written either way |")
-    a("| an OPEN grade word under the closure heading | **REFUSED** — the "
-      "word says open and the section says closed |")
-    a("")
-    a(f"**Closure heading(s) read:** "
-      + ", ".join(f"`## {s}`" for s in read.closure_sections)
-      + f" — {read.closure_sections_why}.")
-    a("")
-    a("The heading is stated rather than assumed because the two failures "
-      "look identical from outside: \"no entry sat under a closure heading\" "
-      "and \"this run looked under a heading this carrier does not use\" "
-      "both produce a zero here.")
-    a("")
-    a("**The SECTION decides before the TITLE does, and the order is the "
-      "rule.** An ungraded entry under a closure heading carries no grade "
-      "word precisely BECAUSE the heading already said it. Scanning its "
-      "title for a closure word first would refuse every one of them as "
-      "ambiguous — a guard firing on legitimate work, which is the repair "
-      "that trains a reader to discount the warning that will one day be "
-      "real.")
-    a("")
-    a("**A date-led bullet with no grade word — `2026-08-23 — title` — is "
-      "the same precedence, admitted under this same rule.** It is neither "
-      "bold at the start nor grade-word-led, so outside a closure heading it "
-      "reads as prose; under one it is the heading's own idiom for a closed "
-      "entry and archives verbatim like any other (lc-72).")
-    a("")
+    if heading_shape:
+        a("## How an entry is GRADED in the `heading` shape")
+        a("")
+        a("The SECTION — the level-1/2 heading an entry sits under — is this "
+          "carrier's only grading statement, so it alone decides. The body's "
+          "lead word is not read for a grade and the title is not scanned "
+          "for a closure word: the titles are prose headings, in which a "
+          "closure word is ordinary language.")
+        a("")
+        a("| the section's first word | disposition |")
+        a("|---|---|")
+        a("| one of the closure headings read | archived VERBATIM to the "
+          "done home, body included |")
+        a("| a section §4 row 1 CUTS (`"
+          + "`, `".join(CUT_SECTIONS) + "`) | cut — counted, not migrated |")
+        a("| UPPER-CASED, a word in the rule table below | that word's rule, "
+          "unchanged |")
+        a("| anything else | ungraded |")
+        a("")
+        a(f"**Closure heading(s) read:** "
+          + ", ".join(f"`## {s}`" for s in read.closure_sections)
+          + f" — {read.closure_sections_why}.")
+        a("")
+        a("The heading is stated rather than assumed because the two "
+          "failures look identical from outside: \"no entry sat under a "
+          "closure heading\" and \"this run looked under a heading this "
+          "carrier does not use\" both produce a zero here.")
+        a("")
+    else:
+        a("## What a CLOSED entry is (lc-18, lc-19, lc-21)")
+        a("")
+        a("A source carrier states a closure in three shapes, and this run read "
+          "all three. A closure written back into the open carrier is the one "
+          "migration defect that is SILENT — the entry lands looking exactly "
+          "like work nobody has started.")
+        a("")
+        a("| shape | disposition |")
+        a("|---|---|")
+        a("| a CLOSURE GRADE WORD at the bullet start (`"
+          + "`, `".join(items_mod.GRADES_CLOSED)
+          + "`) | archived verbatim to the done home |")
+        a("| an entry under the carrier's own CLOSURE HEADING | archived "
+          "verbatim to the done home |")
+        a("| a closure word standing alone LATER in an ungraded title | "
+          "**REFUSED** — reported, never written either way |")
+        a("| an OPEN grade word under the closure heading | **REFUSED** — the "
+          "word says open and the section says closed |")
+        a("")
+        a(f"**Closure heading(s) read:** "
+          + ", ".join(f"`## {s}`" for s in read.closure_sections)
+          + f" — {read.closure_sections_why}.")
+        a("")
+        a("The heading is stated rather than assumed because the two failures "
+          "look identical from outside: \"no entry sat under a closure heading\" "
+          "and \"this run looked under a heading this carrier does not use\" "
+          "both produce a zero here.")
+        a("")
+        a("**The SECTION decides before the TITLE does, and the order is the "
+          "rule.** An ungraded entry under a closure heading carries no grade "
+          "word precisely BECAUSE the heading already said it. Scanning its "
+          "title for a closure word first would refuse every one of them as "
+          "ambiguous — a guard firing on legitimate work, which is the repair "
+          "that trains a reader to discount the warning that will one day be "
+          "real.")
+        a("")
+        a("**A date-led bullet with no grade word — `2026-08-23 — title` — is "
+          "the same precedence, admitted under this same rule.** It is neither "
+          "bold at the start nor grade-word-led, so outside a closure heading it "
+          "reads as prose; under one it is the heading's own idiom for a closed "
+          "entry and archives verbatim like any other (lc-72).")
+        a("")
     a("**Closure bodies are archived VERBATIM, at a named line range, and "
       "are never re-rendered as items.** A closure's body is the author's "
       "own record of what closed and why; re-rendering it into slots would "
@@ -3193,6 +3538,11 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     a("")
     a("## Grade-word rules (design §4 row 1, §3.1)")
     a("")
+    if heading_shape:
+        a("IN THIS SHAPE THE SOURCE WORD IS THE SECTION'S FIRST WORD, "
+          "upper-cased — `Ready` reads as `READY` — and no word is read from "
+          "a bullet. The table is the same one, whole.")
+        a("")
     a("These classify the SOURCE word — which entries are entries, which are "
       "closures, and which are unclassifiable. An OPEN grade is then "
       "overridden to NEW by the write-rules above; the mapping is kept "
@@ -3245,6 +3595,29 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
           "rather than a silent omission.")
         a("")
         for lineno, section in read.non_entry_bullets:
+            a(f"- `{src_name}:{lineno}` — section: {section[:70]}")
+        a("")
+    if heading_shape and read.outside_bullets:
+        a("## Bullets outside any entry — not migrated")
+        a("")
+        a("Top-level bullets under no level-3 heading: a section's own "
+          "preamble, or the body of a heading that was cut. In this shape a "
+          "bullet is never an entry, so these are carried by nothing — "
+          "listed so that 'not migrated' is a visible decision rather than "
+          "a silent omission.")
+        a("")
+        for lineno, section in read.outside_bullets:
+            a(f"- `{src_name}:{lineno}` — section: {section[:70]}")
+        a("")
+    if heading_shape and read.cut_headings:
+        a("## CUT by §4 row 1 — headings in a cut section")
+        a("")
+        a("\"`## Grades` prose declarations, `Closure-home:` line, declared "
+          "extra words | CUT — the tool owns the vocabulary\". Each heading "
+          "below sits in such a section; it is counted and not migrated, and "
+          "its body belongs to no entry.")
+        a("")
+        for lineno, section in read.cut_headings:
             a(f"- `{src_name}:{lineno}` — section: {section[:70]}")
         a("")
     if read.cut_bullets:
@@ -3325,14 +3698,23 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
       "— is not carried across. That is the largest single information loss "
       "in this migration and it is a decision for the desk, not for the "
       "tool.")
-    a("- **A NARRATIVE section's bold bullets migrate as items, because §4 "
-      "row 1 states no rule that stops them.** The rule list covers grade "
-      "words and \"ungraded\", and a handoff paragraph's bullet is ungraded — "
-      "so it becomes a NEW item. Only `## Grades` is CUT by name. The "
-      "per-section table above is where this is visible: a section whose "
-      "heading is a status narrative rather than a queue contributed entries, "
-      "and whether that is wanted is the desk's call, not a rule this tool "
-      "may invent.")
+    if heading_shape:
+        a("- **A level-3 heading under ANY section migrates as an item, "
+          "because §4 row 1 states no rule that stops it.** A section whose "
+          "first word is no rule-table word grades its headings as ungraded, "
+          "and an ungraded entry becomes a NEW item. Only `## Grades` is CUT "
+          "by name. The per-section table above is where this is visible, "
+          "and whether a narrative section's headings are wanted as items "
+          "is the desk's call, not a rule this tool may invent.")
+    else:
+        a("- **A NARRATIVE section's bold bullets migrate as items, because §4 "
+          "row 1 states no rule that stops them.** The rule list covers grade "
+          "words and \"ungraded\", and a handoff paragraph's bullet is ungraded — "
+          "so it becomes a NEW item. Only `## Grades` is CUT by name. The "
+          "per-section table above is where this is visible: a section whose "
+          "heading is a status narrative rather than a queue contributed entries, "
+          "and whether that is wanted is the desk's call, not a rule this tool "
+          "may invent.")
     a("- **Live entry BODIES are not carried.** An item's slots are one line "
       "each; the old entries are paragraphs. In this DRY RUN the bodies stay "
       f"in `{src_name}`, and git keeps them either way — but a later act "
