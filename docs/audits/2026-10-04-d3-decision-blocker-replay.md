@@ -128,7 +128,8 @@ here would be worse there. It is declined with D3.
 ## 5. Not verified
 
 - The TRUE and FALSE grades are one reader's, unblinded, and the reader
-  proposed the mechanism. No second grading exists.
+  proposed the mechanism. The judgment desk re-graded 17 of the 34 (all 9
+  TRUE, 8 FALSE); the other 17 FALSE rows have one reader.
 - "First commit in which the pair appears" is the booking moment only
   where the carrier history is linear and the text was not reworded. One
   rewording was caught by hand (EXCLUDED); others may sit among the FALSE
