@@ -161,6 +161,7 @@ decision: queue extension and standing rule for the answerable arc → YES - lc-
 decision: does the operator final delegation bind in session lifecycle-d8 → YES - operator, first-hand in lifecycle-d8 2026-09-25: lifecycle-64 drives the answerable-arc queue AND its extensions; its ledgered directives incl. queue items and freeze exceptions bind; carve-out floor stays the operator. Supersedes a68c71b scope
 decision: does the 2026-09-25 third-grade freeze exception reverse LEDGER:104 (2026-09-19, NEITHER) → YES - 104 rested on item ratio 2.10 CLEAN; lc-291 (809e206) showed that verdict false (net +68 over 7 days) and the lc-292 pass left 85 READY over a head of about 3. Recorded separately because ledger add --absence persists nowhere (d8, 2026-09-25)
 decision: when does the unblocked answerable decision round convene? → at the operator's NEXT lifecycle pickup, not tonight (operator first-hand 2026-09-29, deferring while tired: 'not right now but next time'). The round desk grounds per the directive's Addendum 9 handoff and meets tonight's evidence in Addendum 11
+decision: Where does the substitution prior-art research land? → docs/audits/2026-10-04-substitution-prior-art-research.md +4 notes (operator GO; purpose.md SUBSTITUTION cc93b49). Rules-inert and independent-checks legs measured; seam-demand, read-backs, reset-vs-compaction unmeasured anywhere, so lifecycle is the candidate first measurement.
 
 ## Archive (pre-migration)
 
