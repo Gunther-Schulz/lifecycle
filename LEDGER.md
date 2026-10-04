@@ -166,6 +166,8 @@ decision: refocus round 2 D6: does anything from round 2 ship before the lc-161 
 decision: which demand at which moment converts a surfaced due read into an act, or is surfacing withdrawn → The VERB retrieves the matching record entries and refuses until disposed in writing; a notice does not convert. Notice leg COULD NOT VERIFY BY STARVATION: 1246 runs, 1 surfacing, 0 kind reads (09-25..10-04). Round 2 D1+D2, judge tmp-ad; docs/directives/2026-10-04-refocus-design-round-2.md
 decision: join disposition of LEDGER:166 beside LEDGER:132 → new: LEDGER:132 decided the SURFACING half (D1-D4, 2026-09-20) and deferred the demand leg (D4 b); this line answers that deferred leg on the post-ship measurement
 dropped: lc-256 — Round 2 D2 (judge tmp-ad, its own booking): the surfacing channel is starved after R1 - 1 informative surfacing in 1246 verb runs, 2026-09-25..10-04 (tools/fire-window-tally.py) - so a named window over it measures nothing. The malformed-line finding is re-booked alone.
+decision: does the lc-161 AFTER-1 measurement for the 2026-09-24 ship set show the drop the freeze release asks for → NO. AFTER-1 (2026-09-25..10-04): 11.64 operator messages per 100 turns against 5.75 (session-bootstrap 95% intervals 7.40-16.60 vs 4.26-7.36); no drop, so nothing is released. Five sessions carry 311 of 514 messages; class shares not comparable. docs/audits/2026-10-04-lc161-after1.md
+decision: join disposition of LEDGER:169 beside LEDGER:165 → new: LEDGER:165 ordered the measurement; this line records its result. It is deliberately NOT worded as the freeze-release blocker question, which only the operator answers
 
 ## Archive (pre-migration)
 
