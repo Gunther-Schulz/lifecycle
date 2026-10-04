@@ -174,6 +174,8 @@ decision: which form do the later arms of lc-161 take, given that AFTER-1 showed
 decision: join disposition of LEDGER:173 beside LEDGER:104, LEDGER:169 → new: LEDGER:169 records the AFTER-1 result; this line records the decision that result prompted. LEDGER:104 is unrelated (the third READY grade)
 decision: what is the per-arc form of lc-161: the arc, the assignment, the delivery proof and the criterion → Crossover inside each declared arc: verb-assigned ON/OFF from the session id, OFF logs what it withheld, delivery proven before effect, defied refusals counted apart; verdict over 6+ arcs, else COULD NOT VERIFY. Graded by judge tmp-ad. docs/directives/2026-10-04-lc161-per-arc-design.md rev 2
 decision: join disposition of LEDGER:175 beside LEDGER:173 → new: the earlier line of this date records the operator choosing the per-arc form; this line records the graded design that realizes it
+decision: what releases a frozen or future mechanism now that the per-arc form leaves no single lc-161 after-measurement verdict → PER MECHANISM: each releases on its own pre-registered probe pass plus the operator narrow exit at ship time, arm switch in the ship set. No blanket release. Ruled by judge tmp-ad under a session-scoped operator delegation stated first-hand at that desk 2026-10-04; per-arc design s7 Q3
+decision: join disposition of LEDGER:177 beside LEDGER:173, LEDGER:175 → new: LEDGER:173 and LEDGER:175 fix the form of the measurement; neither says what releases the parked mechanisms, which the design left open as section 7 question 3
 
 ## Archive (pre-migration)
 

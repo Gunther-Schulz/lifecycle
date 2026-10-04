@@ -147,9 +147,15 @@ double-rated sample must be reported with its agreement.
 secondary beside the per-arc verdict and never the verdict, the label
 stating its use (whether more declared arcs are worth waiting for).
 Question 2: the arm switch rides each future mechanism's ship set and the
-exit ask for that mechanism names it; nothing is built now. Question 3 is
-at the operator. Question 4 is noted and not opened. The questions stand
-below as asked.
+exit ask for that mechanism names it; nothing is built now. Question 3
+was answered the same day (LEDGER:177): release is PER MECHANISM. A frozen
+or future mechanism releases on its own pre-registered probe pass plus the
+operator's narrow exit at ship time, with the arm switch in its ship set;
+there is no blanket release. Ruled by the judgment desk under a
+session-scoped delegation the operator stated first-hand at that desk. The
+31 parked items that waited on the old wording were re-keyed, each to its
+own exit. Question 4 is noted and not opened. The questions stand below as
+asked.
 
 1. **A wider block as a second readout?** Repo-and-week blocks are
    plentiful: 9 of 19 held at least four substantial sessions over the
