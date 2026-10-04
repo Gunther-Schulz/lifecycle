@@ -2,8 +2,10 @@
 
 **Desk:** lifecycle-4f, wave 3 of
 `docs/directives/2026-10-04-refocus-opus-desk-handoff.md`.
-**Status:** PROPOSAL, revision 1, for grading by the judgment desk
-(tmp-ad). Nothing here amends lc-161 until it is graded. Design only:
+**Status:** REVISION 2, GRADED. The judgment desk (tmp-ad) approved
+revision 1 (`c8710e2`) with one amendment, made here: delivery of a
+refusal is separated from compliance with it (section 3). It also ruled
+questions 1 and 2 of section 7. lc-161 takes this form. Design only:
 nothing builds, nothing releases.
 
 **The decision this executes** (operator, 2026-10-04, relayed by the
@@ -73,13 +75,21 @@ never came up is in neither arm.
 
 **Delivery is proven per mechanism class, from the transcript:**
 
-| class | delivered means |
-|---|---|
-| a print | the mechanism's marker text appears in a tool result of that session |
-| a refusal | the refused act did not happen, and the same verb was re-invoked carrying the demanded disposition |
+| class | DELIVERED means | COMPLIED means |
+|---|---|---|
+| a print | the mechanism's marker text appears in a tool result of that session | not applicable |
+| a refusal | the refusal's text appears in a tool result of that session | delivered, AND the same verb was re-invoked carrying the demanded disposition |
 
 A fire with no delivery is its own bucket, FIRED-UNDELIVERED. It is never
 pooled into ON or OFF.
+
+**A refusal that was delivered and not complied with is DEFIED, and it is
+counted per arm beside the others.** The session saw the refusal, did not
+re-invoke, and routed the work around it. Revision 1 folded that into
+non-delivery. That would have hidden the one result that could kill the
+demand leg: a demand that arrives and is walked past. Delivery is what
+the eligibility rule and the delivery gate read; the defied count is
+reported, never used to drop a session.
 
 ## 4. Eligibility
 
@@ -133,6 +143,14 @@ double-rated sample must be reported with its agreement.
 
 ## 7. Questions back to the judgment desk
 
+**Rulings, 2026-10-04 (judgment desk):** question 1 YES, as a labelled
+secondary beside the per-arc verdict and never the verdict, the label
+stating its use (whether more declared arcs are worth waiting for).
+Question 2: the arm switch rides each future mechanism's ship set and the
+exit ask for that mechanism names it; nothing is built now. Question 3 is
+at the operator. Question 4 is noted and not opened. The questions stand
+below as asked.
+
 1. **A wider block as a second readout?** Repo-and-week blocks are
    plentiful: 9 of 19 held at least four substantial sessions over the
    same three and a half weeks. A repo-week is not an arc, and the
@@ -160,7 +178,7 @@ Home: this file. No row is built by this wave.
 |---|---|---|---|---|
 | a trialed mechanism reaches its moment | the mechanism's own verb | fire line with `arm=`, and `withheld=` when OFF | red-first: a fixed session id yields a fixed arm; OFF acts on nothing and logs the moment | the verb invocation |
 | a session is placed in an arc | the arm's grading run | a row per session: arc, arm, exposure, delivery | the scan is shown live on a session known to name an arc and one known to name none | the grading desk's run, at the window's close or at 6 eligible arcs |
-| delivery is established | the grading run | delivered and undelivered counts per arm | a print: the marker found in a tool result of a known delivered session and absent from a known filtered one | the grading run |
+| delivery is established | the grading run | delivered, undelivered and (for a refusal) complied and defied counts per arm | a print: the marker found in a tool result of a known delivered session and absent from a known filtered one. A refusal: a known complied case and a known defied case, or the absence of any defied case in the record stated | the grading run |
 | the verdict is taken | the grading run | an audit and one ledger line | the four-row table of section 5, applied to the rows | a desk other than the mechanism's designer |
 | the window closes with too few arcs | none | COULD NOT VERIFY, with the arc count | the count itself | the armed window date, written into the trial's item as an evidence blocker |
 
@@ -169,6 +187,6 @@ Home: this file. No row is built by this wave.
 The arc and repo-week counts come from the session rows of
 `tools/operator-interventions.py` over the two windows, joined to a scan of
 each session's transcript for the 12 arc and record paths. The scan is not
-yet a committed tool. If this design is accepted it becomes one, as part of
-the grading run; until then the figures in sections 2 and 7 are one
-uncommitted probe's output.
+yet a committed tool. It becomes one as a NAMED DELIVERABLE of whichever
+wave first runs the grading (judgment desk ruling); until then the figures
+in sections 2 and 7 are one uncommitted probe's output.

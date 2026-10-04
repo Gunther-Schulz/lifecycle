@@ -172,6 +172,8 @@ decision: refocus round 2 D3: build the decision-blocker ledger join at the door
 decision: join disposition of LEDGER:171 beside LEDGER:63, LEDGER:65, LEDGER:140 → new: the matched lines share only the verb names park, amend and build; none decides a ledger join for decision blockers. Round 2 D3 was proposed and probed today for the first time
 decision: which form do the later arms of lc-161 take, given that AFTER-1 showed an all-sessions before/after cannot grade a mechanism of this size → PER-ARC COMPARISON: like work against like, mechanism on and off; not all-sessions before/after, not a longer machine-wide window. Operator decision 2026-10-04, first-hand at the driving desk tmp-ad, relayed here under the delegation on this desk record. Basis: docs/audits/2026-10-04-lc161-after1.md
 decision: join disposition of LEDGER:173 beside LEDGER:104, LEDGER:169 → new: LEDGER:169 records the AFTER-1 result; this line records the decision that result prompted. LEDGER:104 is unrelated (the third READY grade)
+decision: what is the per-arc form of lc-161: the arc, the assignment, the delivery proof and the criterion → Crossover inside each declared arc: verb-assigned ON/OFF from the session id, OFF logs what it withheld, delivery proven before effect, defied refusals counted apart; verdict over 6+ arcs, else COULD NOT VERIFY. Graded by judge tmp-ad. docs/directives/2026-10-04-lc161-per-arc-design.md rev 2
+decision: join disposition of LEDGER:175 beside LEDGER:173 → new: the earlier line of this date records the operator choosing the per-arc form; this line records the graded design that realizes it
 
 ## Archive (pre-migration)
 
