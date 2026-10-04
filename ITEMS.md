@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 298
+added: 299
 compacted: 0
 
 ## lc-3
@@ -1768,3 +1768,12 @@ blocked-by: decision which retrieval, if any, is worth a pre-registered replay f
 not-derivable: 2026-10-04 searched LEDGER.md for retrieval and comparator decisions: the lc-289 lines decide the token comparator for ledger-to-ledger questions only, and the D3 decline of this date rules token overlap out here without naming a replacement; the freeze and the admission bar hold any new mechanism, so the choice is a design decision for a later round.
 amend-reason: 2026-10-04 the judgment desk asked for the live false fire at the shipped seam to be carried on the item, and its regrade result changed from one dissent to none
 amended-evidence: 2026-10-04 MEASURED 2026-10-04 (tools/decision-blocker-replay.py; grades in the XDG baselines directory, d3-replay-2026-10-04-grades.jsonl): 179 exercisable, 41 distinct fires, 9 TRUE / 25 FALSE / 5 clearing acts. The three strong specimens by item and booking commit: statiker st-46 at 9dfbd0050d, lifecycle lc-294 at 16f6eb68bd, statiker st-78 at eae13925ad. MEASURED at this desk the same day, at the one seam where the comparator is shipped: `ledger add decision` refused the D3 decline line itself on three unrelated ledger lines sharing only the tokens park, amend and build (disposed --join new; the disposition line sits beside the decline in LEDGER.md). RELAYED from judge tmp-ad: 17 rows re-graded there, 17 agree, its one subgrade dissent withdrawn; D3 and D4 declined.
+
+## lc-307
+grade: READY
+requirement: lifecycle migrate reads a carrier whose entries are level-3 headings: under a declared --entry-shape heading it migrates one item or one archived closure per heading, the bullets being that entry body, and a carrier migrated as bullets keeps its behaviour. Record: the wan2gp repo, docs/directives/2026-10-05-lifecycle-heading-entry-migration-brief.md
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,test/test_migrate.py,tools/prove-rows.py
+done-criterion: test/test_migrate.py carries a case each for: one entry per heading with its bullets as body; the section deciding the grade for an open, a closure and an unknown section; a level-4 heading as body; the zero-heading COULD NOT VERIFY; the bullet-shape note; the default unchanged on an existing bullet fixture. RED-FIRST: disabling the shape dispatch, the zero-heading guard and the note each turns its own case red. The zero-heading refusal has a roster row admitted on the lc-142 pair.
+evidence: MEASURED 2026-10-05 on a scratch copy of the motivating carrier, which holds 145 level-3 headings: read as bullets the migrator answers 241 entries, 65 items, 159 closures and 17 unclassified, every unclassified one a bullet from inside an entry body.
+blocked-by: NONE
