@@ -178,6 +178,8 @@ decision: what releases a frozen or future mechanism now that the per-arc form l
 decision: join disposition of LEDGER:177 beside LEDGER:173, LEDGER:175 → new: LEDGER:173 and LEDGER:175 fix the form of the measurement; neither says what releases the parked mechanisms, which the design left open as section 7 question 3
 decision: how seam content reaches a session whose callers filter verb output: a channel the caller cannot discard, a demand in place of the print, or the print withdrawn → SHIPPED 50ffc11: goal line last on stderr, stdout flushed first, arm switch in the ship set. Probe PASS: 22/22 seam calls, 60/75 write-verb calls, control 3/22. Narrow exit pre-granted by the operator first-hand at judge desk tmp-ad 2026-10-04 (its session record); graded there, round 2 D5 lifted
 decision: join disposition of LEDGER:179 beside LEDGER:71, LEDGER:75, LEDGER:80, LEDGER:166 → new: LEDGER:166 decides what converts a due read; none of the four decides the delivery channel of the goal line, which LEDGER:145 left open and lc-306 asked
+decision: integrate the lc-307 lane commits bda8f6b0b4b2, 458f3e2 and 035765aed9a8 (dispatched from wan2gp-6d) into main → YES - fast-forward from bce7dbc, verified in main 2026-10-05 (unittest 1157 OK, --test 138 of 138, prove-rows held, leak scan clean). Read as a defect repair inside the 2026-09-24 freeze; desk reading, surfaced to the operator, unanswered. lc-307 verbs logged to scratch, not the live fire log
+decision: join disposition of LEDGER:181 beside LEDGER:57 → new: LEDGER:57 cleared the wave-2 R1 lane of 2026-08; this is a different lane, lc-307, built 2026-10-05, with its own commits
 
 ## Archive (pre-migration)
 
