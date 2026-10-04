@@ -908,3 +908,53 @@ class SurfacedVsReadInTheAudit(unittest.TestCase):
         self.assertIn("never read: 1 of 2 surfaced kind(s)", outp)
         self.assertIn("PROSE-REST", outp)
         self.assertNotIn("FINDING", outp)
+
+    def _log(self, text):
+        path = retire.firelog.log_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        lines = []
+        code = retire.surfacing_report(self.REPO, lines.append)
+        return code, "\n".join(lines)
+
+    def _good(self, detail):
+        return json.dumps({"at": "2026-09-21T10:00:00+00:00",
+                           "verb": "item check", "repo": str(self.REPO),
+                           "detail": detail}) + "\n"
+
+    def test_a_malformed_line_is_a_FINDING_and_the_table_still_prints(self):
+        """lc-303. RED-FIRST PAIR: this log and the next arm's differ in the
+        one damaged line alone, and they must render differently."""
+        code, outp = self._log(self._good("surfaced=items")
+                               + '{"verb": "item check", "detail": "surfaced=it\n'
+                               + self._good("read=items"))
+        self.assertEqual(code, exits.FINDING, outp)
+        self.assertIn("FINDING [fire_log_malformed] 1 line(s)", outp)
+        self.assertIn("1 surfacing record(s), 1 read record(s)", outp)
+
+    def test_the_same_log_without_the_damaged_line_stays_CLEAN(self):
+        code, outp = self._log(self._good("surfaced=items")
+                               + self._good("read=items"))
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertNotIn("fire_log_malformed", outp)
+
+    def test_a_record_that_parses_but_is_not_an_object_is_malformed_too(self):
+        code, outp = self._log(self._good("surfaced=items")
+                               + '"surfaced=items"\n')
+        self.assertEqual(code, exits.FINDING, outp)
+        self.assertIn("FINDING [fire_log_malformed] 1 line(s)", outp)
+
+    def test_an_unterminated_last_line_is_an_append_in_flight_not_damage(self):
+        """The declared exemption: every invocation on the machine appends
+        here, so a reader can catch the last line half written. Only a line
+        that was FINISHED and still does not parse is damage."""
+        code, outp = self._log(self._good("surfaced=items")
+                               + '{"verb": "item check", "detail": "surfaced=it')
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertNotIn("fire_log_malformed", outp)
+
+    def test_a_malformed_line_beside_no_surfacing_keeps_both_answers(self):
+        code, outp = self._log('{"detail": "read=items\n')
+        self.assertIn("FINDING [fire_log_malformed] 1 line(s)", outp)
+        self.assertIn("no due read has been surfaced", outp)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, outp)

@@ -831,7 +831,12 @@ def cmd_audit(args, out, repo: Path, doc: dict) -> int:
 def surfacing_report(repo: Path, out) -> int:
     """Surfaced-vs-read per kind — O6 §7 row 3's counter (lc-264).
 
-    Three answers, and none is a FINDING. No readable log, or no surfacing
+    ONE FINDING (lc-303): a damaged line inside what the tally reads. The
+    count then undercounts by an unknown amount, so it prints beside the
+    table rather than instead of it, and `exits.worst` folds it with the
+    answer below.
+
+    Otherwise three answers, and none is a FINDING. No readable log, or no surfacing
     recorded for this repo, is COULD NOT VERIFY: a recorder that is not
     reaching reads exactly like a repo where nothing was ever due, the same
     distinction `judgment.report` draws for an unobserved rule. Otherwise
@@ -847,11 +852,19 @@ def surfacing_report(repo: Path, out) -> int:
     if tally is None:
         out("    COULD NOT VERIFY: no readable fire log on this machine.")
         return exits.COULD_NOT_VERIFY
+    bad = exits.CLEAN
+    if tally["malformed"]:
+        out(f"    FINDING [fire_log_malformed] {tally['malformed']} line(s) "
+            "in the fire log carry a surfacing or read token and are not a "
+            "JSON object. They are counted nowhere below, so every figure "
+            "here is a floor. The lines belong to no repo that can be read "
+            "off them; an unterminated last line is not counted.")
+        bad = exits.FINDING
     if not tally["surfacings"]:
         out("    COULD NOT VERIFY: no due read has been surfaced for this "
             "repo in the log — a recorder not reaching and a repo with "
             "nothing due print this alike.")
-        return exits.COULD_NOT_VERIFY
+        return exits.worst([exits.COULD_NOT_VERIFY, bad])
     out(f"    since {tally['first']}: {tally['surfacings']} surfacing "
         f"record(s), {tally['reads']} read record(s)")
     width = max(len(k) for k in tally["kinds"])
@@ -866,7 +879,7 @@ def surfacing_report(repo: Path, out) -> int:
         "surfaced into sessions that did not act is the review's judgment "
         "(design §6/§8); the ratio is not a usefulness measure (§6, "
         "DECLARED UNDETECTED).")
-    return exits.CLEAN
+    return bad
 
 
 def cmd_kind_sweep(args, out, repo: Path, doc: dict) -> int:

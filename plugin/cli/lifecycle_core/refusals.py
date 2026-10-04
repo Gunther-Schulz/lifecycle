@@ -489,6 +489,44 @@ def _laws_audit_run(laws_text: str) -> Fired:
         return Fired(code, "\n".join(buf))
 
 
+def _surfacing_audit_run(*, damaged: bool) -> Fired:
+    """The audit's surfaced-vs-read walk over a planted fire log (lc-303).
+
+    The two arms differ in ONE line: a finished line carrying a surfacing
+    token that is not JSON. The log is redirected through `XDG_STATE_HOME`
+    for the reason the desk-state row gives — an arm reading the machine's
+    own log would grade whatever it held that day.
+    """
+    from . import firelog as firelog_mod
+    from . import retire as retire_mod
+    repo = "/scratch/audited-repo"
+
+    def rec(detail):
+        return json.dumps({"at": "2026-09-21T10:00:00+00:00",
+                           "verb": "item check", "repo": repo,
+                           "detail": detail}) + "\n"
+    state = Path(tempfile.mkdtemp(prefix="lifecycle-xdg-"))
+    old = os.environ.get("XDG_STATE_HOME")
+    try:
+        os.environ["XDG_STATE_HOME"] = str(state)
+        log = firelog_mod.log_path()
+        log.parent.mkdir(parents=True)
+        log.write_text(
+            rec("surfaced=items")
+            + ('{"verb": "item check", "detail": "surfaced=it\n' if damaged
+               else "")
+            + rec("read=items"), encoding="utf-8")
+        buf = []
+        code = retire_mod.surfacing_report(Path(repo), buf.append)
+        return Fired(code, "\n".join(buf))
+    finally:
+        if old is None:
+            os.environ.pop("XDG_STATE_HOME", None)
+        else:
+            os.environ["XDG_STATE_HOME"] = old
+        shutil.rmtree(state, ignore_errors=True)
+
+
 # --- the rows ----------------------------------------------------------------
 
 def _kind_missing_exit() -> dict:
@@ -859,6 +897,21 @@ ROWS = [
         # law list — and the control is 40 lines longer than the retired cap,
         # which is the point of the replacement.
         control=lambda: _laws_audit_run(LAWS_CLEAN),
+    ),
+    Row(
+        # lc-303. The tally used to skip such a line without a word, so a
+        # damaged log and a whole one printed the same table.
+        ident="fire_log_malformed",
+        refusal="a finished line in the fire log carries a surfacing or read "
+                "token and is not a JSON object — the surfaced-vs-read "
+                "figures are then a floor, and the audit says so beside them",
+        firing_input="a fire log with one surfacing record, one read record "
+                     "and one terminated line that is not JSON between them",
+        expect=exits.FINDING,
+        fire=lambda: _surfacing_audit_run(damaged=True),
+        # The same log without the damaged line: the arms differ in that
+        # line alone, never in whether a log or a surfacing exists.
+        control=lambda: _surfacing_audit_run(damaged=False),
     ),
     Row(
         ident="laws_absent_could_not_verify",

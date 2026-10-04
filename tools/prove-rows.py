@@ -745,6 +745,17 @@ MUTATIONS = [
      "NONE, so the wait is deleted with no record anywhere, which is the "
      "silent half of lc-90 and the direction nothing reported"),
 
+    # lc-303. THE VERDICT FOLDED, per the note above `net_growth`: the tag
+    # still prints, only the code moves. Admitted on the lc-142 pair —
+    # PROVEN at this anchor, "rows changed: NONE" re-pointed at an inert
+    # comment line.
+    ("fire_log_malformed", "retire.py",
+     "        bad = exits.FINDING",
+     "        bad = exits.CLEAN",
+     "the damaged-line verdict (lc-303) — a fire log holding a line the "
+     "tally cannot read then audits clean, so the surfaced-vs-read figures "
+     "print as whole when they are a floor"),
+
     ("laws_scope_audit", "retire.py",
      "    if not hits:",
      "    if True:",

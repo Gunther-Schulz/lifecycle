@@ -3093,10 +3093,13 @@ def render_surfacing_line(repo) -> list[str]:
     if tally is None:
         return ["surfacing: no readable fire log on this machine — a fact "
                 "about THIS machine, not about the repo."]
+    damaged = (f" {tally['malformed']} damaged fire-log line(s) are counted "
+               "nowhere here (`lifecycle audit` reports them)."
+               if tally.get("malformed") else "")
     if not tally["surfacings"]:
         return ["surfacing: no due read has been surfaced for this repo on "
                 "this machine — a recorder not reaching and a quiet repo "
-                "print this alike."]
+                "print this alike." + damaged]
     cold = never_read(tally)
     surfaced_kinds = sum(1 for s, _r in tally["kinds"].values() if s)
     line = (f"surfacing: since {tally['first']} — {tally['surfacings']} "
@@ -3105,4 +3108,4 @@ def render_surfacing_line(repo) -> list[str]:
     line += (f"; never read: {', '.join(cold)}" if cold
              else "; every surfaced kind read at least once")
     line += " (direct file opens are not counted)"
-    return [line]
+    return [line + damaged]

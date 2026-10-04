@@ -161,7 +161,15 @@ def surfacing_tally(repo):
     the two must not render alike: the first says nothing about the repo.
     Otherwise `{"kinds": {kind: [surfaced, read]}, "first": <day or None>,
     "surfacings": <records carrying surfaced=>, "reads": <records carrying
-    read=>}`.
+    read=>, "malformed": <damaged lines>}`.
+
+    A DAMAGED LINE IS COUNTED, NEVER SKIPPED SILENTLY (lc-303): a line that
+    passed the pre-filter and is not a JSON object could have been a
+    surfacing or a read, so a log carrying one undercounts by an unknown
+    amount and must not render like a whole one. It cannot be attributed to
+    a repo, so the count is the log's and not this repo's. ONE EXEMPTION,
+    checked here: a last line with no terminator is an append in flight
+    (every invocation on the machine writes this file), not damage.
 
     The pre-filter on the raw line is a speed measure only (the log is every
     invocation on the machine): a line carrying neither token cannot
@@ -173,7 +181,7 @@ def surfacing_tally(repo):
     want = str(repo)
     kinds: dict = {}
     first = None
-    surfacings = reads = 0
+    surfacings = reads = malformed = 0
     try:
         with open(path, encoding="utf-8") as fh:
             for line in fh:
@@ -182,8 +190,13 @@ def surfacing_tally(repo):
                 try:
                     rec = json.loads(line)
                 except ValueError:
+                    if line.endswith("\n"):
+                        malformed += 1
                     continue
-                if not isinstance(rec, dict) or str(rec.get("repo", "")) != want:
+                if not isinstance(rec, dict):
+                    malformed += 1
+                    continue
+                if str(rec.get("repo", "")) != want:
                     continue
                 detail = rec.get("detail")
                 surfaced = detail_tokens(detail, "surfaced")
@@ -205,4 +218,5 @@ def surfacing_tally(repo):
     except (OSError, UnicodeDecodeError):
         return None
     return {"kinds": kinds, "first": first,
-            "surfacings": surfacings, "reads": reads}
+            "surfacings": surfacings, "reads": reads,
+            "malformed": malformed}
