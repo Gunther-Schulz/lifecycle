@@ -886,17 +886,23 @@ class StageAndStateVerbs(unittest.TestCase):
         RED on the pre-R3 code: no `goal (arc freeze):` line, no
         `goal-seam=narrow` in the fire log."""
         from lifecycle_core import firelog
+        import os
+        # `session-0` hashes to the ON arm (lc-306); pinned so the fire
+        # token below does not depend on which session runs the suite.
+        old_sid = os.environ.get(firelog.SESSION_ENV)
+        os.environ[firelog.SESSION_ENV] = "session-0"
+        self.addCleanup(lambda: os.environ.pop(firelog.SESSION_ENV, None)
+                        if old_sid is None else os.environ.__setitem__(
+                            firelog.SESSION_ENV, old_sid))
         repo = self._repo()
         self._run(repo, *self.OPEN)  # OPEN's --goal is "g"
         code, outp = self._run(repo, "arc", "narrow", "freeze", "--text",
                                "two left")
         self.assertEqual(code, 0, outp)
-        lines = outp.rstrip("\n").split("\n")
-        self.assertIn("goal (arc freeze): g", lines)
-        goal_idx = lines.index("goal (arc freeze): g")
-        nar_idx = next(i for i, l in enumerate(lines)
-                       if l.startswith(f"{arcs.NARROWED_LINE}:"))
-        self.assertLess(goal_idx, nar_idx, outp)
+        # lc-306 moved the line off stdout (last, on stderr; its own arms
+        # are in test_goal_seam_delivery.py). What stays pinned here is that
+        # the seam is still RECORDED.
+        self.assertNotIn("goal (arc freeze): g", outp)
         rec = firelog.last_run("arc narrow", repo=str(repo.dir))
         self.assertIsNotNone(rec, "no fire-log record for 'arc narrow'")
         self.assertIn("goal-seam=narrow", rec.get("detail") or "")
@@ -944,17 +950,21 @@ class StageAndStateVerbs(unittest.TestCase):
         freeze):` line was printed at all, and no `goal-seam=` token
         reached the fire log."""
         from lifecycle_core import firelog
+        import os
+        # `session-0` hashes to the ON arm (lc-306); pinned so the fire
+        # token below does not depend on which session runs the suite.
+        old_sid = os.environ.get(firelog.SESSION_ENV)
+        os.environ[firelog.SESSION_ENV] = "session-0"
+        self.addCleanup(lambda: os.environ.pop(firelog.SESSION_ENV, None)
+                        if old_sid is None else os.environ.__setitem__(
+                            firelog.SESSION_ENV, old_sid))
         repo = self._repo()
         self._run(repo, *self.OPEN)  # OPEN's --goal is "g"
         code, outp = self._run(repo, "arc", "advance", "freeze", "--to",
                                "next", "--reason", "moving on")
         self.assertEqual(code, 0, outp)
-        lines = outp.rstrip("\n").split("\n")
-        self.assertIn("goal (arc freeze): g", lines)
-        goal_idx = lines.index("goal (arc freeze): g")
-        adv_idx = next(i for i, l in enumerate(lines)
-                       if l.startswith(f"{arcs.ADVANCED_LINE}:"))
-        self.assertLess(goal_idx, adv_idx, outp)
+        # lc-306 moved the line off stdout; see the narrow twin above.
+        self.assertNotIn("goal (arc freeze): g", outp)
         rec = firelog.last_run("arc advance", repo=str(repo.dir))
         self.assertIsNotNone(rec, "no fire-log record for 'arc advance'")
         self.assertIn("goal-seam=advance", rec.get("detail") or "")

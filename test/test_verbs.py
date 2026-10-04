@@ -192,6 +192,29 @@ class ClosureRecordIsWritten(unittest.TestCase):
             os.chdir(here)
         return code, buf.getvalue()
 
+    def _run_goal_arm_on(self, repo, *argv):
+        """`_run`, with the goal line's trial arm forced ON and stderr
+        appended after stdout. lc-306 moved the goal line to the end of
+        stderr and put it under a session-keyed arm; `session-0` hashes ON
+        (pinned independently in test_goal_seam_delivery.py), and without
+        the pin these arms would pass or fail by whichever session happens
+        to run the suite."""
+        import io, os
+        from contextlib import redirect_stderr
+        from lifecycle_core import firelog
+        old = os.environ.get(firelog.SESSION_ENV)
+        os.environ[firelog.SESSION_ENV] = "session-0"
+        err = io.StringIO()
+        try:
+            with redirect_stderr(err):
+                code, out = self._run(repo, *argv)
+        finally:
+            if old is None:
+                os.environ.pop(firelog.SESSION_ENV, None)
+            else:
+                os.environ[firelog.SESSION_ENV] = old
+        return code, out + err.getvalue()
+
     def _head(self, repo):
         import subprocess
         return subprocess.run(["git", "-C", str(repo.dir), "rev-parse", "HEAD"],
@@ -324,15 +347,14 @@ class ClosureRecordIsWritten(unittest.TestCase):
         token reached the fire log."""
         from lifecycle_core import firelog
         r = self._repo()
-        code, out = self._run(r, "item", "close", "xx-1",
+        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1",
                               "--reason", self.REASON)
         self.assertEqual(code, exits.CLEAN, out)
         lines = out.rstrip("\n").split("\n")
         self.assertIn("goal (item goal xx-1): mitigate", lines)
-        goal_idx = lines.index("goal (item goal xx-1): mitigate")
-        rec_idx = next(i for i, l in enumerate(lines)
-                       if l.startswith(f"{items.CLOSED_REASON}:"))
-        self.assertLess(goal_idx, rec_idx, out)
+        # lc-306: the goal line is the LAST line of the run, after the
+        # record, where a `tail` keeps it. It used to be asserted first.
+        self.assertEqual(lines[-1], "goal (item goal xx-1): mitigate", out)
         rec = firelog.last_run("item close", repo=str(r.dir))
         self.assertIsNotNone(rec, "no fire-log record for 'item close'")
         self.assertIn("goal-seam=close", rec.get("detail") or "")
@@ -357,7 +379,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
             "yield": "nothing produced yet",
         }, items.SCHEMA_FLOOR)
         (r.dir / "arcs" / "freeze.md").write_text(body, encoding="utf-8")
-        code, out = self._run(r, "item", "close", "xx-1",
+        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1",
                               "--reason", self.REASON)
         self.assertEqual(code, exits.CLEAN, out)
         lines = out.rstrip("\n").split("\n")
@@ -381,7 +403,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
         }, items.SCHEMA_FLOOR)
         (r.dir / "arcs" / "closed" / "done-arc.md").write_text(
             body, encoding="utf-8")
-        code, out = self._run(r, "item", "close", "xx-1",
+        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1",
                               "--reason", self.REASON)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertNotIn("goal (arc done-arc):", out)
@@ -402,7 +424,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
             "blocked-by: NONE\n")
         r = refusals._Repo(items=items_text)
         self.addCleanup(r.close)
-        code, out = self._run(r, "item", "close", "xx-1",
+        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1",
                               "--reason", self.REASON)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("goal: none resolvable for this act", out)

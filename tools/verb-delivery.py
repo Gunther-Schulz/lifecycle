@@ -163,7 +163,9 @@ def unquoted_run(text: str):
 
 
 def shape(cmd: str, verb: str):
-    """`(shape, filter, stderr)` of the first invocation of `verb` in `cmd`."""
+    """`(shape, filter, stderr, stages)` of the first invocation of `verb`
+    in `cmd`. `stages` is the raw text of each pipeline stage after the verb
+    (empty unless piped): what `--replay` re-runs."""
     text = cmd.replace("2>&1", " \x01 ").replace("2>/dev/null", " \x02 ")
     words = r"\s+".join(re.escape(w) for w in verb.split())
     m = re.search(r"lifecycle['\"]?\s+(?:--repo\s+\S+\s+)?" + words, text)
@@ -176,15 +178,99 @@ def shape(cmd: str, verb: str):
     seg, stop, end = unquoted_run(rest)
     stderr = "merged" if "\x01" in seg else "discarded" if "\x02" in seg else "free"
     if lead.rfind("$(") > lead.rfind(")"):
-        return ("captured", "-", stderr)
+        return ("captured", "-", stderr, [])
     if re.search(r"\b(for|while|do|if|then)\b", lead):
-        return ("other", "-", stderr)
+        return ("other", "-", stderr, [])
     if stop == "|":
         name = re.match(r"[\w./-]+", rest[end:].lstrip())
-        return ("piped", Path(name.group(0)).name if name else "?", stderr)
+        stages = []
+        tail = rest[end:]
+        while True:
+            _seg, sep, nxt = unquoted_run(tail)
+            stages.append(tail[:nxt - len(sep)].replace("\x01", "")
+                          .replace("\x02", "").strip())
+            if sep != "|":
+                break
+            tail = tail[nxt:]
+        return ("piped", Path(name.group(0)).name if name else "?", stderr,
+                stages)
     if re.search(r">\s*\S", seg.replace("\x01", "").replace("\x02", "")):
-        return ("redirected", "-", stderr)
-    return ("bare", "-", stderr)
+        return ("redirected", "-", stderr, [])
+    return ("bare", "-", stderr, [])
+
+
+#: The only programs `--replay` will execute, each reading stdin alone.
+REPLAY_FILTERS = ("tail", "head", "grep", "cut")
+#: What a seam verb prints on stdout, modelled on a real `item close`.
+REPLAY_STDOUT = [
+    "moved lc-0 → ITEMS-DONE.md (grade DONE)",
+    "closed-reason: 2026-01-01 verified at 0000000: suite OK",
+    "committed: lifecycle: close lc-0 (DONE)",
+    "conservation: items 1 + done 1 (of which archive 0) = 2   "
+    "baseline 0 + added 2 − compacted 0 = 2",
+    "conservation: CLEAN — nothing left the carrier by a path that is not "
+    "a closure.",
+    "due read: kind 'done bodies' is due now — tier 1",
+]
+REPLAY_GOAL = "goal (arc example): the declared goal of the arc"
+
+
+def run_stages(stages, text):
+    """`text` through the recorded pipeline, or None when a stage is not one
+    of `REPLAY_FILTERS`, does not parse, or errors. Run in an empty
+    directory so a stray file argument resolves to nothing."""
+    import shlex
+    import subprocess
+    import tempfile
+    with tempfile.TemporaryDirectory() as cwd:
+        for stage in stages:
+            try:
+                argv = shlex.split(stage)
+            except ValueError:
+                return None
+            if not argv or Path(argv[0]).name not in REPLAY_FILTERS:
+                return None
+            try:
+                proc = subprocess.run([Path(argv[0]).name] + argv[1:],
+                                      input=text, capture_output=True,
+                                      text=True, cwd=cwd, timeout=10)
+            except (OSError, subprocess.SubprocessError):
+                return None
+            if proc.returncode > 1:
+                return None
+            text = proc.stdout
+    return text
+
+
+def replay_row(row, *, last_on_stderr: bool):
+    """Would the goal line reach the session through this call's shape?
+
+    `last_on_stderr` is the proposed form: stdout is FLUSHED, then the goal
+    line is written to stderr. Where the caller merged the streams the
+    filter therefore sees the stdout lines and then the goal line, in that
+    order; where stderr is free the line bypasses the filter. With it False
+    the line is first and on stdout, which is the form in use.
+    Returns `(delivered, ran)`.
+    """
+    shape_, stderr = row["shape"], row["stderr"]
+    body = "\n".join(REPLAY_STDOUT) + "\n"
+    goal = REPLAY_GOAL + "\n"
+    if shape_ == "bare":
+        return True, False
+    if shape_ != "piped":
+        return False, False
+    if last_on_stderr:
+        if stderr == "free":
+            return True, False
+        if stderr == "discarded":
+            return False, False
+        text = body + goal
+    else:
+        text = goal + body
+    out = run_stages(row.get("stages") or [], text)
+    if out is None:
+        return False, False
+    return bool(GOAL_MARKER.search(out)), True
 
 
 def main() -> int:
@@ -193,6 +279,10 @@ def main() -> int:
     ap.add_argument("--until", default=None, help="ISO timestamp, exclusive")
     ap.add_argument("--transcripts", default=str(Path.home() / ".claude" / "projects"))
     ap.add_argument("--out", default=None)
+    ap.add_argument("--replay", action="store_true",
+                    help="replay each joined call's recorded filters over "
+                         "the goal line in its proposed place (last, on "
+                         "stderr) and in its present one (first, on stdout)")
     args = ap.parse_args()
 
     since = ts(args.since if "T" in args.since else args.since + "T00:00:00+00:00")
@@ -262,7 +352,7 @@ def main() -> int:
                          "refused-write" if verb in WRITE_VERBS else "report-finding"),
                "joined": sh is not None}
         if sh is not None:
-            row["shape"], row["filter"], row["stderr"] = sh
+            row["shape"], row["filter"], row["stderr"], row["stages"] = sh
             marker = GOAL_MARKER if seam else FINDING_MARKER
             row["delivered"] = bool(marker.search(result))
         if row["class"] == "refused-write":
@@ -315,6 +405,18 @@ def main() -> int:
                     print(f"  refusal {label}: {len(grp)}; same verb ran clean in "
                           f"the same session within {int(FOLLOW.total_seconds() // 60)}"
                           f" min in {sum(r['complied'] for r in grp)}")
+    if args.replay:
+        print("\nREPLAY of the recorded filters (tail, head, grep, cut only; "
+              "any other shape counts undelivered and is not run)")
+        print("  population | joined | goal line LAST on stderr | goal line "
+              "FIRST on stdout | filters actually run")
+        for cls in ("goal-seam", "refused-write"):
+            joined = [r for r in rows if r["class"] == cls and r["joined"]]
+            new = [replay_row(r, last_on_stderr=True) for r in joined]
+            cur = [replay_row(r, last_on_stderr=False) for r in joined]
+            print(f"  {cls} | {len(joined)} | {sum(d for d, _ in new)} | "
+                  f"{sum(d for d, _ in cur)} | {sum(ran for _, ran in new)} "
+                  f"and {sum(ran for _, ran in cur)}")
     if args.out:
         print(f"\nrows written: {args.out}")
     return 0

@@ -28,6 +28,8 @@ put the window on the loss side. `check_move_integrity` is what makes that
 window visible afterwards.
 """
 
+import hashlib
+import os
 import posixpath
 import re
 import subprocess
@@ -3540,7 +3542,7 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
         # answer this treatment arm was measuring for; this is only the READ
         # half. Runs for BOTH grades (DONE and DROPPED) — a drop's own
         # required reason is exactly as much "the record" as a done close's.
-        _print_item_close_goal(ctx, out, args.ident, subject)
+        goal_lines = _item_close_goal_lines(ctx, args.ident, subject)
         # THE APPENDED LINES, IN `DONE_ONLY_SLOTS` ORDER, in ONE buffer write
         # with the move. Two writes would leave a body moved without its
         # record, or a record about a move that did not happen — and the
@@ -3646,7 +3648,7 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
         code = exits.worst([code, items_mod.report_conservation(
             items_mod.conservation(items_parsed, done_parsed, done_why), out)])
     args.fire_detail = f"close {args.ident} {grade}"
-    _append_fire_detail(args, "goal-seam=close")
+    _record_seam_goal(args, "close", goal_lines)
     return code
 
 
@@ -3980,18 +3982,57 @@ def _goal_line(source: str, text) -> str | None:
     return f"goal ({source}): {text}" if text else None
 
 
-def _print_seam_goal(out, source: str, text) -> None:
-    """Single-source seam print (`arc advance`, `arc narrow`): the line, or
+#: The mechanism name the trial arm is keyed to, and the `withheld=` value.
+GOAL_SEAM = "goal-seam"
+
+
+def trial_arm(mechanism: str) -> str:
+    """`on`, `off` or `unassigned` for this session and `mechanism`.
+
+    The per-arc trial's assignment (docs/directives/
+    2026-10-04-lc161-per-arc-design.md section 3): made by the VERB from the
+    session id it already knows and the mechanism's own name, never by a
+    flag or a variable a caller could set. sha256 of `<session>:<mechanism>`,
+    last byte even is ON. A run with no session id belongs to no session, so
+    it is in neither arm and says so rather than being counted in one.
+    """
+    session = (os.environ.get(firelog.SESSION_ENV) or "").strip()
+    if not session:
+        return "unassigned"
+    last = hashlib.sha256(f"{session}:{mechanism}".encode()).digest()[-1]
+    return "on" if last % 2 == 0 else "off"
+
+
+def _record_seam_goal(args, seam: str, lines) -> None:
+    """Hand the seam's goal lines to the run's tail, or withhold them.
+
+    lc-306. The line used to be printed here, first, on stdout, and callers'
+    `grep` and `tail` cut it at 19 of 22 seam calls. It is now emitted by
+    `cli.main` as the LAST output of the run, on stderr, after stdout is
+    flushed; this function only says what that is. Under the OFF arm
+    nothing is handed over and the fire line records what was withheld, so
+    both arms leave the same exposure record.
+    """
+    arm = trial_arm(GOAL_SEAM)
+    if arm == "off":
+        _append_fire_detail(args, f"arm=off; withheld={GOAL_SEAM}")
+        return
+    args.seam_goal_lines = list(lines or ())
+    _append_fire_detail(args, f"{GOAL_SEAM}={seam}; arm={arm}")
+
+
+def _seam_goal_lines(source: str, text) -> list:
+    """Single-source seam (`arc advance`, `arc narrow`): the line, or
 
     the NAMED absence — `goal: none resolvable for this act` — when the
     arc's own `goal:` slot is blank. Never silence: an unprinted line here
     would be indistinguishable from a verb that never got this far.
     """
     line = _goal_line(source, text)
-    out(line if line is not None else "goal: none resolvable for this act")
+    return [line if line is not None else "goal: none resolvable for this act"]
 
 
-def _print_item_close_goal(ctx: Ctx, out, ident: str, subject) -> None:
+def _item_close_goal_lines(ctx: Ctx, ident: str, subject) -> list:
     """R3 seam for `item close`: TWO sources, each printed independently
 
     when it resolves, neither invented when it does not.
@@ -4013,14 +4054,13 @@ def _print_item_close_goal(ctx: Ctx, out, ident: str, subject) -> None:
     source produced a line — the MUST-NOT-MOVE this repo's surfacing
     convention already keeps: an absence is spoken, never silent.
     """
-    printed = False
+    found = []
     if subject is not None:
         goal_name = (subject.slots.get("goal") or "").strip()
         if goal_name in decl.effective_goals(ctx.declaration):
             line = _goal_line(f"item goal {ident}", goal_name)
             if line is not None:
-                out(line)
-                printed = True
+                found.append(line)
     pattern = re.compile(r"\b" + re.escape(ident) + r"\b")
     for slug in arcs.live_slugs(ctx.repo):
         path = ctx.repo / arcs.ARCS_DIR / f"{slug}.md"
@@ -4033,10 +4073,8 @@ def _print_item_close_goal(ctx: Ctx, out, ident: str, subject) -> None:
         arc_obj, _probs = arcs.parse_arc(text, slug)
         line = _goal_line(f"arc {slug}", arc_obj.slots.get("goal"))
         if line is not None:
-            out(line)
-            printed = True
-    if not printed:
-        out("goal: none resolvable for this act")
+            found.append(line)
+    return found or ["goal: none resolvable for this act"]
 
 
 def _append_fire_detail(args, addition: str) -> None:
@@ -4415,8 +4453,8 @@ def cmd_arc_advance(args, out, ctx: Ctx) -> int:
     # already-required `--reason` prose below is the written answer; this
     # prints the LIVE goal so the answer has something to be an answer TO,
     # immediately before that prose records.
-    _print_seam_goal(out, f"arc {slug}", arc_obj.slots.get("goal"))
-    _append_fire_detail(args, "goal-seam=advance")
+    _record_seam_goal(args, "advance",
+                      _seam_goal_lines(f"arc {slug}", arc_obj.slots.get("goal")))
     mark = f" | {arcs.OUTWARD_MARK}" if args.outward else ""
     line = (f"{arcs.ADVANCED_LINE}: {to} {_today()} {args.reason.strip()}"
             f"{mark}")
@@ -4466,8 +4504,8 @@ def cmd_arc_narrow(args, out, ctx: Ctx) -> int:
         return exits.FINDING
     # R3 SEAM (refocus round, 2026-09-24, lc-288) — see `cmd_arc_advance`'s
     # own comment for the full rationale; the shape is identical here.
-    _print_seam_goal(out, f"arc {slug}", arc.slots.get("goal"))
-    _append_fire_detail(args, "goal-seam=narrow")
+    _record_seam_goal(args, "narrow",
+                      _seam_goal_lines(f"arc {slug}", arc.slots.get("goal")))
     new = args.text.strip()
     text = arcs.set_slot(text, "narrowing", f"{form} — {new}")
     line = f"{arcs.NARROWED_LINE}: {form} {_today()} {new}"

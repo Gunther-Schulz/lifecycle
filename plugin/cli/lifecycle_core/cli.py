@@ -1464,6 +1464,21 @@ def main(argv=None) -> int:
     for d in due:
         out(f"due read: kind {d.kind!r} is due now — {d.note}")
 
+    # THE SEAM'S GOAL LINE, LAST AND ON STDERR (lc-306). A caller's `tail`
+    # keeps a last line and a caller's `grep` does not see stderr unless the
+    # caller merged it, so this place reaches what the old one (first, on
+    # stdout) did not. STDOUT IS FLUSHED FIRST: under `2>&1` both streams
+    # are one pipe, stdout is block-buffered into it, and without the flush
+    # everything above would land AFTER this line and `tail` would cut it
+    # again. "Last" is a claim about flush order, not print order.
+    goal_lines = getattr(args, "seam_goal_lines", None)
+    if goal_lines:
+        sys.stdout.flush()
+        err = _sys_stderr()
+        for line in goal_lines:
+            err.write(f"{line}\n")
+        err.flush()
+
     # ONE line per invocation, carrying the RESOLVED repo rather than the
     # `--repo` flag: §3.1 says the tool records the writer's repo on every
     # write, and the flag is absent on every invocation that used the cwd.

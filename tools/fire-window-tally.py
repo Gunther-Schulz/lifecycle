@@ -13,7 +13,11 @@ What it counts, per window, over records whose `repo` is a roster entry:
   sessions       distinct `session` values on those records
   surfacings     records whose detail carries `surfaced=`
   kind reads     records whose detail carries `read=`
-  goal seams     records whose detail carries `goal-seam=`, per session
+  goal seams     records whose detail carries `goal-seam=`, per session.
+                 This counts the goal line being EMITTED, not its arrival:
+                 `tools/verb-delivery.py` counts arrivals. A seam reached by
+                 a session in the OFF trial arm (lc-306) carries
+                 `withheld=goal-seam` instead and is counted on its own line
 
 and, separately and never pooled, the records whose repo is NOT a roster
 entry (test fixtures and scratch repos writing to the live log).
@@ -75,6 +79,7 @@ def main() -> int:
     surfaced = []
     reads = []
     seams = collections.defaultdict(collections.Counter)
+    withheld = 0
     foreign = collections.Counter()
     oldest = None
     with fh:
@@ -111,6 +116,7 @@ def main() -> int:
                 reads.append((at[:16], name, kind, sess))
             for seam in detail_values(detail, "goal-seam"):
                 seams[(name, sess)][seam] += 1
+            withheld += len(detail_values(detail, "withheld"))
 
     print(f"window: {args.since} <= at < {args.until}; roster {len(roster)} repo(s); "
           f"oldest record in the live log {oldest}; malformed line(s) {malformed}")
@@ -131,8 +137,10 @@ def main() -> int:
     print(f"kind reads: {len(reads)}")
     for row in reads:
         print("  " + " | ".join(row))
-    print(f"goal seams: {sum(sum(c.values()) for c in seams.values())} "
-          f"in {len(seams)} repo-session pair(s)")
+    print(f"goal seams (line emitted; arrival is tools/verb-delivery.py): "
+          f"{sum(sum(c.values()) for c in seams.values())} "
+          f"in {len(seams)} repo-session pair(s); withheld by the OFF arm: "
+          f"{withheld}")
     for (name, sess), c in sorted(seams.items()):
         print(f"  {name} {sess}: " + ", ".join(f"{k} {n}" for k, n in sorted(c.items())))
     print(f"NOT ROSTER (never pooled above): {sum(foreign.values())} run(s) — "
