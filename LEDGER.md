@@ -170,6 +170,8 @@ decision: does the lc-161 AFTER-1 measurement for the 2026-09-24 ship set show t
 decision: join disposition of LEDGER:169 beside LEDGER:165 → new: LEDGER:165 ordered the measurement; this line records its result. It is deliberately NOT worded as the freeze-release blocker question, which only the operator answers
 decision: refocus round 2 D3: build the decision-blocker ledger join at the door (item add, park, amend) → DECLINED, with D4, no comparator repair spent (judge tmp-ad): replay 9 TRUE vs 25 FALSE of 179 exercisable; token overlap is the wrong retrieval for blocker-to-ledger. Bought: seam rate 3.4% (1.7% strong) and 3 specimens with commit refs. docs/audits/2026-10-04-d3-decision-blocker-replay.md
 decision: join disposition of LEDGER:171 beside LEDGER:63, LEDGER:65, LEDGER:140 → new: the matched lines share only the verb names park, amend and build; none decides a ledger join for decision blockers. Round 2 D3 was proposed and probed today for the first time
+decision: which form do the later arms of lc-161 take, given that AFTER-1 showed an all-sessions before/after cannot grade a mechanism of this size → PER-ARC COMPARISON: like work against like, mechanism on and off; not all-sessions before/after, not a longer machine-wide window. Operator decision 2026-10-04, first-hand at the driving desk tmp-ad, relayed here under the delegation on this desk record. Basis: docs/audits/2026-10-04-lc161-after1.md
+decision: join disposition of LEDGER:173 beside LEDGER:104, LEDGER:169 → new: LEDGER:169 records the AFTER-1 result; this line records the decision that result prompted. LEDGER:104 is unrelated (the third READY grade)
 
 ## Archive (pre-migration)
 
