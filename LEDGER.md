@@ -196,6 +196,8 @@ decision: is the lane commit 3a4647c (a blocker cleared by amendment on a PARKED
 decision: join disposition of LEDGER:195 beside LEDGER:71, LEDGER:181, LEDGER:187, LEDGER:193 → new: LEDGER:181, :187 and :193 each book other lane commits (lc-307, lc-308/lc-311, the migrator pair); none names 3a4647c or the cleared-blocker defect, read at those lines
 decision: is the lane commit fe25c51 (arc advance retires the deadline lanes of a stage whose name has several words) accepted into main? → ACCEPTED 2026-10-05, lifecycle desk, a defect repair under the operator delegation. Reproduced before and re-run after by the desk with the real verbs; suite 1243 run, 0 failed, 1 skipped; --test CLEAN. Body: docs/audits/2026-10-05-gap-sweep-followup-trials.md, Leftovers.
 decision: join disposition of LEDGER:197 beside LEDGER:68, LEDGER:193, LEDGER:195 → new: LEDGER:181, :187, :193 and :195 book other lane commits; none names fe25c51 or the stage-word defect, read at those lines
+decision: is the 2026-09-24 freeze released for the close statement and the deletion-side carrier check? → YES for those two only (operator, 2026-10-05, first-hand in session lifecycle-b5: "yes" to that question). Kept on everything else trialled. Numbers: docs/audits/2026-10-05-gap-sweep-followup-trials.md, last section.
+decision: join disposition of LEDGER:199 beside LEDGER:151, LEDGER:169, LEDGER:187 → new: no earlier line decides a release for these two mechanisms; LEDGER:169 refused a release on a different measurement
 
 ## Archive (pre-migration)
 
