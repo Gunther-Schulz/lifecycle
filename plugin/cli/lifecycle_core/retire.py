@@ -279,7 +279,13 @@ def list_home(repo: Path, home: str) -> tuple:
                     "WAS resolved — an absent in-tree home is an observation, "
                     "not an unexamined population.")
     if path.is_dir():
-        hits = sorted(p for p in path.rglob("*") if p.is_file())
+        # CACHES ARE NOT INSTANCES. The sweep below already refuses to
+        # descend into these directories by name; this listing, which every
+        # growth count reads, walked into them — so a kind homed in a
+        # directory gained a member each time the suite compiled a module.
+        hits = sorted(p for p in path.rglob("*") if p.is_file()
+                      and not any(part in SWEEP_SKIP_DIRS
+                                  for part in p.relative_to(path).parts))
         return [_shown(p, repo) for p in hits], \
             f"directory {home!r}: one instance per file"
     try:

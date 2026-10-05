@@ -958,3 +958,24 @@ class SurfacedVsReadInTheAudit(unittest.TestCase):
         self.assertIn("FINDING [fire_log_malformed] 1 line(s)", outp)
         self.assertIn("no due read has been surfaced", outp)
         self.assertEqual(code, exits.COULD_NOT_VERIFY, outp)
+
+
+class ADirectoryHomeCountsFilesNotCaches(unittest.TestCase):
+    """A directory home is "one instance per file", and the listing walked
+    INTO `__pycache__`: after any run of the suite the audit reported `tools`
+    as 12 instances over 11 tracked files, the twelfth being a `.pyc`. The
+    sweep already skips those directories by name (`SWEEP_SKIP_DIRS`); the
+    listing behind every growth count did not."""
+
+    def test_a_cache_directory_inside_the_home_is_not_an_instance(self):
+        import tempfile
+        from lifecycle_core import retire
+        d = Path(tempfile.mkdtemp(prefix="lifecycle-listhome-"))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "tools" / "__pycache__").mkdir(parents=True)
+        (d / "tools" / "a.py").write_text("x\n", encoding="utf-8")
+        (d / "tools" / "sub").mkdir()
+        (d / "tools" / "sub" / "b.py").write_text("y\n", encoding="utf-8")
+        (d / "tools" / "__pycache__" / "a.cpython-314.pyc").write_bytes(b"z")
+        hits, _how = retire.list_home(d, "tools")
+        self.assertEqual(sorted(hits), ["tools/a.py", "tools/sub/b.py"], hits)
