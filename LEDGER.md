@@ -192,6 +192,8 @@ decision: join disposition of LEDGER:190 beside LEDGER:86, LEDGER:99, LEDGER:185
 decision: does lifecycle get a deadline observer for a parked item whose own text sets a time window → NOT NOW (operator, first-hand at wan2gp-e3 2026-10-05, on the desk recommendation): one instance, wan2gp w2-47, 28 days past its own one-week rule, and a re-grade caught it at pickup. A new mechanism under LEDGER:147, so it would need a probe first; reopen on a second instance
 decision: gap sweep T7: are the migrator lane commits 4dd0d22 and 898a97c accepted into main? → ACCEPTED 2026-10-05, lifecycle desk: booked from the lane closing report, verified at the artifact (both false-clean carriers exit 3 and write nothing; suite 1226 OK, --test 139 rows, prove-rows held). Body: docs/audits/2026-10-05-gap-sweep-trials.md, wave 1 results.
 decision: join disposition of LEDGER:193 beside LEDGER:181, LEDGER:187 → new: a booking of two lane commits made today; no earlier line names 4dd0d22 or 898a97c, the near-matches share only the words migrator and commits
+decision: is the lane commit 3a4647c (a blocker cleared by amendment on a PARKED item commits; the head names the promotion owed) accepted into main? → ACCEPTED 2026-10-05, lifecycle desk, under the operator delegation to fix defects at once. Verified by the desk at the checkout and end to end under the commit hook. Body: docs/audits/2026-10-05-gap-sweep-followup-trials.md, Leftovers.
+decision: join disposition of LEDGER:195 beside LEDGER:71, LEDGER:181, LEDGER:187, LEDGER:193 → new: LEDGER:181, :187 and :193 each book other lane commits (lc-307, lc-308/lc-311, the migrator pair); none names 3a4647c or the cleared-blocker defect, read at those lines
 
 ## Archive (pre-migration)
 
