@@ -195,7 +195,9 @@ A question is REAL when only the operator could answer it.
 | T4a, T4b | book the `arc advance` / date-door defects? | NOT REAL — defects, fixed |
 | T5a | drop the four planted items instead of re-grading? | an artefact of the trial |
 
-10 questions from 10 lanes; 1 REAL, 8 NOT REAL, 1 trial artefact.
+Counted per lane (a row naming two lanes counts twice): 12 questions from
+10 lanes; 1 REAL, 10 NOT REAL, 1 trial artefact. (Corrected 2026-10-05: this
+line first read 10 questions and 8 NOT REAL, a count of rows.)
 
 ## Wave 2 — verdicts registered BEFORE dispatch (2026-10-05)
 
@@ -374,7 +376,7 @@ questions per lane. The trial does NOT show that either mechanism cuts
 questions the record already answers, because the baseline asked none. The
 case the operator described — a question put in conversation that the
 record settles, with no one having voiced the uncertainty first — is not
-what this task exercised; T3 and T4's ten returned questions (8 of 10
+what this task exercised; wave 1's twelve returned questions (10 of 12
 settled by the record) are nearer to it, and came from lanes with no
 prototype.
 

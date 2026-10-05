@@ -32,9 +32,10 @@ recommendation settled it.
 **Totals.** 21 trial lanes (T2-T11), plus 4 lanes that were not subjects
 (one migrator repair, one prototype build, one read-only search; and the
 stopped T10 lane, which is a subject only as the kill). Right unaided: 14
-of 21. Questions returned: 28 — 5 REAL, 22 NOT REAL, 1 an artefact of the
-trial. Lifecycle defects found by Part 3: 9; fixed in this arc: 8, the
-ninth a new mechanism. Counting Parts 1 and 2 as well: 12 fixed (see the
+of 21. Questions returned: 30 — 5 REAL, 24 NOT REAL, 1 an artefact of the
+trial (counted per lane: a question two lanes each returned counts twice).
+Lifecycle defects found by Part 3: 8; fixed in this arc: 7, the eighth a
+new mechanism. Counting Parts 1 and 2 as well: 12 fixed (see the
 last table).
 
 ## What the rows say
@@ -76,8 +77,9 @@ ones — is met by all three arms, the unaided one included. The probe shows
 no benefit of either prototype for a task that states its uncertainty, and
 could not show one: the baseline asked nothing the record answers. It did
 not test a question raised with no one having voiced the uncertainty first.
-Evidence nearer to that case, from lanes with no prototype: of the 11
-questions T2-T10 returned, 9 were settled by the record or a recommendation.
+Evidence nearer to that case, from lanes with no prototype: of the 13
+questions T2-T10 returned, 11 were settled by the record or a
+recommendation, 1 was REAL and 1 an artefact of the trial.
 
 ## What this cannot show
 
