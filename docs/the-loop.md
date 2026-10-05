@@ -33,7 +33,7 @@ Status vocabulary, and it is deliberately not a grade of quality:
 | O1 | nothing → a session exists | — | — | — | SessionStart hooks | MECHANIZED |
 | O2 | session → holds standing state | — | — | — | `session-scan.py` injects ledger tail, item census, ready items, gate status | MECHANIZED |
 | O3 | session → holds the repo's reading roster | — | `.claude/required-reading.json` | roster gate | `required-reading-inject.py` | **MECHANIZED 2026-09-19** — the roster SHIPPED (`e71a414`) and is a REGISTERED KIND (`2a154ea`); injected at session start, gate arms on first write |
-| O4 | session → holds the registry map | `kind list --digest` | — | its own three arms | a SessionStart hook | **PARTIAL — the verb SHIPPED 2026-09-18 (lc-219); the hook that runs it is not built** |
+| O4 | session → holds the registry map | `kind list --digest` | — | its own three arms | `session-scan.py`, the SessionStart hook, runs the verb and injects its output | **MECHANIZED 2026-09-20** — the verb SHIPPED 2026-09-18 (lc-219) and the hook that runs it landed 2026-09-20 (dotfiles `cb52707`); every session start prints the digest. Cell corrected 2026-10-05: it read PARTIAL, hook not built, for fifteen days after the hook landed |
 | O5 | session → picks work | `item ready` | — | `item check` | the injected ready list | MECHANIZED |
 | O6 | **session needs a kind's CONTENT at the moment it matters** | — | — | — | — | **GAP — the central one; see below** |
 | O7 | context dies by compaction → memory replaced by a summary | — | `compactions.jsonl` | — | `postcompact-log.py`, and `compact-reground.py` re-injects the working set | PARTIAL |
@@ -158,8 +158,10 @@ session BEHAVIOUR remains unmeasured, and that half is the open gap.
 6. ~~**O3 — no reading roster.**~~ **CLOSED 2026-09-19**: the roster shipped
    (`e71a414`) and became a registered kind (`2a154ea`), so it is injected at
    session start and its gate arms on first write. **O4's verb SHIPPED the day
-   this file was written**; the hook that puts its output in front of a
-   session has not, so O4 remains PARTIAL and is the live half of this line.
+   this file was written**, and the hook that puts its output in front of a
+   session landed **2026-09-20** (dotfiles `cb52707`), so O4 is MECHANIZED
+   and this line has no live half left. (Corrected 2026-10-05: it named O4
+   as PARTIAL and live for fifteen days after the hook landed.)
 
 **This file is edited in place as its rows move, and that is not
 housekeeping.** A map whose rows go stale while its author watches is the
@@ -167,7 +169,7 @@ label-over-body class aimed at the one artifact written to make absences
 visible — and it would go stale in the QUIET direction, reading as more
 broken than the system is, which is how a reader learns to discount it.
 Convention, and it starts now rather than retroactively: a status cell that
-MOVES carries the date it moved. O4 is the first and currently the only one —
+MOVES carries the date it moved. O3, O4 and M6 carry one as of 2026-10-05 —
 the rest are as-written on 2026-09-18, which the file's own date already says.
 (This sentence replaced one claiming every row carried such a date. It did
 not, and a rule stated beside a mechanism that does not hold it is worse than
@@ -200,5 +202,6 @@ half only. It does not close O6, whose whole finding is that retrieval fails
 at MOMENTS OF APPLICATION rather than at session boundaries — a session can
 be handed this file at minute one and still not reach for it at minute
 forty, which is instance 3 of the design's own three-instance table. The
-registry digest listing it by name would still raise the odds and still not
-close it.
+registry digest is injected at session start since 2026-09-20 and lists the
+design-notes kind with its newest member; that raises the odds and still
+does not close it.
