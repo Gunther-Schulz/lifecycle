@@ -3425,3 +3425,111 @@ class TheHeadNamesClearedWaits(unittest.TestCase):
         self.assertEqual(self._counts(out)[:3], (1, 0, 1), out)
         self.assertIn("xx-2 [PARKED]", out)
         self.assertNotIn("xx-1", out)
+
+
+class TheHeadPassHasABudget(unittest.TestCase):
+    """`item ready --head` returns inside a fixed budget whatever a predicate
+    does, and a predicate it cut off is NAMED as could-not-verify.
+
+    THE EXPOSURE. Since lc-313 the head runs the evidence predicate of every
+    waiting item, each under the evaluator's standing 30 s timeout, and its
+    one unprompted caller — the session-start hook — allows the whole verb
+    half a second. Measured: one PARKED item on `evidence sleep 2` made the
+    head take 2.06 s; the hook's answer to that is "did not run", and the
+    READY listing goes with it, at every session start in that repo.
+
+    THE CALLER'S CLOCK IS THE INSTRUMENT, so the first two tests run the real
+    CLI as a subprocess under a caller timeout. The predicate sleeps 5 s and
+    the caller allows 1.5 s — wider than the hook's 0.5 s so a loaded machine
+    does not fail an honest run, and still far short of what the old pass
+    took. The 0.5 s arrangement itself is recorded in the commit that added
+    this class.
+    """
+
+    CLI = Path(refusals.__file__).resolve().parent.parent / "lifecycle"
+    CUT = "exceeded the head's pass budget"
+
+    def _repo(self, *blocks):
+        head = (f"schema: 2\nbaseline: {len(blocks)}\nadded: 0\n"
+                "compacted: 0\n")
+        r = refusals._Repo(items=head + "".join(blocks))
+        self.addCleanup(r.close)
+        return r
+
+    def _sub(self, repo, *argv, timeout=1.5):
+        import subprocess
+        p = subprocess.run([sys.executable, str(self.CLI), "--repo",
+                            str(repo.dir)] + list(argv),
+                           capture_output=True, text=True, timeout=timeout)
+        return p.returncode, p.stdout
+
+    def _run(self, repo, *argv):
+        import io
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        return code, buf.getvalue()
+
+    def test_a_slow_WAITING_predicate_cannot_take_the_listing_with_it(self):
+        r = self._repo(
+            refusals._blocked_block("xx-1", "READY", "NONE"),
+            refusals._blocked_block("xx-2", "PARKED", "evidence sleep 5"))
+        code, out = self._sub(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("1. xx-1 [READY]", out)
+        self.assertIn("xx-2 [PARKED]", out)
+        self.assertIn(self.CUT, out)
+        # NEVER read as quiet, never as broken, never as fired.
+        self.assertIn("0 FIRED, 0 quiet, 0 BROKEN.", out)
+        self.assertIn("1 CUT OFF by the pass budget", out)
+        self.assertNotIn("trigger_broken", out)
+        self.assertIn("item ready --head: COULD NOT VERIFY", out)
+
+    def test_a_slow_READY_predicate_is_cut_off_too(self):
+        r = self._repo(
+            refusals._blocked_block("xx-1", "READY", "evidence sleep 5"),
+            refusals._blocked_block("xx-2", "READY", "NONE"))
+        code, out = self._sub(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn(self.CUT, out)
+        self.assertIn("xx-1 [READY] goal=mitigate  not schedulable", out)
+        self.assertIn("xx-2 [READY] goal=mitigate  SCHEDULABLE", out)
+
+    def test_once_the_budget_is_spent_the_rest_are_named_not_skipped(self):
+        """A predicate that never STARTED is as unverified as one that was
+        cut off mid-run, and the fast one behind a slow one must not vanish
+        from the count."""
+        r = self._repo(
+            refusals._blocked_block("xx-1", "PARKED", "evidence sleep 5"),
+            refusals._blocked_block("xx-2", "PARKED", "evidence true"))
+        code, out = self._sub(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("xx-1 [PARKED]", out)
+        self.assertIn("xx-2 [PARKED]", out)
+        self.assertIn("2 CUT OFF by the pass budget", out)
+        self.assertNotIn("evidence ARRIVED", out)
+
+    def test_the_budget_binds_the_head_alone(self):
+        """THE PAIR: one predicate slower than the head's budget and far
+        inside the standing timeout. The head cuts it off; `item ready <id>`
+        runs it to its answer. Without the second half, "cut off" would be
+        what a predicate that can never answer also returns."""
+        from lifecycle_core import verbs as verbs_mod
+        slow = f"evidence sleep {verbs_mod.HEAD_PASS_BUDGET_S * 2:g}"
+        r = self._repo(refusals._blocked_block("xx-1", "PARKED", slow))
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn(self.CUT, out)
+        code, out = self._run(r, "item", "ready", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("FIRED (exit 0)", out)
+
+    def test_a_fast_pass_reports_zero_cut_off(self):
+        r = self._repo(
+            refusals._blocked_block("xx-1", "PARKED", "evidence true"))
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("1 FIRED, 0 quiet, 0 BROKEN. 0 CUT OFF by the pass "
+                      "budget", out)

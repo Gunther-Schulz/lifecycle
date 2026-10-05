@@ -181,10 +181,16 @@ class Trigger:
     state: str
     code: int | None
     detail: str = ""
+    #: The predicate was CUT OFF at its timeout rather than answering. It is
+    #: still BROKEN to every caller that asked with the standing timeout; a
+    #: caller that imposed a SHORTER one of its own (the head pass's budget)
+    #: reads this to say "could not verify" instead, because a predicate it
+    #: did not let finish has not been shown broken.
+    timed_out: bool = False
 
 
 def evaluate_trigger(command: str, cwd: Path | None = None,
-                     timeout: int = TRIGGER_TIMEOUT_S) -> Trigger:
+                     timeout: float = TRIGGER_TIMEOUT_S) -> Trigger:
     """Run a `Trigger:` predicate and map its exit code to a state word.
 
     THE RESERVED CODES ARE §3.3'S, and the mapping is total on purpose:
@@ -208,10 +214,10 @@ def evaluate_trigger(command: str, cwd: Path | None = None,
                            capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         return Trigger(BROKEN, None,
-                       f"the predicate did not answer within {timeout}s. A "
+                       f"the predicate did not answer within {timeout:g}s. A "
                        "hung predicate and a quiet one look identical to a "
                        "waiter, and the quiet reading renders a dead lane as "
-                       "a clean board.")
+                       "a clean board.", timed_out=True)
     except (OSError, ValueError) as exc:
         return Trigger(BROKEN, None, f"the predicate could not be run ({exc!r}).")
     code = p.returncode

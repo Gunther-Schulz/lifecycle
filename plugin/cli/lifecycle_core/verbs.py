@@ -33,6 +33,7 @@ import os
 import posixpath
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -1563,6 +1564,51 @@ def cmd_item_ready(args, out, ctx: Ctx) -> int:
     return code
 
 
+#: THE HEAD PASS'S BUDGET for every predicate it runs, TOGETHER. The head is
+#: the one verb a session-start hook runs unprompted, and that caller allows
+#: the whole verb a fraction of a second; the evaluator's standing timeout is
+#: 30 s PER PREDICATE. Since lc-313 the head runs the predicate of every
+#: waiting item, so one slow predicate anywhere in the carrier cost every
+#: session start its whole READY listing (measured: `evidence sleep 2` on one
+#: PARKED item, 2.06 s, the hook answering "did not run"). A quarter second
+#: leaves the caller's half second room for the interpreter and the parse
+#: (measured 0.09 s over a 140-item carrier). `item ready <id>` is NOT bound
+#: by it: somebody asked, and waits.
+HEAD_PASS_BUDGET_S = 0.25
+#: Below this much budget left a predicate is not started: a process spawned
+#: with a few milliseconds to live answers nothing and costs the spawn.
+_HEAD_MIN_SLICE_S = 0.02
+
+
+def _budget_cut_state(detail: str):
+    """The verdict for a predicate the head's budget cut off or never started.
+
+    COULD NOT VERIFY, and never either neighbour: read as QUIET it is a wait
+    nobody checked, read as BROKEN it accuses a predicate that was merely
+    slower than this pass allows.
+    """
+    return (f"COULD NOT VERIFY — the evidence predicate ({detail!r}) "
+            f"exceeded the head's pass budget ({HEAD_PASS_BUDGET_S:g}s for "
+            "all predicates of one pass together) and was cut off or not "
+            "started. Whether the evidence has arrived is UNKNOWN: this is "
+            "neither a quiet predicate nor a broken one. `item ready <id>` "
+            "runs it under the standing timeout."), exits.COULD_NOT_VERIFY, ""
+
+
+def _head_state(it, ctx: Ctx, parsed, done_parsed, done_why, deadline):
+    """`_blocker_state` for the head pass: the same verdict function, with
+    what is left of the pass budget as an evidence predicate's clock."""
+    kind, detail = items_mod.classify_blocker(
+        it.slots.get("blocked-by", ""), ctx.prefix)
+    if kind != "evidence":
+        return _blocker_state(it, ctx, parsed, done_parsed, done_why)
+    remaining = deadline - time.monotonic()
+    if remaining < _HEAD_MIN_SLICE_S:
+        return _budget_cut_state(detail)
+    return _blocker_state(it, ctx, parsed, done_parsed, done_why,
+                          timeout=remaining)
+
+
 def cmd_item_head(args, out, ctx: Ctx) -> int:
     """`item ready --head` — the head, DERIVED. No cap, ever (R22).
 
@@ -1640,10 +1686,11 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
 
     code = exits.CLEAN
     rows = []
+    deadline = time.monotonic() + HEAD_PASS_BUDGET_S
     for it in ready:
         unknown = items_mod.unknown_slots_of(it)
-        state, st_code, _note = _blocker_state(it, ctx, parsed, done_parsed,
-                                               done_why)
+        state, st_code, _note = _head_state(it, ctx, parsed, done_parsed,
+                                            done_why, deadline)
         schedulable = state.startswith("UNBLOCKED") and not unknown
         rows.append((it, state, unknown, schedulable))
         code = exits.worst([code, st_code])
@@ -1678,7 +1725,7 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
     # lc-313: the waits that are OVER, named. After the READY listing and
     # under the same `--goal` view, so a filtered head is filtered whole.
     code = exits.worst([code, _arrived_evidence(
-        waiting, out, ctx, parsed, done_parsed, done_why)])
+        waiting, out, ctx, parsed, done_parsed, done_why, deadline)])
     code = exits.worst([code, _cleared_waits(
         waiting, out, ctx, parsed, done_parsed, done_why)])
     out(f"item ready --head: {exits.word(code)}")
@@ -1686,7 +1733,7 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
 
 
 def _arrived_evidence(waiting, out, ctx: Ctx, parsed, done_parsed,
-                      done_why) -> int:
+                      done_why, deadline) -> int:
     """The head pass's second half (lc-313): every item NOT graded READY whose
     `evidence <predicate>` wait is over is NAMED, and the count is printed.
 
@@ -1712,22 +1759,29 @@ def _arrived_evidence(waiting, out, ctx: Ctx, parsed, done_parsed,
     verdict's code. A FIRED predicate carries CLEAN: it is information for
     the desk, not a finding about the carrier.
 
+    CUT OFF IS ITS OWN BUCKET. Every predicate here runs on what is left of
+    the pass budget (`HEAD_PASS_BUDGET_S`); one the budget cut off, or one
+    never started because an earlier one spent it, is NAMED with the
+    could-not-verify verdict and counted apart — never as quiet.
+
     NOTHING IS PROMOTED. READY is judged (law 10); what a fired predicate
     owes is a re-grade at the desk, and the line says so.
     """
-    fired, broken, quiet = [], [], 0
+    fired, broken, cut, quiet = [], [], [], 0
     code = exits.CLEAN
     for it in waiting:
         kind, detail = items_mod.classify_blocker(
             it.slots.get("blocked-by", ""), ctx.prefix)
         if kind != "evidence":
             continue
-        state, st_code, _note = _blocker_state(it, ctx, parsed, done_parsed,
-                                               done_why)
+        state, st_code, _note = _head_state(it, ctx, parsed, done_parsed,
+                                            done_why, deadline)
         if state.startswith("UNBLOCKED"):
             fired.append((it, detail))
         elif state.startswith("BLOCKED"):
             quiet += 1
+        elif state.startswith("COULD NOT VERIFY"):
+            cut.append((it, state))
         else:
             broken.append((it, state))
         code = exits.worst([code, st_code])
@@ -1742,10 +1796,14 @@ def _arrived_evidence(waiting, out, ctx: Ctx, parsed, done_parsed,
     for it, state in broken:
         out(f"  {it.ident} [{it.grade}] evidence blocker, not a wait:")
         out(f"        {state}")
+    for it, state in cut:
+        out(f"  {it.ident} [{it.grade}] whether this wait is over is unknown:")
+        out(f"        {state}")
     ran = len(fired) + quiet + len(broken)
     out(f"evidence waits (items not graded READY): {ran} predicate(s) run "
         f"this pass — {len(fired)} FIRED, {quiet} quiet, {len(broken)} "
-        "BROKEN.")
+        f"BROKEN. {len(cut)} CUT OFF by the pass budget"
+        + (" — named above, could not verify." if cut else "."))
     return code
 
 
@@ -2421,8 +2479,16 @@ def cmd_item_statusline(args, out, ctx: Ctx) -> int:
     return exits.CLEAN
 
 
-def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
-    """`(state, code, note)` for one item's blocker."""
+def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why,
+                   timeout=None):
+    """`(state, code, note)` for one item's blocker.
+
+    `timeout` is a CALLER's shorter clock for an `evidence` predicate (the
+    head pass's budget). A predicate cut off at it is COULD NOT VERIFY, not
+    BROKEN: the standing timeout is what shows a predicate dead, and a
+    caller that did not wait that long has shown nothing. `None` — every
+    other caller — keeps the standing timeout and its BROKEN reading.
+    """
     value = it.slots.get("blocked-by", "")
     kind, detail = items_mod.classify_blocker(value, ctx.prefix)
     if kind == "none":
@@ -2549,7 +2615,12 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
         # machine's court. >=2 is BROKEN, and BROKEN is a FINDING rather than
         # a wait: a predicate that errors keeps the item parked forever while
         # the board renders it as ordinary waiting.
-        t = lanes.evaluate_trigger(detail, cwd=ctx.repo)
+        if timeout is None:
+            t = lanes.evaluate_trigger(detail, cwd=ctx.repo)
+        else:
+            t = lanes.evaluate_trigger(detail, cwd=ctx.repo, timeout=timeout)
+            if t.timed_out:
+                return _budget_cut_state(detail)
         if t.state == lanes.FIRE:
             return (f"UNBLOCKED — the evidence predicate ({detail!r}) FIRED "
                     f"(exit 0): the evidence it names is here.", exits.CLEAN,
