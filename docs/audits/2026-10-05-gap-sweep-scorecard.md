@@ -81,6 +81,16 @@ Evidence nearer to that case, from lanes with no prototype: of the 13
 questions T2-T10 returned, 11 were settled by the record or a
 recommendation, 1 was REAL and 1 an artefact of the trial.
 
+WHERE the answers sat (counted 2026-10-05, after the close, from the trials
+file's question table, per lane; wave 1's 10 NOT REAL only, T10's one not
+re-read): 7 were settled by the RECORD and 3 were desk calls. Of the 7, 0
+were settled by a ledger decision line: 3 by `lc-32`, 2 by `lc-266`, 2 by
+law 8 with `lc-165` — items and laws. Both prototypes search ledger
+decision lines only, so as built they reach 0 of the 7. A re-run of T11
+with these prototypes on such tasks would show nothing; a trial that could
+show a benefit needs the search widened to items and laws first. Two of the
+7 (T8) were asked by lanes that had already cited the answer themselves.
+
 ## What this cannot show
 
 - Effects that need real elapsed weeks: carrier growth, slow drift of a

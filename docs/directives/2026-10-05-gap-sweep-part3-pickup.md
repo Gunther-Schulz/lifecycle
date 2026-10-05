@@ -21,6 +21,9 @@ outlive the session; each is kept as one patch against `8bde8ee` plus the
 planted ledger line, on the building machine only, under
 `$XDG_STATE_HOME/claude/gap-sweep-2026-10-05/`.
 
+CONTINUED in `docs/directives/2026-10-05-gap-sweep-followup-handoff.md`
+(the follow-up trials, handed to session lifecycle-03 the same day).
+
 ## The commission
 
 The handoff is the wan2gp desk's file, and it is the authority:

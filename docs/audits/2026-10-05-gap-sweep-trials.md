@@ -376,9 +376,10 @@ questions per lane. The trial does NOT show that either mechanism cuts
 questions the record already answers, because the baseline asked none. The
 case the operator described — a question put in conversation that the
 record settles, with no one having voiced the uncertainty first — is not
-what this task exercised; wave 1's twelve returned questions (10 of 12
-settled by the record) are nearer to it, and came from lanes with no
-prototype.
+what this task exercised; wave 1's twelve returned questions (7 of 12
+settled by the record, 3 desk calls — corrected 2026-10-05 from "10 of 12
+settled by the record"; none of the 7 by a ledger line, see the scorecard)
+are nearer to it, and came from lanes with no prototype.
 
 ### T10 with T6 — RESULT (one chain; 3 lanes run of the 4 registered)
 
