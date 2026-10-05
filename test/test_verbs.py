@@ -3035,3 +3035,196 @@ class TheStandbyGrade(unittest.TestCase):
         fired = refusals._ratio_history(refusals.NET_GROWTH_DRAINING)
         self.assertNotIn("schedule:", fired.output)
         self.assertNotIn("head_draining", fired.output)
+
+
+class TheHeadNamesArrivedEvidence(unittest.TestCase):
+    """lc-313: `item ready --head` names every item NOT graded READY whose
+    `evidence <predicate>` has fired, and prints how many it ran.
+
+    THE PAIR IS THE POINT: one carrier, one predicate, and the flag file it
+    tests for absent and then present. A fixture carrying only the fired
+    case would pass over a head that listed every parked item; one carrying
+    only the quiet case would pass over a head that evaluated nothing.
+
+    Every predicate is relative to the fixture repo, which is the cwd the
+    one evaluator runs it in (`lanes.evaluate_trigger(..., cwd=ctx.repo)`).
+    """
+
+    HEAD4 = "schema: 2\nbaseline: 4\nadded: 0\ncompacted: 0\n"
+    COUNT = (r"evidence waits \(items not graded READY\): (\d+) "
+             r"predicate\(s\) run this pass — (\d+) FIRED, (\d+) quiet, "
+             r"(\d+) BROKEN\.")
+
+    def _repo(self, items_text):
+        r = refusals._Repo(items=items_text)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        return code, buf.getvalue()
+
+    def _counts(self, out):
+        """`(ran, fired, quiet, broken)` off the ONE count line. Exactly one:
+        a head that printed it twice, or never, is the finding."""
+        import re
+        found = re.findall(self.COUNT, out)
+        self.assertEqual(len(found), 1, out)
+        return tuple(int(n) for n in found[0])
+
+    def test_a_parked_item_is_named_once_its_flag_arrives(self):
+        carrier = (self.HEAD4
+                   + refusals._blocked_block("xx-1", "READY", "NONE")
+                   + refusals._blocked_block(
+                       "xx-2", "PARKED", "evidence test -e lc313-flag"))
+        r = self._repo(carrier)
+
+        # QUIET: the flag is absent, so the item is counted and NOT listed.
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self._counts(out), (1, 0, 1, 0), out)
+        self.assertNotIn("xx-2", out)
+        self.assertNotIn("evidence ARRIVED", out)
+
+        # FIRED: the same carrier, the same predicate, the flag now there.
+        (r.dir / "lc313-flag").write_text("", encoding="utf-8")
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN,
+                         "a fired predicate is information, not a finding\n"
+                         + out)
+        self.assertEqual(self._counts(out), (1, 1, 0, 0), out)
+        self.assertIn("--- evidence ARRIVED: 1 item(s)", out)
+        self.assertIn("xx-2 [PARKED] the evidence predicate "
+                      "('test -e lc313-flag') FIRED", out)
+        self.assertIn("RE-GRADE is owed at the desk", out)
+        # ...and it is placed AFTER the READY listing, never inside it.
+        self.assertLess(out.index("1. xx-1 [READY]"),
+                        out.index("--- evidence ARRIVED"), out)
+        # The READY half is untouched by the new half.
+        self.assertIn("head: 1 READY, 1 schedulable now.", out)
+
+    def test_a_broken_predicate_is_reported_and_carries_the_item_code(self):
+        carrier = (self.HEAD4
+                   + refusals._blocked_block("xx-1", "PARKED",
+                                             "evidence exit 2"))
+        r = self._repo(carrier)
+        one_code, one_out = self._run(r, "item", "ready", "xx-1")
+        self.assertEqual(one_code, exits.FINDING, one_out)
+        self.assertIn("FINDING [trigger_broken]", one_out)
+
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, one_code, out)
+        self.assertEqual(self._counts(out), (1, 0, 0, 1), out)
+        self.assertIn("xx-1 [PARKED]", out)
+        self.assertIn("FINDING [trigger_broken] the evidence predicate "
+                      "('exit 2') is BROKEN — exit 2", out)
+        self.assertNotIn("evidence ARRIVED", out)
+        self.assertIn("item ready --head: FINDING", out)
+
+    def test_a_NEW_item_on_a_fired_predicate_is_listed_too(self):
+        carrier = (self.HEAD4
+                   + refusals._blocked_block("xx-1", "NEW", "evidence true"))
+        r = self._repo(carrier)
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self._counts(out), (1, 1, 0, 0), out)
+        self.assertIn("xx-1 [NEW] the evidence predicate ('true') FIRED", out)
+
+    def test_the_four_numbers_sum_over_one_of_each(self):
+        """Fired, quiet and broken in ONE carrier, beside the three kinds of
+        item the pass must leave alone. The expected counts are written from
+        the fixture, never read off the output under test."""
+        carrier = (self.HEAD4
+                   + refusals._blocked_block("xx-1", "PARKED", "evidence true")
+                   + refusals._blocked_block("xx-2", "PARKED",
+                                             "evidence exit 1")
+                   + refusals._blocked_block("xx-3", "NEW", "evidence exit 3")
+                   + refusals._blocked_block("xx-4", "PARKED",
+                                             "evidence test -e lc313-flag")
+                   + refusals._blocked_block("xx-5", "READY", "NONE")
+                   + refusals._blocked_block("xx-6", "PARKED",
+                                             "decision which window")
+                   + refusals._blocked_block("xx-7", "PARKED",
+                                             "external the vendor ships"))
+        r = self._repo(carrier)
+        code, out = self._run(r, "item", "ready", "--head")
+        ran, fired, quiet, broken = self._counts(out)
+        self.assertEqual((ran, fired, quiet, broken), (4, 1, 2, 1), out)
+        self.assertEqual(ran, fired + quiet + broken, out)
+        self.assertEqual(code, exits.FINDING, out)
+        # QUIET is counted and not listed; the untouched kinds are not named.
+        for ident in ("xx-2", "xx-4", "xx-6", "xx-7"):
+            self.assertNotIn(ident, out)
+
+    def test_decision_blocked_and_READY_items_are_not_evaluated_here(self):
+        """THE MARKER PAIR. A `decision` blocker whose question text is a
+        shell command that would create a file if anything executed it: the
+        file must not appear. The SAME command typed `evidence` on another
+        carrier does create its file — without that half, an absent marker
+        would be what a marker that can never appear also returns."""
+        carrier = (self.HEAD4
+                   + refusals._blocked_block("xx-1", "READY", "NONE")
+                   + refusals._blocked_block("xx-2", "NEW",
+                                             "decision touch lc313-marker")
+                   + refusals._blocked_block("xx-3", "READY",
+                                             "evidence true"))
+        r = self._repo(carrier)
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertFalse((r.dir / "lc313-marker").exists(), out)
+        # A READY item's evidence blocker stays the READY loop's business:
+        # it is listed there and is OUTSIDE this count.
+        self.assertEqual(self._counts(out), (0, 0, 0, 0), out)
+        self.assertNotIn("evidence ARRIVED", out)
+        self.assertNotIn("xx-2", out)
+        self.assertIn("head: 2 READY, 2 schedulable now.", out)
+
+        control = (self.HEAD4
+                   + refusals._blocked_block("xx-2", "NEW",
+                                             "evidence touch lc313-marker"))
+        rc = self._repo(control)
+        code, out = self._run(rc, "item", "ready", "--head")
+        self.assertTrue((rc.dir / "lc313-marker").exists(), out)
+        self.assertEqual(self._counts(out), (1, 1, 0, 0), out)
+
+    def test_goal_restricts_this_listing_as_it_restricts_the_READY_one(self):
+        """Two fired items under two goals. Each predicate leaves a file
+        behind, so "not listed" and "not run" are separately observable."""
+        other = refusals._blocked_block(
+            "xx-2", "PARKED", "evidence touch lc313-ran-verify"
+        ).replace("goal: mitigate", "goal: verify")
+        self.assertIn("goal: verify", other)
+        carrier = (self.HEAD4
+                   + refusals._blocked_block(
+                       "xx-1", "PARKED", "evidence touch lc313-ran-mitigate")
+                   + other)
+        r = self._repo(carrier)
+        code, out = self._run(r, "item", "ready", "--head", "--goal", "verify")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self._counts(out), (1, 1, 0, 0), out)
+        self.assertIn("xx-2 [PARKED]", out)
+        self.assertNotIn("xx-1", out)
+        self.assertTrue((r.dir / "lc313-ran-verify").exists(), out)
+        self.assertFalse((r.dir / "lc313-ran-mitigate").exists(), out)
+
+        # Unfiltered, both are named and both ran.
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(self._counts(out), (2, 2, 0, 0), out)
+        self.assertIn("xx-1 [PARKED]", out)
+        self.assertIn("xx-2 [PARKED]", out)
+        self.assertTrue((r.dir / "lc313-ran-mitigate").exists(), out)
+
+    def test_statusline_still_runs_no_predicate(self):
+        """Design point 8: the per-prompt render must not start evaluating."""
+        carrier = (self.HEAD4
+                   + refusals._blocked_block(
+                       "xx-1", "PARKED", "evidence touch lc313-statusline"))
+        r = self._repo(carrier)
+        code, out = self._run(r, "item", "statusline")
+        self.assertEqual(out.strip(), "0R.1P head -", out)
+        self.assertFalse((r.dir / "lc313-statusline").exists(), out)

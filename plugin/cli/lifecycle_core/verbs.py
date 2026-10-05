@@ -1587,6 +1587,7 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
 
     lead = decl.head_lead_goal(ctx.declaration.get("head-rule"))
     ready = [it for it in parsed.items if it.grade == "READY"]
+    waiting = [it for it in parsed.items if it.grade != "READY"]
 
     # lc-16: THE GOAL FILTER, and the undeclared-goal answer is the point of
     # it. A repo can declare a closed goal set and set a goal per item, then
@@ -1621,6 +1622,8 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
                 "explicit zero, measured over "
                 f"{len(ready)} READY item(s) — not an absent listing.")
         ready = kept
+        waiting = [it for it in waiting
+                   if (it.slots.get("goal") or "").strip() == want]
 
     out(f"head-rule: lead-goal {lead!r}"
         + ("" if lead and lead != "none" else
@@ -1668,7 +1671,75 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
         out("No READY item. THIS VERB PROMOTES NOTHING: READY is the desk's "
             "judgment and an empty head means nothing has been judged "
             "decision-complete, never that the carrier is empty.")
+    # lc-313: the waits that are OVER, named. After the READY listing and
+    # under the same `--goal` view, so a filtered head is filtered whole.
+    code = exits.worst([code, _arrived_evidence(
+        waiting, out, ctx, parsed, done_parsed, done_why)])
     out(f"item ready --head: {exits.word(code)}")
+    return code
+
+
+def _arrived_evidence(waiting, out, ctx: Ctx, parsed, done_parsed,
+                      done_why) -> int:
+    """The head pass's second half (lc-313): every item NOT graded READY whose
+    `evidence <predicate>` wait is over is NAMED, and the count is printed.
+
+    THE DEFECT THIS CLOSES. The per-item verdict tells a QUIET evidence wait
+    it is "Re-evaluated each pass", and the only pass that runs unprompted —
+    this one, at session start — evaluated READY items alone. So a PARKED
+    item whose predicate had fired sat unseen until somebody asked for it by
+    id, which nobody does for an item they believe is still waiting.
+
+    ONE VERDICT FUNCTION, and therefore one evaluator and one mapping of exit
+    codes: every item goes through `_blocker_state`, exactly as a single
+    `item ready <id>` would, and the three buckets are read off the verdict
+    it returns rather than off the predicate's code. A second reading of the
+    code here would disagree with the first about `>=2` before anything else.
+
+    THE COUNT LINE IS ALWAYS PRINTED, zeros included. A pass that ran nothing
+    and a pass whose predicates were all quiet both list no item, and they
+    are different answers; the four numbers are what tells them apart.
+
+    QUIET IS COUNTED AND NOT LISTED: a wait that is still a wait is not news,
+    and listing it would bury the lines that are. BROKEN IS NEVER SKIPPED —
+    it prints the per-item verdict's own text, unmodified, and carries that
+    verdict's code. A FIRED predicate carries CLEAN: it is information for
+    the desk, not a finding about the carrier.
+
+    NOTHING IS PROMOTED. READY is judged (law 10); what a fired predicate
+    owes is a re-grade at the desk, and the line says so.
+    """
+    fired, broken, quiet = [], [], 0
+    code = exits.CLEAN
+    for it in waiting:
+        kind, detail = items_mod.classify_blocker(
+            it.slots.get("blocked-by", ""), ctx.prefix)
+        if kind != "evidence":
+            continue
+        state, st_code, _note = _blocker_state(it, ctx, parsed, done_parsed,
+                                               done_why)
+        if state.startswith("UNBLOCKED"):
+            fired.append((it, detail))
+        elif state.startswith("BLOCKED"):
+            quiet += 1
+        else:
+            broken.append((it, state))
+        code = exits.worst([code, st_code])
+
+    if fired:
+        out(f"--- evidence ARRIVED: {len(fired)} item(s) not graded READY "
+            "whose wait is over")
+        for it, detail in fired:
+            out(f"  {it.ident} [{it.grade}] the evidence predicate "
+                f"({detail!r}) FIRED (exit 0) — a RE-GRADE is owed at the "
+                "desk. THIS VERB PROMOTES NOTHING.")
+    for it, state in broken:
+        out(f"  {it.ident} [{it.grade}] evidence blocker, not a wait:")
+        out(f"        {state}")
+    ran = len(fired) + quiet + len(broken)
+    out(f"evidence waits (items not graded READY): {ran} predicate(s) run "
+        f"this pass — {len(fired)} FIRED, {quiet} quiet, {len(broken)} "
+        "BROKEN.")
     return code
 
 
