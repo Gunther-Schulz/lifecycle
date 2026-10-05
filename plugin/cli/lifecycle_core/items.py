@@ -115,6 +115,15 @@ SLOTS = ("grade", "requirement", "goal", "write-set", "done-criterion",
 CLOSED_REASON = "closed-reason"
 CLOSED_REF = "closed-ref"
 
+#: THE TWO STATEMENTS A DONE CLOSE DEMANDS. `closed-met:` says what the work
+#: met that was not this item (items booked, commits that fixed); `closed-decided:`
+#: says which ledger decision lines the work's choices were written to. Both
+#: are written on every DONE close — `none` is a valid value — so the slot
+#: demands the statement, never the answer. They sit directly after
+#: `closed-reason:`.
+CLOSED_MET = "closed-met"
+CLOSED_DECIDED = "closed-decided"
+
 #: THE FORWARD POINTER (lc-120). A closed body's slots cannot be corrected —
 #: `item amend` refuses one and that refusal is RIGHT: the done home holds what
 #: was true when the item closed, and editing it there would rewrite a record
@@ -136,7 +145,8 @@ CLOSED_REF = "closed-ref"
 #: was ruled to add is the sibling of `closed_ref_unresolvable`.
 CLOSURE_SUPERSEDED_BY = "closure-superseded-by"
 
-DONE_ONLY_SLOTS = ("superseded-by", "blocker-moot", CLOSED_REASON, CLOSED_REF,
+DONE_ONLY_SLOTS = ("superseded-by", "blocker-moot", CLOSED_REASON,
+                   CLOSED_MET, CLOSED_DECIDED, CLOSED_REF,
                    CLOSURE_SUPERSEDED_BY)
 
 #: THE EXERCISE RECORD FOR AN `evidence` BLOCKER (lc-175). lc-164 made the

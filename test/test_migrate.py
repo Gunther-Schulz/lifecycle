@@ -1394,7 +1394,7 @@ class TheConservationCounterFollowsTheAnchor(unittest.TestCase):
         # `move_uncommitted` — an ARRANGEMENT failure that reads exactly like
         # a finding about the counter.
         commit_all(d, "the migrated homes")
-        code, out = run_cli(d, "item", "close", f"{p}-1",
+        code, out = run_cli(d, "item", "close", f"{p}-1", "--met", "none", "--decided", "none",
                             "--reason", "done with it")
         self.assertEqual(code, exits.CLEAN, out)
         items_text = (d / "ITEMS.md").read_text(encoding="utf-8")

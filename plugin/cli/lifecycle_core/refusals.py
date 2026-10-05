@@ -1739,16 +1739,49 @@ VERB_ROWS = [
                 "is permanent and reads exactly like a good one (lc-44)",
         firing_input="`item close xx-1 --ref <a 40-hex sha no object has>`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1", "--ref",
+        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none", "--ref",
                            "0123456789abcdef0123456789abcdef01234567"],
                           items=SEED_ITEMS),
         # THE SAME CLOSE with a ref that DOES resolve — the arms differ in
         # the ref alone, so neither the close nor the flag is what separates
         # them. `HEAD` rather than a literal sha because the scratch repo's
         # own commit is not knowable from here.
-        control=lambda: _cli(["item", "close", "xx-1", "--ref", "HEAD"],
+        control=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none", "--ref", "HEAD"],
                              items=SEED_ITEMS),
         stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="close_statement_missing",
+        refusal="a DONE `item close` without `--met` and `--decided` — the "
+                "close demands the two STATEMENTS about the work it ends "
+                "(`none` is a valid statement), because a close that can be "
+                "made without saying what was met or decided files both "
+                "unsaid",
+        firing_input="`item close xx-1` with neither `--met` nor `--decided`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "close", "xx-1"], items=SEED_ITEMS),
+        # THE SAME CLOSE with both statements given as `none` — the arms
+        # differ in the two options alone.
+        control=lambda: _cli(["item", "close", "xx-1", "--met", "none",
+                              "--decided", "none"], items=SEED_ITEMS),
+        stage="close statements",
+    ),
+    Row(
+        ident="close_statement_unresolved",
+        refusal="a DONE `item close` whose `--met` names an item id or "
+                "commit that does not exist, or whose `--decided` names a "
+                "`<ledger home>:<line>` that is not a `decision:` line — a "
+                "statement that resolves to nothing reads exactly like one "
+                "that resolves",
+        firing_input="`item close xx-1 --met xx-99999 --decided none`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "close", "xx-1", "--met", "xx-99999",
+                           "--decided", "none"], items=SEED_ITEMS),
+        # THE SAME CLOSE with a `--met` naming an item that DOES exist (the
+        # item being closed is a member of the live carrier at the check).
+        control=lambda: _cli(["item", "close", "xx-1", "--met", "xx-1",
+                              "--decided", "none"], items=SEED_ITEMS),
+        stage="close statements",
     ),
     Row(
         # A SIBLING ROW, NOT A SECOND REFUSAL (lc-120). `item
@@ -1799,13 +1832,13 @@ VERB_ROWS = [
         firing_input="`item close xx-1` where xx-1 is blocked by xx-2 and "
                      "xx-2 is still live",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1"],
+        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"],
                           items=BLOCKER_TARGET_LIVE_ITEMS),
         # THE SAME CLOSE over the SAME blocker, with xx-2 CLOSED: the arms
         # differ in the target's state alone, so neither the close nor the
         # blocker's presence is what separates them. A control with no blocker
         # at all would pass whether or not this refusal read the target.
-        control=lambda: _cli(["item", "close", "xx-1"],
+        control=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"],
                              items=BLOCKER_TARGET_CLOSED_ITEMS,
                              done=BLOCKER_TARGET_CLOSED_DONE),
         stage="wave 1, stage 5",
@@ -1829,13 +1862,13 @@ VERB_ROWS = [
         firing_input="`item close xx-1` where xx-1's requirement carries the "
                      "lc-22 clause in its own words, from dotfiles `bb8edd4`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1"],
+        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"],
                           items=CARRIED_POINTER_ITEMS),
         # THE SAME 384 BYTES with the marker respelled as ordinary prose. The
         # arms differ in the DECLARED MARKER alone, so neither the subject
         # matter nor the words "carrier" and "pointer" is what separates them
         # — which is what makes this control the over-fire probe as well.
-        control=lambda: _cli(["item", "close", "xx-1"],
+        control=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"],
                              items=CARRIED_POINTER_PROSE_ITEMS),
         stage="wave 1, stage 5",
     ),
@@ -2503,9 +2536,9 @@ LANE_ROWS = [
                 "failing, not the move",
         firing_input="`item close` in a repo whose commit is refused",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1"], items=SEED_ITEMS,
+        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"], items=SEED_ITEMS,
                           fail_commit=True),
-        control=lambda: _cli(["item", "close", "xx-1"], items=SEED_ITEMS),
+        control=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"], items=SEED_ITEMS),
         stage="wave 1, stage 8 (found by the emit-site coverage check)",
     ),
     Row(
@@ -3421,8 +3454,8 @@ def _retire_growth(*, closed: bool) -> Fired:
         try:
             os.chdir(str(r.dir))
             if closed:
-                for argv in (["item", "close", "xx-1"],
-                             ["item", "close", "xx-2"],
+                for argv in (["item", "close", "xx-1", "--met", "none", "--decided", "none"],
+                             ["item", "close", "xx-2", "--met", "none", "--decided", "none"],
                              ["item", "compact", "xx-1"]):
                     buf = io.StringIO()
                     with redirect_stdout(buf):
@@ -4012,7 +4045,7 @@ def _ratio_after_close() -> Fired:
         try:
             os.chdir(str(r.dir))
             with redirect_stdout(io.StringIO()):
-                cli_mod.main(["--repo", str(r.dir), "item", "close", "xx-1"])
+                cli_mod.main(["--repo", str(r.dir), "item", "close", "xx-1", "--met", "none", "--decided", "none"])
             buf = io.StringIO()
             with redirect_stdout(buf):
                 code = cli_mod.main(["--repo", str(r.dir), "item", "ratio"])
@@ -4179,7 +4212,7 @@ def _compact_run(*, edited: bool) -> Fired:
         try:
             os.chdir(str(r.dir))
             with redirect_stdout(io.StringIO()):
-                cli_mod.main(["--repo", str(r.dir), "item", "close", "xx-1",
+                cli_mod.main(["--repo", str(r.dir), "item", "close", "xx-1", "--met", "none", "--decided", "none",
                               "--reason", _COMPACT_REASON])
             done = r.dir / "ITEMS-DONE.md"
             if edited:

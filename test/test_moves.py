@@ -113,7 +113,7 @@ class Conservation(unittest.TestCase):
         self.assertIn("items 2 + done 0", out)
         self.assertIn("baseline 1 + added 1", out)
 
-        code, out = run_cli(d, "item", "close", "xx-1")
+        code, out = run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("items 1 + done 1", out)
         self.assertIn("conservation: CLEAN", out)
@@ -212,7 +212,7 @@ class InterruptedMove(unittest.TestCase):
         indistinguishable from "this check always fires"."""
         d = build()
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        code, out = run_cli(d, "item", "close", "xx-1")
+        code, out = run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         code, out = run_cli(d, "item", "check")
         self.assertEqual(code, exits.CLEAN, out)

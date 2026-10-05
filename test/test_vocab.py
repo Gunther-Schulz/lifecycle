@@ -275,7 +275,7 @@ class GradeArmAtItsThreeVerbSites(unittest.TestCase):
         inexpressible state under DONE — the neighbour-folding this contract
         exists to prevent, at the one door after which nobody looks again."""
         repo = self._repo(self._carrier_with_oov())
-        code, outp = self._run(repo, "item", "close", "xx-2",
+        code, outp = self._run(repo, "item", "close", "xx-2", "--met", "none", "--decided", "none",
                                "--reason", "closing it anyway")
         self.assertEqual(code, 2, outp)
         self.assertIn("xx-2",
@@ -316,7 +316,7 @@ class GradeArmAtItsThreeVerbSites(unittest.TestCase):
 
         pass the case above while breaking the verb."""
         repo = self._repo(self._carrier_with_oov())
-        code, outp = self._run(repo, "item", "close", "xx-1",
+        code, outp = self._run(repo, "item", "close", "xx-1", "--met", "none", "--decided", "none",
                                "--reason", "done")
         self.assertEqual(code, 0, outp)
 

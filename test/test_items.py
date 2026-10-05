@@ -1627,7 +1627,7 @@ class CloseRefusesADeclaredCarriedPointer(unittest.TestCase):
     def test_the_real_clause_REFUSES_the_close(self):
         """The measured defect: the move went through and said nothing."""
         r = self._repo(items=self.PLANT)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("[close_carries_pointer]", out)
 
@@ -1639,14 +1639,14 @@ class CloseRefusesADeclaredCarriedPointer(unittest.TestCase):
         short clause from a clipped one.
         """
         r = self._repo(items=self.PLANT)
-        _code, out = self._run(r, "item", "close", "xx-1")
+        _code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertIn(refusals.CARRIED_POINTER_CLAUSE, out)
 
     def test_NEITHER_home_moved_a_byte(self):
         """The move must not have happened — the refusal's other half."""
         r = self._repo(items=self.PLANT)
         before = self._homes(r)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.FINDING, out)
         self.assertEqual(self._homes(r), before,
                          "a home changed under a refusal that promises no move")
@@ -1676,7 +1676,7 @@ class CloseRefusesADeclaredCarriedPointer(unittest.TestCase):
         report its own silence as a pass.
         """
         r = self._repo(items=self.PROSE)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         self.assertNotIn("[close_carries_pointer]", out)
 
@@ -1692,7 +1692,7 @@ class CloseRefusesADeclaredCarriedPointer(unittest.TestCase):
     def test_an_ORDINARY_item_closes_exactly_as_before(self):
         """Nothing about carriers at all — the plain path, unchanged."""
         r = self._repo(items=refusals.SEED_ITEMS)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         self.assertNotIn("[close_carries_pointer]", out)
         done = items.parse(

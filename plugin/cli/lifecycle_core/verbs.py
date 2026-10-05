@@ -3653,6 +3653,110 @@ def _resolve_refs(ctx: Ctx, raw: str, out) -> tuple[str | None, int]:
     return ", ".join(refs), exits.CLEAN
 
 
+#: The refusal's text for a DONE close missing a statement. `{ledger}` is the
+#: ledger home AS THE DECLARATION GIVES IT, never a literal file name: the
+#: reference this text teaches is the one `_close_statements` then resolves,
+#: and a text naming a home the repo does not declare would teach a spelling
+#: its own door refuses.
+_CLOSE_STATEMENT_TEXT = (
+    "`item close` needs two statements about the work this close ends. "
+    "--met \"<none | the item ids you booked, or the commits that fixed, "
+    "whatever you met while working that was NOT this item>\" and --decided "
+    "\"<none | {ledger}:<line> of each decision line written for a choice "
+    "this work made>\". `none` is a valid statement. Something met and not "
+    "yet booked is booked with `item add` first; a choice made and not yet "
+    "ledgered is written with `ledger add decision` first.")
+
+#: An id-SHAPED token, whatever its prefix. Used only to choose which
+#: sentence an unresolved `--met` token gets: one shaped like another repo's
+#: item id is told how a cross-repo item is named, where a bare unknown token
+#: is told it is neither an id nor a commit.
+_ITEM_ID_SHAPE = re.compile(r"^[A-Za-z][A-Za-z0-9-]*-\d+$")
+
+
+def _ledger_ref_name(ctx: Ctx) -> str:
+    """The ledger home as the declaration spells it — the `<home>` of a
+    `<home>:<line>` reference. Read from the declaration, with the resolved
+    path's repo-relative form only where the kind declares no home."""
+    return (_kind_home(ctx.declaration, "ledger lines")
+            or items_mod.rel_to(ctx.repo, ctx.ledger_path))
+
+
+def _close_statements(ctx: Ctx, met_raw: str, decided_raw: str,
+                      out) -> tuple[str | None, str | None, int]:
+    """`(met value, decided value, code)` for a DONE close, before any write.
+
+    The slot demands the STATEMENT, never the answer: `none` passes for both.
+    Every other token is RESOLVED — an item id of THIS repo's declared prefix
+    against the live and closed homes, anything else against this repo's
+    commits, a `<ledger home>:<line>` against the physical line, which must
+    parse as a `decision:` line.
+    """
+    ledger_name = _ledger_ref_name(ctx)
+    met_raw, decided_raw = (met_raw or "").strip(), (decided_raw or "").strip()
+    if not met_raw or not decided_raw:
+        out("FINDING [close_statement_missing] "
+            + _CLOSE_STATEMENT_TEXT.format(ledger=ledger_name))
+        return None, None, exits.FINDING
+
+    def tokens(raw):
+        return [t.strip() for t in raw.split(",") if t.strip()]
+
+    met_tokens = tokens(met_raw)
+    if met_tokens != ["none"]:
+        known = set()
+        for path in (ctx.items_path, ctx.done_path):
+            parsed, _why = _load(path)
+            if parsed is not None:
+                known.update(i.ident for i in parsed.items)
+        own_id = re.compile(rf"^{re.escape(ctx.prefix)}-\d+$")
+        for tok in met_tokens:
+            if own_id.match(tok):
+                if tok not in known:
+                    out(f"FINDING [close_statement_unresolved] --met names "
+                        f"{tok!r}, which is no item in "
+                        f"{ctx.items_path.name} or {ctx.done_path.name}.")
+                    return None, None, exits.FINDING
+                continue
+            probe = subprocess.run(
+                ["git", "-C", str(ctx.repo), "cat-file", "-e",
+                 f"{tok}^{{commit}}"], capture_output=True, text=True)
+            if probe.returncode != 0:
+                if _ITEM_ID_SHAPE.match(tok):
+                    out(f"FINDING [close_statement_unresolved] --met names "
+                        f"{tok!r}, which is shaped like an item id but does "
+                        f"not carry this repo's declared prefix "
+                        f"(`{ctx.prefix}-<n>`), so it cannot be resolved "
+                        "here. An item of ANOTHER repo is named in the "
+                        "`--reason` text instead; `--met` takes this repo's "
+                        "item ids and commits.")
+                else:
+                    out(f"FINDING [close_statement_unresolved] --met names "
+                        f"{tok!r}, which is neither an item id "
+                        f"(`{ctx.prefix}-<n>`) nor a commit in {ctx.repo}.")
+                return None, None, exits.FINDING
+
+    decided_tokens = tokens(decided_raw)
+    if decided_tokens != ["none"]:
+        try:
+            ledger_lines = ctx.ledger_path.read_text(
+                encoding="utf-8").splitlines()
+        except (OSError, UnicodeDecodeError):
+            ledger_lines = []
+        prefix = f"{ledger_name}:"
+        for tok in decided_tokens:
+            lineno = tok[len(prefix):] if tok.startswith(prefix) else ""
+            parsed_line = None
+            if lineno.isdigit() and 1 <= int(lineno) <= len(ledger_lines):
+                parsed_line = ledger.parse_line(ledger_lines[int(lineno) - 1])
+            if not parsed_line or parsed_line[0] != "decision":
+                out(f"FINDING [close_statement_unresolved] --decided names "
+                    f"{tok!r}, which is not `{prefix}<line>` of a "
+                    f"`decision:` line in {ledger_name}.")
+                return None, None, exits.FINDING
+    return ", ".join(met_tokens), ", ".join(decided_tokens), exits.CLEAN
+
+
 #: THE DECLARED FORWARD-CARRIER MARKER (lc-22). ONE SPELLING, and no synonym
 #: is added: a closure vocabulary that sprouts synonyms decays invisibly, and
 #: the `carried-forward` slot another carrier uses is a DIFFERENT detector's
@@ -3756,6 +3860,12 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
             ref_value, ref_code = _resolve_refs(ctx, ref_raw, out)
             if ref_code != exits.CLEAN:
                 return ref_code
+    met_value = decided_value = None
+    if not args.drop:
+        met_value, decided_value, stmt_code = _close_statements(
+            ctx, args.met, args.decided, out)
+        if stmt_code != exits.CLEAN:
+            return stmt_code
     if args.drop:
         problem = ledger.check_prose(args.reason, "the drop reason")
         if problem:
@@ -3895,6 +4005,8 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
             if reason:
                 note_lines.append(
                     f"{items_mod.CLOSED_REASON}: {date} {reason}")
+            note_lines.append(f"{items_mod.CLOSED_MET}: {met_value}")
+            note_lines.append(f"{items_mod.CLOSED_DECIDED}: {decided_value}")
             if ref_value:
                 note_lines.append(f"{items_mod.CLOSED_REF}: {ref_value}")
         code = move_to_done(ctx, args.ident, grade, "\n".join(note_lines), out)
@@ -3909,6 +4021,8 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
                 out(f"{items_mod.CLOSED_REASON}: {date} {reason}")
             else:
                 out(f"{items_mod.CLOSED_REASON}: not given, no line written.")
+            out(f"{items_mod.CLOSED_MET}: {met_value}")
+            out(f"{items_mod.CLOSED_DECIDED}: {decided_value}")
             if ref_value:
                 out(f"{items_mod.CLOSED_REF}: {ref_value}")
             else:

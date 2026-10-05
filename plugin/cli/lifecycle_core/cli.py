@@ -976,6 +976,18 @@ def build_parser() -> argparse.ArgumentParser:
                                      "OPTIONAL — a closure legitimately has "
                                      "no ref, and the verb says so when none "
                                      "was given")
+    close.add_argument("--met", help="REQUIRED on a DONE close: `none`, or a "
+                                     "comma-separated list of this repo's item "
+                                     "ids (live or closed) and commit "
+                                     "shas — whatever you met while working "
+                                     "that was NOT this item. Lands as "
+                                     "`closed-met:`")
+    close.add_argument("--decided", help="REQUIRED on a DONE close: `none`, "
+                                         "or a comma-separated list of "
+                                         "`<ledger home>:<line>`, each a "
+                                         "`decision:` line written for a "
+                                         "choice this work made. Lands as "
+                                         "`closed-decided:`")
     close.add_argument("--no-commit", dest="no_commit", action="store_true")
 
     compact = its.add_parser("compact",

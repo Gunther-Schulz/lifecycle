@@ -134,7 +134,7 @@ class TheRecordResolvesBackOutOfGit(unittest.TestCase):
         d = build()
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         ref = git(d, "rev-parse", "HEAD").strip()
-        code, out = run_cli(d, "item", "close", "xx-1", "--reason", REASON,
+        code, out = run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none", "--reason", REASON,
                             "--ref", ref)
         self.assertEqual(code, exits.CLEAN, out)
 
@@ -165,7 +165,7 @@ class TheRecordResolvesBackOutOfGit(unittest.TestCase):
         d = build()
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         ref = git(d, "rev-parse", "HEAD").strip()
-        run_cli(d, "item", "close", "xx-1", "--reason", REASON, "--ref", ref)
+        run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none", "--reason", REASON, "--ref", ref)
         code, out = run_cli(d, "item", "compact", "xx-1")
         self.assertEqual(code, exits.CLEAN, out)
         blob = blob_in(out)
@@ -191,7 +191,7 @@ class TheRecordResolvesBackOutOfGit(unittest.TestCase):
         ref from a lost one."""
         d = build()
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none", "--reason", REASON)
         code, out = run_cli(d, "item", "compact", "xx-1")
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn(retire.NO_CLOSED_REF, out)
@@ -225,14 +225,14 @@ class ThePinIsTheVintageBlob(unittest.TestCase):
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("xx-2", out)
 
-        run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none", "--reason", REASON)
         before = items.replace_body(
             (d / "ITEMS-DONE.md").read_text(encoding="utf-8"), "xx-1")[1]
         code, out = run_cli(d, "item", "compact", "xx-1")
         self.assertEqual(code, exits.CLEAN, out)
         blob = blob_in(out)
 
-        code, out = run_cli(d, "item", "close", "xx-2", "--reason", REASON)
+        code, out = run_cli(d, "item", "close", "xx-2", "--met", "none", "--decided", "none", "--reason", REASON)
         self.assertEqual(code, exits.CLEAN, out)
 
         head_blob = git(d, "rev-parse", "HEAD:ITEMS-DONE.md").strip()
@@ -261,7 +261,7 @@ class TheIdentityStillBalances(unittest.TestCase):
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("− compacted 0", out)
 
-        run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none", "--reason", REASON)
         code, out = run_cli(d, "item", "compact", "xx-1")
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("items 0 + done 0", out)
@@ -280,7 +280,7 @@ class ItRefusesToStripWhatThePinDoesNotCarry(unittest.TestCase):
 
     def _closed_then_edited(self):
         d = build()
-        run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none", "--reason", REASON)
         done = d / "ITEMS-DONE.md"
         text = done.read_text(encoding="utf-8")
         planted = text.replace("red on the real defect",
@@ -334,7 +334,7 @@ class ItRefusesToStripWhatThePinDoesNotCarry(unittest.TestCase):
         interruption visible would be gone with it."""
         d = build()
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none", "--reason", REASON)
         # Put the live copy back: this is the state a crash between the
         # append and the delete leaves, reached here by writing the file
         # rather than by crashing, because what is under test is the READER.
@@ -413,7 +413,7 @@ class ACompactedIdIsNeverReIssued(unittest.TestCase):
 
     def _closed_and_compacted(self) -> Path:
         d = build()
-        code, out = run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        code, out = run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none", "--reason", REASON)
         self.assertEqual(code, exits.CLEAN, out)
         code, out = run_cli(d, "item", "compact", "xx-1")
         self.assertEqual(code, exits.CLEAN, out)
@@ -459,7 +459,7 @@ class ACompactedIdIsNeverReIssued(unittest.TestCase):
         property the allocator's docstring was always about."""
         d = build()
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        code, out = run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        code, out = run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none", "--reason", REASON)
         self.assertEqual(code, exits.CLEAN, out)
         code, out = run_cli(d, *ADD)
         self.assertEqual(code, exits.CLEAN, out)
@@ -586,7 +586,7 @@ class TheWalkAsksACompactedKindAboutItsExit(unittest.TestCase):
     def test_a_COMPACTED_kind_holding_bodies_with_no_compaction_FIRES(self):
         d = build()
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        code, out = run_cli(d, "item", "close", "xx-1", "--reason", REASON)
+        code, out = run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none", "--reason", REASON)
         self.assertEqual(code, exits.CLEAN, out)
         code, out = run_cli(d, "audit")
         block = self._block(out, "done bodies")
@@ -609,7 +609,7 @@ class TheWalkAsksACompactedKindAboutItsExit(unittest.TestCase):
         code, out = run_cli(d, *ADD)
         self.assertEqual(code, exits.CLEAN, out)
         for ident in ("xx-1", "xx-2"):
-            code, out = run_cli(d, "item", "close", ident, "--reason", REASON)
+            code, out = run_cli(d, "item", "close", ident, "--met", "none", "--decided", "none", "--reason", REASON)
             self.assertEqual(code, exits.CLEAN, out)
         code, out = run_cli(d, "item", "compact", "xx-1")
         self.assertEqual(code, exits.CLEAN, out)

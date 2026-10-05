@@ -1342,6 +1342,22 @@ MUTATIONS = [
      "        out(f\"FINDING [head_draining] the scheduled head is EMPTY while \"",
      "the return trigger's empty-head arm — a head emptied while STANDBY "
      "holds work then reads clean"),
+
+    # THE CLOSE'S TWO STATEMENTS. Each anchor is the single line where its
+    # refusal is DECIDED. Removed, the first lets a DONE close through with
+    # no statement at all; the second lets `--met` name an id no home holds.
+    # They sit in one function and are still two decisions: the plant of the
+    # first never reaches the second's line (it carries no token), and the
+    # plant of the second passes the first's (both statements are given).
+    ("close_statement_missing", "verbs.py",
+     "    if not met_raw or not decided_raw:",
+     "    if False:",
+     "the test that both statements were GIVEN on a DONE close"),
+
+    ("close_statement_unresolved", "verbs.py",
+     "                if tok not in known:",
+     "                if False:",
+     "the resolution of a `--met` item id against the two homes"),
 ]
 
 

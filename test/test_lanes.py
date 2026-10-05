@@ -277,7 +277,7 @@ class EvidenceBlockerAndMootClose(unittest.TestCase):
         stay in the operator's queue after the item that asked it is gone."""
         r = self._repo("decision which window is canonical")
         try:
-            code, out = self._run(r, ["item", "close", "xx-1"])
+            code, out = self._run(r, ["item", "close", "xx-1", "--met", "none", "--decided", "none"])
             self.assertEqual(code, 0, out)
             self.assertIn("blocker-moot", out)
             done = (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8")
@@ -293,7 +293,7 @@ class EvidenceBlockerAndMootClose(unittest.TestCase):
         and this suite would not know."""
         r = self._repo("NONE")
         try:
-            code, out = self._run(r, ["item", "close", "xx-1"])
+            code, out = self._run(r, ["item", "close", "xx-1", "--met", "none", "--decided", "none"])
             self.assertEqual(code, 0, out)
             self.assertNotIn("blocker-moot", out)
             self.assertNotIn("blocker-moot",
@@ -310,7 +310,7 @@ class EvidenceBlockerAndMootClose(unittest.TestCase):
         annotating them would be noise on every archived body."""
         r = self._repo("evidence true")
         try:
-            self._run(r, ["item", "close", "xx-1"])
+            self._run(r, ["item", "close", "xx-1", "--met", "none", "--decided", "none"])
             self.assertNotIn("blocker-moot",
                              (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8"))
         finally:
@@ -490,7 +490,7 @@ class AMootDecisionUnblocksOnlyItsOwnCloser(unittest.TestCase):
         writer and the reader still agree on it."""
         r = self._repo()
         try:
-            code, out = self._run(r, ["item", "close", "xx-2"])
+            code, out = self._run(r, ["item", "close", "xx-2", "--met", "none", "--decided", "none"])
             self.assertEqual(code, 0, out)
             self.assertIn("decision: which window is canonical → moot "
                           "(closed by xx-2)",
@@ -523,7 +523,7 @@ class AMootDecisionUnblocksOnlyItsOwnCloser(unittest.TestCase):
         question is a true-sounding sentence the ledger refutes."""
         r = self._repo()
         try:
-            self._run(r, ["item", "close", "xx-2"])
+            self._run(r, ["item", "close", "xx-2", "--met", "none", "--decided", "none"])
             _code, out = self._run(r, ["item", "ready", "xx-1"])
             self.assertIn("records this question MOOT", out)
             self.assertIn("moot (closed by xx-2)", out)
@@ -537,7 +537,7 @@ class AMootDecisionUnblocksOnlyItsOwnCloser(unittest.TestCase):
         board printing the wrong number."""
         r = self._repo()
         try:
-            self._run(r, ["item", "close", "xx-2"])
+            self._run(r, ["item", "close", "xx-2", "--met", "none", "--decided", "none"])
             code, out = self._run(r, ["item", "ready", "--head"])
             self.assertEqual(code, 0, out)
             self.assertIn("0 schedulable now", out)

@@ -210,7 +210,7 @@ class TheClosureClearsTheWait(unittest.TestCase):
         d = build(items_text=SEED_ITEMS.replace("blocked-by: NONE",
                                                 f"blocked-by: {blocked}"))
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
-        code, out = run_cli(d, "item", "close", "xx-1")
+        code, out = run_cli(d, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         return code, out, (d / "ITEMS-DONE.md").read_text(encoding="utf-8"), d
 
     def test_a_decision_blocker_is_cleared_AND_recorded(self):

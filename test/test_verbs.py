@@ -229,7 +229,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
         """The red, made re-runnable: grep the ref in all three carriers."""
         r = self._repo()
         sha = self._head(r)
-        code, out = self._run(r, "item", "close", "xx-1",
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none",
                               "--reason", self.REASON, "--ref", sha)
         self.assertEqual(code, exits.CLEAN, out)
         c = self._carriers(r)
@@ -253,7 +253,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
         """
         r = self._repo()
         sha = self._head(r)
-        code, out = self._run(r, "item", "close", "xx-1",
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none",
                               "--reason", f"closed at {sha}")
         self.assertEqual(code, exits.CLEAN, out)
         c = self._carriers(r)
@@ -272,7 +272,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
                               "--evidence", "MEASURED in the wave-4 pass",
                               "--reason", "the desk corrected the evidence")
         self.assertEqual(code, exits.CLEAN, out)
-        code, out = self._run(r, "item", "close", "xx-1",
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none",
                               "--reason", self.REASON, "--ref", "HEAD")
         self.assertEqual(code, exits.CLEAN, out)
         code, out = self._run(r, "item", "check")
@@ -300,7 +300,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
         """MUST-NOT-MOVE: the lines are optional, and a close that demanded
         them would fire on every closure that legitimately has no ref."""
         r = self._repo()
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         body = (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8")
         self.assertNotIn("closed-reason:", body)
@@ -311,7 +311,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
         indistinguishable from the defect this item repaired, where the verb
         printed a complete-looking closure and had written nothing."""
         r = self._repo()
-        _code, out = self._run(r, "item", "close", "xx-1")
+        _code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertIn("closed-reason: not given, no line written", out)
         self.assertIn("closed-ref: not given, no line written", out)
 
@@ -319,7 +319,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
         """The control for the arm above: a message printed unconditionally
         would satisfy it while saying nothing true."""
         r = self._repo()
-        _code, out = self._run(r, "item", "close", "xx-1",
+        _code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none",
                                "--reason", self.REASON)
         self.assertNotIn("closed-reason: not given", out)
         self.assertIn("closed-ref: not given, no line written", out)
@@ -330,7 +330,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
         half-move — and the roster row proves only the exit code."""
         r = self._repo()
         before = self._carriers(r)
-        code, out = self._run(r, "item", "close", "xx-1",
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none",
                               "--ref", "0123456789abcdef0123456789abcdef01234567")
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("closed_ref_unresolvable", out)
@@ -348,7 +348,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
         token reached the fire log."""
         from lifecycle_core import firelog
         r = self._repo()
-        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1",
+        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1", "--met", "none", "--decided", "none",
                               "--reason", self.REASON)
         self.assertEqual(code, exits.CLEAN, out)
         lines = out.rstrip("\n").split("\n")
@@ -380,7 +380,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
             "yield": "nothing produced yet",
         }, items.SCHEMA_FLOOR)
         (r.dir / "arcs" / "freeze.md").write_text(body, encoding="utf-8")
-        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1",
+        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1", "--met", "none", "--decided", "none",
                               "--reason", self.REASON)
         self.assertEqual(code, exits.CLEAN, out)
         lines = out.rstrip("\n").split("\n")
@@ -404,7 +404,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
         }, items.SCHEMA_FLOOR)
         (r.dir / "arcs" / "closed" / "done-arc.md").write_text(
             body, encoding="utf-8")
-        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1",
+        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1", "--met", "none", "--decided", "none",
                               "--reason", self.REASON)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertNotIn("goal (arc done-arc):", out)
@@ -425,7 +425,7 @@ class ClosureRecordIsWritten(unittest.TestCase):
             "blocked-by: NONE\n")
         r = refusals._Repo(items=items_text)
         self.addCleanup(r.close)
-        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1",
+        code, out = self._run_goal_arm_on(r, "item", "close", "xx-1", "--met", "none", "--decided", "none",
                               "--reason", self.REASON)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("goal: none resolvable for this act", out)
@@ -505,7 +505,7 @@ class ItemBlockerAtClose(unittest.TestCase):
         which is what made the finding unrepairable rather than merely
         wrong."""
         r = self._repo(self._amended("xx-2", baseline=2), self.CLOSED_TARGET)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         done = (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8")
         self.assertIn(
@@ -524,7 +524,7 @@ class ItemBlockerAtClose(unittest.TestCase):
                       + refusals._blocked_block("xx-2", "READY", "NONE"))
         r = self._repo(items_text)
         before = self._carriers(r)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("close_over_live_blocker", out)
         self.assertEqual(self._carriers(r), before,
@@ -540,7 +540,7 @@ class ItemBlockerAtClose(unittest.TestCase):
                       + refusals._blocked_block("xx-1", "READY", "xx-2")
                       + refusals._blocked_block("xx-2", "READY", "NONE"))
         r = self._repo(items_text)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("xx-2 is still live in the carrier", out)
 
@@ -550,7 +550,7 @@ class ItemBlockerAtClose(unittest.TestCase):
         so a close that read DROPPED as a discharge would assert at one verb
         what the tool refuses two verbs over."""
         r = self._repo(self._amended("xx-2", baseline=2), self.DROPPED_TARGET)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("close_over_live_blocker", out)
         self.assertIn("DROPPED", out)
@@ -560,7 +560,7 @@ class ItemBlockerAtClose(unittest.TestCase):
         reading its absence as a discharge would make the emptiest possible
         evidence the strongest."""
         r = self._repo(self._amended("xx-9999"))
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("NEITHER home", out)
 
@@ -621,7 +621,7 @@ class ItemBlockerAtClose(unittest.TestCase):
         """MUST-NOT-MOVE, both halves: the body line AND the ledger line. The
         decision type is the one this item was forbidden to disturb."""
         r = self._repo(self._amended("decision which window is canonical"))
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         c = self._carriers(r)
         self.assertIn("blocker-moot: which window is canonical",
@@ -635,7 +635,7 @@ class ItemBlockerAtClose(unittest.TestCase):
         nobody asked as a question is the paraphrase-drift the carrier
         doctrine forbids."""
         r = self._repo(self._amended("xx-2", baseline=2), self.CLOSED_TARGET)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         self.assertNotIn("decision:", self._carriers(r)["LEDGER.md"])
 
@@ -648,7 +648,7 @@ class ItemBlockerAtClose(unittest.TestCase):
         r = self._repo(self._amended("xx-2", baseline=2), self.CLOSED_TARGET)
         (r.dir / "ITEMS-DONE.md").unlink()
         before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         self.assertIn("COULD NOT VERIFY", out)
         self.assertEqual((r.dir / "ITEMS.md").read_text(encoding="utf-8"),
@@ -1302,7 +1302,7 @@ class DecisionBlockerAtClose(unittest.TestCase):
         pair `test_a_DROP_records_the_wait_ABANDONED_never_answered` asserts
         one blocker type over."""
         r = self._repo(self._ledger(self.ANSWER))
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         c = self._carriers(r)
         self.assertIn(
@@ -1330,7 +1330,7 @@ class DecisionBlockerAtClose(unittest.TestCase):
         self.assertEqual(ready_code, exits.CLEAN, ready_out)
         self.assertIn("UNBLOCKED — the ledger ANSWERS this decision",
                       ready_out, ready_out)
-        close_code, close_out = self._run(r, "item", "close", "xx-1")
+        close_code, close_out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(close_code, exits.CLEAN, close_out)
         self.assertNotIn(
             "was never answered", close_out,
@@ -1347,7 +1347,7 @@ class DecisionBlockerAtClose(unittest.TestCase):
         self.assertEqual(ready_code, exits.CLEAN, ready_out)
         self.assertIn("BLOCKED — in the OPERATOR's court", ready_out,
                       ready_out)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         c = self._carriers(r)
         self.assertIn(f"blocker-moot: {self.QUESTION}\n", c["ITEMS-DONE.md"],
@@ -1369,7 +1369,7 @@ class DecisionBlockerAtClose(unittest.TestCase):
         r = refusals._Repo(items=("schema: 2\nbaseline: 1\nadded: 0\n"
                                   "compacted: 0\n" + body))
         self.addCleanup(r.close)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         self.assertNotIn("move_uncommitted", out, out)
         done = self._carriers(r)["ITEMS-DONE.md"]
@@ -1411,7 +1411,7 @@ class DecisionBlockerAtClose(unittest.TestCase):
         ready_code, ready_out = self._run(r, "item", "ready", "xx-1")
         self.assertEqual(ready_code, exits.CLEAN, ready_out)
         self.assertIn("records this question MOOT", ready_out, ready_out)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         c = self._carriers(r)
         self.assertIn(f"blocker-moot: {self.QUESTION}", c["ITEMS-DONE.md"],
@@ -1432,7 +1432,7 @@ class DecisionBlockerAtClose(unittest.TestCase):
         refuses to repair. Measured on a private clone before this arm
         existed — the close exited 0 and the next check exited 2."""
         r = self._repo(self._ledger(self.ANSWER), amended=True)
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn(
             f"blocker-moot: {items.decision_moot_record(self.QUESTION)}",
@@ -1482,7 +1482,7 @@ class DecisionBlockerAtClose(unittest.TestCase):
         ready_code, ready_out = self._run(r, "item", "ready", "xx-1")
         self.assertEqual(ready_code, exits.COULD_NOT_VERIFY, ready_out)
         before = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
-        code, out = self._run(r, "item", "close", "xx-1")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none", "--decided", "none")
         self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
         self.assertIn("COULD NOT VERIFY", out)
         self.assertEqual((r.dir / "ITEMS.md").read_text(encoding="utf-8"),
@@ -3323,7 +3323,7 @@ class TheHeadNamesClearedWaits(unittest.TestCase):
         self.assertEqual(self._counts(out), (0, 1, 0, 0, 0, 1, 0, 0), out)
         self.assertNotIn("xx-1 [NEW]", out)
 
-        code, _ = self._run(r, "item", "close", "xx-2", "--reason", "built")
+        code, _ = self._run(r, "item", "close", "xx-2", "--met", "none", "--decided", "none", "--reason", "built")
         self.assertEqual(code, exits.CLEAN)
         code, out = self._run(r, "item", "ready", "--head")
         self.assertEqual(code, exits.CLEAN, out)
