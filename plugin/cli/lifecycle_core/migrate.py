@@ -937,6 +937,30 @@ def _ledger_storable(blocked: str) -> str:
     return blocked
 
 
+def _for_item(blocked: str, ident: str) -> str:
+    """`blocked` with its decision question made THIS item's own (lc-312).
+
+    `migration_blocker` returns one literal per BRANCH, and `item ready`
+    resolves a `decision` blocker by question-slot equality — so every item
+    of a branch waited on the same question, and one ledger answer unblocked
+    all of them (measured: an answer written for one parked-evidence item
+    printed UNBLOCKED under another). Each mechanism is right alone; shared
+    questions exist on purpose, where one decision really does gate several
+    items. A migrated re-grade is not that case: it is a judgment about ONE
+    entry, so the question names the entry.
+
+    THE ID, not the source anchor: the id is what a reader holding the ledger
+    line can look up, and it carries neither ledger separator by construction.
+    Applied at `build_items`, the one site that turns an entry into a block,
+    for the same reason `_ledger_storable` is — a branch added later inherits
+    it. The residue item is not routed through here: it is one item per run.
+    """
+    kind, _detail = items_mod.classify_blocker(blocked, None)
+    if kind != "decision":
+        return blocked
+    return f"{blocked} (item {ident})"
+
+
 def migration_blocker(entry: Entry, slots_incomplete: bool):
     """`(blocked-by, why)` for one migrated entry — TYPED, always (§3.1).
 
@@ -1212,6 +1236,9 @@ def build_items(entries, prefix: str, source_name: str,
         # rule holds by construction here and is CHECKED by the done home's
         # own shape check rather than assumed.
         blocked, why = migration_blocker(e, slots_incomplete=True)
+        # ONE QUESTION PER ITEM (lc-312), before the storability gate so the
+        # gate judges the text that is actually written.
+        blocked = _for_item(blocked, e.ident)
         # THE MINT IS THE LAST PLACE A DECISION QUESTION CAN STILL BE FIXED
         # (lc-40) — after this it is a slot in a file, and the item waits on a
         # question the ledger will refuse to record an answer to.

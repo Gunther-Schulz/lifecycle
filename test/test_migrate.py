@@ -1623,6 +1623,63 @@ class MintedDecisionQuestionsAreAnswerable(unittest.TestCase):
         self.assertIn("UNBLOCKED — the ledger ANSWERS this decision",
                       run_cli(d, "item", "ready", "xx-1")[1])
 
+    #: One pair per branch of the minter: two entries that take the SAME
+    #: branch, so before lc-312 they carried one question between them.
+    SAME_BRANCH_PAIRS = [
+        ("old READY",
+         "- **READY 2026-01-01 — a.** body\n\n"
+         "- **READY 2026-01-02 — b.** body\n"),
+        ("PARKED naming evidence",
+         "- **PARKED 2026-01-01 — a.** Its named missing evidence is one "
+         "measurement.\n\n"
+         "- **PARKED 2026-01-02 — b.** Its named missing evidence is "
+         "another.\n"),
+        ("PARKED naming a decision",
+         "- **PARKED 2026-01-01 — a.** The missing decision here is one "
+         "shape.\n\n"
+         "- **PARKED 2026-01-02 — b.** The missing decision here is "
+         "another.\n"),
+        ("slot-incomplete",
+         "- **An entry with no grade word.** body\n\n"
+         "- **Another entry with no grade word.** body\n"),
+    ]
+
+    def test_an_answer_to_one_migrated_item_leaves_its_sibling_blocked(self):
+        """lc-312. `item ready` resolves a decision blocker by QUESTION
+        EQUALITY, so two items carrying one literal question are cleared by
+        one ledger line — measured on a scratch migration of a real carrier,
+        where answering one parked-evidence item printed UNBLOCKED under
+        another. The question is unique at the MINT or the answer is not
+        about an item at all."""
+        for label, body in self.SAME_BRANCH_PAIRS:
+            with self.subTest(branch=label):
+                d = build("# old\n\n## Open\n\n" + body)
+                self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+                self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+                blocked = [ln[len("blocked-by: "):] for ln in
+                           (d / "ITEMS.md").read_text(
+                               encoding="utf-8").splitlines()
+                           if ln.startswith("blocked-by:")]
+                # Both items were written, so the pair below is a pair.
+                self.assertEqual(len(blocked), 2)
+                kind, question = items.classify_blocker(blocked[0], None)
+                self.assertEqual(kind, "decision")
+                # BASELINE: both read BLOCKED before any answer exists.
+                for ident in ("xx-1", "xx-2"):
+                    self.assertIn("BLOCKED — in the OPERATOR's court",
+                                  run_cli(d, "item", "ready", ident)[1])
+                code, outp = run_cli(d, "ledger", "add", "decision",
+                                     "--question", question,
+                                     "--answer", "settled for the first")
+                self.assertEqual(code, exits.CLEAN, outp)
+                # The answer LANDED on the item it names — without this the
+                # assertion below is satisfied by an answer matching nothing.
+                self.assertIn("UNBLOCKED — the ledger ANSWERS this decision",
+                              run_cli(d, "item", "ready", "xx-1")[1])
+                second = run_cli(d, "item", "ready", "xx-2")[1]
+                self.assertIn("BLOCKED — in the OPERATOR's court", second)
+                self.assertNotIn("UNBLOCKED", second)
+
     def test_the_guard_refuses_a_question_carrying_the_separator(self):
         """The mechanism's OWN red — `_ledger_storable` is what holds the
         mint against a later edit to one of the literals, and a guard shipped
@@ -2729,16 +2786,19 @@ class HeadingShapeEndToEnd(unittest.TestCase):
             self.assertRegex(src[end], r"^#{1,3}\s")
 
     def test_the_section_decides_the_blocker_the_existing_rules_write(self):
-        blockers = [it.slots["blocked-by"]
-                    for it in items.parse(self.items).items]
-        self.assertEqual(blockers[0], migrate.REGRADE_BLOCKER)
-        self.assertEqual(blockers[1], migrate.REGRADE_BLOCKER)
-        self.assertEqual(blockers[2],
-                         "decision " + migrate.PARKED_EVIDENCE_QUESTION)
+        parsed = items.parse(self.items).items
+        blockers = [it.slots["blocked-by"] for it in parsed]
+        # Each question ends in its OWN item's id (lc-312), spelled out here
+        # rather than taken from the minter's helper, which would move with it.
+        own = [f" (item {it.ident})" for it in parsed]
+        self.assertEqual(blockers[0], migrate.REGRADE_BLOCKER + own[0])
+        self.assertEqual(blockers[1], migrate.REGRADE_BLOCKER + own[1])
+        self.assertEqual(blockers[2], "decision "
+                         + migrate.PARKED_EVIDENCE_QUESTION + own[2])
         # The unknown-section entry's body LEADS with `READY`; it carries the
         # ungraded blocker and not the regrade one.
-        self.assertEqual(blockers[3],
-                         "decision " + migrate.INCOMPLETE_DECISION)
+        self.assertEqual(blockers[3], "decision "
+                         + migrate.INCOMPLETE_DECISION + own[3])
 
     def test_the_run_and_the_report_both_state_the_shape_they_read(self):
         self.assertIn("    entry shape:              heading — ", self.out)
@@ -2921,8 +2981,10 @@ class ParkedEvidenceDoesNotMigrateAsAnUnclearableBlocker(unittest.TestCase):
         # The evidence-naming entry takes the new decision, the
         # decision-naming one keeps its own question: the two stay distinct.
         self.assertEqual(blockers, [
-            "decision " + migrate.PARKED_EVIDENCE_QUESTION,
-            "decision " + migrate.PARKED_DECISION_QUESTION])
+            "decision " + migrate.PARKED_EVIDENCE_QUESTION
+            + f" (item {parsed[0].ident})",
+            "decision " + migrate.PARKED_DECISION_QUESTION
+            + f" (item {parsed[1].ident})"])
         self.assertNotIn("evidence false", carrier)
         code, out = run_cli(d, "item", "check")
         self.assertNotIn("blocker_softlock", out)
