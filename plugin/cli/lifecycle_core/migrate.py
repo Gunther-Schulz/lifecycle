@@ -2602,8 +2602,9 @@ def other_marker_note(read: Read, src_name: str) -> str:
     return (f"NOTE: {len(read.other_marker_lines)} line(s) in {src_name} "
             f'open with "* " or "+ " (first at line '
             f"{read.other_marker_lines[0][0]}). The bullet shape reads "
-            f'"- " as the bullet, so these were read as BODY of the entry '
-            f"above them, not as entries.")
+            f'"- " as the bullet, so these were NOT read as entries: each '
+            f"is body of the entry above it where one is open, and reaches "
+            f"no item where none is.")
 
 
 def run(args, out, ctx) -> int:
@@ -3560,8 +3561,8 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
         # PRINTED WHEN ZERO TOO: an omitted row reads as "not counted", and
         # these lines are in no column of the bullet identity below — this
         # row is the only place the report says they exist.
-        a(f"| top-level lines opening with `* ` or `+ ` (read as body, not "
-          f"as entries) | {len(read.other_marker_lines)} |")
+        a(f"| top-level lines opening with `* ` or `+ ` (NOT read as "
+          f"entries) | {len(read.other_marker_lines)} |")
         a(f"| of those, bullets in a section §4 row 1 CUTS | "
           f"{len(read.cut_bullets)} |")
     a(f"| items written to `{ctx.items_path.name}` | {n_items} |")
@@ -3828,7 +3829,7 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
             a(f"- `{src_name}:{lineno}` — section: {section[:70]}")
         a("")
     if not heading_shape and read.other_marker_lines:
-        a("## Lines under another list marker — read as body, not as entries")
+        a("## Lines under another list marker — NOT read as entries")
         a("")
         a("Top-level lines opening with `* ` or `+ `. The bullet shape reads "
           "`- ` as the bullet, so each of these joined the entry above it "

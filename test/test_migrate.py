@@ -3138,8 +3138,9 @@ class OtherMarkerLinesAreSaid(unittest.TestCase):
             notes[0].strip(),
             'NOTE: 2 line(s) in BACKLOG.md open with "* " or "+ " (first at '
             f'line {self.line_of(d, "* **READY")}). The bullet shape reads '
-            '"- " as the bullet, so these were read as BODY of the entry '
-            "above them, not as entries.")
+            '"- " as the bullet, so these were NOT read as entries: each '
+            "is body of the entry above it where one is open, and reaches "
+            "no item where none is.")
 
     def test_the_report_counts_them_and_lists_where_they_are(self):
         d, code, out, report = self.run_over(self.MIXED)
@@ -3148,8 +3149,8 @@ class OtherMarkerLinesAreSaid(unittest.TestCase):
                      if ln.startswith("| of those, non-entry prose bullets"))
         self.assertEqual(
             rows[prose + 1],
-            "| top-level lines opening with `* ` or `+ ` (read as body, not "
-            "as entries) | 2 |")
+            "| top-level lines opening with `* ` or `+ ` (NOT read as "
+            "entries) | 2 |")
         self.assertIn("## Lines under another list marker", report)
         section = report[report.index("## Lines under another list marker"):]
         section = section[:section.index("\n## ", 1)] \
@@ -3191,8 +3192,8 @@ class OtherMarkerLinesAreSaid(unittest.TestCase):
         d, code, out, report = self.run_over(self.PLAIN)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertNotIn("NOTE: ", out)
-        self.assertIn("| top-level lines opening with `* ` or `+ ` (read as "
-                      "body, not as entries) | 0 |", report)
+        self.assertIn("| top-level lines opening with `* ` or `+ ` (NOT "
+                      "read as entries) | 0 |", report)
         self.assertNotIn("## Lines under another list marker", report)
 
     def test_a_star_rule_alone_is_a_zero(self):
