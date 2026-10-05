@@ -1587,7 +1587,11 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
 
     lead = decl.head_lead_goal(ctx.declaration.get("head-rule"))
     ready = [it for it in parsed.items if it.grade == "READY"]
-    waiting = [it for it in parsed.items if it.grade != "READY"]
+    # OPEN grades only. A DONE or DROPPED block still sitting in the live
+    # carrier (a hand edit, an interrupted close) waits on nothing, and
+    # `!= "READY"` named it as owing a re-grade.
+    waiting = [it for it in parsed.items
+               if it.grade in items_mod.GRADES_OPEN and it.grade != "READY"]
 
     # lc-16: THE GOAL FILTER, and the undeclared-goal answer is the point of
     # it. A repo can declare a closed goal set and set a goal per item, then
@@ -1675,6 +1679,8 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
     # under the same `--goal` view, so a filtered head is filtered whole.
     code = exits.worst([code, _arrived_evidence(
         waiting, out, ctx, parsed, done_parsed, done_why)])
+    code = exits.worst([code, _cleared_waits(
+        waiting, out, ctx, parsed, done_parsed, done_why)])
     out(f"item ready --head: {exits.word(code)}")
     return code
 
@@ -1740,6 +1746,91 @@ def _arrived_evidence(waiting, out, ctx: Ctx, parsed, done_parsed,
     out(f"evidence waits (items not graded READY): {ran} predicate(s) run "
         f"this pass — {len(fired)} FIRED, {quiet} quiet, {len(broken)} "
         "BROKEN.")
+    return code
+
+
+def _cleared_waits(waiting, out, ctx: Ctx, parsed, done_parsed,
+                   done_why) -> int:
+    """The head pass's third half: every item NOT graded READY whose
+    `decision` or item-id blocker has CLEARED is NAMED, and what was read is
+    counted.
+
+    THE DEFECT THIS CLOSES is lc-313's, for the two waits it left. A decision
+    the ledger has ANSWERED and an item-id blocker whose target closed DONE
+    both end without anybody touching the waiting item; `item ready <id>`
+    says UNBLOCKED and that a re-grade is owed, and the pass that runs
+    unprompted named neither. Measured across NEW, PARKED and STANDBY
+    (docs/audits/2026-10-05-head-surface-matrix.tsv), and on this repo's own
+    carrier: seven such items the day this was written.
+
+    ONE VERDICT FUNCTION, as in `_arrived_evidence`: every item goes through
+    `_blocker_state` and the buckets are read off the verdict it returns.
+
+    WHAT IS LISTED, WHAT IS ONLY COUNTED, and each for its own reason:
+      - ANSWERED / target DONE — LISTED, with the per-item verdict's own
+        text. These are the waits that are over.
+      - a MIGRATION RE-GRADE — COUNTED. The desk owes the act, but nothing
+        CHANGED: it was owed from the migration on, for every migrated
+        entry at once, and listing a population every session start is the
+        line a reader learns to skip.
+      - still WAITING — COUNTED. A wait that is still a wait is not news.
+      - a FINDING (a target in no home, a DROPPED target) — COUNTED and
+        left to `item check`, which runs in the same unprompted pass and
+        names it as `dangling_reference`. One finding, one home: a second
+        body of that text here would drift from the first. It therefore
+        contributes nothing to this verb's exit code either.
+      - COULD NOT VERIFY (the ledger or the done home unreadable) — LISTED
+        and carried in the exit code: whether the wait is over is unknown,
+        and a count line over an unread home would read as "none".
+
+    NOTHING IS PROMOTED (law 10).
+    """
+    cleared, unverified = [], []
+    n_decision = n_item = answered = target_done = 0
+    regrade = still = left = 0
+    code = exits.CLEAN
+    for it in waiting:
+        kind, detail = items_mod.classify_blocker(
+            it.slots.get("blocked-by", ""), ctx.prefix)
+        if kind not in ("decision", "item"):
+            continue
+        state, st_code, _note = _blocker_state(it, ctx, parsed, done_parsed,
+                                               done_why)
+        if kind == "decision":
+            n_decision += 1
+        else:
+            n_item += 1
+        if state.startswith("UNBLOCKED"):
+            if kind == "decision":
+                answered += 1
+            else:
+                target_done += 1
+            cleared.append((it, state[len("UNBLOCKED — "):]))
+        elif state.startswith("COULD NOT VERIFY"):
+            unverified.append((it, state))
+            code = exits.worst([code, st_code])
+        elif state.startswith("FINDING"):
+            left += 1
+        elif kind == "decision" and grammar.is_migration_question(detail):
+            regrade += 1
+        else:
+            still += 1
+
+    if cleared:
+        out(f"--- waits OVER: {len(cleared)} item(s) not graded READY whose "
+            "blocker has cleared")
+        for it, text in cleared:
+            out(f"  {it.ident} [{it.grade}] {text} A RE-GRADE is owed at the "
+                "desk. THIS VERB PROMOTES NOTHING.")
+    for it, state in unverified:
+        out(f"  {it.ident} [{it.grade}] whether this wait is over is unknown:")
+        out(f"        {state}")
+    out(f"cleared waits (items not graded READY): {n_decision} decision and "
+        f"{n_item} item-id blocker(s) read this pass — {answered} "
+        f"decision(s) ANSWERED, {target_done} target(s) DONE, {regrade} "
+        "migration re-grade(s) owed at the desk (counted, not listed), "
+        f"{still} still waiting, {left} finding(s) left to `item check`, "
+        f"{len(unverified)} could not verify.")
     return code
 
 

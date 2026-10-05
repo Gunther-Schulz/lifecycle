@@ -3228,3 +3228,200 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
         code, out = self._run(r, "item", "statusline")
         self.assertEqual(out.strip(), "0R.1P head -", out)
         self.assertFalse((r.dir / "lc313-statusline").exists(), out)
+
+
+class TheHeadNamesClearedWaits(unittest.TestCase):
+    """`item ready --head` names every item NOT graded READY whose `decision`
+    or item-id blocker has CLEARED, and prints what it evaluated.
+
+    lc-313 covered the evidence predicate that fired. Two more waits end
+    without anybody touching the item, and the unprompted pass named neither:
+    a decision the ledger has ANSWERED, and an item-id blocker whose target
+    closed DONE. Measured on a scratch carrier across NEW, PARKED and STANDBY
+    (docs/audits/2026-10-05-head-surface-matrix.tsv): `item ready <id>` said
+    UNBLOCKED, re-grade owed, and the head said nothing.
+
+    EACH TEST IS A PAIR over one carrier: the state before the wait ends and
+    the state after, the ending written through the tool's own verb.
+    """
+
+    #: baseline 2 — every carrier below holds exactly two blocks, and the
+    #: pairs CLOSE one through the verb, which refuses to commit over a
+    #: carrier whose conservation identity does not hold.
+    HEAD = "schema: 2\nbaseline: 2\nadded: 0\ncompacted: 0\n"
+    COUNT = (r"cleared waits \(items not graded READY\): (\d+) decision and "
+             r"(\d+) item-id blocker\(s\) read this pass — (\d+) decision\(s\) "
+             r"ANSWERED, (\d+) target\(s\) DONE, (\d+) migration re-grade\(s\) "
+             r"owed at the desk \(counted, not listed\), (\d+) still waiting, "
+             r"(\d+) finding\(s\) left to `item check`, (\d+) could not "
+             r"verify\.")
+    MIG_Q = ("regrade: was READY under the old carrier: READY is judged, "
+             "never inherited")
+
+    def _repo(self, items_text):
+        r = refusals._Repo(items=items_text)
+        self.addCleanup(r.close)
+        return r
+
+    def _run(self, repo, *argv):
+        import io
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        return code, buf.getvalue()
+
+    def _counts(self, out):
+        """The eight numbers off the ONE count line: decisions read, item-id
+        blockers read, answered, target done, re-grades, waiting, findings
+        left to `item check`, could not verify."""
+        import re
+        found = re.findall(self.COUNT, out)
+        self.assertEqual(len(found), 1, out)
+        return tuple(int(n) for n in found[0])
+
+    def test_a_decision_is_named_once_the_ledger_answers_it(self):
+        carrier = (self.HEAD
+                   + refusals._blocked_block("xx-1", "READY", "NONE")
+                   + refusals._blocked_block("xx-2", "PARKED",
+                                             "decision which window"))
+        r = self._repo(carrier)
+
+        # UNANSWERED: counted as still waiting, and NOT listed.
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self._counts(out), (1, 0, 0, 0, 0, 1, 0, 0), out)
+        self.assertNotIn("xx-2", out)
+        self.assertNotIn("waits OVER", out)
+
+        # ANSWERED, through the ledger's own verb.
+        code, _ = self._run(r, "ledger", "add", "decision", "--question",
+                            "which window", "--answer", "the left one")
+        self.assertEqual(code, exits.CLEAN)
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN,
+                         "an answered decision is information, not a "
+                         "finding\n" + out)
+        self.assertEqual(self._counts(out), (1, 0, 1, 0, 0, 0, 0, 0), out)
+        self.assertIn("--- waits OVER: 1 item(s)", out)
+        self.assertIn("xx-2 [PARKED] the ledger ANSWERS this decision: "
+                      "'which window' → 'the left one'", out)
+        self.assertIn("RE-GRADE is owed at the desk", out)
+        self.assertLess(out.index("1. xx-1 [READY]"),
+                        out.index("--- waits OVER"), out)
+
+    def test_an_item_blocker_is_named_once_its_target_is_DONE(self):
+        carrier = (self.HEAD
+                   + refusals._blocked_block("xx-1", "NEW", "xx-2")
+                   + refusals._blocked_block("xx-2", "READY", "NONE"))
+        r = self._repo(carrier)
+
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self._counts(out), (0, 1, 0, 0, 0, 1, 0, 0), out)
+        self.assertNotIn("xx-1 [NEW]", out)
+
+        code, _ = self._run(r, "item", "close", "xx-2", "--reason", "built")
+        self.assertEqual(code, exits.CLEAN)
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self._counts(out), (0, 1, 0, 1, 0, 0, 0, 0), out)
+        self.assertIn("xx-1 [NEW] xx-2 is DONE.", out)
+        self.assertIn("RE-GRADE is owed at the desk", out)
+
+    def test_a_DROPPED_target_is_counted_and_left_to_item_check(self):
+        """ONE FINDING, ONE HOME. `item check` runs in the same unprompted
+        pass and names a dangling blocker as `dangling_reference`; the head
+        restating it would be a second body of that text. It is COUNTED here
+        so the line says it was seen, and the head's own verdict stays CLEAN.
+        """
+        carrier = (self.HEAD
+                   + refusals._blocked_block("xx-1", "PARKED", "xx-2")
+                   + refusals._blocked_block("xx-2", "READY", "NONE"))
+        r = self._repo(carrier)
+        code, _ = self._run(r, "item", "close", "xx-2", "--drop", "--reason",
+                            "overtaken")
+        self.assertEqual(code, exits.CLEAN)
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self._counts(out), (0, 1, 0, 0, 0, 0, 1, 0), out)
+        self.assertNotIn("xx-1 [PARKED]", out)
+        self.assertNotIn("waits OVER", out)
+        # ...and the home that owns the finding does name it.
+        code, out = self._run(r, "item", "check")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [dangling_reference]", out)
+        self.assertIn("'xx-1'", out)
+
+    def test_a_migration_regrade_is_counted_and_never_listed(self):
+        carrier = (self.HEAD
+                   + refusals._blocked_block("xx-1", "PARKED",
+                                             "decision " + self.MIG_Q)
+                   + refusals._blocked_block("xx-2", "NEW",
+                                             "decision " + self.MIG_Q))
+        r = self._repo(carrier)
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self._counts(out), (2, 0, 0, 0, 2, 0, 0, 0), out)
+        self.assertNotIn("xx-1", out)
+        self.assertNotIn("xx-2", out)
+
+    def test_an_unreadable_ledger_is_could_not_verify_and_named(self):
+        carrier = (self.HEAD.replace("baseline: 2", "baseline: 1")
+                   + refusals._blocked_block("xx-1", "PARKED",
+                                             "decision which window"))
+        r = self._repo(carrier)
+        (r.dir / "LEDGER.md").unlink()
+        one_code, one_out = self._run(r, "item", "ready", "xx-1")
+        self.assertEqual(one_code, exits.COULD_NOT_VERIFY, one_out)
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertEqual(self._counts(out), (1, 0, 0, 0, 0, 0, 0, 1), out)
+        self.assertIn("xx-1 [PARKED]", out)
+        self.assertIn("COULD NOT VERIFY", out)
+
+    def test_a_CLOSED_grade_left_in_the_carrier_is_not_a_wait(self):
+        """A DONE or DROPPED block still sitting in the live carrier — a hand
+        edit, an interrupted close — waits on nothing. The head named it as
+        `[DONE] … a RE-GRADE is owed at the desk` for every blocker type.
+
+        THE CONTROL is the same block graded PARKED: it IS named, so the
+        absence above is the grade and not a predicate that never ran."""
+        for grade in ("DONE", "DROPPED"):
+            carrier = (self.HEAD
+                       + refusals._blocked_block("xx-1", grade,
+                                                 "evidence true")
+                       + refusals._blocked_block("xx-2", grade,
+                                                 "decision which window"))
+            r = self._repo(carrier)
+            self._run(r, "ledger", "add", "decision", "--question",
+                      "which window", "--answer", "left")
+            code, out = self._run(r, "item", "ready", "--head")
+            self.assertNotIn("RE-GRADE is owed", out, out)
+            self.assertIn("0 predicate(s) run this pass", out)
+            self.assertEqual(self._counts(out)[:2], (0, 0), out)
+
+        control = (self.HEAD.replace("baseline: 2", "baseline: 1")
+                   + refusals._blocked_block("xx-1", "PARKED",
+                                             "evidence true"))
+        code, out = self._run(self._repo(control), "item", "ready", "--head")
+        self.assertIn("xx-1 [PARKED] the evidence predicate ('true') FIRED",
+                      out)
+
+    def test_goal_restricts_this_half_too(self):
+        other = refusals._blocked_block(
+            "xx-2", "PARKED", "decision which window"
+        ).replace("goal: mitigate", "goal: verify")
+        carrier = (self.HEAD
+                   + refusals._blocked_block("xx-1", "PARKED",
+                                             "decision which window")
+                   + other)
+        r = self._repo(carrier)
+        self._run(r, "ledger", "add", "decision", "--question",
+                  "which window", "--answer", "left")
+        code, out = self._run(r, "item", "ready", "--head", "--goal",
+                              "verify")
+        self.assertEqual(self._counts(out)[:3], (1, 0, 1), out)
+        self.assertIn("xx-2 [PARKED]", out)
+        self.assertNotIn("xx-1", out)
