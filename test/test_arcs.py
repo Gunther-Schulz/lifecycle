@@ -1204,6 +1204,73 @@ class DeadlineGeneratesItsObserver(unittest.TestCase):
         self.assertEqual(self._lanes(repo), [], "an abandoned arc left lanes")
         self.assertFalse(self._body(repo).exists())
 
+    def test_a_stage_of_SEVERAL_WORDS_has_its_lane_retired_on_advance(self):
+        """The leaving stage was matched by the FIRST word of the recorded
+
+        stage, so "out for review" never equalled its own record and its
+        lane stayed declared after the arc left."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN, "--stage", "out for review")
+        self._deadline(repo)
+        self.assertIn(self.NAME, self._lanes(repo))
+        code, outp = self._run(repo, "arc", "advance", "bplan", "--to",
+                               "closing", "--reason", "probe")
+        self.assertEqual(code, 0, outp)
+        self.assertIn("retired 1 generated observer lane", outp)
+        self.assertEqual(self._lanes(repo), [])
+        self.assertFalse(self._body(repo).exists())
+
+    def test_an_OUTWARD_stage_has_its_lane_retired_on_advance(self):
+        """The mark lands on the `advanced:` line only; the stage slot holds
+
+        the bare name, so this arm is a control on that reading."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._run(repo, "arc", "advance", "bplan", "--to", "sending",
+                  "--reason", "go", "--outward")
+        self._deadline(repo)
+        self.assertIn(self.NAME, self._lanes(repo))
+        code, outp = self._run(repo, "arc", "advance", "bplan", "--to",
+                               "done", "--reason", "sent")
+        self.assertEqual(code, 0, outp)
+        self.assertEqual(self._lanes(repo), [])
+
+    def test_a_one_word_stage_retires_and_ANOTHER_stages_lane_survives(self):
+        repo = self._repo()
+        self._run(repo, *self.OPEN, "--stage", "out for review")
+        self._deadline(repo)
+        self._run(repo, "arc", "advance", "bplan", "--to", "drafting",
+                  "--reason", "back")
+        self._run(repo, "arc", "deadline", "bplan", "--date", "2027-03-01",
+                  "--what", "x")
+        # Leave `drafting`: its lane goes; nothing else is declared.
+        self._run(repo, "arc", "advance", "bplan", "--to", "out for review",
+                  "--reason", "again")
+        self.assertEqual(self._lanes(repo), [])
+        # Set one more in `out for review`; it is the only lane declared.
+        self._run(repo, "arc", "deadline", "bplan", "--date", "2027-04-01",
+                  "--what", "y")
+        from lifecycle_core import arcs as arcs_mod
+        body = (repo.dir / arcs_mod.ARCS_DIR / "bplan.md").read_text(
+            encoding="utf-8")
+        # The record lines stay; each stage selects only its own lanes.
+        self.assertEqual(arcs_mod.deadline_lanes(body, stage="drafting"),
+                         ["bplan-2027-03-01"])
+        self.assertEqual(arcs_mod.deadline_lanes(body, stage="out for review"),
+                         ["bplan-2026-12-01", "bplan-2027-04-01"])
+        self.assertEqual(arcs_mod.deadline_lanes(body, stage="out"), [])
+        self.assertEqual(self._lanes(repo), ["bplan-2027-04-01"])
+
+    def test_the_deadline_line_is_parsed_whole(self):
+        from lifecycle_core import arcs as arcs_mod
+        rec = arcs_mod.Appended(
+            "deadline", "bplan-2027-04-01",
+            "out for review 2027-04-01 due 2027-04-01 again")
+        d = arcs_mod.parse_deadline(rec)
+        self.assertEqual((d.stage, d.date, d.what),
+                         ("out for review", "2027-04-01",
+                          "due 2027-04-01 again"))
+
     def test_a_non_ISO_date_is_refused(self):
         """The observer is a DATE predicate; a date it cannot compare is a
 

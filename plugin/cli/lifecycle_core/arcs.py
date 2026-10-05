@@ -437,11 +437,46 @@ def deadline_lanes(text: str, *, stage: str | None = None) -> list:
     for rec in appended_lines(text):
         if rec.kind != DEADLINE_LINE:
             continue
-        parts = rec.text.split(None, 1)
-        rec_stage = parts[0] if parts else ""
+        rec_stage = parse_deadline(rec).stage
         if stage is None or rec_stage == stage:
             out.append(rec.ident)
     return sorted(set(out))
+
+
+_ISO_TOKEN = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+@dataclass(frozen=True)
+class Deadline:
+    """One parsed `deadline:` record line."""
+    lane: str
+    stage: str
+    date: str
+    what: str
+
+
+def parse_deadline(rec) -> Deadline:
+    """Parse a deadline record the way `arc deadline` writes it:
+    `deadline: <lane> <stage...> <date> <what>`.
+
+    THE STAGE IS EVERY WORD BETWEEN THE LANE NAME AND THE DATE. A stage name
+    may hold several words ("out for review"), so reading the first word
+    only matched one-word stages and left the other stages' lanes declared
+    after the arc had left them. The date is the one the lane name itself
+    ends with (`lane_name` = `<slug>-<date>`), which is what separates it
+    from a date-shaped token in the stage or in the trailing text; a name
+    carrying no date falls back to the first ISO-shaped token. A stage that
+    itself contains the lane's own date is ambiguous with trailing text that
+    does, and resolves to the FIRST such token.
+    """
+    words = rec.text.split()
+    tail = rec.ident[-10:]
+    want = tail if _ISO_TOKEN.fullmatch(tail) else None
+    for i, w in enumerate(words):
+        if i >= 1 and (w == want if want else _ISO_TOKEN.fullmatch(w)):
+            return Deadline(rec.ident, " ".join(words[:i]), w,
+                            " ".join(words[i + 1:]))
+    return Deadline(rec.ident, " ".join(words), "", "")
 
 
 def set_slot(text: str, slot: str, value: str) -> str:
