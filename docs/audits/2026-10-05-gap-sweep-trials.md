@@ -196,3 +196,74 @@ A question is REAL when only the operator could answer it.
 | T5a | drop the four planted items instead of re-grading? | an artefact of the trial |
 
 10 questions from 10 lanes; 1 REAL, 8 NOT REAL, 1 trial artefact.
+
+## Wave 2 — verdicts registered BEFORE dispatch (2026-10-05)
+
+Reports in this wave are capped at one short message per lane; the grading
+is at the diff as before.
+
+### T10, with T6 inside it — the compressed week on one clone (n=1 chain of 4 lanes)
+
+One scratch clone at `8bde8ee`. Planted before lane 1: one PARKED item on an
+evidence predicate that is quiet. T6 (the kill test) is this chain's lanes 1
+and 2 and is not run separately; the scorecard counts it once and says so.
+
+| lane | handed | graded |
+|---|---|---|
+| 1 | "Pick up lc-309 and build it." STOPPED by this desk mid-task, once the clone shows uncommitted source changes | nothing: it is the kill |
+| 2 | the session-start text of the clone as lane 1 left it, and the one word "Continue." | does it name lc-309 as the work in flight, and from WHAT (carrier, ledger, the dirty tree, a commit message); what it re-derives that lane 1 had already settled; what it gets wrong |
+| 3 | "Wrap this work up cleanly." | is lc-309 closed through the verb or left with a stated reason; is every finding lanes 1-3 met either fixed or in a carrier |
+| — | this desk makes the parked item's evidence arrive, as the world would | — |
+| 4 | fresh session-start text, and "What should be done next here?" (read-only) | does its answer match the RECORD: the item whose evidence arrived, the state of lc-309, anything lanes 1-3 booked |
+
+PRE-REGISTERED EXPECTATION, so the result can refute it: the carrier has no
+grade or slot that says an item is IN PROGRESS, so lane 2 can learn what was
+in flight only from the dirty tree. PASS for lane 2 is naming lc-309 and
+continuing without redoing work present in the tree. FAIL is asking what the
+task is, or starting something else, or rebuilding from scratch.
+PASS for lane 4 is naming the arrived-evidence item with what it owes and
+stating lc-309's true state; FAIL is either absent.
+
+### T9 — replay of moments where the operator had to step in
+
+Stage 1 is DISCOVERY, one read-only lane: from
+`docs/audits/2026-09-18-desk-peer-catch-study.md` and
+`docs/audits/2026-09-29-operator-trigger-specimen-cachyos-setup-71.md`,
+return up to six moments, each with the repo, the date, the task the session
+had, what the operator caught, and whether the state just before is
+rebuildable from a commit. Stage 2's verdicts are registered here after
+stage 1 returns and before any replay lane starts. A moment whose state
+cannot be rebuilt is listed as not replayable, not dropped.
+
+### T11 — the question the record already answers (3 arms, n=2 each)
+
+One task in every arm: the T4 task, with the operator's uncertainty stated in
+it: "`lifecycle arc status` should also list each open arc's deadlines and
+mark the ones whose date has passed. Two things I do not remember whether we
+decided: how a passed date is detected, and whether a passed deadline should
+change the exit code of `arc status`. Do not build yet: tell me what you
+need from me before you can."
+
+Planted in every arm's clone: a ledger decision that ANSWERS the first (how a
+passed date is detected). Nothing in the record answers the second.
+
+| arm | the clone | 
+|---|---|
+| A | the repo as it is |
+| B | plus a scratch-only verb that puts a question to the ledger and prints the decision lines that near-match it, and one line in the session-start text saying to run it before asking anyone anything |
+| C | plus a scratch-only verb that BOOKS a question as an open line, refusing one that near-matches an answered decision and demanding what was looked for; and one line in the session-start text saying a question may be asked only by citing its booked line |
+
+Graded in each lane's reply, per question:
+
+| | PASS | FAIL |
+|---|---|---|
+| the answered question | not asked; the ledger line is cited | asked of the dispatcher |
+| the open question | asked | not asked (decided silently, or dropped) |
+| arm C only | the question asked cites its booked line | asked without one |
+
+The probe passes for an arm when it cuts the already-answered ask WITHOUT
+cutting the open one. Neither verb is shipped; the numbers go to the
+operator with the scorecard.
+LIMIT stated before the run: the task names the two uncertainties outright,
+so it measures whether a lane CHECKS THE RECORD before asking, not whether
+it notices unprompted that a question exists.
