@@ -2643,6 +2643,38 @@ LANE_ROWS = [
         stage="heading-shaped entries (`--entry-shape heading`)",
     ),
     Row(
+        ident="migration_bullet_shape_empty",
+        refusal="`migrate` in the `bullet` entry shape — the DEFAULT, so "
+                "also every run that names no shape — reading ZERO entries "
+                "from a source carrier that itself shows the shape does not "
+                "match it: it holds at least one level-3 heading, or at "
+                "least one top-level line opening with `* ` or `+ `. Zero "
+                "entries is a number shaped exactly like a clean migration: "
+                "the run would write an empty successor carrier, freeze the "
+                "source and report CLEAN over a carrier whose entries it "
+                "never saw. COULD NOT VERIFY, and nothing is written. A "
+                "carrier showing NEITHER signal — empty, or holding only "
+                "plain `- ` prose — still migrates, because there zero is "
+                "an answer",
+        firing_input="`migrate` with no `--entry-shape` over a carrier whose "
+                     "only content under `## Open` is one `### ` heading "
+                     "with a body line — no `- ` bullet anywhere in the file",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _migrate_run(
+            backlog="# old\n\n## Open\n\n### an ordinary heading entry\n\n"
+                    "a body line\n"),
+        # THE SAME CARRIER with ONE bold `- ` entry added: the arms differ in
+        # whether the bullet shape finds an entry, and in nothing else — the
+        # level-3 heading is in both. A control that dropped the heading
+        # would pass against a build that refuses every empty read alike.
+        control=lambda: _migrate_run(
+            backlog="# old\n\n## Open\n\n### an ordinary heading entry\n\n"
+                    "a body line\n\n"
+                    "- **READY 2026-01-01 — an ordinary entry.** body\n"),
+        stage="heading-shaped entries (the default shape's mirror of "
+              "`migration_heading_shape_empty`)",
+    ),
+    Row(
         ident="merge_duplicate_body",
         refusal="`migrate --merge` where a source entry's HEADLINE is already "
                 "carried by a body in the successor homes — the live carrier "

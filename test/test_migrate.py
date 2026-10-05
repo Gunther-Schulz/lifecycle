@@ -2992,6 +2992,112 @@ class HeadingShapeOverNoHeadings(unittest.TestCase):
         self.assertNotEqual(control.code, fired.code)
 
 
+class BulletShapeOverNoEntries(unittest.TestCase):
+    """The mirror of `HeadingShapeOverNoHeadings`: the DEFAULT shape reading
+    zero entries from a carrier that shows its entries are written some
+    other way. Zero reads exactly like a clean migration, so it is the third
+    answer — and where the carrier shows no such sign, zero stays an answer."""
+
+    HEADINGS = ("# old\n\n## Open\n\n### first entry\n\nbody one\n\n"
+                "### second entry\n\nbody two\n")
+    STARRED = ("# old\n\n## Open\n\n"
+               "* **READY 2026-01-01 — a starred entry.** body\n"
+               "+ **READY 2026-01-02 — a plus entry.** body\n")
+    ENTRY = "- **READY 2026-01-03 — an ordinary entry.** body\n"
+
+    def refused(self, text, *extra):
+        d = build(text)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        before = (d / "BACKLOG.md").read_bytes()
+        code, out = migrate_run(d, *extra)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("COULD NOT VERIFY [migration_bullet_shape_empty]", out)
+        self.assertNotIn("migrate: CLEAN", out)
+        self.assertFalse((d / "ITEMS.md").exists())
+        self.assertFalse((d / "ITEMS-DONE.md").exists())
+        self.assertFalse((d / REPORT).exists())
+        self.assertEqual((d / "BACKLOG.md").read_bytes(), before)
+        return out
+
+    def migrated(self, text, entries):
+        d = build(text)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("migration_bullet_shape_empty", out)
+        self.assertIn(f"source entries read:      {entries}\n", out)
+        self.assertTrue((d / "ITEMS.md").exists())
+        return d, out
+
+    def test_headings_under_the_default_shape_could_not_verify(self):
+        out = self.refused(self.HEADINGS)
+        self.assertIn("holds 2 level-3 heading(s) and 0 line(s) opening "
+                      "with `* ` or `+ `", out)
+        self.assertIn("--entry-shape heading", out)
+
+    def test_the_shape_named_explicitly_is_refused_the_same(self):
+        self.refused(self.HEADINGS, "--entry-shape", "bullet")
+
+    def test_other_marker_lines_alone_could_not_verify(self):
+        out = self.refused(self.STARRED)
+        self.assertIn("holds 0 level-3 heading(s) and 2 line(s) opening "
+                      "with `* ` or `+ `", out)
+
+    def test_a_dry_run_is_refused_too(self):
+        self.refused(self.HEADINGS, "--report-only")
+
+    def test_one_entry_is_enough_whatever_else_the_carrier_holds(self):
+        """MUST-NOT-MOVE (a): the guard keys on ZERO entries. One bold `- `
+        entry beside the same headings and the same other-marker lines
+        migrates, and it migrates to the same item as it does without them."""
+        mixed = self.HEADINGS + "\n" + self.STARRED[len("# old\n\n## Open\n\n"):] \
+            + "\n" + self.ENTRY
+        d1, _ = self.migrated(mixed, 1)
+        d2, _ = self.migrated("# old\n\n## Open\n\n" + self.ENTRY, 1)
+        strip = lambda t: re.sub(r"BACKLOG\.md:\d+(-\d+)? at blob [0-9a-f]+",  # noqa: E731
+                                 "BACKLOG.md:N", t)
+        self.assertEqual(strip((d1 / "ITEMS.md").read_text(encoding="utf-8")),
+                         strip((d2 / "ITEMS.md").read_text(encoding="utf-8")))
+
+    def test_an_empty_carrier_still_migrates(self):
+        """MUST-NOT-MOVE (b): zero entries and NEITHER signal is an answer."""
+        self.migrated("# old\n\n## Open\n\n", 0)
+
+    def test_plain_prose_bullets_alone_still_migrate(self):
+        """MUST-NOT-MOVE (b): a plain `- ` bullet is counted as prose and is
+        no sign of another shape."""
+        self.migrated("# old\n\n## Open\n\n- a plain prose bullet\n"
+                      "- another one\n", 0)
+
+    def test_a_star_rule_is_not_an_other_marker_line(self):
+        """`* * *` opens with `* ` and is a horizontal rule, not a list
+        line: alone it is no signal."""
+        self.migrated("# old\n\n## Open\n\nprose\n\n* * *\n\n***\n\n"
+                      "more prose\n", 0)
+
+    def test_the_reader_still_reads_an_other_marker_line_as_body(self):
+        """READING SEMANTICS DO NOT CHANGE: the starred line's text is in
+        the entry above it, and it is no entry and no prose bullet."""
+        read = migrate.read_carrier(
+            "# old\n\n## Open\n\n" + self.ENTRY
+            + "* **READY — a starred line**\n")
+        self.assertEqual(len(read.entries), 1)
+        self.assertIn("a starred line", read.entries[0].text)
+        self.assertEqual(read.total_bullets, 1)
+        self.assertEqual(read.non_entry_bullets, [])
+
+    def test_the_refusal_has_its_own_roster_row(self):
+        from lifecycle_core import refusals
+        row = next(r for r in refusals.ROWS
+                   if r.ident == "migration_bullet_shape_empty")
+        self.assertEqual(row.expect, exits.COULD_NOT_VERIFY)
+        fired, control = row.fire(), row.control()
+        self.assertEqual(fired.code, exits.COULD_NOT_VERIFY, fired.output)
+        self.assertIn("[migration_bullet_shape_empty]", fired.output)
+        self.assertNotIn("[migration_bullet_shape_empty]", control.output)
+        self.assertEqual(control.code, exits.CLEAN, control.output)
+
+
 class BulletShapeNote(unittest.TestCase):
     """The other direction of the silent misread: a `bullet` read over a
     carrier whose entries sit beneath level-3 headings says so in ONE line,

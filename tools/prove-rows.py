@@ -636,6 +636,20 @@ MUTATIONS = [
      "run then writes an empty successor carrier and reports a clean "
      "migration of a carrier whose entries it never saw"),
 
+    # THE MIRROR GUARD, folded the same way and for the same reason. With it
+    # off the plant — one level-3 heading, no `- ` bullet — reads zero
+    # entries under the default shape, writes an empty successor carrier and
+    # answers CLEAN: the verdict moves 3 -> 0. The control holds a bold
+    # bullet, so it reads one entry and never enters the branch.
+    ("migration_bullet_shape_empty", "migrate.py",
+     "    if shape == ENTRY_SHAPE_BULLET and not read.entries "
+     "and shape_mismatch:",
+     "    if False:",
+     "the refusal of a `bullet` read that found no entry in a carrier "
+     "holding level-3 headings or other-marker list lines — the run then "
+     "writes an empty successor carrier, freezes the source and reports a "
+     "clean migration of a carrier whose entries it never saw"),
+
     ("migration_unclassified", "migrate.py",
      '        out(f"FINDING [migration_unclassified] {len(unclassified)} '
      'entry/ies "',

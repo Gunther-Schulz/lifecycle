@@ -246,6 +246,16 @@ REQUIREMENT_CAP = 240
 #: build order's ranking — and is reported as non-entry content rather than
 #: migrated into an item nobody wrote.
 _BULLET = re.compile(r"^- (.*)$")
+#: A top-level list line under ANOTHER marker. `_BULLET` reads `- ` and
+#: nothing else, so such a line is never an entry: it falls through to the
+#: body rule and its text joins the entry above it. COUNTED, never read
+#: differently — the count is what lets `run` tell "this carrier holds no
+#: entries" from "this carrier's entries are written under a marker this
+#: shape does not read", which are the same zero.
+_OTHER_MARKER = re.compile(r"^[*+] ")
+#: A horizontal rule spelled with stars (`* * *`, `***`): three or more `*`
+#: with at most one space between. It opens with `* ` and is no list line.
+_STAR_RULE = re.compile(r"^\*(?: ?\*){2,}\s*$")
 _HEADING = re.compile(r"^(#+)\s+(.*)$")
 #: A grade-shaped word: uppercase, at least two characters, not followed by a
 #: lowercase letter. The trailing guard is what stops `MITIGATE-goal` and
@@ -438,6 +448,10 @@ class Read:
     level3_headings: int = 0
     #: `bullet` only: admitted entries sitting beneath a level-3 heading.
     entries_under_level3: int = 0
+    #: `bullet` only: `(lineno, section)` of every top-level line opening
+    #: with `* ` or `+ ` (a star-spelled horizontal rule excepted). Read as
+    #: BODY, exactly as before this was counted.
+    other_marker_lines: list = field(default_factory=list)
     #: `heading` only: `(lineno, section)` of every level-3 heading inside a
     #: section §4 row 1 CUTS — counted, never migrated.
     cut_headings: list = field(default_factory=list)
@@ -534,6 +548,10 @@ def read_carrier(text: str, closure_sections: tuple | None = None,
         if m and len(m.group(1)) == HEADING_ENTRY_LEVEL:
             out.level3_headings += 1
             under_level3 = True
+        if _OTHER_MARKER.match(raw) and not _STAR_RULE.match(raw):
+            # COUNTED ONLY. The line is not a `- ` bullet, so it still falls
+            # through to the body rule below.
+            out.other_marker_lines.append((lineno, section))
         b = _BULLET.match(raw)
         if b:
             close(lineno - 1)
@@ -2807,6 +2825,27 @@ def run(args, out, ctx) -> int:
             "Either this carrier's entries are bullets (drop the option), or "
             "they sit at another heading level, which this shape does not "
             "read.")
+        return exits.COULD_NOT_VERIFY
+    #: THE MIRROR CASE. A `bullet` read holding zero entries is an ordinary
+    #: answer over an empty carrier and over one holding only prose — and it
+    #: is the same zero over a carrier whose entries are its level-3 headings,
+    #: or list lines under another marker, none of which this shape reads. The
+    #: two signals below are what the file itself shows of the second case;
+    #: with neither, zero stays an answer.
+    shape_mismatch = read.level3_headings or read.other_marker_lines
+    if shape == ENTRY_SHAPE_BULLET and not read.entries and shape_mismatch:
+        # NOTHING HAS BEEN WRITTEN YET, as above: no successor home, no
+        # report, no banner on the source.
+        out(f"COULD NOT VERIFY [migration_bullet_shape_empty] "
+            f"the `bullet` entry shape (which is the default) read ZERO "
+            f"entries from {src_name}, which holds {read.level3_headings} "
+            f"level-3 heading(s) and {len(read.other_marker_lines)} line(s) "
+            "opening with `* ` or `+ `. Zero entries is a number shaped "
+            "exactly like a clean migration. Nothing was written. If this "
+            "carrier's entries are its level-3 headings (`### `), re-run "
+            "with `--entry-shape heading`; if they are list lines under "
+            "another marker, this shape reads `- ` as the bullet and no "
+            "other.")
         return exits.COULD_NOT_VERIFY
     #: Counted off the text the reader was handed, by a different expression
     #: than the reader's — the independent side of the heading identity.
