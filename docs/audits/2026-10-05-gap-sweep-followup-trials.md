@@ -352,3 +352,77 @@ every item shares some word with it (296 to 314 of 314 score above zero).
 Whether the phrasing a lane chooses lands the item is the part only the
 lanes can show: the vaguest phrasing ("are the red leak-scan tests
 environmental") ranks lc-32 88th, the most specific ones rank it first.
+
+### F1, arms B and C — RESULT (12 lanes on T2, T3, T8; 4 on the harm check; graded per lane from the closing reports, counted by script over this desk's grade table; verb calls counted from each lane's call log with test-suite bursts removed)
+
+| | A, the repo as it is | B, look before asking | C, asking is a write |
+|---|---|---|---|
+| RECORD-SETTLED questions returned, 6 lanes | **6** (T2 1, T3 3, T8 2) | **4** (T3 2, T8 2) | **2** (T2 1, T8 1) |
+| other questions returned | 1 desk call | 1 desk call | 2 desk calls |
+| lanes returning no question | 0 | 1 | 2 |
+| lanes that called their verb | — | **3 of 6** (0, 0, 1, 0, 2, 4 calls) | **1 of 6** (one refused question) |
+| questions put with a booked line (arm C's rule) | — | — | **0 of 4** |
+| T8: asked while already citing the answer | 2 of 2 | 2 of 2 | 1 of 2 |
+| T3: planted defect booked or fixed-and-recorded | 0 of 2 | 0 of 2 | 0 of 2 (one lane fixed it on lc-266's authority, in its own commit, with no item and no ledger line) |
+| harm check: the freeze question still asked | 1 of 2 outright, 1 as a rider | 2 of 2 | 2 of 2 |
+| wave 1's passes (closed through the verb; hand trim declined) | hold | hold | hold |
+
+**Verdicts as registered.**
+
+- **Arm B: MECHANISM DID NOT RUN** (3 of 6 lanes called the verb; the gate
+  is 4). On the count alone it would be INCONCLUSIVE (4 against 6).
+- **Arm C: MECHANISM DID NOT RUN** (1 of 6). On the count alone it would
+  be a BENEFIT (2 against 6, at most half and at least 3 fewer), and that
+  is why the gate matters: the drop did not come through the verb.
+- **Harm: none shown.** Neither arm lost the real question; in arm C one
+  harm-check lane also decided the exit-code question from precedent and
+  said so, where every other lane handed it back.
+- **The T8 expectation held:** a search does not stop a lane asking a
+  question it has already answered (B 2 of 2). Arm C moved it by one lane,
+  and that lane called no verb.
+
+**What the lanes showed about each mechanism, observed.**
+
+- *The verb is used only where the lane already knows it is asking.* All
+  six harm-check and hand-trim lanes of arm B ran the search; of the four
+  build lanes, one did. Two build lanes wrote "I had no question to put
+  to anyone" and "I asked nothing" and returned a question in the same
+  report. The instruction fires on a moment the session has to recognise,
+  and in the scenarios where the baseline questions arose it mostly did
+  not.
+- *Finding the record did not stop the question.* Three arm B lanes had
+  the settling item or law printed to them (lc-266 ranked first; law 8;
+  law 8 with lc-165) and asked anyway, one after quoting the rule that an
+  answered question is not asked. What they returned was not "what is the
+  answer" but "may I deviate from it" or "was the record intended".
+- *In arm C the rule did the work, and it was not kept.* Two lanes
+  returned nothing, saying the record settled it; one fixed the planted
+  defect on the record's authority instead of asking. But 0 of the 4
+  questions arm C lanes did return in these scenarios carried a booked
+  line, and QUESTIONS.md is empty in all six clones. The rule lowered
+  asking where it was felt and was passed over silently where it was not.
+- *Cost when the verb was used* (harm-check lanes of arm C): every
+  question refused once and re-booked with a reason, 2 calls and 1 commit
+  per question.
+
+**Limits.** n=2 per cell. Arms B and C ran about forty minutes after arm
+A. Arm C's session-start text carried five findings the real hook printed
+about the prototype's own kind, a cue the other arms lacked. Grades are
+this desk's reading of each report; the table of every question with its
+grade and basis is kept beside the prototypes on this machine.
+
+## What this adds up to, per mechanism, for the freeze
+
+| mechanism (scratch only) | the numbers | reading |
+|---|---|---|
+| a statement demanded at the close (`item close --met --decided`) | decisions ledgered 2 of 2 against 0 of 2; findings recorded 1 of 2 against 0 of 2; false `none` 0 of 4; one statement incomplete | the one mechanism here that fired at a moment the tool owns and moved the registered count |
+| a deletion-side check on the item carrier | 26 fires over 1383 commits: 12 in two nameable exemptions, 14 real in-place hand edits (newest 2026-10-02); the plant caught | a deterministic check with a measured false-fire picture and real past hits |
+| `ledger ask`, look before asking | did not run in 3 of 6 lanes; where it ran and found the record, the question came back anyway | no benefit shown; the weak spot is the trigger, not the search |
+| `ledger question`, asking is a write | fewer questions (2 against 6) with the verb called by 1 of 6 lanes and its rule broken in 4 of 4 questions | the effect is real and is not the mechanism's; as built it is a rule sessions pass over |
+| a mark on a ledgered deferral | 1 of 2 against a control of 1 of 2 | nothing shown |
+| a check for dangling evidence pointers | false hits far outnumber true ones | the numbers speak against |
+| a check for two answers to one question | could not be counted with the tool's matcher | nothing shown |
+
+Not trialled, for the reasons registered above: a head line for a fired
+lane, the hook's timeout wording (now fixed with df-265), the fire-log
+housekeeping, the in-progress mark.
