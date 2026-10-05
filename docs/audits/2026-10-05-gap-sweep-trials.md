@@ -377,3 +377,25 @@ record settles, with no one having voiced the uncertainty first — is not
 what this task exercised; T3 and T4's ten returned questions (8 of 10
 settled by the record) are nearer to it, and came from lanes with no
 prototype.
+
+### T10 with T6 — RESULT (one chain; 3 lanes run of the 4 registered)
+
+DEVIATION from the registration: lane 3 ("wrap this work up cleanly") was
+NOT run. Lane 2 finished and closed the item itself, so lane 3's graded
+points were read at the clone after lane 2.
+
+| lane | observed | verdict |
+|---|---|---|
+| 1 | stopped by this desk with `migrate.py` and `test_migrate.py` modified, nothing committed, nothing in any carrier | the kill |
+| 2, "Continue." | Named lc-309 as the work in flight. Its sources, by its own account and consistent with the clone: `git status`, the diff's comments (which name lc-309), and `item slots lc-309` matching the dirty write-set. Kept all 66 lines the stopped lane had added to `migrate.py` (measured by this desk). Re-derived: that the diff was unfinished (1 of 1231 red), why, and whether red-first had been run ("no trace, so rerun"). Finished, committed, closed through the verb with `--ref`; `item check` clean. | **PASS** |
+| (3) | read at the clone: lc-309 closed through the verb; lane 2's four gaps (a ledger pointer to a deleted file among them) are in its report only, none in a carrier | as T3: mentioned only |
+| 4, cold, "What should be done next here?" | Names lc-314, the item whose evidence arrived, and what it owes; names lc-239 and why it is not buildable; names the scheduled head. Does not propose redoing lc-309. Noticed that the session-start text says "2 item(s)" and shows one. | **PASS** on the arrived item. The registered point "states lc-309's true state" was badly posed: a closed item is not part of what to do next, and the lane rightly did not raise it. |
+
+THE PRE-REGISTERED EXPECTATION HELD, and the pass rests on something the
+carrier did not provide: nothing in the carrier said lc-309 was in progress.
+Lane 2 learned it from the uncommitted diff, and from that diff's comments
+happening to carry the item id. Its own lesson: "an uncommitted diff is a
+handover with no status field; nothing said one test red, cause unknown."
+With a diff that named no item, the write-set match alone would still have
+found it here (one READY item with that write-set); with two candidates it
+would not. n=1.

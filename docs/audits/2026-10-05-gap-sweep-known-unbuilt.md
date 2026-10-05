@@ -22,3 +22,6 @@ ratio`) and `item statusline`.
 
 Not on this list because it is surfaced: a kind's moments going stale (the
 `kind list --structure` line prints "STALE, N day(s)" unprompted).
+
+Part 3 added five more; they are listed with their evidence in
+`2026-10-05-gap-sweep-scorecard.md`, section "Known and unbuilt".

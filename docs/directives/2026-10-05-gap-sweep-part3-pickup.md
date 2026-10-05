@@ -4,6 +4,14 @@ Written 2026-10-05 by the lifecycle desk (session lifecycle-b5) at the seam
 between Part 2 and Part 3, so the arc survives this session. A fresh context
 executes from this file plus the handoff it points at.
 
+## STATE 2026-10-05, late: Part 3 is DONE
+
+Run in session lifecycle-b5 after all, on the operator's delegation there.
+The closing artifact is `docs/audits/2026-10-05-gap-sweep-scorecard.md`;
+the registered verdicts and every result are in
+`docs/audits/2026-10-05-gap-sweep-trials.md`. Nothing below is still owed;
+the rest of this file is kept as the record of the seam.
+
 ## The commission
 
 The handoff is the wan2gp desk's file, and it is the authority:
