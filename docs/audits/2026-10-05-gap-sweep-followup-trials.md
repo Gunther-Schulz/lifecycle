@@ -196,7 +196,7 @@ differ" discriminates nothing between two lines of prose. And the one known
 live case is half missed: LEDGER lines 70 and 190 are NOT paired. A check
 built on this matcher would flood and still miss the known positive.
 
-**S5, closes over a live non-item blocker: recorded.** 36 of 498 closed
+**S5, closes over a live non-item blocker: recorded.** 36 of 403 closed
 bodies (dotfiles 30, statiker 4, dispatch-guards 2); 27 of dotfiles' 30
 carry one migration re-grade text.
 
