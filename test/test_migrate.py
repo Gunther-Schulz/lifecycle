@@ -1770,6 +1770,27 @@ class MintedDecisionQuestionsAreAnswerable(unittest.TestCase):
                          "evidence, or drop")
 
 
+class TheReportTellsANewlyGovernedRepoHowToWorkItsCarrier(unittest.TestCase):
+    """Four facts every first re-grade lane on a migrated carrier met cold
+    (relayed by that carrier's desk): the clearing act, the effective read,
+    the predicate's exit contract, the commit attribution. Each is asserted
+    by the token a reader would act on, taken from its own home where it has
+    one."""
+
+    def test_the_four_facts_are_in_the_report(self):
+        from lifecycle_core import verbs
+        d = build("# old\n\n## Open\n\n- **READY 2026-01-01 — r.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        report = " ".join((d / REPORT).read_text(encoding="utf-8").split())
+        for token in ("clears by RE-GRADING the item, not by a ledger answer",
+                      "`item slots <id>`",
+                      "exits 0 when the evidence has ARRIVED",
+                      verbs.COMMIT_TRAILER_ENV):
+            with self.subTest(token=token):
+                self.assertIn(token, report)
+
+
 class HeadingShapeSaysWhatItDoesNotCheck(unittest.TestCase):
     """Under `--entry-shape heading` every bullet is body, by declaration. A
     carrier that ALSO holds entries written as top-level bullets loses them

@@ -3891,6 +3891,32 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
       "that retires the old carrier drops them to history, and that is worth "
       "deciding rather than discovering.")
     a("")
+    a("## Working the migrated carrier — what its first sessions meet cold")
+    a("")
+    a("Each line below is a fact the first re-grade lanes on a freshly "
+      "migrated carrier each had to rediscover. Stated once, here, because "
+      "this report is what a newly governed repo reads.")
+    a("")
+    a("- **A migrated blocker clears by RE-GRADING the item, not by a ledger "
+      "answer.** Read the source body the `evidence:` slot points at, fill "
+      "the slots it decides with `item amend <id>`, then set the blocker the "
+      "body really has (`--blocked-by NONE`, or a typed one) or `item close "
+      "<id> --drop`. Each minted question names its own item, so an answer "
+      "written anyway clears that item only.")
+    a("- **Read an item through `item slots <id>`, never by grepping the "
+      "carrier.** An amendment is APPENDED and supersedes the slot line "
+      "above it, so a raw `blocked-by:` match reads the value that is no "
+      "longer in force.")
+    a("- **An `evidence <predicate>` exits 0 when the evidence has ARRIVED, "
+      "1 while it has not, 2 or more when the predicate is broken.** That is "
+      "the reverse of a check's 0-clean, so a check wrapped as a predicate "
+      "needs its codes remapped, could-not-verify to broken included.")
+    from . import verbs as verbs_mod
+    a(f"- **The verbs commit what they write, with the attribution in "
+      f"`{verbs_mod.COMMIT_TRAILER_ENV}`.** Unset, the commit carries none; "
+      "a block holding only its co-author half is dropped whole, on "
+      "purpose. Set both lines before the first verb runs.")
+    a("")
     a("## The migration's own RESIDUE, booked as `tend` items (§3.1b)")
     a("")
     a("A migration leaves consumers of the OLD carrier still pointing at it, "
