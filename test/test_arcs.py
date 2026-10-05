@@ -1094,6 +1094,32 @@ class DeadlineGeneratesItsObserver(unittest.TestCase):
         code, outp = self._run(repo, "kind", "check")
         self.assertEqual(code, 0, outp)
 
+    def test_the_generated_predicate_is_EXECUTED_on_both_sides_of_its_date(self):
+        """The observer's whole job is one comparison, and nothing ran it.
+
+        `kind check` passing says the lane PARSES. The predicate first
+        written here used `test A \\>= B`, and `test` has no such operator:
+        every generated lane exited 2 — BROKEN from birth — while this verb
+        printed "QUIET until <date>". So the pair runs the lane's own
+        `Trigger:` line, read back from the body the verb wrote, through the
+        one evaluator `lane list` uses: a date already past must FIRE, a date
+        still ahead must be QUIET, and neither may be BROKEN.
+        """
+        from lifecycle_core import lanes as lanes_mod
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        for date, want in (("2020-01-01", lanes_mod.FIRE),
+                           ("2999-01-01", lanes_mod.QUIET)):
+            code, outp = self._run(repo, "arc", "deadline", "bplan", "--date",
+                                   date, "--what", "x")
+            self.assertEqual(code, 0, outp)
+            lane = lanes_mod.read_lane(repo.dir, f"bplan-{date}")
+            self.assertIsNotNone(lane.trigger, lane.problem)
+            got = lanes_mod.evaluate_trigger(lane.trigger, cwd=repo.dir)
+            self.assertEqual(got.state, want,
+                             f"{date}: {lane.trigger!r} → {got.state} "
+                             f"(exit {got.code}) {got.detail}")
+
     def test_ADVANCING_past_the_stage_retires_body_AND_row(self):
         repo = self._repo()
         self._run(repo, *self.OPEN)

@@ -4746,8 +4746,12 @@ def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
         f"deadline` for arc {slug!r}. It reports that a date has arrived; "
         "what to do about it is the arc's, and the disposition is the "
         "operator's or the desk's.\n\n"
-        f"Trigger: test \"$(date +%Y-%m-%d)\" \\>= \"{date}\"  # fires on and "
-        f"after {date}\n\n"
+        # AN INTEGER COMPARISON, because `test` has no `>=` for strings: the
+        # first spelling here was `test A \>= B`, which exits 2 under every
+        # shell — so each generated observer was BROKEN from birth and never
+        # once fired. `-ge` over the dashless date is POSIX and total.
+        f"Trigger: test \"$(date +%Y%m%d)\" -ge {date.replace('-', '')}  "
+        f"# fires on and after {date}\n\n"
         "| condition | workflow |\n"
         "|---|---|\n"
         f"| the date has arrived | read arc {slug} and disposition the "
@@ -4770,8 +4774,14 @@ def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
     new_text = arcs.refresh_header(text.rstrip("\n") + "\n" + line + "\n")
     atomic.write_text(live, new_text, encoding="utf-8")
     out(line)
-    out(f"generated observer lane {name!r} and declared it — `lane list` "
-        f"reports it QUIET until {date}.")
+    # WHAT OBSERVES IT IS SAID, not implied. The lane's state exists only
+    # when `lane list` RUNS, and nothing runs that unprompted under any
+    # `trigger-policy` this build implements — so "reports it QUIET until"
+    # read as a standing observer and described a verb somebody must call.
+    out(f"generated observer lane {name!r} and declared it — it is QUIET "
+        f"until {date} and FIRES from then on, and that state is read ONLY "
+        "when `lifecycle lane list` is run: no session-start pass runs it, "
+        "so the date arriving is seen by whoever asks.")
     return commit_paths(
         ctx, [live, body, ctx.repo / decl.DECLARATION_REL],
         f"arcs: deadline {date} on {slug}", out, what="the arc deadline",
