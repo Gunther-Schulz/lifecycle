@@ -28,6 +28,7 @@ put the window on the loss side. `check_move_integrity` is what makes that
 window visible afterwards.
 """
 
+import datetime
 import hashlib
 import os
 import posixpath
@@ -4863,9 +4864,16 @@ def _retire_arc_lanes(ctx: Ctx, slug: str, text: str, names, out) -> list:
                 f"({why}), so its row may outlive the arc that generated it.")
             continue
         body = ctx.repo / lanes.LANES_DIR / f"{name}.md"
-        if body.exists():
+        had_body = body.exists()
+        if had_body:
             body.unlink()
-        removed.append(name)
+        # ONLY WHAT THIS CALL REMOVED IS ANNOUNCED. The names come from the
+        # arc's deadline lines, which outlive the lane they generated; an arc
+        # that re-enters a stage and leaves it again asked for a lane the
+        # first advance had already retired, and "retired 1 lane" was then
+        # printed for an act that did not happen.
+        if ok or had_body:
+            removed.append(name)
     if removed:
         out(f"retired {len(removed)} generated observer lane(s): "
             + ", ".join(removed)
@@ -4904,6 +4912,19 @@ def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
             "(YYYY-MM-DD). The observer this generates is a DATE predicate, "
             "so a date it cannot compare is a lane that can never fire — "
             "which is the silent park this mechanism exists to replace.")
+        return exits.FINDING
+    # THE SHAPE IS NOT THE DATE. `2026-13-45` matches the pattern above and
+    # names no day; accepted, it got a lane, a row and a line on the arc,
+    # and its integer predicate would have fired on some day of the
+    # following year. `date` is this function's string, so the class is
+    # reached through the module.
+    try:
+        datetime.date.fromisoformat(date)
+    except ValueError:
+        out(f"FINDING [arc_shape] `--date {date!r}` has the ISO shape and "
+            "names no calendar day. A deadline no calendar holds cannot "
+            "arrive, and the lane generated for it would fire on a day "
+            "nobody set. Nothing was written.")
         return exits.FINDING
 
     text = live.read_text(encoding="utf-8")

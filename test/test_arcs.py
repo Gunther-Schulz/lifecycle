@@ -1120,6 +1120,45 @@ class DeadlineGeneratesItsObserver(unittest.TestCase):
                              f"{date}: {lane.trigger!r} → {got.state} "
                              f"(exit {got.code}) {got.detail}")
 
+    def test_an_IMPOSSIBLE_calendar_date_is_refused_at_the_door(self):
+        """`2026-13-45` has the ISO SHAPE and names no day. The door checked
+        the shape alone, so it was accepted, given a lane and a line on the
+        arc — a deadline no calendar holds, whose integer predicate would
+        simply fire some day the following year."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        code, outp = self._run(repo, "arc", "deadline", "bplan", "--date",
+                               "2026-13-45", "--what", "x")
+        self.assertEqual(code, exits.FINDING, outp)
+        self.assertIn("FINDING [arc_shape]", outp)
+        self.assertEqual(self._lanes(repo), [], "a lane was declared")
+        from lifecycle_core import lanes as lanes_mod
+        self.assertFalse(
+            (repo.dir / lanes_mod.LANES_DIR / "bplan-2026-13-45.md").exists())
+        # THE CONTROL: the last real day of a leap February is taken.
+        code, outp = self._run(repo, "arc", "deadline", "bplan", "--date",
+                               "2028-02-29", "--what", "x")
+        self.assertEqual(code, 0, outp)
+
+    def test_a_lane_retired_once_is_not_announced_a_second_time(self):
+        """Retirement picks a stage's deadlines by the stage NAME on the
+        deadline line, and that line stays in the arc body after the lane is
+        gone. So an arc that RE-ENTERS a stage and leaves it again was told
+        "retired 1 generated observer lane(s)" about a lane the first advance
+        had already removed — a report of an act that did not happen."""
+        repo = self._repo()
+        self._run(repo, *self.OPEN)
+        self._deadline(repo)
+        code, outp = self._run(repo, "arc", "advance", "bplan", "--to",
+                               "drafting", "--reason", "r")
+        self.assertIn("retired 1 generated observer lane(s)", outp)
+        self._run(repo, "arc", "advance", "bplan", "--to", "opened",
+                  "--reason", "back")
+        code, outp = self._run(repo, "arc", "advance", "bplan", "--to",
+                               "review", "--reason", "on")
+        self.assertEqual(code, 0, outp)
+        self.assertNotIn("retired", outp)
+
     def test_ADVANCING_past_the_stage_retires_body_AND_row(self):
         repo = self._repo()
         self._run(repo, *self.OPEN)
