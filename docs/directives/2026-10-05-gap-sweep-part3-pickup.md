@@ -12,6 +12,15 @@ the registered verdicts and every result are in
 `docs/audits/2026-10-05-gap-sweep-trials.md`. Nothing below is still owed;
 the rest of this file is kept as the record of the seam.
 
+ONE THING IS OPEN, and it is the operator's: whether the freeze is released
+for either ask-the-ledger prototype. The numbers are in the scorecard's
+section "The probe for the freeze"; the desk's recommendation is to keep the
+freeze on both. The operator deferred the decision when the session closed
+(2026-10-05). The two prototypes were built in scratch clones that do not
+outlive the session; each is kept as one patch against `8bde8ee` plus the
+planted ledger line, on the building machine only, under
+`$XDG_STATE_HOME/claude/gap-sweep-2026-10-05/`.
+
 ## The commission
 
 The handoff is the wan2gp desk's file, and it is the authority:
