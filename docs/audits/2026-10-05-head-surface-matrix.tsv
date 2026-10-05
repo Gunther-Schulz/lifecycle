@@ -1,0 +1,73 @@
+grade	blocker_state	blocker_text	next_act_owed_by	named_unprompted_at_bbf6ef0	ready_id_exit	ready_id_names_item	head_exit	head_names_item	statusline_exit	statusline_names_item	check_exit	check_names_item	ratio_exit	ratio_names_item	digest_exit	digest_names_item	structure_exit	structure_names_item	audit_exit	audit_names_item
+NEW	none	NONE	desk (grade it) for NEW; nobody for READY/STANDBY; PARKED without blocker is item check's finding	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+READY	none	NONE	desk (grade it) for NEW; nobody for READY/STANDBY; PARKED without blocker is item check's finding	head,statusline	0	yes	0	yes	0	yes	0	no	3	no	0	no	0	no	3	no
+PARKED	none	NONE	desk (grade it) for NEW; nobody for READY/STANDBY; PARKED without blocker is item check's finding	check	0	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+STANDBY	none	NONE	desk (grade it) for NEW; nobody for READY/STANDBY; PARKED without blocker is item check's finding	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	untyped-prose	waiting for the vendor to reply	desk: type the blocker (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+READY	untyped-prose	waiting for the vendor to reply	desk: type the blocker (finding)	head,check	2	yes	2	yes	0	no	2	yes	3	no	0	no	0	no	3	no
+PARKED	untyped-prose	waiting for the vendor to reply	desk: type the blocker (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+STANDBY	untyped-prose	waiting for the vendor to reply	desk: type the blocker (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+NEW	untyped-none-synonym	n/a	desk: retype to NONE (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+READY	untyped-none-synonym	n/a	desk: retype to NONE (finding)	head,check	2	yes	2	yes	0	no	2	yes	3	no	0	no	0	no	3	no
+PARKED	untyped-none-synonym	n/a	desk: retype to NONE (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+STANDBY	untyped-none-synonym	n/a	desk: retype to NONE (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+NEW	external-waiting	external the vendor ships 2.0	nobody: the world	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+READY	external-waiting	external the vendor ships 2.0	nobody: the world	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+PARKED	external-waiting	external the vendor ships 2.0	nobody: the world	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+STANDBY	external-waiting	external the vendor ships 2.0	nobody: the world	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	evidence-quiet	evidence test -e flag-file	nobody: the machine re-runs it	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+READY	evidence-quiet	evidence test -e flag-file	nobody: the machine re-runs it	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+PARKED	evidence-quiet	evidence test -e flag-file	nobody: the machine re-runs it	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+STANDBY	evidence-quiet	evidence test -e flag-file	nobody: the machine re-runs it	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	evidence-fired	evidence test -e flag-file	desk: re-grade	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+READY	evidence-fired	evidence test -e flag-file	desk: re-grade	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+PARKED	evidence-fired	evidence test -e flag-file	desk: re-grade	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+STANDBY	evidence-fired	evidence test -e flag-file	desk: re-grade	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	evidence-broken	evidence exit 2	desk: repair the predicate (finding)	head	2	yes	2	yes	0	no	0	no	3	no	0	no	0	no	3	no
+READY	evidence-broken	evidence exit 2	desk: repair the predicate (finding)	head	2	yes	2	yes	0	no	0	no	3	no	0	no	0	no	3	no
+PARKED	evidence-broken	evidence exit 2	desk: repair the predicate (finding)	head	2	yes	2	yes	0	no	0	no	3	no	0	no	0	no	3	no
+STANDBY	evidence-broken	evidence exit 2	desk: repair the predicate (finding)	head	2	yes	2	yes	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	evidence-unclearable	evidence false	desk: retype (softlock finding)	check	0	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+READY	evidence-unclearable	evidence false	desk: retype (softlock finding)	head,check	0	yes	0	yes	0	no	2	yes	3	no	0	no	0	no	3	no
+PARKED	evidence-unclearable	evidence false	desk: retype (softlock finding)	check	0	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+STANDBY	evidence-unclearable	evidence false	desk: retype (softlock finding)	check	0	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+NEW	decision-unanswered	decision which window	operator: answer	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+READY	decision-unanswered	decision which window	operator: answer	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+PARKED	decision-unanswered	decision which window	operator: answer	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+STANDBY	decision-unanswered	decision which window	operator: answer	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	decision-answered	decision which window	desk: re-grade	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+READY	decision-answered	decision which window	desk: re-grade	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+PARKED	decision-answered	decision which window	desk: re-grade	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+STANDBY	decision-answered	decision which window	desk: re-grade	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	decision-moot-elsewhere	decision which window	operator: answer (a moot line is not an answer)	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+READY	decision-moot-elsewhere	decision which window	operator: answer (a moot line is not an answer)	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+PARKED	decision-moot-elsewhere	decision which window	operator: answer (a moot line is not an answer)	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+STANDBY	decision-moot-elsewhere	decision which window	operator: answer (a moot line is not an answer)	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	decision-migration-regrade	decision regrade: was READY under the old carrier: READY is judged, never inherited	desk: re-grade (owed since migration, no state change)	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+READY	decision-migration-regrade	decision regrade: was READY under the old carrier: READY is judged, never inherited	desk: re-grade (owed since migration, no state change)	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+PARKED	decision-migration-regrade	decision regrade: was READY under the old carrier: READY is judged, never inherited	desk: re-grade (owed since migration, no state change)	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+STANDBY	decision-migration-regrade	decision regrade: was READY under the old carrier: READY is judged, never inherited	desk: re-grade (owed since migration, no state change)	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	item-target-open	xx-50	nobody: waits on the target	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+READY	item-target-open	xx-50	nobody: waits on the target	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+PARKED	item-target-open	xx-50	nobody: waits on the target	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+STANDBY	item-target-open	xx-50	nobody: waits on the target	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	item-target-DONE	xx-50	desk: re-grade	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+READY	item-target-DONE	xx-50	desk: re-grade	head	0	yes	0	yes	0	no	0	no	3	no	0	no	0	no	3	no
+PARKED	item-target-DONE	xx-50	desk: re-grade	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+STANDBY	item-target-DONE	xx-50	desk: re-grade	NONE	0	yes	0	no	0	no	0	no	3	no	0	no	0	no	3	no
+NEW	item-target-DROPPED	xx-50	desk: repoint or retype (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+READY	item-target-DROPPED	xx-50	desk: repoint or retype (finding)	head,check	2	yes	2	yes	0	no	2	yes	3	no	0	no	0	no	3	no
+PARKED	item-target-DROPPED	xx-50	desk: repoint or retype (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+STANDBY	item-target-DROPPED	xx-50	desk: repoint or retype (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+NEW	item-target-absent	xx-9999	desk: repoint or retype (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+READY	item-target-absent	xx-9999	desk: repoint or retype (finding)	head,check	2	yes	2	yes	0	no	2	yes	3	no	0	no	0	no	3	no
+PARKED	item-target-absent	xx-9999	desk: repoint or retype (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+STANDBY	item-target-absent	xx-9999	desk: repoint or retype (finding)	check	2	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+NEW	item-cycle	xx-50	desk: break the cycle (finding)	check	0	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+READY	item-cycle	xx-50	desk: break the cycle (finding)	head,check	0	yes	0	yes	0	no	2	yes	3	no	0	no	0	no	3	no
+PARKED	item-cycle	xx-50	desk: break the cycle (finding)	check	0	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+STANDBY	item-cycle	xx-50	desk: break the cycle (finding)	check	0	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+NEW	item-chain-to-unclearable	xx-50	desk: retype the chain's end (finding)	check	0	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+READY	item-chain-to-unclearable	xx-50	desk: retype the chain's end (finding)	head,check	0	yes	0	yes	0	no	2	yes	3	no	0	no	0	no	3	no
+PARKED	item-chain-to-unclearable	xx-50	desk: retype the chain's end (finding)	check	0	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
+STANDBY	item-chain-to-unclearable	xx-50	desk: retype the chain's end (finding)	check	0	yes	0	no	0	no	2	yes	3	no	0	no	0	no	3	no
