@@ -225,10 +225,12 @@ def main() -> int:
         "ledger add` — rather than by hand, then re-stage.\n"
         "  -> full report: `lifecycle item check`, `lifecycle ledger check`, "
         "`lifecycle kind check`\n"
-        "  -> a hand edit that is deliberate and correct is a DECLARED "
-        "exemption in the declaration, never `--no-verify`: the bypass "
-        "disables every lane in the hook rather than the one that fired "
-        "(law 11).\n")
+        "  -> a deliberate rewrite that REMOVES lines from live blocks is "
+        "declared in the same commit, under `carrier-rewrites` in the "
+        "declaration (carrier, date, reason). That key licenses removals "
+        "only; a shape break has no exemption. Never `--no-verify`: the "
+        "bypass disables every lane in the hook rather than the one that "
+        "fired (law 11).\n")
     return 1
 
 

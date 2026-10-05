@@ -71,11 +71,11 @@ The player loop, with the repo's machinery on each arrow. Judgment lives in
 |---|---|---|---|---|---|---|
 | I1 | perceive: read the artifact | — | — | — | the reader's own act | MECHANIZED |
 | I2 | form intent | — | — | — | judgment — correctly unmechanized | n/a |
-| I3 | act → a finding exists | `item add` | ITEMS.md | `item check` | **memory** | **GAP** |
-| I4 | act → a decision is made | `ledger add` | LEDGER.md | `ledger check` | **memory** | **GAP** |
+| I3 | act → a finding exists | `item add` | ITEMS.md | `item check` | at an item's DONE close, the close statement: `item close` refuses without `--met` (2026-10-05); **memory** everywhere else | **PARTIAL** |
+| I4 | act → a decision is made | `ledger add` | LEDGER.md | `ledger check` | at an item's DONE close, the close statement: `item close` refuses without `--decided` (2026-10-05); **memory** everywhere else | **PARTIAL** |
 | I5 | act → a course change occurs | append a line | `course-corrections.md` | close-time count | the session's own noticing; the close slot makes a zero answerable | PARTIAL |
 | I6 | act → code changes | edit | the tree | suite, `--test`, `prove-rows` | the verbs themselves | MECHANIZED |
-| I7 | change → committed | `git commit` | the object | pre-commit hooks (carrier shape, trailer, claims) | the hook | MECHANIZED |
+| I7 | change → committed | `git commit` | the object | pre-commit hooks (carrier shape, a line removed from a live item block, trailer, claims) | the hook | MECHANIZED |
 | I8 | commit → published | `git push` | the remote | pre-push leak scan, claim gate | the hook | MECHANIZED |
 | I9 | feedback: a check fires | the verb | its exit code | the three-answer contract | the command's own output | MECHANIZED |
 | I9b | **feedback: a check verifies the RIGHT thing** | — | — | — | — | **GAP — see below** |
@@ -90,6 +90,14 @@ obligation with no output: a session that booked nothing reads exactly like a
 session with nothing to book. I5 is the one place this was solved, and the
 solution was not a better duty — it was a COUNT at close, which makes a zero
 answerable instead of silent. **That is the transferable move for I3/I4.**
+
+**BUILT 2026-10-05 FOR ONE MOMENT, THE ITEM'S CLOSE** (LEDGER.md:199; trial:
+`docs/audits/2026-10-05-gap-sweep-followup-trials.md`, section F2). A DONE
+close states what else was met and what was decided, `none` included, or it
+is refused. Measured over 2 lanes per arm: decisions ledgered 2 of 2 with
+the statement against 0 of 2 without; findings booked 1 of 2 against 0 of 2,
+which the registered criterion calls inconclusive. Work that ends in no
+item close has no such moment, and there the observer is still memory.
 
 **I9b WAS FOUND THE DAY THIS FILE WAS WRITTEN, INSIDE THE INSTRUMENT BUILT TO
 CLOSE I9.** Law 25 gained a read-back — after applying, re-open the artifact
@@ -151,7 +159,9 @@ session BEHAVIOUR remains unmeasured, and that half is the open gap.
    probed twice (2026-09-19/20), HEALTH; the behaviour channel is the
    remaining unprobed half.
 3. **I3/I4 — booking and ledgering fire from memory.** Cheap to fix by I5's
-   route: a count at close, not a better duty.
+   route: a count at close, not a better duty. PARTIAL since 2026-10-05: the
+   item's close demands the statement; a session that closes no item is
+   still unobserved.
 4. **I10 — a silenced red is indistinguishable from an understood one.**
 5. **O8 — nothing fires a close.** The ceremony is good; its trigger is a
    person remembering.
