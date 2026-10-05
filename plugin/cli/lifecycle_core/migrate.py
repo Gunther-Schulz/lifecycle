@@ -401,6 +401,9 @@ class Entry:
     #: beside written / closed / unclassified, and a FIELD for the same reason
     #: `closure` is one: the reconciliation identity partitions the entries
     #: read, and a disposition it cannot see is a body the arithmetic loses.
+    #: A CLOSURE comes back too (lc-309): it has no block, so what it carries
+    #: here is `ARCHIVED_CLOSURE` — the archive holds it under a marker and
+    #: under no id — and it is then counted HERE and not as a closure routed.
     reimported_as: str | None = None
     #: The TYPED blocker the write-rules gave this entry, and which branch
     #: produced it. Held per entry so the report can print the per-TYPE
@@ -1953,6 +1956,41 @@ def reimported_bodies(entries, src_name: str, index: dict) -> list:
     return out
 
 
+def _closure_marker(src_name: str) -> "re.Pattern":
+    """The comment `closure_bodies` writes above each archived closure, for
+    ONE source. Anchored at the line start and on the dash the writer puts
+    after the range: a body that merely quotes a range is not a marker."""
+    return re.compile(
+        rf"^<!-- {re.escape(src_name)}:(?P<line>\d+)-(?P<end>\d+) — ",
+        re.MULTILINE)
+
+
+#: What a closure this migration already archived is "migrated as". A closure
+#: has no id in the successor — its body is held verbatim under a marker — so
+#: the fourth column names the place rather than inventing an identifier.
+ARCHIVED_CLOSURE = "a closure in the {done_home} archive"
+
+
+def rearchived_closures(entries, src_name: str, done_home_text: str) -> list:
+    """`[entry]` — closures whose own marker the done home already carries.
+
+    THE CLOSURE HALF OF `reimported_bodies` (lc-309), which skips a closure by
+    design: that function asks the successor BLOCKS, and a closure is archived
+    verbatim and has none. Its record is the per-closure marker, so the same
+    question — "is this migration's own output coming back?" — is asked of
+    the markers, keyed on the same `(source, line, end)` the open half uses.
+    Without it a second `--merge` appended every in-carrier closure again and
+    then failed its own per-source arithmetic, two markers against one entry.
+
+    PER CLOSURE, never per source: a marker that is missing gets its body
+    back and the recognised ones are left alone.
+    """
+    present = {(int(m.group("line")), int(m.group("end")))
+               for m in _closure_marker(src_name).finditer(done_home_text)}
+    return [e for e in entries
+            if e.closure and (e.line, e.end_line) in present]
+
+
 def bump_head(text: str, key: str, delta: int):
     """`(text, ok)` — add `delta` to one head integer, head region only.
 
@@ -2042,8 +2080,7 @@ def per_source_counts(items_text: str, done_text: str, src_name: str) -> tuple:
     archive bodies — which quote the very line ranges this count is keyed
     on — never enter it.
     """
-    marker = re.compile(rf"^<!-- {re.escape(src_name)}:\d+-\d+ — ",
-                        re.MULTILINE)
+    marker = _closure_marker(src_name)
     n_items = sum(1 for src, _line, _end
                   in provenance_index(live_region(items_text),
                                       live_region(done_text))
@@ -2892,6 +2929,7 @@ def run(args, out, ctx) -> int:
     #: provenance anchor is a raw-block question (lc-73) and `items.parse`
     #: resolves amendments away.
     home_texts = []
+    done_home_text = ""
     merge_target = False
     reimported = []
     if merge:
@@ -2927,6 +2965,7 @@ def run(args, out, ctx) -> int:
                 merge_target = True
             else:
                 existing_done_home = parsed
+                done_home_text = home_text
 
         # A RE-IMPORT IS DETECTED BY SOURCE PROVENANCE, NOT BY HEADLINE
         # (lc-73), and it is settled BEFORE the duplicate refusal because the
@@ -2938,6 +2977,12 @@ def run(args, out, ctx) -> int:
         # and that refusal is unchanged.
         reimported = reimported_bodies(read.entries, src_name,
                                        provenance_index(*home_texts))
+        # A CLOSURE COMES BACK THE SAME WAY AND IS RECOGNISED THE SAME WAY
+        # (lc-309) — by its archive marker, since it has no block. Marked
+        # here, beside the open half, so everything below reads ONE field.
+        archived_as = ARCHIVED_CLOSURE.format(done_home=ctx.done_path.name)
+        reimported += [(e, archived_as) for e in rearchived_closures(
+            read.entries, src_name, done_home_text)]
         for e, ident in reimported:
             e.reimported_as = ident
 
@@ -3022,7 +3067,11 @@ def run(args, out, ctx) -> int:
     n_residue = len(residue)
     unclassified = [e for e in read.entries
                     if e.grade is None and not e.closure]
-    closures = [e for e in read.entries if e.closure]
+    # A closure the archive already holds is a RE-IMPORT, not a closure routed
+    # by this run: writing it again is the duplicate, and counting it in both
+    # columns would break the partition the reconciliation identity is.
+    closures = [e for e in read.entries
+                if e.closure and e.reimported_as is None]
 
     # --- the successor files
     closure_text = closure_bodies(closures, src_text, src_name)
@@ -3103,13 +3152,22 @@ def run(args, out, ctx) -> int:
                 # one. Matched as a whole LINE, never as a substring: a body
                 # that merely names the heading is not one.
                 done_old = ctx.done_path.read_text(encoding="utf-8")
-                if items_mod.ARCHIVE_HEADING not in [
-                        ln.strip() for ln in done_old.split("\n")]:
+                heading_owed = items_mod.ARCHIVE_HEADING not in [
+                    ln.strip() for ln in done_old.split("\n")]
+                if heading_owed:
                     done_old = (done_old.rstrip("\n") + "\n\n"
                                 + items_mod.ARCHIVE_HEADING + "\n")
-                atomic.write_text(ctx.done_path, 
-                    done_old.rstrip("\n") + "\n" + done_text + closure_text,
-                    encoding="utf-8")
+                # A MERGE WITH NOTHING TO ARCHIVE LEAVES THE DONE HOME'S
+                # BYTES ALONE (lc-309). The join below normalises the file's
+                # tail, so an append of nothing was still a rewrite: a
+                # repeated merge stripped the blank line its own first run
+                # had written. A heading owed above is itself something to
+                # write, so it is asked beside the two bodies.
+                if heading_owed or done_text or closure_text:
+                    atomic.write_text(
+                        ctx.done_path,
+                        done_old.rstrip("\n") + "\n" + done_text
+                        + closure_text, encoding="utf-8")
             else:
                 atomic.write_text(ctx.done_path, 
                     archive_note + f"schema: {items_mod.SCHEMA_FLOOR}\n\n"
@@ -3214,9 +3272,10 @@ def run(args, out, ctx) -> int:
         # whatever it is.
         out(f"    RE-IMPORTS skipped:       {len(reimported)} — entries whose "
             f"own {src_name}:<line>-<end> provenance already stands in a "
-            "successor block, i.e. this migration's own output coming back. "
-            "Not written, not refused, and no desk call: the successor "
-            "already holds each one under the id named beside it.")
+            "successor block, or on an archive marker for a closure, i.e. "
+            "this migration's own output coming back. Not written, not "
+            "refused, and no desk call: the successor already holds each "
+            "one where the line beside it says.")
         for e, ident in reimported:
             out(f"        {src_name}:{e.line}-{e.end_line}  already migrated "
                 f"as {ident}")
@@ -3884,7 +3943,16 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
         a("")
     a("## Closures routed to the done home")
     a("")
-    if not closures:
+    closures_back = [e for e, _ in reimported if e.closure]
+    if not closures and closures_back:
+        # NOT THE ZERO BELOW. That one says the source STATES no closure;
+        # here it states some and the archive already holds every one.
+        a(f"**None routed by this run.** `{src_name}` states "
+          f"{len(closures_back)} closure(s), and `{ctx.done_path.name}` "
+          "already carries each one's own marker from an earlier run of this "
+          "migration. They are counted as re-imports above and were not "
+          "archived a second time.")
+    elif not closures:
         a(f"**None — zero.** No entry in `{src_name}` carried a closure grade "
           "word and none sat under "
           + ", ".join(f"`## {s}`" for s in read.closure_sections)

@@ -2938,8 +2938,8 @@ class HeadingShapeEndToEnd(unittest.TestCase):
     def test_a_merge_re_run_recognises_every_heading_entry_it_wrote(self):
         """`--merge` behaves as it does today: the provenance this shape
         writes is what the re-import detector reads. Over the OPEN entries
-        only — a closure in the `--from` carrier is re-archived by every
-        merge re-run in either shape, which is not this option's to change."""
+        only — the carrier's own closure across a merge re-run is
+        `ARepeatedMergeArchivesEachClosureOnce`'s case (lc-309)."""
         d = build(HEADING_CARRIER[:HEADING_CARRIER.index("## Done")])
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         self.assertEqual(heading_run(d)[0], exits.CLEAN)
@@ -3570,6 +3570,155 @@ class BulletShapeIsUnchanged(unittest.TestCase):
         self.assertEqual(migrate.ENTRY_SHAPES, ("bullet", "heading"))
         with self.assertRaises(ValueError):
             migrate.read_carrier("# c\n", entry_shape="paragraph")
+
+
+class ARepeatedMergeArchivesEachClosureOnce(unittest.TestCase):
+    """lc-309 — a closure the `--from` carrier states ITSELF is archived by
+    the first merge and RECOGNISED by every later one.
+
+    The re-import detector skipped an OPEN entry whose provenance already
+    stood in a successor block and walked past every closure, because a
+    closure has no block: its record in the successor is the archive's
+    per-closure marker. So a second `--merge` appended each closure's body a
+    second time, bumped the baseline for it, and then answered COULD NOT
+    VERIFY on the per-source arithmetic — two markers against one entry.
+
+    TWO CONSECUTIVE `--merge` RUNS, in both entry shapes, and the second
+    run's done home is compared BYTE FOR BYTE with the first's. The partner
+    cases are what the skip must not have swallowed: a closure of ANOTHER
+    source at the same line range is still archived, and so is one in the
+    same source at a range no marker names.
+    """
+
+    BULLETS = ("# old\n\n## Open\n\n"
+               "- **READY 2026-08-03 — still open.** body\n\n"
+               "## Done\n\n"
+               "- **DONE 2026-08-01 — closed one.** body\n"
+               "- **An ungraded closure under the heading.** body\n")
+
+    def twice(self, d: Path, run):
+        """`(first, second)` — each `(code, out, items, done)` — over two
+        consecutive `--merge` runs with nothing changed between them."""
+        results = []
+        for _ in range(2):
+            code, out = run(d, "--from-done", "NONE", "--merge")
+            results.append((code, out,
+                            (d / "ITEMS.md").read_text(encoding="utf-8"),
+                            (d / "ITEMS-DONE.md").read_text(encoding="utf-8")))
+            commit_all(d, "merged")
+        return results
+
+    def test_bullet_shape_two_merges_archive_each_closure_once(self):
+        d = build(self.BULLETS)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        first, second = self.twice(d, migrate_run)
+        # THE ARRANGEMENT'S OWN CONTROL: the first merge did archive both
+        # closures. Without it the "once" below holds over an archive that
+        # never received them.
+        self.assertEqual(first[0], exits.CLEAN, first[1])
+        self.assertIn("CLOSURES routed to the done home: 2 ", first[1])
+        self.assertEqual(len(re.findall(r"(?m)^<!-- BACKLOG\.md:\d+-\d+ — ",
+                                        first[3])), 2)
+        code, out, items_text, done_text = second
+        self.assertEqual(done_text.count("DONE 2026-08-01 — closed one."), 1)
+        self.assertEqual(
+            done_text.count("An ungraded closure under the heading"), 1)
+        self.assertEqual(done_text, first[3])
+        self.assertEqual(items_text, first[2])
+        self.assertIn("CLOSURES routed to the done home: 0 ", out)
+        self.assertIn("RE-IMPORTS skipped:       3 ", out)
+        self.assertIn("archive markers naming it:        2", out)
+        self.assertIn("entries read − unclassified:      3", out)
+        self.assertIn("3 read == 0 written + 0 closed + 0 unclassified + "
+                      "3 re-imported", out)
+        self.assertNotIn("COULD NOT VERIFY", out)
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_heading_shape_two_merges_archive_each_closure_once(self):
+        d = build(HEADING_CARRIER)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        first, second = self.twice(d, heading_run)
+        self.assertEqual(first[0], exits.CLEAN, first[1])
+        self.assertIn("CLOSURES routed to the done home: 1 ", first[1])
+        code, out, items_text, done_text = second
+        self.assertEqual(done_text.count("### A closed entry"), 1)
+        self.assertEqual(done_text, first[3])
+        self.assertEqual(items_text, first[2])
+        self.assertIn("RE-IMPORTS skipped:       5 ", out)
+        self.assertIn("archive markers naming it:        1", out)
+        self.assertNotIn("COULD NOT VERIFY", out)
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_the_report_names_the_recognised_closure_as_a_re_import(self):
+        d = build(self.BULLETS)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.twice(d, migrate_run)
+        report = (d / REPORT).read_text(encoding="utf-8")
+        self.assertIn("3 entries read = 0 written + 0 closed + "
+                      "0 unclassified + 3 re-imported — HOLDS", report)
+        self.assertIn("| a closure in the ITEMS-DONE.md archive |", report)
+        # The closure section must not answer with the zero that means "this
+        # source states no closure" — it states two.
+        self.assertIn("**None routed by this run.** `BACKLOG.md` states "
+                      "2 closure(s)", report)
+        self.assertNotIn("carried a closure grade word and none sat under",
+                         report)
+
+    def test_another_sources_closure_at_the_same_range_is_still_archived(self):
+        """MUST NOT MOVE. The marker is keyed on the SOURCE as well as the
+        range: a second carrier laid out line for line like the first has
+        closures at the very ranges the archive already names, and they are
+        new bodies."""
+        d = build(self.BULLETS)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.twice(d, migrate_run)
+        # The first source is frozen by its own merge, so the layout the
+        # second must mirror is the one ON DISK.
+        (d / "SECOND.md").write_text(
+            (d / "BACKLOG.md").read_text(encoding="utf-8")
+            .replace("still open", "second open")
+            .replace("closed one", "second closed")
+            .replace("An ungraded closure", "Another ungraded closure"),
+            encoding="utf-8")
+        code, out = migrate_run(d, "--from", "SECOND.md",
+                                "--from-done", "NONE", "--merge")
+        done_text = (d / "ITEMS-DONE.md").read_text(encoding="utf-8")
+        self.assertIn("CLOSURES routed to the done home: 2 ", out)
+        self.assertIn("RE-IMPORTS skipped:       0 ", out)
+        self.assertEqual(done_text.count("second closed."), 1)
+        self.assertEqual(done_text.count("closed one."), 1)
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_a_closure_no_marker_names_is_archived_beside_recognised_ones(self):
+        """MUST NOT MOVE, the other side: the skip is per closure. A done
+        home that lost ONE marker gets that one closure back and no other —
+        a skip keyed on "this source was merged before" would archive
+        neither."""
+        d = build(self.BULLETS)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d, "--from-done", "NONE", "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        done = d / "ITEMS-DONE.md"
+        text = done.read_text(encoding="utf-8")
+        kept, marker, lost = text.rpartition("<!-- BACKLOG.md:")
+        self.assertTrue(marker)
+        done.write_text(kept.rstrip("\n") + "\n", encoding="utf-8")
+        # The baseline gives the removed body up with it, so the TOTAL
+        # identity stays clean and what the run says is about the skip.
+        live, ok = migrate.bump_head(
+            (d / "ITEMS.md").read_text(encoding="utf-8"), "baseline", -1)
+        self.assertTrue(ok)
+        (d / "ITEMS.md").write_text(live, encoding="utf-8")
+        self.assertNotIn("An ungraded closure under the heading",
+                         done.read_text(encoding="utf-8"))
+        code, out = migrate_run(d, "--from-done", "NONE", "--merge")
+        self.assertIn("CLOSURES routed to the done home: 1 ", out)
+        self.assertIn("RE-IMPORTS skipped:       2 ", out)
+        after = done.read_text(encoding="utf-8")
+        self.assertEqual(
+            after.count("An ungraded closure under the heading"), 1)
+        self.assertEqual(after.count("DONE 2026-08-01 — closed one."), 1)
+        self.assertEqual(code, exits.CLEAN, out)
 
 
 if __name__ == "__main__":
