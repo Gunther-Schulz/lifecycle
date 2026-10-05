@@ -9,8 +9,10 @@ executes from this file plus the handoff it points at.
 The handoff is the wan2gp desk's file, and it is the authority:
 `docs/directives/2026-10-05-lifecycle-gap-sweep-handoff.md` in the wan2gp
 repo (read at commit `8b65159`; it has been amended three times, so read it
-again at HEAD). Driving desk: session `wan2gp-e3`. Reports go to it by
-SendMessage: decision rounds and one closing digest.
+again at HEAD — it now opens with a STATE section, and where that section
+and this file differ, it wins). The Part 3 desk reports to the OPERATOR
+directly: the driving desk, session `wan2gp-e3`, closed at this seam
+(its message of 2026-10-05, after accepting Parts 1 and 2 at `d0cccfd`).
 
 THE DELEGATION IS PER SESSION. The operator stated it first-hand in session
 lifecycle-b5. A successor session holds no delegation until the operator
