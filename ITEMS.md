@@ -1786,12 +1786,3 @@ write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py
 done-criterion: migrate --schema-from with --entry-shape either honours the option or refuses the combination by name, and never accepts it silently; red-first on the combined invocation
 evidence: RELAYED from the lc-307 lane closing report 2026-10-05, gap 4; not reproduced at the booking desk
 blocked-by: NONE
-
-## lc-311
-grade: READY
-requirement: migrate writes UNKNOWN for write-set and done-criterion even where the source entry states them under their literal label: on the wan2gp carrier 32 of 34 Ready entries carry a `Write-set:` paragraph and 27 a `Done-criterion:` paragraph, and all 76 migrated items arrive with both UNKNOWN (2026-10-05) — record: LEDGER.md decisions of 2026-10-05
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
-done-criterion: a source entry stating a slot under its literal label migrates with that slot filled from the entry own words and an unlabelled one stays UNKNOWN; red-first on a labelled and an unlabelled fixture entry
-evidence: MEASURED at the wan2gp desk 2026-10-05: label counts by a script over the wan2gp repo's BACKLOG.md at 051aead; grade and blocker lines read from the heading-run trial ITEMS.md (76 NEW, 60 decision regrade)
-blocked-by: NONE

@@ -2219,5 +2219,16 @@ blocked-by: NONE
 closed-reason: 2026-10-05 migrate no longer writes the literal false for a PARKED entry naming missing evidence: it writes a decision blocker (PARKED_EVIDENCE_QUESTION) naming what the desk must supply. Built by a sonnet lane from docs/directives/2026-10-05-migrate-parked-blocker-and-labelled-slots-brief.md, red-first in both entry shapes (4 failures against the old branch). VERIFIED AT THE DESK: unittest 1177 OK, --test 138 of 138 CLEAN, prove-rows held, absence-scan clean; on a scratch copy of the motivating carrier the 16 evidence-false blockers are 0, 17 entries carry the new decision blocker, and item check exits 0 with the blocker graph CLEAN.
 closed-ref: 728bbcd
 
+## lc-311
+grade: DONE
+requirement: migrate writes UNKNOWN for write-set and done-criterion even where the source entry states them under their literal label: on the wan2gp carrier 32 of 34 Ready entries carry a `Write-set:` paragraph and 27 a `Done-criterion:` paragraph, and all 76 migrated items arrive with both UNKNOWN (2026-10-05) — record: LEDGER.md decisions of 2026-10-05
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a source entry stating a slot under its literal label migrates with that slot filled from the entry own words and an unlabelled one stays UNKNOWN; red-first on a labelled and an unlabelled fixture entry
+evidence: MEASURED at the wan2gp desk 2026-10-05: label counts by a script over the wan2gp repo's BACKLOG.md at 051aead; grade and blocker lines read from the heading-run trial ITEMS.md (76 NEW, 60 decision regrade)
+blocked-by: NONE
+closed-reason: 2026-10-05 under the heading entry shape a write-set or done-criterion stated under its literal label now migrates with the entry own words, an unlabelled or twice-labelled one stays UNKNOWN and the report prints the per-slot counts. Same lane and brief as lc-308, red-first against an inert stub (14 failures, 3 errors) plus two mutants. Accepted deviations from the brief: a slot_outcomes helper computes the report counts, and a single label with an empty value is counted with the unlabelled. The done-criterion survives both. VERIFIED AT THE DESK on a scratch copy of the motivating carrier: 77 items written, each slot filled 38 and UNKNOWN 39, item check CLEAN. MEASURED there and NOT a defect of this item: 33 of the 38 carried write-sets classify as prose under classify_write_set, 5 as paths; they are the entry own words and are rewritten at re-grade. Bullet-shape runs are unchanged by construction (Entry.body empty).
+closed-ref: df1380c
+
 ## Archive (pre-migration)
 
