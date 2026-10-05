@@ -230,6 +230,19 @@ MUTATIONS = [
      "    if False:",
      "`item park`'s own typed-blocker requirement"),
 
+    # THE SIBLING of the row above (`finding_row`): the same refusal over a
+    # block already in the carrier. The mutation is on the EXEMPTION's own
+    # narrowing condition rather than on the finding, because that condition
+    # is what this row exists to prove: removed, any PARKED block that
+    # reaches NONE through an amendment is exempt, whatever its base line
+    # said — the softened predicate law 11 forbids.
+    ("parked_without_typed_blocker_carrier", "items.py",
+     "    if base_kind not in BLOCKER_TYPES:",
+     "    if False:",
+     "the cleared-blocker exemption's base-line test — removed, a PARKED "
+     "block that never carried a typed blocker is exempted by an "
+     "`amended-blocked-by: NONE` line alone"),
+
     ("promote_without_judgment", "verbs.py",
      "    if not by or not reason:",
      "    if False:",

@@ -1277,6 +1277,28 @@ PARK_UNAMENDED_ITEMS = (
     + _blocked_block("xx-1", "READY", "NONE")
 )
 
+#: THE CLEARED-BLOCKER PAIR, and the one property between its arms is whether
+#: the BASE `blocked-by:` line is TYPED. Both blocks are PARKED and both carry
+#: the same amendment group clearing the blocker to NONE; the plant's base
+#: line recorded no wait at all, so nothing was cleared and the amendment
+#: alone must not exempt it. The control's base line is the `external` wait
+#: whose own rendering prescribes exactly this amendment.
+_CLEARING_AMENDMENT = ("amend-reason: 2026-10-05 the event arrived — the "
+                       "vendor's tag is on its remote\n"
+                       "amended-blocked-by: 2026-10-05 NONE\n")
+PARKED_NEVER_BLOCKED_ITEMS = (
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 1\nadded: 0\ncompacted: 0\n")
+    + _blocked_block("xx-1", "PARKED", "NONE")
+    + _CLEARING_AMENDMENT
+)
+PARKED_CLEARED_ITEMS = (
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 1\nadded: 0\ncompacted: 0\n")
+    + _blocked_block("xx-1", "PARKED", "external the vendor ships release 9")
+    + _CLEARING_AMENDMENT
+)
+
 #: lc-90's PAIR, and the one property between its arms is WHERE THE TARGET
 #: SITS: `xx-1` is blocked by `xx-2` in both, and only the second has `xx-2`
 #: closed. Both carriers hold two bodies against `baseline: 2`, so neither arm
@@ -1939,6 +1961,33 @@ VERB_ROWS = [
                               "--not-derivable", "a preference with no ledger precedent"],
                              items=SEED_ITEMS),
         stage="wave 1, stage 5",
+    ),
+    Row(
+        ident="parked_without_typed_blocker_carrier",
+        finding_row="parked_without_typed_blocker",
+        # THE SECOND firing input of ONE refusal: the row above fires at the
+        # WRITE path (`item park`), this one over a block already sitting in
+        # the carrier — and it is here because the carrier check carries the
+        # refusal's one DECLARED EXEMPTION, which a roster asserting only the
+        # verb would leave unproven in both directions. `finding_row`
+        # declares the family, so a mutation at this site darkens this row
+        # alone and prove-rows reads that as the honest case.
+        refusal="PARKED without a typed blocker, over the CARRIER — a block "
+                "whose blocker in force is NONE and whose BASE `blocked-by:` "
+                "line never carried a typed one. An `amended-blocked-by: "
+                "NONE` line does not exempt it: the exemption is for a typed "
+                "wait an amendment CLEARED, and here there was no wait",
+        firing_input="`item check` over a PARKED block with base "
+                     "`blocked-by: NONE` under an `amended-blocked-by: NONE` "
+                     "line",
+        expect=exits.FINDING,
+        fire=lambda: _items_run(PARKED_NEVER_BLOCKED_ITEMS),
+        # THE EXEMPTION ITSELF, and the arms differ in the base line alone:
+        # the same block, the same amendment group, a typed `external` wait
+        # underneath. That is the state the tool's own text prescribes —
+        # PARKED, blocker cleared, a promotion owed — and it is CLEAN.
+        control=lambda: _items_run(PARKED_CLEARED_ITEMS),
+        stage="the cleared-blocker repair (2026-10-05)",
     ),
     Row(
         ident="park_over_superseding_amendment",

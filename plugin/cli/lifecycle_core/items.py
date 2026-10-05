@@ -2468,6 +2468,19 @@ def check_file(path: Path, out, prefix: str | None = None, *,
                 "happen quietly.", ident)
     if blockers_unverified:
         out(f"COULD NOT VERIFY: {blockers_unverified}")
+    # THE EXEMPTED POPULATION IS COUNTED AND NAMED, never passed over in
+    # silence: an exemption nobody can see is a softened predicate. A REPORT
+    # LINE and not a finding — the state is the one the tool's own text
+    # prescribes — so it moves no exit code.
+    cleared = parked_cleared_blockers(parsed, prefix)
+    if cleared:
+        out(f"PARKED with a CLEARED blocker: {len(cleared)} item(s) — "
+            + ", ".join(it.ident for it, _date, _reason in cleared)
+            + ". Each carried a typed blocker that an "
+              f"`{AMEND_PREFIX}blocked-by:` line cleared to {BLOCKER_NONE}, "
+              "so it waits on nothing and OWES A PROMOTION: READY is judged, "
+              "never derived, and `item promote` is the act. `item ready "
+              "--head` names each one. Not a finding.")
 
     unk_counts, unk_misplaced = unknown_slots(parsed)
     for ident, line, slot in unk_misplaced:
@@ -3549,8 +3562,74 @@ def check_parked_blockers(parsed: Parsed, prefix: str | None):
     for it in parked:
         kind, _detail = classify_blocker(it.slots.get("blocked-by", ""), prefix)
         if kind is None or kind == "none":
+            # THE DECLARED EXEMPTION, verified here rather than assumed (law
+            # 11): a typed blocker CLEARED by an amendment. See
+            # `parked_blocker_cleared` for what it checks and why the state
+            # is legitimate.
+            if parked_blocker_cleared(it, prefix) is not None:
+                continue
             untyped.append((it.ident, it.line, it.slots.get("blocked-by", "")))
     return untyped, None
+
+
+def parked_blocker_cleared(item: Item, prefix: str | None):
+    """`(date, reason)` where `item` is PARKED with a blocker an amendment
+    CLEARED, else `None`.
+
+    THE STATE IS LEGITIMATE AND THE TOOL PRESCRIBES THE ACT THAT MAKES IT.
+    An `external` wait "ENDS by an ACT" — `_blocker_state`'s own words — and
+    that act is `item amend --blocked-by NONE --reason`; a migration re-grade
+    names the same act. READY is judged, never derived (law 10), so between
+    that amendment and a desk's `item promote` the item must be able to REST:
+    PARKED, waiting on nothing, a promotion owed. `parked_without_typed_blocker`
+    read that as a defect and refused the commit of the amendment the tool
+    had just told its reader to make (measured 2026-10-05, an `external`
+    blocker on a scratch carrier and a `decision` one on this repo's own).
+
+    THREE CONDITIONS, ALL REQUIRED, and each is read off the block:
+      - the blocker IN FORCE is NONE;
+      - the BASE `blocked-by:` line carries a TYPED blocker — there was a
+        wait, in somebody's court, to clear;
+      - the NONE arrived through an `amended-blocked-by:` line, which is the
+        dated record that it was cleared and why.
+    A PARKED block whose base line is itself NONE or prose is NOT this state:
+    nothing typed was ever recorded, so nothing was cleared, and the finding
+    stands exactly as before. `originals` holds a slot's base value only
+    where an amendment superseded it, so its presence IS the third condition.
+
+    The date and reason returned are the clearing amendment's own: the LAST
+    `amended-blocked-by:` line, and the `amend-reason:` that opens its group.
+    """
+    if item.grade != "PARKED" or "blocked-by" not in item.originals:
+        return None
+    if (item.slots.get("blocked-by") or "").strip() != BLOCKER_NONE:
+        return None
+    base_kind, _detail = classify_blocker(item.originals["blocked-by"], prefix)
+    if base_kind not in BLOCKER_TYPES:
+        return None
+    cleared, reason = None, ""
+    for name, raw, _lineno in item.amendments:
+        m = _AMEND_VALUE.match(raw)
+        if not m:
+            continue
+        if name == AMEND_REASON:
+            reason = m.group(2)
+        elif name == AMEND_PREFIX + "blocked-by":
+            cleared = (m.group(1), reason)
+    return cleared
+
+
+def parked_cleared_blockers(parsed: Parsed, prefix: str | None) -> list:
+    """`[(item, date, reason)]` for every PARKED block whose blocker an
+    amendment cleared — the population `check_parked_blockers` exempts, so
+    the exemption is never silent: `item check` counts it and the head names
+    each member as owing a promotion."""
+    out = []
+    for it in parsed.items:
+        cleared = parked_blocker_cleared(it, prefix)
+        if cleared is not None:
+            out.append((it, cleared[0], cleared[1]))
+    return out
 
 
 # --- the wave planner (lc-123) -----------------------------------------------

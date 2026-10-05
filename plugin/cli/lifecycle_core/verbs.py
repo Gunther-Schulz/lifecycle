@@ -1859,14 +1859,29 @@ def _cleared_waits(waiting, out, tally, ctx: Ctx, parsed, done_parsed,
       - COULD NOT VERIFY (the ledger or the done home unreadable) — LISTED
         and carried in the exit code: whether the wait is over is unknown,
         and a count line over an unread home would read as "none".
+      - CLEARED BY AMENDMENT (a PARKED item whose typed blocker an
+        `amended-blocked-by: NONE` line ended) — LISTED, with the
+        amendment's date and its reason clipped, and counted apart: the
+        wait ended by a recorded act and what is owed is `item promote`.
 
     NOTHING IS PROMOTED (law 10).
     """
     cleared, unverified = [], []
     n_decision = n_item = answered = target_done = 0
-    regrade = still = left = 0
+    regrade = still = left = amended = 0
     code = exits.CLEAN
     for it in waiting:
+        # A BLOCKER AN AMENDMENT CLEARED is a wait that is over by an ACT
+        # somebody already recorded — the ending an `external` wait has, and
+        # the one a re-grade takes. The item rests PARKED until a desk
+        # promotes it, and this is the pass that says a promotion is owed.
+        by_amend = items_mod.parked_blocker_cleared(it, ctx.prefix)
+        if by_amend is not None:
+            amended += 1
+            cleared.append((it, _cleared_basis(*by_amend,
+                                               clip=HEAD_REASON_CLIP)
+                            + f" — `item promote {it.ident}` is the act."))
+            continue
         kind, detail = items_mod.classify_blocker(
             it.slots.get("blocked-by", ""), ctx.prefix)
         if kind not in ("decision", "item"):
@@ -1907,7 +1922,9 @@ def _cleared_waits(waiting, out, tally, ctx: Ctx, parsed, done_parsed,
         f"decision(s) ANSWERED, {target_done} target(s) DONE, {regrade} "
         "migration re-grade(s) owed at the desk (counted, not listed), "
         f"{still} still waiting, {left} finding(s) left to `item check`, "
-        f"{len(unverified)} could not verify.")
+        f"{len(unverified)} could not verify. Beside those, {amended} "
+        "PARKED item(s) whose blocker an amendment CLEARED — a promotion "
+        "owed.")
     return code
 
 
@@ -2498,6 +2515,21 @@ def cmd_item_statusline(args, out, ctx: Ctx) -> int:
     return exits.CLEAN
 
 
+#: How much of an `amend-reason` the head prints for a cleared blocker. The
+#: head is the one verb a session-start hook runs unprompted and a reason is
+#: free prose of any length; `item ready <id>` prints it whole.
+HEAD_REASON_CLIP = 120
+
+
+def _cleared_basis(date: str, reason: str, clip: int | None = None) -> str:
+    """The one spelling of a cleared blocker's basis — `item ready <id>` and
+    the head both print it, the head clipped."""
+    reason = reason or "(no `amend-reason:` recorded)"
+    if clip is not None and len(reason) > clip:
+        reason = reason[:clip].rstrip() + "…"
+    return f"blocker cleared by amendment on {date}: {reason}"
+
+
 def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why,
                    timeout=None):
     """`(state, code, note)` for one item's blocker.
@@ -2511,6 +2543,16 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why,
     value = it.slots.get("blocked-by", "")
     kind, detail = items_mod.classify_blocker(value, ctx.prefix)
     if kind == "none":
+        # A PARKED ITEM WHOSE BLOCKER AN AMENDMENT CLEARED says so, with the
+        # amendment as its basis. "No blocker recorded" would be true and
+        # would hide the one thing a reader of a PARKED item needs: that a
+        # wait was recorded, that it ENDED, when, and on what evidence.
+        cleared = items_mod.parked_blocker_cleared(it, ctx.prefix)
+        if cleared is not None:
+            return (f"UNBLOCKED — {_cleared_basis(*cleared)}", exits.CLEAN,
+                    "The item is still PARKED: READY is judged, and `item "
+                    f"promote {it.ident}` is the act that re-grades it. THIS "
+                    "VERB PROMOTES NOTHING.")
         return "UNBLOCKED — no blocker recorded.", exits.CLEAN, ""
     if kind is None:
         if items_mod.is_blocker_none_synonym(value):
@@ -3251,6 +3293,19 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
         code = commit_paths(ctx, (ctx.items_path,),
                             f"lifecycle: amend {args.ident}", out,
                             skip=args.no_commit, what="the amendment")
+        # CLEARING A PARKED ITEM'S BLOCKER DOES NOT RE-GRADE IT, and the
+        # verb's last line says so. Asked of the reader's own resolver over
+        # what was just written, never inferred from the flag: the state is
+        # whatever `items.parse` puts in force.
+        after = next((i for i in items_mod.parse(new).items
+                      if i.ident == args.ident), None)
+        if after is not None and items_mod.parked_blocker_cleared(
+                after, ctx.prefix) is not None:
+            out(f"{args.ident} is still PARKED: its blocker is cleared and "
+                "the grade did not move, because READY is judged, never "
+                f"derived. `item promote {args.ident} --by <desk> --reason "
+                "<why it is decision-complete>` is the act that re-grades "
+                "it; `item ready --head` names it until then.")
     args.fire_detail = f"amend {args.ident} {','.join(sorted(updates))}"
     return code
 
