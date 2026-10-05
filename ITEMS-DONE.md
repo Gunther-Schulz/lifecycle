@@ -2208,5 +2208,16 @@ blocked-by: NONE
 closed-reason: 2026-10-05 MEASURED 2026-10-05 at 458f3e2: test_migrate 148 passed with 31 new cases; on a copy, the shape dispatch off turns 16 red, the zero-heading guard folded 2, the note folded 1. Roster row migration_heading_shape_empty admitted on the lc-142 pair (real anchor: rows changed migration_heading_shape_empty; inert comment anchor: rows changed NONE, FAILED). Scratch copy of the motivating carrier: 145 read, 76 written, 69 closed, 0 unclassified, all 145 citation ranges resolve. Built on a worktree branch; integration is the dispatching desk act.
 closed-ref: 458f3e2
 
+## lc-308
+grade: DONE
+requirement: migrate writes the blocker `evidence false` for a PARKED source entry whose body names missing evidence, and item check then reports blocker_softlock on the migrator own output: 16 on a copy of the wan2gp carrier in heading shape, 1 on base code with one parked bullet (2026-10-05) — record: LEDGER.md decision of 2026-10-05 on the lc-307 integration
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a migrated PARKED entry never carries the literal predicate false: migrate writes the decision-typed blocker the 2026-09-19 pass applied by hand, and item check exits clean on the migrated carrier; red-first on a parked source entry naming missing evidence
+evidence: MEASURED at the wan2gp desk 2026-10-05: the trial ITEMS.md from the heading run holds 16 lines blocked-by evidence false (grep over the migrated carrier). RELAYED from the lc-307 lane report, not re-run at the desk: item check exits 2 with 16 blocker_softlock on that carrier, and base code reproduces 1 with a single parked bullet
+blocked-by: NONE
+closed-reason: 2026-10-05 migrate no longer writes the literal false for a PARKED entry naming missing evidence: it writes a decision blocker (PARKED_EVIDENCE_QUESTION) naming what the desk must supply. Built by a sonnet lane from docs/directives/2026-10-05-migrate-parked-blocker-and-labelled-slots-brief.md, red-first in both entry shapes (4 failures against the old branch). VERIFIED AT THE DESK: unittest 1177 OK, --test 138 of 138 CLEAN, prove-rows held, absence-scan clean; on a scratch copy of the motivating carrier the 16 evidence-false blockers are 0, 17 entries carry the new decision blocker, and item check exits 0 with the blocker graph CLEAN.
+closed-ref: 728bbcd
+
 ## Archive (pre-migration)
 
