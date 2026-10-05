@@ -18,6 +18,7 @@ ordinary add.
 import _isolation  # noqa: F401  # lc-183: before any verb runs
 
 import json
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -2941,6 +2942,38 @@ class TheStandbyGrade(unittest.TestCase):
             self.assertIn("head: 0 READY", out)
             code, out = _pair(refusals._cli_in(r, ["item", "statusline"]))
             self.assertEqual(out.strip(), "0R.0P.1S head -")
+
+    def test_park_commits_what_it_writes_like_its_sibling_verbs(self):
+        """`item park` wrote the carrier and left it uncommitted, where
+        amend, promote and bench each commit — measured on a real carrier,
+        where a lane committed by hand. `--no-commit` is the batching
+        caller's way out, as it is on the siblings."""
+        git = lambda r, *a: subprocess.run(  # noqa: E731
+            ["git", *a], cwd=str(r.dir), capture_output=True,
+            text=True).stdout
+        with refusals._Repo(items=refusals.SEED_ITEMS) as r:
+            before = git(r, "rev-parse", "HEAD")
+            # BASELINE: a clean tree, or "clean afterwards" proves nothing.
+            self.assertEqual(git(r, "status", "--porcelain"), "")
+            code, out = _pair(refusals._cli_in(
+                r, ["item", "park", "xx-1",
+                    "--blocked-by", "external an event nobody can compute"]))
+            self.assertEqual(code, exits.CLEAN, out)
+            # The CARRIER, by pathspec: the fixture ignores nothing, so the
+            # verb's own lock file shows as untracked in a whole-tree status.
+            self.assertEqual(git(r, "status", "--porcelain", "ITEMS.md"),
+                             "", out)
+            self.assertNotEqual(git(r, "rev-parse", "HEAD"), before)
+            self.assertIn("park xx-1", git(r, "log", "-1", "--format=%s"))
+        with refusals._Repo(items=refusals.SEED_ITEMS) as r:
+            before = git(r, "rev-parse", "HEAD")
+            code, out = _pair(refusals._cli_in(
+                r, ["item", "park", "xx-1", "--no-commit",
+                    "--blocked-by", "external an event nobody can compute"]))
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertIn("NOT COMMITTED (--no-commit)", out)
+            self.assertEqual(git(r, "rev-parse", "HEAD"), before)
+            self.assertIn("ITEMS.md", git(r, "status", "--porcelain"))
 
     def test_promote_returns_a_STANDBY_item_to_READY(self):
         with refusals._Repo(items=refusals.STANDBY_SEED,

@@ -2546,8 +2546,15 @@ def cmd_item_park(args, out, ctx: Ctx) -> int:
             return exits.FINDING
         atomic.write_text(ctx.items_path, new, encoding="utf-8")
     out(f"{args.ident} → PARKED, blocked-by: {value}")
+    # COMMITTED LIKE EVERY OTHER CARRIER WRITE (lc-25 said "every carrier
+    # write reaches this function" and this verb was the member it missed):
+    # a park left on disk is a grade change the next writer's commit carries
+    # out under its own message.
+    code = commit_paths(ctx, (ctx.items_path,),
+                        f"lifecycle: park {args.ident}",
+                        out, skip=args.no_commit, what="the park")
     args.fire_detail = f"park {args.ident}"
-    return exits.CLEAN
+    return code
 
 
 # --- `item promote` (lc-39) ---------------------------------------------------

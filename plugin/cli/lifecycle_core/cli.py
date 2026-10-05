@@ -954,6 +954,9 @@ def build_parser() -> argparse.ArgumentParser:
     park = its.add_parser("park", help="PARKED, with a typed blocker")
     park.add_argument("ident")
     park.add_argument("--blocked-by", dest="blocked_by", help="TYPED; required")
+    park.add_argument("--no-commit", dest="no_commit", action="store_true",
+                      help="write the carrier without committing it — a "
+                           "caller batching a park pass owns that commit")
     park.add_argument("--not-derivable", dest="not_derivable", help="why the question is NOT DERIVABLE from the record — required with a `decision` blocker (lc-169): which precedent, ledger entry, audit or declaration you looked for and did not find, or that the question is constitutively the operator's")
     park.add_argument("--blocker-exercise", dest="blocker_exercise", help="the exercise record for an `evidence` blocker (lc-175): the TWO CONSTRUCTED ARMS showing the predicate answers both ways — a case it must accept and one it must refuse. The live booking exit is added by the tool, which ran it; the arms are yours, because a verb that synthesised one would be grading its own plant")
 
