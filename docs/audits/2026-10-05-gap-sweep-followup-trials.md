@@ -327,3 +327,28 @@ controls, on clones whose commit hook runs the prototype's code (the
 machine-wide hook grades every clone with the real checkout's code and
 refuses the prototype's two new slots). Every lane had a dispatcher to
 return a question to.
+
+### F1 — the second matcher's evaluation, read before arms B and C start: the gate is MET, narrowly
+
+Built as registered (rare shared words weighted, no threshold, top 3 items
+and top 2 laws always shown). Rank of the expected item or law within its
+source, per fixed phrasing (the builder's table, its three verifier runs
+re-read by this desk, one phrasing re-run by this desk):
+
+| kind | phrasings | in the printed top | ranks |
+|---|---|---|---|
+| leak-scan reds (lc-32) | 4 | 2 | 88, 1, 5, 1 |
+| none-synonym (lc-266) | 3 | 3 | 1, 3, 1 |
+| hand trim (law 8) | 2 | 2 | 1, 1 |
+| hand trim (lc-165) | 3 | 1 | 18, 1, 10 |
+
+5 of the 7 leak-scan and none-synonym phrasings: the registered mark. So
+arms B and C run on T2, T3 and T8, plus the harm check. Known before they
+run, from the same evaluation: the scores do not separate a question the
+record answers from one it does not (an unrelated question's top hit
+scores 0.78, an open one's 1.00), so the list is a reading list and not a
+verdict; in arm C nearly every question is refused first, since almost
+every item shares some word with it (296 to 314 of 314 score above zero).
+Whether the phrasing a lane chooses lands the item is the part only the
+lanes can show: the vaguest phrasing ("are the red leak-scan tests
+environmental") ranks lc-32 88th, the most specific ones rank it first.
