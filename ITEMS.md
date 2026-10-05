@@ -1491,7 +1491,7 @@ amended-blocked-by: 2026-10-04 decision narrow freeze exit for lc-238 - has its 
 amended-not-derivable: 2026-10-04 Not derivable: release is per mechanism (LEDGER:177, 2026-10-04). This item names no pre-registered probe yet, and the narrow exit is the operator's at ship time, asked per mechanism; no ledger line grants either for this item.
 
 ## lc-239
-grade: READY
+grade: STANDBY
 requirement: EIGHT DECLARED REPOS MUST BE MIGRATED OFF SCHEMA 2, AND THE ARC IS NOT MECHANICAL. Each of their 26 kinds needs a trigger stage AUTHORED, not stamped: the seventh stage takes verb <name>, predicate <cmd>, or none declared why <reason>, and which one a kind gets is per-kind judgment about what occasions its write. Disposition decided 2026-09-19 (LEDGER, this repo): migrate all eight, none has grounds to exit governance. lc-218's every-declared-repo clause was false at the artifact and is recorded as a CORRECTION rather than a reopening: that item's build stands and this entry carries its residue.
 goal: enforce-the-invariants
 write-set: other-repo:CachyOS-Setup,other-repo:beat-the-books,other-repo:begehung,other-repo:daneel,other-repo:dispatch-guards,other-repo:skill-craft,other-repo:statiker,other-repo:claude-code-cache-fix
@@ -1511,6 +1511,7 @@ amended-done-criterion: 2026-10-05 All eight declarations read this build floor 
 amended-blocked-by: 2026-10-05 NONE
 promote-reason: 2026-10-05 Decision-complete since the round closed: vocabulary fixed, staging ruled by the operator (LEDGER decision on lc-239 staging), criterion and verifier now stated, write-set the eight repos. A fresh desk can run beat 1 from the entry.
 promoted-by: 2026-10-05 lifecycle-03
+bench-reason: 2026-10-05 A multi-repo arc for its own desk, outside this session held copies and not cited by an open arc: decision-complete, not on the scheduled head.
 
 ## lc-240
 grade: PARKED
