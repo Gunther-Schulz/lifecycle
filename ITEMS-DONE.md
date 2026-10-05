@@ -2252,5 +2252,16 @@ blocked-by: NONE
 closed-reason: 2026-10-05 item ready --head now names every non-READY item whose evidence predicate fired, counts quiet ones, and reports a broken one through the existing trigger_broken text; one always-printed count line. Built by an opus lane from docs/directives/2026-10-05-head-surfaces-arrived-evidence-brief.md, red-first (6 of 7 new tests failed against the old head; the seventh is the statusline control). VERIFIED AT THE DESK: unittest 1191 OK, --test CLEAN, prove-rows held; on a scratch carrier the item parked on a flag-file predicate is named once the flag exists and the line goes quiet when it is removed, and that item blocker had arrived through an amended line. Accepted deviations: the count covers non-READY items only and says so; --goal filters before evaluation; STANDBY items are included. NOT covered here and handed to the lifecycle desk: an answered decision and a dropped blocking item are still unnamed by the head. Unverified: a predicate that times out, and how the session-start hook renders long output.
 closed-ref: bbf6ef0
 
+## lc-309
+grade: DONE
+requirement: a second `migrate --merge` run over a carrier that keeps its closures in its own Done section re-archives those closures and then fails the per-source arithmetic, in bullet and heading shape alike; the lc-307 merge test covers open entries only — record: LEDGER.md decision of 2026-10-05 on the lc-307 integration
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a repeated --merge over a carrier with an in-carrier closure section archives each closure once and the per-source conservation holds; red-first on two consecutive --merge runs over such a fixture
+evidence: RELAYED from the lc-307 lane closing report 2026-10-05, gap 3, stated there as pre-existing; not reproduced at the booking desk
+blocked-by: NONE
+closed-reason: 2026-10-05 A repeated --merge now recognises the closures it already archived (marker-keyed re-import) and no longer rewrites the done home when a merge archives nothing. Built in a scratch clone by two trial lanes of the gap sweep (T10: one stopped mid-build, its successor told only Continue), cherry-picked here as 3e43f33 and verified at this desk: the new tests fail against the previous migrate.py on assertions, suite 1231 OK, --test CLEAN, prove-rows held.
+closed-ref: 3e43f33
+
 ## Archive (pre-migration)
 
