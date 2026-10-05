@@ -2241,5 +2241,16 @@ blocked-by: NONE
 closed-reason: 2026-10-05 the question now ends in the item id, applied at build_items; red-first in all four branches (old READY, PARKED-evidence, PARKED-decision, slot-incomplete), so the regrade and parked-decision halves the booking marked DERIVED are now measured. Carriers migrated BEFORE this still hold the shared question; their repair is a per-item amend, reported to the wan2gp desk
 closed-ref: 7498b39
 
+## lc-313
+grade: DONE
+requirement: a PARKED item whose evidence predicate has FIRED is surfaced by nothing unprompted: item ready --head, the pass a session start runs, lists READY items only, so an item whose wait is over sits unseen until someone asks for it by id — record: LEDGER.md decision of 2026-10-05 on the deadline observer
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: item ready --head names every live non-READY item whose evidence predicate FIRES on that pass and prints the count of predicates it ran, zeros included; QUIET is counted and not listed; BROKEN is reported through the existing trigger_broken path, never skipped; red-first on a parked fixture item whose predicate flips from quiet to fired
+evidence: MEASURED at the wan2gp desk 2026-10-05 on a scratch carrier at lifecycle a0da4cc: an item parked on evidence test -e <flag>; after the flag appeared item ready <id> printed UNBLOCKED, the predicate FIRED, while item ready --head printed 0 READY and never named the item, item statusline printed 0R.3P, and neither item check nor audit named it. DERIVED: the QUIET verdict text says Re-evaluated each pass, and the only pass that runs unprompted does not evaluate it. Not measured: any other verb that would surface it
+blocked-by: NONE
+closed-reason: 2026-10-05 item ready --head now names every non-READY item whose evidence predicate fired, counts quiet ones, and reports a broken one through the existing trigger_broken text; one always-printed count line. Built by an opus lane from docs/directives/2026-10-05-head-surfaces-arrived-evidence-brief.md, red-first (6 of 7 new tests failed against the old head; the seventh is the statusline control). VERIFIED AT THE DESK: unittest 1191 OK, --test CLEAN, prove-rows held; on a scratch carrier the item parked on a flag-file predicate is named once the flag exists and the line goes quiet when it is removed, and that item blocker had arrived through an amended line. Accepted deviations: the count covers non-READY items only and says so; --goal filters before evaluation; STANDBY items are included. NOT covered here and handed to the lifecycle desk: an answered decision and a dropped blocking item are still unnamed by the head. Unverified: a predicate that times out, and how the session-start hook renders long output.
+closed-ref: bbf6ef0
+
 ## Archive (pre-migration)
 
