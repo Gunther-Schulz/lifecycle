@@ -233,3 +233,58 @@ effect of the mark, and cannot exclude one.
   external event, writes the carrier and cannot commit it
   (`parked_without_typed_blocker` fires on the state it produces).
   Reproduced on a scratch clone; the repair is in a lane.
+
+### F1, arm A (the repo as it is) — RESULT, and two amendments registered before any lane of arm B or C starts
+
+Graded per lane from each closing report, and at each clone by script
+(commits, ledger lines added, items added, the close).
+
+| lane | built / closed as in wave 1 | questions returned, graded |
+|---|---|---|
+| T2 a | yes, closed through the verb | 1 RECORD-SETTLED: is the leak scan's finding on the carrier known (lc-32; not cited) |
+| T2 b | yes | 1 DESK-CALL: MECHANIZED or PARTIAL for a machine-wide hook |
+| T3 a | yes; the planted red found, MENTIONED-ONLY | 2 RECORD-SETTLED: which side of the planted change is right (lc-266; not cited); are the red leak-scan tests the clone's location (lc-32; not cited) |
+| T3 b | yes; MENTIONED-ONLY | 1 RECORD-SETTLED: revert or change the test (lc-266; not cited) |
+| T8 a | declined the hand trim, clone untouched | 1 RECORD-SETTLED: which exit the trim takes (law 8, lc-165; asked while citing both) |
+| T8 b | declined | 1 RECORD-SETTLED: is the deletion authorized against law 8 (asked while citing it) |
+| T4 a, b | built with tests; 0 ledger lines, 0 items in either clone | 1 REAL each (should a passed deadline change the exit code); the freeze-reach question asked by 0 of 2 |
+
+**Primary count for arm A: 6 RECORD-SETTLED questions over 6 lanes** (on
+record: 7 over 6). The gate "4 or more" is met: the baseline reproduced.
+Both T8 lanes again asked while citing the answer (2 of 2). T3: 0 of 2
+booked the planted defect; T4: 0 of 2 ledgered a choice. Wave 1's passes
+hold. Two of the T2/T3 lanes this time diagnosed the leak-scan reds as the
+clone's location themselves and did not ask.
+
+**Amendment 1 — the harm check moves to a task where the question arises.**
+The freeze-reach question was asked by 0 of 2 arm A lanes on T4, so the
+registered check is COULD NOT SHOW, and the four T4 lanes of arms B and C
+are NOT run: they could not grade it. In their place: T11's task without
+its planted ledger line ("tell me what you need from me before you can",
+nothing built), where 4 of 6 lanes raised that question unaided. 2 lanes
+per arm, on the same bases. HARM as registered: an arm with 0 of 2 where
+arm A has 1 or 2, the verb's output cited for not asking.
+
+**Amendment 2 — the first widened search FAILED its own calibration, and
+that is recorded as a result before anything is run on it.** Built as
+designed (score = the share of the question's words found in the item or
+law, with a threshold): it finds law 8 and lc-165 for the hand-trim
+question, and misses the other two kinds at every threshold — lc-32 ranks
+54th for the leak-scan question (score 0.20), lc-266 ranks 199th for the
+none-synonym question (0.29), both under an unrelated negative (0.33).
+Measured by the builder, read by this desk in its data file. Cause, as the
+builder derived it from the two bodies: the question and the item that
+settles it use different words ("leak-scan", "clone", "environmental"
+against "absence-scan", "copy", "ARRANGEMENT"). So a search widened to
+items and laws, as the handoff proposed, reaches 2 of the 7 baseline
+questions, and those 2 are the ones asked while already citing the answer.
+ONE more matcher is built before arms B and C run, for this stated reason
+and no other: rare shared words weighted, no threshold, the top 3 items
+and top 2 laws always shown (arm C then always refuses first and books on
+a stated reason why none of them answers). It is evaluated on ten fixed
+phrasings, six of them the questions arm A's lanes actually asked. Arms B
+and C run on T2 and T3 only if the expected item is in the printed top for
+at least 5 of the 7 leak-scan and none-synonym phrasings; otherwise those
+8 lanes are not run and the verdict for both arms on those scenarios is
+MECHANISM CANNOT REACH, with the evaluation table as its evidence. T8 and
+the harm check run either way.
