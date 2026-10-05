@@ -2586,6 +2586,26 @@ def bullet_shape_note(read: Read, src_name: str) -> str:
             f"read correctly as it is.")
 
 
+def other_marker_note(read: Read, src_name: str) -> str:
+    """The ONE line a `bullet` read prints when the source holds top-level
+    lines opening with `* ` or `+ `, or "" where it holds none.
+
+    A NOTE AND NOT A FINDING, for `bullet_shape_note`'s reason: a `* ` line
+    inside an entry's body is legitimate prose, and no predicate tells it
+    from an entry somebody wrote under another marker. What it ends is the
+    SILENCE — such a line joins the entry above it, is in no column of the
+    bullet identity, and was mentioned nowhere. With zero entries read the
+    same lines are a refusal instead (`migration_bullet_shape_empty`).
+    """
+    if read.entry_shape != ENTRY_SHAPE_BULLET or not read.other_marker_lines:
+        return ""
+    return (f"NOTE: {len(read.other_marker_lines)} line(s) in {src_name} "
+            f'open with "* " or "+ " (first at line '
+            f"{read.other_marker_lines[0][0]}). The bullet shape reads "
+            f'"- " as the bullet, so these were read as BODY of the entry '
+            f"above them, not as entries.")
+
+
 def run(args, out, ctx) -> int:
     retire = getattr(args, "retire_source", False)
     if args.schema_from is not None:
@@ -3175,6 +3195,9 @@ def run(args, out, ctx) -> int:
     note = bullet_shape_note(read, src_name)
     if note:
         out(f"    {note}")
+    marker_note = other_marker_note(read, src_name)
+    if marker_note:
+        out(f"    {marker_note}")
     out(f"    items written:            {n_items} → {ctx.items_path.name}")
     out(f"    CLOSURES routed to the done home: {len(closures)} → "
         f"{ctx.done_path.name}, verbatim")
@@ -3534,6 +3557,11 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
           f"{len(read.entries)} |")
         a(f"| of those, non-entry prose bullets (not migrated) | "
           f"{len(read.non_entry_bullets)} |")
+        # PRINTED WHEN ZERO TOO: an omitted row reads as "not counted", and
+        # these lines are in no column of the bullet identity below — this
+        # row is the only place the report says they exist.
+        a(f"| top-level lines opening with `* ` or `+ ` (read as body, not "
+          f"as entries) | {len(read.other_marker_lines)} |")
         a(f"| of those, bullets in a section §4 row 1 CUTS | "
           f"{len(read.cut_bullets)} |")
     a(f"| items written to `{ctx.items_path.name}` | {n_items} |")
@@ -3797,6 +3825,18 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
           "rather than a silent omission.")
         a("")
         for lineno, section in read.non_entry_bullets:
+            a(f"- `{src_name}:{lineno}` — section: {section[:70]}")
+        a("")
+    if not heading_shape and read.other_marker_lines:
+        a("## Lines under another list marker — read as body, not as entries")
+        a("")
+        a("Top-level lines opening with `* ` or `+ `. The bullet shape reads "
+          "`- ` as the bullet, so each of these joined the entry above it "
+          "and is no `- ` bullet: it sits OUTSIDE the bullet identity above. "
+          "Listed so that an entry somebody wrote under another marker is a "
+          "line a reader can go and look at rather than a silent omission.")
+        a("")
+        for lineno, section in read.other_marker_lines:
             a(f"- `{src_name}:{lineno}` — section: {section[:70]}")
         a("")
     if heading_shape and read.outside_bullets:

@@ -3098,6 +3098,118 @@ class BulletShapeOverNoEntries(unittest.TestCase):
         self.assertEqual(control.code, exits.CLEAN, control.output)
 
 
+class OtherMarkerLinesAreSaid(unittest.TestCase):
+    """A `bullet` read that DID find entries, over a carrier that also holds
+    top-level `* ` / `+ ` lines: they are read as body exactly as before, and
+    the run and the report now say so."""
+
+    PLAIN = ("# old\n\n## Open\n\n"
+             "- a plain prose bullet\n"
+             "- **READY 2026-01-01 — an ordinary entry.** body\n")
+    MIXED = (PLAIN
+             + "* **READY 2026-01-02 — a starred line.** body\n"
+             + "\n## Later\n\n"
+             + "- **READY 2026-01-03 — a second entry.** body\n"
+             + "+ a plus line\n"
+             + "\n* * *\n")
+
+    def run_over(self, text, *extra):
+        d = build(text)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d, *extra)
+        return d, code, out, (d / REPORT).read_text(encoding="utf-8")
+
+    @staticmethod
+    def line_of(d, opening):
+        """The 1-based line of the one line opening with `opening`, in the
+        file ON DISK — the frozen one, whose lines every citation indexes
+        (the banner in its head moves them)."""
+        src = (d / "BACKLOG.md").read_text(encoding="utf-8").split("\n")
+        hits = [i + 1 for i, ln in enumerate(src) if ln.startswith(opening)]
+        assert len(hits) == 1, (opening, hits)
+        return hits[0]
+
+    def test_one_note_line_on_stdout_naming_the_count_and_the_first_line(self):
+        d, code, out, report = self.run_over(self.MIXED)
+        self.assertEqual(code, exits.CLEAN, out)
+        notes = [ln for ln in out.split("\n") if "NOTE: " in ln]
+        self.assertEqual(len(notes), 1, out)
+        self.assertEqual(
+            notes[0].strip(),
+            'NOTE: 2 line(s) in BACKLOG.md open with "* " or "+ " (first at '
+            f'line {self.line_of(d, "* **READY")}). The bullet shape reads '
+            '"- " as the bullet, so these were read as BODY of the entry '
+            "above them, not as entries.")
+
+    def test_the_report_counts_them_and_lists_where_they_are(self):
+        d, code, out, report = self.run_over(self.MIXED)
+        rows = report.split("\n")
+        prose = next(i for i, ln in enumerate(rows)
+                     if ln.startswith("| of those, non-entry prose bullets"))
+        self.assertEqual(
+            rows[prose + 1],
+            "| top-level lines opening with `* ` or `+ ` (read as body, not "
+            "as entries) | 2 |")
+        self.assertIn("## Lines under another list marker", report)
+        section = report[report.index("## Lines under another list marker"):]
+        section = section[:section.index("\n## ", 1)] \
+            if "\n## " in section[1:] else section
+        listed = [ln for ln in section.split("\n") if ln.startswith("- `")]
+        # The star rule is no list line: two lines listed, not three.
+        self.assertEqual(listed, [
+            f"- `BACKLOG.md:{self.line_of(d, '* **READY')}` — section: Open",
+            f"- `BACKLOG.md:{self.line_of(d, '+ a plus line')}` — section: "
+            "Later"])
+
+    def test_the_bullet_identity_is_unchanged_and_still_holds(self):
+        """These lines are not `- ` bullets and stay outside the identity."""
+        d, code, out, report = self.run_over(self.MIXED)
+        self.assertIn("**Bullet identity:** 3 top-level bullets = 2 entries "
+                      "+ 1 prose + 0 cut — HOLDS", report)
+
+    def test_the_note_changes_no_exit_code_and_no_successor_byte(self):
+        """NOTHING ELSE MOVES. The reader is asked directly: the same text
+        with and without the count taken reads the same entries, so the
+        successor carrier is the one the entries alone decide."""
+        d, code, out, report = self.run_over(self.MIXED)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("source entries read:      2\n", out)
+        self.assertIn("items written:            2 ", out)
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual(len(parsed.items), 2)
+        # The starred line is in the FIRST item's evidence range — body of
+        # the entry above it, as before.
+        m = re.match(r"BACKLOG\.md:(\d+)-(\d+) at blob ",
+                     parsed.items[0].slots["evidence"])
+        self.assertIsNotNone(m, parsed.items[0].slots["evidence"])
+        self.assertEqual(int(m.group(1)),
+                         self.line_of(d, "- **READY 2026-01-01"))
+        self.assertGreaterEqual(int(m.group(2)),
+                                self.line_of(d, "* **READY"))
+
+    def test_none_of_them_prints_no_note_and_a_zero_row(self):
+        d, code, out, report = self.run_over(self.PLAIN)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("NOTE: ", out)
+        self.assertIn("| top-level lines opening with `* ` or `+ ` (read as "
+                      "body, not as entries) | 0 |", report)
+        self.assertNotIn("## Lines under another list marker", report)
+
+    def test_a_star_rule_alone_is_a_zero(self):
+        d, code, out, report = self.run_over(self.PLAIN + "\n* * *\n\n***\n")
+        self.assertNotIn("NOTE: ", out)
+        self.assertIn("as entries) | 0 |", report)
+
+    def test_the_heading_shape_says_nothing_of_them(self):
+        """In the heading shape every such line is body by DECLARATION."""
+        text = ("# old\n\n## Open\n\n### a heading entry\n\n"
+                "* a starred body line\n")
+        d, code, out, report = self.run_over(text, "--entry-shape", "heading")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn('open with "* "', out)
+        self.assertNotIn("opening with `* `", report)
+
+
 class BulletShapeNote(unittest.TestCase):
     """The other direction of the silent misread: a `bullet` read over a
     carrier whose entries sit beneath level-3 headings says so in ONE line,
