@@ -847,11 +847,17 @@ def classify_heading(entry: Entry) -> None:
 #:
 #:   old READY        -> NEW, blocked-by: decision "regrade: …"
 #:   slot-incomplete  -> NEW, blocked-by: decision <what the desk must supply>
-#:   PARKED with its named missing evidence -> KEEPS blocked-by: evidence
+#:   PARKED with its named missing evidence -> NEW, blocked-by: decision
+#:                                              (the evidence must be stated
+#:                                              as a predicate that can fire)
 #:
-#: The third is the one that is easy to lose: a parked entry whose evidence is
-#: named is ALREADY in the machine's court, and converting it to a decision
-#: would move a waiting item into the operator's queue for no reason.
+#: The third USED TO read "KEEPS blocked-by: evidence", on the reasoning that
+#: a parked entry whose evidence is named is already in the machine's court.
+#: It was wrong in effect (lc-308): the tool cannot compose a predicate from
+#: prose, so it wrote the literal `false`, which nothing ever evaluates to
+#: anything but "not yet" and which `item check` reports as a softlock — the
+#: migrator's own output failed the tool's own check. The entry now goes to
+#: the desk as a decision naming what to supply.
 #:
 #: A MINTED DECISION QUESTION IS LEDGER-STORABLE, and that is a joint property
 #: of three mechanisms rather than a wording preference (lc-40). `ledger add
@@ -943,11 +949,13 @@ def migration_blocker(entry: Entry, slots_incomplete: bool):
                     "mechanical ever clears it, and an evidence predicate "
                     "here would be one nothing evaluates")
         if _NAMED_EVIDENCE.search(entry.text):
-            return ("evidence " + PARKED_EVIDENCE_PREDICATE,
-                    "PARKED carrying its named missing evidence KEEPS an "
-                    "`evidence` blocker — it is already in the MACHINE's "
-                    "court and converting it to a decision would move a "
-                    "waiting item into the operator's queue for no reason")
+            return ("decision " + PARKED_EVIDENCE_QUESTION,
+                    "PARKED carrying its named missing evidence gets a "
+                    "`decision` blocker: the migrator cannot compose a "
+                    "predicate it could stand behind, and the literal "
+                    "`false` it used to write is one `item check` proves "
+                    "can never clear, so the entry goes to the desk naming "
+                    "exactly what must be supplied")
     if entry.grade_word in ("READY", "RECORD"):
         return (REGRADE_BLOCKER,
                 "old READY never inherits READY (§3.1): the grade is a "
@@ -963,10 +971,15 @@ def migration_blocker(entry: Entry, slots_incomplete: bool):
             "decision blocker rather than NONE")
 
 
-#: The evidence predicate a kept-PARKED entry carries. It names the SOURCE
-#: line, so the predicate points at the body that states the missing evidence
-#: rather than at a sentence this tool composed.
-PARKED_EVIDENCE_PREDICATE = "false  # the named missing evidence in the source body"
+#: The question a PARKED-on-evidence entry carries across. It names the SOURCE
+#: body rather than restating it, and it differs from
+#: `PARKED_DECISION_QUESTION` on purpose, so the two branches stay
+#: distinguishable in the carrier. The tool cannot compose an evidence
+#: predicate it could stand behind; the desk is asked for one.
+#: LEDGER-STORABLE by the same rule as `REGRADE_BLOCKER` above.
+PARKED_EVIDENCE_QUESTION = ("the missing evidence named in the source "
+                            "body: state it as a predicate that can "
+                            "fire, then re-grade")
 
 #: The question a PARKED-on-a-decision entry carries across. It names the
 #: SOURCE body rather than restating it: the entry already says what decision
@@ -3431,9 +3444,10 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     a("|---|---|---|")
     a("| old READY / RECORD | `decision` | the grade returns to the desk for "
       "a re-grade; it is not inherited |")
-    a("| PARKED carrying its named missing evidence | `evidence` | it is "
-      "already in the MACHINE's court, and converting it to a decision would "
-      "move a waiting item into the operator's queue for no reason |")
+    a("| PARKED carrying its named missing evidence | `decision` | the tool "
+      "cannot compose an evidence predicate that can fire, and the literal "
+      "`false` it used to write is a softlock `item check` reports; the desk "
+      "is asked to state the evidence as a predicate, then re-grade |")
     a("| slot-incomplete (everything else) | `decision` | NEW with a decision "
       "naming what the desk must supply — never `NONE` |")
     a("")

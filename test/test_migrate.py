@@ -2734,7 +2734,7 @@ class HeadingShapeEndToEnd(unittest.TestCase):
         self.assertEqual(blockers[0], migrate.REGRADE_BLOCKER)
         self.assertEqual(blockers[1], migrate.REGRADE_BLOCKER)
         self.assertEqual(blockers[2],
-                         "evidence " + migrate.PARKED_EVIDENCE_PREDICATE)
+                         "decision " + migrate.PARKED_EVIDENCE_QUESTION)
         # The unknown-section entry's body LEADS with `READY`; it carries the
         # ungraded blocker and not the regrade one.
         self.assertEqual(blockers[3],
@@ -2889,6 +2889,55 @@ class BulletShapeNote(unittest.TestCase):
     def test_the_heading_shape_prints_no_note(self):
         d, code, out = self.run_over(self.GROUPED, "--entry-shape", "heading")
         self.assertNotIn("NOTE: ", out)
+
+
+class ParkedEvidenceDoesNotMigrateAsAnUnclearableBlocker(unittest.TestCase):
+    """lc-308 — a PARKED entry naming missing evidence used to migrate with
+    `evidence false`, which `item check` proves can never clear. The migrated
+    carrier failed the tool's own check, in both entry shapes."""
+
+    BULLET = ("# c\n\n## Parked\n\n"
+              "- **PARKED 2026-01-01 — waits.** Its named missing evidence is "
+              "a measurement nobody has taken.\n"
+              "- **PARKED 2026-01-01 — asks.** The missing decision here is "
+              "which shape to take.\n")
+    HEADING = ("# c\n\n## Parked\n\n"
+               "### Waits\n\nMissing evidence: a measurement nobody has "
+               "taken.\n\n"
+               "### Asks\n\nThe missing decision here is which shape to "
+               "take.\n")
+
+    def migrated(self, text, *extra):
+        d = build(text)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d, *extra)
+        self.assertEqual(code, exits.CLEAN, out)
+        carrier = (d / "ITEMS.md").read_text(encoding="utf-8")
+        return d, carrier, items.parse(carrier).items
+
+    def check_shape(self, text, *extra):
+        d, carrier, parsed = self.migrated(text, *extra)
+        blockers = [it.slots["blocked-by"] for it in parsed]
+        # The evidence-naming entry takes the new decision, the
+        # decision-naming one keeps its own question: the two stay distinct.
+        self.assertEqual(blockers, [
+            "decision " + migrate.PARKED_EVIDENCE_QUESTION,
+            "decision " + migrate.PARKED_DECISION_QUESTION])
+        self.assertNotIn("evidence false", carrier)
+        code, out = run_cli(d, "item", "check")
+        self.assertNotIn("blocker_softlock", out)
+
+    def test_bullet_shape(self):
+        self.check_shape(self.BULLET)
+
+    def test_heading_shape(self):
+        self.check_shape(self.HEADING, "--entry-shape", "heading")
+
+    def test_the_report_counts_the_entry_as_a_decision(self):
+        d, _carrier, _parsed = self.migrated(self.BULLET)
+        report = (d / REPORT).read_text(encoding="utf-8")
+        self.assertIn("| `decision` | 2 |", report)
+        self.assertIn("| `evidence` | 0 |", report)
 
 
 class BulletShapeIsUnchanged(unittest.TestCase):
