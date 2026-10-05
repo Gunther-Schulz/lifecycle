@@ -318,9 +318,9 @@ they do not ledger either way (0 of 4 without the statement, 2 of 2 with).
 **Cost of the statement.** One refusal per close, then two arguments. One
 T4 lane's first two `ledger add decision` attempts were refused by the
 ledger's own doors (the 300-character cap, then the join check) before the
-third landed: three tries to write one line. In every statement lane the
-extra writes were the lane's own commits (a fix, an item, a ledger line),
-3 to 5 commits per lane against 2 without.
+third landed: three tries to write one line. Commits per lane, counted at
+the clones: T3 with the statement 4 and 3, without 2 and 2; T4 as an item
+with the statement 4 and 6, without 4 and 4.
 
 **Limits.** n=2 per cell. The statement lanes ran a few minutes after the
 controls, on clones whose commit hook runs the prototype's code (the
