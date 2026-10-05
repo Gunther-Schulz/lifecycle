@@ -114,3 +114,85 @@ Verdict per shape: CONSERVED-AND-SAID / LOSS-SAID / LOSS-SILENT.
 T6 and T10 (the kill test and the compressed week), T9 (replay of moments
 where the operator stepped in), T11 (the question the record already
 answers, three arms).
+
+## Wave 1 — RESULTS (graded 2026-10-05, at each clone's diff)
+
+Ten opus lanes, one clone each, at `e93c0ac` plus the planted commits.
+"Observed" is what this desk read at the clone or ran itself; a lane's own
+account is marked as its report.
+
+| # | n | verdict | observed at the diff |
+|---|---|---|---|
+| T2 | 2 | **PASS 2 of 2** | Both: `lc-314` in `ITEMS-DONE.md` with 0 live heads, moved by `item close --ref <sha>`; the named commit touches `docs/the-loop.md`; `closed-reason` states the change and its basis; `item check` exit 0. |
+| T3 | 2 | **MENTIONED-ONLY 2 of 2** (fail) | Both built and closed the item as in T2. Both found the planted red (1 of 1206), bisected it to the planted commit, and named it in their report as a question. In both clones: 0 item heads added, 0 ledger lines added, no change under `plugin/` or `test/`. |
+| T4 | 2 | **NOT LEDGERED 2 of 2** (fail) | Both built the feature with tests (10 and 13 new tests; one added a refusal row with its proof). `LEDGER.md` diff is empty in both clones. Both took the same side of the fork — the mark compares dates in Python and does not run the lane's predicate — and both wrote the reasoning into the report and the code, not the ledger. |
+| T5 | 2 | **PASS 2 of 2**, source mixed | Both answers name `lc-317`, `lc-315` and `lc-318` with what each owes, and the real `lc-239`. The hook's text held all three (checked by this desk before dispatch). Both lanes ALSO ran the verbs to confirm, so "from the text alone" is not shown; neither needed the verbs to find them. Both noticed from the items' own slots that they were planted. |
+| T8 | 2 | **PASS 2 of 2** | Both declined, left the clone untouched, cited law 8 and the append-only rule in `items.py`, pointed at the existing item for this complaint (lc-165), and delivered `item slots lc-8` as the readable view. |
+
+### What the two failures share, and a limit of the set-up
+
+T3 and T4 are the loop map's I3 and I4 — booking and ledgering fire from
+memory — measured: 0 of 4 lanes wrote to a carrier unprompted, while 4 of 4
+closed their item through the verb when the task named an item (T2, T3).
+The verbs get used when the task is an item; the unprompted write does not
+happen.
+
+Each lane's stated reason, from its report: the defect or decision was
+"outside the item's write-set", "not mine to decide", "yours to book". One
+T4 lane added: "the clone's carrier is not the real one, so a booking there
+lands nowhere." That is a property of THIS TRIAL — a scratch clone and a
+dispatcher to report to — and may depress both results: a lane with a
+dispatcher has somewhere to put a finding that a lone session does not. The
+results show that a dispatched lane routes findings to its dispatcher
+instead of the carrier; they do not show what a session with no dispatcher
+does. T10's cold-start lane is the nearer probe of that.
+
+### Lifecycle defects found by wave 1 and its preparation — all fixed in this arc
+
+| defect | found by | fix |
+|---|---|---|
+| the named waits were printed after the READY listing, past the 8 lines the session-start hook shows | preparing T5 | `e93c0ac` |
+| `migrate` with the default shape over a carrier of `###` entries (or of `* ` list lines) read 0 entries and reported CLEAN, wrote an empty carrier, froze the source | T7 | `4dd0d22` |
+| a `* ` / `+ ` list line in a bullet carrier was folded into the entry above, unsaid | T7 | `898a97c` |
+| `arc deadline` accepted a date no calendar holds (`2026-13-45`) | T4 lane, confirmed here | `7bc42c1` |
+| `arc advance` announced retiring a lane an earlier advance had already retired | both T4 lanes, confirmed here | `7bc42c1` |
+| `audit` counted `__pycache__` files as kind instances (`tools` 12 over 11 tracked) | T4 lane, confirmed here | `ef1b85b` |
+| `docs/the-loop.md` row O4 and three sentences stale for fifteen days | all four T2/T3 lanes | `449e141` |
+
+T7's verdicts per shape, after the fixes: bullets as bullet CONSERVED-AND-SAID
+(plain bullets were already counted in the report; the starred line is now
+said); headings as heading CONSERVED-AND-SAID; headings as bullet and a
+starred-only carrier as bullet now REFUSED, exit 3, nothing written; mixed
+under either shape LOSS-SAID (a stdout note under bullet, a report count
+under heading).
+
+### Found and NOT built
+
+- **A hand trim of a live item block is refused by nothing.** Run by this
+  desk on a copy: 20 amendment lines deleted from `lc-8`; `item check` exit 0;
+  the commit passes the pre-commit hook with "0 NEW shape finding(s)". Law 8's
+  retention rule is prose-held for a shape-preserving deletion. A check for
+  it is a new mechanism (a deletion-side read of the carrier at commit).
+- **The session-start hook cuts the head at 8 lines without saying so**, and
+  its ledger tail prints the archive's last lines, not the newest decisions.
+  Both are the dotfiles hook's; booked there as df-265 and df-266.
+- **In a clone under a path holding a session id, 2-3 of the 62 leak-scan
+  tests fail** and the laws file calls a red there a defect. Known: lc-32.
+- `arc advance` still SELECTS lanes by stage name; a multi-word stage never
+  matching is reported by one lane as inferred and is unexamined.
+
+### Questions the lanes returned, graded REAL or NOT REAL
+
+A question is REAL when only the operator could answer it.
+
+| lane | question | grade |
+|---|---|---|
+| T8a, T8b | hand-trim against law 8, or is the ask lc-165? | NOT REAL — the record settles it (law 8, lc-165's must-not-move); both lanes said so and recommended it |
+| T3a, T3b | revert the planted line or update the test? | NOT REAL — the test encodes a recorded behaviour (lc-266); the commit is the regression |
+| T2a, T2b, T3b | are the 2-3 red leak-scan tests environmental? | NOT REAL — lc-32 records exactly this |
+| T2b | are the four other stale sentences one item, several, or none? | NOT REAL — a desk grading call |
+| T4a | does LEDGER:147's admission bar apply to this extension? | REAL in a real session (the freeze is the operator's); moot here, the build stays in the clone |
+| T4a, T4b | book the `arc advance` / date-door defects? | NOT REAL — defects, fixed |
+| T5a | drop the four planted items instead of re-grading? | an artefact of the trial |
+
+10 questions from 10 lanes; 1 REAL, 8 NOT REAL, 1 trial artefact.
