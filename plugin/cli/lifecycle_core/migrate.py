@@ -403,6 +403,12 @@ class Entry:
     #: from the heading alone — the body here is paragraphs and bullets, and a
     #: headline that ran into it would be a requirement nobody wrote.
     heading: bool = False
+    #: The entry's RAW body lines, joined with "\n" exactly as read, heading
+    #: line excluded. Populated only by `_read_heading_entries`: `text` is
+    #: whitespace-joined there, so paragraph boundaries do not survive in it,
+    #: and a slot stated under its own label (`labelled_slots`) is found by
+    #: paragraph. Empty for every other reader.
+    body: str = ""
 
 
 @dataclass
@@ -585,12 +591,14 @@ def _read_heading_entries(lines: list, out: Read) -> None:
     """
     section = "(before any heading)"
     pending = None
+    body_lines: list = []
 
     def close(end):
         if pending is None:
             return
         pending.end_line = end
         pending.text = " ".join(pending.text.split())
+        pending.body = "\n".join(body_lines)
         out.entries.append(pending)
 
     # A file ending in a newline splits into a final EMPTY element that is no
@@ -602,6 +610,7 @@ def _read_heading_entries(lines: list, out: Read) -> None:
         if m and len(m.group(1)) <= HEADING_ENTRY_LEVEL:
             close(lineno - 1)
             pending = None
+            body_lines = []
             if len(m.group(1)) < HEADING_ENTRY_LEVEL:
                 section = m.group(2).strip()
                 out.sections.setdefault(section, 0)
@@ -627,6 +636,7 @@ def _read_heading_entries(lines: list, out: Read) -> None:
                 out.outside_bullets.append((lineno, section))
         if pending is not None:
             pending.text += " " + raw.strip()
+            body_lines.append(raw)
     close(max(last, pending.line) if pending is not None else last)
 
 
@@ -1053,6 +1063,116 @@ BLOB_PIN = " at blob "
 _PINNED_TAIL = rf"{BLOB_PIN}[0-9a-f]{{40}}"
 
 
+#: A paragraph's first line states a slot under its LITERAL label: the label
+#: word, optional emphasis marks around it, then ONE `:` or `.`. Anything
+#: between the word and the punctuation but emphasis and spaces — a
+#: parenthesis, more words — is not this label: those openings are a minority
+#: in the measured carrier and they are not read, because reading them would
+#: be guessing what the author meant.
+_SLOT_LABEL = re.compile(
+    r"[*_]{0,2}(write-set|done-criterion)[*_]{0,2} *[:.][*_]{0,2}(.*)",
+    re.IGNORECASE)
+
+#: The slots a source entry can state under a label. `goal` has no label in
+#: the measured carrier and stays `UNKNOWN`.
+LABELLED_SLOTS = ("write-set", "done-criterion")
+
+
+def labelled_slots(entry) -> tuple:
+    """`(values, counts)` for the slots one entry states under their label.
+
+    `values` is slot -> the entry's own words, for a slot whose label opens
+    EXACTLY ONE paragraph with a non-empty value. `counts` is slot -> how many
+    paragraphs the label opened, so a slot left `UNKNOWN` because it was
+    labelled twice is distinguishable from one never labelled: the tool does
+    not choose between two statements of one slot, and it says it did not.
+
+    ONLY THE HEADING SHAPE READS ANYTHING. `Entry.body` is empty for every
+    other reader, so a bullet run is bit-for-bit what it was.
+
+    A PARAGRAPH is a maximal run of non-blank lines, and a line inside a
+    fenced block is never a paragraph start: a label quoted in a code sample
+    is the entry's example, not its statement.
+
+    The write-set loses its backticks and ONE trailing full stop, which is
+    what makes a prose-quoted path list a bare comma list the join reads; the
+    done-criterion is the author's sentence and gets only the whitespace
+    collapse.
+    """
+    values: dict = {}
+    counts: dict = {}
+    if not entry.body:
+        return values, counts
+    lines = entry.body.split("\n")
+    in_fence = False
+    runs: list = []          # (starts_a_paragraph, [lines])
+    run: list = []
+    starts = False
+    for ln in lines:
+        fence = ln.lstrip().startswith("```")
+        if not ln.strip():
+            if run:
+                runs.append((starts, run))
+            run = []
+            if fence:
+                in_fence = not in_fence
+            continue
+        if not run:
+            starts = not in_fence and not fence
+        run.append(ln)
+        if fence:
+            in_fence = not in_fence
+    if run:
+        runs.append((starts, run))
+    found: dict = {}
+    for ok, para in runs:
+        if not ok:
+            continue
+        m = _SLOT_LABEL.fullmatch(para[0].strip())
+        if m is None:
+            continue
+        slot = m.group(1).lower()
+        value = " ".join(" ".join([m.group(2)] + para[1:]).split())
+        found.setdefault(slot, []).append(value)
+    for slot, vals in found.items():
+        counts[slot] = len(vals)
+        if len(vals) != 1 or not vals[0]:
+            continue
+        value = vals[0]
+        if slot == "write-set":
+            value = value.replace("`", "")
+            if value.endswith("."):
+                value = value[:-1]
+            value = value.strip()
+        if value:
+            values[slot] = value
+    return values, counts
+
+
+def slot_outcomes(entries) -> dict:
+    """slot -> `{filled, unlabelled, repeated}` over the entries `build_items`
+    WROTE (graded, not a re-import — the predicate `blocker_types` uses), so
+    the three counts of a slot sum to the items written.
+
+    `unlabelled` also holds an entry whose single label carried an empty
+    value: nothing was read, and the report says "no label" for both.
+    """
+    out = {slot: {"filled": 0, "unlabelled": 0, "repeated": 0}
+           for slot in LABELLED_SLOTS}
+    for e in entries:
+        if e.grade is None or e.reimported_as is not None:
+            continue
+        values, counts = labelled_slots(e)
+        for slot in LABELLED_SLOTS:
+            if slot in values:
+                out[slot]["filled"] += 1
+            elif counts.get(slot, 0) > 1:
+                out[slot]["repeated"] += 1
+            else:
+                out[slot]["unlabelled"] += 1
+    return out
+
+
 def build_items(entries, prefix: str, source_name: str,
                 source_blob: str, allocate=None) -> str:
     """The successor carrier. Ids are allocated in SOURCE ORDER, from 1.
@@ -1098,6 +1218,7 @@ def build_items(entries, prefix: str, source_name: str,
         blocked = _ledger_storable(blocked)
         e.blocker = blocked
         e.blocker_rule = why
+        slots_read, _counts = labelled_slots(e)
         blocks.append(items_mod.render_block(e.ident, {
             # NEVER READY (§3.1, blocking). READY is a judgment about a
             # carrier that no longer exists; inheriting it would re-create
@@ -1112,8 +1233,10 @@ def build_items(entries, prefix: str, source_name: str,
             # matches on it, the retire lane never reads it as "advances no
             # goal", `item check` counts it, and `item ready` REFUSES it.
             "goal": UNKNOWN,
-            "write-set": UNKNOWN,
-            "done-criterion": UNKNOWN,
+            # A slot the entry states under its own label travels; the rest
+            # stay the gap (lc-311). `goal` has no label to read.
+            "write-set": slots_read.get("write-set", UNKNOWN),
+            "done-criterion": slots_read.get("done-criterion", UNKNOWN),
             # The source body IS the evidence a migrated entry actually has.
             # A line range, not a copy: the body stays where it is and git
             # keeps it.
@@ -3700,10 +3823,17 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     a("")
     a("- **`goal`, `done-criterion` and `evidence` have no rule in §4 row "
       "1.** Only the write-set does (\"write-set absent → UNKNOWN\"). A slot "
-      "cannot be empty, so `goal` and `done-criterion` are written `UNKNOWN` "
-      "at the same width the design gives the write-set, and `evidence` "
-      f"carries the source line range in `{src_name}`. The design gap is "
-      "reported, not closed here.")
+      "cannot be empty, so `goal` is written `UNKNOWN`, and so are the "
+      "`write-set` and `done-criterion` of an entry that does not state them "
+      "under their literal label (`--entry-shape heading` only; counts "
+      "below), at the same width the design gives the write-set. "
+      f"`evidence` carries the source line range in `{src_name}`. The design "
+      "gap is reported, not closed here.")
+    for slot, c in slot_outcomes(read.entries).items():
+        a(f"  - `{slot}` — filled from the entry's own label: "
+          f"{c['filled']}; left `UNKNOWN`, no label: {c['unlabelled']}; "
+          f"left `UNKNOWN`, labelled in more than one paragraph: "
+          f"{c['repeated']}")
     a("- **The PARKED branch of §4 row 1 is unreachable over this carrier.** "
       "\"PARKED→PARKED with a typed blocker or NEW\" turns on a typed "
       "blocker, and the old carrier has no blocker slot; no rule in the "

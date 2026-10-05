@@ -2940,6 +2940,203 @@ class ParkedEvidenceDoesNotMigrateAsAnUnclearableBlocker(unittest.TestCase):
         self.assertIn("| `evidence` | 0 |", report)
 
 
+LABELLED_CARRIER = """# old carrier
+
+## Ready
+
+### Both labels once
+
+Some prose first.
+
+**Write-set:** `plugin/a.py`, `test/b.py`.
+
+*Done-criterion:* the thing works, shown by
+a run that spans two lines.
+
+### No label at all
+
+Write-set is mentioned mid-sentence here, and so is done-criterion.
+
+### Write-set twice
+
+*Write-set:* `plugin/a.py`.
+
+*Write-set:* `plugin/c.py`.
+
+**Done-criterion:** only one of these.
+
+### A parenthesis before the colon
+
+**Write-set (draft):** `plugin/a.py`.
+
+Done-criterion (see above): never read.
+
+### A label inside a fence
+
+```
+
+Write-set: not/a/real/label.py
+
+```
+
+## Done
+
+### A closed entry
+
+**Shipped.**
+"""
+
+LABELLED_TITLES = ["Both labels once", "No label at all", "Write-set twice",
+                   "A parenthesis before the colon", "A label inside a fence"]
+
+
+class LabelledSlotsTravel(unittest.TestCase):
+    """lc-311 — a slot a source entry states under its literal label migrates
+    filled from the entry's own words; everything else stays `UNKNOWN`."""
+
+    def slots_of(self, body: str):
+        read = heading_read(f"# c\n\n## Ready\n\n### An entry\n\n{body}\n")
+        return migrate.labelled_slots(read.entries[0])
+
+    def test_both_labels_once_fill_both_slots_with_the_entry_words(self):
+        values, counts = self.slots_of(
+            "**Write-set:** `plugin/a.py`, `test/b.py`.\n\n"
+            "*Done-criterion:* works,\nacross two lines.")
+        self.assertEqual(values, {"write-set": "plugin/a.py, test/b.py",
+                                  "done-criterion": "works, across two lines."})
+        self.assertEqual(counts, {"write-set": 1, "done-criterion": 1})
+
+    def test_every_listed_spelling_is_read(self):
+        for opener in ("*{}:*", "**{}:**", "*{}.*", "**{}.**"):
+            for word, slot in (("Write-set", "write-set"),
+                               ("Done-criterion", "done-criterion")):
+                with self.subTest(opener=opener, word=word):
+                    values, _ = self.slots_of(opener.format(word) + " v")
+                    self.assertEqual(values, {slot: "v"})
+
+    def test_no_label_is_no_slot(self):
+        self.assertEqual(self.slots_of("Just prose, Write-set: later."),
+                         ({}, {}))
+
+    def test_a_parenthesis_before_the_punctuation_is_not_a_label(self):
+        self.assertEqual(self.slots_of("**Write-set (draft):** `a.py`.\n\n"
+                                       "Done-criterion (see above): x"),
+                         ({}, {}))
+
+    def test_a_slot_labelled_twice_is_counted_and_not_returned(self):
+        values, counts = self.slots_of("*Write-set:* `a.py`.\n\n"
+                                       "*Write-set:* `b.py`.\n\n"
+                                       "**Done-criterion:** one")
+        self.assertEqual(values, {"done-criterion": "one"})
+        self.assertEqual(counts, {"write-set": 2, "done-criterion": 1})
+
+    def test_a_label_inside_a_fenced_block_is_not_read(self):
+        # A blank line inside the fence makes the label line the first line
+        # of a run of its own; only the fence state keeps it from counting.
+        self.assertEqual(self.slots_of("```\n\nWrite-set: x/y.py\n\n```"),
+                         ({}, {}))
+
+    def test_an_empty_value_is_not_returned(self):
+        values, counts = self.slots_of("**Write-set:**")
+        self.assertEqual(values, {})
+        self.assertEqual(counts, {"write-set": 1})
+
+    def test_a_write_set_comes_out_as_a_bare_comma_list_the_join_reads(self):
+        values, _ = self.slots_of("**Write-set:** `plugin/a.py`, `test/b.py`.")
+        bucket, paths, why = items.classify_write_set(values["write-set"])
+        self.assertEqual(bucket, items.WAVE_PATHS, why)
+        self.assertEqual(paths, ["plugin/a.py", "test/b.py"])
+
+    def test_only_the_write_set_is_stripped_of_backticks_and_its_full_stop(self):
+        values, _ = self.slots_of("**Write-set:** `a.py`.\n\n"
+                                  "**Done-criterion:** a `thing` holds.")
+        self.assertEqual(values["write-set"], "a.py")
+        self.assertEqual(values["done-criterion"], "a `thing` holds.")
+
+    def test_a_bullet_entry_has_no_body_and_reads_nothing(self):
+        read = migrate.read_carrier(
+            "# c\n\n## Ready\n\n- **READY 2026-01-01 — t.** "
+            "**Write-set:** `a.py`. **Done-criterion:** x\n")
+        self.assertEqual(read.entries[0].body, "")
+        self.assertEqual(migrate.labelled_slots(read.entries[0]), ({}, {}))
+
+
+class LabelledSlotsEndToEnd(unittest.TestCase):
+
+    def setUp(self):
+        self.d = build(LABELLED_CARRIER)
+        self.addCleanup(shutil.rmtree, self.d, ignore_errors=True)
+        self.code, self.out = heading_run(self.d)
+        self.items = (self.d / "ITEMS.md").read_text(encoding="utf-8")
+        self.report = (self.d / REPORT).read_text(encoding="utf-8")
+        self.parsed = items.parse(self.items).items
+
+    def slot(self, i, name):
+        return self.parsed[i].slots[name]
+
+    def test_a_labelled_and_an_unlabelled_entry(self):
+        self.assertEqual(self.code, exits.CLEAN, self.out)
+        self.assertEqual(self.slot(0, "write-set"), "plugin/a.py, test/b.py")
+        self.assertEqual(self.slot(0, "done-criterion"),
+                         "the thing works, shown by a run that spans two "
+                         "lines.")
+        for slot in ("write-set", "done-criterion"):
+            self.assertEqual(self.slot(1, slot), migrate.UNKNOWN)
+        # `goal` has no label and stays UNKNOWN on every entry.
+        self.assertTrue(all(it.slots["goal"] == migrate.UNKNOWN
+                            for it in self.parsed))
+
+    def test_a_doubly_labelled_slot_is_unknown_and_its_sibling_is_filled(self):
+        self.assertEqual(self.slot(2, "write-set"), migrate.UNKNOWN)
+        self.assertEqual(self.slot(2, "done-criterion"), "only one of these.")
+
+    def test_the_parenthesis_and_the_fence_entries_stay_unknown(self):
+        for i in (3, 4):
+            for slot in ("write-set", "done-criterion"):
+                self.assertEqual(self.slot(i, slot), migrate.UNKNOWN)
+
+    def test_the_migrated_carrier_has_no_shape_finding(self):
+        """The third answer: no refusal exists for a one-line value, so none
+        is written. This is the read-back that says so."""
+        code, out = run_cli(self.d, "item", "check")
+        self.assertNotIn("item_shape", out)
+
+    def test_the_counts_sum_to_the_items_written(self):
+        read = heading_read(LABELLED_CARRIER)
+        outcomes = migrate.slot_outcomes(
+            [e for e in read.entries if e.grade is not None])
+        for slot in ("write-set", "done-criterion"):
+            self.assertEqual(sum(outcomes[slot].values()), len(self.parsed))
+        self.assertEqual(outcomes["write-set"],
+                         {"filled": 1, "unlabelled": 3, "repeated": 1})
+        self.assertEqual(outcomes["done-criterion"],
+                         {"filled": 2, "unlabelled": 3, "repeated": 0})
+
+    def test_the_report_prints_the_counts_zeros_included(self):
+        self.assertIn("`write-set` — filled from the entry's own label: 1; "
+                      "left `UNKNOWN`, no label: 3; left `UNKNOWN`, "
+                      "labelled in more than one paragraph: 1", self.report)
+        self.assertIn("`done-criterion` — filled from the entry's own label: "
+                      "2; left `UNKNOWN`, no label: 3; left `UNKNOWN`, "
+                      "labelled in more than one paragraph: 0", self.report)
+        self.assertNotIn("`goal` and `done-criterion` are written `UNKNOWN`",
+                         self.report)
+
+
+class LabelledSlotsStayInTheHeadingShape(unittest.TestCase):
+    """MUST-NOT-MOVE: a bullet run over the same label text writes UNKNOWN."""
+
+    def test_a_bullet_run_writes_unknown_for_both(self):
+        d = build("# c\n\n## Ready\n\n- **READY 2026-01-01 — t.** body\n"
+                  "  **Write-set:** `a.py`.\n\n  **Done-criterion:** x\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        it = items.parse((d / "ITEMS.md").read_text(encoding="utf-8")).items[0]
+        self.assertEqual(it.slots["write-set"], migrate.UNKNOWN)
+        self.assertEqual(it.slots["done-criterion"], migrate.UNKNOWN)
+
+
 class BulletShapeIsUnchanged(unittest.TestCase):
     """MUST-NOT-MOVE: without the option, and with `--entry-shape bullet`,
     a bullet carrier migrates as it did. `LIVE_HEAD` is an existing fixture
