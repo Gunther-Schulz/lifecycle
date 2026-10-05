@@ -194,6 +194,8 @@ decision: gap sweep T7: are the migrator lane commits 4dd0d22 and 898a97c accept
 decision: join disposition of LEDGER:193 beside LEDGER:181, LEDGER:187 → new: a booking of two lane commits made today; no earlier line names 4dd0d22 or 898a97c, the near-matches share only the words migrator and commits
 decision: is the lane commit 3a4647c (a blocker cleared by amendment on a PARKED item commits; the head names the promotion owed) accepted into main? → ACCEPTED 2026-10-05, lifecycle desk, under the operator delegation to fix defects at once. Verified by the desk at the checkout and end to end under the commit hook. Body: docs/audits/2026-10-05-gap-sweep-followup-trials.md, Leftovers.
 decision: join disposition of LEDGER:195 beside LEDGER:71, LEDGER:181, LEDGER:187, LEDGER:193 → new: LEDGER:181, :187 and :193 each book other lane commits (lc-307, lc-308/lc-311, the migrator pair); none names 3a4647c or the cleared-blocker defect, read at those lines
+decision: is the lane commit fe25c51 (arc advance retires the deadline lanes of a stage whose name has several words) accepted into main? → ACCEPTED 2026-10-05, lifecycle desk, a defect repair under the operator delegation. Reproduced before and re-run after by the desk with the real verbs; suite 1243 run, 0 failed, 1 skipped; --test CLEAN. Body: docs/audits/2026-10-05-gap-sweep-followup-trials.md, Leftovers.
+decision: join disposition of LEDGER:197 beside LEDGER:68, LEDGER:193, LEDGER:195 → new: LEDGER:181, :187, :193 and :195 book other lane commits; none names fe25c51 or the stage-word defect, read at those lines
 
 ## Archive (pre-migration)
 
