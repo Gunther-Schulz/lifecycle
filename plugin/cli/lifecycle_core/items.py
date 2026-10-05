@@ -3501,6 +3501,9 @@ class RemovedLines:
     #: Conditional slots cleared beside a blocker whose TYPE changed
     #: (exemption 2).
     exempt_retyped: int = 0
+    #: Conditional slot lines REWRITTEN in place: the line HEAD carried is
+    #: gone and the staged block still carries a line of that same slot.
+    exempt_conditional_in_place: int = 0
 
     @property
     def lines(self) -> int:
@@ -3516,13 +3519,24 @@ def removed_live_lines(head_text: str, staged_text: str,
     and a line that merely MOVED inside its block is nothing at all. Blank
     lines are not content and are ignored on both sides.
 
-    THE TWO LINE-LEVEL EXEMPTIONS LIVE HERE, each verified from the two
+    THE THREE LINE-LEVEL EXEMPTIONS LIVE HERE, each verified from the two
     bodies and nothing else: a `grade:` or `blocked-by:` slot line, which the
-    tool rewrites in place; and a conditional slot (`BLOCKER_ONLY_SLOTS`) in
+    tool rewrites in place; a conditional slot (`BLOCKER_ONLY_SLOTS`) in
     a block whose EFFECTIVE blocker type differs between the two sides —
     the re-typing door clears it, because the slot is legal beside one type
     only. The effective type is the parser's own resolution, amendments
     included, never a second reading of the slot line.
+
+    AND A CONDITIONAL SLOT REWRITTEN IN PLACE, which completes the class the
+    first exemption names. `_set_slots` rewrites a conditional slot where it
+    stands by design — `item park` over a block already parked hands it the
+    new statement — so the line HEAD carried is gone while the SLOT is still
+    there. Read from the staged block: a removed conditional line is exempt
+    when that block still carries at least one line of the same slot, the
+    in-place slot itself and never its `amended-` form (`grammar.is_slot`
+    anchors the key, so `amended-not-derivable:` is not `not-derivable:`).
+    A conditional line removed with NO such line left is a deletion, and is
+    exempt by the type change or not at all.
 
     A block that LEFT the live home (a close, a drop) is not this check's
     subject: it is in neither side's difference, and what happens to a body
@@ -3557,7 +3571,12 @@ def removed_live_lines(head_text: str, staged_text: str,
             if any(grammar.is_slot(ln, s) for s in _REWRITTEN_IN_PLACE):
                 res.exempt_rewritten += 1
                 continue
-            if any(grammar.is_slot(ln, s) for s in BLOCKER_ONLY_SLOTS):
+            slot = next((s for s in BLOCKER_ONLY_SLOTS
+                         if grammar.is_slot(ln, s)), None)
+            if slot is not None:
+                if any(grammar.is_slot(x, slot) for x in after):
+                    res.exempt_conditional_in_place += 1
+                    continue
                 if retyped is None:
                     was, _d = classify_blocker(
                         it.slots.get("blocked-by", ""), prefix)
@@ -3658,8 +3677,8 @@ def check_staged(repo: Path, carriers, out, err, *,
     hand deletion of amendment lines leaves a well-shaped block. So for the
     live home the HEAD body is compared with the staged one through
     `removed_live_lines`, and a line gone from a block that stays live is
-    `live_block_line_removed`. FOUR EXEMPTIONS, each read from data the gate
-    itself holds and each COUNTED in the output when it applies: the two
+    `live_block_line_removed`. FIVE EXEMPTIONS, each read from data the gate
+    itself holds and each COUNTED in the output when it applies: the three
     line-level ones inside `removed_live_lines`; the tool's own commit, named
     by `WRITER_VERB_ENV` and honoured for `LINE_REMOVING_VERBS` only; and a
     rewrite DECLARED in this same commit (`_declared_rewrite`). `live_rel`
@@ -3680,6 +3699,7 @@ def check_staged(repo: Path, carriers, out, err, *,
     removed_all: list = []
     exempt_rewritten = 0
     exempt_retyped = 0
+    exempt_in_place = 0
     exempt_verb: list = []
     exempt_declared: list = []
 
@@ -3739,6 +3759,7 @@ def check_staged(repo: Path, carriers, out, err, *,
             gone = removed_live_lines(head_text, idx_text, prefix)
             exempt_rewritten += gone.exempt_rewritten
             exempt_retyped += gone.exempt_retyped
+            exempt_in_place += gone.exempt_conditional_in_place
             if gone.removed:
                 verb = os.environ.get(WRITER_VERB_ENV, "")
                 declared = None
@@ -3769,7 +3790,8 @@ def check_staged(repo: Path, carriers, out, err, *,
     # EVERY EXEMPTION THAT APPLIED IS COUNTED, never silent. A gate that
     # passed a removal without saying which licence it read would be
     # indistinguishable from one that did not look.
-    if exempt_rewritten or exempt_retyped or exempt_verb or exempt_declared:
+    if (exempt_rewritten or exempt_retyped or exempt_in_place or exempt_verb
+            or exempt_declared):
         parts = []
         if exempt_rewritten:
             parts.append(f"{exempt_rewritten} `grade:`/`blocked-by:` line(s) "
@@ -3777,6 +3799,9 @@ def check_staged(repo: Path, carriers, out, err, *,
         if exempt_retyped:
             parts.append(f"{exempt_retyped} conditional slot line(s) cleared "
                          "beside a blocker whose TYPE changed")
+        if exempt_in_place:
+            parts.append(f"{exempt_in_place} conditional slot rewritten in "
+                         "place (the slot is still in the staged block)")
         for verb, rel, n in exempt_verb:
             parts.append(f"{n} line(s) in {rel} under the tool's own commit "
                          f"({WRITER_VERB_ENV}={verb})")

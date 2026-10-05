@@ -224,6 +224,31 @@ class TheLineLevelExemptionsAreCounted(unittest.TestCase):
         self.assertIn("'tt-2'", lines[0])
         self.assertIn("    - `not-derivable` not-derivable:", out)
 
+    def test_a_hand_rewrite_IN_PLACE_of_the_conditional_slot_is_exempt(self):
+        """THE PAIR's other half for the in-place exemption: the same slot,
+        the blocker untouched, the line REPLACED rather than deleted."""
+        staged = HEAD_CARRIER.replace(
+            "not-derivable: 2026-09-03 constitutively the operator's "
+            "preference", "not-derivable: 2026-09-06 searched the ledger "
+            "and the audits; neither answers it")
+        code, out = self._out(staged)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(removal_lines(out), [], out)
+        self.assertIn("1 conditional slot rewritten in place", out)
+
+    def test_an_AMENDED_form_left_behind_is_not_the_slot_itself(self):
+        """The base line deleted and only `amended-not-derivable:` appended:
+        the in-place slot is gone, so this is a removal."""
+        staged = HEAD_CARRIER.replace(
+            "not-derivable: 2026-09-03 constitutively the operator's "
+            "preference\n",
+            "amend-reason: 2026-09-06 names its searches\n"
+            "amended-not-derivable: 2026-09-06 searched, not found\n")
+        code, out = self._out(staged)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("    - `not-derivable` not-derivable:", out)
+        self.assertNotIn("rewritten in place", out)
+
     def test_the_type_is_the_EFFECTIVE_one_amendments_included(self):
         """Re-typed by an appended `amended-blocked-by:` — the slot line
         never moved, and the parser's resolution is what the gate reads."""
@@ -643,11 +668,11 @@ class WhichVerbsRemoveLinesFromALiveBlock(unittest.TestCase):
     never that a verb's every write path is among them.
     """
 
-    #: The verbs whose scenarios fire, as measured. `item repair` is the
-    #: exempt one. `item park` FIRES AND IS NOT EXEMPT: a re-park that keeps
-    #: the blocker's type rewrites the conditional slot in place, which
-    #: destroys the earlier statement — reported as a gap, not licensed.
-    MEASURED_TO_FIRE = {"item repair", "item park"}
+    #: The verbs whose scenarios fire, as measured: `item repair` alone.
+    #: `item park` re-parking rewrites a conditional slot in place, and that
+    #: is a line-level exemption the gate reads from the staged block — not
+    #: a verb on this list.
+    MEASURED_TO_FIRE = {"item repair"}
 
     def test_every_verb_the_CLI_carries_is_classified(self):
         top, item_actions = _parser_verbs()
@@ -686,29 +711,30 @@ class WhichVerbsRemoveLinesFromALiveBlock(unittest.TestCase):
                     fired.setdefault(verb, []).append((what, res.removed))
         self.assertEqual(set(fired), self.MEASURED_TO_FIRE, fired)
 
-    def test_the_exempt_list_is_the_firing_verbs_minus_the_reported_gap(self):
+    def test_the_exempt_list_is_the_firing_verbs(self):
         self.assertEqual(set(items.LINE_REMOVING_VERBS),
-                         self.MEASURED_TO_FIRE - {"item park"})
+                         self.MEASURED_TO_FIRE)
 
-    def test_the_park_gap_is_the_in_place_conditional_slot(self):
-        """The reported gap, pinned to its exact shape so a repair of
-        `item park` turns this arm red rather than leaving it stale."""
-        for n, slot, line in ((1, "not-derivable", _ND),
-                              (3, "blocker-exercise", _EX)):
+    def test_a_re_park_rewrites_its_conditional_slot_in_place_and_is_counted(self):
+        """Both re-park scenarios: nothing removed, 1 under the in-place
+        label, and not by the type exemption — the type did not change."""
+        for n in (1, 3):
             what, head, argvs = SCENARIOS["item park"][n]
             with self.subTest(what=what):
                 res, _b, _a, _runs = _walk(head, argvs)
-                self.assertEqual(res.removed, [("xx-1", [(slot, line)])])
+                self.assertEqual(res.removed, [])
+                self.assertEqual(res.exempt_conditional_in_place, 1)
                 self.assertEqual(res.exempt_retyped, 0)
 
     def test_the_other_park_scenarios_remove_nothing(self):
-        """THE PAIR for the gap: a first park, and a re-park that changes
-        the blocker's type, are clean over the same verb."""
+        """A first park, and a re-park onto an item, touch no conditional
+        line that HEAD carried."""
         for n in (0, 2):
             what, head, argvs = SCENARIOS["item park"][n]
             with self.subTest(what=what):
                 res, _b, _a, _runs = _walk(head, argvs)
                 self.assertEqual(res.removed, [])
+                self.assertEqual(res.exempt_conditional_in_place, 0)
 
     def test_the_retyping_door_is_exempt_by_type_not_by_verb(self):
         for n in (1, 3):
@@ -858,24 +884,43 @@ class TheGateAsARealHook(unittest.TestCase):
         self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn(f"[{ROW}]", r.stdout + r.stderr)
 
-    def test_a_stale_verb_name_in_the_shell_does_not_ride_another_verb(self):
-        """`commit_paths` SETS OR CLEARS the name. `item park` re-parking in
-        place fires the gate; with `item repair` left in the calling shell
-        it must still fire, because park's commit names park."""
+    def test_a_re_park_on_another_decision_commits_through_the_gate(self):
+        """`item park` over a block already parked rewrites its conditional
+        slot IN PLACE, by design. The slot is still there afterwards, so the
+        gate counts the rewrite and the tool's own commit lands."""
         d = _with_gate(PARKED_ON_DECISION)
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = run_cli(d, *SCENARIOS["item park"][1][2][0])
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(_subjects(d)[0], "lifecycle: park xx-1")
+
+    def test_a_stale_verb_name_in_the_shell_does_not_ride_another_verb(self):
+        """`commit_paths` SETS OR CLEARS the name. A hook that records what
+        it was handed sees the ACTING verb, whatever the calling shell held."""
+        d = build(self.HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        hooks = d / ".gate"
+        hooks.mkdir()
+        hook = hooks / "pre-commit"
+        hook.write_text('#!/bin/sh\nprintf %s "$LIFECYCLE_WRITER_VERB" > '
+                        '"$(git rev-parse --git-dir)/verb-seen"\n',
+                        encoding="utf-8")
+        hook.chmod(hook.stat().st_mode | stat.S_IXUSR)
+        subprocess.run(["git", "config", "core.hooksPath", str(hooks)],
+                       cwd=str(d), capture_output=True)
         saved = os.environ.get(items.WRITER_VERB_ENV)
         os.environ[items.WRITER_VERB_ENV] = "item repair"
         try:
-            code, out = run_cli(d, *SCENARIOS["item park"][1][2][0])
+            code, out = run_cli(d, "item", "amend", "xx-1", "--write-set",
+                                "tools/harvest.mjs, tools/rotate.mjs",
+                                "--reason", "the realizing file was missing")
         finally:
             if saved is None:
                 os.environ.pop(items.WRITER_VERB_ENV, None)
             else:
                 os.environ[items.WRITER_VERB_ENV] = saved
-        self.assertEqual(code, exits.FINDING, out)
-        self.assertIn("[move_uncommitted]", out)
-        self.assertEqual(_subjects(d), ["seed"])
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual((d / ".git" / "verb-seen").read_text(), "item amend")
 
     def test_an_ordinary_verb_commits_through_the_gate(self):
         d = _with_gate(self.HEAD)

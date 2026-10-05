@@ -5200,7 +5200,8 @@ STAGED_ROWS = [
                 "addition, and the removed text is then in no file; a block "
                 "trimmed by hand stays well-shaped, so no shape check sees "
                 "it. `grade:` and `blocked-by:` lines, a conditional slot "
-                "beside a re-typed blocker, the tool's own repairing commit "
+                "beside a re-typed blocker or rewritten in place (the slot "
+                "still in the staged block), the tool's own repairing commit "
                 "and a rewrite declared in the same commit are exempt and "
                 "COUNTED",
         firing_input="`item check --staged` with a live block's two "
