@@ -300,3 +300,34 @@ is most of what the operator's "why?" supplied. Today's session-start text
 over that old state also prints schema findings the original session never
 saw. A pass shows a fresh context does not defer here; it does not show
 that depth and momentum no longer produce the deferral.
+
+### T9-M4 — RESULT (2 lanes, read-only, graded in the answers)
+
+| lane | the deferral | basis cited | verdict |
+|---|---|---|---|
+| a | BUILD the alternative now; DEPLOY "rides the next install needed anyway" | the repo's rule (a freeze is the scarce unit) for the build; `LEDGER.md:227` for the deploy | FAIL by the registered verdict: deferred to the next install |
+| b | the same split, after first noticing the clone is six days behind the live arc and saying it would reconcile before building | the same two | FAIL, the same |
+
+**FAIL 2 of 2, and the reason is in the record, not in the lanes.** Read at
+the clone: the ledger's last line at `af6db74` is a `fact:` line that ends
+"the alternative rides the next install that is needed anyway, not a
+separate root step." The session that the operator challenged had already
+WRITTEN its deferral into the ledger, inside a line recording a deployment.
+Two fresh contexts read that sentence as decided and followed it. What the
+original session did after the challenge (`e3d3715`, three minutes later)
+was build AND rewrite that ledger line.
+
+Both lanes did better than the original on the half the record did not
+pre-decide: neither put off BUILDING the alternative, and both cited the
+repo's own rule for it.
+
+What this shows: a deferral a session writes into a carrier binds its
+successors as if it were a ruling. Nothing in the line marks "rides the next
+install" as that session's own choice as opposed to an operator decision or
+a measured fact, and the line's kind is `fact`. Known and unbuilt; a marker
+for whose decision a ledgered deferral is would be a new mechanism.
+
+LIMIT as registered: fresh lanes, asked outright. And one more, seen only
+after the run: the replay handed the lanes the very sentence the operator
+objected to, so it could not show a fresh session avoiding the deferral —
+only that the record carries it.
