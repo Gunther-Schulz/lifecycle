@@ -190,6 +190,8 @@ decision: does lc-36 still gate the wan2gp migration now that every migrated cit
 decision: lc-36 after the wan2gp re-grade trial: does lifecycle build a per-item record file for a migrated body → NO (operator, first-hand at wan2gp-e3 2026-10-05, on the desk recommendation): the slot declares itself TRUNCATED with its source range, no per-item record home. 4 of 4 trial lanes took such a file apart into existing kinds. Supersedes LEDGER:185; narrows LEDGER:70 to what fits a slot
 decision: join disposition of LEDGER:190 beside LEDGER:86, LEDGER:99, LEDGER:185, LEDGER:189 → new: LEDGER:70 and LEDGER:185 were decided before any consumer repo had tried a per-item file; this is the decision after the trial measured it
 decision: does lifecycle get a deadline observer for a parked item whose own text sets a time window → NOT NOW (operator, first-hand at wan2gp-e3 2026-10-05, on the desk recommendation): one instance, wan2gp w2-47, 28 days past its own one-week rule, and a re-grade caught it at pickup. A new mechanism under LEDGER:147, so it would need a probe first; reopen on a second instance
+decision: gap sweep T7: are the migrator lane commits 4dd0d22 and 898a97c accepted into main? → ACCEPTED 2026-10-05, lifecycle desk: booked from the lane closing report, verified at the artifact (both false-clean carriers exit 3 and write nothing; suite 1226 OK, --test 139 rows, prove-rows held). Body: docs/audits/2026-10-05-gap-sweep-trials.md, wave 1 results.
+decision: join disposition of LEDGER:193 beside LEDGER:181, LEDGER:187 → new: a booking of two lane commits made today; no earlier line names 4dd0d22 or 898a97c, the near-matches share only the words migrator and commits
 
 ## Archive (pre-migration)
 
