@@ -288,3 +288,42 @@ at least 5 of the 7 leak-scan and none-synonym phrasings; otherwise those
 8 lanes are not run and the verdict for both arms on those scenarios is
 MECHANISM CANNOT REACH, with the evaluation table as its evidence. T8 and
 the harm check run either way.
+
+### F2 — a statement demanded at the close: RESULT (graded at each clone: the ledger diff, the items added, the closed body's two statements)
+
+| cell | lanes | registered outcome | at the clone |
+|---|---|---|---|
+| T3, repo as it is (F1 arm A) | 2 | **0 of 2** PASS: MENTIONED-ONLY twice | 0 items, 0 fixes; the planted red returned as a question |
+| T3, with the statement | 2 | **1 of 2** PASS | a: tried `item add`, was told by the cost test to do it now, restored the line in its own commit following lc-266, booked a second finding, closed with `--met lc-315,be9cb40`. b: MENTIONED-ONLY again, but fixed and recorded a different finding (`--met 1655fe9`) |
+| T4 as an item, repo as it is | 2 | **0 of 2** PASS | 0 ledger lines; the choices are in the reports, one under "decisions I made (this slot should be empty)" |
+| T4 as an item, with the statement | 2 | **2 of 2** PASS | each wrote one `decision:` line through `ledger add decision` naming what counts as passed, which deadlines are listed and that the exit code is unchanged, and closed with `--decided LEDGER.md:193` |
+
+**Verdicts as registered.** Decisions (T4 as an item): **BENEFIT**, 2 of 2
+against a control of 0 of 2. Findings (T3): **INCONCLUSIVE**, 1 of 2
+against 0 of 2.
+
+**FALSE NONE: 0 of 4.** No lane stated `none` over something its report
+names. One statement is INCOMPLETE: T3 lane b recorded the finding it fixed
+and left out the planted red its own report names. The slot was filled
+truthfully and not fully.
+
+**What the control showed that wave 1 did not.** Posed as an item, the T4
+task got its sibling defects BOOKED unprompted in both control lanes (1 and
+2 items through `item add`), where the same task as a bare request booked
+0 of 2 here and 0 of 2 in wave 1. So "sessions do not write to a carrier
+unprompted" splits: inside an item they book findings they meet in their
+own work; a pre-existing red (T3) they hand back as a question; a decision
+they do not ledger either way (0 of 4 without the statement, 2 of 2 with).
+
+**Cost of the statement.** One refusal per close, then two arguments. One
+T4 lane's first two `ledger add decision` attempts were refused by the
+ledger's own doors (the 300-character cap, then the join check) before the
+third landed: three tries to write one line. In every statement lane the
+extra writes were the lane's own commits (a fix, an item, a ledger line),
+3 to 5 commits per lane against 2 without.
+
+**Limits.** n=2 per cell. The statement lanes ran a few minutes after the
+controls, on clones whose commit hook runs the prototype's code (the
+machine-wide hook grades every clone with the real checkout's code and
+refuses the prototype's two new slots). Every lane had a dispatcher to
+return a question to.
