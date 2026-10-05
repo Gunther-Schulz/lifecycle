@@ -152,3 +152,84 @@ scripts and output in scratch:
   naming the item in flight would be read is settled as for gap 1; whether a
   session would WRITE the mark is the unprompted-write question F2 measures
   at another seam.
+
+## RESULTS (appended as graded, 2026-10-05)
+
+### S — the scans (one sonnet lane, read-only; every hit list in this desk's scratch, the grading below is this desk's)
+
+Ten governed repos, all with an item carrier. Each scan's positive control
+fired unless said.
+
+**S1, the deletion-side check: SPEAKS FOR building it.** Over 1383 commits
+that touched an item carrier, "a line other than `grade:` or `blocked-by:`
+left a block that stayed live" fires on 26. Graded by commit:
+
+| class | commits | what they are |
+|---|---|---|
+| a conditional slot cleared by the tool itself | 8 | `not-derivable:` removed on a re-typing (7 in lifecycle, 1 in beat-the-books): one nameable exemption |
+| bulk rewrites | 4 | two schema migrations and two citation re-roots (cache-fix, dotfiles, beat-the-books): one nameable exemption, each a declared act |
+| HAND EDITS IN PLACE of a live item's base slots | 14 | CachyOS-Setup 10 (2026-09-14 to 2026-10-02), dotfiles 2 (2026-09-13), lifecycle 2 (2026-08-26). Opened: `b87fc65` rewrites cs-75's `requirement:` line in place, the superseded text gone from the tree |
+
+The planted 20-line trim is caught, 1 of 1. So the check has two exemption
+classes, both nameable in data, and it would have fired on 14 real hand
+edits that nothing named when they landed, the newest three days old. Law
+8's retention rule is prose-held and was not kept 14 times. Not measured:
+whether any of the 14 lost something a reader later needed.
+
+**S2, dangling evidence pointers: SPEAKS AGAINST a path-resolution check.**
+822 live items; 438 path-like tokens in evidence slots do not resolve, of
+which 69 are shaped like a path with a directory. Of the 22 of those on
+READY or STANDBY items in lifecycle and dotfiles, read by this desk as
+tokens (the files not opened one by one): citations of another repo's file,
+of the retired `BACKLOG.md` (resolved by a pinned blob, by design), paths
+relative to a subdirectory, and example paths in prose. At most 1 looks
+like a file that should exist here and does not. False hits outnumber true
+ones by the registered reading: evidence slots are prose, and prose cites
+across repos.
+
+**S3, one question with two answers: COULD NOT SHOW.** The tool's own
+near-match pairs 122 decision-line pairs (lifecycle 67 of 132 lines,
+statiker 44, dotfiles 11), every pair with differing answer text, 104 of
+them with the later line not naming the earlier. That is the matcher
+pairing loosely (two shared tokens), not 104 contradictions: "the answers
+differ" discriminates nothing between two lines of prose. And the one known
+live case is half missed: LEDGER lines 70 and 190 are NOT paired. A check
+built on this matcher would flood and still miss the known positive.
+
+**S5, closes over a live non-item blocker: recorded.** 36 of 498 closed
+bodies (dotfiles 30, statiker 4, dispatch-guards 2); 27 of dotfiles' 30
+carry one migration re-grade text.
+
+### F3 — the mark on a ledgered deferral: INCONCLUSIVE, and the control did not reproduce
+
+| lane | ledger | what it does with the install | verdict |
+|---|---|---|---|
+| control a | as it was | builds now; the install "rides the next install", citing the ledger line as deciding it | FAIL |
+| control b | as it was | builds now; says the ledger "names no event", recommends installing before the next game session | PASS |
+| marked a | with the mark | builds now, books it; the install is the operator's "when they next run one" | FAIL |
+| marked b | with the mark | builds now, one install command now; says outright the deferral "was the prior session's own choice (LEDGER:227 says so)" | PASS |
+
+Control 1 of 2, marked 1 of 2. T9's 2 of 2 FAIL did not reproduce in the
+control (4 control lanes over both runs: 3 FAIL, 1 PASS). One marked lane
+used the mark exactly as intended; the other read past it. n=2 shows no
+effect of the mark, and cannot exclude one.
+
+### Leftovers
+
+- **df-265, df-266 (the session-start hook): DONE**, dotfiles `3e2a49e`,
+  built by a sonnet lane on an exported copy and landed in one step,
+  verified by this desk at the checkout (the hook's own test; its real
+  output over this repo: the ledger tail now prints the newest decision
+  lines, the ready block ends with the count of lines not shown). Both
+  closed through the verb. The same silent cut in the hook's
+  BACKLOG-format branch is booked there as df-267.
+- **lc-239: NOT DONE, measured.** The eight repos declare schema 2 against
+  floor 6, and 0 of their 26 kinds carry a trigger. Its decision blocker
+  was answered on 2026-09-19; the done-criterion that waited on that round
+  is now stated, and the item is STANDBY (`5f8373c`, `8aa05ea`): a
+  multi-repo arc for its own desk.
+- **A defect met doing that:** `item amend --blocked-by NONE` on a PARKED
+  item, the act the tool's own refusal text prescribes for an arrived
+  external event, writes the carrier and cannot commit it
+  (`parked_without_typed_blocker` fires on the state it produces).
+  Reproduced on a scratch clone; the repair is in a lane.
