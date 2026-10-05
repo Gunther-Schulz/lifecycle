@@ -384,7 +384,7 @@ environmental") ranks lc-32 88th, the most specific ones rank it first.
 **What the lanes showed about each mechanism, observed.**
 
 - *The verb is used only where the lane already knows it is asking.* All
-  six harm-check and hand-trim lanes of arm B ran the search; of the four
+  four harm-check and hand-trim lanes of arm B ran the search; of the four
   build lanes, one did. Two build lanes wrote "I had no question to put
   to anyone" and "I asked nothing" and returned a question in the same
   report. The instruction fires on a moment the session has to recognise,

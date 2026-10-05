@@ -1,5 +1,19 @@
 # Handoff: what the gap sweep left, for the lifecycle session that continues it
 
+## STATE 2026-10-05, late: DONE, one decision open
+
+Run in session lifecycle-03 on the operator's delegation there. Criteria,
+every result and the per-mechanism table are in
+`docs/audits/2026-10-05-gap-sweep-followup-trials.md`. Leftovers: df-265
+and df-266 built and closed (dotfiles `3e2a49e`); lc-239 measured not done
+and re-graded STANDBY. Two defects met on the way are fixed in main
+(`3a4647c`, `fe25c51`). OPEN, the operator's: whether the freeze is
+released for the close statement and for the deletion-side check; the
+desk recommends both, and keeping it on everything else trialled. The
+prototypes, the grade table and the briefs are kept on the building
+machine under `$XDG_STATE_HOME/claude/gap-sweep-2026-10-05/followup/`.
+The rest of this file is the record of the handoff.
+
 Written 2026-10-05 by session lifecycle-b5, which closes after this file.
 Receiver: session lifecycle-03. You hold judgment and execution. You report
 to the OPERATOR directly; no desk drives you and nothing returns here.
