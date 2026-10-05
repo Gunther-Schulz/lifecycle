@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 304
+added: 305
 compacted: 0
 
 ## lc-3
@@ -1785,4 +1785,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py,test/test_migrate.py
 done-criterion: migrate --schema-from with --entry-shape either honours the option or refuses the combination by name, and never accepts it silently; red-first on the combined invocation
 evidence: RELAYED from the lc-307 lane closing report 2026-10-05, gap 4; not reproduced at the booking desk
+blocked-by: NONE
+
+## lc-313
+grade: READY
+requirement: a PARKED item whose evidence predicate has FIRED is surfaced by nothing unprompted: item ready --head, the pass a session start runs, lists READY items only, so an item whose wait is over sits unseen until someone asks for it by id — record: LEDGER.md decision of 2026-10-05 on the deadline observer
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: item ready --head names every live non-READY item whose evidence predicate FIRES on that pass and prints the count of predicates it ran, zeros included; QUIET is counted and not listed; BROKEN is reported through the existing trigger_broken path, never skipped; red-first on a parked fixture item whose predicate flips from quiet to fired
+evidence: MEASURED at the wan2gp desk 2026-10-05 on a scratch carrier at lifecycle a0da4cc: an item parked on evidence test -e <flag>; after the flag appeared item ready <id> printed UNBLOCKED, the predicate FIRED, while item ready --head printed 0 READY and never named the item, item statusline printed 0R.3P, and neither item check nor audit named it. DERIVED: the QUIET verdict text says Re-evaluated each pass, and the only pass that runs unprompted does not evaluate it. Not measured: any other verb that would surface it
 blocked-by: NONE
