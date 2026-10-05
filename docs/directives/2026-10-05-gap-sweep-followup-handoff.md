@@ -1,15 +1,18 @@
 # Handoff: what the gap sweep left, for the lifecycle session that continues it
 
-## STATE 2026-10-05, late: DONE, one decision open
+## STATE 2026-10-05, night: DONE, the freeze question answered and built
 
 Run in session lifecycle-03 on the operator's delegation there. Criteria,
 every result and the per-mechanism table are in
 `docs/audits/2026-10-05-gap-sweep-followup-trials.md`. Leftovers: df-265
 and df-266 built and closed (dotfiles `3e2a49e`); lc-239 measured not done
 and re-graded STANDBY. Two defects met on the way are fixed in main
-(`3a4647c`, `fe25c51`). OPEN, the operator's: whether the freeze is
-released for the close statement and for the deletion-side check; the
-desk recommends both, and keeping it on everything else trialled. The
+(`3a4647c`, `fe25c51`). The freeze question is ANSWERED (LEDGER.md:199):
+released for the close statement and the deletion-side check only, kept
+on everything else trialled. Both are built and in main (`9c4c5c5`,
+`3063fd1`, `36126b5`; acceptance LEDGER.md:201; design
+`2026-10-05-close-statement-and-deletion-check-brief.md` beside this
+file). Nothing here is still owed. The
 prototypes, the grade table and the briefs are kept on the building
 machine under `$XDG_STATE_HOME/claude/gap-sweep-2026-10-05/followup/`.
 The rest of this file is the record of the handoff.
