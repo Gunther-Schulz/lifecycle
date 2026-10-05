@@ -240,7 +240,16 @@ def _context(args, out):
         out("the carrier's homes are named by the declaration, and there is "
             "no readable declaration to name them.")
         return None, res.code
-    return verbs.context(repo, res.declaration, out)
+    ctx, code = verbs.context(repo, res.declaration, out)
+    if ctx is not None:
+        # THE ACTING VERB, named once here for every carrier verb — the
+        # spelling `main` logs as the act's path. `commit_paths` hands it to
+        # the commit it starts; no call site names its own verb, so a verb
+        # added later cannot forget to.
+        action = getattr(args, f"{getattr(args, 'verb', None)}_action", None)
+        base = getattr(args, "verb", None)
+        ctx.verb = f"{base} {action}" if base and action else base
+    return ctx, code
 
 
 def cmd_item_check(args, out, err=None) -> int:
@@ -269,7 +278,8 @@ def cmd_item_check(args, out, err=None) -> int:
               check_items, ctx.prefix),
              (items_mod.rel_to(ctx.repo, ctx.done_path), ctx.done_path,
               items_mod.check_done_file, ctx.prefix)],
-            out, err)
+            out, err,
+            live_rel=items_mod.rel_to(ctx.repo, ctx.items_path))
 
     code = check_items(ctx.items_path, out, prefix=ctx.prefix,
                        ledger_path=ctx.ledger_path)
@@ -803,7 +813,10 @@ def build_parser() -> argparse.ArgumentParser:
                           "only findings this staged edit INTRODUCED — the "
                           "commit-time gate. Findings already at HEAD are "
                           "counted, not reported, so a repo that carries "
-                          "some can still commit.")
+                          "some can still commit. Over the LIVE item home "
+                          "it also refuses a line REMOVED from a block that "
+                          "stays live; the exemptions that applied are "
+                          "counted in the output.")
 
     rep = its.add_parser("repair",
                          help="the MECHANICAL half of hand-written damage: "

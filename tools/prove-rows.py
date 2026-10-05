@@ -1358,6 +1358,16 @@ MUTATIONS = [
      "                if tok not in known:",
      "                if False:",
      "the resolution of a `--met` item id against the two homes"),
+
+    # THE COMMIT GATE'S DELETION SIDE. The anchor is where the gate decides
+    # whether the lines `removed_live_lines` returned are acted on at all;
+    # removed, a hand-trimmed live block passes as it did before the check
+    # existed. The shape findings beside it are computed above this line and
+    # are not touched.
+    ("live_block_line_removed", "items.py",
+     "            if gone.removed:",
+     "            if False:",
+     "the test that a live block LOST a line between HEAD and the index"),
 ]
 
 

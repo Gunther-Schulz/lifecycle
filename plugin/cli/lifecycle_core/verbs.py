@@ -128,6 +128,11 @@ class Ctx:
     items_path: Path
     done_path: Path
     ledger_path: Path
+    #: The acting verb as the CLI spells it (`item repair`), set by the one
+    #: resolver every carrier verb shares (`cli._context`). `commit_paths`
+    #: hands it to the commit it starts; None where nothing came through the
+    #: CLI, and then no verb is named.
+    verb: str | None = None
 
 
 # --- context ------------------------------------------------------------------
@@ -715,8 +720,19 @@ def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False,
     if warning:
         out(warning)
     full_msg = f"{msg}\n\n{block}" if block else msg
+    # THE COMMIT'S OWN HOOK IS TOLD WHICH VERB IS COMMITTING. The commit
+    # gate refuses a line removed from a live block, and one verb removes
+    # such lines by design; the gate cannot tell that commit from a hand
+    # edit by its diff. The name is SET OR CLEARED, never inherited: a value
+    # left in the calling shell would otherwise ride every verb's commit
+    # under a name that verb never had.
+    env = dict(os.environ)
+    if ctx.verb:
+        env[items_mod.WRITER_VERB_ENV] = ctx.verb
+    else:
+        env.pop(items_mod.WRITER_VERB_ENV, None)
     r = subprocess.run(["git", "-C", str(ctx.repo), "commit", "-m", full_msg,
-                        "--"] + rel, capture_output=True, text=True)
+                        "--"] + rel, capture_output=True, text=True, env=env)
     if r.returncode != 0:
         out(f"FINDING [move_uncommitted] {what} is on disk but was NOT "
             f"committed, so its halves are not durable together: "

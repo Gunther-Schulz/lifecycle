@@ -37,6 +37,7 @@ The two never share an exit code — that is the contract in `exits.py`.
 
 import functools
 import json
+import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -304,6 +305,23 @@ CLOSURE_WORDS_KEY = "closure-words"
 #: Hyphenated like every other key here (the brief's underscore was a
 #: defect, ruled at the desk 2026-09-25).
 GRADES_EXTRA_KEY = "grades-extra"
+
+#: THE DECLARED REWRITE: `"carrier-rewrites": [{"carrier": "<repo-relative
+#: item home>", "date": "<ISO date>", "reason": "<why>"}, …]`. OPTIONAL for
+#: `grades-extra`'s reason — a repo declaring none behaves exactly as it did,
+#: so no schema bump. It is the declared exemption the commit gate's own text
+#: promises for a deliberate bulk edit of a live item carrier: the gate
+#: (`items.check_staged`) honours an entry that THIS COMMIT adds and that
+#: names the carrier being rewritten, and counts the lines it covers.
+#:
+#: A RECORD, NEVER A SWITCH. An entry is honoured only in the commit that
+#: introduces it — one both HEAD and the index carry licenses nothing — so
+#: entries accumulate as the history of the rewrites this carrier has had and
+#: are never removed. Prose-rest for the "never removed" half: nothing here
+#: grades a deletion from this list.
+CARRIER_REWRITES_KEY = "carrier-rewrites"
+
+_ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 #: Keys a declaration may NOT carry any more, each with what replaced it.
 #: Named rather than ignored: a withdrawn key left in a file reads exactly
@@ -627,6 +645,8 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
         _validate_closure_words(doc[CLOSURE_WORDS_KEY], res)
     if GRADES_EXTRA_KEY in doc:
         _validate_grades_extra(doc[GRADES_EXTRA_KEY], res)
+    if CARRIER_REWRITES_KEY in doc:
+        _validate_carrier_rewrites(doc[CARRIER_REWRITES_KEY], doc, res)
 
     if "delegation" in doc and doc["delegation"] not in DELEGATION_VALUES:
         res.add("declaration_malformed",
@@ -733,6 +753,81 @@ def grades_extra(doc) -> tuple:
     if not isinstance(ge, list):
         return ()
     return tuple(g for g in ge if g in items_mod.GRADES_DECLARED)
+
+
+def _carrier_rewrite_problem(entry) -> str | None:
+    """Why one `carrier-rewrites` entry is not readable, or None.
+
+    ONE PREDICATE FOR THE VALIDATOR AND THE READER, so the gate can never
+    honour an entry `kind check` would refuse.
+    """
+    if not isinstance(entry, dict):
+        return f"an entry must be an object, got {type(entry).__name__}"
+    for key in ("carrier", "date", "reason"):
+        value = entry.get(key)
+        if not isinstance(value, str) or not value.strip():
+            return (f"an entry's `{key}` must be a non-empty string, got "
+                    f"{value!r}")
+    if not _ISO_DATE.match(entry["date"]):
+        return (f"an entry's `date` must be an ISO date (YYYY-MM-DD), got "
+                f"{entry['date']!r}")
+    extra = sorted(set(entry) - {"carrier", "date", "reason"})
+    if extra:
+        return f"an entry carries unknown key(s): {', '.join(extra)}"
+    return None
+
+
+def carrier_rewrites(doc) -> list:
+    """The declared rewrites, well-formed entries only.
+
+    READ IN ONE PLACE, like `grades_extra` above and for its reason: a
+    malformed value reads as EMPTY and a malformed entry is skipped —
+    `validate` reports both, and a half-read licence would let the commit
+    gate pass a removal on a line nobody validly declared.
+    """
+    cr = (doc or {}).get(CARRIER_REWRITES_KEY) if isinstance(doc, dict) else None
+    if not isinstance(cr, list):
+        return []
+    return [{"carrier": e["carrier"], "date": e["date"], "reason": e["reason"]}
+            for e in cr if _carrier_rewrite_problem(e) is None]
+
+
+def _validate_carrier_rewrites(cr, doc: dict, res: Result) -> None:
+    """`carrier-rewrites`: a list of `{carrier, date, reason}` records.
+
+    The carrier must be the declared ITEM home — the only carrier whose live
+    blocks the commit gate grades for removed lines, so an entry naming any
+    other path would read as a licence while licensing nothing.
+    """
+    import posixpath
+
+    if not isinstance(cr, list):
+        res.add("declaration_malformed",
+                f"`{CARRIER_REWRITES_KEY}` must be a list of "
+                "{\"carrier\", \"date\", \"reason\"} records, one per "
+                f"deliberate rewrite of an item carrier. Got "
+                f"{type(cr).__name__}.")
+        return
+    items_body = (doc.get("kinds") or {}).get("items")
+    items_home = items_body.get("home") if isinstance(items_body, dict) else None
+    for n, entry in enumerate(cr, 1):
+        problem = _carrier_rewrite_problem(entry)
+        if problem:
+            res.add("declaration_malformed",
+                    f"`{CARRIER_REWRITES_KEY}` entry {n}: {problem}. An "
+                    "entry is the record of WHY a live carrier was rewritten "
+                    "by hand; one without its carrier, date or reason is a "
+                    "licence nobody can read back.")
+            continue
+        if not (isinstance(items_home, str) and posixpath.normpath(
+                entry["carrier"]) == posixpath.normpath(items_home)):
+            res.add("declaration_malformed",
+                    f"`{CARRIER_REWRITES_KEY}` entry {n} names the carrier "
+                    f"{entry['carrier']!r}, which is not this repo's "
+                    f"declared item home ({items_home!r}). The commit gate "
+                    "grades removed lines in the live item home only, so an "
+                    "entry naming another path licenses nothing while "
+                    "reading as if it did.")
 
 
 def declares_standby(doc) -> bool:

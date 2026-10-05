@@ -28,9 +28,11 @@ skips everything from that heading onward; conservation still counts it.
 
 import fcntl
 import json
+import os
 import posixpath
 import re
 import subprocess
+from collections import Counter
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -3427,7 +3429,210 @@ def _quote_block(text: str, finding: Finding) -> list:
     return ["    | (the finding names no block and no line of this body)"]
 
 
-def check_staged(repo: Path, carriers, out, err) -> int:
+# --- the deletion side of a staged edit --------------------------------------
+
+#: The variable `verbs.commit_paths` sets, to the acting verb's name, in the
+#: environment of the `git commit` child it starts. The commit gate runs as
+#: that child's hook, so this is how the gate learns WHICH verb is committing
+#: — and only that: it is an ordinary environment variable, so a hand commit
+#: can carry it too. The roster labels that reach PROSE-REST.
+WRITER_VERB_ENV = "LIFECYCLE_WRITER_VERB"
+
+#: The verbs whose OWN commit legitimately removes lines from a live block.
+#: MEASURED, never assumed: `test_live_block_removal` runs every
+#: carrier-writing verb over fixtures and applies `removed_live_lines` to what
+#: it wrote, and the committing verbs that fire are this tuple. `item repair
+#: --shape` joins a wrapped value back into its slot line, which removes the
+#: continuation lines and the unjoined slot line while every word survives.
+LINE_REMOVING_VERBS = ("item repair",)
+
+#: How much of a removed line the finding quotes.
+REMOVED_LINE_CLIP = 80
+
+#: What a removed line with no `slot:` opener is filed under.
+NO_SLOT_PREFIX = "(no slot prefix)"
+
+#: The lines the tool rewrites IN PLACE by design: a grade moves where it
+#: stands (`item park`, `promote`, `bench`), and a blocker's slot line is
+#: rewritten by `item park`. Neither is a record of what a desk decided that
+#: a later reader would need verbatim — the promotion, bench and amendment
+#: lines beside them are, and those are appended.
+_REWRITTEN_IN_PLACE = ("grade", "blocked-by")
+
+
+def live_block_lines(text: str, idents) -> dict:
+    """`{ident: [raw line, …]}` for the named LIVE blocks, heading excluded.
+
+    The live region only: everything from the archive heading on is held
+    verbatim and is not this check's subject. A block is found by
+    `grammar.heading_ident` and ended by `grammar.ends_block` — the pair
+    `_set_slots` uses, for its reason.
+    """
+    wanted = set(idents)
+    out: dict = {}
+    cur = None
+    for ln in text.split("\n"):
+        if ln.strip() == ARCHIVE_HEADING:
+            break
+        if grammar.ends_block(ln):
+            found = grammar.heading_ident(ln)
+            cur = found if found in wanted and found not in out else None
+            if cur is not None:
+                out[cur] = []
+            continue
+        if cur is not None:
+            out[cur].append(ln)
+    return out
+
+
+def _slot_prefix(line: str) -> str:
+    m = _SLOT_LINE.match(line)
+    return m.group(1) if m else NO_SLOT_PREFIX
+
+
+@dataclass
+class RemovedLines:
+    """What `removed_live_lines` found, exempt lines COUNTED beside it."""
+    #: `[(ident, [(slot prefix, raw line), …]), …]` — one entry per block
+    #: that lost a line, in the HEAD carrier's order.
+    removed: list = field(default_factory=list)
+    #: Lines that left because the tool rewrites them in place (exemption 1).
+    exempt_rewritten: int = 0
+    #: Conditional slots cleared beside a blocker whose TYPE changed
+    #: (exemption 2).
+    exempt_retyped: int = 0
+
+    @property
+    def lines(self) -> int:
+        return sum(len(ls) for _i, ls in self.removed)
+
+
+def removed_live_lines(head_text: str, staged_text: str,
+                       prefix: str | None) -> RemovedLines:
+    """Every line a block CARRIED AT HEAD and no longer carries, for blocks
+    live on both sides.
+
+    A MULTISET DIFFERENCE, so an in-place edit is a removal plus an addition
+    and a line that merely MOVED inside its block is nothing at all. Blank
+    lines are not content and are ignored on both sides.
+
+    THE TWO LINE-LEVEL EXEMPTIONS LIVE HERE, each verified from the two
+    bodies and nothing else: a `grade:` or `blocked-by:` slot line, which the
+    tool rewrites in place; and a conditional slot (`BLOCKER_ONLY_SLOTS`) in
+    a block whose EFFECTIVE blocker type differs between the two sides —
+    the re-typing door clears it, because the slot is legal beside one type
+    only. The effective type is the parser's own resolution, amendments
+    included, never a second reading of the slot line.
+
+    A block that LEFT the live home (a close, a drop) is not this check's
+    subject: it is in neither side's difference, and what happens to a body
+    on its way out is the move's business.
+    """
+    head_parsed, staged_parsed = parse(head_text), parse(staged_text)
+    staged_items = {it.ident: it for it in staged_parsed.items}
+    both = [it for it in head_parsed.items if it.ident in staged_items]
+    head_blocks = live_block_lines(head_text, [it.ident for it in both])
+    staged_blocks = live_block_lines(staged_text, [it.ident for it in both])
+
+    res = RemovedLines()
+    for it in both:
+        before = head_blocks.get(it.ident)
+        after = staged_blocks.get(it.ident)
+        if before is None or after is None:
+            continue
+        have = Counter(ln for ln in after if ln.strip())
+        gone = []
+        for ln in before:
+            if not ln.strip():
+                continue
+            if have[ln] > 0:
+                have[ln] -= 1
+            else:
+                gone.append(ln)
+        if not gone:
+            continue
+        retyped = None
+        kept = []
+        for ln in gone:
+            if any(grammar.is_slot(ln, s) for s in _REWRITTEN_IN_PLACE):
+                res.exempt_rewritten += 1
+                continue
+            if any(grammar.is_slot(ln, s) for s in BLOCKER_ONLY_SLOTS):
+                if retyped is None:
+                    was, _d = classify_blocker(
+                        it.slots.get("blocked-by", ""), prefix)
+                    now, _d = classify_blocker(
+                        staged_items[it.ident].slots.get("blocked-by", ""),
+                        prefix)
+                    retyped = was != now
+                if retyped:
+                    res.exempt_retyped += 1
+                    continue
+            kept.append((_slot_prefix(ln), ln))
+        if kept:
+            res.removed.append((it.ident, kept))
+    return res
+
+
+def _declared_rewrite(repo: Path, rel: str) -> dict | None:
+    """The `carrier-rewrites` entry THIS COMMIT adds for `rel`, or None.
+
+    Read from the STAGED declaration against HEAD's: an entry both carry was
+    declared for an earlier rewrite and licenses nothing now. A declaration
+    unreadable at the index declares nothing — the finding then stands,
+    which is the safe side of not knowing.
+    """
+    def entries(spec):
+        text, _why = _git_blob(repo, f"{spec}:{decl.DECLARATION_REL.as_posix()}")
+        if text is None:
+            return []
+        try:
+            doc = json.loads(text)
+        except ValueError:
+            return []
+        return decl.carrier_rewrites(doc)
+
+    old = entries("HEAD")
+    for entry in entries(""):
+        if entry in old:
+            continue
+        if posixpath.normpath(entry["carrier"]) == posixpath.normpath(rel):
+            return entry
+    return None
+
+
+def _removal_finding(name: str, rel: str, ident: str, line: int,
+                     lines: list) -> str:
+    """The rendered refusal for ONE block that lost lines.
+
+    SPELLED WITH THE LITERAL ROW NAME, as every refusal in this package is:
+    the emit-site scan reads the source for exactly that form, and a name
+    assembled from a constant would leave this site outside the coverage
+    check while the roster row read as covered.
+    """
+    listed = "".join(
+        f"\n    - `{p}` {ln[:REMOVED_LINE_CLIP]}"
+        + ("…" if len(ln) > REMOVED_LINE_CLIP else "")
+        for p, ln in lines)
+    return (
+        f"FINDING [live_block_line_removed] {name}:{line}: block {ident!r} "
+        f"is live at HEAD and in this commit, and {len(lines)} line(s) HEAD "
+        f"carries are gone from it:{listed}\n"
+        "    A live block keeps what it used to say: an in-place edit is a "
+        "removal plus an addition, and the removed text is then in no file. "
+        "Three routes are open. (1) THE VERB THAT OWNS THE CHANGE — `item "
+        f"amend {ident} --<slot> <new value> --reason <why>` appends the "
+        "new value and RETAINS the old line. (2) A DECLARED REWRITE, for a "
+        f"deliberate bulk edit — add {{\"carrier\": \"{rel}\", \"date\": "
+        "\"<today, ISO>\", \"reason\": \"<why>\"} under "
+        f"`{decl.CARRIER_REWRITES_KEY}` in the declaration, IN THIS COMMIT; "
+        "the gate reads it from the staged declaration and counts the "
+        "lines it covers. (3) NEVER `--no-verify`, which skips every gate "
+        "in the hook at once.")
+
+
+def check_staged(repo: Path, carriers, out, err, *,
+                 live_rel: str | None = None) -> int:
     """`item check --staged`: the shape findings a STAGED edit INTRODUCES.
 
     WHY A DIFF AND NOT THE PLAIN CHECK. A commit-time gate that refused every
@@ -3447,6 +3652,19 @@ def check_staged(repo: Path, carriers, out, err) -> int:
     Both are checked because both are carriers the tool owns (law 8), and a
     gate guarding one of two leaves the other's breaks reported by nothing
     while the wiring reads as covered.
+
+    THE DELETION SIDE, over the LIVE home only (`live_rel`). A shape check
+    reads what a staged body IS and cannot see what it no longer says: a
+    hand deletion of amendment lines leaves a well-shaped block. So for the
+    live home the HEAD body is compared with the staged one through
+    `removed_live_lines`, and a line gone from a block that stays live is
+    `live_block_line_removed`. FOUR EXEMPTIONS, each read from data the gate
+    itself holds and each COUNTED in the output when it applies: the two
+    line-level ones inside `removed_live_lines`; the tool's own commit, named
+    by `WRITER_VERB_ENV` and honoured for `LINE_REMOVING_VERBS` only; and a
+    rewrite DECLARED in this same commit (`_declared_rewrite`). `live_rel`
+    absent means no carrier is graded for removals — the closure home holds
+    records, which nothing here rewrites.
     """
     silent = lambda _s: None  # noqa: E731
     unverified: list = []
@@ -3458,6 +3676,12 @@ def check_staged(repo: Path, carriers, out, err) -> int:
     #: graded AND carry a could-not-verify (the newly-introduced case below),
     #: so the subtraction would under-report exactly where it is read.
     graded = 0
+    #: The deletion side's verdicts and its exemption counts (live home only).
+    removed_all: list = []
+    exempt_rewritten = 0
+    exempt_retyped = 0
+    exempt_verb: list = []
+    exempt_declared: list = []
 
     for rel, path, checker, prefix in carriers:
         idx_text, idx_why = _git_blob(repo, f":{rel}")
@@ -3511,10 +3735,56 @@ def check_staged(repo: Path, carriers, out, err) -> int:
         if head_text is not None and idx_text == head_text:
             unchanged.append(rel)
 
+        if rel == live_rel and head_text is not None and idx_text != head_text:
+            gone = removed_live_lines(head_text, idx_text, prefix)
+            exempt_rewritten += gone.exempt_rewritten
+            exempt_retyped += gone.exempt_retyped
+            if gone.removed:
+                verb = os.environ.get(WRITER_VERB_ENV, "")
+                declared = None
+                if verb not in LINE_REMOVING_VERBS:
+                    declared = _declared_rewrite(repo, rel)
+                if verb in LINE_REMOVING_VERBS:
+                    exempt_verb.append((verb, rel, gone.lines))
+                elif declared is not None:
+                    exempt_declared.append((declared, rel, gone.lines))
+                else:
+                    staged_at = {it.ident: it.line
+                                 for it in parse(idx_text).items}
+                    for ident, lines in gone.removed:
+                        removed_all.append(_removal_finding(
+                            path.name, rel, ident, staged_at.get(ident, 0),
+                            lines))
+
     for rel, idx_text, f in new_all:
         out(f.render())
         for ln in _quote_block(idx_text, f):
             out(ln)
+
+    # THE REMOVALS ARE NOT QUOTED AS A BLOCK: the block on disk is the one
+    # WITHOUT the lines, and the finding lists what left it.
+    for rendered in removed_all:
+        out(rendered)
+
+    # EVERY EXEMPTION THAT APPLIED IS COUNTED, never silent. A gate that
+    # passed a removal without saying which licence it read would be
+    # indistinguishable from one that did not look.
+    if exempt_rewritten or exempt_retyped or exempt_verb or exempt_declared:
+        parts = []
+        if exempt_rewritten:
+            parts.append(f"{exempt_rewritten} `grade:`/`blocked-by:` line(s) "
+                         "the tool rewrites in place")
+        if exempt_retyped:
+            parts.append(f"{exempt_retyped} conditional slot line(s) cleared "
+                         "beside a blocker whose TYPE changed")
+        for verb, rel, n in exempt_verb:
+            parts.append(f"{n} line(s) in {rel} under the tool's own commit "
+                         f"({WRITER_VERB_ENV}={verb})")
+        for entry, rel, n in exempt_declared:
+            parts.append(f"{n} line(s) in {rel} under the rewrite this commit "
+                         f"declares ({entry['date']}: {entry['reason']})")
+        out("staged: line(s) removed from live block(s) and EXEMPT, counted "
+            "rather than reported — " + "; ".join(parts) + ".")
 
     if len(unchanged) == len(carriers):
         out("staged: nothing staged for the carriers "
@@ -3546,8 +3816,13 @@ def check_staged(repo: Path, carriers, out, err) -> int:
             "above are not a full verdict.")
         return exits.COULD_NOT_VERIFY
 
-    code = exits.FINDING if new_all else exits.CLEAN
-    out(f"item check --staged: {exits.word(code)} — {len(new_all)} finding(s) "
+    if removed_all:
+        out(f"staged: {len(removed_all)} live block(s) lost line(s) HEAD "
+            "carries — each listed above with the routes open to its "
+            "committer.")
+    introduced = len(new_all) + len(removed_all)
+    code = exits.FINDING if introduced else exits.CLEAN
+    out(f"item check --staged: {exits.word(code)} — {introduced} finding(s) "
         "this staged edit introduced.")
     return code
 

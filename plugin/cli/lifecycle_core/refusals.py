@@ -1102,6 +1102,18 @@ PROSE_REST = [
      "(measured, exit 0); the row was red-proven with a capture-key token "
      "instead (exit 2). Reported to the judgment desk — closing it is either "
      "a new scanner class or an amended row, and both are design decisions."),
+    ("a hand commit carrying `LIFECYCLE_WRITER_VERB=item repair`",
+     "the commit gate exempts a live-block line removal under the tool's own "
+     "commit, and learns which verb is committing from an environment "
+     "variable `commit_paths` sets on the `git commit` it starts. A session "
+     "can export the same variable before a hand commit, and no predicate "
+     "available to a hook separates the two — `live_block_line_removed` is "
+     "enforced for every commit that does not forge it, and the exemption is "
+     "COUNTED in the gate's output either way, which is what a reader has"),
+    ("removing an entry from `carrier-rewrites`",
+     "entries are a record and are never removed; nothing grades a deletion "
+     "from the list — the gate honours an entry only in the commit that adds "
+     "it, so a removed entry licenses nothing, and the loss is of history"),
     ("procedure text elsewhere; near-duplicate templates; laws-vs-method; the "
      "no-operator-quote rule; \"subagents never book\"",
      "the design's own prose-rest row: no predicate exists, operator is the "
@@ -5124,10 +5136,86 @@ STANDBY_ROWS = [
     ),
 ]
 
+# --- the commit gate's deletion side ------------------------------------------
+#
+# The first rows that run `item check --staged`: the staged form asks what
+# THIS COMMIT made wrong, so its firing input is an INDEX, not a file. The
+# scratch repo commits one carrier and stages another, and the verdict is the
+# CLI's over that pair.
+
+#: A live block carrying an amendment — what a desk decided, and then what it
+#: decided instead. Committed as HEAD in both arms.
+_REMOVAL_AMENDMENT = ("amend-reason: 2026-10-01 the rotated window is the "
+                      "unit, not the capture\n"
+                      "amended-done-criterion: 2026-10-01 one fire per "
+                      "rotated window\n")
+STAGED_REMOVAL_HEAD = SEED_ITEMS + _REMOVAL_AMENDMENT
+#: The plant: the two amendment lines deleted by hand. The block that remains
+#: is well-shaped — it is exactly `SEED_ITEMS` — so no shape check sees it.
+STAGED_REMOVAL_PLANT = SEED_ITEMS
+#: The control: the SAME block edited in the same commit, one more amendment
+#: appended and nothing removed. The arms differ in whether a line LEFT.
+STAGED_REMOVAL_CONTROL = STAGED_REMOVAL_HEAD + (
+    "amend-reason: 2026-10-02 and the window is five minutes\n"
+    "amended-done-criterion: 2026-10-02 one fire per five-minute window\n")
+
+
+def _staged_run(staged_items: str, *, head_items: str = STAGED_REMOVAL_HEAD,
+                staged_declaration: dict | None = None) -> Fired:
+    """`item check --staged` over a scratch repo: `head_items` committed,
+    `staged_items` in the index.
+
+    THE WRITER-VERB VARIABLE IS CLEARED FOR THE RUN. The gate reads it from
+    the environment, and a roster run started from inside a verb's own commit
+    hook would otherwise inherit the exemption and report the plant clean.
+    """
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+
+    with _Repo(items=head_items) as r:
+        (r.dir / "ITEMS.md").write_text(staged_items, encoding="utf-8")
+        r._run(["git", "add", "ITEMS.md"])
+        if staged_declaration is not None:
+            (r.dir / ".claude" / "lifecycle.json").write_text(
+                json.dumps(staged_declaration, indent=2), encoding="utf-8")
+            r._run(["git", "add", ".claude/lifecycle.json"])
+        saved = os.environ.pop(items_mod.WRITER_VERB_ENV, None)
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                code = cli_mod.main(["--repo", str(r.dir),
+                                     "item", "check", "--staged"])
+            return Fired(code, buf.getvalue())
+        finally:
+            if saved is not None:
+                os.environ[items_mod.WRITER_VERB_ENV] = saved
+
+
+STAGED_ROWS = [
+    Row(
+        ident="live_block_line_removed",
+        refusal="a staged edit that REMOVES a line from an item block which "
+                "stays live — an in-place edit is a removal plus an "
+                "addition, and the removed text is then in no file; a block "
+                "trimmed by hand stays well-shaped, so no shape check sees "
+                "it. `grade:` and `blocked-by:` lines, a conditional slot "
+                "beside a re-typed blocker, the tool's own repairing commit "
+                "and a rewrite declared in the same commit are exempt and "
+                "COUNTED",
+        firing_input="`item check --staged` with a live block's two "
+                     "amendment lines deleted in the index",
+        expect=exits.FINDING,
+        fire=lambda: _staged_run(STAGED_REMOVAL_PLANT),
+        control=lambda: _staged_run(STAGED_REMOVAL_CONTROL),
+        stage="the commit gate's deletion side",
+    ),
+]
+
 ROWS = (ROWS + VERB_ROWS + LANE_ROWS + SCHEMA_ROWS + DESK_ROWS + WORKFLOW_ROWS
         + HOOK_ROWS + COMPACT_ROWS + RECORD_ROWS + GOAL_ROWS
         + RECORDS_KIND_ROWS + HOME_ROWS + MOMENT_ROWS
-        + MARK_ROWS + ROSTER_POPULATION_ROWS + STANDBY_ROWS)
+        + MARK_ROWS + ROSTER_POPULATION_ROWS + STANDBY_ROWS + STAGED_ROWS)
 
 # --- the ROUTE SETS, attached to the rows whose refusal has a vocabulary -----
 #
