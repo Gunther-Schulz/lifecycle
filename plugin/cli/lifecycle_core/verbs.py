@@ -1675,15 +1675,6 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
         waiting = [it for it in waiting
                    if (it.slots.get("goal") or "").strip() == want]
 
-    out(f"head-rule: lead-goal {lead!r}"
-        + ("" if lead and lead != "none" else
-           " — no lead goal declared, so the head is source order"))
-    out("NO CAP (R22): every READY item is listed. Growth is watched by FLOW "
-        "(`item ratio`, and the retire lane's kind-grew-without-an-exit "
-        "finding), never by a size — a cap here bounds the LABEL and is "
-        "escaped by relabelling.")
-    out("")
-
     code = exits.CLEAN
     rows = []
     deadline = time.monotonic() + HEAD_PASS_BUDGET_S
@@ -1694,6 +1685,35 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
         schedulable = state.startswith("UNBLOCKED") and not unknown
         rows.append((it, state, unknown, schedulable))
         code = exits.worst([code, st_code])
+
+    # THE NEWS LEADS, the standing listing follows. Every verdict is computed
+    # before anything prints — READY rows first, so they have first call on
+    # the pass budget — and the waits that are OVER are printed at the TOP:
+    # an item whose state changed so that somebody owes an act. The READY
+    # listing is standing state and reads the same as last session. Measured
+    # 2026-10-05: the one unprompted caller, the session-start hook, shows
+    # the first 8 lines of this output, so the named waits printed AFTER the
+    # listing reached no session at start at all — the repair of lc-313 and
+    # of its two sibling waits was invisible at the very surface it was
+    # built for. The COUNT lines stay at the end: with nothing to name they
+    # say nothing new, and two standing lines at the top of every session
+    # start are the lines a reader learns to skip.
+    tallies = []
+    code = exits.worst([code, _arrived_evidence(
+        waiting, out, tallies.append, ctx, parsed, done_parsed, done_why,
+        deadline)])
+    code = exits.worst([code, _cleared_waits(
+        waiting, out, tallies.append, ctx, parsed, done_parsed, done_why)])
+
+    out(f"head-rule: lead-goal {lead!r}"
+        + ("" if lead and lead != "none" else
+           " — no lead goal declared, so the head is source order"))
+    out("NO CAP (R22): every READY item is listed. Growth is watched by FLOW "
+        "(`item ratio`, and the retire lane's kind-grew-without-an-exit "
+        "finding), never by a size — a cap here bounds the LABEL and is "
+        "escaped by relabelling.")
+    out("")
+
 
     leads = [r for r in rows if lead and lead != "none"
              and (r[0].slots.get("goal") or "").strip() == lead]
@@ -1722,17 +1742,15 @@ def cmd_item_head(args, out, ctx: Ctx) -> int:
         out("No READY item. THIS VERB PROMOTES NOTHING: READY is the desk's "
             "judgment and an empty head means nothing has been judged "
             "decision-complete, never that the carrier is empty.")
-    # lc-313: the waits that are OVER, named. After the READY listing and
-    # under the same `--goal` view, so a filtered head is filtered whole.
-    code = exits.worst([code, _arrived_evidence(
-        waiting, out, ctx, parsed, done_parsed, done_why, deadline)])
-    code = exits.worst([code, _cleared_waits(
-        waiting, out, ctx, parsed, done_parsed, done_why)])
+    # The two count lines of the waits (lc-313 and its siblings), always
+    # printed, zeros included; the items they name led this output.
+    for line in tallies:
+        out(line)
     out(f"item ready --head: {exits.word(code)}")
     return code
 
 
-def _arrived_evidence(waiting, out, ctx: Ctx, parsed, done_parsed,
+def _arrived_evidence(waiting, out, tally, ctx: Ctx, parsed, done_parsed,
                       done_why, deadline) -> int:
     """The head pass's second half (lc-313): every item NOT graded READY whose
     `evidence <predicate>` wait is over is NAMED, and the count is printed.
@@ -1800,14 +1818,14 @@ def _arrived_evidence(waiting, out, ctx: Ctx, parsed, done_parsed,
         out(f"  {it.ident} [{it.grade}] whether this wait is over is unknown:")
         out(f"        {state}")
     ran = len(fired) + quiet + len(broken)
-    out(f"evidence waits (items not graded READY): {ran} predicate(s) run "
+    tally(f"evidence waits (items not graded READY): {ran} predicate(s) run "
         f"this pass — {len(fired)} FIRED, {quiet} quiet, {len(broken)} "
         f"BROKEN. {len(cut)} CUT OFF by the pass budget"
         + (" — named above, could not verify." if cut else "."))
     return code
 
 
-def _cleared_waits(waiting, out, ctx: Ctx, parsed, done_parsed,
+def _cleared_waits(waiting, out, tally, ctx: Ctx, parsed, done_parsed,
                    done_why) -> int:
     """The head pass's third half: every item NOT graded READY whose
     `decision` or item-id blocker has CLEARED is NAMED, and what was read is
@@ -1883,7 +1901,7 @@ def _cleared_waits(waiting, out, ctx: Ctx, parsed, done_parsed,
     for it, state in unverified:
         out(f"  {it.ident} [{it.grade}] whether this wait is over is unknown:")
         out(f"        {state}")
-    out(f"cleared waits (items not graded READY): {n_decision} decision and "
+    tally(f"cleared waits (items not graded READY): {n_decision} decision and "
         f"{n_item} item-id blocker(s) read this pass — {answered} "
         f"decision(s) ANSWERED, {target_done} target(s) DONE, {regrade} "
         "migration re-grade(s) owed at the desk (counted, not listed), "

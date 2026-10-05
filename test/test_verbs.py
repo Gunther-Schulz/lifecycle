@@ -3102,9 +3102,10 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
         self.assertIn("xx-2 [PARKED] the evidence predicate "
                       "('test -e lc313-flag') FIRED", out)
         self.assertIn("RE-GRADE is owed at the desk", out)
-        # ...and it is placed AFTER the READY listing, never inside it.
-        self.assertLess(out.index("1. xx-1 [READY]"),
-                        out.index("--- evidence ARRIVED"), out)
+        # ...and it LEADS the output, ahead of the READY listing and never
+        # inside it (see TheNewsLeadsTheHead for why the order flipped).
+        self.assertLess(out.index("--- evidence ARRIVED"),
+                        out.index("1. xx-1 [READY]"), out)
         # The READY half is untouched by the new half.
         self.assertIn("head: 1 READY, 1 schedulable now.", out)
 
@@ -3308,8 +3309,8 @@ class TheHeadNamesClearedWaits(unittest.TestCase):
         self.assertIn("xx-2 [PARKED] the ledger ANSWERS this decision: "
                       "'which window' → 'the left one'", out)
         self.assertIn("RE-GRADE is owed at the desk", out)
-        self.assertLess(out.index("1. xx-1 [READY]"),
-                        out.index("--- waits OVER"), out)
+        self.assertLess(out.index("--- waits OVER"),
+                        out.index("1. xx-1 [READY]"), out)
 
     def test_an_item_blocker_is_named_once_its_target_is_DONE(self):
         carrier = (self.HEAD
@@ -3533,3 +3534,69 @@ class TheHeadPassHasABudget(unittest.TestCase):
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("1 FIRED, 0 quiet, 0 BROKEN. 0 CUT OFF by the pass "
                       "budget", out)
+
+
+class TheNewsLeadsTheHead(unittest.TestCase):
+    """The waits that are OVER are printed at the TOP of `item ready --head`.
+
+    THE CONSUMER IS THE INSTRUMENT. The session-start hook, the one caller
+    that runs this verb unprompted, shows the FIRST 8 LINES of its output
+    (dotfiles `session-scan.py`, `MAX_READY_LINES`). Printed after the READY
+    listing, the named waits reached no session at start: measured on a
+    carrier with four READY items, where the hook's text held the first two
+    of them and none of the three items lc-313 and its siblings name. So the
+    assertion is on that view — the first eight lines — over a carrier whose
+    READY listing alone is longer than eight.
+    """
+
+    HOOK_LINES = 8
+
+    def _run(self, repo, *argv):
+        import io
+        from contextlib import redirect_stdout
+        from lifecycle_core import cli as cli_mod
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli_mod.main(["--repo", str(repo.dir)] + list(argv))
+        return code, buf.getvalue()
+
+    def _carrier(self, flagged):
+        blocks = [refusals._blocked_block(f"xx-{n}", "READY", "NONE")
+                  for n in (1, 2, 3)]
+        blocks.append(refusals._blocked_block(
+            "xx-4", "PARKED",
+            "evidence true" if flagged else "evidence exit 1"))
+        blocks.append(refusals._blocked_block(
+            "xx-5", "PARKED", "decision which window"))
+        return ("schema: 2\nbaseline: 5\nadded: 0\ncompacted: 0\n"
+                + "".join(blocks))
+
+    def _top(self, out):
+        return [ln for ln in out.splitlines() if ln.strip()][:self.HOOK_LINES]
+
+    def test_the_first_eight_lines_name_every_wait_that_is_over(self):
+        r = refusals._Repo(items=self._carrier(flagged=True))
+        self.addCleanup(r.close)
+        self._run(r, "ledger", "add", "decision", "--question",
+                  "which window", "--answer", "left")
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        top = "\n".join(self._top(out))
+        self.assertIn("xx-4 [PARKED]", top, out)
+        self.assertIn("xx-5 [PARKED]", top, out)
+        # The listing is still whole further down, and the counts close it.
+        for ident in ("xx-1", "xx-2", "xx-3"):
+            self.assertIn(f"{ident} [READY]", out)
+        self.assertLess(out.index("3. xx-3 [READY]"),
+                        out.index("evidence waits ("), out)
+
+    def test_with_nothing_over_the_top_is_the_listing_as_before(self):
+        """THE CONTROL: no wait is over, so nothing is prepended and the
+        first line is the head-rule line it always was."""
+        r = refusals._Repo(items=self._carrier(flagged=False))
+        self.addCleanup(r.close)
+        code, out = self._run(r, "item", "ready", "--head")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertTrue(out.startswith("head-rule: lead-goal"), out)
+        self.assertNotIn("xx-4", out)
+        self.assertNotIn("xx-5", out)
