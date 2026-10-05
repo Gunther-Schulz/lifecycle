@@ -1613,7 +1613,7 @@ class MintedDecisionQuestionsAreAnswerable(unittest.TestCase):
         # Before the answer the item reads BLOCKED — the baseline this pair
         # needs, since "UNBLOCKED" below means nothing over an item that was
         # never blocked.
-        self.assertIn("BLOCKED — in the OPERATOR's court",
+        self.assertIn("BLOCKED — a RE-GRADE owed at the DESK",
                       run_cli(d, "item", "ready", "xx-1")[1])
 
         code, outp = run_cli(d, "ledger", "add", "decision",
@@ -1666,7 +1666,7 @@ class MintedDecisionQuestionsAreAnswerable(unittest.TestCase):
                 self.assertEqual(kind, "decision")
                 # BASELINE: both read BLOCKED before any answer exists.
                 for ident in ("xx-1", "xx-2"):
-                    self.assertIn("BLOCKED — in the OPERATOR's court",
+                    self.assertIn("BLOCKED — a RE-GRADE owed at the DESK",
                                   run_cli(d, "item", "ready", ident)[1])
                 code, outp = run_cli(d, "ledger", "add", "decision",
                                      "--question", question,
@@ -1677,8 +1677,48 @@ class MintedDecisionQuestionsAreAnswerable(unittest.TestCase):
                 self.assertIn("UNBLOCKED — the ledger ANSWERS this decision",
                               run_cli(d, "item", "ready", "xx-1")[1])
                 second = run_cli(d, "item", "ready", "xx-2")[1]
-                self.assertIn("BLOCKED — in the OPERATOR's court", second)
+                self.assertIn("BLOCKED — a RE-GRADE owed at the DESK", second)
                 self.assertNotIn("UNBLOCKED", second)
+
+    def test_item_ready_routes_a_migrated_blocker_to_the_desk_regrade(self):
+        """A migrated blocker is cleared by RE-GRADING the item, and `item
+        ready` said the opposite: "in the OPERATOR's court" and "no
+        `decision:` line names this question", which reads as an invitation
+        to write a ledger answer. Four independent re-grade lanes read it
+        that way. One case per branch, since the PARKED-on-evidence branch is
+        the one furthest from the operator's court."""
+        for label, body in self.SAME_BRANCH_PAIRS:
+            with self.subTest(branch=label):
+                d = build("# old\n\n## Open\n\n" + body)
+                self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+                self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+                code, outp = run_cli(d, "item", "ready", "xx-1")
+                self.assertEqual(code, exits.CLEAN, outp)
+                self.assertIn("BLOCKED — a RE-GRADE owed at the DESK", outp)
+                self.assertIn("item amend xx-1", outp)
+                self.assertNotIn("OPERATOR's court", outp)
+                self.assertNotIn("has not been answered", outp)
+
+    def test_a_hand_booked_decision_still_reads_the_operators_court(self):
+        """MUST NOT MOVE: the desk wording is for questions `migrate` mints,
+        recognised by their own text. A decision somebody booked stays where
+        it was, including one that merely quotes a minted question."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-01-01 — r.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        commit_all(d, "migrated")
+        for question in ("which window is canonical",
+                         "is " + migrate.INCOMPLETE_DECISION + " still right"):
+            with self.subTest(question=question):
+                code, outp = run_cli(
+                    d, "item", "amend", "xx-1",
+                    "--blocked-by", "decision " + question,
+                    "--not-derivable", "the operator's preference",
+                    "--reason", "a hand-booked question")
+                self.assertEqual(code, exits.CLEAN, outp)
+                outp = run_cli(d, "item", "ready", "xx-1")[1]
+                self.assertIn("BLOCKED — in the OPERATOR's court", outp)
+                self.assertNotIn("RE-GRADE owed", outp)
 
     def test_the_guard_refuses_a_question_carrying_the_separator(self):
         """The mechanism's OWN red — `_ledger_storable` is what holds the

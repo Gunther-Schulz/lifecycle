@@ -958,7 +958,7 @@ def _for_item(blocked: str, ident: str) -> str:
     kind, _detail = items_mod.classify_blocker(blocked, None)
     if kind != "decision":
         return blocked
-    return f"{blocked} (item {ident})"
+    return grammar.for_item(blocked, ident)
 
 
 def migration_blocker(entry: Entry, slots_incomplete: bool):
@@ -1005,30 +1005,13 @@ def migration_blocker(entry: Entry, slots_incomplete: bool):
             "decision blocker rather than NONE")
 
 
-#: The question a PARKED-on-evidence entry carries across. It names the SOURCE
-#: body rather than restating it, and it differs from
-#: `PARKED_DECISION_QUESTION` on purpose, so the two branches stay
-#: distinguishable in the carrier. The tool cannot compose an evidence
-#: predicate it could stand behind; the desk is asked for one.
-#: LEDGER-STORABLE by the same rule as `REGRADE_BLOCKER` above.
-PARKED_EVIDENCE_QUESTION = ("the missing evidence named in the source "
-                            "body: state it as a predicate that can "
-                            "fire, then re-grade")
-
-#: The question a PARKED-on-a-decision entry carries across. It names the
-#: SOURCE body rather than restating it: the entry already says what decision
-#: is missing, and a second wording of it here would be a paraphrase that
-#: drifts from the body it summarizes.
-#: LEDGER-STORABLE by the same rule as `REGRADE_BLOCKER` above: the clause
-#: break is a colon, never the ledger's slot separator.
-PARKED_DECISION_QUESTION = ("the missing decision named in the source body: "
-                            "answer it, then re-grade")
-
-#: What the desk must supply, for a slot-incomplete entry. One sentence, and
-#: it names the SLOTS rather than describing them: a decision question the
-#: desk cannot act on is a blocker in a decision's costume.
-INCOMPLETE_DECISION = ("regrade: fill goal, write-set, done-criterion and "
-                       "evidence, or drop")
+#: THE THREE OTHER MINTED QUESTIONS LIVE IN `grammar` TOO, beside
+#: `REGRADE_BLOCKER` and for a second reason: `item ready` must RECOGNISE a
+#: minted question to say what clears it, and a reader holding its own copy of
+#: these texts would age apart from the writer.
+PARKED_EVIDENCE_QUESTION = grammar.PARKED_EVIDENCE_QUESTION
+PARKED_DECISION_QUESTION = grammar.PARKED_DECISION_QUESTION
+INCOMPLETE_DECISION = grammar.INCOMPLETE_DECISION
 
 
 class IdentAllocator:

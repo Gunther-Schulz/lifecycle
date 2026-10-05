@@ -2330,6 +2330,29 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why):
                     f"({ctx.ledger_path.name}:{last.lineno}).", exits.CLEAN,
                     "§3.1 has the item re-graded at the desk once a blocker "
                     "clears. THIS VERB PROMOTES NOTHING.")
+        if grammar.is_migration_question(detail):
+            # A MINTED RE-GRADE IS THE DESK'S, AND THE TEXT BELOW USED TO SAY
+            # THE OPERATOR'S. `migrate` types it `decision` because READY is
+            # judged and no predicate can fire on a judgment — but the judge
+            # is whoever works this carrier, and what clears it is the item
+            # being re-graded, not a question being answered. "No `decision:`
+            # line names this question" read as an invitation to write one
+            # (four re-grade lanes, independently), and for an entry parked on
+            # EVIDENCE the operator's court was simply the wrong court.
+            return (f"BLOCKED — a RE-GRADE owed at the DESK: {detail!r}. "
+                    "`migrate` minted this blocker; it is typed `decision` "
+                    "because READY is judged, and the judge is the desk "
+                    "working this carrier, not the operator. It clears by "
+                    "RE-GRADING this item: read the source body its "
+                    "`evidence:` slot points at, fill the slots that body "
+                    f"decides with `item amend {it.ident}`, then set the "
+                    f"blocker the body really has — `item amend {it.ident} "
+                    "--blocked-by NONE --reason <the re-grade>`, or a typed "
+                    "`evidence <predicate>` / `external <event>` / `decision "
+                    "<q>` where it still waits on something — or `item close "
+                    f"{it.ident} --drop`. A ledger answer is not the route: "
+                    "it would record a question settled while the item "
+                    "stayed ungraded."), exits.CLEAN, ""
         moots = ledger.moot_decisions_for(led, detail)
         if moots:
             # NAMED, never folded into the flat "no line names this

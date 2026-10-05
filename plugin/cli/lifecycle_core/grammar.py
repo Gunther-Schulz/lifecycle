@@ -194,7 +194,11 @@ def check_prose(value: str, what: str) -> str | None:
     if len(v) > REASON_CAP:
         return (f"{what} is {len(v)} characters, over the {REASON_CAP}-cap. "
                 "That length is a body wearing a reason's clothes; the body "
-                "belongs in the done home.")
+                "belongs in the done home — or, where the item is still "
+                "open, in the record this line points at: state the decision "
+                "in one line and name the file that holds the rest. Cutting "
+                "the text to fit is how a line stops answering its own "
+                "question.")
     if SEP in v:
         return (f"{what} contains the slot separator {SEP!r}, which would "
                 "make the line parse into different slots than it was "
@@ -222,3 +226,57 @@ def check_prose(value: str, what: str) -> str | None:
 #: must satisfy cannot drift into different files.
 REGRADE_BLOCKER = ('decision regrade: was READY under the old carrier'
                    ': READY is judged, never inherited')
+
+#: The question a PARKED-on-evidence entry carries across. It names the SOURCE
+#: body rather than restating it, and it differs from
+#: `PARKED_DECISION_QUESTION` on purpose, so the two branches stay
+#: distinguishable in the carrier. The tool cannot compose an evidence
+#: predicate it could stand behind; the desk is asked for one.
+PARKED_EVIDENCE_QUESTION = ("the missing evidence named in the source "
+                            "body: state it as a predicate that can "
+                            "fire, then re-grade")
+
+#: The question a PARKED-on-a-decision entry carries across. It names the
+#: SOURCE body rather than restating it: the entry already says what decision
+#: is missing, and a second wording of it here would be a paraphrase that
+#: drifts from the body it summarizes. The clause break is a colon, never the
+#: ledger's slot separator.
+PARKED_DECISION_QUESTION = ("the missing decision named in the source body: "
+                            "answer it, then re-grade")
+
+#: What the desk must supply, for a slot-incomplete entry. One sentence, and
+#: it names the SLOTS rather than describing them: a decision question the
+#: desk cannot act on is a blocker in a decision's costume.
+INCOMPLETE_DECISION = ("regrade: fill goal, write-set, done-criterion and "
+                       "evidence, or drop")
+
+#: EVERY question `migrate` mints for a migrated ENTRY. They live together so
+#: the reader that must recognise them (`item ready`) and the writer that
+#: mints them cannot hold two lists. The residue item's question is not one of
+#: these: it is a real decision, booked once per run.
+MIGRATION_QUESTIONS = (REGRADE_BLOCKER[len("decision "):],
+                       PARKED_EVIDENCE_QUESTION, PARKED_DECISION_QUESTION,
+                       INCOMPLETE_DECISION)
+
+_ITEM_SUFFIX_RE = re.compile(r" \(item [a-z][a-z0-9-]*-\d+\)")
+
+
+def for_item(question: str, ident: str) -> str:
+    """`question` made ONE item's own (lc-312): the id is what a reader
+    holding the ledger line can look up, and it carries neither separator."""
+    return f"{question} (item {ident})"
+
+
+def is_migration_question(detail: str) -> bool:
+    """Is this decision question one `migrate` minted for a migrated entry?
+
+    EQUALITY against the minter's own texts, with or without the item suffix
+    — carriers migrated before lc-312 hold the bare form. Never containment:
+    a hand-booked question that QUOTES one of these is somebody's real
+    decision and must not be read as a re-grade.
+    """
+    d = (detail or "").strip()
+    m = _ITEM_SUFFIX_RE.search(d)
+    if m and m.end() == len(d):
+        d = d[:m.start()]
+    return d in MIGRATION_QUESTIONS
