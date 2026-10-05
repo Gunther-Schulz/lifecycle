@@ -331,3 +331,49 @@ LIMIT as registered: fresh lanes, asked outright. And one more, seen only
 after the run: the replay handed the lanes the very sentence the operator
 objected to, so it could not show a fresh session avoiding the deferral —
 only that the record carries it.
+
+### T11 — RESULT (6 opus lanes, 2 per arm; graded in each reply and at the arm C clones)
+
+| arm | the answered question | the open question | arm C: cites a booked line | arm C: answer written back |
+|---|---|---|---|---|
+| A, repo as it is | NOT asked 2 of 2, `LEDGER.md:195` cited | asked 2 of 2 | — | — |
+| B, look before asking | NOT asked 2 of 2, line cited from the verb's output | asked 2 of 2 | — | — |
+| C, asking is a write | NOT asked 2 of 2, line cited | asked 2 of 2 | 2 of 2, every question (3 each) | 2 of 2: all three answers written with the verb once this desk sent them; 0 lines left OPEN, read at both clones |
+
+**The probe does not discriminate between the arms on its registered
+criterion.** It passes for all three: no arm asked the already-answered
+question, no arm dropped the open one. So it shows NO benefit of either
+prototype over the repo as it is, for a task that states its uncertainties.
+That is the limit registered before the run, now measured: an opus lane told
+"I do not remember whether we decided X" searches the ledger unaided (both
+arm A lanes cite the line, and name the search they ran).
+
+What the arms DID differ in, observed:
+
+- **Cost of arm C.** Each arm C lane had two of its three questions REFUSED
+  first as near-matches (the open exit-code question matches the planted
+  line on "deadline, passed, status" and an unrelated `init` line on "exit
+  code") and re-booked them with a stated reason. Six extra commits per
+  clone for three questions and three answers. The prototype builder flagged
+  the over-matching before the trial.
+- **What arm C leaves behind.** A carrier holding each question, what was
+  looked for, and its answer, so the same question cannot be asked twice.
+  Arms A and B leave nothing: their questions and this desk's answers exist
+  only in messages.
+- **Every lane asked more than was planted.** All six raised whether the
+  deadline day itself counts as passed; four raised whether the feature is a
+  new mechanism under the freeze. Both are genuinely open in the record. The
+  freeze question is REAL in this repo's terms (the operator's hold); the
+  boundary question is a desk call. Per lane: 2 or 3 questions, 0 of them
+  already answered by the record.
+
+**For the freeze decision, the numbers as they stand:** n=2 per arm; arms
+A/B/C each 2 of 2 on both graded points; arm C additionally 2 of 2 on
+citing and writing back, at a measured cost of 2 refused-then-rebooked
+questions per lane. The trial does NOT show that either mechanism cuts
+questions the record already answers, because the baseline asked none. The
+case the operator described — a question put in conversation that the
+record settles, with no one having voiced the uncertainty first — is not
+what this task exercised; T3 and T4's ten returned questions (8 of 10
+settled by the record) are nearer to it, and came from lanes with no
+prototype.
