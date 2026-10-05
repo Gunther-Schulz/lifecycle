@@ -186,6 +186,7 @@ decision: where does a migrated entry body travel when it is a multi-paragraph b
 decision: join disposition of LEDGER:185 beside LEDGER:70, LEDGER:86 → new: LEDGER:70 chose between the whole body in the slot and a TRUNCATED mark, for bodies that fit a slot; it never asked what happens to a body with paragraphs, tables and code that a single line destroys. LEDGER:86 concerns lc-55 answered-body records, a different subject
 decision: integrate the lc-308 and lc-311 lane commits 728bbcd and df1380c (dispatched from wan2gp-e3) into main, inside the 2026-09-24 freeze → YES - defect repairs in the migrator, exempt under LEDGER:147. Verified in main 2026-10-05 (unittest 1177 OK, --test 138 of 138, prove-rows held, leak scan clean), pushed as fc7e3d9; evidence in both closed-reason lines. Desk reading at wan2gp-e3, the operator word overrides
 decision: join disposition of LEDGER:187 beside LEDGER:169, LEDGER:181 → new: LEDGER:181 integrated the lc-307 lane; this is a later lane with its own two commits and items. LEDGER:169 records a measurement, a different subject
+decision: does lc-36 still gate the wan2gp migration now that every migrated citation is blob-pinned → NO - the body is recoverable from the pinned blob, so lc-36 loss premise (2026-08-27) predates lc-86. wan2gp migrated 2026-10-05 at its 599f6c7 and cut the 78 bodies into docs/items/ with a repo-side script. lc-36 stays STANDBY: a record home in the migrator is a new mechanism under the freeze
 
 ## Archive (pre-migration)
 
