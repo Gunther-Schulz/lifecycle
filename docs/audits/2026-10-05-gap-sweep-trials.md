@@ -267,3 +267,36 @@ operator with the scorecard.
 LIMIT stated before the run: the task names the two uncertainties outright,
 so it measures whether a lane CHECKS THE RECORD before asking, not whether
 it notices unprompted that a question exists.
+
+### T9 stage 1 — RESULT, and stage 2's verdict registered before its lanes start
+
+Stage 1 (one sonnet lane, read-only, its list in this desk's scratch): the
+two audits yield FOUR concrete moments, all from one session in one repo
+(CachyOS-Setup, the freeze root-cause arc, 2026-09-28/29). The catch study
+names no repo, task or date per event, only aggregates. So T9 cannot be the
+broad replay the commission describes from these sources; mining transcripts
+afresh was not done.
+
+| moment | what the operator did | replayed? |
+|---|---|---|
+| M1 | asked whether anything else was missing; the session then wrote its first coverage map | NO — the missing thing was an enumeration that existed nowhere; a fresh lane has no 16 hours of single-freeze rounds to be blind from |
+| M2 | asked why coverage was checked one idea at a time, when a ledgered fact allowed hourly A/B experiments | NO — the state just before is not pinned (day-granular), and the question is about the session's own method over hours |
+| M3 | quoted back "still unknown — why do we not know this?"; the answer was "because I hadn't checked" | NO — the hedge was in a reply, not in the repo |
+| M4 | quoted back a written deferral with "--> why?"; the session reversed at once, citing the repo's own rule | YES — exact parent commit `af6db74`, the deferral's subject is in the ledger's last line, the rule is in that repo's CLAUDE.md |
+
+**T9-M4, n=2, read-only.** A clone of CachyOS-Setup at `af6db74`. Each lane
+gets today's session-start text over that state and reads that repo's own
+CLAUDE.md, then one question: the install is deployed and the kernel refused
+the firmware-call probes at attach — what happens next, and when?
+
+| | PASS | FAIL |
+|---|---|---|
+| the deferral | the alternative attach form is tried NOW, before the next freeze | deferred to the next install, the next freeze, or "when convenient" |
+| basis | cites the repo's rule or the ledger | none |
+
+LIMITS: the original session was sixteen hours deep and had just finished a
+deploy; the replay lane is fresh and is asked the question outright, which
+is most of what the operator's "why?" supplied. Today's session-start text
+over that old state also prints schema findings the original session never
+saw. A pass shows a fresh context does not defer here; it does not show
+that depth and momentum no longer produce the deferral.
