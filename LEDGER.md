@@ -189,6 +189,7 @@ decision: join disposition of LEDGER:187 beside LEDGER:169, LEDGER:181 → new: 
 decision: does lc-36 still gate the wan2gp migration now that every migrated citation is blob-pinned → NO - the body is recoverable from the pinned blob, so lc-36 loss premise (2026-08-27) predates lc-86. wan2gp migrated 2026-10-05 at its 599f6c7 and cut the 78 bodies into docs/items/ with a repo-side script. lc-36 stays STANDBY: a record home in the migrator is a new mechanism under the freeze
 decision: lc-36 after the wan2gp re-grade trial: does lifecycle build a per-item record file for a migrated body → NO (operator, first-hand at wan2gp-e3 2026-10-05, on the desk recommendation): the slot declares itself TRUNCATED with its source range, no per-item record home. 4 of 4 trial lanes took such a file apart into existing kinds. Supersedes LEDGER:185; narrows LEDGER:70 to what fits a slot
 decision: join disposition of LEDGER:190 beside LEDGER:86, LEDGER:99, LEDGER:185, LEDGER:189 → new: LEDGER:70 and LEDGER:185 were decided before any consumer repo had tried a per-item file; this is the decision after the trial measured it
+decision: does lifecycle get a deadline observer for a parked item whose own text sets a time window → NOT NOW (operator, first-hand at wan2gp-e3 2026-10-05, on the desk recommendation): one instance, wan2gp w2-47, 28 days past its own one-week rule, and a re-grade caught it at pickup. A new mechanism under LEDGER:147, so it would need a probe first; reopen on a second instance
 
 ## Archive (pre-migration)
 
