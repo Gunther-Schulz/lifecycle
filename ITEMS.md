@@ -1786,12 +1786,3 @@ write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py
 done-criterion: migrate --schema-from with --entry-shape either honours the option or refuses the combination by name, and never accepts it silently; red-first on the combined invocation
 evidence: RELAYED from the lc-307 lane closing report 2026-10-05, gap 4; not reproduced at the booking desk
 blocked-by: NONE
-
-## lc-312
-grade: READY
-requirement: migrate mints the SAME decision question on every item of a branch (regrade, parked-decision, parked-evidence), and item ready resolves a decision blocker by question equality, so ONE ledger answer unblocks every item carrying it — record: LEDGER.md decision of 2026-10-05 on lc-36 and the wan2gp migration
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
-done-criterion: a decision question migrate mints is unique to its item (it carries the item source anchor or id) and still ledger-storable, so answering one clears exactly one; red-first on two migrated items of one branch, asserting an answer to the first leaves the second BLOCKED
-evidence: MEASURED at the wan2gp desk 2026-10-05 on a scratch migration of the wan2gp carrier at lifecycle 2d8f70e: one ledger add decision answering the parked-evidence question, then item ready on two different items each printed UNBLOCKED citing that one ledger line. 18 items carry that question in wan2gp and 60 carry the regrade question. DERIVED, not measured: the regrade and parked-decision branches behave the same, since each is one literal. Bounded today because a migrated item is NEW and promotion stays a desk judgment
-blocked-by: NONE

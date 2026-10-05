@@ -2230,5 +2230,16 @@ blocked-by: NONE
 closed-reason: 2026-10-05 under the heading entry shape a write-set or done-criterion stated under its literal label now migrates with the entry own words, an unlabelled or twice-labelled one stays UNKNOWN and the report prints the per-slot counts. Same lane and brief as lc-308, red-first against an inert stub (14 failures, 3 errors) plus two mutants. Accepted deviations from the brief: a slot_outcomes helper computes the report counts, and a single label with an empty value is counted with the unlabelled. The done-criterion survives both. VERIFIED AT THE DESK on a scratch copy of the motivating carrier: 77 items written, each slot filled 38 and UNKNOWN 39, item check CLEAN. MEASURED there and NOT a defect of this item: 33 of the 38 carried write-sets classify as prose under classify_write_set, 5 as paths; they are the entry own words and are rewritten at re-grade. Bullet-shape runs are unchanged by construction (Entry.body empty).
 closed-ref: df1380c
 
+## lc-312
+grade: DONE
+requirement: migrate mints the SAME decision question on every item of a branch (regrade, parked-decision, parked-evidence), and item ready resolves a decision blocker by question equality, so ONE ledger answer unblocks every item carrying it — record: LEDGER.md decision of 2026-10-05 on lc-36 and the wan2gp migration
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a decision question migrate mints is unique to its item (it carries the item source anchor or id) and still ledger-storable, so answering one clears exactly one; red-first on two migrated items of one branch, asserting an answer to the first leaves the second BLOCKED
+evidence: MEASURED at the wan2gp desk 2026-10-05 on a scratch migration of the wan2gp carrier at lifecycle 2d8f70e: one ledger add decision answering the parked-evidence question, then item ready on two different items each printed UNBLOCKED citing that one ledger line. 18 items carry that question in wan2gp and 60 carry the regrade question. DERIVED, not measured: the regrade and parked-decision branches behave the same, since each is one literal. Bounded today because a migrated item is NEW and promotion stays a desk judgment
+blocked-by: NONE
+closed-reason: 2026-10-05 the question now ends in the item id, applied at build_items; red-first in all four branches (old READY, PARKED-evidence, PARKED-decision, slot-incomplete), so the regrade and parked-decision halves the booking marked DERIVED are now measured. Carriers migrated BEFORE this still hold the shared question; their repair is a per-item amend, reported to the wan2gp desk
+closed-ref: 7498b39
+
 ## Archive (pre-migration)
 
