@@ -2532,6 +2532,20 @@ def level3_lines(text: str) -> int:
     return sum(1 for ln in text.split("\n") if _LEVEL3_LINE.match(ln))
 
 
+#: What a `heading` read does NOT check, said in the run and in the report.
+#: The mirror of `bullet_shape_note`, and a plain statement rather than a
+#: detector on purpose: in this shape every bullet is body by DECLARATION, and
+#: no predicate tells an entry somebody wrote as a top-level bullet from an
+#: entry's own bold-led prose (measured on one real carrier: 233 bold
+#: top-level bullets, 3 of them entries that got no item). A guess listed as
+#: a finding would fire on the other 230.
+HEADING_SHAPE_UNCHECKED = (
+    "THE SHAPE IS DECLARED, SO THIS IS NOT CHECKED: an entry written as a "
+    "top-level bullet beneath a heading entry is read as that entry's body "
+    "and gets no item of its own. If this carrier mixes the two forms, find "
+    "those bullets in the source before trusting the item count.")
+
+
 def bullet_shape_note(read: Read, src_name: str) -> str:
     """The ONE line a `bullet` read prints when entries sit beneath a level-3
     heading, or "" where none does.
@@ -3118,6 +3132,7 @@ def run(args, out, ctx) -> int:
         out(f"    top-level bullets:        {read.body_bullets} inside an "
             f"entry's body, {len(read.outside_bullets)} outside any entry — "
             "none is an entry in this shape")
+        out(f"    {HEADING_SHAPE_UNCHECKED}")
     note = bullet_shape_note(read, src_name)
     if note:
         out(f"    {note}")
@@ -3530,7 +3545,8 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
           f"as two counts and are in neither column: {read.body_bullets} "
           "inside an entry's body, which travel with that entry's line "
           f"range, and {len(read.outside_bullets)} outside any entry, which "
-          "nothing carries and which are listed below.")
+          "nothing carries and which are listed below. "
+          + HEADING_SHAPE_UNCHECKED)
         a("")
     else:
         bullets_ok = (read.total_bullets == len(read.entries)

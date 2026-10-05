@@ -1770,6 +1770,45 @@ class MintedDecisionQuestionsAreAnswerable(unittest.TestCase):
                          "evidence, or drop")
 
 
+class HeadingShapeSaysWhatItDoesNotCheck(unittest.TestCase):
+    """Under `--entry-shape heading` every bullet is body, by declaration. A
+    carrier that ALSO holds entries written as top-level bullets loses them
+    into the preceding heading entry's body: measured on a real carrier,
+    three entries got no item and the run printed only two counts. No
+    predicate separates such a bullet from body prose (on that carrier 233
+    bold top-level bullets, 3 of them entries), so the run SAYS the shape is
+    unchecked instead of pretending to detect it."""
+
+    SOURCE = ("# old\n\n## Open\n\n"
+              "### A heading entry\n\nits body\n\n\n"
+              "- **An entry written as a bullet.** its own body\n")
+
+    def test_the_run_and_the_report_say_a_bullet_entry_is_absorbed(self):
+        d = build(self.SOURCE)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, outp = migrate_run(d, "--entry-shape", "heading")
+        self.assertEqual(code, exits.CLEAN, outp)
+        # The absorption itself, so the sentence below is about a real case:
+        # one item for two entries.
+        parsed = items.parse((d / "ITEMS.md").read_text(encoding="utf-8"))
+        self.assertEqual(len(parsed.items), 1)
+        report = (d / REPORT).read_text(encoding="utf-8")
+        for where, text in (("run", outp), ("report", report)):
+            with self.subTest(where=where):
+                self.assertIn(migrate.HEADING_SHAPE_UNCHECKED,
+                              " ".join(text.split()))
+
+    def test_the_bullet_shape_does_not_carry_the_sentence(self):
+        """MUST NOT MOVE: it is a statement about the heading shape only."""
+        d = build("# old\n\n## Open\n\n- **READY 2026-01-01 — r.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, outp = migrate_run(d)
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertNotIn("gets no item of its own", outp)
+        self.assertNotIn("gets no item of its own",
+                         (d / REPORT).read_text(encoding="utf-8"))
+
+
 LIVE_HEAD = ("# BACKLOG — the live queue\n"
              "\n"
              "This file is the queue. Add work here.\n"
