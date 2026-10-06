@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 306
+added: 307
 compacted: 0
 
 ## lc-3
@@ -1819,4 +1819,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_retire.py
 done-criterion: Where the fire log on this machine holds no exit event for a kind while the kind's own tracked history shows exits were taken (closed bodies in the done home, close commits in git), the walk answers COULD NOT VERIFY and names the log as machine-local; it does not print FINDING. Control: a kind with no exit anywhere still fires kind_grew_without_exit. Red-first: an empty fire log over this repo's real carriers prints today's three findings (items, done bodies, arcs). The staleness line claiming this is the first walk is held to the same rule or says it speaks for this machine only.
 evidence: MEASURED 2026-10-06 on the laptop, whose fire log starts 2026-10-05T21:09Z (first record read): lifecycle audit exits 3 and prints FINDING [kind_grew_without_exit] for items (138), done bodies (175) and arcs (2), each with 0 exit events, text saying the kind is not draining at all. Same machine, same minute: item ratio reports 11 drained in the 7-day window from the carriers, and git log since 2026-09-24 holds 38 close-or-drop commits. Two instruments on one quantity disagree and the walk is the one reading a log that never left the building machine. The session-start banner hedges the same absence correctly for moments (a fact about THIS machine); the walk does not. Emit site: plugin/cli/lifecycle_core/retire.py:359, events read near :436.
+blocked-by: NONE
+
+## lc-315
+grade: READY
+requirement: A FINDING ADDED TO THE TOOL WAS NEVER SWEPT OVER ITS DEPENDENTS: 9 OF 9 GOVERNED DECLARATIONS FAIL kind check ON A WRITER THE TOOL ITSELF USED TO ACCEPT. lc-279 (f4e26a0, 2026-09-24) made a verb reference naming a command group a dangling_reference; every governed repo still declares the ledger kind's writer as the bare group, so kind check and lane list are red in all of them and have been for twelve days. Record: standort run 2026-10-06, LEDGER decision of that date.
+goal: enforce-the-invariants
+write-set: venue: .claude/lifecycle.json in each of the nine governed repos (one commit per repo, each at its own desk or by operator-approved edit)
+done-criterion: kind check in each of the nine governed repos prints no dangling_reference line for the ledger kind, the writer naming the four executable actions as this repo's own declaration does; lifecycle's own kind check stays CLEAN as the control. The per-repo edit is each repo's own commit. Verifier: the sweep loop of the evidence slot re-run, nine zeros and the control zero.
+evidence: MEASURED 2026-10-06, one loop over every declaration found on this machine: beat-the-books, begehung, CachyOS-Setup, daneel, dispatch-guards, dotfiles, skill-craft, statiker and claude-code-cache-fix each print 1 dangling_reference line and each carry the bare group as writer; lifecycle prints 0 and carries the four actions (the control, and the form to copy). lane list over the roster exits FINDING on dotfiles for this alone. DERIVED: a red that stands in every governed repo is the standing-red class law 26 names, readers learn to pass over it. wan2gp is not on this machine and was not read.
 blocked-by: NONE
