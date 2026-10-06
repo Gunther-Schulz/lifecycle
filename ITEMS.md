@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 305
+added: 306
 compacted: 0
 
 ## lc-3
@@ -1810,4 +1810,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py,test/test_migrate.py
 done-criterion: migrate --schema-from with --entry-shape either honours the option or refuses the combination by name, and never accepts it silently; red-first on the combined invocation
 evidence: RELAYED from the lc-307 lane closing report 2026-10-05, gap 4; not reproduced at the booking desk
+blocked-by: NONE
+
+## lc-314
+grade: READY
+requirement: THE AUDIT WALK READS A MACHINE-LOCAL LOG AS THE REPO'S EXIT HISTORY, SO ON A SECOND MACHINE A DRAINING KIND IS REPORTED AS NOT DRAINING AT ALL. kind_grew_without_exit counts exit events in the fire log under XDG_STATE_HOME, which does not travel with the repo; the carriers and git do. Record: standort run 2026-10-06, LEDGER decision of that date.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_retire.py
+done-criterion: Where the fire log on this machine holds no exit event for a kind while the kind's own tracked history shows exits were taken (closed bodies in the done home, close commits in git), the walk answers COULD NOT VERIFY and names the log as machine-local; it does not print FINDING. Control: a kind with no exit anywhere still fires kind_grew_without_exit. Red-first: an empty fire log over this repo's real carriers prints today's three findings (items, done bodies, arcs). The staleness line claiming this is the first walk is held to the same rule or says it speaks for this machine only.
+evidence: MEASURED 2026-10-06 on the laptop, whose fire log starts 2026-10-05T21:09Z (first record read): lifecycle audit exits 3 and prints FINDING [kind_grew_without_exit] for items (138), done bodies (175) and arcs (2), each with 0 exit events, text saying the kind is not draining at all. Same machine, same minute: item ratio reports 11 drained in the 7-day window from the carriers, and git log since 2026-09-24 holds 38 close-or-drop commits. Two instruments on one quantity disagree and the walk is the one reading a log that never left the building machine. The session-start banner hedges the same absence correctly for moments (a fact about THIS machine); the walk does not. Emit site: plugin/cli/lifecycle_core/retire.py:359, events read near :436.
 blocked-by: NONE
