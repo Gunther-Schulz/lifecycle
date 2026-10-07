@@ -1956,6 +1956,22 @@ def provenance_index(*texts) -> dict:
     question that belongs to the carrier's own shape check, not here.
     """
     out = {}
+    for src, line, end, _blob, ident in provenance_records(*texts):
+        out.setdefault((src, line, end), ident)
+    return out
+
+
+def provenance_records(*texts) -> list:
+    """`[(source, line, end, blob-or-None, ident)]` over the same raw blocks
+    `provenance_index` reads, one record per provenance token, in order.
+
+    The scanner `provenance_index` is derived from (lc-114). A token written
+    by a build that pins (`{src}:{line}-{end} at blob <sha>`) carries the
+    IMMUTABLE half of the anchor; `blob` is that sha, or None for a legacy
+    unpinned token. The pin is read off the three tokens that follow the
+    range, matched whole, never searched for as a substring.
+    """
+    out = []
     for text in texts:
         if not text:
             continue
@@ -1966,18 +1982,26 @@ def provenance_index(*texts) -> dict:
                 continue
             if ident is None:
                 continue
-            for tok in raw.split():
+            toks = raw.split()
+            for i, tok in enumerate(toks):
                 m = _PROVENANCE_TOKEN.fullmatch(tok.strip(_TOKEN_WRAPPERS))
                 if m is None:
                     continue
-                out.setdefault(
-                    (m.group("src"), int(m.group("line")),
-                     int(m.group("end"))), ident)
+                blob = None
+                if (i + 3 < len(toks) and toks[i + 1] == "at"
+                        and toks[i + 2] == "blob"):
+                    pin = re.fullmatch(
+                        r"[0-9a-f]{40}", toks[i + 3].strip(_TOKEN_WRAPPERS))
+                    blob = pin.group(0) if pin else None
+                out.append((m.group("src"), int(m.group("line")),
+                            int(m.group("end")), blob, ident))
     return out
 
 
-def reimported_bodies(entries, src_name: str, index: dict) -> list:
-    """`[(entry, colliding-ident)]` — entries this migration itself produced.
+def reimported_bodies(entries, src_name: str, records: list,
+                      src_text: str, read_blob) -> tuple:
+    """`([(entry, colliding-ident)], [unverifiable-record])` — entries this
+    migration itself produced.
 
     RE-IMPORT IS A PROVENANCE QUESTION, NOT A HEADLINE ONE (lc-73). The
     headline detector beside this one asks whether two bodies share a title,
@@ -1987,18 +2011,86 @@ def reimported_bodies(entries, src_name: str, index: dict) -> list:
     migration WROTE cannot decay that way, so it is what the same-work
     question is asked against.
 
+    THE ANCHOR IS THE PINNED BLOB, NOT THE LINE NUMBERS (lc-114). The
+    `(source, line, end)` triple moves whenever anybody edits above the entry,
+    and a lookup keyed on it then misses a legitimate re-merge; the blob the
+    same record pins is immutable. So each record of this source resolves its
+    pinned blob through `read_blob(sha)` (text, or None), and its body --
+    the lines `line..end` of THAT blob -- is compared with the body of each
+    fresh entry's own lines. Three answers: (1) the pin resolves -> match or
+    no match by body; (2) no match -> the entry stays unmatched and the
+    headline refusal stands; (3) a record is UNPINNED or its pin does not
+    resolve -> it is returned in the second list and NEVER read through the
+    line numbers, because that fall-back would restore the old behaviour
+    while reading as a fix. The list is returned only while a fresh entry is
+    still unmatched: with every entry matched there is nothing left the
+    unreadable record could have decided.
+
+    EACH RECORD ANSWERS ONCE. A pasted copy of a migrated body is a second
+    body, so it does not ride the first one's record.
+
     THE POPULATION IS `duplicate_bodies`', to the entry: the grade-None skip
     is the same skip, because a closure is archived verbatim rather than
     written as an item and has no item body to collide with.
     """
-    out = []
+    fresh_lines = src_text.split("\n")
+
+    def body(lines, line, end):
+        return "\n".join(lines[line - 1:end]).strip()
+
+    resolved, unverifiable, cache = [], [], {}
+    for r in records:
+        if r[0] != src_name:
+            continue
+        if r[3] is None:
+            unverifiable.append(r)
+            continue
+        if r[3] not in cache:
+            cache[r[3]] = read_blob(r[3])
+        text = cache[r[3]]
+        if text is None:
+            unverifiable.append(r)
+            continue
+        resolved.append((r, body(text.split("\n"), r[1], r[2])))
+    used, out = set(), []
     for e in entries:
         if e.grade is None:
             continue
-        ident = index.get((src_name, e.line, e.end_line))
-        if ident is not None:
-            out.append((e, ident))
-    return out
+        fresh = body(fresh_lines, e.line, e.end_line)
+        if not fresh:
+            continue
+        for i, (r, old) in enumerate(resolved):
+            if i not in used and old == fresh:
+                used.add(i)
+                out.append((e, r[4]))
+                break
+    matched = {id(e) for e, _ in out}
+    open_left = any(e.grade is not None and id(e) not in matched
+                    for e in entries)
+    return out, (unverifiable if open_left else [])
+
+
+def pinned_blob_reader(repo: Path, on_disk: dict):
+    """`read_blob(sha)` -> text or None. A blob whose bytes are on disk right
+    now (`on_disk`: sha -> text) is answered from there, because an anchor
+    pinned to the file this very run froze is not in any object database
+    until somebody commits it; every other sha is asked of git."""
+    def read_blob(sha: str):
+        if sha in on_disk:
+            return on_disk[sha]
+        try:
+            p = subprocess.run(
+                ["git", "-C", str(repo), "cat-file", "blob", sha],
+                capture_output=True)
+        except OSError:
+            return None
+        if p.returncode != 0:
+            return None
+        try:
+            return p.stdout.decode("utf-8")
+        except UnicodeDecodeError:
+            return None
+    return read_blob
 
 
 def _closure_marker(src_name: str) -> "re.Pattern":
@@ -2747,6 +2839,7 @@ def run(args, out, ctx) -> int:
         src_bytes = src.read_bytes()
         done_bytes = b"" if src_done is None else src_done.read_bytes()
         src_text = src.read_text(encoding="utf-8")
+        src_text_asread = src_text
         done_text = "" if src_done is None else src_done.read_text(
             encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
@@ -3040,9 +3133,25 @@ def run(args, out, ctx) -> int:
         # `Done` -- a NEW open entry on that range was then skipped as
         # "already migrated as Done". An archive body is not an item; the
         # closure half is answered from the markers by `rearchived_closures`.
-        reimported = reimported_bodies(
+        reimported, unverifiable_anchors = reimported_bodies(
             read.entries, src_name,
-            provenance_index(*[live_region(t) for t in home_texts]))
+            provenance_records(*[live_region(t) for t in home_texts]),
+            src_text,
+            pinned_blob_reader(ctx.repo, {
+                blob_sha(src_bytes): src_text_asread,
+                anchor_blob: src_text}))
+        if unverifiable_anchors:
+            out(f"COULD NOT VERIFY: {len(unverifiable_anchors)} anchor(s) in "
+                f"the successor homes name {src_name} with no blob pin, or a "
+                "pin that does not resolve, while this source holds entries "
+                "no resolvable anchor accounts for. Whether those entries "
+                "are this migration's own output coming back cannot be "
+                "established from line numbers, which move; nothing was "
+                "written. Anchors:")
+            for r in unverifiable_anchors[:10]:
+                out(f"    {r[4]}: {r[0]}:{r[1]}-{r[2]}"
+                    + ("" if r[3] is None else f" at blob {r[3]}"))
+            return exits.COULD_NOT_VERIFY
         # A CLOSURE COMES BACK THE SAME WAY AND IS RECOGNISED THE SAME WAY
         # (lc-309) — by its archive marker, since it has no block. Marked
         # here, beside the open half, so everything below reads ONE field.

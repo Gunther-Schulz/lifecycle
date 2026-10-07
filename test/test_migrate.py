@@ -1111,7 +1111,11 @@ class ReImportByProvenance(unittest.TestCase):
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         (d / "ITEMS.md").write_text(self.home(self.block(
             f"{p}-1", "a requirement somebody rewrote after the migration",
-            f"BACKLOG.md:{line}-{end}")), encoding="utf-8")
+            f"BACKLOG.md:{line}-{end}{migrate.BLOB_PIN}"
+            f"{migrate.blob_sha(self.SOURCE.encode())}")),
+            encoding="utf-8")
+        # lc-114: the anchor is the PINNED blob; an unpinned one is COULD NOT
+        # VERIFY and is pinned by tests/test_drain_b_m2b.py.
 
         read = migrate.read_carrier(self.SOURCE)
         for e in read.entries:
@@ -1169,7 +1173,9 @@ class ReImportByProvenance(unittest.TestCase):
         (d / "ITEMS-DONE.md").write_text(
             f"schema: {items.SCHEMA_FLOOR}\n\n" + self.block(
                 f"{p}-9", "a closed body nobody expects back",
-                f"BACKLOG.md:{line}-{end}"), encoding="utf-8")
+                f"BACKLOG.md:{line}-{end}{migrate.BLOB_PIN}"
+                f"{migrate.blob_sha(self.SOURCE.encode())}"),
+            encoding="utf-8")
         code, out = migrate_run(d, "--from", "BACKLOG.md",
                                 "--from-done", "NONE", "--merge")
         self.assertIn(f"already migrated as {p}-9", out)
@@ -1257,10 +1263,12 @@ class ReImportByProvenance(unittest.TestCase):
         read = migrate.read_carrier(self.SOURCE)
         for e in read.entries:
             migrate.classify(e)
-        self.assertEqual(
-            migrate.reimported_bodies(read.entries, "BACKLOG.md",
-                                      migrate.provenance_index(near)), [],
-            "an extended range is not the range")
+        matched, unverifiable = migrate.reimported_bodies(
+            read.entries, "BACKLOG.md", migrate.provenance_records(near),
+            self.SOURCE, lambda sha: None)
+        self.assertEqual(matched, [], "an extended range is not the range")
+        self.assertEqual(len(unverifiable), 1,
+                         "the unpinned record is surfaced, not read by line")
 
         other = self.home(self.block(f"{p}-1", "unrelated work",
                                      f"OTHER.md:{line}-{end}"))
@@ -2167,7 +2175,10 @@ class FreezeBanner(unittest.TestCase):
         `BACKLOG.md:5-6` stopped recognising a body the reader now saw at line
         11. The re-import detector is the LOUD half; the quiet half is that
         those anchors still RESOLVE afterwards, several lines off."""
-        d = build("# old\n\n## Open\n\n- **READY 2026-01-01 — e.** body\n")
+        # lc-114: with an OPEN entry in the source this legacy unpinned
+        # anchor is now COULD NOT VERIFY before the disposition is reached,
+        # so the source holds a closure only.
+        d = build("# old\n\n## Done\n\n- **DONE 2026-01-01 — c.** body\n")
         self.addCleanup(shutil.rmtree, d, ignore_errors=True)
         (d / "ITEMS.md").write_text(
             "schema: 2\nbaseline: 1\nadded: 0\ncompacted: 0\n\n"

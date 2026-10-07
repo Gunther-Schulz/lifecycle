@@ -120,5 +120,80 @@ class ArchiveMarkersAreNotItemProvenance(unittest.TestCase):
         self.assertIn("RE-IMPORTS skipped:       2 ", out)
 
 
+class ReimportResolvesThePinnedBlob(unittest.TestCase):
+    """lc-114 — the re-import lookup compares BODIES at the pinned blob."""
+
+    TWO = ("# second\n\n## Open\n\n"
+           "- **READY 2026-09-01 — alpha work.** alpha body\n"
+           "- **READY 2026-09-02 — beta work.** beta body\n")
+
+    def _merged(self):
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        migrate_run(d)
+        commit_all(d, "m0")
+        (d / "SECOND.md").write_text(self.TWO, encoding="utf-8")
+        commit_all(d, "s")
+        self.assertEqual(migrate_run(
+            d, "--from", "SECOND.md", "--from-done", "NONE", "--merge")[0],
+            exits.CLEAN)
+        commit_all(d, "m1")
+        return d
+
+    def _remerge(self, d, text, report="docs/audits/r2.md"):
+        (d / "SECOND.md").write_text(text, encoding="utf-8")
+        return run_cli(d, "migrate", "--report", report, "--from",
+                       "SECOND.md", "--from-done", "NONE", "--merge")
+
+    def test_an_edit_above_a_migrated_entry_is_still_a_reimport(self):
+        d = self._merged()
+        before = (d / "ITEMS.md").read_text(encoding="utf-8")
+        edited = (d / "SECOND.md").read_text(encoding="utf-8").replace(
+            "## Open\n", "A paragraph added above.\nAnd another.\n\n## Open\n",
+            1)
+        code, out = self._remerge(d, edited)
+        self.assertNotIn("merge_duplicate_body", out)
+        self.assertIn("RE-IMPORTS skipped:       2 ", out)
+        self.assertEqual((d / "ITEMS.md").read_text(encoding="utf-8")
+                         .count("alpha work"), before.count("alpha work"))
+
+    def test_a_new_duplicate_headline_with_another_body_still_refuses(self):
+        """MUST NOT FIRE the other way: the repair is not a no-op."""
+        d = self._merged()
+        edited = (d / "SECOND.md").read_text(encoding="utf-8") + (
+            "- **READY 2026-09-01 — alpha work.** a DIFFERENT body\n")
+        code, out = self._remerge(d, edited)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[merge_duplicate_body]", out)
+
+    def test_an_unpinned_anchor_is_could_not_verify_not_a_key_match(self):
+        d = self._merged()
+        items = (d / "ITEMS.md").read_text(encoding="utf-8")
+        import re as _re
+        unpinned = _re.sub(r"( at blob [0-9a-f]{40})", "", items)
+        self.assertNotEqual(unpinned, items)
+        (d / "ITEMS.md").write_text(unpinned, encoding="utf-8")
+        commit_all(d, "unpin")
+        code, out = self._remerge(
+            d, (d / "SECOND.md").read_text(encoding="utf-8") + (
+                "- **READY 2026-09-09 — gamma work.** gamma body\n"))
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("COULD NOT VERIFY", out)
+        self.assertNotIn("gamma work", (d / "ITEMS.md").read_text(
+            encoding="utf-8"))
+
+    def test_an_unresolvable_pin_is_could_not_verify(self):
+        d = self._merged()
+        items = (d / "ITEMS.md").read_text(encoding="utf-8")
+        import re as _re
+        gone = _re.sub(r" at blob [0-9a-f]{40}", " at blob " + "a" * 40, items)
+        (d / "ITEMS.md").write_text(gone, encoding="utf-8")
+        commit_all(d, "badpin")
+        code, out = self._remerge(
+            d, (d / "SECOND.md").read_text(encoding="utf-8") + (
+                "- **READY 2026-09-09 — gamma work.** gamma body\n"))
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+
+
 if __name__ == "__main__":
     unittest.main()
