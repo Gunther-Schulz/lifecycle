@@ -2500,5 +2500,21 @@ closed-met: none
 closed-decided: none
 closed-ref: cb08711f055046c7959bf2b2c6ebed927bfc7035
 
+## lc-85
+grade: DONE
+requirement: migrate's terminal summary prints CLEAN beside a reconciliation that can be 0 read == 0 written, so a run that migrated nothing reports identically to one that migrated correctly. The report BODY is honest; the summary line is a paraphrase over it
+goal: tend
+write-set: plugin/cli/lifecycle_core/migrate.py,test/
+done-criterion: the summary line cannot read CLEAN over a vacuous identity: a run whose reconciliation is 0 == 0 says so in the summary itself, in the three-answer form. Red-first: a migrate run over a repo with no source entries, whose summary today says CLEAN and afterwards does not
+evidence: Relayed from the lifecycle-migration arc's wave-2 digest, UNVERIFIED at this desk: the desk booking this did not reproduce the vacuous run. What IS verified here is that the same class is live in this repo's sibling instruments, which is why it is worth the entry rather than a note: absence-scan prints clean over a class declared off with no degraded line, and lifecycle ledger check answers COULD NOT VERIFY over 252 unreadable lines that nothing reads. The class is the repo's own three-answers rule applied to a SUMMARY rather than to a check
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 2026-10-07 the booked criterion (three-answer form) contradicted four existing must-not-move tests; a lane reproduced the defect, tried exit 3, saw them go red and reverted
+amended-done-criterion: 2026-10-07 RULED at the desk 2026-10-07 on wave A lane A evidence: exit 0 STAYS for a run that read zero entries, because the BulletShapeOverNoEntries tests already settle that zero entries is an answer and they do not move. Only the summary changes: a run whose reconciliation is 0 read == 0 written says in its summary line that it was vacuous and examined no entry, and never prints a bare CLEAN. Red-first: a migrate run over a repo with no source entries, whose summary today says CLEAN.
+closed-reason: 2026-10-07 A run that read and wrote zero entries says so in its summary; exit 0 stays, as ruled. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 28037a28e94bfb1c969d78d55f736b94cf7976c8
+
 ## Archive (pre-migration)
 
