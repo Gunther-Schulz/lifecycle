@@ -3154,5 +3154,19 @@ closed-met: none
 closed-decided: none
 closed-ref: ffb413b8b24087d996119ff225ad73bfc0b6a26e
 
+## lc-215
+grade: DONE
+requirement: run_schema's 'in every carrier' MEANS EXACTLY THREE KINDS, AND BOTH SIDES OF ITS AGREEMENT CHECK SHARE THAT BLIND SPOT. declaration.carrier_homes covers items, done bodies and ledger lines only, with ledger lines defaulting to LEDGER.md UNCONDITIONALLY. Two consequences: (a) a declaring repo that registers no ledger-lines kind and has no LEDGER.md at root gets COULD NOT VERIFY at migrate.py:1937 and the whole schema migration refuses BEFORE printing any plan; (b) the CLEAN at 1973-1975 says the repo is 'already at schema N in the declaration and in every carrier' over those three kinds only. check_schema_agreement resolves through the SAME function, so both sides of that comparison share the blind spot — an expectation derived from the artifact it grades.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/declaration.py,test/test_schema.py
+done-criterion: The CLEAN sentence's scope matches what it examined — it names the kinds it checked rather than claiming 'every carrier' — and a repo whose declared kinds include a schema-bearing carrier outside those three is either covered or told it is not. The unconditional LEDGER.md default is decided: either it is justified in the code's own words or a repo without that kind stops being refused for lacking a file it never declared. MUST-NOT-BUILD: this is not a licence to widen carrier_homes silently — widening it changes what every caller resolves, and the dependents question is part of the work. RED-FIRST: a declaring repo with no ledger-lines kind and no LEDGER.md currently cannot run a schema migration at all; after, it either migrates or is told precisely why not.
+evidence: RELAYED from the lc-192 lane, DERIVED on its side and NOT constructed: it read carrier_homes and run_schema and explicitly said it did not build the repo population that would exercise (a). MEASURED at this desk and it is the reason this is not hypothetical: my own lc-205 reproduction hit consequence (a) twice — a scratch repo with no ITEMS-DONE.md refused with 'COULD NOT VERIFY: the done bodies carrier could not be read for its schema line', and with no schema head on LEDGER.md refused again with the ledger-lines equivalent, both BEFORE any plan printed. I built those fixtures to reproduce a different defect and was stopped by this one, which is the strongest evidence available that the population is reachable rather than theoretical. DERIVED: this is the audit's finding-4 shape one level out — both sides of a comparison resolving through one function cannot detect that function's omission.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The schema migration names the carriers it examined and no longer refuses a ledger nobody declared; arcs/INDEX left unreached is booked as lc-335. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: 66d9cdfe198ed6d7109afcfe168fb9a432548a95
+
 ## Archive (pre-migration)
 
