@@ -7,7 +7,9 @@ lc-136: the explicit-zero sweep's disposition table.
 
 import _isolation  # noqa: F401  # lc-183: before any verb runs
 
+import ast
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -118,6 +120,141 @@ class ReachArmSkipIsVisible(unittest.TestCase):
         ''')
         p = _run(d)
         self.assertEqual(p.returncode, COULD_NOT_VERIFY, p.stdout + p.stderr)
+
+
+# --- lc-136: the explicit-zero sweep --------------------------------------
+
+#: A STATED zero in an asserted string: `<label>: 0 — none` or
+#: `<label>: 0 of <n>`. Law 1 requires the stated zero; the defect is that the
+#: assertion is satisfied by a producer that is DEAD (lc-124: `SERIALIZE: 0`
+#: stayed green under a mutation dropping every warning). Scope, named so the
+#: sweep is not over-read: it covers asserted STRINGS carrying a stated zero
+#: in test_waves.py and test_items.py; `assertEqual(x, [])` over a returned
+#: list is a different shape and is not swept here.
+_STATED_ZERO = re.compile(r": 0 (?:—|of )")
+_SWEPT = ("test_waves.py", "test_items.py")
+
+#: Every swept arm's DISPOSITION: the non-zero arm over the SAME producer that
+#: goes red when the producer is dead. `(file, test, regex)`: the regex must
+#: match the pair's own source, so a pair whose assertion was edited away goes
+#: red here. The table is checked BOTH ways against the sweep's derivation
+#: (an arm the sweep finds with no row, a row whose arm is gone), so it cannot
+#: age silently. Producer-dead mutations run for the three producers,
+#: 2026-10-07: bucket counts (`hits = []`): the pairs below for prose, unset,
+#: venue, foreign and unresolved went red, the zero arms stayed green;
+#: SERIALIZE (`if True:`): only the cross-group arm went red; FILTERED
+#: (`len(kept)*0`): test_filter_returns_only_that_goal went red.
+_PROSE_PAIR = ("test_waves.py",
+               "test_a_prose_write_set_lands_in_the_prose_bucket",
+               r'"prose: 2"')
+_VENUE_PAIR = ("test_waves.py",
+               "test_the_venue_bucket_prints_its_count_and_LEAVES_prose_empty",
+               r'"  venue: 1"')
+_FILTER_PAIR = ("test_items.py", "test_filter_returns_only_that_goal",
+                r"FILTERED to goal=verify: 1 of 2")
+DISPOSITIONS = {
+    ("test_waves.py", "test_every_non_path_bucket_prints_its_ZERO"): (
+        _PROSE_PAIR, _VENUE_PAIR,
+        ("test_waves.py",
+         "test_UNKNOWN_and_NONE_land_in_their_own_bucket_not_in_prose",
+         r"WAVE_UNSET\}: 1"),
+        ("test_waves.py", "test_a_foreign_path_lands_in_the_other_repo_bucket",
+         r"WAVE_FOREIGN\}: 1"),
+        ("test_drain_c_c4.py",
+         "test_the_misspelled_item_is_NAMED_with_the_path_that_did_not_resolve",
+         r"WAVE_UNRESOLVED\}: 1")),
+    ("test_waves.py",
+     "test_UNKNOWN_and_NONE_land_in_their_own_bucket_not_in_prose"): (
+        _PROSE_PAIR,),
+    ("test_waves.py",
+     "test_a_partition_with_no_cross_group_file_prints_its_ZERO"): (
+        ("test_waves.py",
+         "test_the_cross_group_shared_file_is_NAMED_with_BOTH_groups",
+         r"tools/cold\.py:"),),
+    ("test_waves.py",
+     "test_the_venue_bucket_prints_its_count_and_LEAVES_prose_empty"): (
+        _PROSE_PAIR,),
+    ("test_waves.py", "test_a_carrier_with_no_venue_prints_the_venue_ZERO"): (
+        _VENUE_PAIR,),
+    ("test_items.py",
+     "test_declared_goal_with_no_ready_work_is_an_explicit_zero"): (
+        _FILTER_PAIR,),
+    ("test_items.py", "test_the_reserved_meta_goal_is_queryable"): (
+        _FILTER_PAIR,),
+}
+
+
+def _functions(path: Path):
+    src = path.read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    out = {}
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            out.setdefault(node.name, []).append(
+                (node, ast.get_source_segment(src, node) or ""))
+    return out
+
+
+def _strings(node):
+    """Every literal string piece under `node`, f-string pieces included."""
+    for sub in ast.walk(node):
+        if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+            yield sub.value
+
+
+def sweep():
+    """`{(file, test): [asserted zero strings]}` DERIVED from the sources."""
+    found = {}
+    for name in _SWEPT:
+        for fname, defs in _functions(TEST_DIR / name).items():
+            for node, _src in defs:
+                for call in ast.walk(node):
+                    if not (isinstance(call, ast.Call)
+                            and isinstance(call.func, ast.Attribute)
+                            and call.func.attr == "assertIn"):
+                        continue
+                    for text in _strings(call.args[0]):
+                        if _STATED_ZERO.search(text):
+                            found.setdefault((name, fname), []).append(text)
+    return found
+
+
+class ExplicitZeroArmsAreEachPaired(unittest.TestCase):
+
+    def test_the_sweep_finds_arms_and_names_each_with_its_disposition(self):
+        derived = sweep()
+        report = "\n".join(
+            f"  {f}::{t} {texts} -> "
+            + ("; ".join(p[1] for p in DISPOSITIONS[(f, t)])
+               if (f, t) in DISPOSITIONS else "NO DISPOSITION")
+            for (f, t), texts in sorted(derived.items()))
+        # A zero count here would be a stated zero, never an omitted key.
+        self.assertTrue(derived, "the sweep found no explicit-zero arm: it "
+                        "examined nothing or its pattern is dead")
+        self.assertEqual(sorted(derived), sorted(DISPOSITIONS),
+                         "arms found vs dispositions recorded:\n" + report)
+
+    def test_every_pair_exists_and_still_asserts_a_nonzero_over_the_producer(self):
+        for (f, t), pairs in sorted(DISPOSITIONS.items()):
+            for pfile, ptest, regex in pairs:
+                with self.subTest(arm=f"{f}::{t}", pair=f"{pfile}::{ptest}"):
+                    defs = _functions(TEST_DIR / pfile).get(ptest)
+                    self.assertTrue(defs, f"pair {pfile}::{ptest} is gone")
+                    self.assertTrue(
+                        any(re.search(regex, src) for _n, src in defs),
+                        f"{ptest} no longer asserts /{regex}/")
+
+    def test_the_sweep_is_live_on_a_known_positive_and_a_known_negative(self):
+        """Positive: the SERIALIZE zero arm of lc-124 is found. Negative: an
+        arm asserting a NON-zero count line is not."""
+        derived = sweep()
+        self.assertIn(
+            ("test_waves.py",
+             "test_a_partition_with_no_cross_group_file_prints_its_ZERO"),
+            derived)
+        self.assertNotIn(
+            ("test_waves.py",
+             "test_a_prose_write_set_lands_in_the_prose_bucket"), derived)
 
 
 if __name__ == "__main__":
