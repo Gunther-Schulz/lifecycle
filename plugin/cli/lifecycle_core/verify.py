@@ -132,10 +132,19 @@ def parse_block(laws_text: str) -> list[RegisteredCommand]:
 def run_one(cmd: str, repo: Path, timeout: int) -> tuple[str, int, str]:
     """`(verdict, code, detail)` for one registered command.
 
-    Three verdicts and never two: `ran-clean`, `ran-failed`, `did-not-run`.
-    A timeout is `did-not-run` rather than a failure: the command produced no
-    verdict, and booking a timeout as a red is the same error one level down
-    as booking a check that never started as a pass.
+    FOUR verdicts: `ran-clean`, `ran-failed`, `could-not-verify`,
+    `did-not-run`. A timeout is `did-not-run` rather than a failure: the
+    command produced no verdict, and booking a timeout as a red is the same
+    error one level down as booking a check that never started as a pass.
+
+    `could-not-verify` IS THE WRAPPED COMMAND'S OWN THIRD ANSWER, KEPT
+    (lc-230). A command that RAN and exited `exits.COULD_NOT_VERIFY` said it
+    could form no verdict. Booked as `ran-failed` — which is where every
+    non-zero code outside the did-not-start pair used to go — it reads as
+    verified-wrong, and this verb then reported a FINDING for a check that
+    found nothing. It is keyed to that ONE code, read from the contract in
+    `exits.py` rather than restated here: every other non-zero code is still
+    a failure.
     """
     try:
         r = subprocess.run(cmd, shell=True, cwd=str(repo), capture_output=True,
@@ -151,6 +160,8 @@ def run_one(cmd: str, repo: Path, timeout: int) -> tuple[str, int, str]:
     if r.returncode == 0:
         return "ran-clean", 0, ""
     tail = (r.stderr or r.stdout or "").strip().splitlines()
+    if r.returncode == exits.COULD_NOT_VERIFY:
+        return "could-not-verify", r.returncode, (tail[-1] if tail else "")
     return "ran-failed", r.returncode, (tail[-1] if tail else "")
 
 
@@ -202,7 +213,7 @@ def cmd_verify(args, out, repo: Path, declaration: dict) -> int:
         return exits.CLEAN
 
     timeout = getattr(args, "timeout", 900)
-    ran = failed = never = 0
+    ran = failed = unverified = never = 0
     verdicts = []  # (RegisteredCommand, verdict) — only for commands that ran
     for i, c in enumerate(cmds, 1):
         verdict, code, detail = run_one(c.command, repo, timeout)
@@ -216,13 +227,22 @@ def cmd_verify(args, out, repo: Path, declaration: dict) -> int:
             out(f"  {i}. RAN, FAILED ({code})  {c.command}")
             if detail:
                 out(f"       {detail[:200]}")
+        elif verdict == "could-not-verify":
+            # It RAN — so it counts as executed — and it is counted APART
+            # from the failures, because it reported no failure (lc-230).
+            ran += 1
+            unverified += 1
+            out(f"  {i}. RAN, COULD NOT VERIFY ({code})  {c.command}")
+            if detail:
+                out(f"       {detail[:200]}")
         else:
             never += 1
             out(f"  {i}. DID NOT RUN      {c.command}")
             out(f"       {detail[:200]}")
 
     out(f"executed: {ran} of {len(cmds)} registered   "
-        f"(failed {failed}, never ran {never})")
+        f"(failed {failed}, could not verify {unverified}, "
+        f"never ran {never})")
 
     # THE ORDER OF THESE TWO IS THE VERB'S POINT. A check that never ran is
     # reported BEFORE anything about expectations or failures, because a run
@@ -263,6 +283,21 @@ def cmd_verify(args, out, repo: Path, declaration: dict) -> int:
         out(f"FINDING [verify_check_failed] {failed} of {len(cmds)} "
             "registered command(s) ran and returned non-zero.")
         code = exits.worst([code, exits.FINDING])
+    # A REGISTERED COMMAND'S OWN COULD-NOT-VERIFY IS THIS RUN'S (lc-230).
+    # Not an early return like the did-not-run case above: these commands
+    # DID execute, so every finding the others produced is already printed
+    # in full, and what this withdraws is only the promise that the list is
+    # complete. That is `exits.worst`'s own rule, and it is why the fold is
+    # done there rather than decided again here.
+    if unverified:
+        out(f"COULD NOT VERIFY [verify_check_could_not_verify] {unverified} "
+            f"of {len(cmds)} registered command(s) ran and exited "
+            f"{exits.COULD_NOT_VERIFY}, this CLI's own COULD NOT VERIFY. "
+            "That is not a failure and it is not a pass: the command said "
+            "it could form no verdict, so this run cannot say the block is "
+            "clean, and it does not say the command found something wrong. "
+            "Run it by hand to read what it could not verify.")
+        code = exits.worst([code, exits.COULD_NOT_VERIFY])
     if code == exits.CLEAN:
         out(f"verify: CLEAN — all {len(cmds)} registered command(s) executed "
             "and returned zero. This says they RAN, never that they "

@@ -4847,6 +4847,26 @@ GOAL_ROWS = [
         stage="lc-16 follow-up",
     ),
     Row(
+        ident="verify_check_could_not_verify",
+        refusal="a registered verify command that RAN and exited this CLI's "
+                "own COULD NOT VERIFY code — carried through as could-not-"
+                "verify, never booked as a failure: a wrapped tool that said "
+                "it could form no verdict has not been shown wrong",
+        firing_input="a laws file whose `## Verify` block names a command "
+                     "that exits 3, beside one that passes",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _verify_run("true\nexit 3"),
+        # THE DISCRIMINATING PAIR IS THE ROW'S OWN: the SAME block with that
+        # command exiting 1 instead of 3 — the arms differ in the wrapped
+        # exit code alone, and the control is the neighbour this refusal
+        # used to be folded into (it exits FINDING, under
+        # `verify_check_failed`). A control of `true` would differ in
+        # whether the command failed at all and would pass for a build that
+        # answered could-not-verify to every non-zero code.
+        control=lambda: _verify_run("true\nexit 1"),
+        stage="drain wave B (lc-230)",
+    ),
+    Row(
         ident="emit_site_unregistered_could_not_verify",
         finding_row="emit_site_unregistered",
         refusal="the COULD-NOT-VERIFY half of the coverage check's reach: a "

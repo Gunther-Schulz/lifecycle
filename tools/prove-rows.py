@@ -1163,6 +1163,23 @@ MUTATIONS = [
      "    if False:",
      "the test that every registered verify command actually EXECUTED"),
 
+    # lc-230. THE CLASSIFIER, in `run_one`, which is where a wrapped
+    # could-not-verify is told apart from a failure. Folded, exit 3 falls
+    # through to `ran-failed` exactly as it did before the item: the plant
+    # exits FINDING under `verify_check_failed`'s name, so this row goes
+    # from 3 to 2 and darkens. Anchoring `if unverified:` in `cmd_verify`
+    # instead would grade the REPORTING — the command would still be
+    # classified apart and merely go unmentioned, a CLEAN run, which is a
+    # different defect from the collapse this row exists to refuse.
+    # `verify_check_failed`'s own plant is `false` (exit 1), which never
+    # reaches this branch, so the two rows stay separable in both
+    # directions; `verify_check_did_not_run` is decided above it, on 126/127.
+    ("verify_check_could_not_verify", "verify.py",
+     "    if r.returncode == exits.COULD_NOT_VERIFY:",
+     "    if False:",
+     "the test that a wrapped command's exit is this CLI's own COULD NOT "
+     "VERIFY, which keeps it out of the failures"),
+
     # lc-193. THE RING DETECTION, which is where THIS ROW'S OWN PLANT is
     # decided. The row carries two shapes under one answer class (a set of
     # items that can never become schedulable), and its fire/control pair is

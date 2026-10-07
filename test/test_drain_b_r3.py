@@ -267,5 +267,102 @@ class LaneNewRefusesAnUnsafeDoor(unittest.TestCase):
         self.assertIs(lanes._UNSAFE_FOR_FILENAME, desk._UNSAFE_FOR_FILENAME)
 
 
+# --- lc-230 -------------------------------------------------------------------
+
+class AWrappedCouldNotVerifyIsItsOwnAnswer(unittest.TestCase):
+    """lc-230. `run_one` sent every non-zero code outside the did-not-start
+    pair to `ran-failed`, so a wrapped command exiting 3 — this CLI's own
+    COULD NOT VERIFY — was booked as a failure and the verify run exited
+    FINDING: could-not-verify rendered as verified-wrong, inside the verb
+    that exists to keep the three answers apart.
+
+    THE DISCRIMINATING PAIR, BOTH ARMS: `exit 3` must stop sharing a verdict
+    with `exit 1`, AND `exit 1` must still report as a failure. A change that
+    merely moved 3 somewhere new would pass the first and say nothing about
+    the second.
+    """
+
+    def setUp(self):
+        self._tmp = tempfile.mkdtemp(prefix="lifecycle-r3-verify-")
+        self.cwd = Path(self._tmp)
+
+    def tearDown(self):
+        shutil.rmtree(self._tmp, ignore_errors=True)
+
+    def one(self, command):
+        from lifecycle_core import verify
+        return verify.run_one(command, self.cwd, 30)
+
+    # -- the classifier ---------------------------------------------------
+
+    def test_pair_arm_1_exit_3_no_longer_shares_a_verdict_with_exit_1(self):
+        self.assertNotEqual(self.one("exit 3")[0], self.one("exit 1")[0])
+
+    def test_pair_arm_2_exit_1_is_still_a_failure(self):
+        verdict, code, _detail = self.one("exit 1")
+        self.assertEqual((verdict, code), ("ran-failed", 1))
+
+    def test_exit_3_is_a_fourth_verdict_carrying_its_code(self):
+        verdict, code, _detail = self.one("exit 3")
+        self.assertEqual((verdict, code), ("could-not-verify", 3))
+        self.assertNotIn(verdict, ("ran-clean", "ran-failed", "did-not-run"))
+
+    def test_only_the_contracts_own_code_is_lifted_out_of_failure(self):
+        # 2 is this CLI's FINDING and 4 is nobody's: both ran and returned
+        # non-zero, and both stay failures. The fourth verdict is keyed to
+        # ONE code, not to "anything that is not 1".
+        for n in (2, 4, 255):
+            verdict, code, _detail = self.one(f"exit {n}")
+            self.assertEqual((verdict, code), ("ran-failed", n))
+
+    def test_MUST_NOT_MOVE_127_and_126_stay_did_not_run(self):
+        self.assertEqual(self.one("exit 127")[:2], ("did-not-run", 127))
+        self.assertEqual(self.one("exit 126")[:2], ("did-not-run", 126))
+
+    def test_MUST_NOT_MOVE_0_stays_ran_clean(self):
+        self.assertEqual(self.one("exit 0")[:2], ("ran-clean", 0))
+
+    # -- the verb ---------------------------------------------------------
+
+    def test_a_registered_command_that_could_not_verify_makes_the_run_3(self):
+        fired = refusals._verify_run("true\nexit 3")
+        self.assertEqual(fired.code, exits.COULD_NOT_VERIFY, fired.output)
+        self.assertIn("COULD NOT VERIFY [verify_check_could_not_verify]",
+                      fired.output)
+        # APART FROM FAILURES: not counted as one, not printed as one.
+        self.assertNotIn("[verify_check_failed]", fired.output)
+        self.assertNotIn("RAN, FAILED", fired.output)
+        self.assertIn("failed 0", fired.output)
+        self.assertNotIn("verify: CLEAN", fired.output)
+
+    def test_a_registered_command_that_failed_still_makes_the_run_2(self):
+        fired = refusals._verify_run("true\nexit 1")
+        self.assertEqual(fired.code, exits.FINDING, fired.output)
+        self.assertIn("FINDING [verify_check_failed]", fired.output)
+        self.assertNotIn("[verify_check_could_not_verify]", fired.output)
+
+    def test_both_at_once_print_both_and_fold_by_worst(self):
+        # `exits.worst`: could-not-verify outranks finding, and the finding
+        # is still printed in full — only completeness is withdrawn.
+        fired = refusals._verify_run("exit 1\nexit 3")
+        self.assertEqual(fired.code, exits.COULD_NOT_VERIFY, fired.output)
+        self.assertIn("FINDING [verify_check_failed] 1 of 2", fired.output)
+        self.assertIn("COULD NOT VERIFY [verify_check_could_not_verify] 1 of 2",
+                      fired.output)
+
+    def test_a_command_that_never_started_still_returns_first(self):
+        # The did-not-run early return is ahead of everything else and is
+        # not moved by this change.
+        fired = refusals._verify_run("exit 3\nlc230_no_such_command_anywhere")
+        self.assertEqual(fired.code, exits.COULD_NOT_VERIFY, fired.output)
+        self.assertIn("[verify_check_did_not_run]", fired.output)
+
+    def test_the_refusal_is_a_registry_row(self):
+        row = next((r for r in refusals.ROWS
+                    if r.ident == "verify_check_could_not_verify"), None)
+        self.assertIsNotNone(row, "no registry row for the fourth verdict")
+        self.assertEqual(row.expect, exits.COULD_NOT_VERIFY)
+
+
 if __name__ == "__main__":
     unittest.main()
