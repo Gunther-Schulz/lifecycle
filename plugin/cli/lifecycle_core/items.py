@@ -1407,6 +1407,14 @@ def classify_blocker(value: str, prefix: str | None):
     return None, ""
 
 
+def _norm_question(s: str) -> str:
+    """The near-match view of a decision question; never its resolver."""
+    s = (s or "").casefold()
+    s = re.sub(r"['’]s\b", "", s)
+    s = re.sub(r"[^\w\s]", "", s)
+    return " ".join(s.split())
+
+
 # --- writing: the shape, spelled in exactly one place ------------------------
 
 def render_block(ident: str, slots: dict) -> str:
@@ -2638,27 +2646,16 @@ def check_file(path: Path, out, prefix: str | None = None, *,
             else:
                 answered = 0
                 unanswered = []
-                # EVERY decision blocker with no exact answer, STATED OR NOT
-                # (lc-62). The near-match below read `unanswered` alone, and
-                # a blocker carrying a statement never reaches that list —
-                # which, since the door demands the statement, is every
-                # blocker booked after lc-169. The census counts are still
-                # taken from the two names above and do not move.
-                unmatched = []
                 for it in parsed.items:
                     kind, detail = classify_blocker(
                         it.slots.get("blocked-by", ""), prefix)
                     if kind != "decision":
                         continue
-                    is_answered = bool(
-                        ledger.decision_for(led, detail, for_item=it.ident))
-                    if not is_answered:
-                        unmatched.append((it.ident, detail))
                     value = (it.slots.get(NOT_DERIVABLE) or "").strip()
                     if (value and value.upper() != UNKNOWN
                             and not value.startswith(SLOT_STAMP_NONE_YET)):
                         continue
-                    if is_answered:
+                    if ledger.decision_for(led, detail, for_item=it.ident):
                         answered += 1
                     else:
                         unanswered.append((it.ident, detail))
@@ -2666,13 +2663,19 @@ def check_file(path: Path, out, prefix: str | None = None, *,
                     f"{answered} ANSWERED by the ledger (no statement needed), "
                     f"{len(unanswered)} UNSTATED (no `{NOT_DERIVABLE}:` record). "
                     + tail)
-                for ident, detail in unmatched:
-                    for ln, how in ledger.near_decisions_for(led, detail):
-                        out(f"  near-match: {ident} blocks on {detail!r}; "
-                            f"the ledger answers {ln.slots['question']!r} "
-                            f"({ledger_path.name}:{ln.lineno}) — {how}. NOT "
-                            "resolved: equality is the rule; amend the blocker "
-                            "or ledger the exact question.")
+                for ident, detail in unanswered:
+                    for ln in led.lines:
+                        question = (ln.slots.get("question")
+                                    if ln.kind == "decision" else None)
+                        if (question and detail != question
+                                and _norm_question(detail)
+                                == _norm_question(question)):
+                            out(f"  near-match: {ident} blocks on {detail!r}; "
+                                f"the ledger answers {question!r} "
+                                f"({ledger_path.name}:{ln.lineno}) — equal after "
+                                "normalising whitespace and punctuation. NOT "
+                                "resolved: equality is the rule; amend the blocker "
+                                "or ledger the exact question.")
 
     c = census(parsed)
     out(f"census: open {c['open']}  closed {c['closed']}  "
