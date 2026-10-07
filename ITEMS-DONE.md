@@ -2716,5 +2716,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 21383e7f6b3952584eb064fd61d9271db84d00b8
 
+## lc-110
+grade: DONE
+requirement: the judgment register prices a rule's retirement on a DENOMINATOR that omits its new commonest outcome. judgment.record_use fires on 'fired' and 'overridden' only; lc-10 added a third path — the cost test correctly DECLINING to fire because the item carries a typed blocker — and nothing counts it. So the fire-rate review sees fires and overrides but cannot tell 'this rule fires rarely because it is rarely evaluated' from 'this rule fires rarely because it is usually exempt', and those argue OPPOSITE ways about retiring it: the first says the rule is idle machinery, the second says it is working exactly as written. A rate without its denominator is the label-over-body shape the register was built to replace — record: lc-10 lane closing report gap 4, 2026-09-13, surfaced and deliberately not built because it is register design rather than executor work
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/judgment.py,plugin/cli/lifecycle_core/verbs.py,test/test_items.py
+done-criterion: every EVALUATION of a rule reaches the register, not only the ones that fire: the declined-by-exemption path records its own outcome (a third value beside fired/overridden), so fire rate is readable as a fraction of evaluations rather than as a bare count. RULING, made here so the builder does not re-derive it: COUNT IT. The review's question is whether a rule earns its stay, and a rule that is usually exempt is a different animal from one that is rarely reached — only the denominator separates them. Red-first: run the add verb over a typed-blocker one-file item and show the register gains no row today, then show it gains the declined row after. MUST-NOT-MOVE: 'fired' and 'overridden' keep their exact current semantics and call sites, because every existing rate reading depends on them; and the new write must not fire on the FINDING path, which is already 'fired'. NOTE the coupling to lc-109: the override write is currently decided by a substring match over the rendered message, so whichever of the two lands second inherits a cleaner branch to hang the third outcome on
+evidence: VERIFIED AT THIS DESK 2026-09-13: judgment.record_use is called at verbs.py:816 with 'fired' on the veto path and at verbs.py:825 with 'overridden' under the operator-source branch; lc-10's new clear-by-typed-blocker branch (b64bb08) returns before either and records nothing. The lane reported this as gap 4 and explicitly did NOT add a call, correctly — its brief granted verbs.py and test_items.py, and a register semantics change is neither. The consequence is not hypothetical for this particular rule: lc-10's whole point is that a typed blocker is the exemption the spec grants, so the exempt path is expected to be COMMON, which is precisely when an uncounted denominator distorts the rate most
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The judgment register records the declined outcome. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 5fa443eb61527afa401c9462f871d7e86f748e32
+
 ## Archive (pre-migration)
 
