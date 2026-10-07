@@ -409,6 +409,8 @@ done-criterion: the summary line cannot read CLEAN over a vacuous identity: a ru
 evidence: Relayed from the lifecycle-migration arc's wave-2 digest, UNVERIFIED at this desk: the desk booking this did not reproduce the vacuous run. What IS verified here is that the same class is live in this repo's sibling instruments, which is why it is worth the entry rather than a note: absence-scan prints clean over a class declared off with no degraded line, and lifecycle ledger check answers COULD NOT VERIFY over 252 unreadable lines that nothing reads. The class is the repo's own three-answers rule applied to a SUMMARY rather than to a check
 blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 2026-10-07 the booked criterion (three-answer form) contradicted four existing must-not-move tests; a lane reproduced the defect, tried exit 3, saw them go red and reverted
+amended-done-criterion: 2026-10-07 RULED at the desk 2026-10-07 on wave A lane A evidence: exit 0 STAYS for a run that read zero entries, because the BulletShapeOverNoEntries tests already settle that zero entries is an answer and they do not move. Only the summary changes: a run whose reconciliation is 0 read == 0 written says in its summary line that it was vacuous and examined no entry, and never prints a bare CLEAN. Red-first: a migrate run over a repo with no source entries, whose summary today says CLEAN.
 
 ## lc-88
 grade: STANDBY
