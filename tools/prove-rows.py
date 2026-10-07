@@ -702,6 +702,49 @@ MUTATIONS = [
      "    if False:",
      "`workflow bind`'s refusal to overwrite a binding that already exists"),
 
+    # lc-324. THE FOUR BINDING ROWS `kind check` decides, in one function
+    # (`_validate_template_bindings`), each at its own branch. Two of them
+    # are one finding on two firing inputs — a slot holding UNKNOWN, a slot
+    # absent — and the two inputs are computed on two separate lines before
+    # the one `if` that reports either, so each row is folded at ITS line:
+    # folding the shared `if` would darken both and say which of neither.
+    #
+    # The UNKNOWN half: the comprehension's filter, so no present value is
+    # ever counted as unanswered. The absent-key plant holds no UNKNOWN and
+    # is untouched.
+    # All four admitted on the lc-142 pair — PROVEN at these anchors, "rows
+    # changed: NONE" re-pointed at an inert comment line.
+    ("binding_slot_unbound", "declaration.py",
+     '            if isinstance(value, str) and value.strip().upper() == "UNKNOWN")',
+     "            if False)",
+     "the test that a bound slot's value is the UNKNOWN marker"),
+
+    # The ABSENT-KEY half: the required-slot set is never compared with the
+    # binding's keys, which is the pre-correction code this row was added to
+    # tell apart from a complete binding.
+    ("binding_slot_unbound_absent_key", "declaration.py",
+     "            missing_keys = sorted(s for s in tmpl.slots if s not in binding)",
+     "            missing_keys = []",
+     "the comparison of a template's required slots against a binding's "
+     "keys"),
+
+    # THE VERDICT STAYS A 2 AND LOSES ITS NAME (`2/named -> 2/unnamed`),
+    # which is the case the signature's name half exists for. The reader
+    # hands back a `problem` for a missing file as well as for a bad one, so
+    # with this test folded a missing template falls into the branch below
+    # and is reported as UNPARSABLE: still a finding, under the neighbouring
+    # row — the wrong diagnosis and the wrong repair. A comparison over exit
+    # codes alone would read this arm as a row that does not discriminate.
+    ("binding_template_missing", "declaration.py",
+     "        if tmpl.path is None:",
+     "        if False:",
+     "the test that a binding's named template has a file in the registry"),
+
+    ("binding_template_unparsable", "declaration.py",
+     "        elif tmpl.problem:",
+     "        elif False:",
+     "the test that a binding's named template parses"),
+
     ("trigger_broken", "lanes.py",
      "            if t.state == BROKEN:",
      "            if False:",
