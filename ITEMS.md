@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 322
+added: 323
 compacted: 0
 
 ## lc-3
@@ -1405,4 +1405,13 @@ goal: every-refusal-red-first
 write-set: tools/compare-governed.py,test/test_compare_governed.py,CLAUDE.md
 done-criterion: tools/compare-governed.py takes two checkouts (base and new) and runs item check, item ready, kind check and audit read-only over every roster repo with state on scratch, printing per repo and verb the exit code before and after and the count of changed output lines; it exits 0 on no change, 2 on any change, 3 naming a repo or verb that could not be run. It writes nothing in any repo, asserted by a status read before and after. Red-first: a planted new finding in the new checkout shows as a change over a fixture roster, and two identical checkouts show none. The Verify section of CLAUDE.md names it for changes that add or widen a finding.
 evidence: MEASURED 2026-10-07 at the drain desk: the comparison was run by hand at the integration of waves B, C and D and for the lc-149 desk repair; three lane changes were reverted or shelved on its output. The first run printed rc 3 to 3 for every repo because zsh did not split a variable holding the verb words; a control over a known change exposed it.
+blocked-by: NONE
+
+## lc-331
+grade: STANDBY
+requirement: THE MUTATION PROVER'S FULL WALK IS SERIAL, MUTATES THE CHECKOUT IT RUNS IN, AND EVERY LANE AND EVERY INTEGRATION PAYS IT WHOLE. Since lc-200 each arrangement runs the whole roster and every control, one after another, in the working tree itself; a nine-lane wave runs the walk ten times, and no other work can use that checkout meanwhile (lc-117 names the same mutation as a hazard to briefs). The walk is the only proof an arrangement still holds, so it cannot be skipped, only made cheaper and safer. Record: docs/directives/2026-10-07-drain-wave-d.md
+goal: lean-machinery-strict-checks
+write-set: tools/prove-rows.py,test/test_prove_rows.py
+done-criterion: The full walk runs its arrangements in parallel, each worker on a PRIVATE COPY of the source it mutates under a temp directory, and never writes a tracked file of the checkout it was started from (asserted: git status identical before and after, also when a worker is killed). Verdicts are unchanged: the same PROVEN and FAILED per arrangement and the same rows-changed sets as the serial walk at the same commit, compared arrangement by arrangement. Wall time on this repo is quoted before and after on one machine and is at most half. Red-first for correctness: an arrangement re-pointed at an inert anchor still reads FAILED under the new walk. The output states how many arrangements ran and on how many workers.
+evidence: MEASURED 2026-10-07 at the drain desk: the full walk took roughly ten minutes at 124 arrangements before lc-200 and ran 152 arrangements with every control after it; it refuses to start while a core file differs from HEAD and restores by file copy. DERIVED: about twenty minutes per walk now; not timed with a clock at 152.
 blocked-by: NONE
