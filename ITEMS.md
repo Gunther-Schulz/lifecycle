@@ -1274,6 +1274,8 @@ done-criterion: At item add, a live item describing the same deliverable is offe
 evidence: MEASURED 2026-09-24: item add for lc-268 printed match: shares 2 requirement token(s): record, stay against lc-266; lc-264 requirement said no item carries the counter while lc-256 (READY since 2026-09-20) carried it - found only by reading both at status time.
 blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 2026-10-07 dispatched in wave B: one direction not reproduced, one narrowed by a commit, and the over-offer rate named as the real residue
+amended-evidence: 2026-10-07 RELAYED from wave B lane V2 2026-10-07 at base fb91697, not re-run at the desk: (1) the first direction does NOT reproduce - replayed over the real carrier at the parent of the commit that added lc-264, the unmodified predicate already offers lc-256 for that text (shared write-set and 10 requirement tokens). (2) the second direction reproduced and is narrowed by 7f35e3a, which stop-lists stay and stays so lc-268 against lc-266 falls below the two-token minimum. (3) WHAT REMAINS: the predicate offers 78 to 84 of about 130 live items as candidates for one booking, so an offer carries almost no signal; and record cannot be stop-listed without moving the arrangement test_verbs.RarityWeightedJoin pins.
 
 ## lc-277
 grade: NEW
