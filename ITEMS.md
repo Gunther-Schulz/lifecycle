@@ -1120,15 +1120,6 @@ amended-evidence: 2026-10-07 MEASURED at the lifecycle desk 2026-10-07, on opera
 amend-reason: 2026-10-07 dotfiles repaired; outcome recorded
 amended-evidence: 2026-10-07 MEASURED 2026-10-07 at this desk: dotfiles repaired by its own session (dotfiles 7f0ee2f, unpushed there): kind check over dotfiles exits 0, 0 dangling_reference lines, CLEAN with 5 kinds. Five of nine repos now fixed (begehung, daneel, dispatch-guards, skill-craft, dotfiles); remaining: statiker, CachyOS-Setup, beat-the-books (live sessions), claude-code-cache-fix (its gate, lc-239).
 
-## lc-326
-grade: STANDBY
-requirement: NO ROSTER ROW STATES WHAT CLASS OF INPUT FIRES IT, so a refusal whose text names malformed, unreadable or absent input can be proven only on a well-formed one and nothing reports it: the input-axis third of lc-200 - record: wave C lane C5 closing report 2026-10-07, gap 1
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/roster.py,tools/prove-rows.py,test/test_refusals.py
-done-criterion: Each roster row declares the input class of its firing input from a closed vocabulary decided first; a row whose refusal names malformed, unreadable or absent input carries a plant of that class or is reported by name. The class lives on the row, graded by the roster run, unless the pickup shows the arrangement is the better home.
-evidence: RELAYED from lane C5 (opus) 2026-10-07 at f95c75f: the arrangement table is a five-tuple unpacked by test_refusals near line 159, the firing input belongs to the row, 149 existing plants are unclassed, and a word-presence test over refusal prose would fire on text that only discusses the word. DERIVED: a declared class is a new field on the row, which the 2026-09-24 freeze reads as a schema change until released.
-blocked-by: NONE
-
 ## lc-328
 grade: STANDBY
 requirement: FOUR PROOF-SHAPE LEFTOVERS FROM WAVE D: two retire-source rows are decided by two tests over one value, so one arrangement folds both tests and the other swaps a value where the rule says disable; the compaction site is a new route into carrier_dirty_at_entry with no arrangement of its own; and the conditional-slot recogniser reads an external moot record as a decision one - record: wave D lanes D4 (gaps C1, C2), D2 (gap 4) and D1 (gap 3) closing reports 2026-10-07

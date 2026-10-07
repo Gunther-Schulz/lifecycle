@@ -3438,5 +3438,18 @@ closed-met: none
 closed-decided: none
 closed-ref: 152ee0c5aac6b2beef06a4bc178e1be8740b760f
 
+## lc-326
+grade: DONE
+requirement: NO ROSTER ROW STATES WHAT CLASS OF INPUT FIRES IT, so a refusal whose text names malformed, unreadable or absent input can be proven only on a well-formed one and nothing reports it: the input-axis third of lc-200 - record: wave C lane C5 closing report 2026-10-07, gap 1
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/roster.py,tools/prove-rows.py,test/test_refusals.py
+done-criterion: Each roster row declares the input class of its firing input from a closed vocabulary decided first; a row whose refusal names malformed, unreadable or absent input carries a plant of that class or is reported by name. The class lives on the row, graded by the roster run, unless the pickup shows the arrangement is the better home.
+evidence: RELAYED from lane C5 (opus) 2026-10-07 at f95c75f: the arrangement table is a five-tuple unpacked by test_refusals near line 159, the firing input belongs to the row, 149 existing plants are unclassed, and a word-presence test over refusal prose would fire on text that only discusses the word. DERIVED: a declared class is a new field on the row, which the 2026-09-24 freeze reads as a schema change until released.
+blocked-by: NONE
+closed-reason: 2026-10-07 Every roster row declares the input class of its plant; the readout names refusals whose named class nothing plants. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: 51a7a13e383db043bdfb2cb441c7e3438e7b6c12, 0cb14f2fc62020b237c3aef43dae853a7e67b8d9
+
 ## Archive (pre-migration)
 
