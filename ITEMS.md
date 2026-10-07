@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 309
+added: 310
 compacted: 0
 
 ## lc-3
@@ -1689,4 +1689,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py
 done-criterion: init --lane refuses an unsafe name before any write, by the same imported predicate lane new uses and under the existing lane_new_unsafe_door finding or a sibling of it; the three inputs above exit 2 with nothing written and no exit 1. Control: a safe name still writes its stub. The sweep that lc-202 owed is re-run over every site that builds a path from a caller-supplied name, and its hits are listed.
 evidence: RELAYED from lane R3 (opus) 2026-10-07 at a4dfdcd, executed there in scratch, not re-run at the desk: init --lane ../escape wrote repo/escape.md; init --lane bad/door exit 1 with FileNotFoundError; init --lane with the empty string wrote repo/lanes/.md; control goodlane wrote lanes/goodlane.md. Site: init.py near line 438. arc open already refuses the same inputs; workflows.read_template was not probed.
+blocked-by: NONE
+
+## lc-318
+grade: STANDBY
+requirement: EVERY CARRIER VERB BUT ledger add STILL COMMITS ITS CARRIER WHOLE OVER A PENDING HAND EDIT. lc-138 made ledger add refuse a carrier dirty at entry; item add, amend, park, close, supersede and the arc verbs take the same commit path, so a hand edit or an earlier verb half-written state rides out under an unrelated message - record: wave B lane R1 closing report 2026-10-07 gap 1, and the dotfiles incident on lc-105
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_verbs.py
+done-criterion: Every verb that writes and commits a carrier checks, before its first write, that each carrier it will commit is clean, by the carrier_dirty helper lc-138 added, and refuses with nothing written where one is not; the ledger ruling of 2026-10-07 (REFUSE-ON-DIRTY) extended to every carrier. Red-first per verb family: a carrier dirty with an unrelated hand edit at verb entry. MUST-NOT-MOVE: a clean invocation commits exactly what the verb wrote; --no-commit callers are not refused; a verb that writes two carriers checks both before writing either. The could-not-verify branch (git cannot answer) is exercised end to end by a test.
+evidence: RELAYED from lane R1 (opus) 2026-10-07 at 431190d: ledger.append followed by a whole-file commit also runs in item supersede and in item close decision and drop branches, and every item verb commits ITEMS.md whole by the same route. RELAYED from peer session dotfiles-2b the same day: after a refused drop left three files dirty, the next verb (an item amend on another item) committed ITEMS.md whole, carrying the half-finished deletion under an unrelated message.
 blocked-by: NONE
