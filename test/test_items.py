@@ -123,8 +123,8 @@ class ItemSlotsOverTheRealCarrier(unittest.TestCase):
     def test_an_UNAMENDED_item_reports_base_slots_byte_unchanged(self):
         item = self._subject(
             lambda it: not it.amendments
-            and all(s in it.slots for s in items.SLOTS),
-            "carrying no amendments and all fixed slots")
+            and set(it.slots) == set(items.SLOTS),
+            "carrying no amendments and exactly the fixed slots")
 
         code, out = self._run(item.ident)
         self.assertEqual(code, exits.CLEAN, out)
