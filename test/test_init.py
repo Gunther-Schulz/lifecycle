@@ -189,32 +189,20 @@ class RoundTrip(unittest.TestCase):
         self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("lifecycle --test: CLEAN", out)
 
-    def test_GAP_a_truly_bare_repo_reads_could_not_verify_not_clean(self):
-        """NAMED GAP, not silently bridged: `init`'s own scope (brief,
-        section A) is the declaration, the .gitignore lines, and lane
-        stubs — it does NOT create ITEMS.md/ITEMS-DONE.md/LEDGER.md. On a
-        repo that has neither (never migrated, never hand-seeded),
-        `check_schema_agreement` cannot read any of the three carriers'
-        `schema:` lines and answers COULD NOT VERIFY for each — a real,
-        honest third answer, never a FINDING (init wrote nothing wrong),
-        but also not the literal CLEAN the round-trip arm's wording asks
-        for. This test records the actual behavior rather than asserting
-        the wording; see the closing report for the question this raises
-        for the dispatching desk."""
+    def test_a_truly_bare_repo_reads_clean_once_init_seeds_the_carriers(self):
+        """lc-23: `init` seeds the three carriers (empty bodies, headers
+        only), so a bare repo's `kind check` no longer answers COULD NOT
+        VERIFY on them. The criterion changes the behaviour the former GAP
+        arm recorded."""
         r = ScratchGitRepo()
+        r.write("CLAUDE.md", "# laws\n")
         r.commit_as("op@example.invalid")
         self.addCleanup(r.close)
         code, out = _run(["--repo", str(r.dir), "init"])
-        # lc-119: this fixture also has no tracked CLAUDE.md, so init's OWN
-        # exit code now carries the unresolved laws reading too —
-        # legitimately-changed. This does not disturb the gap this test
-        # documents (kind check answering COULD NOT VERIFY on the absent
-        # carriers below); both readings now agree the repo is unresolved.
-        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertEqual(code, exits.CLEAN, out)
         code2, out2 = _run(["--repo", str(r.dir), "kind", "check"])
-        self.assertEqual(code2, exits.COULD_NOT_VERIFY, out2)
-        self.assertIn("is not present", out2)
-        self.assertNotIn("FINDING", out2)  # confirms it is NOT a rejection
+        self.assertEqual(code2, exits.CLEAN, out2)
+        self.assertNotIn("is not present", out2)
 
 
 class TwelveKeys(unittest.TestCase):

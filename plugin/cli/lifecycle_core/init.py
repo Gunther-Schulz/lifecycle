@@ -3,15 +3,11 @@ design §3.11: "Authoring support is part of the plugin").
 
 WHAT THIS VERB OWNS. A repo's `.claude/lifecycle.json` with all twelve
 `REQUIRED_KEYS`, made visible to git, plus a stub `lanes/<name>.md` for each
-`--lane` named. It does NOT create carrier files (`ITEMS.md`,
-`ITEMS-DONE.md`, `LEDGER.md`) — those are `migrate`'s job for a repo with an
-old carrier to convert FROM, or a human's for a truly greenfield one; a repo
-that has never run any of the above will see `kind check`'s one-schema-
-per-repo agreement answer COULD NOT VERIFY on those three carriers rather
-than CLEAN until they exist. That is a real gap in the wave-2 design this
-verb inherited rather than one it introduced — see the module's own report
-for the evidence — and it is named here rather than silently patched by
-having `init` invent carrier files the settled design never asked for.
+`--lane` named, and (lc-23) the three carrier files (`ITEMS.md`,
+`ITEMS-DONE.md`, `LEDGER.md`) seeded with empty bodies, headers only,
+skip-if-present — a greenfield repo would otherwise see `kind check`'s
+one-schema-per-repo agreement answer COULD NOT VERIFY on them forever
+(LEDGER.md decision: init seeds, no separate verb).
 
 EVERY DEFAULT THIS VERB WRITES IS PRINTED WITH ITS REASON. §3.11's own rule:
 "a schema default is what `lifecycle init` WRITES into the file, never what
@@ -262,6 +258,15 @@ def plugin_kinds() -> dict:
     return out
 
 
+def _seed_body(kind_name: str) -> str:
+    """The empty carrier a greenfield repo starts from: the item carrier's
+    four head counters at zero, the other two homes the schema line alone."""
+    head = f"schema: {decl.SCHEMA_FLOOR}\n"
+    if kind_name == "items":
+        head += "baseline: 0\nadded: 0\ncompacted: 0\n"
+    return head
+
+
 def ensure_gitignore(repo: Path) -> list:
     """Append the declaration negation and the `ITEMS.md.lock` ignore line
     (booked as lc-11) if either is missing. Returns the lines actually
@@ -462,6 +467,22 @@ def cmd_init(args, out, repo: Path) -> int:
     # lc-118 guards and this aggregation do not double-report one failure.
     if laws_unresolved or public_unresolved:
         code = exits.worst([code, exits.COULD_NOT_VERIFY])
+
+    # lc-23 (LEDGER.md decision: init SEEDS the three carriers, empty bodies,
+    # headers only, skip-if-present). The homes are read from the kinds this
+    # verb just copied, never restated.
+    for kind_name in _PLUGIN_KIND_NAMES:
+        home = kinds[kind_name].get("home")
+        if not isinstance(home, str) or not home:
+            continue
+        carrier = repo / home
+        if carrier.exists():
+            out(f"{home} already present — left untouched (init seeds a "
+                "carrier only where none exists).")
+            continue
+        carrier.write_text(_seed_body(kind_name), encoding="utf-8")
+        out(f"seeded {home} (empty body, headers only, schema "
+            f"{decl.SCHEMA_FLOOR}).")
 
     lane_lines_dir = repo / "lanes"
     for name in lane_names:
