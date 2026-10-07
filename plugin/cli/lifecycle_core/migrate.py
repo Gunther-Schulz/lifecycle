@@ -700,6 +700,23 @@ def title_of(entry: Entry) -> str:
     return headline
 
 
+def requirement_headline(entry: Entry, source_name: str) -> str:
+    """The headline as the requirement SLOT carries it (lc-36).
+
+    A headline that fits the cap travels whole. One that does not is never
+    shortened silently: the cut text is followed by an explicit TRUNCATED
+    mark carrying the source range the full text lives at, in place of a bare
+    ellipsis a reader takes for the author's own sentence. No per-item record
+    file is written for it (LEDGER.md:190) — the range is the pointer.
+    """
+    headline = headline_of(entry)
+    if len(headline) <= REQUIREMENT_CAP:
+        return headline
+    cut = headline[:REQUIREMENT_CAP].rstrip()
+    return (f"{cut} [TRUNCATED: full text at "
+            f"{source_name}:{entry.line}-{entry.end_line}]")
+
+
 def closure_word_in_title(entry: Entry, closure_words=None) -> str | None:
     """A closure word standing alone LATER in a bold entry's title (lc-21).
 
@@ -1255,7 +1272,8 @@ def build_items(entries, prefix: str, source_name: str,
             # carrier that no longer exists; inheriting it would re-create
             # the 95-entry queue nobody believed, in a new file.
             "grade": "NEW",
-            "requirement": (f"{title_of(e)} — record: {source_name}:{e.line}"
+            "requirement": (f"{requirement_headline(e, source_name)} — record: "
+                            f"{source_name}:{e.line}"
                             f"{BLOB_PIN}{source_blob}"),
             # THE GAP, WRITTEN AS A GAP. §4 row 1 names UNKNOWN for the
             # write-set and says nothing about `goal`, `done-criterion` or
