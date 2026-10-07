@@ -29,10 +29,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 from lifecycle_core import cli as cli_mod, exits, items, refusals  # noqa: E402
 
 
-def carrier(blocks, baseline=0):
-    """A carrier file from `[(ident, {slot: value}), …]`, slots in order."""
+def carrier(blocks):
+    """A carrier file from `[(ident, {slot: value}), …]`, slots in order.
 
-    out = [f"schema: {items.SCHEMA_FLOOR}", f"baseline: {baseline}",
+    THE HEAD COUNTS THE BLOCKS IT IS GIVEN (lc-203). It said `baseline: 0`
+    over every fixture, which `item waves` now reports as a carrier holding
+    more bodies than were admitted, beside the plan the test asked for."""
+
+    out = [f"schema: {items.SCHEMA_FLOOR}", f"baseline: {len(blocks)}",
            "added: 0", "compacted: 0", ""]
     for ident, slots in blocks:
         out.append(f"## {ident}")

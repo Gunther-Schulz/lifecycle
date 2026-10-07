@@ -1972,8 +1972,14 @@ class GoalFilteredListing(unittest.TestCase):
     ABSENT" separates a working filter from a listing that ignored the flag.
     """
 
+    # THE HEAD IS TRUE OF THE BODIES (lc-203): two admitted, two present.
+    # `item ready` states whether the carrier it read was whole, so a head
+    # with no flow counters over two bodies answered could-not-verify beside
+    # every listing below.
     TWO_GOALS = """schema: 2
-baseline: 0
+baseline: 2
+added: 0
+compacted: 0
 
 ## xx-1
 grade: READY
@@ -2966,8 +2972,10 @@ class NetGrowthIsAFlowOverAWindow(unittest.TestCase):
             # with the drain side short by the compacted count — that side's
             # own blindness to `compacted` is a separate, booked defect, and
             # this case isolates the WINDOW's handling from it.
-            items_mid, done_mid = refusals._flow_carrier(10, 6)
-            items_mid = items_mid.replace("compacted: 0", "compacted: 2")
+            # The helper takes the count, so the live home holds what a head
+            # saying "two compacted" leaves (lc-203): the same three bodies
+            # as before the compaction, never five under a rewritten head.
+            items_mid, done_mid = refusals._flow_carrier(10, 6, compacted=2)
             (r.dir / "ITEMS.md").write_text(items_mid, encoding="utf-8")
             (r.dir / "ITEMS-DONE.md").write_text(done_mid, encoding="utf-8")
             _git_dated(r.dir, ["commit", "-qam", "compact"], 5)

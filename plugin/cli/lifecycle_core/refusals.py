@@ -1248,6 +1248,29 @@ TWO_SEED_ITEMS = (
     + SEED_ITEMS.split("\n\n", 1)[1].replace("## xx-1", "## xx-2", 1))
 
 
+def _seed_carrier(live: int, *, added: int = 0, compacted: int = 0) -> str:
+    """`SEED_ITEMS`' head with its flow counters set, over `live` bodies
+    `xx-1`..`xx-<live>` — the seed block under each id, derived the way
+    `TWO_SEED_ITEMS` derives its second one.
+
+    FOR THE FLOW FIXTURES (lc-203). They set `added:` on the one-body seed and
+    left the bodies alone, on the stated ground that `item ratio` reads flows
+    and never conservation. It now states the extent of what it read, so a
+    head claiming admissions its homes do not hold is a carrier missing
+    bodies — the very input the extent check exists to name. A caller passes
+    the count that makes its own identity balance; this does not compute it,
+    so a fixture that MEANS to be short can still say so.
+    """
+    head, body = SEED_ITEMS.split("\n\n", 1)
+    head = (head.replace("added: 0", f"added: {added}", 1)
+            .replace("compacted: 0", f"compacted: {compacted}", 1))
+    return head + "\n\n" + "\n".join(
+        body.replace("## xx-1", f"## xx-{i}", 1) for i in range(1, live + 1))
+
+
+assert _seed_carrier(1) == SEED_ITEMS, "the seed's head or block shape moved"
+
+
 def _blocked_block(ident: str, grade: str, blocker: str) -> str:
     return (f"\n{grammar.render_heading(ident)}\ngrade: {grade}\n"
             f"requirement: a blocker-form fixture block — LEDGER.md\n"
@@ -3787,7 +3810,12 @@ def _sweep_run(*, stray: bool) -> Fired:
 # THREE, not four: the control closes ONE item, so the arms differ in the
 # DRAIN alone and the control lands exactly AT the 3:1 tripwire rather than
 # over it. A pair whose control is still over the wire would separate nothing.
-NO_DRAIN_ITEMS = SEED_ITEMS.replace("added: 0", "added: 3")
+#
+# FOUR LIVE BODIES, because the head says four were admitted (baseline 1 +
+# added 3) and none left: the identity balances, so the ratio's extent line
+# reads CLEAN in both arms and the pair still differs in the drain alone
+# (lc-203). With one body under that head the carrier was three short.
+NO_DRAIN_ITEMS = _seed_carrier(4, added=3)
 
 #: A closed body, as `item close` writes one.
 DONE_BLOCK = """## xx-1
@@ -4288,11 +4316,19 @@ def _backdate_head(repo: Path, days_ago=None):
                _net_growth_older() if days_ago is None else days_ago)
 
 
-def _flow_carrier(added: int, closed: int) -> tuple[str, str]:
-    """(ITEMS.md, ITEMS-DONE.md) whose head says `added` and whose done home
-    holds `closed` bodies. `item ratio` reads flows and never conservation,
-    so the live body stays the one seed block."""
-    items = SEED_ITEMS.replace("added: 0", f"added: {added}")
+def _flow_carrier(added: int, closed: int,
+                  compacted: int = 0) -> tuple[str, str]:
+    """(ITEMS.md, ITEMS-DONE.md) whose head says `added` (and `compacted`)
+    and whose done home holds `closed` bodies.
+
+    THE LIVE HOME HOLDS WHAT THE HEAD SAYS IS LEFT (lc-203): baseline 1 +
+    `added`, less the `closed` bodies in the done home and the `compacted`
+    ones that left it. `item ratio` reads flows, and it now also states
+    whether the carrier it read them from is whole — so a flow fixture whose
+    counters are not true of its bodies answers `conservation_short` beside
+    whatever it was built to show."""
+    items = _seed_carrier(1 + added - closed - compacted, added=added,
+                          compacted=compacted)
     done = EMPTY_DONE + "".join(
         "\n" + DONE_BLOCK.replace("## xx-1", f"## xx-{100 + i}")
         for i in range(closed))
@@ -4827,7 +4863,9 @@ RECORD_ROWS = [
 # --- lc-16: reading the carrier BY GOAL -------------------------------------
 
 _TWO_GOAL_ITEMS = f"""schema: {items_mod.SCHEMA_FLOOR}
-baseline: 0
+baseline: 2
+added: 0
+compacted: 0
 
 ## xx-1
 grade: READY

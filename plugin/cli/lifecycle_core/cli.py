@@ -370,6 +370,45 @@ def cmd_item_check(args, out, err=None) -> int:
     return code
 
 
+def _carrier_extent(ctx, out, *, quiet_when_clean: bool = False) -> int:
+    """THE EXTENT OF WHAT A READING VERB READ (lc-203) — conservation, run
+    where the carrier is CONSUMED rather than in one verb.
+
+    A carrier cut before a `## <id>` heading parses perfectly: every verb
+    that reads it reports the bodies that are left, and only the identity
+    `items + done == baseline + added − compacted` knows one is missing.
+    That identity ran in `item check` alone, so `item ready` called a
+    truncated carrier's survivor schedulable at exit 0.
+
+    ONE BODY BEHIND ONE CONTRACT: this is `item check`'s own closing pair,
+    `items.conservation` rendered by `items.report_conservation`, called and
+    never restated. The row names it prints (`conservation_short`,
+    `conservation_surplus`) are therefore the registered ones.
+
+    HERE AND NOT IN `verbs._load`, which the booking named: `_load` reads ONE
+    home and the identity needs both, so the shared path that holds the
+    question is the dispatch each reading verb leaves through.
+
+    `quiet_when_clean` is for a verb that prints DATA and no population
+    (`item slots`, whose `--json` form is parsed): it runs the check and
+    speaks only when the identity is not clean, so a balanced carrier's
+    output stays the bytes its readers expect.
+    """
+    items_parsed, why = verbs._load(ctx.items_path)
+    if items_parsed is None:
+        out(f"COULD NOT VERIFY: conservation — {why}")
+        return exits.COULD_NOT_VERIFY
+    done_parsed, done_why = verbs._load(ctx.done_path)
+    lines = []
+    code = items_mod.report_conservation(
+        items_mod.conservation(items_parsed, done_parsed, done_why),
+        lines.append)
+    if code != exits.CLEAN or not quiet_when_clean:
+        for line in lines:
+            out(line)
+    return code
+
+
 def cmd_item_repair(args, out) -> int:
     """`item repair --shape` (lc-129) — the MECHANICAL half of hand damage.
 
@@ -499,10 +538,13 @@ def cmd_item_waves(args, out) -> int:
     # same one `item check` grades write-sets by. A listing that failed is
     # handed down as `None` with its reason and never as an empty tree.
     tree, tree_why = items_mod.tracked_tree(ctx.repo)
-    return exits.worst([code, items_mod.report_waves(
+    code = exits.worst([code, items_mod.report_waves(
         schedulable, out, ready_n=len(ready), live_n=len(parsed.items),
         excluded=excluded, grouped=getattr(args, "grouped", False),
         tree=tree, tree_why=tree_why)])
+    # "scanned: N live item(s)" is a population, and a plan over a carrier
+    # missing a body is a plan over a set nobody saw whole (lc-203).
+    return exits.worst([code, _carrier_extent(ctx, out)])
 
 
 class _Parser(argparse.ArgumentParser):
@@ -1458,6 +1500,10 @@ def main(argv=None) -> int:
             ctx, code = _context(args, out)
             if ctx is not None:
                 code = items_mod.cmd_item_slots(args, out, ctx.items_path)
+                # lc-203. Quiet over a balanced carrier: this verb prints
+                # one block's DATA, and its `--json` form is parsed.
+                code = exits.worst([code, _carrier_extent(
+                    ctx, out, quiet_when_clean=True)])
         elif args.item_action == "waves":
             code = cmd_item_waves(args, out)
         elif args.item_action in ("add", "amend", "promote", "ready", "park",
@@ -1680,18 +1726,32 @@ def _carrier_verb(args, out) -> int:
                 "AND a filter over many. Drop the id for the goal's listing, "
                 "or drop --goal for that one item.")
             return exits.COULD_NOT_VERIFY
+        # THE READING VERBS LEAVE THROUGH `_carrier_extent` (lc-203): each
+        # reports a population, and none of them knew whether it was the
+        # whole one. `item statusline` below is NOT among them — see the
+        # note at its branch.
         if getattr(args, "head", False) or getattr(args, "goal", None):
-            return verbs.cmd_item_head(args, out, ctx)
+            return exits.worst([verbs.cmd_item_head(args, out, ctx),
+                                _carrier_extent(ctx, out)])
         if not args.ident:
             out("COULD NOT VERIFY: `item ready` needs an item id, or `--head` "
                 "for the whole derived head. Refusing rather than picking one "
                 "for you: an id-less run that printed the head anyway would "
                 "answer a question nobody asked.")
             return exits.COULD_NOT_VERIFY
-        return verbs.cmd_item_ready(args, out, ctx)
+        return exits.worst([verbs.cmd_item_ready(args, out, ctx),
+                            _carrier_extent(ctx, out)])
     if args.item_action == "ratio":
-        return verbs.cmd_item_ratio(args, out, ctx)
+        return exits.worst([verbs.cmd_item_ratio(args, out, ctx),
+                            _carrier_extent(ctx, out)])
     if args.item_action == "statusline":
+        # NO EXTENT HERE, AND THAT IS A STATED LIMIT, NOT AN OVERSIGHT
+        # (lc-203). This verb is ONE line, rendered on every prompt in every
+        # declaring repo, and its own docstring rules out a full parse of
+        # either home at that cost. So it still prints `1R.0P` over a
+        # carrier missing a body. Its line is a syntactic approximation by
+        # its own account; `item ready --head` is the answer that now says
+        # whether the carrier was whole.
         return verbs.cmd_item_statusline(args, out, ctx)
     if args.item_action == "park":
         return verbs.cmd_item_park(args, out, ctx)

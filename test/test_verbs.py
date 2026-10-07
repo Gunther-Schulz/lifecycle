@@ -3161,7 +3161,19 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
     one evaluator runs it in (`lanes.evaluate_trigger(..., cwd=ctx.repo)`).
     """
 
-    HEAD4 = "schema: 2\nbaseline: 4\nadded: 0\ncompacted: 0\n"
+    @staticmethod
+    def _headed(bodies):
+        """`bodies` under a head whose `baseline` IS their count (lc-203).
+
+        This class used one head saying FOUR over carriers of one, two, three
+        and seven bodies. `item ready --head` now states whether the carrier
+        it read was whole, so each of those answered `conservation_short` or
+        `conservation_surplus` beside the verdict the test was written for —
+        and the arms expecting a FINDING kept passing on the wrong one."""
+        import re
+        n = len(re.findall(r"^## ", bodies, flags=re.M))
+        return f"schema: 2\nbaseline: {n}\nadded: 0\ncompacted: 0\n" + bodies
+
     COUNT = (r"evidence waits \(items not graded READY\): (\d+) "
              r"predicate\(s\) run this pass — (\d+) FIRED, (\d+) quiet, "
              r"(\d+) BROKEN\.")
@@ -3189,8 +3201,8 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
         return tuple(int(n) for n in found[0])
 
     def test_a_parked_item_is_named_once_its_flag_arrives(self):
-        carrier = (self.HEAD4
-                   + refusals._blocked_block("xx-1", "READY", "NONE")
+        carrier = self._headed(
+                     refusals._blocked_block("xx-1", "READY", "NONE")
                    + refusals._blocked_block(
                        "xx-2", "PARKED", "evidence test -e lc313-flag"))
         r = self._repo(carrier)
@@ -3221,8 +3233,8 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
         self.assertIn("head: 1 READY, 1 schedulable now.", out)
 
     def test_a_broken_predicate_is_reported_and_carries_the_item_code(self):
-        carrier = (self.HEAD4
-                   + refusals._blocked_block("xx-1", "PARKED",
+        carrier = self._headed(
+                     refusals._blocked_block("xx-1", "PARKED",
                                              "evidence exit 2"))
         r = self._repo(carrier)
         one_code, one_out = self._run(r, "item", "ready", "xx-1")
@@ -3239,8 +3251,8 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
         self.assertIn("item ready --head: FINDING", out)
 
     def test_a_NEW_item_on_a_fired_predicate_is_listed_too(self):
-        carrier = (self.HEAD4
-                   + refusals._blocked_block("xx-1", "NEW", "evidence true"))
+        carrier = self._headed(
+                     refusals._blocked_block("xx-1", "NEW", "evidence true"))
         r = self._repo(carrier)
         code, out = self._run(r, "item", "ready", "--head")
         self.assertEqual(code, exits.CLEAN, out)
@@ -3251,8 +3263,8 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
         """Fired, quiet and broken in ONE carrier, beside the three kinds of
         item the pass must leave alone. The expected counts are written from
         the fixture, never read off the output under test."""
-        carrier = (self.HEAD4
-                   + refusals._blocked_block("xx-1", "PARKED", "evidence true")
+        carrier = self._headed(
+                     refusals._blocked_block("xx-1", "PARKED", "evidence true")
                    + refusals._blocked_block("xx-2", "PARKED",
                                              "evidence exit 1")
                    + refusals._blocked_block("xx-3", "NEW", "evidence exit 3")
@@ -3279,8 +3291,8 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
         file must not appear. The SAME command typed `evidence` on another
         carrier does create its file — without that half, an absent marker
         would be what a marker that can never appear also returns."""
-        carrier = (self.HEAD4
-                   + refusals._blocked_block("xx-1", "READY", "NONE")
+        carrier = self._headed(
+                     refusals._blocked_block("xx-1", "READY", "NONE")
                    + refusals._blocked_block("xx-2", "NEW",
                                              "decision touch lc313-marker")
                    + refusals._blocked_block("xx-3", "READY",
@@ -3296,8 +3308,8 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
         self.assertNotIn("xx-2", out)
         self.assertIn("head: 2 READY, 2 schedulable now.", out)
 
-        control = (self.HEAD4
-                   + refusals._blocked_block("xx-2", "NEW",
+        control = self._headed(
+                     refusals._blocked_block("xx-2", "NEW",
                                              "evidence touch lc313-marker"))
         rc = self._repo(control)
         code, out = self._run(rc, "item", "ready", "--head")
@@ -3311,8 +3323,8 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
             "xx-2", "PARKED", "evidence touch lc313-ran-verify"
         ).replace("goal: mitigate", "goal: verify")
         self.assertIn("goal: verify", other)
-        carrier = (self.HEAD4
-                   + refusals._blocked_block(
+        carrier = self._headed(
+                     refusals._blocked_block(
                        "xx-1", "PARKED", "evidence touch lc313-ran-mitigate")
                    + other)
         r = self._repo(carrier)
@@ -3333,8 +3345,8 @@ class TheHeadNamesArrivedEvidence(unittest.TestCase):
 
     def test_statusline_still_runs_no_predicate(self):
         """Design point 8: the per-prompt render must not start evaluating."""
-        carrier = (self.HEAD4
-                   + refusals._blocked_block(
+        carrier = self._headed(
+                     refusals._blocked_block(
                        "xx-1", "PARKED", "evidence touch lc313-statusline"))
         r = self._repo(carrier)
         code, out = self._run(r, "item", "statusline")
