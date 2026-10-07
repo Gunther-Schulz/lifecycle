@@ -1033,6 +1033,8 @@ amended-blocked-by: 2026-10-05 NONE
 promote-reason: 2026-10-05 Decision-complete since the round closed: vocabulary fixed, staging ruled by the operator (LEDGER decision on lc-239 staging), criterion and verifier now stated, write-set the eight repos. A fresh desk can run beat 1 from the entry.
 promoted-by: 2026-10-05 lifecycle-03
 bench-reason: 2026-10-05 A multi-repo arc for its own desk, outside this session held copies and not cited by an open arc: decision-complete, not on the scheduled head.
+amend-reason: 2026-10-07 three migrated, four handed to their own sessions, one diagnosed
+amended-evidence: 2026-10-07 MEASURED 2026-10-07 at the drain desk: three of eight migrated and committed unpushed, each ending kind check CLEAN - begehung 8211887, daneel 1a678f0, claude-code-cache-fix a236107 (four triggers authored there). RELAYED to the sessions living in the others by the brief docs/directives/2026-10-07-lc239-repo-migration-brief.md (operator decision the same day: each repo own session migrates it): statiker-30, beat-the-books-70, cachyos-setup-49, dispatch-guards-99; no reply yet. skill-craft: no live session, dry run COULD NOT VERIFY because LEDGER.md carries a prose preamble above its schema line; not repaired.
 
 ## lc-240
 grade: PARKED
