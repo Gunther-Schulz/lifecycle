@@ -1642,9 +1642,21 @@ def _walk_verb(args, out) -> int:
             "registry to walk. An empty walk reads exactly like a repo whose "
             "every kind is in order.")
         return res.code
+    # lc-107: a READABLE declaration still carries its own answers. They were
+    # dropped here, so a declaration-level finding left the verb reporting
+    # clean. Printed before the walk (which prints its own verdict last), and
+    # folded into the exit by the same `exits.worst` every walk uses.
+    if res.findings or res.unverified:
+        _report(res, out)
+        out(f"{args.verb}: declaration check {exits.word(res.code)} — "
+            f"{len(res.findings)} finding(s), "
+            f"{len(res.unverified)} check(s) could not verify; folded into "
+            "this verb's exit code.")
     if args.verb == "retire":
-        return retire_mod.cmd_retire(args, out, repo, res.declaration)
-    return retire_mod.cmd_audit(args, out, repo, res.declaration)
+        walk_code = retire_mod.cmd_retire(args, out, repo, res.declaration)
+    else:
+        walk_code = retire_mod.cmd_audit(args, out, repo, res.declaration)
+    return exits.worst([res.code, walk_code])
 
 
 def cmd_migrate(args, out) -> int:
