@@ -1112,7 +1112,7 @@ MUTATIONS = [
      "and it is a value nothing can ever fill in"),
 
     ("ready_with_unknown_slot", "items.py",
-     "                     if it.grade == \"READY\" and unknown_slots_of(it)]",
+     "                     if it.grade in GRADES_JUDGED_COMPLETE and unknown_slots_of(it)]",
      "                     if False]",
      "the refusal of READY over a slot nobody has ever written — a migrated "
      "entry is then schedulable on a judgment that cannot have been made"),

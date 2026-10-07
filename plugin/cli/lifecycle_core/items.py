@@ -77,6 +77,13 @@ GRADES = GRADES_OPEN + GRADES_CLOSED
 #: whole accepted value set of the declaration's `grades-extra` key.
 GRADES_DECLARED = (STANDBY,)
 
+#: The grades that ASSERT a desk judged the item decision-complete (lc-299).
+#: STANDBY differs from READY in the schedule alone, so whatever the judgment
+#: cannot have been made over — a slot nobody has ever written — refuses both.
+#: NEW and PARKED are deliberately absent: they are where a migrated UNKNOWN
+#: is supposed to sit until the grade workflow fills it.
+GRADES_JUDGED_COMPLETE = ("READY", STANDBY)
+
 #: The slots, in order. Fixed: a block carries exactly these, exactly once,
 #: in this sequence. Order is part of the shape rather than decoration — a
 #: diff over a tool-written file should show what CHANGED, not where a slot
@@ -2733,16 +2740,21 @@ def check_file(path: Path, out, prefix: str | None = None, *,
     # reaches the file, and a rule enforced only on the write path is a
     # convention with a mechanism's reputation. This is the one that stops a
     # migrated entry being graded READY on a slot nobody has ever written.
-    ready_unknown = [(it.ident, it.line, unknown_slots_of(it))
+    #
+    # STANDBY TOO (lc-299). It is READY off the scheduled head: the same
+    # judgment, made over the same slots, so the same slot refuses it. The
+    # message names the grade the block HAS — one that said READY about a
+    # STANDBY block would send its reader looking for the wrong line.
+    ready_unknown = [(it.ident, it.line, it.grade, unknown_slots_of(it))
                      for it in parsed.items
-                     if it.grade == "READY" and unknown_slots_of(it)]
-    for ident, line, slots_ in ready_unknown:
+                     if it.grade in GRADES_JUDGED_COMPLETE and unknown_slots_of(it)]
+    for ident, line, grade_, slots_ in ready_unknown:
         finding("ready_with_unknown_slot", line,
-                f"block {ident!r} is READY and still holds UNKNOWN in "
+                f"block {ident!r} is {grade_} and still holds UNKNOWN in "
                 + ", ".join(f"`{s}`" for s in slots_)
-                + ". READY is the desk's judgment that a fresh context could "
-                  "execute this now, and a slot nobody has ever written is "
-                  "the one thing that judgment cannot have been made over.",
+                + f". {grade_} is the desk's judgment that a fresh context "
+                  "could execute this now, and a slot nobody has ever written "
+                  "is the one thing that judgment cannot have been made over.",
                 ident)
     if ready_unknown:
         code = exits.worst([code, exits.FINDING])

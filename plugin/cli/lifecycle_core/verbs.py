@@ -1003,6 +1003,21 @@ def _collect_slots(args, ctx: Ctx, out):
                     "it AS one — dated, with its reason — rather than "
                     "inventing a sixth word nothing consumes.")
             return None, exits.FINDING
+        # STANDBY IS OPT-IN PER REPO, AND THIS DOOR ASKS (lc-299). `item
+        # bench` already refuses in a repo that does not declare the grade;
+        # `add --grade` accepted any member of GRADES, so it wrote a block
+        # the repo's own `item check` then refused — `standby_undeclared`,
+        # the same refusal, met one verb late and after the commit.
+        if (grade == items_mod.STANDBY
+                and not decl.declares_standby(ctx.declaration)):
+            out(f"FINDING [standby_undeclared] `--grade {grade}` in a repo "
+                "whose declaration does not opt into it "
+                f"(`\"{decl.GRADES_EXTRA_KEY}\": [\"{items_mod.STANDBY}\"]`). "
+                "It is the off-head twin of READY and exists per repo, so "
+                "this add would write a grade its own `item check` refuses. "
+                "Declare it, or book the item under a grade this repo "
+                "carries. Nothing was written.")
+            return None, exits.FINDING
     else:
         grade = "READY" if complete else "NEW"
     slots["grade"] = grade

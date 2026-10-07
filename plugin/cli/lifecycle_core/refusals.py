@@ -4176,9 +4176,9 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="ready_with_unknown_slot",
-        refusal="READY over a slot nobody has ever written (§3.1) — UNKNOWN "
-                "is the migration's declared marker and the grade workflow "
-                "fills it BEFORE READY",
+        refusal="READY, or its off-head twin STANDBY, over a slot nobody has "
+                "ever written (§3.1) — UNKNOWN is the migration's declared "
+                "marker and the grade workflow fills it BEFORE either grade",
         firing_input="a READY block whose `goal` is UNKNOWN",
         expect=exits.FINDING,
         fire=lambda: _items_run(
