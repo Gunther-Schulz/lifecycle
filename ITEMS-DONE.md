@@ -2486,5 +2486,19 @@ closed-met: none
 closed-decided: none
 closed-ref: d04190758f23ec8e5c42565aa1f83af8621524fe
 
+## lc-210
+grade: DONE
+requirement: THE BLOCKER-TYPE TABLE IS A CHECK NO INPUT CAN FALSIFY, PRINTED AS A STATISTIC, WITH A FINDING-CLAIM BESIDE IT HELD BY NOTHING. Console 2576-2579 and report 2962-2971 print five rows including the sentence 'untyped and NONE are both N, and either being non-zero is a finding rather than a statistic.' But e.blocker is set only by build_items from migration_blocker's literal returns, and the lane's exhaustive run over every reachable branch emitted exactly two classes, decision and evidence — so item-id, NONE and untyped are 0 BY CONSTRUCTION (law 22). AND NOTHING CONVERTS A NON-ZERO INTO A FINDING ANYWAY: bt is consumed only by the two print loops at 2579 and 2965, so the sentence is law 26's second clause exactly — a claim in prose beside a mechanism, held by nothing, degrading in the SILENT direction.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: Either the sentence becomes a mechanism — a non-zero untyped or NONE actually produces a finding — or the rows are reported as could-not-verify arithmetic and the sentence is deleted rather than left standing beside them. Law 22: a check no input can falsify is DELETED, not registered. THREE SMALLER THINGS IN THE SAME SITE, each fixed or explicitly declined: the sentence prints the SUM of two counts under the words 'are both', so if they ever diverged it would be wrong about each; migration_blocker's 767-769 branch is dead given slots_incomplete hardcoded True at 887; and the internal contrast is the model to copy — _ledger_storable's docstring at 711-716 reasons about this exact class correctly and says R22 means such a check is not registered. The same author applied the law in one place and not the other, which is the strongest argument that the fix is the law and not this site.
+evidence: RELAYED from the lc-192 lane, its exhaustive enumeration pasted and NOT re-run here: the distinct blockers build_items can emit are four literal strings classifying to exactly {decision, evidence}. DERIVED from that: item-id, NONE and untyped are unreachable, so the table's green is arithmetic rather than a result. RELAYED: bt's only consumers are the two print loops; slots_incomplete is hardcoded True at 887, making 767-769 dead. MEASURED at this desk: nothing in this item — it is booked wholly on the lane's read and its first build step is to re-run the branch enumeration, because an unfalsifiability claim that is itself unverified is the same error one level up.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The blocker-type table states its zeros are by construction and claims no finding. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: cb08711f055046c7959bf2b2c6ebed927bfc7035
+
 ## Archive (pre-migration)
 
