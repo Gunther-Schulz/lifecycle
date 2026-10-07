@@ -1345,15 +1345,6 @@ blocked-by: NONE
 amend-reason: 2026-10-06 the booked slot carried a comma inside one venue phrase and the tool split it into two paths; restated as one venue with no comma. Nothing else changes.
 amended-write-set: 2026-10-06 venue: .claude/lifecycle.json of each governed repo - nine repos and one commit per repo - outside this working copy
 
-## lc-324
-grade: STANDBY
-requirement: FOURTEEN ROSTER ROWS ARE DARKENED BY NO ARRANGEMENT, so nothing shows their checks can fail: binding_slot_unbound, binding_slot_unbound_absent_key, binding_template_missing, binding_template_unparsable, desk_state_shape, desk_state_unknown_value, lane_new_exists, record_route_outside_set, retire_source_laws_absent, retire_source_not_writing, retire_source_uncommitted, retire_source_unpinned_anchor, verify_check_failed, workflow_binding_exists - record: wave C lane C5 closing report 2026-10-07, gap 3
-goal: enforce-the-invariants
-write-set: tools/prove-rows.py,test/test_prove_rows.py
-done-criterion: Each of the fourteen has a recorded arrangement admitted on the pair, or is listed with the reason none is possible; the prover closing line for rows never dark reads zero or names only the reasoned exceptions.
-evidence: RELAYED from lane C5 (opus) 2026-10-07 at f95c75f, from its full prover walk: 135 of 149 rows went dark under at least one arrangement and these fourteen under none.
-blocked-by: NONE
-
 ## lc-325
 grade: STANDBY
 requirement: A MISSPELLED WRITE-SET PATH STILL BOOKS READY, and a misspelled file name under a real directory reads as a new file: lc-185 stopped the wave join from joining an unresolved path, but item add decides the grade without resolving, and nothing lets an entry declare that it creates a file - record: wave C lane C4 closing report 2026-10-07, gaps G3 and G4

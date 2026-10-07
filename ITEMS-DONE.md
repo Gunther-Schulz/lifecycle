@@ -3069,5 +3069,18 @@ closed-met: lc-327
 closed-decided: none
 closed-ref: e9126c2439627c484c67d8e94294c24f9a95b50c
 
+## lc-324
+grade: DONE
+requirement: FOURTEEN ROSTER ROWS ARE DARKENED BY NO ARRANGEMENT, so nothing shows their checks can fail: binding_slot_unbound, binding_slot_unbound_absent_key, binding_template_missing, binding_template_unparsable, desk_state_shape, desk_state_unknown_value, lane_new_exists, record_route_outside_set, retire_source_laws_absent, retire_source_not_writing, retire_source_uncommitted, retire_source_unpinned_anchor, verify_check_failed, workflow_binding_exists - record: wave C lane C5 closing report 2026-10-07, gap 3
+goal: enforce-the-invariants
+write-set: tools/prove-rows.py,test/test_prove_rows.py
+done-criterion: Each of the fourteen has a recorded arrangement admitted on the pair, or is listed with the reason none is possible; the prover closing line for rows never dark reads zero or names only the reasoned exceptions.
+evidence: RELAYED from lane C5 (opus) 2026-10-07 at f95c75f, from its full prover walk: 135 of 149 rows went dark under at least one arrangement and these fourteen under none.
+blocked-by: NONE
+closed-reason: 2026-10-07 All fourteen rows have an admitted arrangement; every roster row now goes dark under at least one. Wave D 2026-10-07, verified on main at deede51: suite 1612 OK no skips, --test 157 of 157, prove-rows 152 of 152 held with every row dark under some arrangement and no control red, leak battery 62 of 62; item check and item ready unchanged in exit code across all ten rostered repos.
+closed-met: lc-328
+closed-decided: none
+closed-ref: 7ab8c36d7dc91fd53083f89de8d3c9dbc794f689, 2d0ab15eb225d66a0a71b44fda97dbf786f735b7, ecfdac0c8a214adf81759049767696a04ebd1523
+
 ## Archive (pre-migration)
 
