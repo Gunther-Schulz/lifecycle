@@ -3232,6 +3232,15 @@ def run(args, out, ctx) -> int:
         carried_src, carried_done = recorded_blobs(prior_report)
         carried_src.pop(src_name, None)
         carried_done.pop(done_name, None)
+    # lc-34: the pins ride across only through a prior report AT THIS PATH.
+    # A merge into an existing carrier whose report path holds none cannot
+    # carry the earlier sources' pins, and the report that documents one
+    # source must say so (the exit code stays: the merge formed its verdict).
+    carry_note = ""
+    if merge and merge_target and not prior_report:
+        carry_note = (f"no prior report found at `{report_rel}`, so the "
+                      "earlier sources' provenance pins are NOT carried: "
+                      "this report records only the source of this run")
 
     # --- THE DISPOSITION STAGE (lc-86), here and nowhere else: the successor
     # homes exist above it, the report is rendered below it. `code` carries its
@@ -3251,7 +3260,7 @@ def run(args, out, ctx) -> int:
                       carried_src, carried_done, readers, readers_why,
                       src_label, n_residue, reimported, disposition,
                       n_level3=n_level3, wrote=writing_run,
-                      plan_warnings=plan_warnings),
+                      plan_warnings=plan_warnings, carry_note=carry_note),
         encoding="utf-8")
 
     # --- the run's own answer
@@ -3585,7 +3594,8 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
                   done_blob="", carried_src=None, carried_done=None,
                   readers=(), readers_why="", src_label="", n_residue=0,
                   reimported=(), disposition=DISPOSED_UNTOUCHED,
-                  n_level3=0, wrote=False, plan_warnings=()) -> str:
+                  n_level3=0, wrote=False, plan_warnings=(),
+                  carry_note="") -> str:
     """The classification report.
 
     IT DESCRIBES ENTRIES; IT DOES NOT QUOTE THEM. Every entry appears as its
@@ -3673,6 +3683,9 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     # EARLIER runs: this report replaces its predecessor, so a pin it did not
     # carry across would simply cease to exist and the source it pinned would
     # read as never migrated.
+    if carry_note:
+        a(f"**PROVENANCE NOT CARRIED (lc-34):** {carry_note}.")
+        a("")
     for path, sha in sorted((carried_src or {}).items()):
         a(f"source-blob: {sha}  ({path})")
         a("")

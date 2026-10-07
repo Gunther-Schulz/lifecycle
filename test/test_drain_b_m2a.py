@@ -105,3 +105,37 @@ class ReportOnlyWouldRefuse(unittest.TestCase):
                "- **READY 2026-09-09 — genuinely new work.** body\n")
         for text in (out, report):
             self.assertNotIn("WOULD refuse", text)
+
+
+class MergeProvenanceCarry(unittest.TestCase):
+    """lc-34: a --merge whose --report path holds no prior report for the
+    EXISTING carrier says, in the report, that earlier sources' provenance
+    pins are NOT carried. Exit code unchanged."""
+
+    NOTE = "provenance pins are NOT carried"
+
+    def two_runs(self, second_report):
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        (d / "SECOND.md").write_text(
+            "# second\n\n## Open\n\n"
+            "- **READY 2026-09-09 — genuinely new work.** body\n",
+            encoding="utf-8")
+        from test_migrate import run_cli
+        code, out = run_cli(d, "migrate", "--report", second_report,
+                            "--from", "SECOND.md", "--from-done", "NONE",
+                            "--merge")
+        self.assertEqual(code, exits.CLEAN, out)
+        return (d / second_report).read_text(encoding="utf-8")
+
+    def test_a_different_report_path_states_the_gap(self):
+        report = self.two_runs("docs/audits/other.md")
+        self.assertIn(self.NOTE, report)
+        self.assertIn("no prior report found at", report)
+
+    def test_control_the_same_report_path_carries_both_pins_and_no_note(self):
+        report = self.two_runs(REPORT)
+        self.assertNotIn(self.NOTE, report)
+        self.assertEqual(len(re.findall(r"^source-blob: ", report, re.M)), 2,
+                         report)
