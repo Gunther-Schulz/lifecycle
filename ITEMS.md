@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 325
+added: 326
 compacted: 0
 
 ## lc-3
@@ -1430,4 +1430,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
 done-criterion: One reading verb prints the decision queue for a person: each open decision blocker once per distinct question, in plain words, with the items it holds, its age, and the not-derivable statement shortened to one line; questions a ledger line already answers are listed as ANSWERED AND STILL PARKED with the line. The session-start banner and the session close each print the queue's count and its three oldest questions, so the list arrives without being asked for. It decides nothing and moves no grade. Red-first: a fixture carrier with two items on one question and one answered question prints one line with both ids and one ANSWERED line; a carrier with no decision blocker says so.
 evidence: MEASURED 2026-10-07 at the drain desk through item slots over all 96 open items: 49 blocked on a decision (8 NEW, 39 PARKED, 2 STANDBY), 31 of them worded as a narrow freeze exit for the item itself plus lc-282 asking whether the freeze is lifted; the banner line reads 49 with a derivability statement, 0 answered by the ledger.
+blocked-by: NONE
+
+## lc-334
+grade: STANDBY
+requirement: THE EMIT-SITE SCAN READS DOCSTRINGS AS EMIT SITES. roster.emit_sites matches the bracketed row idiom anywhere in a source file, so prose inside a docstring counts: for trigger_broken it returns two lines that sit inside cmd_item_statusline's docstring. A row whose real emit sites were deleted would still read as emitted, a docstring naming an unregistered row would fire a false finding, and the prover's per-row site counts are inflated. Record: docs/directives/2026-10-07-drain-wave-e.md
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/roster.py,test/test_roster.py
+done-criterion: The scan counts a bracketed row name only where it is code that can execute: a name inside a docstring or a comment is not an emit site. Red-first, both directions: a planted module whose ONLY mention of a registered row is in a docstring makes that row read as not emitted where the real sites are removed; and a docstring naming an unregistered row raises no emit_site_unregistered. Control: every row emitted today is still counted, and the count per row is printed before and after so a dropped real site shows.
+evidence: RELAYED from wave E lane E4 2026-10-07 at 83eaa73, not re-run at the desk: emit_sites() for trigger_broken returns lanes.py:1031, lanes.py:1046, verbs.py:2570, verbs.py:2576, verbs.py:2891, and 2570 and 2576 are prose inside a docstring.
 blocked-by: NONE
