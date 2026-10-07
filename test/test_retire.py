@@ -804,6 +804,37 @@ class AnAbsenceClaimNamesWhatProvesTheInstrumentWasLive(unittest.TestCase):
         instances, _ = retire.list_home(d, "NOTES.txt")
         self.assertEqual(instances, ["NOTES.txt"])
 
+    def test_growth_verdict_and_walk_agree_on_the_unexaminable_kinds(self):
+        """lc-187. A kind with no home and a kind whose home cannot be
+        resolved are COULD NOT VERIFY with a printed reason in BOTH bodies,
+        never a silent continue that returns CLEAN."""
+        d = self._tmp()
+        doc = {"kinds": {
+            "nohome": {"growth": "bounded-by-exit", "exit": {"action": "move"}},
+            "unres": {"home": self.UNRESOLVABLE + "/x.jsonl",
+                      "growth": "bounded-by-exit", "exit": {"action": "move"}},
+        }}
+        gbuf, wbuf = [], []
+        gcode = retire.growth_verdict(d, doc, gbuf.append)
+        wcode = retire.walk(d, doc, wbuf.append, acting=False)
+        self.assertEqual(gcode, exits.COULD_NOT_VERIFY, "\n".join(gbuf))
+        self.assertEqual(wcode, exits.COULD_NOT_VERIFY)
+        gtext, wtext = "\n".join(gbuf), "\n".join(wbuf)
+        for needle in (retire.NO_HOME_LINE, "home_unresolvable"):
+            self.assertIn(needle, gtext)
+            self.assertIn(needle, wtext)
+
+    def test_growth_verdict_keeps_its_verdict_for_a_resolving_home(self):
+        """MUST-NOT-MOVE: a kind whose home resolves is graded as before."""
+        d = self._tmp()
+        doc = {"kinds": {"items": {"home": "NOT-THERE.md",
+                                  "growth": "bounded-by-exit",
+                                  "exit": {"action": "move"}}}}
+        buf = []
+        code = retire.growth_verdict(d, doc, buf.append)
+        self.assertEqual(code, exits.CLEAN, "\n".join(buf))
+        self.assertIn("holds 0", "\n".join(buf))
+
     def test_a_glob_over_a_missing_directory_reports_what_it_searched(self):
         """Also CLEAN — an in-tree directory's absence is an observation —
         but the denominator must say there was nothing to match, or the zero

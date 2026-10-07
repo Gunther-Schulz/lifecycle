@@ -156,6 +156,15 @@ def unresolvable_line(note: str) -> str:
     return f"COULD NOT VERIFY [home_unresolvable] {note}"
 
 
+#: The walk's answers for the two other unexaminable shapes of a registry
+#: row (lc-187), as ONE body each, so `walk` and `growth_verdict` cannot
+#: disagree about the case that decides a clean board.
+NO_HOME_LINE = ("COULD NOT VERIFY: no home declared, so nothing could be "
+                "listed. An undeclared home is a `kind check` finding; here "
+                "it is simply unlistable.")
+NOT_AN_OBJECT_LINE = "COULD NOT VERIFY: the registry row is not an object."
+
+
 #: The XDG base directories this walk knows how to default, and NOTHING ELSE
 #: (lc-170). Each maps to the spec's own fallback, derived from the running
 #: user's home at call time — law 6 forbids a hardcoded machine path or XDG
@@ -404,16 +413,28 @@ def growth_verdict(repo: Path, doc: dict, out) -> int:
     log_present = fire_log_readable()
     code = exits.CLEAN
     for name, body in kinds.items():
+        # lc-187: an unexaminable kind answers COULD NOT VERIFY with its
+        # reason, the SAME sentences `walk` prints, never a silent continue
+        # that lets this function return CLEAN having examined nothing.
         if not isinstance(body, dict):
+            out(f"kind: {name}")
+            out("    " + NOT_AN_OBJECT_LINE)
+            code = exits.worst([code, exits.COULD_NOT_VERIFY])
             continue
         home = body.get("home")
         growth = str(body.get("growth") or "")
         mode = growth.split()[0].strip(":,—-").lower() if growth.strip() else ""
         ex = body.get("exit") if isinstance(body.get("exit"), dict) else {}
         if not isinstance(home, str) or not home.strip():
+            out(f"kind: {name}")
+            out("    " + NO_HOME_LINE)
+            code = exits.worst([code, exits.COULD_NOT_VERIFY])
             continue
-        instances, _note = list_home(repo, home)
+        instances, note = list_home(repo, home)
         if instances is None:
+            out(f"kind: {name}")
+            out("    " + unresolvable_line(note))
+            code = exits.worst([code, exits.COULD_NOT_VERIFY])
             continue
         out(f"kind: {name}")
         g_code, _state = check_growth(name, mode, ex.get("action"),
@@ -450,7 +471,7 @@ def walk(repo: Path, doc: dict, out, *, acting: bool) -> int:
     for name, body in kinds.items():
         if not isinstance(body, dict):
             out(f"kind: {name}")
-            out("    COULD NOT VERIFY: the registry row is not an object.")
+            out("    " + NOT_AN_OBJECT_LINE)
             code = exits.worst([code, exits.COULD_NOT_VERIFY])
             continue
         home = body.get("home")
@@ -466,9 +487,7 @@ def walk(repo: Path, doc: dict, out, *, acting: bool) -> int:
             f"{ex.get('recording-act', '(no recording act)')}")
 
         if not isinstance(home, str) or not home.strip():
-            out("    COULD NOT VERIFY: no home declared, so nothing could be "
-                "listed. An undeclared home is a `kind check` finding; here "
-                "it is simply unlistable.")
+            out("    " + NO_HOME_LINE)
             code = exits.worst([code, exits.COULD_NOT_VERIFY])
             out("")
             continue
