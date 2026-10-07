@@ -865,6 +865,64 @@ def law_list_lines(lines) -> set:
     return set(longest)
 
 
+#: Stand-ins for the four values `migrate.deletion_record` interpolates, in
+#: its own argument order, each with the pattern a real value satisfies. The
+#: stand-ins are what turn the WRITER's output into the recogniser below; the
+#: patterns are deliberately no wider than the value — a blob pin is forty
+#: hex, and the rest stop at the delimiter the writer puts after them.
+_RECORD_FIELDS = (
+    ("src", "\x00lc99-src\x00", r"[^`\n]+"),
+    ("home", "\x00lc99-home\x00", r"[^`\n]+"),
+    ("sha", "\x00lc99-sha\x00", r"[0-9a-f]{40}"),
+    ("on", "\x00lc99-on\x00", r"[^()\n]+"),
+)
+
+
+def deletion_record_lines(lines) -> set:
+    """The line numbers (1-based) of every deletion record in a laws file,
+    AS `migrate --retire-source` WRITES ONE (lc-99; LEDGER.md:78, reading 1).
+
+    THE SHAPE IS TAKEN FROM THE WRITER, never restated here. The record is
+    rendered by `migrate.deletion_record` with stand-ins for its four values,
+    and that rendering is what a block of the laws file is compared against,
+    WHOLE and line for line. So a change to the record's wording moves this
+    recogniser with it, where a second spelling of the shape kept in this
+    file would pass the old record and fire on every new one — or worse, the
+    reverse.
+
+    WHOLE, because a prefix match would be the forbidden repair from the
+    other side: a block that opens like a record and then says something else
+    is prose somebody wrote into the laws file, and prose is what this audit
+    grades. The same value must also recur wherever the writer repeats it
+    (the path three times, the blob three times), so two half-records do not
+    add up to one.
+
+    The import is function-local because `migrate` imports this module.
+    """
+    from . import migrate as migrate_mod
+    rendered = migrate_mod.deletion_record(
+        *(stand_in for _name, stand_in, _pat in _RECORD_FIELDS)).strip("\n")
+    by_stand_in = {s: (n, p) for n, s, p in _RECORD_FIELDS}
+    seen = set()
+    pattern = []
+    for part in re.split("(" + "|".join(re.escape(s) for s in by_stand_in)
+                         + ")", rendered):
+        if part in by_stand_in:
+            name, pat = by_stand_in[part]
+            pattern.append(f"(?P={name})" if name in seen
+                           else f"(?P<{name}>{pat})")
+            seen.add(name)
+        else:
+            pattern.append(re.escape(part))
+    whole = re.compile("".join(pattern))
+    height = rendered.count("\n") + 1
+    found = set()
+    for i in range(len(lines) - height + 1):
+        if whole.fullmatch("\n".join(lines[i:i + height])):
+            found.update(range(i + 1, i + height + 1))
+    return found
+
+
 def laws_scope_audit(repo: Path, laws_rel: str, out) -> int:
     """The mechanism that REPLACED the 60-line cap (R22).
 
@@ -895,9 +953,17 @@ def laws_scope_audit(repo: Path, laws_rel: str, out) -> int:
 
     lines = text.split("\n")
     law_lines = law_list_lines(lines)
+    # lc-99: A DELETION RECORD IS THIS TOOL'S OWN SANCTIONED OUTPUT IN THIS
+    # FILE. `migrate --retire-source` appends it here by design, and it is
+    # dated and carries a blob — so it fired this audit in every repo that
+    # had retired a carrier, forever, with nothing anyone could do to clear
+    # it. A finding nobody can clear teaches a reader that this audit's red
+    # is the known one. Law lines are excluded first: a record is never
+    # inside the law list, and one that somehow were is already exempt.
+    record_lines = deletion_record_lines(lines) - law_lines
     hits = []
     for i, raw in enumerate(lines, start=1):
-        if i in law_lines or not raw.strip():
+        if i in law_lines or i in record_lines or not raw.strip():
             continue
         for name, pat, why in MARKERS:
             if pat.search(raw):
@@ -915,6 +981,17 @@ def laws_scope_audit(repo: Path, laws_rel: str, out) -> int:
         "over a body that moves.")
     out("    markers looked for, each belonging to ANOTHER kind: "
         + "; ".join(f"{n} ({w})" for n, _p, w in MARKERS))
+    if record_lines:
+        # SAID, not silently skipped: these lines were not graded, and a
+        # reader of the count below is owed the lines it leaves out.
+        heads = sorted(i for i in record_lines if i - 1 not in record_lines)
+        out(f"    deletion records: {len(heads)} recognised, "
+            f"{len(record_lines)} line(s) passed ungraded "
+            f"(starting {', '.join(f'{laws_rel}:{i}' for i in heads)}). A "
+            "deletion record is what `migrate --retire-source` appends to "
+            "this file by design; each was matched WHOLE, line for line, "
+            "against that verb's own rendering. A block that only opens "
+            "like one is graded as the prose it is.")
 
     if not hits:
         # lc-172: THE DENOMINATOR IS THE CLAIM'S EVIDENCE. "No line carries a
@@ -922,7 +999,8 @@ def laws_scope_audit(repo: Path, laws_rel: str, out) -> int:
         # and mean opposite things, so the examined population is named here
         # rather than left on an earlier line a reader may not reach.
         examined = sum(1 for i, raw in enumerate(lines, start=1)
-                       if i not in law_lines and raw.strip())
+                       if i not in law_lines and i not in record_lines
+                       and raw.strip())
         out(f"    scope: CLEAN — 0 of {examined} line(s) outside the law list "
             f"carry another kind's marker, over {len(MARKERS)} marker(s) "
             "looked for. Both numbers are the proof this audit was live: a "
