@@ -3748,5 +3748,48 @@ class SchemaPathRefusesAnEntryShapeItWouldIgnore(unittest.TestCase):
         self.assertNotIn("--entry-shape", out)
 
 
+class TheReportConservationSentenceReadsTheFiles(unittest.TestCase):
+    """lc-206 — the sentence says it was computed on the produced files, so a
+    produced file that disagrees with this run's in-memory counters must make
+    it say something other than HOLDS."""
+
+    def _sentence(self, report):
+        for ln in report.splitlines():
+            if ln.startswith("**Conservation (§3.1)"):
+                return ln
+        self.fail("no conservation sentence in the report")
+
+    def test_control_untampered_files_hold(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        line = self._sentence((d / REPORT).read_text(encoding="utf-8"))
+        self.assertIn("HOLDS", line)
+
+    def test_a_produced_file_that_disagrees_is_not_reported_as_holding(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        items = d / "ITEMS.md"
+        text, ok = migrate.bump_head(items.read_text(encoding="utf-8"),
+                                     "baseline", -1)
+        self.assertTrue(ok)
+        items.write_text(text, encoding="utf-8")
+        migrate_run(d, "--report-only")
+        line = self._sentence((d / REPORT).read_text(encoding="utf-8"))
+        self.assertNotIn("HOLDS", line)
+        self.assertIn("FAILS", line)
+
+    def test_an_unreadable_produced_file_is_could_not_verify(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        (d / "ITEMS.md").write_bytes(b"\xff\xfe not utf-8\n")
+        migrate_run(d, "--report-only")
+        line = self._sentence((d / REPORT).read_text(encoding="utf-8"))
+        self.assertIn("**Conservation (§3.1): COULD NOT VERIFY**", line)
+        self.assertNotIn("HOLDS", line)
+
+
 if __name__ == "__main__":
     unittest.main()

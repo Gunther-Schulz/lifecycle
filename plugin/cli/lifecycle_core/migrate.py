@@ -3696,16 +3696,43 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
           "migration simply did not see would show up as a gap in the sum rather "
           "than as nothing at all.")
         a("")
-    a(f"**Conservation (§3.1), computed on the produced files:** "
-      f"items {n_items + n_residue} (of which {n_residue} residue) + done "
-      f"{archive_count} = {n_items + n_residue + archive_count}; "
-      f"baseline {baseline} + added 0 − compacted 0 = {baseline}. "
-      f"{'HOLDS' if n_items + n_residue + archive_count == baseline else 'FAILS'}"
-      ". THE RESIDUE IS IN THIS IDENTITY AND NOT IN THE ONE ABOVE, and the "
-      "split is the point: a residue item is a BODY in the carrier, so "
-      "conservation must see it, and it comes from no SOURCE ENTRY, so the "
-      "reconciliation identity must not — folding it in there would answer "
-      "COULD NOT VERIFY on every migration after this one.")
+    # lc-206: RE-READ FROM DISK, through the one reader of this identity.
+    # This sentence used to render `n_items + n_residue + archive_count ==
+    # baseline` with `baseline` assigned from those same three, so it read
+    # HOLDS over any input while claiming to have checked the files (law 22).
+    # Both figures below now come out of the homes as they stand, exactly as
+    # `merge_conservation` re-parses them; a home that cannot be read is the
+    # third answer, never a figure.
+    try:
+        items_now = items_mod.parse(
+            ctx.items_path.read_text(encoding="utf-8"))
+        done_now = (items_mod.parse(
+            ctx.done_path.read_text(encoding="utf-8"))
+            if ctx.done_path.exists() else None)
+        cons = items_mod.conservation(
+            items_now, done_now,
+            done_unreadable=f"{ctx.done_path.name} does not exist, so the "
+            "identity's closed side could not be counted")
+    except (OSError, UnicodeDecodeError) as exc:
+        cons = {"ok": None, "why": f"a produced home could not be read "
+                                   f"({exc!r})"}
+    if cons["ok"] is None:
+        a(f"**Conservation (§3.1): COULD NOT VERIFY** — {cons['why']}. "
+          "The figures were to be re-read from the produced files and "
+          "were not, so no verdict is given; a figure taken from this "
+          "run's own counters would be exact by construction.")
+    else:
+        a(f"**Conservation (§3.1), re-read from the produced files on "
+          f"disk:** items {cons['items']} + done {cons['done']} = "
+          f"{cons['actual']}; baseline {cons['baseline']} + added "
+          f"{cons['added']} − compacted {cons['compacted']} = "
+          f"{cons['expected']}. {'HOLDS' if cons['ok'] else 'FAILS'}.")
+    a("")
+    a("THE RESIDUE IS IN THE CONSERVATION IDENTITY AND NOT IN THE ONE "
+      "ABOVE, and the split is the point: a residue item is a BODY in the "
+      "carrier, so conservation must see it, and it comes from no SOURCE "
+      "ENTRY, so the reconciliation identity must not — folding it in there "
+      "would answer COULD NOT VERIFY on every migration after this one.")
     a("")
     a("The bullet count and the archive count use DIFFERENT notions of an "
       "entry, deliberately and not accidentally: the archive count is "
