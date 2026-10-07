@@ -1010,16 +1010,6 @@ evidence: RELAYED (opus review lane, read-only at pinned sha 09ea70a, carried as
 blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
 
-## lc-187
-grade: STANDBY
-requirement: TWO BODIES BEHIND ONE CONTRACT DISAGREE ABOUT THE CASE THAT DECIDES A CLEAN BOARD. growth_verdict (retire.py) still carries the defect walk had repaired: a kind with no declared home and a kind whose home is UNRESOLVABLE are both continued SILENTLY, so the function can return CLEAN having examined nothing — while walk routes both to COULD NOT VERIFY with a printed reason. This is the same one-evaluator rule the laws file states for lane list and item ready, sitting inside the growth check. Bounded today because growth_verdict is reached by a roster row and never by the CLI, and the lc-170 lesson has exactly one home while this is the other.
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/retire.py,test/test_retire.py
-done-criterion: growth_verdict and walk give the SAME answer for a kind with no home and for a kind whose home cannot be resolved: could-not-verify with a printed reason, never a silent continue. RED-FIRST: a declaration carrying one kind with no home and one with an unresolvable home makes growth_verdict return CLEAN today and must not after. MUST-NOT-MOVE: a kind whose home resolves keeps its exact current verdict and wording, and the two functions stay two functions — the repair is one shared answer for the unexaminable case, not a merge that would lose the acting-versus-reporting split.
-evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs: retire.py 364-380 against 426-439, the two branches and their disagreement. DERIVED: a silent continue over an unexaminable kind is the absence-claim class lc-172 removed from the walk, so this is that same repair at the sibling body rather than a new judgment. MEASURED at this desk: growth_verdict has no CLI caller today, which bounds the blast radius and decides nothing about whether the bodies should agree.
-blocked-by: NONE
-bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
-
 ## lc-188
 grade: STANDBY
 requirement: A RECORD WITH ZERO GRADED LINES READS CLEAN. record check (records.py) grades tagged lines and reports CLEAN when it finds no problems, without printing how many lines it graded — so a record whose prose carries no gradeable line at all passes every check, and the output is byte-identical to a record that was examined and found sound. The module docstring names this class in its own words: a record of pure prose passes every tag-shaped check ever written. record_line_untagged closes the prose case; it does not close the same case with the prose removed.
