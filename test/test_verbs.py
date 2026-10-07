@@ -242,6 +242,34 @@ class ClosureRecordIsWritten(unittest.TestCase):
         self.assertNotIn(sha, c["LEDGER.md"])
         self.assertNotIn(sha, c["ITEMS.md"])
 
+    def test_a_moving_ref_is_stored_as_its_FULL_SHA_not_the_label(self):
+        """lc-50 red-first: `--ref HEAD` wrote the literal string HEAD, a
+        moving label, into a record that then stops being edited. The
+        assertion is about the FILE and about CONTENT: the full 40-hex sha
+        HEAD named at the instant of the close, and the label nowhere."""
+        r = self._repo()
+        sha = self._head(r)
+        self.assertRegex(sha, r"^[0-9a-f]{40}$")
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none",
+                              "--decided", "none", "--reason", self.REASON,
+                              "--ref", "HEAD")
+        self.assertEqual(code, exits.CLEAN, out)
+        done = self._carriers(r)["ITEMS-DONE.md"]
+        self.assertIn(f"closed-ref: {sha}", done)
+        self.assertNotIn("closed-ref: HEAD", done)
+
+    def test_a_comma_list_and_an_abbreviation_resolve_elementwise(self):
+        """lc-50 must-not-move: a comma list still resolves per element, and
+        a full sha passed in is written unchanged."""
+        r = self._repo()
+        sha = self._head(r)
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none",
+                              "--decided", "none", "--reason", self.REASON,
+                              "--ref", f"HEAD, {sha[:12]}, {sha}")
+        self.assertEqual(code, exits.CLEAN, out)
+        done = self._carriers(r)["ITEMS-DONE.md"]
+        self.assertIn(f"closed-ref: {sha}, {sha}, {sha}", done)
+
     def test_a_REASON_ALONE_lands_on_the_body(self):
         """THE DISCRIMINATING RED, and it needs its own arm because every
         assertion above passes `--ref` — a flag the old binary rejects at

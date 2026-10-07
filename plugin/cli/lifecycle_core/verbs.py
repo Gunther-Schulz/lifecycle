@@ -3636,11 +3636,14 @@ def _resolve_refs(ctx: Ctx, raw: str, out) -> tuple[str | None, int]:
     commit in this repo" is a question the repo answers and nothing here
     should be modelling.
 
-    WRITTEN AS GIVEN, not resolved to a full sha: the operator's own spelling
-    is what the record should carry, and rewriting it would put a value in the
-    file nobody typed.
+    RESOLVED TO THE FULL 40-HEX SHA before it is written (lc-50): the record
+    is content, and `HEAD` or a branch name is a label that moves. The full
+    sha IS what the caller meant by the spelling at that instant, and it must
+    survive the ref moving; the same `rev-parse` that verifies the ref
+    already prints it, so no second resolver is added.
     """
     refs = [r.strip() for r in raw.split(",") if r.strip()]
+    resolved: list[str] = []
     if not refs:
         out(f"FINDING [closed_ref_unresolvable] `--ref {raw!r}` names no ref. "
             "The flag is OPTIONAL — omitting it writes no `closed-ref:` line "
@@ -3657,6 +3660,12 @@ def _resolve_refs(ctx: Ctx, raw: str, out) -> tuple[str | None, int]:
         probe = subprocess.run(
             ["git", "-C", str(ctx.repo), "rev-parse", "--verify",
              f"{ref}^{{commit}}"], capture_output=True, text=True)
+        # Collected BEFORE the test so the two-line `if ...: continue` below
+        # stays byte-identical: `tools/prove-rows.py` anchors its
+        # `closed_ref_unresolvable` arrangement on exactly that run. A failed
+        # probe returns below, so the stdout kept here is only ever read for a
+        # ref that resolved.
+        resolved.append(probe.stdout.strip())
         if probe.returncode == 0:
             continue
         out(f"FINDING [closed_ref_unresolvable] `--ref` names {ref!r}, "
@@ -3666,7 +3675,7 @@ def _resolve_refs(ctx: Ctx, raw: str, out) -> tuple[str | None, int]:
             "edited, so an unresolvable ref there is permanent — and it "
             "reads exactly like a good one.")
         return None, exits.FINDING
-    return ", ".join(refs), exits.CLEAN
+    return ", ".join(resolved), exits.CLEAN
 
 
 #: The refusal's text for a DONE close missing a statement. `{ledger}` is the
