@@ -2838,5 +2838,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 0ef742404c620e8f5d4a89ce503ccdaddce8d3b2
 
+## lc-134
+grade: DONE
+requirement: The live home has NO MIRROR of open_grade_in_done_home: a body carrying a CLOSED grade (DONE or DROPPED) while it sits in ITEMS.md passes item check CLEAN, and the census counts it as closed while it is live. The done home is guarded in one direction only. Consequence measured with lc-29 in hand: an item-id blocker naming a live-but-DROPPED target resolves as EXISTS and is never refused, so lc-29's widening — which reads the grade from the DONE home, per its own design — cannot see it. Such a body arises from a hand edit or an interrupted close, which is exactly the population the carrier checks exist for (law 8: the tool is the only writer, and the check catches what slipped past by hand) — record: lc-29 closing report slot (g), settled as REACHABLE by desk measurement 2026-09-15
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py,tools/prove-rows.py
+done-criterion: red-first on a live carrier whose block carries grade DROPPED — today items.check_file returns exit 0 CLEAN with census 'open 0 closed 1 unknown 0'; after, a FINDING naming the block and the grade, as an assertion FAILURE not an error. The DONE case too, since both are closed grades. MUST-NOT-MOVE, and this is what decides shippability: every OPEN grade in the live home still passes, the done home's own open_grade_in_done_home direction is unchanged, and the archive section stays exempt. A recorded mutation in tools/prove-rows.py for the new row, since a row without one ships unproven by that instrument (69 of 84 carry one today)
+evidence: Measured at the desk, not inferred: items.check_file over GOOD_ITEMS with its single grade READY replaced by DROPPED returns exit 0 and prints 'census: open 0  closed 1  unknown 0  (total 1)' — the body is counted as closed while sitting in the LIVE carrier, and no row fires. The asymmetry is in the roster: open_grade_in_done_home exists (refusals.py:2442, emitted items.py:1579) and no live-home counterpart does. Surfaced by lc-29's lane as a SCOPE residual it declined to claim as a defect ('if reachable, this check does not see it'); the desk settled reachability by running it. The interaction with lc-29 is the reason this is worth building rather than noting
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 A closed grade in the live carrier is a finding, closed_grade_in_live_home. Wave C 2026-10-07, verified on main at 5e77b52: suite 1531 OK no skips, --test 153 of 153, prove-rows 134 of 134 held with no control red, leak battery 62 of 62; item check unchanged in exit code across all ten rostered repos.
+closed-met: none
+closed-decided: none
+closed-ref: bdd0852f2798baae31d5e5abc0a052d66b2057e7
+
 ## Archive (pre-migration)
 
