@@ -758,6 +758,8 @@ blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
 amend-reason: 2026-10-07 2026-10-07 dispatched in wave A and returned as a gap: the repair needs a schema field
 amended-evidence: 2026-10-07 RELAYED from wave A lane F 2026-10-07 at base 3eb0f98, not re-run at the desk: ref_world (declaration.py near 1666) builds the producer pool only from kind writers, and no other producer registry exists in the declaration or plugin.json (grep). DERIVED: making a writer-named producer dangle needs an INDEPENDENT pool, which is a new declaration field, a schema change, outside the defect-repair exemption of the 2026-09-24 freeze. Not buildable as a repair.
+amend-reason: 2026-10-07 reproduced; the registry shape is ruled
+amended-evidence: 2026-10-07 RELAYED from wave E lane E8 2026-10-07 at 83eaa73: reproduced (a writer naming an unknown producer gives no finding, the same spelling in a reader gives dangling_reference). The only producer reference in ten rostered declarations is this repo .claude/lifecycle.json writer producer:plugin-installer. DESK RULING 2026-10-07: an OPTIONAL top-level producers list in the declaration, absent meaning an empty pool (precedent: grades-extra, closure-words; no schema bump); this repo declaration gains producers: [plugin-installer] in the same change. About 40 lines plus tests by the lane estimate.
 
 ## lc-194
 grade: STANDBY
