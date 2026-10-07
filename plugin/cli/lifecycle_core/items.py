@@ -2470,6 +2470,25 @@ def check_file(path: Path, out, prefix: str | None = None, *,
                 f"{prefix!r} — ids are `{prefix}-<n>` and immutable across "
                 "moves.", ident)
 
+    # THE MIRROR OF `open_grade_in_done_home` (lc-134). The closure home
+    # refuses an open grade; this home had no counterpart, so a body graded
+    # DONE or DROPPED while it still sat HERE passed clean and was counted on
+    # the closed side of the census below while live. It arises from a hand
+    # edit or an interrupted close — a close MOVES the body, so a closed
+    # grade that stayed is a closure without its exit — and an item-id
+    # blocker naming it resolves as an item that EXISTS. The archive is not
+    # reached: `parse` stops at its heading, as everywhere else.
+    closed_here = [it for it in parsed.items if it.grade in GRADES_CLOSED]
+    for it in closed_here:
+        finding("closed_grade_in_live_home", it.line,
+                f"block {it.ident!r} is graded {it.grade} in the LIVE "
+                "carrier. A closed grade is written by a close, and a close "
+                "MOVES the body to the closure home; one still sitting here "
+                "is a closure without its exit — a hand edit or an "
+                "interrupted close — and the census counts it closed while "
+                "it is live. Close it through `item close`, or restore the "
+                "open grade it really has.", it.ident)
+
     untyped, blockers_unverified = check_parked_blockers(parsed, prefix)
     for ident, line, value in untyped:
         finding("parked_without_typed_blocker", line,
@@ -2666,7 +2685,8 @@ def check_file(path: Path, out, prefix: str | None = None, *,
             f"{ARCHIVE_HEADING!r}, held verbatim and not shape-checked.")
 
     code = exits.CLEAN
-    if parsed.problems or bad_ids or untyped or unk_misplaced:
+    if (parsed.problems or bad_ids or closed_here or untyped
+            or unk_misplaced):
         code = exits.FINDING
     if c["unknown"] or blockers_unverified:
         code = exits.worst([code, exits.COULD_NOT_VERIFY])
@@ -2714,7 +2734,7 @@ def check_file(path: Path, out, prefix: str | None = None, *,
         code = exits.worst([code, exits.FINDING])
 
     out(f"item check: {exits.word(code)} — "
-        f"{len(parsed.problems) + len(bad_ids) + len(untyped) + len(unk_misplaced) + len(ready_unknown) + len(standby_undeclared)}"
+        f"{len(parsed.problems) + len(bad_ids) + len(closed_here) + len(untyped) + len(unk_misplaced) + len(ready_unknown) + len(standby_undeclared)}"
         f" shape finding(s), {len(c['unknown'])} unclassifiable grade word(s).")
     return code
 

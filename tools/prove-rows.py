@@ -839,6 +839,13 @@ MUTATIONS = [
      "the closed-grade rule over the closure home — a body that arrived by "
      "some path other than a close then reads as an ordinary closure"),
 
+    ("closed_grade_in_live_home", "items.py",
+     "    closed_here = [it for it in parsed.items if it.grade in GRADES_CLOSED]",
+     "    closed_here = []",
+     "the open-grade rule over the live carrier — a body graded DONE or "
+     "DROPPED that never left then reads as an ordinary live item, counted "
+     "closed"),
+
     ("blocked_in_done_home", "items.py",
      "        if kind not in (None, \"none\"):",
      "        if False:",

@@ -429,7 +429,7 @@ class Amendments(unittest.TestCase):
         n=2 in a live carrier (dotfiles' done home, df-75 and df-64). A guard
         that fires on legitimate work stops the lane (R11).
         """
-        code, out = run_check(self._CLOSED)
+        code, out = run_done_check(self._CLOSED)
         self.assertEqual(code, exits.CLEAN, out)
         self.assertNotIn("among the fixed slots", out)
 
@@ -441,7 +441,7 @@ class Amendments(unittest.TestCase):
         misplaced = self._CLOSED.replace(
             "goal: mitigate\n",
             "amended-goal: 2026-08-27 verify\ngoal: mitigate\n")
-        code, out = run_check(misplaced)
+        code, out = run_done_check(misplaced)
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("among the fixed slots", out)
 
@@ -468,7 +468,7 @@ class ClosureRecord(unittest.TestCase):
                 + "\n" + "".join(l + "\n" for l in extra))
 
     def test_a_closed_body_carrying_the_closure_record_is_CLEAN(self):
-        code, out = run_check(self._closed(
+        code, out = run_done_check(self._closed(
             "closed-reason: 2026-08-27 shipped in the wave-4 batch",
             "closed-ref: 0123456789abcdef0123456789abcdef01234567"))
         self.assertEqual(code, exits.CLEAN, out)
@@ -486,7 +486,7 @@ class ClosureRecord(unittest.TestCase):
         self.assertIn("`closed-reason:`", out)
 
     def test_an_undated_closed_reason_is_a_finding(self):
-        code, out = run_check(self._closed(
+        code, out = run_done_check(self._closed(
             "closed-reason: shipped in the wave-4 batch"))
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("ISO date", out)
@@ -495,7 +495,7 @@ class ClosureRecord(unittest.TestCase):
         """The must-not arm: the record is optional — a close with no
         `--reason` behaves as it did, and a shape check that demanded the
         lines would fire on every body closed before this existed."""
-        code, out = run_check(self._closed())
+        code, out = run_done_check(self._closed())
         self.assertEqual(code, exits.CLEAN, out)
 
 

@@ -3787,6 +3787,22 @@ SCHEMA_ROWS = [
         stage="wave 1d, the schema wave",
     ),
     Row(
+        # THE MIRROR (lc-134). The row above guards the closure home in one
+        # direction; nothing guarded the live carrier in the other, so a body
+        # graded DROPPED while it sat in `ITEMS.md` read CLEAN and was counted
+        # closed while live.
+        ident="closed_grade_in_live_home",
+        refusal="a CLOSED grade in the live carrier — a closure that never "
+                "took its exit, counted closed while it is live",
+        firing_input="a `DROPPED` block in `ITEMS.md`",
+        expect=exits.FINDING,
+        fire=lambda: _items_run(
+            GOOD_ITEMS.replace("grade: READY", "grade: DROPPED")),
+        # The SAME body, OPEN: the arms differ in the grade alone.
+        control=lambda: _items_run(GOOD_ITEMS),
+        stage="drain wave C, lc-134",
+    ),
+    Row(
         ident="blocked_in_done_home",
         refusal="a closed body still carrying a blocker — a wait recorded "
                 "against something that has stopped waiting, which is what "
