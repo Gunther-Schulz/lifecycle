@@ -2472,5 +2472,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 8116248680dd3dbb4ecd79478c75af23dddeba05
 
+## lc-213
+grade: DONE
+requirement: A --report-only RUN PRINTS 'items written: N -> ITEMS.md' TWO LINES UNDER ITS OWN 'this run writes no successor state'. migrate.py:2549 prints the items-written line on a run that produced no ITEMS.md at all. Adjacent to lc-85 (a terminal CLEAN over 0 read == 0 written) but a DIFFERENT STRING at a different site, so it is booked separately rather than folded in. The two sentences contradict each other inside one run's output, which is the tell the corpus names for a stale premise — a premise and its dependent disagreeing in one emission.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: A run that writes no successor state does not print a written count for a file it did not produce — it says what it WOULD write, in the conditional, or it does not print the line. RED-FIRST: a --report-only run currently prints 'items written: 3 -> ITEMS.md' with no ITEMS.md on disk; after, the output contains no unconditional written-count for an absent file. CONTROL that must stay green: a real writing run still reports its actual counts unchanged.
+evidence: RELAYED from the lc-192 lane, NOT reproduced at this desk, and booked at that grade: it observed 'items written: 3 -> ITEMS.md' two lines under 'migrate: DRY RUN — ... this run writes no successor state' on a --report-only run that produced no ITEMS.md. DERIVED from the lane's read: the site is migrate.py:2549. MEASURED here: nothing. First build step is to reproduce it, which is cheap — one --report-only run and one ls.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 A report-only run prints no written-count for files it did not produce. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: d04190758f23ec8e5c42565aa1f83af8621524fe
+
 ## Archive (pre-migration)
 
