@@ -1111,9 +1111,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     waves = its.add_parser("waves", help="the item→lane JOIN over the "
                                          "schedulable READY set: write-set "
-                                         "overlap, file-granular. Reports "
-                                         "the mapping, decides no sizing "
-                                         "and no tier")
+                                         "overlap, file-granular, "
+                                         "WRITE-WRITE ONLY — what a lane "
+                                         "reads or executes is not joined. "
+                                         "Reports the mapping, decides no "
+                                         "sizing and no tier")
     waves.add_argument("--grouped", action="store_true",
                        help="APPEND a partition beside the join: each item "
                             "in the group of its write-set's most-frequent "

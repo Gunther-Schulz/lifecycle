@@ -4539,6 +4539,30 @@ def check_write_set_venues(parsed: Parsed, out, tree, tree_why: str,
     return code
 
 
+#: WHAT THE JOIN'S PREDICATE COVERS, IN THE VERB'S OWN TEXT (lc-139). The
+#: join compares WRITE sets, and its output used to call the lanes "disjoint
+#: by construction" and "the PARALLEL set" outright — an assurance wider than
+#: that predicate establishes. Measured while composing a drain wave: one
+#: lane's write-set held the mutation prover while every sibling lane ran
+#: that prover as its verifier, and the join reported no collision between
+#: them. It could not have: the carrier has no slot for what an item READS or
+#: EXECUTES, so the collision is outside what a join over write-sets can
+#: compute. The limit is therefore STATED where the lanes are printed,
+#: rather than a collision being guessed from a slot nobody wrote.
+#:
+#: ONE CONSTANT, printed under the lane count on every run that prints lanes:
+#: the limit is a property of the predicate, not of a run that ended CLEAN.
+WAVE_WRITE_WRITE_ONLY = (
+    "WRITE-WRITE ONLY: this join compares what items WRITE and nothing else, "
+    "so `disjoint` above means no shared WRITTEN file. It CANNOT SEE a lane "
+    "that READS or EXECUTES a file another lane writes — a verifier, a "
+    "checker, a fixture, a shared tool — because no slot records what an "
+    "item reads or runs. An item whose write-set holds such an instrument "
+    "collides with every lane that runs it, and that collision is in NO "
+    "lane printed here: before running lanes at once, check each lane's "
+    "write-set against what the other lanes execute.")
+
+
 def wave_covers(entry: str, other: str) -> bool:
     """Does `entry` — a DIRECTORY entry — contain `other`?
 
@@ -4593,8 +4617,9 @@ def wave_lanes(rows):
 
     `rows` is `[(ident, [path, …]), …]`; a lane is
     `{"members": [ident, …], "binders": [(key, by_containment, carriers,
-    covered)]}`. Members SERIALIZE (they share a file); lanes are disjoint and
-    therefore parallel. Single-item lanes are lanes: an item colliding with
+    covered)]}`. Members SERIALIZE (they share a file); lanes are disjoint in
+    what they WRITE and parallel for write-write collisions only
+    (`WAVE_WRITE_WRITE_ONLY`). Single-item lanes are lanes: an item colliding with
     nothing is the parallel case, not an omission.
 
     A CONTAINMENT BINDER SPLITS ITS MEMBERS IN TWO, and the split is the
@@ -4791,9 +4816,10 @@ def report_waves(schedulable, out, *, ready_n, live_n, excluded,
     lanes = wave_lanes(rows)
     out("")
     out(f"LANES: {len(lanes)} over {len(rows)} path-valued item(s). Members of "
-        "one lane SHARE A FILE and serialize; the lanes are disjoint by "
-        "construction, so the whole set of lanes is the PARALLEL set — "
-        f"{len(lanes)} lane(s) can run at once.")
+        "one lane SHARE A FILE and serialize; no two lanes WRITE the same "
+        f"file, so for WRITE-WRITE collisions the {len(lanes)} lane(s) are "
+        "the parallel set — and for those alone.")
+    out(WAVE_WRITE_WRITE_ONLY)
     for n, lane in enumerate(lanes, start=1):
         members = lane["members"]
         if len(members) == 1:
@@ -4829,8 +4855,9 @@ def report_waves(schedulable, out, *, ready_n, live_n, excluded,
                 + ", ".join(sorted(members, key=_wave_ident_key)))
         if not crossings:
             out("SERIALIZE: 0 — none. No file crosses a group boundary over "
-                "this population, so the groups above are parallel as "
-                "printed.")
+                "this population, so for WRITE-WRITE collisions the groups "
+                "above are parallel as printed — the limit stated under "
+                "LANES holds for groups too.")
         else:
             out(f"SERIALIZE: {len(crossings)} cross-group shared file(s) — "
                 "these group PAIRS do NOT run at once; dispatching them in "
@@ -4884,5 +4911,6 @@ def report_waves(schedulable, out, *, ready_n, live_n, excluded,
         "here: a tracked file or directory, or a new file under a tracked "
         "top-level directory. The mapping above covers the whole population "
         "at that grain and no finer — a misspelled basename under a tracked "
-        "directory still reads as a new file.")
+        "directory still reads as a new file — and for WRITE-WRITE "
+        "collisions only: what a lane reads or executes was not joined.")
     return exits.CLEAN
