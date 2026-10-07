@@ -100,20 +100,6 @@ amended-blocked-by: 2026-09-13 evidence false  # realizing write is TWO copies, 
 amend-reason: 2026-09-19 Re-typed from `evidence false` at the contract's build (D-8): the predicate was the literal `false`, which can never fire, so this read on the board as ordinary machine-court waiting and `item check` counted it among the unclearable softlock chains. It was never a predicate wait — nothing here can test it — and `external` is the member minted for exactly this state. It now ends by an ACT: amend the blocker away with the arrival named.
 amended-blocked-by: 2026-09-19 external the cache-fix copy of test/absence-scan.test.mjs carries the same repair, so both copies can go green together
 
-## lc-32
-grade: STANDBY
-requirement: A repo copy placed under a Claude Code scratchpad fails two absence-scan tests for a reason belonging to the ARRANGEMENT, not the code: every scratchpad path contains the session UUID, and the scan asserts over the checkout own root path, so capture-uuid fires on the copy location. A lane that does not check its old-side self-check first sees two extra reds and may FIX them, silencing a correct instrument — record: lane B2, 2026-08-27
-goal: enforce-the-invariants
-write-set: CLAUDE.md,decision:procedural-note-or-scan-scope-fix
-done-criterion: the Verify section states that an old-side or scratch copy of this repo goes at a UUID-free path, with the measured control quoted; OR the scan stops asserting over the checkout own root path. Red-first is already in hand: the same commit copied to two paths must give 62/59/3 under a UUID path and 62/61/1 without
-evidence: lane B2 single-variable control, executed 2026-08-27: same commit, same cp -a, ONLY the path differing. Under a scratchpad path (contains session UUID) node --test gives tests 62 / pass 59 / fail 3 — :743 (lc-24) plus :973 "foreign-path: a path under THIS REPO own root does not fire" and :1002 (actual [capture-uuid,foreign-path] vs expected [foreign-path]). At /tmp/lcb2plain/old, no UUID in the path: 62 / 61 / 1, :743 only. Found because devbook step 2 requires the old-side self-check GREEN before any red from it is trusted
-blocked-by: decision a procedural note in the Verify section, or narrowing the scan so it does not assert over its own checkout root
-bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
-amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over). The decision is ANSWERED at LEDGER.md:73: narrow the scan, mechanized, not a procedural note. The done-criterion is rewritten to that branch alone and the write-set to the two files that realize it. The symptom was RE-MEASURED today rather than carried: it still reproduces, with different counts than booked (60/2 against the booked 59/3), so the entry is not overtaken by 7fe9e68. Stays STANDBY.
-amended-write-set: 2026-10-05 tools/absence-scan.mjs,test/absence-scan.test.mjs
-amended-done-criterion: 2026-10-05 the scan stops asserting over its own checkout root path, so a copy of this repo placed under a path containing a UUID passes the same bites as the real checkout. Red-first is in hand and re-measured 2026-10-05 at b97eb32: the same tree exported under a session scratchpad path gives 62 tests, 60 pass, 2 fail (both foreign-path bites), and 62 pass, 0 fail at the real checkout. MUST-NOT-MOVE: a foreign home path in a tracked file still fires; only the checkout own root is exempted, derived at run time and never hardcoded (law 6).
-amended-blocked-by: 2026-10-05 NONE
-
 ## lc-36
 grade: STANDBY
 requirement: migrate TRUNCATES the requirement slot at a fixed ~277 chars with an ellipsis, then appends " — record: <carrier>:<line>" — measured 23 of 133 items in the dotfiles migration; the full body survives only in the source carrier, so the truncation is a silent information loss the conservation identity does not see

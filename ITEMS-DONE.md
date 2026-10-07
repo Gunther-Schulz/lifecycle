@@ -2730,5 +2730,23 @@ closed-met: none
 closed-decided: none
 closed-ref: 5fa443eb61527afa401c9462f871d7e86f748e32
 
+## lc-32
+grade: DONE
+requirement: A repo copy placed under a Claude Code scratchpad fails two absence-scan tests for a reason belonging to the ARRANGEMENT, not the code: every scratchpad path contains the session UUID, and the scan asserts over the checkout own root path, so capture-uuid fires on the copy location. A lane that does not check its old-side self-check first sees two extra reds and may FIX them, silencing a correct instrument — record: lane B2, 2026-08-27
+goal: enforce-the-invariants
+write-set: CLAUDE.md,decision:procedural-note-or-scan-scope-fix
+done-criterion: the Verify section states that an old-side or scratch copy of this repo goes at a UUID-free path, with the measured control quoted; OR the scan stops asserting over the checkout own root path. Red-first is already in hand: the same commit copied to two paths must give 62/59/3 under a UUID path and 62/61/1 without
+evidence: lane B2 single-variable control, executed 2026-08-27: same commit, same cp -a, ONLY the path differing. Under a scratchpad path (contains session UUID) node --test gives tests 62 / pass 59 / fail 3 — :743 (lc-24) plus :973 "foreign-path: a path under THIS REPO own root does not fire" and :1002 (actual [capture-uuid,foreign-path] vs expected [foreign-path]). At /tmp/lcb2plain/old, no UUID in the path: 62 / 61 / 1, :743 only. Found because devbook step 2 requires the old-side self-check GREEN before any red from it is trusted
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over). The decision is ANSWERED at LEDGER.md:73: narrow the scan, mechanized, not a procedural note. The done-criterion is rewritten to that branch alone and the write-set to the two files that realize it. The symptom was RE-MEASURED today rather than carried: it still reproduces, with different counts than booked (60/2 against the booked 59/3), so the entry is not overtaken by 7fe9e68. Stays STANDBY.
+amended-write-set: 2026-10-05 tools/absence-scan.mjs,test/absence-scan.test.mjs
+amended-done-criterion: 2026-10-05 the scan stops asserting over its own checkout root path, so a copy of this repo placed under a path containing a UUID passes the same bites as the real checkout. Red-first is in hand and re-measured 2026-10-05 at b97eb32: the same tree exported under a session scratchpad path gives 62 tests, 60 pass, 2 fail (both foreign-path bites), and 62 pass, 0 fail at the real checkout. MUST-NOT-MOVE: a foreign home path in a tracked file still fires; only the checkout own root is exempted, derived at run time and never hardcoded (law 6).
+amended-blocked-by: 2026-10-05 NONE
+closed-reason: 2026-10-07 The two foreign-path arms derive their expectation from the checkout root; the battery reads 62 of 62 under a scratchpad path holding a session id, measured at the desk. The scanner itself is unchanged. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: e1bc5ea0347c12486bc774b94c125e9d44582c58
+
 ## Archive (pre-migration)
 
