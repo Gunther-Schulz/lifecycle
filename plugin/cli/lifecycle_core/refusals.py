@@ -1951,6 +1951,33 @@ VERB_ROWS = [
         stage="close statements",
     ),
     Row(
+        ident="close_expect_mismatch",
+        refusal="an `item close --expect TEXT` whose TEXT does not occur, "
+                "case-insensitively, in the requirement in force for the id "
+                "given — a close takes a bare id and moves whatever body "
+                "carries it, so an id carried from a summary rather than "
+                "re-read at the carrier closes the wrong item, and the only "
+                "signal was the moved body printed after the act (lc-270). "
+                "Refused before anything moves, with the requirement the id "
+                "does name. The flag is optional; a close without it is "
+                "unchanged",
+        firing_input="`item close xx-1 --expect \"the four audit arms\"` "
+                     "where xx-1's requirement is about a harvest timer",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none",
+                           "--decided", "none", "--expect",
+                           "the four audit arms"], items=SEED_ITEMS),
+        # THE SAME CLOSE WITH THE FLAG STILL GIVEN, and text the requirement
+        # does carry. The arms differ in the expectation's TEXT alone, so
+        # neither the close nor the flag's presence is what separates them —
+        # a control without the flag would pass against a build that refused
+        # every `--expect`.
+        control=lambda: _cli(["item", "close", "xx-1", "--met", "none",
+                              "--decided", "none", "--expect",
+                              "harvest timer"], items=SEED_ITEMS),
+        stage="drain wave E, lane E1 (lc-270)",
+    ),
+    Row(
         # A SIBLING ROW, NOT A SECOND REFUSAL (lc-120). `item
         # supersede-closure` writes a ref onto a body that has ALREADY stopped
         # being edited, so the cause and the repair are `closed_ref_

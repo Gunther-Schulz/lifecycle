@@ -1861,6 +1861,14 @@ MUTATIONS = [
      "                if False:",
      "the resolution of a `--met` item id against the two homes"),
 
+    # THE CLOSE'S EXPECTATION (lc-270). The anchor is the one comparison
+    # between the text the caller gave and the requirement the id names;
+    # removed, every `--expect` passes and the flag is decoration.
+    ("close_expect_mismatch", "verbs.py",
+     "            if expect.strip().casefold() not in requirement.casefold():",
+     "            if False:",
+     "the test that `--expect`'s text OCCURS in the requirement in force"),
+
     # THE COMMIT GATE'S DELETION SIDE. The anchor is where the gate decides
     # whether the lines `removed_live_lines` returned are acted on at all;
     # removed, a hand-trimmed live block passes as it did before the check

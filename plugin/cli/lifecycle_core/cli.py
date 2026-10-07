@@ -1203,6 +1203,14 @@ def build_parser() -> argparse.ArgumentParser:
                                          "`decision:` line written for a "
                                          "choice this work made. Lands as "
                                          "`closed-decided:`")
+    close.add_argument("--expect", metavar="TEXT",
+                       help="what the id is SUPPOSED to name (lc-270). The "
+                            "close refuses, with nothing moved, unless TEXT "
+                            "occurs case-insensitively in the item's "
+                            "requirement in force, and the refusal prints "
+                            "that requirement. OPTIONAL — an id carried from "
+                            "a summary rather than re-read at the carrier is "
+                            "the case it is for")
     close.add_argument("--no-commit", dest="no_commit", action="store_true")
 
     compact = its.add_parser("compact",

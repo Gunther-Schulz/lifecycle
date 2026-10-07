@@ -4200,6 +4200,12 @@ def _carried_pointer_clauses(ctx: Ctx, ident: str) -> tuple[list, str]:
     return _carried_pointer_lines(body), ""
 
 
+#: How much of a requirement `--expect`'s refusal prints (lc-270). The HEAD,
+#: because it is shown to identify an item and a requirement here runs to
+#: several hundred characters; the cut is marked, never silent.
+_EXPECT_HEAD = 240
+
+
 def cmd_item_close(args, out, ctx: Ctx) -> int:
     """The MOVE, then conservation — re-run at EVERY close, not asserted once.
 
@@ -4287,6 +4293,38 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
             return exits.COULD_NOT_VERIFY
         subject = next((i for i in close_parsed.items
                         if i.ident == args.ident), None)
+        # WHAT THE ID NAMES, ASKED BEFORE ANYTHING ELSE IS (lc-270). A close
+        # takes a bare id and moves whatever body carries it, so an id
+        # carried from a summary instead of re-read here closes the wrong
+        # item and says so only by printing the moved body afterwards. FIRST
+        # among the refusals on purpose: every later one is a verdict about
+        # THIS body, and a caller holding the wrong id should hear that
+        # before being told what is wrong with an item they never meant.
+        # `subject.slots` is the parser's resolved reading, so an amended
+        # requirement is the one matched. An id no live block carries is
+        # left to `move_to_done`'s `unknown_item`, which owns that case.
+        expect = getattr(args, "expect", None)
+        if expect is not None and subject is not None:
+            if not expect.strip():
+                out("COULD NOT VERIFY: `--expect` was given with no text. "
+                    "Empty text occurs in every requirement, so the check "
+                    "would have passed having examined nothing. Nothing was "
+                    "moved.")
+                return exits.COULD_NOT_VERIFY
+            requirement = subject.slots.get("requirement", "")
+            if expect.strip().casefold() not in requirement.casefold():
+                out(f"FINDING [close_expect_mismatch] {args.ident} does not "
+                    f"name what `--expect` says it should: {expect.strip()!r} "
+                    "does not occur in its requirement. Nothing was moved. "
+                    f"What {args.ident} names in "
+                    f"{ctx.items_path.name}:")
+                out("    requirement: " + (
+                    requirement if len(requirement) <= _EXPECT_HEAD
+                    else requirement[:_EXPECT_HEAD] + " […]"))
+                out("If that is the item you meant, the expectation is "
+                    "wrong; if it is not, the id is — re-read it at the "
+                    "carrier rather than from a summary.")
+                return exits.FINDING
         if subject is not None and vocab.is_oov(subject.grade):
             oov = vocab.parse_oov(subject.grade)
             out(f"FINDING [unknown_grade_write] {args.ident} is graded with "
