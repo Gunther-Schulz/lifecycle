@@ -1718,6 +1718,33 @@ def live_carrier_readers(repo: Path, names, excluded) -> tuple:
     return [h for h in hits if h not in excluded], ""
 
 
+#: The residue item's own identity (lc-71): the carrier label its requirement
+#: names. Parsed back out of the SLOT with a full match, never searched for as
+#: a substring of the rendered file.
+_RESIDUE_REQUIREMENT = re.compile(
+    r"^\d+ tracked file\(s\) still name the migrated carrier\(s\) "
+    r"(?P<label>.+?)\. A consumer left pointing at a carrier ")
+
+
+def residue_already_booked(src_label: str, *parsed) -> bool:
+    """True when a body in either home is already THIS label's residue item.
+
+    A re-run of the same merge reads the same carrier names, so its residue
+    item has the same identity as the one a previous run booked; the generated
+    block is not source-derived, so `duplicate_bodies` (which reads source
+    headlines) never sees it.
+    """
+    for p in parsed:
+        if p is None:
+            continue
+        for it in p.items:
+            m = _RESIDUE_REQUIREMENT.match(
+                (it.slots.get("requirement", "") or "").strip())
+            if m and m.group("label") == src_label:
+                return True
+    return False
+
+
 def residue_blocks(readers, src_label: str, ident: str) -> list:
     """The residue item, or NOTHING when there are no readers.
 
@@ -3093,7 +3120,8 @@ def run(args, out, ctx) -> int:
     # a carrier this run never touched would be a number nobody could find
     # the body for.
     residue = []
-    if readers and not report_only:
+    if readers and not report_only and not residue_already_booked(
+            src_label, existing_items, existing_done_home):
         residue = residue_blocks(
             readers, src_label,
             allocate() if allocate is not None else f"{ctx.prefix}-{n_items + 1}")
