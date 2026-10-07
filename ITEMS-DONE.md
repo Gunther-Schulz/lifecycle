@@ -3255,5 +3255,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 0d76c52d90571d57f87cb4225e7810153cb349c5
 
+## lc-198
+grade: DONE
+requirement: A SILENTLY SKIPPED ARM IS A REACH ARM DELETED, AND THE SUITE STILL EXITS 0. One arm in test_verbs is premised on a sibling dotfiles checkout and vanishes anywhere that checkout is absent — a fresh clone, another machine, a CI runner — while unittest discover still exits 0 and the repo verify section reads only the exit code. That arm is blocker_unstorable REACH case, so where it vanishes the roster still reads 110 green while one refusal is graded by nothing. A skip that removes a reach arm and leaves a green is the third answer collapsing into the first, in the suite this repo trusts most.
+goal: enforce-the-invariants
+write-set: test/test_verbs.py,tools/verify-suite.py,CLAUDE.md
+done-criterion: a SKIPPED arm is visible in the verdict rather than folded into a pass: the suite reports skips as their own count and a run whose skips include a reach arm does not read as a clean run. THE COUNT COMES OFF THE RESULT OBJECT, never the -v rendering, per law 17 — res.skipped and t.id(), which is how the lane measured it. RED-FIRST: rename the sibling checkout and the suite must stop reading as clean where today it exits 0 with one arm gone. MUST-NOT-MOVE: an arm that legitimately cannot run somewhere is still allowed to skip — the repair is that the skip is REPORTED, never that the arm is forced to run or deleted; and the arms that do run keep their verdicts unchanged.
+evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs and read off the RESULT OBJECT rather than console output, which is the discrimination law 17 demands: the arm is premised on ../dotfiles and disappears without it. DERIVED: the repo declared verify set reads exit codes, so a vanished arm is invisible to the one instrument anyone runs before trusting the package.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 tools/verify-suite.py reports skips as their own count and withdraws the clean over a skipped reach arm; the Verify block names it. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: 78db780632a04b2c2635c7dd789a26fd3420b30d, a5d7219d94af4cff085ddbbdfed1459995ae62ca
+
 ## Archive (pre-migration)
 
