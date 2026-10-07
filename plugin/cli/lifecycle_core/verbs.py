@@ -119,6 +119,10 @@ SOURCE_OPERATOR = "operator"
 SOURCE_SESSION = "session"
 DETECTOR_PREFIX = "detector:"
 
+#: `cost_test`'s third return value: the reason a "clear" verdict cleared,
+#: as a value the caller can branch on without reading prose.
+COST_OPERATOR_OVERRIDE = "operator-override"   # do-it-now shape, source=operator
+
 
 @dataclass
 class Ctx:
@@ -389,7 +393,13 @@ def print_candidates(ctx: Ctx, found: list, out) -> None:
 
 def cost_test(write_set: str, hunks: int | None, source: str,
               blocker_kind: str | None):
-    """`(verdict, message)` — verdict in "veto", "clear", "unverified".
+    """`(verdict, message, reason)` — verdict in "veto", "clear", "unverified".
+
+    `reason` is the PARSED answer to "why did this clear": one of the
+    `COST_*` tokens below, or None. The caller branches on it and on nothing
+    else — `message` is display only and can be reworded freely without moving
+    any register write (lc-109: the override used to be decided by a
+    substring match over the rendered message).
 
     THREE CONJUNCTS, and the ask is owed only where ALL THREE hold (§3.11):
     "write-set <= 1 file AND session live AND no typed blocker -> the tool
@@ -412,7 +422,7 @@ def cost_test(write_set: str, hunks: int | None, source: str,
     if len(entries) != 1:
         return "clear", (f"cost test: not applicable — the write-set names "
                          f"{len(entries)} path(s); the do-it-now shape is one "
-                         "file, one hunk.")
+                         "file, one hunk."), None
     if blocker_kind not in (None, "none"):
         # THE THIRD CONJUNCT, and it sits AHEAD of the hunk question because
         # the conjunction is ALREADY false: demanding evidence that cannot
@@ -426,27 +436,28 @@ def cost_test(write_set: str, hunks: int | None, source: str,
             f"cost test: not applicable — the item carries a TYPED blocker "
             f"({blocker_kind}), and the rule's third conjunct is NO typed "
             "blocker. What the item waits for is what this session cannot "
-            "dissolve, so booking it is the only exit there is.")
+            "dissolve, so booking it is the only exit there is."), None
     if hunks is None:
         return "unverified", (
             "the write-set names ONE file and the hunk count was not stated "
             "(`--hunks <n>`). A one-file, one-hunk write-set with the session "
             "live is do-it-now, not book-it — and this add cannot tell which "
-            "it is. State the hunk count.")
+            "it is. State the hunk count."), None
     if hunks != 1:
         return "clear", (f"cost test: clear — one file but {hunks} hunks, "
-                         "which is not the do-it-now shape.")
+                         "which is not the do-it-now shape."), None
     if source == SOURCE_OPERATOR:
         return "clear", ("cost test: one file, one hunk — DO IT NOW? — but "
                          "the source is the operator, who skips the veto. "
-                         "The join above was not skipped and never is.")
+                         "The join above was not skipped and never is."), \
+            COST_OPERATOR_OVERRIDE
     return "veto", (
         f"do it now? The write-set is one file ({entries[0]}) and one hunk, "
         "and the session that can see this is live. Booking it costs about "
         "what doing it costs, so the entry would be the deferral refuting "
         "itself in its own arithmetic. If it genuinely cannot be done here, "
         "the blocker is real and belongs on an `item park`; if the operator "
-        "asked for it to be booked, say so with `--source operator`.")
+        "asked for it to be booked, say so with `--source operator`."), None
 
 
 # --- the move (§3.1) ----------------------------------------------------------
@@ -1427,8 +1438,8 @@ def _do_new(args, ctx: Ctx, parsed, done_parsed, done_why, slots, source, out) -
 
     blocker_kind, _detail = items_mod.classify_blocker(
         slots["blocked-by"], ctx.prefix)
-    verdict, message = cost_test(slots["write-set"], args.hunks, source,
-                                 blocker_kind)
+    verdict, message, reason = cost_test(slots["write-set"], args.hunks,
+                                         source, blocker_kind)
     # USE-EVIDENCE AT THE EFFECT SITE (§3.11). The judgment register prices a
     # rule's retirement on its fire rate, and a rate reconstructed later from
     # git or from memory is the shape this design replaced everywhere else —
@@ -1442,7 +1453,7 @@ def _do_new(args, ctx: Ctx, parsed, done_parsed, done_why, slots, source, out) -
                             detail="veto")
         out(f"FINDING [cost_test_veto] {message}")
         return exits.FINDING
-    if source == SOURCE_OPERATOR and "skips the veto" in message:
+    if reason == COST_OPERATOR_OVERRIDE:
         # The operator's own override, which is exactly the evidence the
         # fire-rate review needs: a rule overridden often is one whose
         # predicate is wrong, and it is invisible unless the override is what
