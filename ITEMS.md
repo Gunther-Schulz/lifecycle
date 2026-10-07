@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 315
+added: 316
 compacted: 0
 
 ## lc-3
@@ -1547,4 +1547,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/init.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_roster.py
 done-criterion: Each of the four is repaired or declined with a reason: one conservation line with its arrangement re-anchored in the same commit; the laws row in the bracket form with its sibling branch named; a roster row and admitted arrangement for the init site; the existing-declaration refusal named. MUST-NOT-MOVE: no exit code changes.
 evidence: RELAYED from lane C2 (opus) 2026-10-07 at 03a40f3, read and partly measured there, not re-run at the desk.
+blocked-by: NONE
+
+## lc-324
+grade: STANDBY
+requirement: FOURTEEN ROSTER ROWS ARE DARKENED BY NO ARRANGEMENT, so nothing shows their checks can fail: binding_slot_unbound, binding_slot_unbound_absent_key, binding_template_missing, binding_template_unparsable, desk_state_shape, desk_state_unknown_value, lane_new_exists, record_route_outside_set, retire_source_laws_absent, retire_source_not_writing, retire_source_uncommitted, retire_source_unpinned_anchor, verify_check_failed, workflow_binding_exists - record: wave C lane C5 closing report 2026-10-07, gap 3
+goal: enforce-the-invariants
+write-set: tools/prove-rows.py,test/test_prove_rows.py
+done-criterion: Each of the fourteen has a recorded arrangement admitted on the pair, or is listed with the reason none is possible; the prover closing line for rows never dark reads zero or names only the reasoned exceptions.
+evidence: RELAYED from lane C5 (opus) 2026-10-07 at f95c75f, from its full prover walk: 135 of 149 rows went dark under at least one arrangement and these fourteen under none.
 blocked-by: NONE
