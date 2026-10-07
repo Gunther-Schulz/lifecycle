@@ -4354,6 +4354,60 @@ def tracked_tree(repo: Path):
                                         if "/" in f)), ""
 
 
+def write_set_resolution(repo: Path, value: str):
+    """`(new_files, new_trees, unjoined, why-not)` for a write-set at BOOKING
+    (lc-325).
+
+    WHAT EACH PATH ENTRY RESOLVES TO, asked at the one moment its author can
+    still see the spelling. `new_files` are entries that are not tracked
+    while their PARENT DIRECTORY is — read as a file the entry creates.
+    `new_trees` are entries whose parent directory is tracked nowhere — read
+    as a file AND its directory. `unjoined` is the subset of those the wave
+    join will not cluster (`TrackedTree.resolves` is its predicate, asked
+    here rather than restated). `why-not` is git being unable to list the
+    tree: the third answer, never folded into "everything resolves".
+
+    IT DECIDES NO GRADE, by ruling (drain wave E). The first build demoted an
+    entry whose parent directory was untracked and fired on 66 honest
+    bookings: an entry creating a file in a directory it also creates is
+    ordinary work. A new tree and a misspelled one read alike, so the caller
+    SAYS which reading it took and leaves the judgment where it can be made.
+
+    WHICH SLOTS ARE ASKED is `classify_write_set`'s answer, not a second
+    reading of the slot: only one it calls path-valued has paths to resolve.
+    A venue, a `<path>@<repo>` boundary and prose are graded by their own
+    checks and are left exactly as they were.
+
+    FINER THAN THE WAVE JOIN on one axis, visibly: `resolves` passes any
+    path under a tracked TOP-LEVEL directory, so `plugin/cli/lifecycle_cor/
+    x.py` is joined and is still a `new_trees` entry here.
+    """
+    bucket, paths, _why = classify_write_set(value)
+    if bucket != WAVE_PATHS:
+        return [], [], [], ""
+    tree, tree_why = tracked_tree(repo)
+    if tree is None:
+        return [], [], [], tree_why
+    dirs = {""}
+    for f in tree.files:
+        parent = posixpath.dirname(f)
+        while parent and parent not in dirs:
+            dirs.add(parent)
+            parent = posixpath.dirname(parent)
+    new_files, new_trees, unjoined = [], [], []
+    for path in paths:
+        e = path.rstrip("/")
+        if e in tree.files or e in dirs:
+            continue
+        if posixpath.dirname(e) in dirs:
+            new_files.append(path)
+            continue
+        new_trees.append(path)
+        if not tree.resolves(path):
+            unjoined.append(path)
+    return new_files, new_trees, unjoined, ""
+
+
 def _bare_repo_entry(entry: str, tree: TrackedTree) -> bool:
     """`<repo> <path>` — a bare repo NAME in front of a path (lc-24's form).
 

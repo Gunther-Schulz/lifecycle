@@ -153,5 +153,137 @@ class CloseChecksWhatTheIdNames(unittest.TestCase):
         self.assertIn("## xx-1", (repo / "ITEMS-DONE.md").read_text())
 
 
+# --- lc-325 -------------------------------------------------------------------
+#
+# `item add` GRADED A BOOKING WITHOUT RESOLVING ITS WRITE-SET, so a misspelled
+# directory booked READY and nothing at the booking said that the path named
+# nothing here. THE RULING (drain wave E, replacing wave D's): the grade is
+# left alone — an entry that creates a file in a directory it also creates is
+# an ordinary booking, and refusing it fired on 66 honest fixtures. What the
+# door owes is the STATEMENT, at the one moment the author can still see the
+# spelling: this path is read as a file the entry creates, or as a file AND
+# its directory. How an entry says it creates a file is therefore: by naming
+# a path that is not tracked. There is no slot for it.
+
+TRACKED = "plugin/cli/core/thing.py"
+CREATES_FILE = "is read as a file this entry CREATES"
+CREATES_DIR = "creates the directory too"
+UNLISTED = "resolution could not be verified"
+
+
+def add_argv(write_set: str, *extra) -> list:
+    """`R.GOOD_ADD` with its write-set replaced — one slot differs."""
+    argv = list(R.GOOD_ADD)
+    argv[argv.index("--write-set") + 1] = write_set
+    return argv + ["--join", "new"] + list(extra)
+
+
+class AddSaysWhatAWriteSetPathResolvesTo(unittest.TestCase):
+
+    def _repo(self) -> Path:
+        r = R._Repo()
+        self.addCleanup(r.close)
+        target = r.dir / TRACKED
+        target.parent.mkdir(parents=True)
+        target.write_text("x = 1\n", encoding="utf-8")
+        git(r.dir, "add", "--", TRACKED)
+        git(r.dir, "commit", "-qm", "a tracked tree")
+        return r.dir
+
+    def _booked(self, repo: Path) -> str:
+        return (repo / "ITEMS.md").read_text(encoding="utf-8")
+
+    # --- the red-first pair: one directory, spelled wrong two ways ------------
+
+    def test_a_MISSPELLED_top_directory_is_STATED_at_the_booking(self):
+        repo = self._repo()
+        code, outp = run(repo, *add_argv("plugni/cli/core/thing.py"))
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("[READY]", outp)          # the grade is left alone
+        self.assertIn(CREATES_DIR, outp)
+        self.assertIn("'plugni/cli/core/thing.py'", outp)
+        # and the reader that will NOT join it is named, from the predicate
+        self.assertIn("item waves", outp)
+
+    def test_a_MISSPELLED_inner_directory_is_STATED_at_the_booking(self):
+        """The half the wave join cannot see: `plugin/` is tracked, so a
+        top-level test resolves this path and joins on it."""
+        repo = self._repo()
+        code, outp = run(repo, *add_argv("plugin/cli/cor/thing.py"))
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("[READY]", outp)
+        self.assertIn(CREATES_DIR, outp)
+        self.assertIn("'plugin/cli/cor/thing.py'", outp)
+
+    def test_CONTROL_the_same_path_SPELLED_RIGHT_states_nothing(self):
+        repo = self._repo()
+        code, outp = run(repo, *add_argv(TRACKED))
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("[READY]", outp)
+        self.assertNotIn(CREATES_DIR, outp)
+        self.assertNotIn(CREATES_FILE, outp)
+        self.assertNotIn(UNLISTED, outp)
+
+    # --- how an entry says it creates a file -----------------------------------
+
+    def test_a_NEW_FILE_under_a_tracked_parent_is_read_as_CREATED(self):
+        repo = self._repo()
+        code, outp = run(repo, *add_argv("plugin/cli/core/new_thing.py"))
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("[READY]", outp)
+        self.assertIn(CREATES_FILE, outp)
+        self.assertIn("'plugin/cli/core/new_thing.py'", outp)
+        self.assertNotIn(CREATES_DIR, outp)
+
+    def test_a_NEW_TREE_books_READY_exactly_as_it_did(self):
+        """The honest booking wave D's ruling refused: `R.GOOD_ADD` itself,
+        `tools/replay.mjs` in a repo that tracks no `tools/`."""
+        repo = self._repo()
+        code, outp = run(repo, *R.GOOD_ADD, "--join", "new")
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("[READY]", outp)
+        self.assertIn("grade: READY", self._booked(repo))
+        self.assertIn(CREATES_DIR, outp)
+
+    def test_only_the_UNRESOLVED_entry_of_several_is_named(self):
+        repo = self._repo()
+        code, outp = run(repo, *add_argv(f"{TRACKED},plugni/cli/x.py"))
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("'plugni/cli/x.py'", outp)
+        self.assertNotIn(f"{TRACKED!r} is not tracked", outp)
+
+    # --- the third answer: stated, and the booking is not refused --------------
+
+    def test_an_UNLISTABLE_tree_is_STATED_and_the_item_still_books(self):
+        from unittest import mock
+        repo = self._repo()
+        with mock.patch.object(R.items_mod, "tracked_tree",
+                               return_value=(None, "the listing failed")):
+            code, outp = run(repo, *add_argv(TRACKED))
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn(UNLISTED, outp)
+        self.assertIn("the listing failed", outp)
+        self.assertIn("[READY]", outp)
+        self.assertIn("grade: READY", self._booked(repo))
+
+    # --- controls: what the door must NOT start talking about ------------------
+
+    def test_CONTROL_a_tracked_DIRECTORY_entry_states_nothing(self):
+        repo = self._repo()
+        code, outp = run(repo, *add_argv("plugin/cli/core/"))
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertNotIn(CREATES_FILE, outp)
+        self.assertNotIn(CREATES_DIR, outp)
+
+    def test_CONTROL_a_VENUE_is_not_a_path_and_is_not_resolved(self):
+        repo = self._repo()
+        code, outp = run(repo, *add_argv("decision:who-seeds-the-carrier"))
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("[READY]", outp)
+        self.assertNotIn(CREATES_FILE, outp)
+        self.assertNotIn(CREATES_DIR, outp)
+        self.assertNotIn(UNLISTED, outp)
+
+
 if __name__ == "__main__":
     unittest.main()

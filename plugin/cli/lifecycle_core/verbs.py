@@ -1056,7 +1056,47 @@ def _collect_slots(args, ctx: Ctx, out):
     if problem:
         out(f"FINDING [evidence_mark_malformed] {problem}")
         return None, exits.FINDING
+    _state_write_set_resolution(ctx, slots["write-set"], out)
     return slots, exits.CLEAN
+
+
+def _state_write_set_resolution(ctx: Ctx, write_set: str, out) -> None:
+    """SAY what each write-set path resolves to, at the booking (lc-325).
+
+    The grade above was decided on the slot's PRESENCE, so a misspelled
+    directory booked READY with nothing at the door saying the path named
+    nothing here. This states it and DECIDES NOTHING: the grade is left
+    alone by ruling, because a new tree is an ordinary booking and only the
+    author can tell it from a misspelling — which they can do here, with
+    the spelling still in front of them, and not at the wave join later.
+
+    HOW AN ENTRY SAYS IT CREATES A FILE: by naming a path that is not
+    tracked. There is no slot for it; this line is where that reading is
+    made visible. The predicate is `items.write_set_resolution`'s.
+    """
+    new_files, new_trees, unjoined, why = items_mod.write_set_resolution(
+        ctx.repo, write_set)
+    if why:
+        out(f"write-set: resolution could not be verified — {why}. Whether "
+            f"{write_set!r} names anything in this repo is therefore "
+            "UNKNOWN, not confirmed. The grade does not depend on it and "
+            "the booking proceeds.")
+        return
+    for path in new_files:
+        out(f"write-set: {path!r} is not tracked here and is read as a file "
+            "this entry CREATES, because its parent directory is tracked — "
+            "that is how an entry says so; there is no slot for it. A "
+            "misspelled file name reads the same way, so check the spelling "
+            "if no new file was meant.")
+    for path in new_trees:
+        out(f"write-set: {path!r} is not tracked here and neither is its "
+            "parent directory, so it is read as a file this entry creates "
+            "in a directory it also creates (creates the directory too). A "
+            "MISSPELLED directory reads the same way, so check the spelling "
+            "if no new directory was meant. The grade is unchanged."
+            + (" `item waves` will not join this entry until that tree "
+               "exists: it names no tracked top-level directory."
+               if path in unjoined else ""))
 
 
 #: How long the mint's PARSE check may take. `sh -n` reads a program and
