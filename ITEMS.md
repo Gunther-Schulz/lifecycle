@@ -1367,15 +1367,6 @@ blocked-by: NONE
 amend-reason: 2026-10-06 the booked slot carried a comma inside one venue phrase and the tool split it into two paths; restated as one venue with no comma. Nothing else changes.
 amended-write-set: 2026-10-06 venue: .claude/lifecycle.json of each governed repo - nine repos and one commit per repo - outside this working copy
 
-## lc-320
-grade: STANDBY
-requirement: arc advance AND arc close RETIRE A DEADLINE LANE AND DO NOT COMMIT IT: the declaration row and the lane body are changed on disk while the verb commits only the arc paths, so the tree is left dirty behind a verb that reported success - record: wave C lane C1 closing report 2026-10-07, gap G1
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,test/test_arcs.py
-done-criterion: arc advance and arc close commit every path they write, the declaration and the retired lane body included, or say NOT COMMITTED by name; after either verb over an arc with a deadline lane, git status is clean. Then arc deadline grades the declaration in its dirty-carrier entry check (lc-318 left it out because of this leftover). Red-first: open, deadline, advance, then git status.
-evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, measured there on a scratch repo, not re-run at the desk: after open, deadline, then advance or close, exit 0 and git status shows the declaration modified and lanes/<name>.md deleted, uncommitted. Found because the lc-318 entry check, as first built, turned two tests in test_arcs.DeadlineGeneratesItsObserver red.
-blocked-by: NONE
-
 ## lc-322
 grade: STANDBY
 requirement: AN AMENDED external BLOCKER RIDES INTO THE CLOSURE HOME ALIVE, the route lc-105 repaired for evidence blockers, one type over: the close exits 0 and the next item check exits 2 with blocked_in_done_home, and no close writes a record for it - record: wave C lane C1 closing report 2026-10-07, gap G3

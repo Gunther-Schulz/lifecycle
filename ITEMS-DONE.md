@@ -3000,5 +3000,18 @@ closed-met: lc-328
 closed-decided: none
 closed-ref: 0cc8ee7bb82d72efbab72feb91d456c66c564f4e
 
+## lc-320
+grade: DONE
+requirement: arc advance AND arc close RETIRE A DEADLINE LANE AND DO NOT COMMIT IT: the declaration row and the lane body are changed on disk while the verb commits only the arc paths, so the tree is left dirty behind a verb that reported success - record: wave C lane C1 closing report 2026-10-07, gap G1
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_arcs.py
+done-criterion: arc advance and arc close commit every path they write, the declaration and the retired lane body included, or say NOT COMMITTED by name; after either verb over an arc with a deadline lane, git status is clean. Then arc deadline grades the declaration in its dirty-carrier entry check (lc-318 left it out because of this leftover). Red-first: open, deadline, advance, then git status.
+evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, measured there on a scratch repo, not re-run at the desk: after open, deadline, then advance or close, exit 0 and git status shows the declaration modified and lanes/<name>.md deleted, uncommitted. Found because the lc-318 entry check, as first built, turned two tests in test_arcs.DeadlineGeneratesItsObserver red.
+blocked-by: NONE
+closed-reason: 2026-10-07 arc advance and arc close commit the declaration and lane body they retire; arc deadline grades the declaration at entry. Wave D 2026-10-07, verified on main at deede51: suite 1612 OK no skips, --test 157 of 157, prove-rows 152 of 152 held with every row dark under some arrangement and no control red, leak battery 62 of 62; item check and item ready unchanged in exit code across all ten rostered repos.
+closed-met: none
+closed-decided: none
+closed-ref: e98c4cdd456e91d86fb59ad7c46ed8f7c8121564
+
 ## Archive (pre-migration)
 
