@@ -114,5 +114,44 @@ class AReTypedBlockerLeavesACleanBlock(unittest.TestCase):
         self.assertIn("amend-reason:", text)
 
 
+class TheCommitGateAcceptsThatClear(unittest.TestCase):
+    """The other half, which the verb arms cannot see: their scratch repos
+    run with hooks off, and it is the commit gate that reads the removed
+    lines. Measured on the live carrier 2026-10-07: with the verb repaired,
+    its own commit was refused (`live_block_line_removed`) over the
+    `amended-not-derivable:` line it had just cleared."""
+
+    def _texts(self, r):
+        head = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        return head
+
+    def _amended(self):
+        r = R._Repo()
+        self.addCleanup(r.close)
+        run(r.dir, *ADD)
+        run(r.dir, "item", "amend", "xx-1",
+            "--not-derivable", "looked again: still no line",
+            "--reason", "second search")
+        return r, self._texts(r)
+
+    def test_the_amended_line_cleared_by_a_RETYPE_is_exempt(self):
+        from lifecycle_core import items
+        r, head = self._amended()
+        run(r.dir, "item", "amend", "xx-1",
+            "--blocked-by", "NONE", "--reason", "decided")
+        res = items.removed_live_lines(head, self._texts(r), "xx")
+        self.assertEqual(res.removed, [], res.removed)
+        self.assertEqual(res.exempt_retyped, 2)
+
+    def test_CONTROL_the_same_line_removed_WITHOUT_a_retype_is_reported(self):
+        from lifecycle_core import items
+        _r, head = self._amended()
+        staged = "\n".join(ln for ln in head.split("\n")
+                           if not ln.startswith("amended-not-derivable:"))
+        self.assertNotEqual(staged, head)
+        res = items.removed_live_lines(head, staged, "xx")
+        self.assertEqual([ident for ident, _k in res.removed], ["xx-1"])
+
+
 if __name__ == "__main__":
     unittest.main()

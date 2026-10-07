@@ -3761,8 +3761,18 @@ def removed_live_lines(head_text: str, staged_text: str,
                 continue
             slot = next((s for s in BLOCKER_ONLY_SLOTS
                          if grammar.is_slot(ln, s)), None)
-            if slot is not None:
-                if any(grammar.is_slot(x, slot) for x in after):
+            # THE AMENDED FORM RIDES THE RE-TYPE EXEMPTION AND NO OTHER
+            # (lc-332). When the type changes, the re-typing door clears the
+            # conditional slot AND its `amended-` lines, which would
+            # otherwise supersede a slot the block no longer carries. Outside
+            # a type change an `amended-` line is history and its removal is
+            # a finding, so it never reaches the in-place exemption above.
+            amended = slot is None and any(
+                grammar.is_slot(ln, AMEND_PREFIX + s)
+                for s in BLOCKER_ONLY_SLOTS)
+            if slot is not None or amended:
+                if slot is not None and any(grammar.is_slot(x, slot)
+                                            for x in after):
                     res.exempt_conditional_in_place += 1
                     continue
                 if retyped is None:
