@@ -3880,5 +3880,32 @@ class AnUnreadableRoutingHomeIsNotAnEmptyTable(unittest.TestCase):
         self.assertIn("could not be read at all", self._report(d))
 
 
+class AReportOnlyRunPrintsNoWrittenCountForAbsentFiles(unittest.TestCase):
+    """lc-213 — `--report-only` writes no successor state, so a line saying
+    items were WRITTEN to a file that does not exist contradicts the
+    sentence two lines above it."""
+
+    def test_report_only_says_would_write_in_the_conditional(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d, "--report-only")
+        self.assertFalse((d / "ITEMS.md").exists())
+        self.assertNotRegex(out, r"items written:\s+\d+ → ITEMS\.md")
+        self.assertNotRegex(out, r"archive bodies:\s+\d+ → ITEMS-DONE\.md")
+        self.assertNotRegex(
+            out, r"CLOSURES routed to the done home: \d+ → ITEMS-DONE\.md")
+        self.assertRegex(out, r"items WOULD be written:\s+1 → ITEMS\.md")
+
+    def test_control_a_writing_run_reports_its_counts_unchanged(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d)
+        self.assertTrue((d / "ITEMS.md").exists())
+        self.assertIn("items written:            1 → ITEMS.md", out)
+        self.assertIn("CLOSURES routed to the done home: 0 → ITEMS-DONE.md",
+                      out)
+        self.assertRegex(out, r"archive bodies:\s+1 → ITEMS-DONE\.md")
+
+
 if __name__ == "__main__":
     unittest.main()

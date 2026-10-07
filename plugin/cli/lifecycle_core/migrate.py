@@ -3275,9 +3275,21 @@ def run(args, out, ctx) -> int:
     marker_note = other_marker_note(read, src_name)
     if marker_note:
         out(f"    {marker_note}")
-    out(f"    items written:            {n_items} → {ctx.items_path.name}")
-    out(f"    CLOSURES routed to the done home: {len(closures)} → "
-        f"{ctx.done_path.name}, verbatim")
+    # lc-213: a run that writes no successor state produced neither home, so
+    # a WRITTEN count naming them contradicts its own opening sentence. It
+    # says what it WOULD write, in the conditional; a writing run's wording
+    # is unchanged.
+    if writing_run:
+        out(f"    items written:            {n_items} → "
+            f"{ctx.items_path.name}")
+        out(f"    CLOSURES routed to the done home: {len(closures)} → "
+            f"{ctx.done_path.name}, verbatim")
+    else:
+        out(f"    items WOULD be written:   {n_items} → "
+            f"{ctx.items_path.name} (nothing written: this run writes no "
+            "successor state)")
+        out(f"    CLOSURES WOULD be routed: {len(closures)} → "
+            f"{ctx.done_path.name}, verbatim (nothing written)")
     out(f"    closure heading(s) read:  "
         f"{', '.join('## ' + s for s in read.closure_sections)} — "
         f"{read.closure_sections_why}")
@@ -3324,7 +3336,9 @@ def run(args, out, ctx) -> int:
             f"\"{RESIDUE_DECISION}\", naming {len(readers)} live reader(s) of "
             f"{src_label}; counted separately from source entries")
     out(f"    archive bodies:           {archive_count} → "
-        f"{ctx.done_path.name}, verbatim")
+        f"{ctx.done_path.name}, verbatim" if writing_run else
+        f"    archive bodies WOULD be:  {archive_count} → "
+        f"{ctx.done_path.name}, verbatim (nothing written)")
     out(f"    ledger lines:             {ledger_count} (nothing migrates into "
         "the ledger — §3.6, §4 row 1)")
     # STATED IN EVERY MODE, INCLUDING UNTOUCHED. An omitted line reads as
