@@ -828,8 +828,11 @@ class LedgerStorableBlocker(unittest.TestCase):
         # the skip below already covers its absence.
         repo = Path(__file__).resolve().parents[2] / "dotfiles"
         if not (repo / "ITEMS.md").exists():
-            self.skipTest(f"no carrier at {repo}: this arm grades the REAL "
-                          "texts and has no input here")
+            # `REACH ARM:` is the marker tools/verify-suite.py reads off the
+            # result object (lc-198): a skip here removes the only arm
+            # grading `blocker_unstorable` on real texts.
+            self.skipTest(f"REACH ARM: no carrier at {repo}: this arm grades "
+                          "the REAL texts and has no input here")
 
         def unstorable(text):
             parsed = items.parse(text)
@@ -848,7 +851,8 @@ class LedgerStorableBlocker(unittest.TestCase):
             ["git", "-C", str(repo), "show", "ec47c3c^:ITEMS.md"],
             capture_output=True, text=True)
         if before.returncode != 0:
-            self.skipTest("ec47c3c^ is not reachable in that checkout")
+            self.skipTest("REACH ARM: ec47c3c^ is not reachable in that "
+                          "checkout")
         # THE POSITIVE CONTROL. Without it the empty list above is what a
         # predicate matching nothing at all also returns.
         self.assertEqual(len(unstorable(before.stdout)), 67,
