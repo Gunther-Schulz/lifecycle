@@ -281,5 +281,148 @@ class Lc41CommitOrSay(unittest.TestCase):
         self.assertNotIn("NOT COMMITTED", out)
 
 
+# --- lc-194: a shell answers for the last process only
+
+from lifecycle_core import lanes as lanes_mod  # noqa: E402
+from lifecycle_core import verify as verify_mod  # noqa: E402
+
+_PLUGIN = Path(__file__).resolve().parent.parent / "plugin"
+
+
+def _trigger(command):
+    return lanes_mod.evaluate_trigger(command, cwd=Path(tempfile.gettempdir()))
+
+
+def _verify(command):
+    return verify_mod.run_one(command, Path(tempfile.gettempdir()), 20)
+
+
+class Lc194TriggerPipelines(unittest.TestCase):
+    """The ruling: only an EARLIER stage exiting 126 or 127 is BROKEN; any
+    other non-zero earlier stage leaves the verdict as it is today."""
+
+    def test_a_pipeline_whose_first_stage_does_not_exist_is_broken(self):
+        t = _trigger("no_such_cmd_lc194 | grep -q .")
+        self.assertEqual(t.state, lanes_mod.BROKEN, t)
+
+    def test_a_first_stage_that_is_not_executable_is_broken(self):
+        with tempfile.TemporaryDirectory() as td:
+            f = Path(td) / "tool.sh"
+            f.write_text("#!/bin/sh\necho x\n")
+            f.chmod(0o644)
+            t = lanes_mod.evaluate_trigger(f"{f} | grep -q .", cwd=Path(td))
+            self.assertEqual(t.state, lanes_mod.BROKEN, t)
+
+    def test_must_not_move_the_glob_idiom_stays_quiet(self):
+        """`ls <glob> 2>/dev/null | grep -q .`: ls exits 2 when nothing
+        matches and the pipeline is correctly QUIET (the reverted first
+        build flipped a live predicate here)."""
+        t = _trigger("ls /nonexistent_lc194_glob* 2>/dev/null | grep -q .")
+        self.assertEqual(t.state, lanes_mod.QUIET, t)
+
+    def test_must_not_move_a_working_pipeline_fires_and_stays_quiet(self):
+        self.assertEqual(_trigger("echo x | grep -q x").state, lanes_mod.FIRE)
+        self.assertEqual(_trigger("echo x | grep -q nope").state,
+                         lanes_mod.QUIET)
+
+    def test_must_not_move_a_reader_closing_the_pipe_early_fires(self):
+        self.assertEqual(_trigger("yes | grep -q y").state, lanes_mod.FIRE)
+
+    def test_must_not_move_bare_and_chained_spellings(self):
+        self.assertEqual(_trigger("no_such_cmd_lc194").state, lanes_mod.BROKEN)
+        self.assertEqual(_trigger("true && no_such_cmd_lc194").state,
+                         lanes_mod.BROKEN)
+        self.assertEqual(_trigger("exit 0").state, lanes_mod.FIRE)
+        self.assertEqual(_trigger("exit 1").state, lanes_mod.QUIET)
+
+    def test_a_quiet_answer_over_a_failed_earlier_stage_says_it_cannot_discriminate(self):
+        t = _trigger("ls /nonexistent_lc194_glob* 2>/dev/null | grep -q .")
+        self.assertIn("cannot discriminate", t.detail)
+
+    def test_a_working_quiet_pipeline_carries_no_such_note(self):
+        t = _trigger("echo x | grep -q nope")
+        self.assertNotIn("cannot discriminate", t.detail)
+
+
+class Lc194VerifyPipelines(unittest.TestCase):
+
+    def test_a_pipeline_whose_first_stage_does_not_exist_did_not_run(self):
+        verdict, code, detail = _verify("no_such_cmd_lc194 | cat")
+        self.assertEqual(verdict, "did-not-run", (verdict, code, detail))
+
+    def test_must_not_move_a_failing_earlier_stage_other_than_126_127(self):
+        verdict, code, detail = _verify("ls /nonexistent_lc194_glob* 2>/dev/null | cat")
+        self.assertEqual(verdict, "ran-clean", (verdict, code, detail))
+        self.assertIn("cannot discriminate", detail)
+
+    def test_must_not_move_a_working_pipeline_is_clean_without_a_note(self):
+        verdict, code, detail = _verify("echo x | cat")
+        self.assertEqual((verdict, code, detail), ("ran-clean", 0, ""))
+
+    def test_must_not_move_bare_and_chained_spellings(self):
+        self.assertEqual(_verify("no_such_cmd_lc194")[0], "did-not-run")
+        self.assertEqual(_verify("true && no_such_cmd_lc194")[0],
+                         "did-not-run")
+        self.assertEqual(_verify("exit 3")[0], "could-not-verify")
+
+
+class Lc194EnumerationOfShellVerdictSites(unittest.TestCase):
+    """The enumeration is the deliverable: every site in plugin/ and tools/
+    that takes a verdict through a shell, keyed on the invariant (a shell
+    invocation: `shell=True`, or an argv naming a shell with `-c`), not on
+    the idiom the two found sites share."""
+
+    SHELL_ARGV = ("sh", "/bin/sh", "bash", "/bin/bash", "dash", "zsh")
+
+    def _sites(self):
+        import ast
+        found = []
+        for root in (_PLUGIN, _PLUGIN.parent / "tools"):
+            for p in sorted(root.rglob("*.py")):
+                try:
+                    tree = ast.parse(p.read_text(encoding="utf-8"))
+                except SyntaxError:
+                    continue
+                for node in ast.walk(tree):
+                    if not isinstance(node, ast.Call):
+                        continue
+                    shell_kw = any(k.arg == "shell"
+                                   and isinstance(k.value, ast.Constant)
+                                   and k.value.value is True
+                                   for k in node.keywords)
+                    shell_argv = (
+                        node.args and isinstance(node.args[0], ast.List)
+                        and node.args[0].elts
+                        and isinstance(node.args[0].elts[0], ast.Constant)
+                        and node.args[0].elts[0].value in self.SHELL_ARGV
+                        and any(isinstance(e, ast.Constant) and e.value == "-c"
+                                for e in node.args[0].elts))
+                    if shell_kw or shell_argv:
+                        found.append((str(p.relative_to(_PLUGIN.parent)),
+                                      "shell=True" if shell_kw else "argv -c"))
+        return found
+
+    def test_the_only_shell_verdict_sites_are_the_declared_ones(self):
+        sites = self._sites()
+        files = sorted({f for f, _k in sites})
+        # lanes.py: the ONE helper both verdict sites go through
+        # (evaluate_trigger, verify.run_one). verbs.py: the booking-time
+        # `/bin/sh -n -c` SYNTAX parse — `-n` executes nothing, so no exit
+        # code of a last stage is taken as a verdict about a command.
+        self.assertEqual(
+            files, ["plugin/cli/lifecycle_core/lanes.py",
+                    "plugin/cli/lifecycle_core/verbs.py"],
+            f"a new shell verdict site appeared (or one vanished): {sites}")
+
+    def test_verify_takes_its_shell_verdict_through_the_one_helper(self):
+        src = (_PLUGIN / "cli" / "lifecycle_core" / "verify.py").read_text()
+        self.assertNotIn("shell=True", src)
+        self.assertIn("lanes.run_shell", src)
+
+    def test_positive_control_the_walk_sees_a_known_site(self):
+        self.assertTrue(any(f.endswith("verbs.py") and k == "argv -c"
+                            for f, k in self._sites()))
+
+
 if __name__ == "__main__":
     unittest.main()

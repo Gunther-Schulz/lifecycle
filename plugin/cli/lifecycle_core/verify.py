@@ -47,13 +47,13 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import exits
+from . import exits, lanes
 
 #: Exit codes a SHELL returns when the command never started. 127 is "not
 #: found", 126 is "found and not executable" — which is the mode-644 case
 #: this verb exists for. Neither is a test result and neither may be booked
 #: as one.
-COULD_NOT_START = (126, 127)
+COULD_NOT_START = lanes.NEVER_STARTED  # one source: lanes owns the shell run (lc-194)
 
 VERIFY_HEADING = re.compile(r'^##+\s*Verify\s*$', re.I | re.M)
 
@@ -147,18 +147,28 @@ def run_one(cmd: str, repo: Path, timeout: int) -> tuple[str, int, str]:
     a failure.
     """
     try:
-        r = subprocess.run(cmd, shell=True, cwd=str(repo), capture_output=True,
-                           text=True, timeout=timeout)
+        r = lanes.run_shell(cmd, cwd=repo, timeout=timeout)
     except subprocess.TimeoutExpired:
         return "did-not-run", -1, f"timed out after {timeout}s"
     except OSError as e:
         return "did-not-run", -1, f"could not start: {e}"
+    # A shell reports the LAST stage of a pipeline (lc-194): a first stage
+    # that never started is a command that did not run whatever the last
+    # stage then returned. Any other failing earlier stage leaves the
+    # verdict as the last stage gave it (the lc-194 ruling), and a clean
+    # answer over one says it cannot discriminate.
+    bad = r.broken_stage()
+    if bad is not None:
+        pos, stage_code = bad
+        return ("did-not-run", stage_code,
+                f"pipeline stage {pos} of {len(r.stages)} exited {stage_code} "
+                "(never started)")
     if r.returncode in COULD_NOT_START:
         tail = (r.stderr or r.stdout or "").strip().splitlines()
         return ("did-not-run", r.returncode,
                 (tail[-1] if tail else f"exit {r.returncode}"))
     if r.returncode == 0:
-        return "ran-clean", 0, ""
+        return "ran-clean", 0, r.cannot_discriminate()
     tail = (r.stderr or r.stdout or "").strip().splitlines()
     if r.returncode == exits.COULD_NOT_VERIFY:
         return "could-not-verify", r.returncode, (tail[-1] if tail else "")
@@ -221,6 +231,8 @@ def cmd_verify(args, out, repo: Path, declaration: dict) -> int:
         if verdict == "ran-clean":
             ran += 1
             out(f"  {i}. RAN, clean       {c.command}")
+            if detail:
+                out(f"       {detail[:200]}")
         elif verdict == "ran-failed":
             ran += 1
             failed += 1
