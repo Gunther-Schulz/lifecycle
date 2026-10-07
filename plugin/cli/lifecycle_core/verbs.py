@@ -122,6 +122,7 @@ DETECTOR_PREFIX = "detector:"
 #: `cost_test`'s third return value: the reason a "clear" verdict cleared,
 #: as a value the caller can branch on without reading prose.
 COST_OPERATOR_OVERRIDE = "operator-override"   # do-it-now shape, source=operator
+COST_TYPED_BLOCKER = "typed-blocker"           # exempt: the third conjunct is false
 
 
 @dataclass
@@ -436,7 +437,8 @@ def cost_test(write_set: str, hunks: int | None, source: str,
             f"cost test: not applicable — the item carries a TYPED blocker "
             f"({blocker_kind}), and the rule's third conjunct is NO typed "
             "blocker. What the item waits for is what this session cannot "
-            "dissolve, so booking it is the only exit there is."), None
+            "dissolve, so booking it is the only exit there is."), \
+            COST_TYPED_BLOCKER
     if hunks is None:
         return "unverified", (
             "the write-set names ONE file and the hunk count was not stated "
@@ -1460,6 +1462,14 @@ def _do_new(args, ctx: Ctx, parsed, done_parsed, done_why, slots, source, out) -
         # gets recorded rather than only the fire.
         judgment.record_use("intake-cost-test", "overridden",
                             repo=str(ctx.repo), detail="source=operator")
+    elif reason == COST_TYPED_BLOCKER:
+        # lc-110: the rule WAS evaluated and correctly declined to fire — the
+        # exemption the spec grants. Counted, so the fire rate reads as a
+        # fraction of evaluations: a rule usually exempt is working as written,
+        # one rarely reached is idle machinery. Only a CLEAR verdict reaches
+        # here (the FINDING path above is already "fired").
+        judgment.record_use("intake-cost-test", "declined",
+                            repo=str(ctx.repo), detail="typed-blocker")
     out(message)
 
     if done_parsed is None:

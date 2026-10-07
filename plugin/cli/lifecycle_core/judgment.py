@@ -30,13 +30,17 @@ from dataclasses import dataclass, field
 
 from . import exits, firelog
 
-#: The three use-evidence outcomes §3.11 names, closed.
+#: The use-evidence outcomes §3.11 names (three) plus `declined` (lc-110), closed.
 #:
 #:   fired       the rule's condition held and it reported
 #:   legitimate  it fired on work that was CORRECT — the over-firing signal,
 #:               and the one that decides retirement
 #:   overridden  a caller went ahead anyway
-USES = ("fired", "legitimate", "overridden")
+#:   declined    the rule was EVALUATED and correctly declined to fire — the
+#:               exemption the spec grants (lc-110). The denominator: without
+#:               it a rule "rarely fired" cannot be told from one "usually
+#:               exempt", and those argue opposite ways about retiring it.
+USES = ("fired", "legitimate", "overridden", "declined")
 
 
 @dataclass(frozen=True)

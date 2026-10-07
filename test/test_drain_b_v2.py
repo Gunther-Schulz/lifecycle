@@ -126,5 +126,41 @@ class OverrideIsDecidedByStateNotText(_CostTestBase):
         self.assertEqual(self._uses(r), ["use=overridden"])
 
 
+class DeclinedByExemptionReachesTheRegister(_CostTestBase):
+    """lc-110: an EVALUATION that declines to fire is counted, as `declined`."""
+
+    def _typed_blocker_add(self, r):
+        return self._run(r, *self._add(
+            self.ONE_FILE, "--hunks", "1", "--blocked-by", self.BLOCKER,
+            "--not-derivable", "a preference with no precedent in the ledger"))
+
+    def test_typed_blocker_one_file_item_records_declined(self):
+        r = self._repo()
+        code, out = self._typed_blocker_add(r)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self._uses(r), ["use=declined"])
+
+    def test_declined_is_counted_in_the_fire_rates(self):
+        from lifecycle_core import judgment
+        r = self._repo()
+        self._typed_blocker_add(r)
+        recs = [json.loads(ln) for ln in
+                firelog.log_path().read_text(encoding="utf-8").splitlines()
+                if str(r.dir) in ln]
+        rates = judgment.fire_rates(recs)["intake-cost-test"]
+        self.assertEqual(rates, {"fired": 0, "legitimate": 0,
+                                 "overridden": 0, "declined": 1})
+
+    def test_veto_path_records_fired_and_never_declined(self):
+        r = self._repo()
+        self._run(r, *self._add(self.ONE_FILE, "--hunks", "1"))
+        self.assertEqual(self._uses(r), ["use=fired"])
+
+    def test_multi_file_clear_records_nothing(self):
+        r = self._repo()
+        self._run(r, *self._add(self.TWO_FILES))
+        self.assertEqual(self._uses(r), [])
+
+
 if __name__ == "__main__":
     unittest.main()
