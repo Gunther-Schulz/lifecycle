@@ -2942,6 +2942,10 @@ def run(args, out, ctx) -> int:
     done_home_text = ""
     merge_target = False
     reimported = []
+    #: lc-88: refusals a --report-only run computes and the real merge would
+    #: take. A dry run writes nothing and stays non-refusing, but it must not
+    #: render a clean plan over a source the real merge refuses.
+    plan_warnings = []
     if merge:
         if not ctx.prefix:
             out("COULD NOT VERIFY: `--merge` allocates ids from the carrier's "
@@ -2997,6 +3001,15 @@ def run(args, out, ctx) -> int:
             e.reimported_as = ident
 
         source_dupes = duplicate_source_bodies(read.entries)
+        if source_dupes and report_only:
+            plan_warnings.append(
+                f"[merge_source_self_duplicate] WOULD refuse: "
+                f"{len(source_dupes)} entry/ies in {src_name} repeat a "
+                "parsed source headline; the real merge writes nothing and "
+                "exits 2.")
+            plan_warnings.extend(
+                f"    {src_name}:{e.line}  repeats {src_name}:{first.line}"
+                for e, first in source_dupes)
         if source_dupes and not report_only:
             out(f"FINDING [merge_source_self_duplicate] {len(source_dupes)} "
                 f"entry/ies in {src_name} repeat a parsed source headline. "
@@ -3017,6 +3030,16 @@ def run(args, out, ctx) -> int:
         dupes = [(e, ident) for e, ident in duplicate_bodies(
             read.entries, existing_titles(existing_items, existing_done_home))
             if e.reimported_as is None]
+        if dupes and report_only:
+            plan_warnings.append(
+                f"[merge_duplicate_body] WOULD refuse: {len(dupes)} "
+                f"entry/ies in {src_name} carry a headline a body already in "
+                "the successor homes carries and carry provenance no "
+                "successor block carries; the real merge writes nothing and "
+                "exits 2.")
+            plan_warnings.extend(
+                f"    {src_name}:{e.line}  already present as {ident}"
+                for e, ident in dupes)
         if dupes and not report_only:
             out(f"FINDING [merge_duplicate_body] {len(dupes)} entry/ies in "
                 f"{src_name} carry a headline a body already in the successor "
@@ -3227,7 +3250,8 @@ def run(args, out, ctx) -> int:
                       lwhy, report_rel, closures, anchor_blob, done_blob,
                       carried_src, carried_done, readers, readers_why,
                       src_label, n_residue, reimported, disposition,
-                      n_level3=n_level3, wrote=writing_run),
+                      n_level3=n_level3, wrote=writing_run,
+                      plan_warnings=plan_warnings),
         encoding="utf-8")
 
     # --- the run's own answer
@@ -3252,6 +3276,8 @@ def run(args, out, ctx) -> int:
     else:
         out(f"migrate: {src_name} is READ and then {disposition} (lc-86); "
             f"{done_name} is READ and not touched.")
+    for w in plan_warnings:
+        out(f"WARNING (plan): {w}" if w.startswith("[") else w)
     if merge:
         out(f"    MODE: MERGE — {ctx.items_path.name} is APPENDED to; every "
             "entry already there keeps its id, its slots and its position.")
@@ -3559,7 +3585,7 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
                   done_blob="", carried_src=None, carried_done=None,
                   readers=(), readers_why="", src_label="", n_residue=0,
                   reimported=(), disposition=DISPOSED_UNTOUCHED,
-                  n_level3=0, wrote=False) -> str:
+                  n_level3=0, wrote=False, plan_warnings=()) -> str:
     """The classification report.
 
     IT DESCRIBES ENTRIES; IT DOES NOT QUOTE THEM. Every entry appears as its
@@ -3620,6 +3646,14 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     shape_note = bullet_shape_note(read, src_name)
     if shape_note:
         a(shape_note)
+        a("")
+    if plan_warnings:
+        a("**PLAN WARNING (lc-88).** This dry run computed refusals the "
+          "real `--merge` would take. It stays non-refusing because it "
+          "writes nothing:")
+        a("")
+        for w in plan_warnings:
+            a(f"- {w.strip()}")
         a("")
     a("## The sources this run read, PINNED BY BLOB")
     a("")
