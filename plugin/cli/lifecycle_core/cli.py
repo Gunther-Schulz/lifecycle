@@ -83,7 +83,15 @@ def _report(res, out) -> None:
     for f in res.findings:
         out(f"FINDING [{f.row}] {f.message}")
     for u in res.unverified:
-        out(f"COULD NOT VERIFY: {u}")
+        # A reason that knows its row prints the row the way a finding does
+        # (lc-323): the name in brackets straight after the verdict words,
+        # never after a colon inside the message. `row` is set only where the
+        # emitting site wrote that form itself (`declaration.Unverified`).
+        row = getattr(u, "row", None)
+        if row:
+            out(f"COULD NOT VERIFY [{row}] {u.text}")
+        else:
+            out(f"COULD NOT VERIFY: {u}")
 
 
 def cmd_kind(args, out) -> int:

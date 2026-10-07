@@ -346,6 +346,51 @@ class Finding:
     message: str
 
 
+#: The opening of a could-not-verify reason that names its row: the two
+#: verdict words, then the row name in brackets — the form every other module
+#: prints directly, and the one the roster's emit-site scan reads from source.
+_NAMED_REASON = re.compile(r"^COULD NOT VERIFY \[([a-z_][a-z0-9_]*)\] ")
+
+
+class Unverified(str):
+    """One could-not-verify reason, which may know the ROW it belongs to.
+
+    WHY A STRING THAT CARRIES A NAME (lc-323). A reason reaches a reader
+    through `Result.unverified`, and several renderers print that list, each
+    putting the verdict words and a colon in front of it. A row's name was
+    therefore written INSIDE the message, after the colon — readable by a
+    person and invisible to the emit-site scan, which reads the SOURCE for
+    the verdict words followed directly by the bracketed name, the form every
+    module that prints for itself already uses.
+
+    So a site that has a row name writes that form, and this type takes it
+    apart again: `row` is the name, `text` the sentence, and the string's own
+    VALUE stays the name in brackets followed by the sentence — exactly what
+    the list held before. A renderer that knows nothing about rows prints
+    what it always printed; one that does (`cli._report`) prints the verdict
+    words and the bracketed name with no colon between. A reason written
+    without a name is itself, `row` None.
+
+    The name is taken ONLY from that written form, never guessed from a
+    reason that merely opens with a bracket: a guess would promote somebody's
+    prose to a row name.
+    """
+    row: str | None = None
+    text: str = ""
+
+    @classmethod
+    def of(cls, why: str) -> "Unverified":
+        m = _NAMED_REASON.match(why)
+        if m is None:
+            reason = cls(why)
+            reason.text = why
+            return reason
+        text = why[m.end():]
+        reason = cls(f"[{m.group(1)}] {text}")
+        reason.row, reason.text = m.group(1), text
+        return reason
+
+
 @dataclass
 class Result:
     """What a read or a check answered.
@@ -368,7 +413,7 @@ class Result:
         self.code = exits.worst([self.code, exits.FINDING])
 
     def cannot_verify(self, why: str) -> None:
-        self.unverified.append(why)
+        self.unverified.append(Unverified.of(why))
         self.code = exits.worst([self.code, exits.COULD_NOT_VERIFY])
 
 
@@ -2174,13 +2219,17 @@ def check_laws_present(repo: Path, laws_rel: str, res: Result) -> None:
     verb is what made `kind check` unable to answer CLEAN over a healthy repo.
     """
     path = repo / laws_rel
-    # THE ROW NAME RIDES IN THE MESSAGE (lc-316). Every could-not-verify is a
+    # EACH BRANCH NAMES ITS ROW (lc-316, lc-323). Every could-not-verify is a
     # 3, so a caller reading the code alone cannot tell WHICH one answered;
-    # the name is what separates this row from its neighbours. (The comment
-    # sits above the `if`: the two lines below are a recorded proof anchor.)
+    # the name is what separates these rows from their neighbours and from
+    # each other. It is written in the form the emit-site scan reads — the
+    # verdict words, then the bracketed name — and `Unverified.of` hands
+    # every renderer the string it was always handed. (The comment sits
+    # above the `if`: the two lines below it, and the three opening the
+    # `except`, are recorded proof anchors.)
     if not path.is_file():
         res.cannot_verify(
-            "[laws_absent_could_not_verify] "
+            "COULD NOT VERIFY [laws_absent_could_not_verify] "
             f"the declared laws file {laws_rel!r} is not present in the "
             "working tree, so nothing about it could be measured. This is "
             "COULD NOT VERIFY and not a clean zero — an absent file and a "
@@ -2189,8 +2238,10 @@ def check_laws_present(repo: Path, laws_rel: str, res: Result) -> None:
     try:
         path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
-        res.cannot_verify(f"the declared laws file {laws_rel!r} could not be "
-                          f"read ({exc!r}).")
+        res.cannot_verify(
+            "COULD NOT VERIFY [laws_unreadable_could_not_verify] "
+            f"the declared laws file {laws_rel!r} could not be read "
+            f"({exc!r}).")
 
 
 # --- the git hooks a repo SHIPS stay launchable ------------------------------

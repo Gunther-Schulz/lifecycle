@@ -289,9 +289,13 @@ def cmd_init(args, out, repo: Path) -> int:
     """
     decl_path = repo / decl.DECLARATION_REL
     if decl_path.exists() and not getattr(args, "force", False):
-        out(f"declaration already exists at {decl.DECLARATION_REL} "
-            f"({decl_path}). Refusing to overwrite it — pass --force to "
-            "overwrite. A silent overwrite of a declaration is not available.")
+        # NAMED (lc-323). It exited FINDING under no row name, so the roster
+        # had nothing to fire and nothing could be asked whether `init` still
+        # refuses; every other FINDING this verb prints carries its row.
+        out(f"FINDING [init_declaration_exists] declaration already exists "
+            f"at {decl.DECLARATION_REL} ({decl_path}). Refusing to overwrite "
+            "it — pass --force to overwrite. A silent overwrite of a "
+            "declaration is not available.")
         return exits.FINDING
 
     # AN UNSAFE LANE NAME IS REFUSED BEFORE ANYTHING IS WRITTEN (lc-317), by

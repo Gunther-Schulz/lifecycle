@@ -356,10 +356,15 @@ MUTATIONS = [
     # clean identity from an uncomputable one. Folding could-not-verify into
     # CLEAN is the actual defect the row exists to catch, so that is the
     # mutation: one token, and the output is a verdict rather than a crash.
+    # RE-ANCHORED by lc-323, which folded the row's two could-not-verify
+    # lines into one: the emitting line this arrangement quotes was reworded,
+    # so the anchor moved in the same commit. The mutation is the same one.
     ("conservation_unverified", "items.py",
-     '        out(f"COULD NOT VERIFY: conservation — {c[\'why\']}")\n'
+     '        out("COULD NOT VERIFY [conservation_unverified] conservation — "\n'
+     '            f"{c[\'why\']}")\n'
      "        return exits.COULD_NOT_VERIFY",
-     '        out(f"COULD NOT VERIFY: conservation — {c[\'why\']}")\n'
+     '        out("COULD NOT VERIFY [conservation_unverified] conservation — "\n'
+     '            f"{c[\'why\']}")\n'
      "        return exits.CLEAN",
      "the could-not-verify ANSWER for an identity that could not be "
      "computed — folded into CLEAN, which is the number shaped like a pass"),
@@ -523,6 +528,24 @@ MUTATIONS = [
      "tree — folded into CLEAN, which is the index-resolved zero the design "
      "names explicitly"),
 
+    # lc-323. THE SIBLING BRANCH, folded the same way and for the same
+    # reason: the answer becomes a discarded value, so an unreadable laws
+    # file reads CLEAN. Three lines, because the first two alone are how
+    # every `except` in this module opens a could-not-verify; the third is
+    # this branch's own. The absent-file plant never reaches this `except`
+    # (it returned above), so the fold leaves the neighbouring row firing.
+    # Admitted on the lc-142 pair — PROVEN at this anchor, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("laws_unreadable_could_not_verify", "declaration.py",
+     "    except (OSError, UnicodeDecodeError) as exc:\n"
+     "        res.cannot_verify(\n"
+     '            "COULD NOT VERIFY [laws_unreadable_could_not_verify] "',
+     "    except (OSError, UnicodeDecodeError) as exc:\n"
+     "        _folded = (\n"
+     '            "COULD NOT VERIFY [laws_unreadable_could_not_verify] "',
+     "the could-not-verify ANSWER for a laws file that is present and cannot "
+     "be read — folded into CLEAN, an unread file answering for a read one"),
+
     ("schema_above_floor", "items.py",
      '    elif out.head["schema"] > SCHEMA_FLOOR:',
      "    elif False:",
@@ -607,6 +630,34 @@ MUTATIONS = [
      "    if not door or _UNSAFE_FOR_FILENAME.search(door):",
      "    if False:",
      "the test that a door may safely name a lane, ahead of every write"),
+
+    # lc-323. THE SAME REFUSAL'S SECOND SITE, in `init`. The row above
+    # proves `lane new`'s test; `init --lane` runs its own a module away, so
+    # that arrangement left this one deletable with the roster green. Folded,
+    # `init --force --lane ../escape` writes `escape.md` beside the lanes
+    # directory and a declaration naming the literal, and answers what any
+    # init answers in a scratch repo. The arm RUNS under the fold: the plant
+    # is the escape and not a nested slash, which would crash on a missing
+    # parent and read COULD NOT VERIFY, never a red. Both rows map to one
+    # finding, and each mutation darkens its own row alone — the two sites
+    # share the predicate's regex and not the branch.
+    # Admitted on the lc-142 pair — PROVEN at this anchor, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("init_lane_unsafe_door", "init.py",
+     "    if unsafe:",
+     "    if False:",
+     "`init`'s refusal of an unsafe `--lane` name, ahead of its first write"),
+
+    # lc-323. `init`'s own no-silent-overwrite test. Folded, a second `init`
+    # overwrites the declaration and answers what a first one does. The
+    # control passes `--force`, which already skips this test, so the fold
+    # cannot move it.
+    # Admitted on the lc-142 pair — PROVEN at this anchor, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("init_declaration_exists", "init.py",
+     '    if decl_path.exists() and not getattr(args, "force", False):',
+     "    if False:",
+     "the refusal to overwrite a declaration that already exists"),
 
     ("trigger_broken", "lanes.py",
      "            if t.state == BROKEN:",

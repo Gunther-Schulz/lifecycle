@@ -1736,14 +1736,17 @@ def conservation(items_parsed: Parsed, done_parsed: Parsed | None,
 def report_conservation(c: dict, out) -> int:
     """Render a conservation result and answer with one of the three codes."""
     if c["ok"] is None:
-        # THE ROW NAME, ON ITS OWN LINE (lc-316). Every could-not-verify is
-        # a 3, so the code alone does not say WHICH one answered. It is a
-        # line of its own, and not a tag inside the line below, because that
-        # line is the literal anchor of this row's recorded mutation in
-        # `tools/prove-rows.py`: rewording it retires the row's proof.
-        out("COULD NOT VERIFY [conservation_unverified] the conservation "
-            "identity could not be computed; the reason follows.")
-        out(f"COULD NOT VERIFY: conservation — {c['why']}")
+        # THE ROW NAME AND THE REASON, ON ONE LINE (lc-316, lc-323). Every
+        # could-not-verify is a 3, so the code alone does not say WHICH one
+        # answered. lc-316 put the name on a line of its own, ahead of the
+        # reason, because the reason's line was the literal anchor of this
+        # row's recorded mutation — which left one answer printed as two
+        # could-not-verify lines, a name with no reason and a reason with no
+        # name. The two lines below ARE that anchor now, in
+        # `tools/prove-rows.py`: reword them and the arrangement moves in the
+        # same commit, or the row's proof is retired.
+        out("COULD NOT VERIFY [conservation_unverified] conservation — "
+            f"{c['why']}")
         return exits.COULD_NOT_VERIFY
     out(f"conservation: items {c['items']} + done {c['done']} "
         f"(of which archive {c['archive']}) = {c['actual']}   "

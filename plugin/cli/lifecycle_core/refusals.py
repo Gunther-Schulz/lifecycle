@@ -357,6 +357,21 @@ def _cli_in(repo, argv) -> Fired:
         os.chdir(here)
 
 
+def _kind_check_over_laws(raw: bytes) -> Fired:
+    """`kind check` through the real entry point, over a laws file holding
+    exactly `raw` (lc-323).
+
+    BYTES, not a mode: an unreadable file made with `chmod 000` is readable
+    to root, so a permission-keyed plant would quietly turn into a second
+    control wherever the roster runs as root. The real CLI rather than the
+    declaration scaffold, because the rendering under test is `cli._report`'s
+    — the scaffold prints the list its own way.
+    """
+    with _Repo() as repo:
+        (repo.dir / "LAWS.md").write_bytes(raw)
+        return _cli_in(repo, ["kind", "check"])
+
+
 def _arc_cli(argv, *, setup=None) -> Fired:
     with _Repo() as repo:
         if setup is not None:
@@ -922,6 +937,22 @@ ROWS = [
         expect=exits.COULD_NOT_VERIFY,
         fire=lambda: _decl_run(declaration=GOOD_DECLARATION, gitignore=""),
         control=lambda: _decl_run(**_GOOD_KW),
+    ),
+    Row(
+        ident="laws_unreadable_could_not_verify",
+        refusal="the laws file the declaration names is in the working tree "
+                "and cannot be READ — COULD NOT VERIFY, never a clean zero. "
+                "The sibling branch of the absent file, which answered under "
+                "no name until lc-323",
+        firing_input="`kind check` in a repo whose declared laws file holds "
+                     "bytes that are not UTF-8",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _kind_check_over_laws(b"law \xff\xfe not utf-8\n"),
+        # The SAME file at the SAME path, readable: the arms differ in the
+        # bytes alone, never in whether a laws file exists — an absent file
+        # is the neighbouring row's input, not this one's control.
+        control=lambda: _kind_check_over_laws(b"law\n"),
+        stage="drain wave D (lc-323)",
     ),
     Row(
         ident="schema_above_floor",
@@ -3192,6 +3223,24 @@ LANE_ROWS = [
         stage="wave 2",
     ),
     Row(
+        ident="init_declaration_exists",
+        refusal="`init` refuses to overwrite a declaration that already "
+                "exists — no silent overwrite. The rule `lane new` cites for "
+                "its own body, at the site that states it; it exited FINDING "
+                "under no row name until lc-323",
+        firing_input="`init` in a repo that already carries "
+                     "`.claude/lifecycle.json`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["init"]),
+        # The SAME repo and the SAME existing declaration, WITH --force: the
+        # arms differ in the flag alone. It exits COULD NOT VERIFY rather
+        # than CLEAN — a scratch repo tracks no laws file for `init` to
+        # resolve — which is what this legitimate input answers, and is not
+        # the finding.
+        control=lambda: _cli(["init", "--force"]),
+        stage="drain wave D (lc-323)",
+    ),
+    Row(
         ident="lane_new_unsafe_door",
         refusal="`lane new` refuses a door that cannot safely name a lane — "
                 "one carrying a character outside letters, digits, `.`, `_` "
@@ -3208,6 +3257,31 @@ LANE_ROWS = [
         # no path separator: the arms differ in the door's characters alone.
         control=lambda: _cli(["lane", "new", "escape"]),
         stage="drain wave B (lc-202)",
+    ),
+    Row(
+        ident="init_lane_unsafe_door",
+        refusal="`init --lane` refuses the same unsafe name `lane new` "
+                "refuses, BEFORE its first write. ONE refusal at a second "
+                "site in another module: the row above proves `lane new`'s "
+                "test and says nothing about this one, so until lc-323 the "
+                "init test could be deleted with every row still green",
+        firing_input="`init --force --lane ../escape` — which wrote "
+                     "`escape.md` outside the lanes directory and a "
+                     "declaration naming the literal `../escape`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["init", "--force", "--lane", "../escape"]),
+        # The SAME verb, flags and repo with a name of the same letters and
+        # no path separator: the arms differ in the name's characters alone.
+        # `--force` rides in BOTH arms because the scratch repo is seeded
+        # with a declaration, and without it the existing-declaration
+        # refusal would answer for both. The control exits COULD NOT VERIFY,
+        # not CLEAN: a scratch repo tracks no laws file for `init` to
+        # resolve.
+        control=lambda: _cli(["init", "--force", "--lane", "escape"]),
+        stage="drain wave D (lc-323)",
+        # Two roster rows, two firing inputs, ONE finding — declared, never
+        # derived from the ident.
+        finding_row="lane_new_unsafe_door",
     ),
     Row(
         ident="lane_undeclared",
