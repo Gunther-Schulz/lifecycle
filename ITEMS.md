@@ -293,6 +293,8 @@ amended-done-criterion: 2026-09-12 lifecycle audit surfaces every tracked file t
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
 amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over). The decision is ANSWERED at LEDGER.md:74: DECLARED CUSTOM is the fourth disposition, the sweep verifies that the repo CLAUDE.md names the file AND its consumer, and the sweep joins the audit walk. The done-criterion carried both branches; the first is the one ruled. Stays STANDBY: a fourth disposition is a new mechanism and the 2026-09-24 freeze holds those.
 amended-blocked-by: 2026-10-05 NONE
+amend-reason: 2026-10-07 half 1 measured and re-shaped; half 2 needs its two rulings reconciled
+amended-evidence: 2026-10-07 RELAYED from wave E lane E6 2026-10-07 (half 1 built as 636497b on its branch, NOT landed): audit running the full sweep adds 3950 lines in claude-code-cache-fix, 1363 in beat-the-books, 488 in dotfiles, 37 to 211 elsewhere, because nine of ten repos register only their carriers. DESK RULING: audit prints the sweep VERDICT and COUNT and points at kind sweep for the list. Fourth disposition still open: LEDGER.md:74 (CLAUDE.md names file and consumer) against the amended criterion (machine-read from lifecycle.json), and no key names or entry shapes are stated; declaration.py belongs in the write-set.
 
 ## lc-78
 grade: PARKED
