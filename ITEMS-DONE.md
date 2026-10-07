@@ -3203,5 +3203,23 @@ closed-met: none
 closed-decided: none
 closed-ref: 62f423cc1124f7736082222a8995c4b09fe9dac2
 
+## lc-225
+grade: DONE
+requirement: AN INVESTIGATION ROUND SERIES IS VISIBLE TO NOBODY WHO IS IN IT. Instrument rounds never present as a cycle to the session running them, so the question is another round owed and is the FORM failing never gets asked from inside. Make the series persisted, printed state: round 5; rounds 2-4 returned nothing new, surfaced where the session composing the next round sees it. Pattern is lc I5 count-at-close applied to rounds: a count makes a zero answerable.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/records.py,test/test_records.py
+done-criterion: The record carries per-round yield and the record check prints the series where the next round composer reads it, with a zero-yield round rendering as an explicit zero rather than as silence. Three answers reachable, red-first per arm. FIRST DECISION OF THE ITEM, named as a design question and not pre-decided: whether the home is investigation-record slots plus record check (the likely home, and the write-set above assumes it), a prose form, or a desk convention. If the decision moves the home, the write-set is amended before building. MUST-NOT-BUILD: no round counter whose value is derived from the composing session own memory; the count comes from the record.
+evidence: DERIVED from the operator corpus re-entry-seam convention: a repeated cycle carries two method-shaped questions, is another round owed and is the FORM failing, and the session running the rounds cannot see the series. MEASURED 2026-09-18, relayed from the driving desk and carried as theirs: in the CachyOS freeze arc, keep playing was recommended over an unchanged instrument while the data that would have answered sat on disk, and the operator was the only party who saw the series. DERIVED from docs/the-loop.md I5: the one gap solved here was solved by a COUNT at close rather than by a better duty, which is the transferable move. DERIVED: the operator line by now something should have materialized is this question arriving late, from outside.
+blocked-by: NONE
+amend-reason: 2026-09-19 attack finding A7 (2026-09-19): the round ruled the round-series readout's home is the ARC's yield slot for arc-carried work (round-decisions doc, integration rulings), and that ruling lived only in the design doc while this entry stood READY and unblocked - a picker would have built the readout into records.py as a second home. Blocked on the arc kind item until its design re-locks; if the arc design's yield slot dies in repair, this blocker lifts and the entry's own home question re-opens as booked.
+amended-blocked-by: 2026-09-19 lc-231
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over). The blocker named lc-231, which is DONE. Nothing else in the entry moves; its first decision is named inside its own done-criterion as part of the work. Stays STANDBY: a new mechanism, held by the 2026-09-24 freeze.
+amended-blocked-by: 2026-10-05 NONE
+closed-reason: 2026-10-07 record check prints the round series with explicit zeros; the home is the record MOVES lines, confirmed at the desk. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: e20f7d8c15bdc3dccb95b6bee28cf7cc6cac19b4
+
 ## Archive (pre-migration)
 
