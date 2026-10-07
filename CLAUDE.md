@@ -507,15 +507,21 @@ the board shows ordinary waiting.
 ## Verify
 
 ```bash
-python3 -m unittest discover -s test -p 'test_*.py'        # the CLI
+python3 tools/verify-suite.py                              # the CLI suite off the result object:
+                                                           # skips are their own count, and a
+                                                           # skipped REACH ARM is exit 3, not clean
 python3 plugin/cli/lifecycle --test                        # roster + coverage + ROUTE SETS
 python3 tools/prove-rows.py                                # every row, red-first
 python3 plugin/cli/lifecycle audit                         # the walk, read-only: growth,
                                                            # the laws scope audit, the
                                                            # judgment register's fire-rate
 node --test test/absence-scan.test.mjs                     # the leak scan's bites
-node tools/absence-scan.mjs --git-range ..HEAD             # the leak scan itself
+node tools/absence-scan.mjs --git-range EMPTY..HEAD        # the leak scan itself
 ```
+
+`python3 tools/verify-claude-md.py` EXECUTES the block above and re-derives
+the counts this section states (lc-95). It is named here and not inside the
+block, because a block that ran its own executor would not terminate.
 
 `lifecycle --test` runs every roster row's plant AND control and prints
 full counts including skips, then runs the EMIT-SITE COVERAGE check: every
