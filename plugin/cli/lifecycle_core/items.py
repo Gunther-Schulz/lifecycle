@@ -1091,8 +1091,17 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
         # against NONE refused the very body the close had just written —
         # every decision-blocked item carrying a statement was unclosable.
         # Only a moot record that is not an item-id one stands for a decision.
+        #
+        # AN EVIDENCE BLOCKER HAS THE SAME SURVIVAL AND THE SAME STAND-IN
+        # (lc-105). The door stamps `blocker-exercise:` on every evidence
+        # blocker it books, so the close that cleared `blocked-by:` left that
+        # slot beside NONE and this rule refused the body the close had just
+        # written. The evidence record names its own type, so it is tested
+        # FIRST: it stands for `evidence` and never for a decision.
         moot = item.slots.get("blocker-moot")
-        if (kind_ in (None, "none") and moot and want == "decision"
+        if kind_ in (None, "none") and moot and is_evidence_moot_record(moot):
+            kind_ = "evidence"
+        elif (kind_ in (None, "none") and moot and want == "decision"
                 and not is_item_moot_record(moot)):
             kind_ = "decision"
         if kind_ != want:
@@ -2898,14 +2907,63 @@ def is_item_moot_record(moot: str) -> bool:
 
     Read off the two templates rather than spelled a second time, so the
     shape `verbs.cmd_item_close` writes and the shape recognised here have one
-    producer. Only `decision` and item-id blockers are ever mooted by a close
-    (the docstring at `verbs.move_to_done`'s caller), so a `blocker-moot:`
-    line that is NOT this shape records a mooted `decision` blocker (lc-269).
+    producer. A close moots three blocker types — `decision`, item-id and,
+    since lc-105, `evidence` (`is_evidence_moot_record` below) — so a
+    `blocker-moot:` line that is NEITHER this shape NOR that one records a
+    mooted `decision` blocker (lc-269).
     """
     m = (moot or "").strip()
     for shape in (_ITEM_MOOT_ANSWERED, _ITEM_MOOT_ABANDONED):
         tail = shape.format(ident="")
         if m.endswith(tail) and m[:-len(tail)] and " " not in m[:-len(tail)]:
+            return True
+    return False
+
+
+#: THE `blocker-moot:` RECORD FOR AN `evidence` BLOCKER (lc-105), in the two
+#: states a close can honestly report after RUNNING the predicate. Spelled
+#: here and nowhere else for the reason the item-id pair above is:
+#: `verbs.cmd_item_close` writes the record and `_moot_discharges` reads it
+#: back by EQUALITY.
+#:
+#: TWO FORMS BECAUSE THE TWO FACTS ARE DIFFERENT. Exit 0 is the evidence
+#: having ARRIVED — the wait was answered, whichever grade the close takes.
+#: Exit 1 under a DROP is a wait that ended because the waiter is gone, and
+#: the record says so in those words rather than claiming a discharge. There
+#: is no third form: a predicate that answers BROKEN closes nothing, so no
+#: close ever writes a record about one.
+#:
+#: THE VALUE OPENS WITH THE TYPE WORD, as the blocker itself is spelled
+#: (`evidence <predicate>`), so the record is recognisable WITHOUT knowing
+#: the predicate — which the conditional-slot rule in `_parse_block` needs: a
+#: closed body's base `blocked-by:` reads NONE, and this record is then the
+#: only place the type survives.
+_EVIDENCE_MOOT_OPEN = "evidence "
+_EVIDENCE_MOOT_ARRIVED = (_EVIDENCE_MOOT_OPEN + "{predicate} (the predicate "
+                          "exited 0 at this close: the evidence arrived)")
+_EVIDENCE_MOOT_ABANDONED = (_EVIDENCE_MOOT_OPEN + "{predicate} (the predicate "
+                            "exited 1 at this close: not arrived; this item "
+                            "was dropped)")
+
+
+def evidence_moot_record(predicate: str, *, abandoned: bool) -> str:
+    """The `blocker-moot:` value a close writes for the evidence blocker
+    `predicate`. The single writer of this shape — see the note above."""
+    shape = _EVIDENCE_MOOT_ABANDONED if abandoned else _EVIDENCE_MOOT_ARRIVED
+    return shape.format(predicate=(predicate or "").strip())
+
+
+def is_evidence_moot_record(moot: str) -> bool:
+    """Is `moot` one of `evidence_moot_record`'s two shapes, for any predicate?
+
+    Read off the two templates, as `is_item_moot_record` is, so the writer and
+    this recogniser have one producer.
+    """
+    m = (moot or "").strip()
+    for shape in (_EVIDENCE_MOOT_ARRIVED, _EVIDENCE_MOOT_ABANDONED):
+        tail = shape.format(predicate="")[len(_EVIDENCE_MOOT_OPEN):]
+        if (m.startswith(_EVIDENCE_MOOT_OPEN) and m.endswith(tail)
+                and len(m) > len(_EVIDENCE_MOOT_OPEN) + len(tail)):
             return True
     return False
 
@@ -2963,8 +3021,12 @@ def _moot_discharges(item: Item, detail: str, kind: str = "decision") -> bool:
     item-id blocker too, in `item_moot_record`'s two forms, and this discharges
     on either of them — for the id the effective blocker actually names, which
     is what keeps a record about some other item from clearing this one.
-    An `evidence` blocker is still annotated by no close and still has no
-    record to be discharged by; the type test below is what keeps it a finding.
+
+    THREE TYPES SINCE lc-105. A close now RUNS an `evidence` blocker's
+    predicate and records what it answered (`evidence_moot_record`'s two
+    forms), and this discharges on either — for the PREDICATE the effective
+    blocker actually names, by the same equality. An `external` blocker is the
+    remainder: no close records one, so the type test below keeps it a finding.
 
     THE `decision` TYPE HAS TWO RECORD FORMS NOW (lc-55), and both discharge
     for the question the effective blocker actually names: the bare question,
@@ -2982,6 +3044,11 @@ def _moot_discharges(item: Item, detail: str, kind: str = "decision") -> bool:
         return bool(target) and moot in (
             item_moot_record(target, abandoned=False),
             item_moot_record(target, abandoned=True))
+    if kind == "evidence":
+        predicate = (detail or "").strip()
+        return bool(predicate) and moot in (
+            evidence_moot_record(predicate, abandoned=False),
+            evidence_moot_record(predicate, abandoned=True))
     if kind != "decision":
         return False
     question = (detail or "").strip()
@@ -3029,11 +3096,17 @@ def check_done_file(path: Path, out, prefix: str | None = None, *,
     `item close` exited 0 and the next `item check` reported this row against a
     body the close had just written. The close now records that type too
     (`item_moot_record`) and the discharge above recognises it. An `evidence`
-    blocker is the REMAINDER, left as it stands rather than repaired blind: it
-    reaches this row by the same route and the same measurement, but what a
-    close should say about a predicate nobody re-evaluated is a design question
-    this repair did not settle — so for that one type the sentence below still
-    over-reads, and the body it names may well have arrived by a close.
+    blocker was the remainder lc-90 left, and lc-105 closed it: the close now
+    RUNS the predicate through the trigger evaluator and records what it
+    answered (`evidence_moot_record`), or refuses.
+
+    WHAT IS LEFT IS `external`, and the message below says so instead of
+    over-reading. No close records an `external` blocker — it waits on an
+    event nothing evaluates — so an amended one still survives a close and
+    reaches this row (measured 2026-10-07 on a scratch repo). The finding used
+    to conclude the body "did not arrive here by a close"; that is a claim
+    about provenance this check never read, and it was false for every type
+    in turn. It now names both readings.
     """
     if text is None:
         if not path.exists():
@@ -3094,11 +3167,15 @@ def check_done_file(path: Path, out, prefix: str | None = None, *,
                     f"block {it.ident!r} is closed and still carries "
                     f"`blocked-by: {it.slots.get('blocked-by', '')}`. A "
                     "closed item waits for nothing, and this body carries no "
-                    "`blocker-moot:` naming that question — so it did not "
-                    "arrive here by a close, which is the path that records "
-                    "the question as moot precisely so the operator's "
-                    "decision queue does not keep listing it after the item "
-                    "that asked it is gone.", it.ident)
+                    "`blocker-moot:` naming that blocker. A close records one "
+                    "for a `decision`, an item-id and an `evidence` blocker, "
+                    "precisely so nothing keeps listing a wait after the item "
+                    "that held it is gone. So EITHER this body reached the "
+                    "closure home by a path that is not a close, OR it was "
+                    "closed over a blocker no close records (an `external` "
+                    "one, or any type under a build that predates its "
+                    "record). This check read the body, not how it got "
+                    "here, and cannot say which.", it.ident)
 
     n = len(parsed.items)
     out(f"done home: {n} closed block(s), archive {parsed.archive_lines} "

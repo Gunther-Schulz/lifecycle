@@ -868,6 +868,21 @@ MUTATIONS = [
      "NONE, so the wait is deleted with no record anywhere, which is the "
      "silent half of lc-90 and the direction nothing reported"),
 
+    # lc-105, the SIBLING firing input of the row above. ANCHORED ON ITS OWN
+    # MESSAGE TAIL for the reason that row is — the bare return is not unique
+    # — and scoped to the QUIET refusal alone: the FIRED and DROP arms above
+    # it and the BROKEN arm below it keep reading real input. Disabled, the
+    # close proceeds over a predicate that answered "not arrived".
+    ("close_over_live_blocker_evidence", "verbs.py",
+     "            \"--drop, which records the wait as abandoned, not as "
+     "arrived.\")\n        return None, exits.FINDING",
+     "            \"--drop, which records the wait as abandoned, not as "
+     "arrived.\")\n        return None, exits.CLEAN",
+     "the refusal of a DONE close over a QUIET evidence predicate — the "
+     "close then moves the body with no record, which is lc-105's defect: "
+     "a live wait deleted, and an amended one left standing in the closure "
+     "home"),
+
     # lc-303. THE VERDICT FOLDED, per the note above `net_growth`: the tag
     # still prints, only the code moves. Admitted on the lc-142 pair —
     # PROVEN at this anchor, "rows changed: NONE" re-pointed at an inert

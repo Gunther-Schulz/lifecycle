@@ -197,13 +197,16 @@ class CommentBlockBeforeTheSchemaLine(unittest.TestCase):
 
 
 class TheClosureClearsTheWait(unittest.TestCase):
-    """A closed item waits for nothing, and only ONE type earns the record.
+    """A closed item waits for nothing, and the close RECORDS what ended the wait.
 
-    Both halves matter and they pull opposite ways. Clearing is what makes "no
-    blocker in the done home" a property the tool maintains rather than a hope.
-    Annotating only the `decision` type is what keeps the archive free of
-    noise: an item-id blocker resolves on its target's DONE and an evidence
-    one is re-evaluated each pass, so neither is left hanging by a close.
+    Clearing is what makes "no blocker in the done home" a property the tool
+    maintains rather than a hope. The record is what lets the done home's own
+    check tell a wait a close ended from a blocker that arrived some other way.
+
+    THIS DOCSTRING SAID ONLY `decision` EARNS THE RECORD, on the ground that
+    an item-id blocker "resolves on its target's DONE" and an evidence one "is
+    re-evaluated each pass". Neither happened at a close: lc-90 found the
+    first, lc-105 the second, and each got its record.
     """
 
     def _closed(self, blocked):
@@ -218,10 +221,14 @@ class TheClosureClearsTheWait(unittest.TestCase):
         self.assertIn("blocked-by: NONE", done)
         self.assertIn("blocker-moot: which window is canonical", done)
 
-    def test_an_evidence_blocker_is_cleared_and_NOT_annotated(self):
-        _code, _out, done, _d = self._closed("evidence true")
+    def test_an_evidence_blocker_that_FIRED_is_cleared_AND_recorded(self):
+        """Reversed by lc-105: this asserted NO record. The close now runs
+        the predicate, and exit 0 is recorded as the evidence having arrived."""
+        code, out, done, _d = self._closed("evidence true")
+        self.assertEqual(code, exits.CLEAN, out)
         self.assertIn("blocked-by: NONE", done)
-        self.assertNotIn("blocker-moot", done)
+        self.assertIn("blocker-moot: evidence true (the predicate exited 0 "
+                      "at this close: the evidence arrived)", done)
 
     def test_the_done_home_check_fires_on_a_surviving_blocker(self):
         """The violation arm: a blocker that reached the closure home by some

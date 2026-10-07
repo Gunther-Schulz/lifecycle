@@ -303,16 +303,23 @@ class EvidenceBlockerAndMootClose(unittest.TestCase):
         finally:
             r.close()
 
-    def test_an_item_id_blocker_is_not_made_moot_by_a_close(self):
-        """Only a `decision` blocker qualifies. An item-id blocker resolves
-        mechanically on its target's DONE and an evidence one is
-        re-evaluated each pass — neither is left hanging by a close, so
-        annotating them would be noise on every archived body."""
+    def test_an_evidence_blocker_that_FIRED_is_recorded_by_a_close(self):
+        """REVERSED BY lc-105, and the old premise goes with the assertion.
+        This test asserted NO record, on the ground that an evidence blocker
+        "is re-evaluated each pass — neither is left hanging by a close".
+        Nothing re-evaluated it at the close: the body moved with the
+        predicate unasked, and an amended one reached the closure home alive.
+        The close now RUNS the predicate, and exit 0 is recorded as arrived
+        — never ledgered, because it is nobody's question."""
         r = self._repo("evidence true")
         try:
-            self._run(r, ["item", "close", "xx-1", "--met", "none", "--decided", "none"])
-            self.assertNotIn("blocker-moot",
-                             (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8"))
+            code, out = self._run(r, ["item", "close", "xx-1", "--met", "none", "--decided", "none"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("blocker-moot: evidence true (the predicate exited "
+                          "0 at this close: the evidence arrived)",
+                          (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8"))
+            self.assertNotIn("decision:",
+                             (r.dir / "LEDGER.md").read_text(encoding="utf-8"))
         finally:
             r.close()
 

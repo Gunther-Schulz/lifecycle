@@ -1330,6 +1330,21 @@ BLOCKER_TARGET_CLOSED_ITEMS = (
 )
 BLOCKER_TARGET_CLOSED_DONE = EMPTY_DONE + _blocked_block("xx-2", "DONE", "NONE")
 
+#: lc-105's PAIR: one item, blocked by an `evidence` predicate, differing in
+#: what the predicate ANSWERS. The scratch repo always holds `ITEMS.md` and
+#: never holds `the-evidence.flag`, so the first exits 1 (QUIET) and the
+#: second exits 0 (FIRED) with no file planted for either.
+EVIDENCE_QUIET_ITEMS = (
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 1\nadded: 0\ncompacted: 0\n")
+    + _blocked_block("xx-1", "READY", "evidence test -e the-evidence.flag")
+)
+EVIDENCE_FIRED_ITEMS = (
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 1\nadded: 0\ncompacted: 0\n")
+    + _blocked_block("xx-1", "READY", "evidence test -e ITEMS.md")
+)
+
 #: lc-193's RING: `xx-1` and `xx-2` block each other by id. Neither is
 #: dangling and neither is DROPPED, so `check_blocker_targets` reads this
 #: carrier CLEAN — the whole reason a GRAPH traversal is a different check
@@ -1879,6 +1894,38 @@ VERB_ROWS = [
                              items=BLOCKER_TARGET_CLOSED_ITEMS,
                              done=BLOCKER_TARGET_CLOSED_DONE),
         stage="wave 1, stage 5",
+    ),
+    Row(
+        # A SIBLING ROW, NOT A SECOND REFUSAL (lc-105). One cause — a DONE
+        # close over a wait that is still live — and one repair: clear the
+        # blocker with a reason, or drop. §3.8c splits a row only where the
+        # sites yield different ANSWER CLASSES, and these do not; what
+        # differs is who holds the answer (the target item's state there, the
+        # predicate's own exit here), which is a second FIRING INPUT.
+        ident="close_over_live_blocker_evidence",
+        finding_row="close_over_live_blocker",
+        refusal="a DONE close over an `evidence` blocker whose predicate is "
+                "QUIET — the close RUNS the predicate through the one "
+                "trigger evaluator, and exit 1 (not arrived) refuses, because "
+                "the move would end a live wait by deleting it (lc-105). "
+                "Exit 0 records the evidence as arrived and proceeds; a DROP "
+                "records the wait as abandoned; a BROKEN predicate is could "
+                "not verify and closes nothing",
+        firing_input="`item close xx-1` where xx-1 is blocked by `evidence "
+                     "test -e the-evidence.flag` and no such file exists",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none",
+                           "--decided", "none"],
+                          items=EVIDENCE_QUIET_ITEMS),
+        # THE SAME CLOSE over the same blocker TYPE, with a predicate that
+        # FIRES: the arms differ in the predicate's answer alone, so neither
+        # the close nor the presence of an evidence blocker is what separates
+        # them. A control with no blocker would pass whether or not this
+        # refusal ran the predicate at all.
+        control=lambda: _cli(["item", "close", "xx-1", "--met", "none",
+                              "--decided", "none"],
+                             items=EVIDENCE_FIRED_ITEMS),
+        stage="drain wave C, lane C1 (lc-105)",
     ),
     Row(
         ident="close_carries_pointer",

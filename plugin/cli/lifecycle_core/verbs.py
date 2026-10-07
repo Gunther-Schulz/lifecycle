@@ -488,14 +488,14 @@ def move_to_done(ctx: Ctx, ident: str, closing_grade: str, note: str,
     not a close, which is the property §3.1's write-rules state about the
     closure home.
 
-    CLEARED IS NOT THE SAME AS ANNOTATED, and only one type earns the
-    annotation. An `<item-id>` blocker resolves mechanically on its target's
-    DONE and an `evidence` one is re-evaluated each pass, so neither is left
-    hanging by a close and annotating them would be noise on every archived
-    body. A `decision` blocker sits in the OPERATOR's queue and nothing else
-    takes it out of there — that one the caller records as `blocker-moot:`,
-    which is a real closed-body slot since this wave rather than an annotation
-    nothing checks.
+    CLEARED IS NOT THE SAME AS ANNOTATED, and the annotation is the CALLER's.
+    This function clears the `blocked-by:` LINE and appends what it is
+    handed. `cmd_item_close` disposes the blocker BEFORE calling here and
+    hands over a `blocker-moot:` record for the three types a close can speak
+    for — `decision` (lc-48, lc-55), `<item-id>` (lc-90) and `evidence`
+    (lc-105). The sentence this replaces said only `decision` earned one
+    because the other two "resolve mechanically"; nothing resolved either,
+    and an amended one of each rode into the closure home alive.
 
     `note` MAY CARRY SEVERAL LINES, newline-separated (lc-44): a DONE close
     appends `closed-reason:` and `closed-ref:` beside the moot record, and
@@ -3601,8 +3601,9 @@ def _effective_blocker(ctx: Ctx, ident: str):
     `_item_blocker_disposition` below — which needs an answer this function's
     predecessor never had, a refusal, because an item-id blocker names a target
     whose state decides whether the wait was answered or is still live — and an
-    `evidence` one is still annotated by nothing, which lc-90 measured and did
-    not repair.
+    `evidence` one is disposed by `_evidence_blocker_disposition` (lc-105),
+    which asks the predicate itself. `external` is the type no close speaks
+    for.
     """
     try:
         parsed = items_mod.parse(ctx.items_path.read_text(encoding="utf-8"))
@@ -3681,6 +3682,73 @@ def _item_blocker_disposition(ctx: Ctx, ident: str, detail: str,
         "<why the dependency no longer holds>` — or close it with --drop, "
         "which records the wait as abandoned rather than as answered.")
     return None, exits.FINDING
+
+
+def _evidence_blocker_disposition(ctx: Ctx, ident: str, detail: str,
+                                  dropping: bool,
+                                  out) -> tuple[str | None, int]:
+    """`(the `blocker-moot:` record for an evidence blocker, code)` — lc-105.
+
+    THE CLOSE ASKS THE PREDICATE, because it is the one blocker type whose
+    answer a MACHINE holds. Until this existed a close moved the body without
+    running it, and two closed bodies resulted that the next `item check`
+    reds and no verb can repair: an AMENDED evidence blocker survives the
+    cleared `blocked-by:` line, and a base one leaves its `blocker-exercise:`
+    slot beside NONE (measured 2026-10-07, both). In a governed repo the
+    commit gate refuses that body, so the close stopped HALF-DONE with three
+    carriers dirty (relayed from a peer desk, twice).
+
+    THE EVALUATOR IS `lanes.evaluate_trigger`, the call `_blocker_state`
+    makes for `item ready` — one body behind the contract, so the close and
+    the board cannot disagree about which exit means what. THE MAPPING is
+    that function's, read as a blocker (the note in `_blocker_state`):
+
+      * 0, FIRED — the evidence ARRIVED. The wait was answered, so the close
+        records it and proceeds, DONE or DROP alike.
+      * 1, QUIET — not arrived. A DONE close is REFUSED: it would end a live
+        wait by deleting it. A DROP is an exit of equal standing and stays
+        available; its record says the wait was ABANDONED, never answered.
+      * >=2 or no answer, BROKEN — COULD NOT VERIFY, and it refuses BOTH
+        grades. Which record to write is exactly what could not be learned:
+        "arrived" and "abandoned" are different claims on a body nothing can
+        amend afterwards, and a broken predicate supports neither.
+
+    THE SAME ROW AS THE ITEM-ID REFUSAL ABOVE, not a second name: one cause
+    (a DONE close over a wait that is still live) and one repair (clear the
+    blocker with a reason, or drop).
+
+    RUN ONCE, and before anything is written — a predicate may be slow, and a
+    refusal arriving after the move would be a verdict about a body already
+    sitting where nothing can amend it.
+    """
+    t = lanes.evaluate_trigger(detail, cwd=ctx.repo)
+    if t.state == lanes.FIRE:
+        return items_mod.evidence_moot_record(detail, abandoned=False), \
+            exits.CLEAN
+    if t.state == lanes.QUIET and dropping:
+        return items_mod.evidence_moot_record(detail, abandoned=True), \
+            exits.CLEAN
+    if t.state == lanes.QUIET:
+        out(f"FINDING [close_over_live_blocker] {ident} is blocked by the "
+            f"evidence predicate ({detail!r}) and it is QUIET (exit 1): the "
+            "evidence it names has not arrived. NOT CLOSED. A close that "
+            "moved this body would end the wait by deleting it, and a closed "
+            "body cannot be amended afterwards. If the evidence is in and the "
+            "predicate cannot see it, the predicate is what is wrong: clear "
+            f"the blocker first — `item amend {ident} --blocked-by NONE "
+            "--reason <what arrived and where it is>` — or close it with "
+            "--drop, which records the wait as abandoned, not as arrived.")
+        return None, exits.FINDING
+    exited = (f"exited {t.code}, which §3.3 RESERVES for broken"
+              if t.code is not None else "gave no exit code at all")
+    out(f"COULD NOT VERIFY: {ident} is blocked by the evidence predicate "
+        f"({detail!r}) and it is BROKEN — it {exited}. {t.detail} NOT "
+        "CLOSED, as DONE or as a drop: the `blocker-moot:` line a close "
+        "writes says the evidence ARRIVED or that the wait was ABANDONED "
+        "unanswered, and a broken predicate establishes neither. Repair the "
+        f"predicate, or clear the blocker — `item amend {ident} --blocked-by "
+        "NONE --reason <why the wait no longer holds>` — and close again.")
+    return None, exits.COULD_NOT_VERIFY
 
 
 def _decision_blocker_disposition(
@@ -4131,6 +4199,15 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
                 ctx, args.ident, detail, args.drop, out)
             if item_code != exits.CLEAN:
                 return item_code
+        # THE EVIDENCE TYPE IS DISPOSED HERE TOO, by RUNNING its predicate
+        # (lc-105) — before the write for the reason the two above are: two
+        # of its three answers refuse.
+        evidence_moot = None
+        if kind == "evidence" and detail:
+            evidence_moot, evidence_code = _evidence_blocker_disposition(
+                ctx, args.ident, detail, args.drop, out)
+            if evidence_code != exits.CLEAN:
+                return evidence_code
         # R3 SEAM (refocus round, 2026-09-24, lc-288), printed before the
         # move: the already-required `--reason` prose below is the written
         # answer this treatment arm was measuring for; this is only the READ
@@ -4148,6 +4225,8 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
             note_lines.append(f"blocker-moot: {decision_moot}")
         elif item_moot:
             note_lines.append(f"blocker-moot: {item_moot}")
+        elif evidence_moot:
+            note_lines.append(f"blocker-moot: {evidence_moot}")
         if not args.drop:
             if reason:
                 note_lines.append(
@@ -4224,6 +4303,16 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
                 "ledger line, because an item-id blocker is not a question in "
                 "the operator's queue — its record is the target item's own "
                 "closure.")
+            moot_code = exits.CLEAN
+        elif evidence_moot:
+            # SPOKEN, and NOT LEDGERED, for the item-id reason: an evidence
+            # blocker sits in the MACHINE's court and is nobody's question,
+            # so there is no queue for a ledger line to take it out of.
+            out(f"blocker-moot: {evidence_moot}. The predicate was RUN at "
+                "this close, through the evaluator `item ready` uses. "
+                "Recorded on the moved body; no ledger line, because an "
+                "evidence blocker is a fact a command settles and never a "
+                "question in the operator's queue.")
             moot_code = exits.CLEAN
         else:
             moot_code = exits.CLEAN
