@@ -206,6 +206,7 @@ dropped: lc-233 — Overtaken: blocker_unstorable (8a5d664, lc-49) already refus
 dropped: lc-122 — Overtaken, 2026-10-07: half (a) not reproduced by wave C lane C6 at 63712a8 (blocker-moot after a wrapped value is credited); half (b) repaired today by lc-50 at 96b0a4c (closed-ref stores the full sha).
 decision: what did the 2026-10-07 drain desk land under the freeze, and on whose authority → Operator, first-hand at this desk: drain on the desk own recommendations. Four waves of defect repairs: 55 DONE, 2 DROPPED, 13 booked; nothing frozen built. Two lane repairs reverted on cross-repo measurement (lc-194, first lc-62). Briefs: docs/directives/2026-10-07-drain-wave-a..d.md
 decision: is the 2026-09-24 freeze (LEDGER:138) lifted in general, not per mechanism → YES - operator, first-hand at the drain desk 2026-10-07: "yes lift it", answering that lifting opens the standby stock. Supersedes the general freeze of LEDGER:138 and the no-blanket-release of LEDGER:177. Each item keeps its own done-criterion; laws and the carve-out floor are untouched.
+decision: does law 2 reach the could-not-verify answer (lc-216) → YES, scoped by EXIT: a site that RETURNS could-not-verify is a refusal and registry-bearing; a printed could-not-verify line beside another verdict is not. The coverage check states its channels and COUNTS unadmitted exit-3 sites; no row is added to settle it. Desk ruling 2026-10-07.
 
 ## Archive (pre-migration)
 
