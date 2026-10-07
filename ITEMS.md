@@ -1266,6 +1266,8 @@ done-criterion: item close accepts an optional --expect TEXT; when given, the cl
 evidence: MEASURED 2026-09-24: item close lc-260 moved the desk/peer control-arm body while the session intended the four-audit-arms item (lc-261); the mislabel originated in the session own status summary and travelled into ledger line 6fff837 and commit a53e131 before the close echoed the real body. Recovered only because lc-269 made that close fail uncommitted.
 blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 2026-10-07 dispatched in wave B and returned as a gap: the repair is a new flag
+amended-evidence: 2026-10-07 RELAYED from wave B lane V2 2026-10-07 at base fb91697: the done-criterion is a new flag on item close (an expected-text argument), confirmed absent. DERIVED: a new CLI surface is a new mechanism under the 2026-09-24 freeze, so this is not buildable as a defect repair until the operator releases it.
 
 ## lc-275
 grade: STANDBY
