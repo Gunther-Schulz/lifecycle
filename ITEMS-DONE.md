@@ -2702,5 +2702,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 370f58dc60468d20b336cede850e7aa7968ce36f
 
+## lc-109
+grade: DONE
+requirement: the judgment register's OVERRIDE evidence is decided by a SUBSTRING MATCH OVER A RENDERED MESSAGE, so it can be written falsely by ordinary wording. verbs.py:820 reads 'if source == SOURCE_OPERATOR and "skips the veto" in message:' and on that basis writes record_use('intake-cost-test','overridden'). The phrase is prose from cost_test's own clear-message; any future clear-branch whose wording happens to contain it books a false override. That corrupts exactly the evidence the register exists to hold — fire-rate prices a rule's RETIREMENT, and a rule that looks overridden often is one whose predicate reads as wrong, so a false override argues for retiring a rule that never fired wrongly at all — record: surfaced by the lc-10 build lane's grounding round while it steered its own new wording around the phrase, 2026-09-13, verified at this desk at verbs.py:818-825
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_items.py
+done-criterion: the override is decided by a VALUE the branch computes, not by text it renders — cost_test returns its verdict and its reason as separate parsed things (a verdict token, or an explicit overridden flag), and the caller branches on that token. The rendered message becomes display only and can be reworded freely without moving any register write. Red-first is cheap and exact: give the clear-branch a message containing the phrase 'skips the veto' under a NON-operator source and under an operator source, and show the register write today follows the TEXT rather than the state; after the change the same wordings write nothing and the state alone decides. MUST-NOT-MOVE: the genuine operator override still records 'overridden', the ordinary fire still records 'fired', and prove-rows' cost_test_veto and cost_test_unverified anchors stay byte-exact — they sit in the same function and lc-10 has just proven they can be worked around additively
+evidence: VERIFIED AT THIS DESK 2026-09-13 by reading verbs.py:818-825: the FINDING branch returns first, then 'if source == SOURCE_OPERATOR and "skips the veto" in message:' guards the record_use(...,'overridden') call, with the phrase appearing in cost_test's operator-source clear message at verbs.py:372-374. This is the assertion-site shape the corpus names: a match over RENDERED text standing in for a comparison of parsed bodies, satisfied by any longer body that merely contains the fragment. The lane found it while choosing wording for its own new clear-branch and deliberately avoided the phrase rather than fixing it, which is correct — it was outside its write set's purpose — but the avoidance is a convention holding what a value comparison should hold, and the next author has no reason to know
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The cost-test override is decided by a parsed reason, not by text in a rendered message. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 21383e7f6b3952584eb064fd61d9271db84d00b8
+
 ## Archive (pre-migration)
 
