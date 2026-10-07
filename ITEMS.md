@@ -1122,16 +1122,6 @@ amend-reason: 2026-10-04 the blocker waited on the lc-161 after-measurement verd
 amended-blocked-by: 2026-10-04 decision narrow freeze exit for lc-298 - has its own pre-registered probe passed the admission bar, and has the operator granted its exit at ship time with the per-arc arm switch in the ship set
 amended-not-derivable: 2026-10-04 Not derivable: release is per mechanism (LEDGER:177, 2026-10-04). This item names no pre-registered probe yet, and the narrow exit is the operator's at ship time, asked per mechanism; no ledger line grants either for this item.
 
-## lc-299
-grade: STANDBY
-requirement: lc-294 shipped with three reader gaps, named in its closed-reason (ITEMS-DONE.md lc-294, fe7e5cc) and the design reader table
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_items.py,test/test_verbs.py
-done-criterion: (1) item check refuses a STANDBY block holding an UNKNOWN slot, as it refuses READY (ready_with_unknown_slot widened, its route text naming STANDBY); (2) item add --grade STANDBY in a repo not declaring grades-extra exits 2 at the door naming standby_undeclared, and exits 0 in a declaring repo; (3) head_draining has a dated fixture where the head shrinks in both halves with a non-empty head and STANDBY non-empty, and it fires. Each red-first; prove-rows green; --test CLEAN.
-evidence: MEASURED at a67b80f: items.py ready_with_unknown_slot tests grade READY only (reader table row items.py:2655); verbs.py item add --grade accepts any member of GRADES (reader table row verbs.py:831); head_draining rows in refusals.py fire only the empty-head arm (lane report, desk-verified)
-blocked-by: NONE
-bench-reason: 2026-09-25 lc-294 residue, decision-complete; no open arc schedules it this window (head lc-161, lc-256); returns by promote when the judge schedules it
-
 ## lc-300
 grade: PARKED
 requirement: Reflection triggers: a closed set of diagnostic events (a bound firing, a budget exhausting, a guard refusing) each owing a named written slot - structural cause: / generalization: / next-step: - so the reflection is a computable absence, not a remembered duty (law 26). Directive from lifecycle-64, 2026-09-25
