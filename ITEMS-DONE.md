@@ -2417,5 +2417,18 @@ closed-met: none
 closed-decided: none
 closed-ref: a2255dee235b934e1fceb46534a4b0b48cbc3640
 
+## lc-310
+grade: DONE
+requirement: `migrate --entry-shape` passed together with `--schema-from` is silently ignored: the schema path never reads it, so a caller gets no word that the option did nothing — record: LEDGER.md decision of 2026-10-05 on the lc-307 integration
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py,test/test_migrate.py
+done-criterion: migrate --schema-from with --entry-shape either honours the option or refuses the combination by name, and never accepts it silently; red-first on the combined invocation
+evidence: RELAYED from the lc-307 lane closing report 2026-10-05, gap 4; not reproduced at the booking desk
+blocked-by: NONE
+closed-reason: 2026-10-07 migrate --schema-from refuses a typed --entry-shape by name, exit 3. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: cbd07d6b79dc036beed6918c2bbc14fb7fc4667b
+
 ## Archive (pre-migration)
 

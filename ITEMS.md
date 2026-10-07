@@ -1695,15 +1695,6 @@ not-derivable: 2026-10-04 searched LEDGER.md for retrieval and comparator decisi
 amend-reason: 2026-10-04 the judgment desk asked for the live false fire at the shipped seam to be carried on the item, and its regrade result changed from one dissent to none
 amended-evidence: 2026-10-04 MEASURED 2026-10-04 (tools/decision-blocker-replay.py; grades in the XDG baselines directory, d3-replay-2026-10-04-grades.jsonl): 179 exercisable, 41 distinct fires, 9 TRUE / 25 FALSE / 5 clearing acts. The three strong specimens by item and booking commit: statiker st-46 at 9dfbd0050d, lifecycle lc-294 at 16f6eb68bd, statiker st-78 at eae13925ad. MEASURED at this desk the same day, at the one seam where the comparator is shipped: `ledger add decision` refused the D3 decline line itself on three unrelated ledger lines sharing only the tokens park, amend and build (disposed --join new; the disposition line sits beside the decline in LEDGER.md). RELAYED from judge tmp-ad: 17 rows re-graded there, 17 agree, its one subgrade dissent withdrawn; D3 and D4 declined.
 
-## lc-310
-grade: READY
-requirement: `migrate --entry-shape` passed together with `--schema-from` is silently ignored: the schema path never reads it, so a caller gets no word that the option did nothing — record: LEDGER.md decision of 2026-10-05 on the lc-307 integration
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py,test/test_migrate.py
-done-criterion: migrate --schema-from with --entry-shape either honours the option or refuses the combination by name, and never accepts it silently; red-first on the combined invocation
-evidence: RELAYED from the lc-307 lane closing report 2026-10-05, gap 4; not reproduced at the booking desk
-blocked-by: NONE
-
 ## lc-314
 grade: READY
 requirement: THE AUDIT WALK READS A MACHINE-LOCAL LOG AS THE REPO'S EXIT HISTORY, SO ON A SECOND MACHINE A DRAINING KIND IS REPORTED AS NOT DRAINING AT ALL. kind_grew_without_exit counts exit events in the fire log under XDG_STATE_HOME, which does not travel with the repo; the carriers and git do. Record: standort run 2026-10-06, LEDGER decision of that date.
