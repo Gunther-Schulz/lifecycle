@@ -712,6 +712,34 @@ ROWS = [
         control=lambda: _decl_run(**_GOOD_KW),
     ),
     Row(
+        # lc-70. A second firing input of `declaration_malformed`, declared
+        # through `finding_row` like the row above: the refusal is the same
+        # one (`goals` says something a declaration may not say — its
+        # neighbour at that site is "`goals` contains duplicates"), so it is
+        # a new INPUT and not a new name.
+        ident="declaration_malformed_reserved_goal",
+        finding_row="declaration_malformed",
+        refusal="a redundant declaration — `goals` lists the plugin-reserved "
+                "goal, which is in every repo's effective set and is not "
+                "declarable per repo (§3.1b)",
+        firing_input="a declaration whose `goals` list carries the reserved "
+                     "`tend` beside the repo's own goals",
+        expect=exits.FINDING,
+        fire=lambda: _decl_run(
+            declaration={**GOOD_DECLARATION,
+                         "goals": GOOD_DECLARATION["goals"]
+                         + [decl.RESERVED_GOAL]},
+            gitignore="", laws_lines=10),
+        # The control ALSO adds one goal, and one that merely CONTAINS the
+        # reserved word — so the pair isolates membership of the reserved
+        # value itself, not "the list grew" and not a substring.
+        control=lambda: _decl_run(
+            declaration={**GOOD_DECLARATION,
+                         "goals": GOOD_DECLARATION["goals"]
+                         + [decl.RESERVED_GOAL + "-the-garden"]},
+            gitignore="", laws_lines=10),
+    ),
+    Row(
         ident="declaration_ignored",
         refusal="ignored declaration",
         firing_input="`.gitignore` swallowing `lifecycle.json` (`.claude/*` "

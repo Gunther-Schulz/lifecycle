@@ -521,6 +521,17 @@ MUTATIONS = [
      "the required-key set's test — an ABSENT key then reads exactly like an "
      "empty declared one, which is the distinction §3.0 turns on"),
 
+    # lc-70. Admitted on the lc-142 pair — PROVEN at this anchor, "rows
+    # changed: NONE" at an inert one. The mutation DISABLES the membership
+    # test rather than swapping it, so the row's control (a goal merely
+    # containing the reserved word) is left reading real input.
+    ("declaration_malformed_reserved_goal", "declaration.py",
+     "        if RESERVED_GOAL in goals:",
+     "        if False:",
+     "the reserved-goal membership test — a declaration naming the "
+     "plugin-reserved goal is then absorbed by the effective-set union "
+     "without a word, which is the state lc-70 was booked against"),
+
     # SHARES ITS SITE with `declaration_ignored_tracked` above, and that is
     # correct rather than sloppy: the two roster rows prove two firing inputs
     # (untracked, tracked) of ONE refusal, which is what `finding_row`

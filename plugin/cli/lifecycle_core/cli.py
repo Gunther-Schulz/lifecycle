@@ -228,6 +228,15 @@ def cmd_kind(args, out) -> int:
         + (f" — {ls['reason']}" if isinstance(ls, dict) and ls.get("reason")
            else ""))
     out(f"goals: {', '.join(d.get('goals') or []) or '(none declared)'}")
+    # THE EFFECTIVE SET, beside the declared one (lc-70). The line above
+    # prints what the FILE says, and the one goal every repo has is in no
+    # file — so the orientation a session reads to learn what an item may
+    # carry omitted the value it can always book under. Read through
+    # `effective_goals`, the same body `item add` validates against; the
+    # wording is `init`'s, which was the only place that said it.
+    out(f"goals (effective): {', '.join(decl.effective_goals(d))} — the "
+        f"declared list plus the plugin-reserved `{decl.RESERVED_GOAL}`, "
+        "accepted in every repo and declared in none (§3.1b).")
     lanes = d.get("lanes")
     out(f"lanes: {', '.join(lanes) if lanes else '(empty — declared, not absent)'}")
     tb = d.get("template-bindings")

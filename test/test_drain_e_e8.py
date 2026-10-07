@@ -285,5 +285,77 @@ class TheCleanSentenceNamesWhatItExamined(unittest.TestCase):
         self.assertEqual(decl.unreached_schema_carriers(d, good()), [])
 
 
+class TheReservedGoalIsNotDeclarable(unittest.TestCase):
+    """lc-70 — the two halves lc-64 left open.
+
+    (a) §3.1b says `tend` is "not declarable per repo", and
+    `effective_goals` is a UNION, so a declaration that listed it was
+    absorbed without a word: the file said something the plugin owns and
+    nothing called it. (b) `kind list` printed the DECLARED goals, so the one
+    goal every repo has was the one its own orientation never showed.
+    """
+
+    def _repo(self, declaration):
+        d = build(declaration)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        return d
+
+    def _with_goals(self, goals):
+        doc = good()
+        doc["goals"] = goals
+        return doc
+
+    def test_RED_FIRST_kind_check_refuses_a_declaration_listing_tend(self):
+        base = good()["goals"]
+        d = self._repo(self._with_goals(base + [decl.RESERVED_GOAL]))
+        code, out = run_cli(d, "kind", "check")
+        self.assertEqual(code, exits.FINDING, out)
+        hit = [ln for ln in out.split("\n")
+               if "[declaration_malformed]" in ln
+               and "REDUNDANT DECLARATION" in ln]
+        self.assertEqual(len(hit), 1, out)
+        self.assertIn(f"`{decl.RESERVED_GOAL}`", hit[0])
+
+    def test_CONTROL_the_same_declaration_without_it_is_clean(self):
+        d = self._repo(good())
+        code, out = run_cli(d, "kind", "check")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("REDUNDANT DECLARATION", out)
+
+    def test_MUST_NOT_MOVE_a_goal_merely_CONTAINING_the_word_is_legal(self):
+        """Membership, not a substring: `tend-the-garden` is a domain goal."""
+        base = good()["goals"]
+        doc = self._with_goals(base + ["tend-the-garden", "attend"])
+        res = decl.Result(code=0)
+        decl.validate(doc, res)
+        self.assertEqual(
+            [f.message for f in res.findings
+             if "REDUNDANT DECLARATION" in f.message], [])
+
+    def test_MUST_NOT_MOVE_the_effective_set_still_absorbs_it(self):
+        """The finding is the declaration's; an item booked under `tend` in
+        such a repo is still legal, and the vocabulary still renders it
+        once."""
+        base = good()["goals"]
+        doc = self._with_goals(base + [decl.RESERVED_GOAL])
+        self.assertEqual(decl.effective_goals(doc),
+                         base + [decl.RESERVED_GOAL])
+
+    def test_RED_FIRST_orientation_shows_the_effective_goal_set(self):
+        d = self._repo(good())
+        code, out = run_cli(d, "kind", "list")
+        self.assertEqual(code, exits.CLEAN, out)
+        eff = [ln for ln in out.split("\n")
+               if ln.startswith("goals (effective):")]
+        self.assertEqual(len(eff), 1, out)
+        for goal in decl.effective_goals(good()):
+            self.assertIn(goal, eff[0])
+        self.assertIn("plugin-reserved", eff[0])
+        # The DECLARED line is unmoved, and still does not list it.
+        declared = [ln for ln in out.split("\n") if ln.startswith("goals:")]
+        self.assertEqual(
+            declared, ["goals: " + ", ".join(good()["goals"])], out)
+
+
 if __name__ == "__main__":
     unittest.main()

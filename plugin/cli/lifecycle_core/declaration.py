@@ -648,6 +648,22 @@ def validate(doc: dict, res: Result, repo: Path | None = None) -> None:
             goals = []
         elif len(set(goals)) != len(goals):
             res.add("declaration_malformed", "`goals` contains duplicates.")
+        # THE RESERVED GOAL IS NOT DECLARABLE (§3.1b; lc-70). MEMBERSHIP, not
+        # a substring: `tend-the-garden` is a domain goal like any other.
+        # `effective_goals` is a union precisely so a hand edit or a merge
+        # that put `tend` here cannot double it — which also meant the
+        # declaration could say it and nothing would answer. The item
+        # vocabulary is unmoved: this is a finding about the FILE, and an
+        # item carrying `tend` in such a repo is as legal as in any other.
+        if RESERVED_GOAL in goals:
+            res.add("declaration_malformed",
+                    f"REDUNDANT DECLARATION: `goals` lists `{RESERVED_GOAL}`, "
+                    "the plugin-reserved goal. It is in every repo's "
+                    "effective goal set already and is not declarable per "
+                    "repo (§3.1b): a declaration naming it claims a value "
+                    "the plugin owns, and reads as though removing the line "
+                    "would take the goal away. Remove it from `goals`; "
+                    f"items booked under `{RESERVED_GOAL}` are unaffected.")
     goals = goals if isinstance(goals, list) else []
 
     # THE PREDICATE WIDENS TO MATCH THE MESSAGE, not the other way round
