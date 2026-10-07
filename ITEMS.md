@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 308
+added: 309
 compacted: 0
 
 ## lc-3
@@ -1680,4 +1680,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/roster.py,test/test_roster.py
 done-criterion: Every roster row is named in its own output whatever its expected code: the five rows above print their bracketed name on the could-not-verify path, and the roster's name check no longer skips rows whose expectation is not FINDING. Red-first: the name check, ungated, over the unmodified emitters goes red on exactly these five and no other row. MUST-NOT-MOVE: no exit code changes, and prove-rows' baseline grading (lc-196) still reads 143 of 143 agree, or whatever the roster count then is.
 evidence: RELAYED from lane B (opus) 2026-10-07 at base 3eb0f98, not re-run at the booking desk: the five rows each read code 3, named False; the gate is at roster.py:533-536. The lane could not build it because the emitting messages sit in declaration.py, items.py and verbs.py, outside its write set.
+blocked-by: NONE
+
+## lc-317
+grade: STANDBY
+requirement: init --lane WRITES THROUGH AN UNSAFE LANE NAME, the third site of the defect lc-202 repaired at lane new: a name like ../escape lands outside lanes/, a name with a slash crashes exit 1, and the empty string writes lanes/.md - record: wave B lane R3 closing report 2026-10-07, part 3 finding 1
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py
+done-criterion: init --lane refuses an unsafe name before any write, by the same imported predicate lane new uses and under the existing lane_new_unsafe_door finding or a sibling of it; the three inputs above exit 2 with nothing written and no exit 1. Control: a safe name still writes its stub. The sweep that lc-202 owed is re-run over every site that builds a path from a caller-supplied name, and its hits are listed.
+evidence: RELAYED from lane R3 (opus) 2026-10-07 at a4dfdcd, executed there in scratch, not re-run at the desk: init --lane ../escape wrote repo/escape.md; init --lane bad/door exit 1 with FileNotFoundError; init --lane with the empty string wrote repo/lanes/.md; control goodlane wrote lanes/goodlane.md. Site: init.py near line 438. arc open already refuses the same inputs; workflows.read_template was not probed.
 blocked-by: NONE
