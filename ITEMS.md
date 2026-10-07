@@ -463,6 +463,8 @@ blocked-by: NONE
 amend-reason: 2026-09-18 2026-09-18 write-set repaired to PATHS ONLY. The slot carried a real path with a parenthetical glued to it, which does not parse as a path and made item waves exit COULD NOT VERIFY for the whole carrier. The doctrine demote-to-parked clause is for a boundary genuinely UNKNOWN; this was the inverse, a known path made unparseable by commentary. The commentary is not lost: it restates what the requirement already says. Found by the build desk, ruled by this desk.
 amended-write-set: 2026-09-18 plugin/cli/lifecycle_core,test/
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 mechanism 1 lands in wave E; mechanism 2 stays open
+amended-evidence: 2026-10-07 RELAYED from wave E lane E1 2026-10-07: mechanism 1 built (prefix mismatch refused before existence at 13 doors; four ledger doors had exited 0 on a foreign id, three writing it). MECHANISM 2 NOT BUILT by desk ruling: machine readers of stdout exist (dotfiles statusline renderer and session-scan re-render item check, kind list, item ready --head, arc status; item slots --json; lane list --json), so stream and exempt verbs need a design. Also uncovered: ids passed as secondary arguments (--join, --met, --by, --blocked-by).
 
 ## lc-117
 grade: STANDBY
