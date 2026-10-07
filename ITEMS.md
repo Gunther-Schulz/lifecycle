@@ -190,6 +190,8 @@ promote-reason: 2026-09-19 the blocking decision is answered on the ledger 2026-
 promoted-by: 2026-09-19 round desk (fable, operator-delegated 2026-09-19)
 amend-reason: 2026-09-19 Re-typed from `evidence false` at the contract's build (D-8): the predicate was the literal `false`, which can never fire, so this read on the board as ordinary machine-court waiting and `item check` counted it among the unclearable softlock chains. It was never a predicate wait — nothing here can test it — and `external` is the member minted for exactly this state. It now ends by an ACT: amend the blocker away with the arrival named.
 amended-blocked-by: 2026-09-19 external the dotfiles session-env export lands, which is where the trailer default's realizing write belongs
+amend-reason: 2026-10-07 2026-10-07 a peer fact changing how this item can be built; recorded as testimony, the design choice stays with the pickup
+amended-evidence: 2026-10-07 RELAYED 2026-10-07 from peer session dotfiles-2b, not measured here: inside a Bash tool call (CC 2.1.289) the harness exports CLAUDE_CODE_BRIDGE_SESSION_ID, equal to the id in the Claude-Session trailer URL, and CLAUDE_CODE_SESSION_ID, naming the local transcript whose assistant rows carry the model id. So attribution_block could derive both halves when LIFECYCLE_COMMIT_TRAILER is unset, without a SessionStart hook. Peer names as unmeasured: sessions without remote attach, subagent Bash calls, headless -p children. Source: dotfiles ITEMS.md df-259, newest evidence line.
 
 ## lc-53
 grade: PARKED
