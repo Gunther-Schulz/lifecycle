@@ -205,6 +205,7 @@ decision: which of the three repair directions this repo takes: pathspec-scoped 
 dropped: lc-233 — Overtaken: blocker_unstorable (8a5d664, lc-49) already refuses the separator at item add, park and amend, each exit 2, control exit 0; measured by wave C lane C3 at 63712a8, 2026-10-07. The standing population is unmeasured and not in this criterion.
 dropped: lc-122 — Overtaken, 2026-10-07: half (a) not reproduced by wave C lane C6 at 63712a8 (blocker-moot after a wrapped value is credited); half (b) repaired today by lc-50 at 96b0a4c (closed-ref stores the full sha).
 decision: what did the 2026-10-07 drain desk land under the freeze, and on whose authority → Operator, first-hand at this desk: drain on the desk own recommendations. Four waves of defect repairs: 55 DONE, 2 DROPPED, 13 booked; nothing frozen built. Two lane repairs reverted on cross-repo measurement (lc-194, first lc-62). Briefs: docs/directives/2026-10-07-drain-wave-a..d.md
+decision: is the 2026-09-24 freeze (LEDGER:138) lifted in general, not per mechanism → YES - operator, first-hand at the drain desk 2026-10-07: "yes lift it", answering that lifting opens the standby stock. Supersedes the general freeze of LEDGER:138 and the no-blanket-release of LEDGER:177. Each item keeps its own done-criterion; laws and the carve-out floor are untouched.
 
 ## Archive (pre-migration)
 
