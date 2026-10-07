@@ -1391,6 +1391,8 @@ write-set: tools/prove-rows.py,test/test_prove_rows.py
 done-criterion: The full walk runs its arrangements in parallel, each worker on a PRIVATE COPY of the source it mutates under a temp directory, and never writes a tracked file of the checkout it was started from (asserted: git status identical before and after, also when a worker is killed). Verdicts are unchanged: the same PROVEN and FAILED per arrangement and the same rows-changed sets as the serial walk at the same commit, compared arrangement by arrangement. Wall time on this repo is quoted before and after on one machine and is at most half. Red-first for correctness: an arrangement re-pointed at an inert anchor still reads FAILED under the new walk. The output states how many arrangements ran and on how many workers.
 evidence: MEASURED 2026-10-07 at the drain desk: the full walk took roughly ten minutes at 124 arrangements before lc-200 and ran 152 arrangements with every control after it; it refuses to start while a core file differs from HEAD and restores by file copy. DERIVED: about twenty minutes per walk now; not timed with a clock at 152.
 blocked-by: NONE
+amend-reason: 2026-10-07 the mutates-the-checkout premise was wrong at booking; corrected on a lane measurement
+amended-evidence: 2026-10-07 RELAYED from wave E lane E5 2026-10-07 at 83eaa73, not re-run at the desk: the walk already mutates a COPY (lc-163) - a scratch clone polled every 50 ms during a single-ident run showed 0 dirty states of 183, with a positive control showing 1. So the half of this item about writing the checkout it runs in is OVERTAKEN; what stands is the serial walk. RELAYED from lane E2: one full walk took about 20 minutes with eight other walks on the machine.
 
 ## lc-332
 grade: STANDBY
