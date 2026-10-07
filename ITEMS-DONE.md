@@ -3393,5 +3393,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 820ede09b9b59bd4132a2700c03b4c8a05170589
 
+## lc-201
+grade: DONE
+requirement: A GIT WORKTREE REGISTRATION IS A PERSISTED THING THAT RESOLVES TO NO REGISTERED KIND, AND IT LIVES WHERE THE SWEEP CANNOT REACH. Measured 2026-09-18 in this repo: git worktree list shows /tmp/claude-1000/-home-g-dev-Gunther-Schulz-lifecycle/55c5d05e-.../scratchpad/wt-old at 2c65b8d (detached), a frozen reader from another session. Its record lives in .git/worktrees/, which the unregistered-persisted-thing sweep never walks because that sweep reads git ls-files — tracked files only. Invariant 1 says every persisted thing resolves to a registered kind; this population sits outside the only world-facing instrument the repo has.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/retire.py,plugin/cli/lifecycle_core/refusals.py,test/test_retire.py
+done-criterion: The sweep's could-not-verify arm NAMES git worktree registrations as a population it does not examine, or a check reports them. MUST-NOT-BUILD: nothing REMOVES or prunes a worktree. What a party is standing in is not moved under them, a live session may hold this one, and its directory still exists so prune would not touch the entry anyway. The deliverable is that the registration stops being invisible, never that it stops existing. RED-FIRST: with a worktree registered the check names it; with none registered the check says so rather than reporting clean by silence.
+evidence: MEASURED at this desk, executed: git worktree list returns two entries, the second under a foreign session's scratchpad at a detached head. RELAYED from lifecycle-6f, carried as theirs and unverified here: session 55c5d05e is the writer-reservation lock holder this repo has reported all evening and may be live; ls confirms the directory exists, so git worktree prune would not clear the entry — prune only clears entries whose path is gone. DERIVED, not executed: that the sweep cannot see .git/worktrees/ follows from its reading tracked files; the arm that would report the absence has not been run against a registered worktree.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The sweep names git worktree registrations, or says the list was read and is empty; nothing is removed. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: 5457feae4229c75aba3b97c6e0dbb95a5469d98a
+
 ## Archive (pre-migration)
 
