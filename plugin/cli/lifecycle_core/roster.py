@@ -203,6 +203,17 @@ def reach_paths(root: Path | None = None, repo: Path | None = None,
                 continue
             for inst in instances:
                 p = Path(inst) if not isinstance(inst, Path) else inst
+                # ANCHORED TO THE REPO THAT WAS ENUMERATED, never to the
+                # cwd (lc-327). `list_home` hands back in-tree members
+                # REPO-RELATIVE — that is how a reader should see them — and
+                # a bare relative path is resolved against wherever the
+                # process stands. Run from another checkout, this read THAT
+                # tree's files and reported its emit sites as this tool's;
+                # run from no checkout at all, every member failed `is_file`
+                # and the check printed CLEAN over zero files. An absolute
+                # member (an out-of-tree home) is left as it came.
+                if not p.is_absolute():
+                    p = Path(repo) / p
                 if p.is_file() and is_executable_python(p):
                     found.append(p.resolve())
         return sorted(set(found))
