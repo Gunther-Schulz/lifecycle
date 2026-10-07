@@ -275,5 +275,186 @@ class TheWorktreeListIsParsedAsGitWritesIt(unittest.TestCase):
         self.assertIn("non-existent", regs[0]["prunable"])
 
 
+# --- lc-204 -------------------------------------------------------------------
+
+CORE = Path(retire.__file__).resolve().parent
+
+#: A module that turns a NEW variable into a path — a consumption site.
+PLANTED_SITE = (
+    "import os\n"
+    "from pathlib import Path\n\n\n"
+    "def scratch_root() -> Path:\n"
+    "    base = os.environ.get(\"XDG_RUNTIME_DIR\") or \"/nonexistent\"\n"
+    "    return Path(base) / \"lifecycle\"\n")
+
+#: The SAME variable, MENTIONED three ways and resolved into no path: a table
+#: key, a docstring, and the save-and-restore read every isolating fixture
+#: does. One property separates this module from the one above.
+PLANTED_MENTION = (
+    "import os\n\n"
+    "DEFAULTS = {\"XDG_RUNTIME_DIR\": (\"run\",)}\n\n\n"
+    "def isolated(fn):\n"
+    "    \"\"\"Run `fn` with XDG_RUNTIME_DIR unset.\"\"\"\n"
+    "    old = os.environ.get(\"XDG_RUNTIME_DIR\")\n"
+    "    try:\n"
+    "        os.environ.pop(\"XDG_RUNTIME_DIR\", None)\n"
+    "        return fn()\n"
+    "    finally:\n"
+    "        if old is not None:\n"
+    "            os.environ[\"XDG_RUNTIME_DIR\"] = old\n")
+
+
+def package_copy(test, extra: dict | None = None) -> Path:
+    d = Path(tempfile.mkdtemp(prefix="lifecycle-e6-pkg-"))
+    test.addCleanup(shutil.rmtree, d, ignore_errors=True)
+    for f in CORE.glob("*.py"):
+        shutil.copy2(f, d / f.name)
+    for name, text in (extra or {}).items():
+        (d / name).write_text(text, encoding="utf-8")
+    return d
+
+
+def roots(root: Path | None = None, **kw):
+    lines = []
+    code = retire.user_global_roots(lines.append,
+                                    **({"root": root} if root else {}), **kw)
+    return code, "\n".join(lines)
+
+
+class TestOutputPublishesTheUserGlobalRoots(unittest.TestCase):
+    """lc-204 — a probe author isolating one XDG variable learned there were
+    two by appending a scratch path to the operator's real roster. The set is
+    published on the surface that author already reads."""
+
+    def setUp(self):
+        from lifecycle_core import roster
+        self.roster = roster
+        self.real = roster.cmd_test
+        self.addCleanup(setattr, roster, "cmd_test", self.real)
+
+    def _run(self, roster_code=exits.CLEAN):
+        def stub(out, list_only=False):
+            out(f"lifecycle --test: {exits.word(roster_code)}")
+            return roster_code
+        self.roster.cmd_test = stub
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = cli.main(["--test"])
+        return code, buf.getvalue()
+
+    def test_the_two_named_lines_are_in_the_test_output(self):
+        code, out = self._run()
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("written by the tool: XDG_CONFIG_HOME, XDG_STATE_HOME",
+                      out)
+        self.assertIn("resolvable as a declared home: plus XDG_CACHE_HOME, "
+                      "XDG_DATA_HOME", out)
+
+    def test_the_roots_verdict_cannot_soften_the_rosters(self):
+        code, out = self._run(roster_code=exits.FINDING)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertEqual(out.strip().split("\n")[-1],
+                         "lifecycle --test: FINDING")
+
+    def test_a_diverged_set_makes_the_whole_run_a_FINDING_and_says_so_LAST(self):
+        """The roster's own closing line says CLEAN and was printed first, so
+        the run closes on a line that carries the worse answer."""
+        real = retire.PUBLISHED_ROOTS
+        retire.PUBLISHED_ROOTS = ("XDG_STATE_HOME",)
+        self.addCleanup(setattr, retire, "PUBLISHED_ROOTS", real)
+        code, out = self._run()
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[user_global_roots_diverged]", out)
+        self.assertTrue(out.strip().split("\n")[-1].startswith(
+            "lifecycle --test: FINDING"), out[-400:])
+
+
+class TheRootsAreDerivedFromConsumptionSites(unittest.TestCase):
+    def test_the_live_package_is_CLEAN_and_names_its_sites(self):
+        code, out = roots()
+        self.assertEqual(code, exits.CLEAN, out)
+        for site in ("firelog.py", "lanes.py", "records.py"):
+            self.assertIn(site, out)
+        self.assertNotIn("refusals.py:", out)
+
+    def test_the_derivation_reads_the_three_sites_and_no_other(self):
+        """The table graded against the source it mirrors (law 24's worked
+        example): which module turns which variable into a path."""
+        derived, why = retire.derive_root_sites(CORE)
+        self.assertIsNotNone(derived, why)
+        self.assertEqual(
+            sorted((name, Path(where).name) for name, where, _ln in derived),
+            [("XDG_CONFIG_HOME", "lanes.py"),
+             ("XDG_STATE_HOME", "firelog.py"),
+             ("XDG_STATE_HOME", "records.py")])
+
+    def test_a_planted_CONSUMPTION_site_goes_red_naming_it(self):
+        d = package_copy(self, {"planted_mod.py": PLANTED_SITE})
+        code, out = roots(d)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[user_global_roots_diverged]", out)
+        self.assertIn("XDG_RUNTIME_DIR", out)
+        self.assertIn("planted_mod.py:6", out)
+
+    def test_a_planted_MENTION_stays_green(self):
+        """The arm that proves the predicate is consumption, not occurrence."""
+        d = package_copy(self, {"planted_mod.py": PLANTED_MENTION})
+        code, out = roots(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("XDG_RUNTIME_DIR", out)
+
+    def test_the_same_copy_with_NO_plant_is_green(self):
+        code, out = roots(package_copy(self))
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_a_published_root_NOTHING_consumes_is_the_other_divergence(self):
+        code, out = roots(published=("XDG_CONFIG_HOME", "XDG_STATE_HOME",
+                                     "XDG_DATA_HOME"))
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("published and consumed NOWHERE: XDG_DATA_HOME", out)
+
+    def test_other_forms_of_the_read_are_consumption_too(self):
+        for label, body in (
+                ("subscript", "    return Path(os.environ[\"XDG_RUNTIME_DIR\"])\n"),
+                ("getenv", "    return Path(os.getenv(\"XDG_RUNTIME_DIR\", \"/x\"))\n"),
+                ("join", "    return os.path.join(os.environ.get("
+                         "\"XDG_RUNTIME_DIR\", \"/x\"), \"lifecycle\")\n"),
+                ("module level", "    return None\n\n\nROOT = Path("
+                                 "os.environ.get(\"XDG_RUNTIME_DIR\", "
+                                 "\"/x\"))\n")):
+            with self.subTest(form=label):
+                d = package_copy(self, {"planted_mod.py":
+                                        "import os\nfrom pathlib import Path\n"
+                                        "\n\ndef f():\n" + body})
+                code, out = roots(d)
+                self.assertEqual(code, exits.FINDING, out)
+                self.assertIn("XDG_RUNTIME_DIR", out)
+
+    def test_a_name_reused_in_ANOTHER_function_carries_nothing(self):
+        """`old` is assigned from a read in one function and is a path in
+        another: two names that happen to be spelled alike."""
+        d = package_copy(self, {"planted_mod.py": (
+            "import os\nfrom pathlib import Path\n\n\n"
+            "def saved():\n"
+            "    old = os.environ.get(\"XDG_RUNTIME_DIR\")\n"
+            "    return old is None\n\n\n"
+            "def elsewhere(old):\n"
+            "    return Path(old)\n")})
+        code, out = roots(d)
+        self.assertEqual(code, exits.CLEAN, out)
+
+    def test_a_module_that_does_not_parse_is_COULD_NOT_VERIFY(self):
+        d = package_copy(self, {"planted_mod.py": "def broken(:\n"})
+        code, out = roots(d)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("planted_mod.py", out)
+
+    def test_a_root_holding_no_module_is_COULD_NOT_VERIFY(self):
+        d = Path(tempfile.mkdtemp(prefix="lifecycle-e6-empty-"))
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = roots(d)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+
+
 if __name__ == "__main__":
     unittest.main()

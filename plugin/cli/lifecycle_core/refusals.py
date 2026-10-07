@@ -2966,6 +2966,23 @@ LANE_ROWS = [
         stage="wave 1, stage 8",
     ),
     Row(
+        ident="user_global_roots_diverged",
+        refusal="the published set of user-global roots — the environment "
+                "variables under which the tool keeps state outside every "
+                "repo — differs from the set the package's own source "
+                "consumes, so a probe isolating the published set runs a "
+                "verb against live state",
+        firing_input="a copy of the package holding one more module, whose "
+                     "function turns an unpublished variable into a path",
+        expect=exits.FINDING,
+        fire=lambda: _roots_over_copy(consumed=True),
+        # The SAME copy, the SAME variable, MENTIONED and never resolved
+        # into a path: the arm that proves the predicate is consumption and
+        # not occurrence.
+        control=lambda: _roots_over_copy(consumed=False),
+        stage="lc-204",
+    ),
+    Row(
         ident="migrate_would_overwrite",
         refusal="`migrate` over a repo whose successor carrier already exists "
                 "— a second run would replace real work with a re-derivation "
@@ -3412,6 +3429,50 @@ def _coverage_over_copy(*, plant: bool, word: str = "FINDING") -> Fired:
                 encoding="utf-8")
         buf = []
         code = roster_mod.check_coverage(buf.append, root=d)
+        return Fired(code, "\n".join(buf))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def _roots_over_copy(*, consumed: bool) -> Fired:
+    """Run the user-global roots check (lc-204) over a COPY of this package
+    carrying one extra module, for `_coverage_over_copy`'s reason.
+
+    BOTH ARMS PLANT THE SAME VARIABLE, and the variable is one the published
+    set does not name. In the plant a function turns it into a path; in the
+    control the module only MENTIONS it — a table key, a docstring, and the
+    save-and-restore read an isolating fixture does. So the arms differ in
+    whether the variable is CONSUMED and in nothing else, which is the
+    predicate: a check that fired on the control would be publishing every
+    variable somebody once typed.
+    """
+    from . import retire as retire_mod
+
+    var = "XDG_RUNTIME_DIR"
+    d = Path(tempfile.mkdtemp(prefix="lifecycle-roots-"))
+    try:
+        for f in Path(__file__).resolve().parent.glob("*.py"):
+            shutil.copy2(f, d / f.name)
+        if consumed:
+            body = ("import os\nfrom pathlib import Path\n\n\n"
+                    "def scratch_root() -> Path:\n"
+                    f"    base = os.environ.get(\"{var}\") or \"/nonexistent\"\n"
+                    "    return Path(base) / \"lifecycle\"\n")
+        else:
+            body = ("import os\n\n"
+                    f"DEFAULTS = {{\"{var}\": (\"run\",)}}\n\n\n"
+                    "def isolated(fn):\n"
+                    f"    \"\"\"Run `fn` with {var} unset.\"\"\"\n"
+                    f"    old = os.environ.get(\"{var}\")\n"
+                    "    try:\n"
+                    f"        os.environ.pop(\"{var}\", None)\n"
+                    "        return fn()\n"
+                    "    finally:\n"
+                    "        if old is not None:\n"
+                    f"            os.environ[\"{var}\"] = old\n")
+        (d / "planted_roots.py").write_text(body, encoding="utf-8")
+        buf = []
+        code = retire_mod.user_global_roots(buf.append, root=d)
         return Fired(code, "\n".join(buf))
     finally:
         shutil.rmtree(d, ignore_errors=True)

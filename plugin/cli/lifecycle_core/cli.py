@@ -1513,7 +1513,23 @@ def main(argv=None) -> int:
             scratch = tempfile.mkdtemp(prefix="lifecycle-test-state-")
             os.environ["XDG_STATE_HOME"] = scratch
         try:
-            code = roster_mod.cmd_test(out, list_only="--list" in argv)
+            # lc-204: THE USER-GLOBAL ROOTS, PUBLISHED WHERE A PROBE AUTHOR
+            # ALREADY READS. Ahead of the roster, so it is the first thing
+            # met; `--list` prints the roster as data and carries no checks.
+            roots_code = exits.CLEAN
+            if "--list" not in argv:
+                roots_code = retire_mod.user_global_roots(out)
+                out("")
+            roster_code = roster_mod.cmd_test(out, list_only="--list" in argv)
+            code = exits.worst([roster_code, roots_code])
+            if code != roster_code:
+                # The roster closes on its OWN verdict line, printed before
+                # this one was folded in. A run must not end on a line that
+                # says less than its exit code does.
+                out(f"lifecycle --test: {exits.word(code)} — the roster's "
+                    "line above speaks for the roster; the USER-GLOBAL ROOTS "
+                    "check at the top of this output answered "
+                    f"{exits.word(roots_code)}.")
         finally:
             if scratch is not None:
                 os.environ.pop("XDG_STATE_HOME", None)

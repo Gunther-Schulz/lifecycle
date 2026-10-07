@@ -248,6 +248,194 @@ def _shown(path: Path, repo: Path) -> str:
         return str(path)
 
 
+# --- the user-global roots, published and derived (lc-204) --------------------
+
+#: THE PUBLISHED SET: the environment variables under which this tool keeps
+#: state OUTSIDE every repo — the fire log and desk state, and the roster. A
+#: probe that isolates fewer than all of them aims a real verb at the
+#: operator's live files (MEASURED: a brief isolated `XDG_STATE_HOME` alone,
+#: and `lane register` appended a scratch path to the real roster).
+#:
+#: A HAND-WRITTEN LIST BESIDE THE CODE IT MIRRORS CANNOT AGE LOUDLY, so this
+#: one is graded on every `--test`: `user_global_roots` derives the set from
+#: the package's own source and FAILS when the two differ. The list is what a
+#: reader is shown; the derivation is what keeps it true.
+PUBLISHED_ROOTS = ("XDG_CONFIG_HOME", "XDG_STATE_HOME")
+
+#: What turns a value into a path, for the derivation below. `Path` under any
+#: spelling of its module, and `os.path.join`.
+_PATH_BUILDERS = ("Path", "PurePath", "join")
+
+
+def _env_read(node):
+    """The variable a node READS from the environment by LITERAL name, or
+    None. Three spellings: `os.environ.get("X")`, `os.getenv("X")`, and
+    `os.environ["X"]` being loaded (a STORE or a `pop` is isolation, never a
+    read)."""
+    import ast
+
+    def environ(n):
+        return (isinstance(n, ast.Attribute) and n.attr == "environ") or \
+            (isinstance(n, ast.Name) and n.id == "environ")
+
+    def literal(n):
+        return n.value if (isinstance(n, ast.Constant)
+                           and isinstance(n.value, str)) else None
+
+    if isinstance(node, ast.Call) and node.args:
+        fn = node.func
+        if isinstance(fn, ast.Attribute) and fn.attr == "get" \
+                and environ(fn.value):
+            return literal(node.args[0])
+        if (isinstance(fn, ast.Attribute) and fn.attr == "getenv") or \
+                (isinstance(fn, ast.Name) and fn.id == "getenv"):
+            return literal(node.args[0])
+    if isinstance(node, ast.Subscript) and isinstance(node.ctx, ast.Load) \
+            and environ(node.value):
+        return literal(node.slice)
+    return None
+
+
+def derive_root_sites(root: Path) -> tuple:
+    """`(sites, why)` — every CONSUMPTION SITE in the package under `root`,
+    as `(variable, file, line)`. `sites` is None when the source could not be
+    read, with the reason.
+
+    A CONSUMPTION SITE IS AN ENVIRONMENT READ THE SAME FUNCTION TURNS INTO A
+    PATH: the read, or a local name assigned from it, appears inside a
+    `Path(...)` or `os.path.join(...)` call. That is the predicate, and it is
+    deliberately NOT "the variable's name occurs". A MENTION is not a site —
+    a key in `_XDG_DEFAULTS`, a docstring, the save-and-restore read an
+    isolating fixture does — and a derivation over mentions would publish
+    variables the tool never touches: a probe author would isolate roots
+    that do not matter and feel covered, which is the failure this exists to
+    prevent, shipped by the mechanism built to prevent it.
+
+    Read from the AST and never by pattern over text, so a comment or a
+    string that looks like a read is not one.
+    """
+    import ast
+    files = sorted(Path(root).glob("*.py"))
+    if not files:
+        return None, f"no module was found under {str(root)!r}"
+    sites = []
+    for path in files:
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, SyntaxError) as exc:
+            return None, f"{path.name} could not be read as source ({exc!r})"
+        # ONE SCOPE PER FUNCTION, plus the module's own top-level statements
+        # as a scope of their own: a root resolved at import time is a site
+        # too. Never the whole tree as one scope — a name assigned from a
+        # read in one function would then "carry" into a `Path(...)` in
+        # another that happens to reuse the name.
+        defs = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+        scopes = [n for n in ast.walk(tree) if isinstance(n, defs[:2])]
+        scopes.append(ast.Module(
+            body=[s for s in tree.body if not isinstance(s, defs)],
+            type_ignores=[]))
+        for scope in scopes:
+            # A local name assigned from an expression holding a read carries
+            # that read: `base = os.environ.get("X") or default`.
+            carried = {}
+            for n in ast.walk(scope):
+                value = getattr(n, "value", None)
+                if not isinstance(n, (ast.Assign, ast.AnnAssign,
+                                      ast.NamedExpr)) or value is None:
+                    continue
+                reads = [(v, sub.lineno) for sub in ast.walk(value)
+                         for v in [_env_read(sub)] if v]
+                if not reads:
+                    continue
+                targets = n.targets if isinstance(n, ast.Assign) \
+                    else [n.target]
+                for t in targets:
+                    if isinstance(t, ast.Name):
+                        carried.setdefault(t.id, []).extend(reads)
+            for n in ast.walk(scope):
+                if not isinstance(n, ast.Call):
+                    continue
+                fn = n.func
+                name = fn.attr if isinstance(fn, ast.Attribute) else \
+                    getattr(fn, "id", None)
+                if name not in _PATH_BUILDERS:
+                    continue
+                for arg in list(n.args) + [k.value for k in n.keywords]:
+                    for sub in ast.walk(arg):
+                        var = _env_read(sub)
+                        if var:
+                            sites.append((var, path.name, sub.lineno))
+                        elif isinstance(sub, ast.Name):
+                            sites.extend((v, path.name, ln)
+                                         for v, ln in carried.get(sub.id, ()))
+    return sorted(set(sites)), ""
+
+
+def user_global_roots(out, root: Path | None = None, published=None) -> int:
+    """Publish the user-global roots, and grade the list against the source.
+
+    TWO QUESTIONS, TWO LINES, and they are not the same question. "Written
+    by the tool" is what a probe must isolate before it runs a verb.
+    "Resolvable as a declared home" is the rest of `_XDG_DEFAULTS`: variables
+    this walk can EXPAND when a repo's declaration names one, which the tool
+    itself keeps nothing under. Printing one list for both would either
+    over-state what the tool touches or drop the table without saying so.
+
+    THREE ANSWERS: CLEAN when the published set is the derived one; FINDING
+    when they differ, naming which side holds what; COULD NOT VERIFY when
+    the source could not be read, because a derivation that examined nothing
+    agrees with any list.
+    """
+    root = Path(__file__).resolve().parent if root is None else Path(root)
+    published = PUBLISHED_ROOTS if published is None else tuple(published)
+    declared = sorted(set(_XDG_DEFAULTS) - set(published))
+    out("USER-GLOBAL ROOTS — what a probe isolates before it runs a "
+        "lifecycle verb (lc-204)")
+    out(f"    written by the tool: {', '.join(sorted(published))}")
+    out("    resolvable as a declared home: plus "
+        + (", ".join(declared) or "(none)")
+        + " — expanded when a repo's declaration names one; the tool keeps "
+          "nothing of its own under them")
+    sites, why = derive_root_sites(root)
+    if sites is None:
+        out(f"    COULD NOT VERIFY: {why}, so the published set above was "
+            "NOT graded against the source. An ungraded list is the "
+            "restated enumeration this check exists to replace.")
+        return exits.COULD_NOT_VERIFY
+    consumed = sorted({v for v, _f, _ln in sites})
+    out(f"    derived: {len(sites)} consumption site(s) over "
+        f"{len(list(root.glob('*.py')))} module(s) — "
+        + ("; ".join(f"{f}:{ln} {v}" for v, f, ln in sites) or "none")
+        + ". A consumption site is an environment read the same function "
+          "turns into a path; a table key, a docstring or a save-and-restore "
+          "read is a MENTION and is not counted. Whether each path is then "
+          "WRITTEN is not computed: a root the tool only reads under is "
+          "still live state a probe would be reading.")
+    unpublished = sorted(set(consumed) - set(published))
+    unconsumed = sorted(set(published) - set(consumed))
+    if not unpublished and not unconsumed:
+        out("    roots: CLEAN — the published set is the derived one.")
+        return exits.CLEAN
+    out("    FINDING [user_global_roots_diverged] the published set and the "
+        "source disagree.")
+    if unpublished:
+        out("        consumed and NOT published: "
+            + "; ".join(f"{v} at " + ", ".join(
+                f"{f}:{ln}" for sv, f, ln in sites if sv == v)
+                for v in unpublished)
+            + ". A probe isolating the published set runs this path against "
+              "the operator's live state. Repair: add the variable to "
+              "`retire.PUBLISHED_ROOTS`.")
+    if unconsumed:
+        out("        published and consumed NOWHERE: "
+            + ", ".join(unconsumed)
+            + ". The list promises an isolation nothing needs, or the read "
+              "moved to a spelling this derivation does not see. Repair: "
+              "drop the variable, or widen the derivation — never both "
+              "quietly.")
+    return exits.FINDING
+
+
 def list_home(repo: Path, home: str, *, block_carrier: bool = False) -> tuple:
     """`(instances, note)` for one kind's declared home, RE-LISTED now.
 

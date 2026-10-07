@@ -878,6 +878,17 @@ MUTATIONS = [
      "over a finding emitted under no registered row, which is the "
      "clean-forever check it exists to prevent"),
 
+    # lc-204. The comparison's verdict DISABLED rather than swapped (wave D:
+    # a swapped condition reddens the control). Admitted on the lc-142
+    # pair — PROVEN at this anchor, "rows changed: NONE" re-pointed at an
+    # inert comment line.
+    ("user_global_roots_diverged", "retire.py",
+     "    if not unpublished and not unconsumed:",
+     "    if True:",
+     "the published-versus-derived comparison (lc-204) — a module that "
+     "turns a variable nobody published into a path then reads as covered, "
+     "and a probe isolating the published set runs against live state"),
+
     # THE ANCHOR MOVED WHEN `--merge` LANDED (lc-17), and this tool is what
     # said so: it answers COULD NOT VERIFY on an anchor that no longer matches
     # rather than mutating whichever line looks closest, so a guard silently
