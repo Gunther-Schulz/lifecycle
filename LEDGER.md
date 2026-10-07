@@ -204,6 +204,7 @@ decision: standort 2026-10-06 (laptop, session lifecycle-69): where does lifecyc
 decision: which of the three repair directions this repo takes: pathspec-scoped commit, refuse-on-dirty, or document the contract → REFUSE-ON-DIRTY (desk 2026-10-07, operator direction to drain on desk recommendations). A pathspec is file-granular and cannot split a hand hunk from the verb line in one file; a documented contract leaves the hazard. The hand edit is committed first, under its own message. lc-138
 dropped: lc-233 — Overtaken: blocker_unstorable (8a5d664, lc-49) already refuses the separator at item add, park and amend, each exit 2, control exit 0; measured by wave C lane C3 at 63712a8, 2026-10-07. The standing population is unmeasured and not in this criterion.
 dropped: lc-122 — Overtaken, 2026-10-07: half (a) not reproduced by wave C lane C6 at 63712a8 (blocker-moot after a wrapped value is credited); half (b) repaired today by lc-50 at 96b0a4c (closed-ref stores the full sha).
+decision: what did the 2026-10-07 drain desk land under the freeze, and on whose authority → Operator, first-hand at this desk: drain on the desk own recommendations. Four waves of defect repairs: 55 DONE, 2 DROPPED, 13 booked; nothing frozen built. Two lane repairs reverted on cross-repo measurement (lc-194, first lc-62). Briefs: docs/directives/2026-10-07-drain-wave-a..d.md
 
 ## Archive (pre-migration)
 
