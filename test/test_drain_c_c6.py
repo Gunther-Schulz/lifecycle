@@ -11,7 +11,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
-from lifecycle_core import retire  # noqa: E402
+from unittest import mock  # noqa: E402
+
+from lifecycle_core import exits, refusals, retire, roster  # noqa: E402
 
 
 class GlobHomeIsRootAnchored(unittest.TestCase):
@@ -40,6 +42,50 @@ class GlobHomeIsRootAnchored(unittest.TestCase):
                                             "docs/begehung-findings-1.tsv"))
         self.assertFalse(retire._home_claims("docs/begehung-findings-*.tsv",
                                              "x/docs/begehung-findings-1.tsv"))
+
+
+def _row(ident, fire, control, expect=exits.FINDING):
+    return refusals.Row(ident=ident, refusal="r", firing_input="i",
+                        expect=expect, fire=fire, control=control,
+                        stage="drain-c6")
+
+
+class OneRowCannotAbortTheRoster(unittest.TestCase):
+    """lc-101. argparse's `parser.error` raises SystemExit, which
+    `except Exception` does not catch, so one row with an argv that cannot
+    parse stopped `--test` mid-run with no `rows:` summary."""
+
+    def _run(self, rows):
+        lines = []
+        with mock.patch.object(refusals, "ROWS", rows):
+            code = roster.cmd_test(lines.append)
+        return code, "\n".join(lines)
+
+    def _unparseable(self):
+        import argparse
+        argparse.ArgumentParser(prog="x").parse_args(["--no-such-flag"])
+
+    def test_a_systemexit_in_a_row_fails_that_row_by_name_and_the_rest_run(self):
+        ok = refusals.Fired(exits.FINDING, "FINDING [after_row] x")
+        clean = refusals.Fired(exits.CLEAN, "clean")
+        rows = [
+            _row("drain_c6_bad", self._unparseable, lambda: clean),
+            _row("after_row", lambda: ok, lambda: clean),
+        ]
+        code, text = self._run(rows)
+        self.assertIn("rows: 2", text)               # the summary line exists
+        self.assertIn("drain_c6_bad", text)          # the bad row is named
+        self.assertIn("PASS  after_row", text)       # its sibling still ran
+        self.assertNotEqual(code, exits.CLEAN)       # not a passing row
+
+    def test_a_row_raising_an_ordinary_exception_still_surfaces(self):
+        def boom():
+            raise RuntimeError("unexpected")
+        clean = refusals.Fired(exits.CLEAN, "clean")
+        code, text = self._run([_row("drain_c6_boom", boom, lambda: clean)])
+        self.assertIn("drain_c6_boom", text)
+        self.assertIn("RuntimeError", text)
+        self.assertNotEqual(code, exits.CLEAN)
 
 
 if __name__ == "__main__":

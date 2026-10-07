@@ -512,10 +512,19 @@ def cmd_test(out, list_only: bool = False) -> int:
         try:
             fired = row.fire()
             control = row.control()
-        except Exception:                                  # noqa: BLE001
+        except (Exception, SystemExit) as exc:             # noqa: BLE001
+            # SystemExit is NAMED because it is a BaseException: argparse's
+            # `parser.error` raises it, `except Exception` does not catch it,
+            # and one row given an argv that cannot parse stopped the whole
+            # roster mid-run with no `rows:` line (lc-101). It is contained to
+            # ITS row and reported as a row that could not run, never as a
+            # pass. KeyboardInterrupt and the rest still propagate.
             raised += 1
             failures.append(row.ident)
-            out(f"ERROR {row.ident:<34} the row RAISED — could not verify")
+            what = ("the row exited the process (SystemExit "
+                    f"{getattr(exc, 'code', None)!r}, a usage error)"
+                    if isinstance(exc, SystemExit) else "the row RAISED")
+            out(f"ERROR {row.ident:<34} {what} — could not verify")
             out("      " + traceback.format_exc().strip().replace(
                 "\n", "\n      "))
             continue
