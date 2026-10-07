@@ -353,6 +353,17 @@ MUTATIONS = [
      "    if False:",
      "the ledger's one-line rule — the NO BODIES half"),
 
+    # lc-138. ANCHORED ON THE DIRTY BRANCH ITSELF, not on `carrier_dirty`'s
+    # return: the helper answers three ways and the `None` arm above this
+    # line must keep reading real input, so the mutation switches off the
+    # REFUSAL and nothing else. Disabled, the verb appends its line beside
+    # the pending hand edit and commits the file whole — the measured defect.
+    ("ledger_carrier_dirty", "verbs.py",
+     "        if dirty:",
+     "        if False:",
+     "the refusal of a ledger dirty at verb entry — the pending hand edit "
+     "then rides out in the verb's own commit, under its message"),
+
     # R7 (lc-289). ANCHORED ON THE SINGLE EARLY RETURN THAT DECIDES WHETHER
     # THE JOIN HAS ANYTHING TO SAY, not on any of the three FINDING branches
     # below it: disabling this one collapses `_check_decision_join` to an

@@ -675,6 +675,42 @@ def conservation_guard(ctx: Ctx, paths, out) -> int:
     return exits.FINDING
 
 
+def carrier_dirty(repo: Path, path: Path):
+    """Does `path` differ from what is committed? → (True | False | None, why).
+
+    THREE ANSWERS (law 1). `None` is git being unable to say — not a work
+    tree, the path outside it — and a caller that folded it into `False`
+    would proceed over exactly the state this question exists to refuse.
+
+    `git status --porcelain -- <path>` rather than a diff against HEAD: it
+    answers in a repo with no commits yet, and it reports the INDEX as well
+    as the working tree — a staged hand edit is as pending as an unstaged
+    one, and a pathspec commit takes the working-tree file whatever the index
+    holds. `--no-optional-locks` because this is a READ in a work tree other
+    writers share, and the default refreshes the index under a lock.
+
+    AN UNTRACKED PATH (`??`) IS NOT "DIRTY" BY THIS PREDICATE, deliberately:
+    nothing of it is committed, so there is no committed carrier for a
+    pending edit to be distinguished FROM, and the pathspec commit over it
+    already fails loudly as `move_uncommitted` rather than absorbing
+    anything. Folding it in here would give that existing refusal a second
+    name.
+    """
+    try:
+        rel = str(Path(path).relative_to(repo))
+    except ValueError:
+        return None, f"{path} is not inside the work tree {repo}"
+    st = subprocess.run(["git", "--no-optional-locks", "-C", str(repo),
+                         "status", "--porcelain", "--", rel],
+                        capture_output=True, text=True)
+    if st.returncode:
+        return None, (f"`git status -- {rel}` could not answer: "
+                      f"{(st.stderr or st.stdout).strip()[:200]!r}")
+    pending = [ln for ln in st.stdout.splitlines()
+               if ln.strip() and not ln.startswith("??")]
+    return bool(pending), "; ".join(ln.strip() for ln in pending)
+
+
 def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False,
                  what: str = "the move", stage_new: bool = False) -> int:
     """Commit exactly the files this act wrote, BY PATHSPEC, never the index.
@@ -4411,11 +4447,46 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
     can for every item verb — after CLEAN the line is committed unless
     `--no-commit` said otherwise, because a commit that fails is a FINDING
     and not a CLEAN.
+
+    A CARRIER DIRTY AT ENTRY IS REFUSED BEFORE ANYTHING IS WRITTEN (lc-138,
+    the ledger's REFUSE-ON-DIRTY decision). The commit above is by pathspec
+    and a pathspec is FILE-granular: it cannot split a pending hand hunk from
+    the line this verb appends, so whatever sat uncommitted in the ledger
+    rode out under `lifecycle: ledger <kind>` — a message describing none of
+    it. Measured at a foreign desk: a hand-appended fact line absorbed into
+    the verb's commit. The check is HERE and not in `commit_paths` because
+    the remedy is to write NOTHING, and by the time that function runs the
+    line is already in the file. A `--no-commit` caller is not asked: it owns
+    the commit, and a carrier dirty with its own batched lines is its
+    ordinary state.
     """
     if not args.line_kind:
         out("COULD NOT VERIFY: `ledger add` needs a line kind: "
             + ", ".join(ledger.KINDS))
         return exits.COULD_NOT_VERIFY
+
+    if not getattr(args, "no_commit", False):
+        dirty, pending = carrier_dirty(ctx.repo, ctx.ledger_path)
+        if dirty is None:
+            out(f"COULD NOT VERIFY: whether {ctx.ledger_path.name} holds "
+                f"uncommitted changes — {pending}. Nothing was written: "
+                "this verb commits its carrier whole, and without that "
+                "answer it cannot say what its commit would carry.")
+            return exits.COULD_NOT_VERIFY
+        if dirty:
+            out(f"FINDING [ledger_carrier_dirty] REFUSING TO WRITE: "
+                f"{ctx.ledger_path.name} has uncommitted changes at verb "
+                f"entry ({pending}). `ledger add` commits its carrier by "
+                "pathspec, and a pathspec is file-granular — the pending "
+                f"edit would ride out under `lifecycle: ledger "
+                f"{args.line_kind}`, a message that does not describe it. "
+                "NOTHING was written and nothing committed. Commit the "
+                "pending edit first, under its own message (`git commit -m "
+                f"\"<what it is>\" -- "
+                f"{ctx.ledger_path.relative_to(ctx.repo)}`), then re-run. A "
+                "caller batching several lines passes `--no-commit` and "
+                "owns that commit.")
+            return exits.FINDING
 
     if args.line_kind == "superseded":
         slots = {"id": args.ident, "by": args.by, "reason": args.reason}

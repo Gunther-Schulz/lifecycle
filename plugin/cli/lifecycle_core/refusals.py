@@ -1532,6 +1532,22 @@ def _cli_foreign(argv, **repo_kw) -> Fired:
         return _cli(argv, cwd=elsewhere.dir, **repo_kw)
 
 
+def _cli_over_hand_edited_ledger(argv) -> Fired:
+    """Same, with an UNCOMMITTED hand-appended line in the ledger (lc-138).
+
+    Appended AFTER the seed commit — `_Repo(ledger_text=…)` would commit the
+    line with the seed and the carrier would be clean. A WELL-FORMED line on
+    purpose: the pending edit of the measured incident was a legitimate one,
+    and a malformed file would let some other check refuse first.
+    """
+    with _Repo() as repo:
+        led = repo.dir / "LEDGER.md"
+        led.write_text(led.read_text(encoding="utf-8")
+                       + "dropped: zz-7 — a hand edit nobody committed\n",
+                       encoding="utf-8")
+        return _cli_in(repo, argv)
+
+
 def _mutate(text: str, old: str, new: str) -> str:
     assert old in text, f"the plant's anchor {old!r} is not in the text"
     return text.replace(old, new, 1)
@@ -2248,6 +2264,29 @@ VERB_ROWS = [
         control=lambda: _cli(["ledger", "add", "dropped", "xx-1", "--reason",
                               "overtaken by the rework"]),
         stage="wave 1, stage 6",
+    ),
+    Row(
+        ident="ledger_carrier_dirty",
+        refusal="`ledger add` over a ledger that holds UNCOMMITTED changes "
+                "at verb entry: the verb commits its carrier by pathspec, a "
+                "pathspec is file-granular, so the pending edit would ride "
+                "out under `lifecycle: ledger <kind>` — a message that does "
+                "not describe it. Refused BEFORE the write, so nothing is "
+                "written and nothing committed (lc-138, the ledger's "
+                "REFUSE-ON-DIRTY decision). `--no-commit` callers own their "
+                "commit and are not asked",
+        firing_input="`ledger add dropped` in a repo whose committed ledger "
+                     "carries one more, uncommitted, hand-appended line",
+        expect=exits.FINDING,
+        fire=lambda: _cli_over_hand_edited_ledger(
+            ["ledger", "add", "dropped", "xx-1", "--reason",
+             "overtaken by the rework"]),
+        # THE SAME ADD over the same seeded repo with the ledger as
+        # committed: the arms differ in the pending hand edit alone, so the
+        # refusal is the DIRT and not the verb or the line.
+        control=lambda: _cli(["ledger", "add", "dropped", "xx-1", "--reason",
+                              "overtaken by the rework"]),
+        stage="drain wave B, lane R1 (lc-138)",
     ),
     Row(
         ident="ledger_join_undisposed",
