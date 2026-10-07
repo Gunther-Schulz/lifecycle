@@ -1401,15 +1401,6 @@ blocked-by: NONE
 amend-reason: 2026-10-06 the booked slot carried a comma inside one venue phrase and the tool split it into two paths; restated as one venue with no comma. Nothing else changes.
 amended-write-set: 2026-10-06 venue: .claude/lifecycle.json of each governed repo - nine repos and one commit per repo - outside this working copy
 
-## lc-318
-grade: STANDBY
-requirement: EVERY CARRIER VERB BUT ledger add STILL COMMITS ITS CARRIER WHOLE OVER A PENDING HAND EDIT. lc-138 made ledger add refuse a carrier dirty at entry; item add, amend, park, close, supersede and the arc verbs take the same commit path, so a hand edit or an earlier verb half-written state rides out under an unrelated message - record: wave B lane R1 closing report 2026-10-07 gap 1, and the dotfiles incident on lc-105
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_verbs.py
-done-criterion: Every verb that writes and commits a carrier checks, before its first write, that each carrier it will commit is clean, by the carrier_dirty helper lc-138 added, and refuses with nothing written where one is not; the ledger ruling of 2026-10-07 (REFUSE-ON-DIRTY) extended to every carrier. Red-first per verb family: a carrier dirty with an unrelated hand edit at verb entry. MUST-NOT-MOVE: a clean invocation commits exactly what the verb wrote; --no-commit callers are not refused; a verb that writes two carriers checks both before writing either. The could-not-verify branch (git cannot answer) is exercised end to end by a test.
-evidence: RELAYED from lane R1 (opus) 2026-10-07 at 431190d: ledger.append followed by a whole-file commit also runs in item supersede and in item close decision and drop branches, and every item verb commits ITEMS.md whole by the same route. RELAYED from peer session dotfiles-2b the same day: after a refused drop left three files dirty, the next verb (an item amend on another item) committed ITEMS.md whole, carrying the half-finished deletion under an unrelated message.
-blocked-by: NONE
-
 ## lc-320
 grade: STANDBY
 requirement: arc advance AND arc close RETIRE A DEADLINE LANE AND DO NOT COMMIT IT: the declaration row and the lane body are changed on disk while the verb commits only the arc paths, so the tree is left dirty behind a verb that reported success - record: wave C lane C1 closing report 2026-10-07, gap G1

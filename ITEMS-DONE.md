@@ -2924,5 +2924,18 @@ closed-met: lc-322
 closed-decided: none
 closed-ref: 755d3e35f173b4df194c186a4697a447849685fc
 
+## lc-318
+grade: DONE
+requirement: EVERY CARRIER VERB BUT ledger add STILL COMMITS ITS CARRIER WHOLE OVER A PENDING HAND EDIT. lc-138 made ledger add refuse a carrier dirty at entry; item add, amend, park, close, supersede and the arc verbs take the same commit path, so a hand edit or an earlier verb half-written state rides out under an unrelated message - record: wave B lane R1 closing report 2026-10-07 gap 1, and the dotfiles incident on lc-105
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_verbs.py
+done-criterion: Every verb that writes and commits a carrier checks, before its first write, that each carrier it will commit is clean, by the carrier_dirty helper lc-138 added, and refuses with nothing written where one is not; the ledger ruling of 2026-10-07 (REFUSE-ON-DIRTY) extended to every carrier. Red-first per verb family: a carrier dirty with an unrelated hand edit at verb entry. MUST-NOT-MOVE: a clean invocation commits exactly what the verb wrote; --no-commit callers are not refused; a verb that writes two carriers checks both before writing either. The could-not-verify branch (git cannot answer) is exercised end to end by a test.
+evidence: RELAYED from lane R1 (opus) 2026-10-07 at 431190d: ledger.append followed by a whole-file commit also runs in item supersede and in item close decision and drop branches, and every item verb commits ITEMS.md whole by the same route. RELAYED from peer session dotfiles-2b the same day: after a refused drop left three files dirty, the next verb (an item amend on another item) committed ITEMS.md whole, carrying the half-finished deletion under an unrelated message.
+blocked-by: NONE
+closed-reason: 2026-10-07 Every item and arc verb that commits a carrier refuses one dirty at entry, carrier_dirty_at_entry. Two sites remain, booked as lc-321. Wave C 2026-10-07, verified on main at 5e77b52: suite 1531 OK no skips, --test 153 of 153, prove-rows 134 of 134 held with no control red, leak battery 62 of 62; item check unchanged in exit code across all ten rostered repos.
+closed-met: lc-320, lc-321
+closed-decided: none
+closed-ref: c38414f17bb4cb39ee4304f96d77c025573a03be
+
 ## Archive (pre-migration)
 
