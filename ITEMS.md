@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 320
+added: 321
 compacted: 0
 
 ## lc-3
@@ -1387,4 +1387,13 @@ goal: enforce-the-invariants
 write-set: tools/prove-rows.py,plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/items.py,test/test_prove_rows.py
 done-criterion: Each two-test row either gets a second firing input so each test has its own arrangement, or its combined arrangement is stated as covering both with the reason; the compaction route has an admitted arrangement; the recogniser has an external arm with a test, or the reason it cannot be reached is written at the site.
 evidence: RELAYED from the three lanes 2026-10-07: retire_source_laws_absent folded alone reads 2/named to 2/named, rows changed NONE; retire_source_uncommitted is recorded as committed = src_blob; the compaction refusal is covered by test_drain_d_d2 only; items.py near line 1102 was read, not executed.
+blocked-by: NONE
+
+## lc-329
+grade: STANDBY
+requirement: NOTHING FLAGS A LIVE ITEM WHOSE GROUND HAS MOVED SINCE IT WAS BOOKED. The items kind declares staleness as a record pointer that no longer resolves, and no verb reads whether the files in an item's write-set changed after its booking. On 2026-10-07 the drain waves found items already repaired or overtaken (lc-233 and lc-122 dropped, several NOT-REPRODUCED) only because each lane reproduced before building. Operator question, first-hand 2026-10-07: do governed repos judge backlog items as they pile up, since they may be superseded or need adjusting. Record: docs/directives/2026-10-07-drain-wave-e.md
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,test/test_items.py
+done-criterion: A reading verb lists, per live item, the commits that touched a file of its write-set after the item's booking commit or its newest amendment, with the count; an item with none says so; an item whose write-set is UNKNOWN, a venue, or a path git does not track is listed as NOT GRADED with the reason, never as unchanged. The list FINDS and moves nothing: no grade changes and no drop (law 10). Red-first: in a fixture repo an item whose write-set file is committed after its booking is listed and a sibling whose file is untouched is not. Before FIXED the line count is measured over every rostered repo and reported.
+evidence: MEASURED 2026-10-07 at the drain desk: a search for stale, overtaken, aged over items.py and verbs.py finds no per-item check, and the items kind in .claude/lifecycle.json declares staleness as change-coupling on a record pointer. DERIVED: the flow ratio reads the trend of the whole carrier and says nothing about one item.
 blocked-by: NONE
