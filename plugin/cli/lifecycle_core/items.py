@@ -1727,6 +1727,13 @@ def conservation(items_parsed: Parsed, done_parsed: Parsed | None,
 def report_conservation(c: dict, out) -> int:
     """Render a conservation result and answer with one of the three codes."""
     if c["ok"] is None:
+        # THE ROW NAME, ON ITS OWN LINE (lc-316). Every could-not-verify is
+        # a 3, so the code alone does not say WHICH one answered. It is a
+        # line of its own, and not a tag inside the line below, because that
+        # line is the literal anchor of this row's recorded mutation in
+        # `tools/prove-rows.py`: rewording it retires the row's proof.
+        out("COULD NOT VERIFY [conservation_unverified] the conservation "
+            "identity could not be computed; the reason follows.")
         out(f"COULD NOT VERIFY: conservation — {c['why']}")
         return exits.COULD_NOT_VERIFY
     out(f"conservation: items {c['items']} + done {c['done']} "
@@ -2662,7 +2669,10 @@ def check_file(path: Path, out, prefix: str | None = None, *,
     out(f"census: open {c['open']}  closed {c['closed']}  "
         f"unknown {sum(c['unknown'].values())}  (total {c['total']})")
     for word_, n in sorted(c["unknown"].items()):
-        out(f"  unknown grade {word_!r}: {n} — READ, never folded into open "
+        # NAMED (lc-316): this line is what turns the check's code into a 3,
+        # and every could-not-verify is a 3.
+        out(f"  COULD NOT VERIFY [unknown_grade_read] "
+            f"unknown grade {word_!r}: {n} — READ, never folded into open "
             "or closed. It reached this file by a merge or an older tool.")
     if c["cannot-express"]:
         # THE DISPOSITIONS-OWED LINE (D-3). Printed only when nonzero: a

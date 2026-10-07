@@ -1456,7 +1456,7 @@ def _do_new(args, ctx: Ctx, parsed, done_parsed, done_why, slots, source, out) -
     # so the record is written where the rule is evaluated, by the code that
     # evaluates it.
     if verdict == "unverified":
-        out(f"COULD NOT VERIFY: {message}")
+        out(f"COULD NOT VERIFY [cost_test_unverified] {message}")
         return exits.COULD_NOT_VERIFY
     if verdict == "veto":
         judgment.record_use("intake-cost-test", "fired", repo=str(ctx.repo),

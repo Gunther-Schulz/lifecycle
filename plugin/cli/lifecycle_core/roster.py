@@ -543,8 +543,11 @@ def cmd_test(out, list_only: bool = False) -> int:
                          "is not what produced it, so this pair separates "
                          "nothing and the row is UNPROVEN in either "
                          "direction")
-        if row.expect == exits.FINDING and \
-                f"[{row.expected_finding_row}]" not in fired.output:
+        # WHATEVER THE ROW EXPECTS (lc-316). This was gated on a FINDING
+        # expectation, so a could-not-verify row was graded on its exit code
+        # alone — and every could-not-verify is a 3, exactly as every finding
+        # is a 2. Which refusal answered is the question for both.
+        if f"[{row.expected_finding_row}]" not in fired.output:
             broken.append("the plant fired, but nothing in its output names "
                           f"row [{row.expected_finding_row}]")
         if broken:

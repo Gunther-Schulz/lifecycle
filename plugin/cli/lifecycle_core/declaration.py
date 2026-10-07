@@ -2174,8 +2174,13 @@ def check_laws_present(repo: Path, laws_rel: str, res: Result) -> None:
     verb is what made `kind check` unable to answer CLEAN over a healthy repo.
     """
     path = repo / laws_rel
+    # THE ROW NAME RIDES IN THE MESSAGE (lc-316). Every could-not-verify is a
+    # 3, so a caller reading the code alone cannot tell WHICH one answered;
+    # the name is what separates this row from its neighbours. (The comment
+    # sits above the `if`: the two lines below are a recorded proof anchor.)
     if not path.is_file():
         res.cannot_verify(
+            "[laws_absent_could_not_verify] "
             f"the declared laws file {laws_rel!r} is not present in the "
             "working tree, so nothing about it could be measured. This is "
             "COULD NOT VERIFY and not a clean zero — an absent file and a "
