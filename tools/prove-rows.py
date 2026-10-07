@@ -814,6 +814,16 @@ MUTATIONS = [
      "is still PRINTED and the run exits CLEAN, which is the shape a caller "
      "reading only the code cannot see"),
 
+    # WHOSE ID IS THIS (lc-104). The anchor is where a recognised foreign
+    # prefix is acted on; removed, a wrong-repo id falls through to the
+    # existence check and is refused by luck under `unknown_item`'s name —
+    # the code is the same 2, which is why the proof is the NAME changing.
+    ("ident_prefix_mismatch", "verbs.py",
+     "        if other is not None:",
+     "        if False:",
+     "the refusal of an id carrying another repo's prefix, before existence "
+     "is asked"),
+
     ("unknown_source", "verbs.py",
      "    if source not in (SOURCE_SESSION, SOURCE_OPERATOR) and not \\",
      "    if False and not \\",

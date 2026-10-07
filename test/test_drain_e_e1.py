@@ -285,5 +285,141 @@ class AddSaysWhatAWriteSetPathResolvesTo(unittest.TestCase):
         self.assertNotIn(UNLISTED, outp)
 
 
+# --- lc-104, mechanism 1 --------------------------------------------------------
+#
+# AN IDENT-TAKING VERB RUN IN THE WRONG REPO FAILED ONLY BY LUCK: `unknown_item`
+# fired because the id happened not to exist there, and said nothing about
+# why. The `ledger add` kinds that take an id do not look the id up at all,
+# so there the wrong repo's ledger simply gained a line. The id's own prefix
+# is the computable half: an id shaped `<other-prefix>-<n>` is refused BEFORE
+# existence is asked, with the diagnosis and the repo that was resolved.
+#
+# THE FIXTURE IS TWO REPOS, each declaring its own prefix and each holding an
+# item numbered 1. Every arm runs ONE command line against both: the foreign
+# one (repo `xx`, ident `yy-1`) and the matching one (repo `yy`, ident `yy-1`).
+
+MISMATCH_ROW = "FINDING [ident_prefix_mismatch]"
+DIAGNOSIS = "ident prefix 'yy' does not match this repo's prefix 'xx'"
+
+#: Every door that takes an item id, as argv with the id already in place.
+#: `None` marks the ledger doors, which never asked whether the id exists.
+IDENT_DOORS = {
+    "item slots": ("item", "slots", "yy-1"),
+    "item ready": ("item", "ready", "yy-1"),
+    "item amend": ("item", "amend", "yy-1", "--evidence",
+                   "MEASURED once more on the rotated fixture",
+                   "--reason", "the earlier line was thin"),
+    "item promote": ("item", "promote", "yy-1", "--reason", "schedulable"),
+    "item bench": ("item", "bench", "yy-1", "--reason", "not this window"),
+    "item park": ("item", "park", "yy-1", "--blocked-by",
+                  "external the vendor ships a fix"),
+    "item close": ("item", "close", "yy-1", "--met", "none",
+                   "--decided", "none"),
+    "item compact": ("item", "compact", "yy-1"),
+    "item supersede-closure": ("item", "supersede-closure", "yy-1", "--ref",
+                               "HEAD", "--line", "the reason was falsified"),
+    "ledger add dropped": ("ledger", "add", "dropped", "yy-1",
+                           "--reason", "overtaken by the rewrite"),
+    "ledger add superseded": ("ledger", "add", "superseded", "yy-1",
+                              "--by", "xx-1", "--reason", "one fix covers both"),
+    "ledger add rejected": ("ledger", "add", "rejected", "yy-1",
+                            "--approach", "a second timer",
+                            "--why", "it double-fires the same way"),
+    "ledger rejected --for": ("ledger", "rejected", "--for", "yy-1"),
+}
+
+
+def _decl_with_prefix(prefix: str) -> dict:
+    import json
+    d = json.loads(json.dumps(R.GOOD_FULL_DECLARATION))
+    d["id-prefix"] = prefix
+    return d
+
+
+class AnIdentFromAnotherRepoIsRefusedByItsPrefix(unittest.TestCase):
+
+    def _repo(self, prefix: str) -> Path:
+        r = R._Repo(declaration=_decl_with_prefix(prefix),
+                    items=R.SEED_ITEMS.replace("## xx-1", f"## {prefix}-1"))
+        self.addCleanup(r.close)
+        return r.dir
+
+    def _homes(self, repo: Path) -> tuple:
+        return tuple((repo / n).read_bytes()
+                     for n in ("ITEMS.md", "ITEMS-DONE.md", "LEDGER.md"))
+
+    # --- the red-first arm: every door, the foreign ident ----------------------
+
+    def test_EVERY_ident_door_refuses_a_FOREIGN_prefix_before_existence(self):
+        for door, argv in IDENT_DOORS.items():
+            with self.subTest(door=door):
+                repo = self._repo("xx")
+                before = self._homes(repo)
+                head = git(repo, "rev-parse", "HEAD")
+                code, outp = run(repo, *argv)
+                self.assertEqual(code, exits.FINDING, outp)
+                self.assertIn(MISMATCH_ROW, outp)
+                self.assertIn(DIAGNOSIS, outp)
+                self.assertIn("--repo", outp)
+                self.assertIn(str(repo), outp)   # the repo that WAS resolved
+                # BEFORE existence: the lucky refusal is never reached.
+                self.assertNotIn("unknown_item", outp)
+                self.assertEqual(self._homes(repo), before)
+                self.assertEqual(git(repo, "rev-parse", "HEAD"), head)
+
+    # --- the matching pair: the same command lines, the repo they belong to ----
+
+    def test_CONTROL_the_same_ident_in_ITS_OWN_repo_is_not_refused(self):
+        for door, argv in IDENT_DOORS.items():
+            with self.subTest(door=door):
+                repo = self._repo("yy")
+                code, outp = run(repo, *argv)
+                self.assertNotIn("ident_prefix_mismatch", outp)
+
+    def test_CONTROL_a_matching_pair_still_does_its_work(self):
+        repo = self._repo("yy")
+        code, outp = run(repo, "item", "ready", "yy-1")
+        self.assertEqual(code, exits.CLEAN, outp)
+        code, outp = run(repo, *IDENT_DOORS["ledger add dropped"])
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn("yy-1", (repo / "LEDGER.md").read_text())
+
+    # --- what is NOT a prefix mismatch -----------------------------------------
+
+    def test_the_RIGHT_prefix_on_an_absent_id_is_still_unknown_item(self):
+        repo = self._repo("xx")
+        code, outp = run(repo, "item", "ready", "xx-9999")
+        self.assertEqual(code, exits.FINDING, outp)
+        self.assertIn("FINDING [unknown_item]", outp)
+        self.assertNotIn("ident_prefix_mismatch", outp)
+
+    def test_an_ident_with_NO_prefix_shape_is_not_called_a_mismatch(self):
+        repo = self._repo("xx")
+        for ident in ("12", "the-harvest-timer", "XX-1"):
+            with self.subTest(ident=ident):
+                code, outp = run(repo, "item", "ready", ident)
+                self.assertNotIn("ident_prefix_mismatch", outp)
+
+    def test_a_HYPHENATED_declared_prefix_matches_its_own_ids(self):
+        """A prefix may carry hyphens; `cs-2b-7` under `cs-2b` is this repo's
+        own id and must not read as prefix `cs-2b` versus anything."""
+        repo = self._repo("cs-2b")
+        code, outp = run(repo, "item", "ready", "cs-2b-1")
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertNotIn("ident_prefix_mismatch", outp)
+
+    def test_an_ARC_belief_ident_is_not_an_item_id(self):
+        """`arc belief --ident` shares the argparse dest and names a belief."""
+        repo = self._repo("xx")
+        code, outp = run(repo, "arc", "open", "freeze", "--goal", "mitigate",
+                         "--narrowing", "none")
+        self.assertEqual(code, exits.CLEAN, outp)
+        code, outp = run(repo, "arc", "belief", "freeze", "--ident", "yy-1",
+                         "--claim", "the timer double-fires",
+                         "--basis", "seen on the rotated fixture",
+                         "--kill", "none known")
+        self.assertNotIn("ident_prefix_mismatch", outp)
+
+
 if __name__ == "__main__":
     unittest.main()

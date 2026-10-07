@@ -203,6 +203,69 @@ def context(repo: Path, declaration: dict, out):
     ), exits.CLEAN
 
 
+# --- whose id is this (lc-104) --------------------------------------------------
+
+#: THE ID SHAPE UNDER ANY PREFIX — `<prefix>-<n>`, the prefix spelled the way
+#: `declaration` admits one (lowercase alphanumeric with hyphens, a letter
+#: first). Used ONLY to recognise an id that is somebody else's; whether an
+#: id is THIS repo's is `grammar.id_re(prefix)`'s question and stays there.
+_ANY_REPO_ID = re.compile(r"^([a-z][a-z0-9-]*)-\d+$")
+
+#: The argparse dests that carry an ITEM id on the `item` and `ledger` verbs:
+#: the positional `ident`, `ledger add rejected <item>`, and `ledger rejected
+#: --for`. `arc … --ident` shares the first dest and names a belief, which is
+#: why the caller asks by VERB and this is not read off every namespace.
+IDENT_DESTS = ("ident", "item", "for_item")
+
+
+def foreign_ident_prefix(prefix: str, ident) -> str | None:
+    """The prefix `ident` carries where it is ANOTHER repo's id, else None.
+
+    None for this repo's own shape, for no declared prefix (nothing to
+    compare against — the checks that need one say so themselves), and for
+    a string that is not id-shaped at all: `12` or a slug is not a prefix
+    mismatch, and calling it one would send the caller looking for a repo
+    that does not exist.
+
+    OWN-SHAPE IS ASKED FIRST, and the order is the hyphen case: under the
+    declared prefix `cs-2b` the id `cs-2b-7` also reads as `<cs-2b>-<7>`
+    below, and only the equality with the declared prefix says it is home.
+    """
+    if not prefix or not isinstance(ident, str):
+        return None
+    if grammar.id_re(prefix).match(ident):
+        return None
+    m = _ANY_REPO_ID.match(ident)
+    if m is None or m.group(1) == prefix:
+        return None
+    return m.group(1)
+
+
+def refuse_foreign_idents(ctx: Ctx, idents, out) -> int:
+    """Refuse an id carrying another repo's prefix, BEFORE existence (lc-104).
+
+    A verb run in the wrong repo failed only by luck — `unknown_item`,
+    because the id happened not to exist there — and the `ledger add` kinds
+    never looked the id up, so there the wrong carrier simply gained a line.
+    The prefix is the half a command can settle: ids are `<prefix>-<n>` and
+    the prefix is declared, so one that names another prefix was not minted
+    here. The message names the repo that WAS resolved, which is the fact
+    the caller did not have.
+    """
+    for ident in idents:
+        other = foreign_ident_prefix(ctx.prefix, ident)
+        if other is not None:
+            out(f"FINDING [ident_prefix_mismatch] ident prefix {other!r} "
+                f"does not match this repo's prefix {ctx.prefix!r} — wrong "
+                f"repo? pass --repo. {ident!r} was not minted here: ids are "
+                f"`{ctx.prefix}-<n>` in the repo this run resolved, "
+                f"{ctx.repo}. Nothing was read or written for it; whether "
+                "such an item exists was not asked, because the answer "
+                "would be about the wrong carrier.")
+            return exits.FINDING
+    return exits.CLEAN
+
+
 def _load(path: Path):
     """`(Parsed, why-not)` for a carrier home. An ABSENT home is COULD NOT
     VERIFY, never an empty one: they differ in whether anything was checked."""

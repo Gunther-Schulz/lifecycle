@@ -2845,6 +2845,31 @@ LANE_ROWS = [
         stage="wave 1, stage 8 (found by the emit-site coverage check)",
     ),
     Row(
+        # NOT `unknown_item` WITH A SECOND FIRING INPUT. That row's cause is
+        # an id no home holds and its repair is the right id; this one's
+        # cause is the right id in the wrong repo and its repair is `--repo`.
+        # Opposite repairs do not share a name (the lc-30 case), and the
+        # whole defect was the first answer being given for the second.
+        ident="ident_prefix_mismatch",
+        refusal="an `item` or `ledger` verb given an id shaped "
+                "`<other-prefix>-<n>` — another repo's id. Refused BEFORE "
+                "existence is asked: a verb run in the wrong repo failed "
+                "only by luck, as `unknown_item` because the id happened "
+                "not to exist there, and the `ledger add` kinds never "
+                "looked the id up at all, so the wrong carrier gained a "
+                "line (lc-104). The message names the prefix this repo "
+                "declares and the repo the run resolved. An id that is not "
+                "id-shaped is not this refusal's",
+        firing_input="`item ready yy-1` in a repo whose declared `id-prefix` "
+                     "is `xx`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "ready", "yy-1"], items=SEED_ITEMS),
+        # THE SAME VERB ON THE SAME CARRIER, the id spelled with the prefix
+        # this repo declares. The arms differ in the prefix alone.
+        control=lambda: _cli(["item", "ready", "xx-1"], items=SEED_ITEMS),
+        stage="drain wave E, lane E1 (lc-104)",
+    ),
+    Row(
         ident="unknown_source",
         refusal="a `--source` outside the closed door set — an unrecognised "
                 "source would decide the cost test's veto silently",

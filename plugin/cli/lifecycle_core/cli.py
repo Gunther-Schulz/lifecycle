@@ -278,6 +278,15 @@ def _context(args, out):
         action = getattr(args, f"{getattr(args, 'verb', None)}_action", None)
         base = getattr(args, "verb", None)
         ctx.verb = f"{base} {action}" if base and action else base
+        # WHOSE ID IS THIS, asked at the one resolver every ident-taking
+        # verb already passes (lc-104) — so a verb added later cannot forget
+        # to ask. By VERB, not by dest alone: `arc … --ident` names a belief
+        # under the same dest, and `migrate` carries no item id at all.
+        if base in ("item", "ledger"):
+            mismatch = verbs.refuse_foreign_idents(
+                ctx, [getattr(args, d, None) for d in verbs.IDENT_DESTS], out)
+            if mismatch != exits.CLEAN:
+                return None, mismatch
     return ctx, code
 
 
