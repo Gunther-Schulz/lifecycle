@@ -64,6 +64,11 @@ ANCHOR = "    if flag:"
 REPLACEMENT = "    if False:"
 FIXTURE_REL = "plugin/cli/lifecycle_core/probe_mod.py"
 
+#: What the emit-site reader answers by default: the fixture's refusal is
+#: emitted at ONE site, so every arm that is not about reach (lc-106) runs
+#: over a row that reports exactly as it did before reach was printed.
+_ONE_SITE = {"probe_row": ("probe_mod.py:5",)}
+
 
 def _prove_rows():
     """`tools/prove-rows.py` as a module — its filename is not an identifier.
@@ -121,7 +126,8 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
         return d, core, target
 
     def _run(self, d, core, *, expect=None, extra_base=None,
-             arrangements=None, controls=None, argv=()):
+             arrangements=None, controls=None, argv=(), sites=_ONE_SITE,
+             siblings=None):
         """`main(argv)` over the fixture, its exit code and everything it said.
 
         `expect` is what the roster DECLARES for each row (lc-196) — by
@@ -132,7 +138,10 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
         move under a second arrangement (lc-200's coverage arms).
         `arrangements` replaces the one recorded arrangement, and `controls`
         is `text -> {ident: signature}` for the rows' CONTROLS (lc-200),
-        green by default.
+        green by default. `sites` is `{refusal: [file:line, …]}`, what the
+        emit-site reader answers (lc-106) — one site by default, `None` for a
+        reader that could not answer — and `siblings` replaces the roster's
+        ident -> refusal mapping.
         """
         mod = _prove_rows()
         declared = {"probe_row": 2} if expect is None else expect
@@ -201,11 +210,17 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
                                create=True), \
                 mock.patch.object(mod, "control_verdicts", control_verdicts,
                                   create=True), \
+                mock.patch.object(
+                    mod, "emit_site_map",
+                    lambda: None if sites is None else
+                    {k: list(v) for k, v in sites.items()},
+                    create=True), \
                 mock.patch.object(mod, "REPO", d), \
                 mock.patch.object(mod, "CORE", core), \
                 mock.patch.object(mod, "MUTATIONS", arrangements), \
-                mock.patch.object(mod, "sibling_map",
-                                  lambda: {"probe_row": "probe_row"}), \
+                mock.patch.object(
+                    mod, "sibling_map",
+                    lambda: dict(siblings or {"probe_row": "probe_row"})), \
                 mock.patch.object(mod, "verdicts", verdicts), \
                 contextlib.redirect_stdout(buf):
             code = mod.main(list(argv))
@@ -700,6 +715,106 @@ class TheToolPrintsItsOwnCoverage(unittest.TestCase):
             arrangements=[_PROBE_ARM, _BARE_ARM],
             controls=_both_controls_green)
         self.assertNotIn("PARTIAL RUN", full, full)
+
+
+def _reach_lines(out):
+    """`{refusal: line}` for the tool's tagged reach lines.
+
+    Off the TAG at the line's start, for `_never_dark`'s reason: the refusal
+    name occurs throughout the output.
+    """
+    found = {}
+    for line in out.splitlines():
+        parts = line.split()
+        if parts[:2] == ["UNPROVEN", "BRANCHES"] and len(parts) > 2:
+            found[parts[2]] = line
+    return found
+
+
+class TheProverReportsItsOwnReachPerRow(unittest.TestCase):
+    """lc-106 — a PROVEN certifies a ROW, never the row's BRANCHES.
+
+    One refusal can be emitted at many sites; an arrangement mutates one
+    condition and runs one firing input. Deleting any other branch left the
+    row PROVEN and the tool silent, and silence here reads as proven — which
+    is could-not-verify rendered as a pass.
+    """
+
+    _fixture = TheStartupRefusalOverADirtyMutationTarget._fixture
+    _run = TheStartupRefusalOverADirtyMutationTarget._run
+    _sha = staticmethod(TheStartupRefusalOverADirtyMutationTarget._sha)
+
+    THREE = {"probe_row": ("probe_mod.py:5", "probe_mod.py:9", "other.py:3")}
+
+    def test_a_multi_site_row_says_how_many_sites_no_arrangement_reaches(self):
+        """THE PAIR, over one fixture and one arrangement, differing in the
+        number of emit sites alone. Both stay PROVEN — nothing a row has is
+        taken away — and only the multi-site one names the hole."""
+        d, core, _target = self._fixture()
+        code, out, mod = self._run(d, core)
+        self.assertIn("[probe_row] PROVEN", out, out)
+        self.assertEqual(code, mod.CLEAN, out)
+        self.assertEqual(
+            _reach_lines(out), {},
+            "a refusal emitted at ONE site was reported as having unproven "
+            f"branches — a single-site row must report exactly as before:\n{out}")
+        self.assertNotIn("reach:", out, out)
+
+        code, out, mod = self._run(d, core, sites=self.THREE)
+        self.assertIn("[probe_row] PROVEN", out, out)
+        self.assertEqual(code, mod.CLEAN, out)
+        self.assertIn(
+            "reach: 1 recorded arrangement(s) against 3 emit site(s)", out,
+            "the arrangement's own block did not say how much of its "
+            f"refusal it reaches:\n{out}")
+        lines = _reach_lines(out)
+        self.assertIn(
+            "probe_row", lines,
+            "a refusal emitted at three sites and mutated at one read "
+            "PROVEN with nothing saying two of its branches rest on no "
+            f"mutation:\n{out}")
+        self.assertIn("3 emit site(s), 1 arrangement(s)", lines["probe_row"])
+        self.assertIn("at least 2 ", lines["probe_row"])
+
+    def test_arrangements_are_counted_per_REFUSAL_not_per_roster_row(self):
+        """Two roster rows can prove two firing inputs of ONE refusal, each
+        with its own arrangement. The count against the sites is the
+        refusal's, or the family would be reported one short."""
+        d, core, _target = self._fixture()
+        code, out, mod = self._run(
+            d, core, sites=self.THREE,
+            siblings={"probe_row": "probe_row", "bare_row": "probe_row"},
+            expect={"probe_row": 2, "bare_row": 2},
+            controls=_both_controls_green,
+            extra_base=TheToolPrintsItsOwnCoverage._bare,
+            arrangements=[_PROBE_ARM, _BARE_ARM])
+        self.assertEqual(code, mod.CLEAN, out)
+        line = _reach_lines(out).get("probe_row", "")
+        self.assertIn("3 emit site(s), 2 arrangement(s)", line, out)
+        self.assertIn("at least 1 ", line, out)
+
+    def test_a_multi_site_refusal_with_NO_arrangement_is_named_too(self):
+        """The reach list is over the refusals, not over the arrangement
+        table: a multi-site refusal nobody mutates has EVERY branch
+        unproven."""
+        d, core, _target = self._fixture()
+        sites = dict(_ONE_SITE, bare_row=("other.py:1", "other.py:2"))
+        _code, out, _mod = self._run(
+            d, core, sites=sites, expect={"probe_row": 2, "bare_row": 2},
+            controls=_both_controls_green,
+            extra_base={"bare_row": "2/named"})
+        line = _reach_lines(out).get("bare_row", "")
+        self.assertIn("2 emit site(s), 0 arrangement(s)", line, out)
+
+    def test_emit_sites_that_could_not_be_read_are_COULD_NOT_VERIFY(self):
+        """THE THIRD ANSWER. With no site count the tool cannot say whether
+        any PROVEN leaves a branch unexercised; saying nothing would read as
+        "none does"."""
+        d, core, _target = self._fixture()
+        code, out, mod = self._run(d, core, sites=None)
+        self.assertIn("[probe_row] PROVEN", out, out)
+        self.assertIn("COULD NOT VERIFY: the emit sites", out, out)
+        self.assertEqual(code, mod.COULD_NOT_VERIFY, out)
 
 
 if __name__ == "__main__":

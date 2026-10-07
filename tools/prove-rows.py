@@ -56,6 +56,14 @@ arrangement of this run and name each row none darkened (`NEVER DARK`). That
 is a different list from "rows with NO mutation recorded" and both are
 printed: one reads the table, the other reads the walk.
 
+A PROVEN IS ABOUT A ROW, NOT ABOUT THE ROW'S BRANCHES (lc-106). One refusal
+can be emitted at many sites; an arrangement disables one condition and runs
+one firing input. So for every refusal the roster's own emit-site scan finds
+at more than one site, the closing REACH section names it with its site count
+and its arrangement count (`UNPROVEN BRANCHES`), and each such arrangement's
+block carries a `reach:` line. Silence there would read as proven. A refusal
+emitted at one site reports exactly as it always did.
+
 RESTORE IS BY FILE COPY, never `git checkout`/`restore`/`stash` — those take
 the whole tree, and this runs in a work tree that has uncommitted work in it
 by construction. `__pycache__` is cleared around every arm: a stale `.pyc`
@@ -1791,6 +1799,36 @@ def expectations() -> dict:
     return json.loads(r.stdout.strip().split("\n")[-1])
 
 
+def emit_site_map():
+    """`{refusal: [file:line, …]}` from the UNMUTATED copy, or `None`.
+
+    NOT A SECOND SCAN. This is `roster.emit_sites()` — the enumeration
+    `lifecycle --test` prints its "emitted at MORE THAN ONE site" line from —
+    run over the copy this tool is about to mutate, before anything is. A
+    second counter here would be a second body for one fact and would
+    disagree with the roster's the day a pattern was added to either.
+
+    `None` where it could not be read. That is a THIRD answer and the caller
+    says so: with no site count, a PROVEN cannot be told from a PROVEN over
+    one branch of thirty.
+    """
+    src = (
+        "import json, sys\n"
+        f"sys.path.insert(0, {str(WORK_ROOT or CLI)!r})\n"
+        "from lifecycle_core import roster\n"
+        "print(json.dumps(roster.emit_sites()))\n"
+    )
+    r = subprocess.run([sys.executable, "-c", src], capture_output=True,
+                       text=True, cwd=str(REPO))
+    if r.returncode != 0:
+        return None
+    import json
+    try:
+        return json.loads(r.stdout.strip().split("\n")[-1])
+    except ValueError:
+        return None
+
+
 def grade_baseline(base: dict, expect: dict):
     """`(disagree, ungraded)` — the baseline against what each row DECLARED.
 
@@ -1907,6 +1945,17 @@ def main(argv) -> int:
           "during it sees the committed code and not a mutation.")
 
     siblings = sibling_map()
+    # REACH (lc-106), read BEFORE any mutation and from the same copy. An
+    # arrangement mutates one condition and runs one firing input, so its
+    # PROVEN is about that route; how many routes the refusal HAS is the
+    # roster's own emit-site count. Arrangements are counted per REFUSAL
+    # over the whole table, not over this run's selection: reach is a fact
+    # about what is recorded, not about what was asked for today.
+    sites = emit_site_map()
+    arms_for = {}
+    for m in MUTATIONS:
+        ref = siblings.get(m[0], m[0])
+        arms_for[ref] = arms_for.get(ref, 0) + 1
     clear_pycache()
     print("BASELINE — the unmutated roster, stated rather than assumed.")
     print("(Over an already-red baseline a mutate-and-restore proof is "
@@ -2095,6 +2144,14 @@ def main(argv) -> int:
                   f"row(s): {', '.join(family)} — a mutation at the single "
                   "site where that refusal is decided darkens the family, "
                   "and that is not a stray.")
+        n_sites = len((sites or {}).get(refusal, ()))
+        if n_sites > 1:
+            k = arms_for.get(refusal, 0)
+            print(f"    reach: {k} recorded arrangement(s) against {n_sites} "
+                  f"emit site(s) of refusal {refusal!r}. The verdict above "
+                  "is about the one condition this arm disables and the one "
+                  "firing input it runs — not about the refusal's other "
+                  "branches (listed under REACH below).")
         if not ok_named:
             print("    -> the row did NOT change. The condition this "
                   "mutation names is not what produces its verdict.")
@@ -2149,12 +2206,49 @@ def main(argv) -> int:
         for ident in never:
             print(f"    NEVER DARK  {ident}")
 
+    # REACH (lc-106) — what a PROVEN above does NOT cover, said rather than
+    # left to be read as covered. A refusal emitted at N sites with K
+    # recorded arrangements has, by counting alone, at least N-K sites with
+    # no arrangement of their own: where such a site is its own branch,
+    # deleting it leaves every arm above reading PROVEN (measured on
+    # `declaration_malformed`'s goals-duplicates branch). Which sites one
+    # arrangement's condition GATES is not computable from an anchor — a
+    # mutation on a shared predicate reaches several — so the line is a
+    # count of what was never aimed at, not a measure of what is broken, and
+    # nothing here claims the K are proven site by site either. Single-site refusals are not listed: one site,
+    # one route, and they report exactly as they did.
+    if sites is None:
+        print("\nCOULD NOT VERIFY: the emit sites could not be read from "
+              "the roster, so this run cannot say how many branches of each "
+              "refusal its arrangements leave unexercised. A PROVEN above "
+              "is about one condition and one firing input; nothing here "
+              "says that is the whole refusal.")
+    else:
+        multi = sorted(k for k, v in sites.items() if len(v) > 1)
+        print(f"\nREACH — refusals emitted at MORE THAN ONE site: "
+              f"{len(multi)} of {len(sites)}. A PROVEN certifies the "
+              "condition its arm disables, never the refusal's other "
+              "branches:")
+        for ref in multi:
+            n, k = len(sites[ref]), arms_for.get(ref, 0)
+            if k < n:
+                print(f"    UNPROVEN BRANCHES  {ref}  {n} emit site(s), "
+                      f"{k} arrangement(s): at least {n - k} site(s) have "
+                      "no arrangement of their own")
+            else:
+                print(f"    BRANCHES NOT SEPARATED  {ref}  {n} emit "
+                      f"site(s), {k} arrangement(s): as many arrangements "
+                      "as sites, and nothing here shows each site has its "
+                      "own")
+
     if raised:
         print(f"\nCOULD NOT VERIFY: {', '.join(raised)} — the arm crashed "
               "rather than answering, so nothing here says whether the row "
               "discriminates.")
         return COULD_NOT_VERIFY
     if stale:
+        return COULD_NOT_VERIFY
+    if sites is None:
         return COULD_NOT_VERIFY
     if ctl_unreadable:
         print(f"\nCOULD NOT VERIFY: the control of "
