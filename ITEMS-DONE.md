@@ -3040,5 +3040,21 @@ closed-met: none
 closed-decided: none
 closed-ref: 671beffa46d3ea64717cc909b1c39211015ed9ec
 
+## lc-62
+grade: DONE
+requirement: lc-40's repair covers the MINT side only; the ANSWER side is still verbatim-equality and nothing says so at answer time. A desk that answers a decision blocker's substance in its own words leaves the item blocked forever: item ready resolves by question-slot equality, reports 'No decision: line names this question', and the answer sits in the ledger unmatched. The blocker's own refusal text coaches the minter and says nothing to the answerer
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/ledger.py,test/test_items.py
+done-criterion: answering a decision blocker is possible without reproducing its text by hand: either the ledger answer is keyed to the item and question at write time, or a near-miss between a ledger question and a standing blocker is reported rather than silently unmatched. Red-first on the measured pair below, where the substance was answered and the item stayed blocked
+evidence: measured at the wave-5 peer desk 2026-08-28 on df-130, both arms in one run: a ledger decision was written answering the blocker's substance, item ready still reported BLOCKED with 'No decision: line names this question, so it has not been answered'; the blocker was then re-minted as the bare question matching the ledger text and item ready immediately reported UNBLOCKED citing LEDGER.md:299. Second half of the same finding: df-130's original blocker was a SENTENCE ABOUT the question ('the item own body says decision OPEN: whether ...'), which no answer could ever equal
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 2026-10-07 built in wave C and taken back out at integration: the near-match notice must aggregate by question before it can land
+amended-evidence: 2026-10-07 MEASURED at the desk 2026-10-07: a lane built the read-side half (item ready and item check name a near-match between a ledger question and a standing blocker; normalised equality plus word-for-word containment, floor of three words) and it was REVERTED before landing, because over the real carriers it printed about 300 near-match lines on claude-code-cache-fix and about 145 on CachyOS-Setup, where today item check prints 47 and 12 lines: one boilerplate migration blocker (regrade: fill goal, write-set, done-criterion) is shared by hundreds of items and is contained in one ledger line. On this repo it printed none. RELAYED from that lane: the answer-time half needs cmd_ledger_add, and the helper it wrote was ledger.near_decisions_for. The lane commit is 8a3e415 on branch worktree-agent-a8ed30f20055f2d9d, unmerged.
+closed-reason: 2026-10-07 A near-match between a ledger question and a waiting blocker is reported once per distinct question at item check, item ready and answer time; never for a moot line or a migration question. Zero such lines on all ten rostered carriers today, so the positive is fixture-proven only. Wave D 2026-10-07, verified on main at deede51: suite 1612 OK no skips, --test 157 of 157, prove-rows 152 of 152 held with every row dark under some arrangement and no control red, leak battery 62 of 62; item check and item ready unchanged in exit code across all ten rostered repos.
+closed-met: none
+closed-decided: none
+closed-ref: c38142e67379759d84e05c4184a02cb05b606c7c, aa7409ca0f5004f4a5a96fd0052a4bba483bab14
+
 ## Archive (pre-migration)
 
