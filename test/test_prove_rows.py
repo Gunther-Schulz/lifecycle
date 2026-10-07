@@ -120,19 +120,41 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
         git("commit", "-q", "-m", "fixture")
         return d, core, target
 
-    def _run(self, d, core, *, expect=None, extra_base=None):
-        """`main([])` over the fixture, its exit code and everything it said.
+    def _run(self, d, core, *, expect=None, extra_base=None,
+             arrangements=None, controls=None, argv=()):
+        """`main(argv)` over the fixture, its exit code and everything it said.
 
         `expect` is what the roster DECLARES for each row (lc-196) — by
         default the code the verdict stub's baseline really carries, so every
         arm that is not about the baseline runs over one that agrees.
-        `extra_base` adds rows to the baseline that carry NO arrangement.
+        `extra_base` adds rows to the baseline that carry NO arrangement; a
+        CALLABLE is handed the watched file's text, so a row can be made to
+        move under a second arrangement (lc-200's coverage arms).
+        `arrangements` replaces the one recorded arrangement, and `controls`
+        is `text -> {ident: signature}` for the rows' CONTROLS (lc-200),
+        green by default.
         """
         mod = _prove_rows()
         declared = {"probe_row": 2} if expect is None else expect
         self._live_during = []
-        arrangements = [("probe_row", "probe_mod.py", ANCHOR, REPLACEMENT,
-                         "the fixture module's one decided condition")]
+        self._control_saw = []
+        if arrangements is None:
+            arrangements = [("probe_row", "probe_mod.py", ANCHOR, REPLACEMENT,
+                             "the fixture module's one decided condition")]
+        if controls is None:
+            def controls(_text):
+                return {"probe_row": "0"}
+
+        def control_verdicts():
+            # AN INSTRUMENT like the plant stub below, and for its reason: it
+            # reads the file the walk writes, so a walk that asked about the
+            # controls only AFTER restoring would be seen here as never
+            # having looked at a mutated tree.
+            work = getattr(mod, "WORK_CORE", None)
+            watched = Path(work) if work else core
+            text = (watched / "probe_mod.py").read_text(encoding="utf-8")
+            self._control_saw.append(text)
+            return dict(controls(text))
 
         def verdicts(only=None):
             # AN INSTRUMENT, not a constant: it looks at the file the walk
@@ -163,7 +185,8 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
             text = (watched / "probe_mod.py").read_text(encoding="utf-8")
             out = {"probe_row": "0/unnamed" if REPLACEMENT in text
                    else "2/named"}
-            out.update(extra_base or {})
+            out.update(extra_base(text) if callable(extra_base)
+                       else (extra_base or {}))
             return out
 
         buf = io.StringIO()
@@ -176,6 +199,8 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
         # assertion.
         with mock.patch.object(mod, "expectations", lambda: dict(declared),
                                create=True), \
+                mock.patch.object(mod, "control_verdicts", control_verdicts,
+                                  create=True), \
                 mock.patch.object(mod, "REPO", d), \
                 mock.patch.object(mod, "CORE", core), \
                 mock.patch.object(mod, "MUTATIONS", arrangements), \
@@ -183,7 +208,7 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
                                   lambda: {"probe_row": "probe_row"}), \
                 mock.patch.object(mod, "verdicts", verdicts), \
                 contextlib.redirect_stdout(buf):
-            code = mod.main([])
+            code = mod.main(list(argv))
         return code, buf.getvalue(), mod
 
     @staticmethod
@@ -456,6 +481,225 @@ class TheProvenanceRefusalCoversEveryFileTheRunCopies(
         self.assertIn(self._sha(working), out, out)
         self.assertIn(self._sha(committed), out, out)
         self.assertEqual(code, mod.FINDING, out)
+
+
+#: A replacement that removes the fixture's decided condition AND reaches past
+#: it. The plant stub goes dark on it exactly as on `REPLACEMENT` (it carries
+#: that line); the marker is what the control stub reads.
+WIDE_MARK = "widened_past_its_target = True"
+WIDE_REPLACEMENT = f"    {WIDE_MARK}\n{REPLACEMENT}"
+
+#: A second decided line in the fixture module, for a second arrangement.
+SECOND_ANCHOR = '    return "clean"'
+SECOND_REPLACEMENT = '    return "dark"'
+
+_PROBE_ARM = ("probe_row", "probe_mod.py", ANCHOR, REPLACEMENT,
+              "the fixture module's one decided condition")
+_BARE_ARM = ("bare_row", "probe_mod.py", SECOND_ANCHOR, SECOND_REPLACEMENT,
+             "the fixture module's second decided line")
+
+
+def _never_dark(out):
+    """The idents the coverage readout names as darkened by NOTHING.
+
+    Parsed off the tool's own tagged lines rather than searched for by
+    ident: an ident occurs all over the output (the baseline listing, its
+    own verdict block), so a substring test would be satisfied by a row
+    that is merely mentioned.
+    """
+    return {line.split()[-1] for line in out.splitlines()
+            if line.strip().startswith("NEVER DARK ")}
+
+
+def _both_controls_green(_text):
+    return {"probe_row": "0", "bare_row": "0"}
+
+
+class EveryArrangementAlsoAssertsNoControlGoesRed(unittest.TestCase):
+    """lc-200 (1) — REACH, as a property the tool checks.
+
+    An arrangement proved that its row's PLANT moves and that no other
+    refusal's plant moves with it. Nothing asked whether the LEGITIMATE case
+    still passes under the mutation, so a mutation that broke more than the
+    condition it names — and reddened a control — earned PROVEN.
+
+    BORROWS the fixture and `_run` rather than inheriting them: inheriting
+    re-runs every parent arm under this class's name, and these arms are not
+    about the startup refusal.
+    """
+
+    _fixture = TheStartupRefusalOverADirtyMutationTarget._fixture
+    _run = TheStartupRefusalOverADirtyMutationTarget._run
+    _sha = staticmethod(TheStartupRefusalOverADirtyMutationTarget._sha)
+
+    @staticmethod
+    def _controls(text):
+        return {"probe_row": "2" if WIDE_MARK in text else "0"}
+
+    def test_a_widened_mutation_reddens_a_control_and_an_ordinary_one_does_not(self):
+        """THE PAIR, over one fixture and one control instrument, differing
+        in the REPLACEMENT alone. Both darken the plant; only the widened one
+        reaches the legitimate case."""
+        d, core, _target = self._fixture()
+        code, out, mod = self._run(d, core, controls=self._controls)
+        self.assertIn("[probe_row] PROVEN", out, out)
+        self.assertEqual(code, mod.CLEAN, out)
+        self.assertTrue(
+            any(REPLACEMENT in text for text in self._control_saw),
+            "the controls were never read while the mutation was applied, "
+            "so the green above is a control run over the UNMUTATED tree and "
+            "says nothing about reach")
+
+        wide = [("probe_row", "probe_mod.py", ANCHOR, WIDE_REPLACEMENT,
+                 "the decided condition, and a line past it")]
+        code, out, mod = self._run(d, core, controls=self._controls,
+                                   arrangements=wide)
+        self.assertIn(
+            "verdict 2/named -> 0/unnamed", out,
+            "the widened mutation did not darken the plant, so this arm is "
+            f"not exercising the case it names:\n{out}")
+        self.assertNotIn(
+            "[probe_row] PROVEN", out,
+            "a mutation that turned a CONTROL red was granted PROVEN: it "
+            "broke more than the condition it names, and nothing in the "
+            f"proof looked at the case that must stay silent:\n{out}")
+        self.assertIn("[probe_row] FAILED", out, out)
+        self.assertIn("control(s) went RED under this mutation", out, out)
+        self.assertIn("probe_row (0 -> 2)", out, out)
+        self.assertEqual(code, mod.FINDING, out)
+
+    def test_a_control_that_moves_TO_clean_is_printed_and_not_judged(self):
+        """MUST NOT FIRE. A neighbour's control that was sitting on the
+        disabled condition goes quiet with it; that is the mutation doing
+        what it names, not reaching past it. Red is a direction."""
+        d, core, _target = self._fixture()
+
+        def controls(text):
+            return {"probe_row": "0",
+                    "bare_row": "0" if REPLACEMENT in text else "2"}
+
+        code, out, mod = self._run(
+            d, core, controls=controls,
+            expect={"probe_row": 2, "bare_row": 3},
+            extra_base={"bare_row": "3/unnamed"})
+        self.assertIn("[probe_row] PROVEN", out, out)
+        self.assertNotIn("went RED", out, out)
+        self.assertIn("bare_row (2 -> 0)", out, out)
+        self.assertEqual(code, mod.CLEAN, out)
+
+    def test_a_control_that_CRASHES_under_the_mutation_is_COULD_NOT_VERIFY(self):
+        """THE THIRD ANSWER. A control that raised did not go red; it did not
+        answer. Neither a proof nor a failed one."""
+        d, core, _target = self._fixture()
+
+        def controls(text):
+            return {"probe_row": "RAISED: KeyError" if REPLACEMENT in text
+                    else "0"}
+
+        code, out, mod = self._run(d, core, controls=controls)
+        self.assertNotIn("[probe_row] PROVEN", out, out)
+        self.assertNotIn("[probe_row] FAILED", out, out)
+        self.assertIn("[probe_row] COULD NOT VERIFY", out, out)
+        self.assertIn("probe_row (0 -> RAISED: KeyError)", out, out)
+        self.assertEqual(code, mod.COULD_NOT_VERIFY, out)
+
+    def test_another_rows_control_going_red_is_reported_under_its_own_name(self):
+        """The assertion is over EVERY control, not the mutated row's own:
+        the legitimate case a widened mutation breaks is usually a
+        neighbour's."""
+        d, core, _target = self._fixture()
+
+        def controls(text):
+            return {"probe_row": "0",
+                    "bare_row": "2" if REPLACEMENT in text else "0"}
+
+        code, out, mod = self._run(
+            d, core, controls=controls,
+            expect={"probe_row": 2, "bare_row": 2},
+            extra_base={"bare_row": "2/named"})
+        self.assertNotIn("[probe_row] PROVEN", out, out)
+        self.assertIn("bare_row (0 -> 2)", out, out)
+        self.assertEqual(code, mod.FINDING, out)
+
+
+class TheToolPrintsItsOwnCoverage(unittest.TestCase):
+    """lc-200 (2) — how many rows EVER go dark, and which never do.
+
+    The tool already lists rows with no recorded mutation. That answers
+    "unproven"; it does not answer "darkened by nothing", and the two part
+    company in both directions: a row with no arrangement can be darkened as
+    a sibling, and a row with one can be darkened by nothing.
+    """
+
+    _fixture = TheStartupRefusalOverADirtyMutationTarget._fixture
+    _run = TheStartupRefusalOverADirtyMutationTarget._run
+    _sha = staticmethod(TheStartupRefusalOverADirtyMutationTarget._sha)
+
+    BOTH = {"probe_row": 2, "bare_row": 2}
+
+    @staticmethod
+    def _bare(text):
+        return {"bare_row": "0/unnamed" if SECOND_REPLACEMENT in text
+                else "2/named"}
+
+    def test_the_never_dark_set_names_the_row_and_SHRINKS_when_one_darkens_it(self):
+        """THE PAIR, over one fixture and one two-row baseline, differing in
+        the ARRANGEMENT LIST alone."""
+        d, core, _target = self._fixture()
+        code, out, mod = self._run(d, core, expect=self.BOTH,
+                                   extra_base=self._bare,
+                                   controls=_both_controls_green)
+        self.assertEqual(code, mod.CLEAN, out)
+        self.assertIn(
+            "went dark under at least one arrangement: 1 of 2", out,
+            f"the tool did not print how much of the roster it darkened:\n{out}")
+        self.assertEqual(
+            _never_dark(out), {"bare_row"},
+            "the row no arrangement darkened was not named, or the row one "
+            f"did darken was named beside it:\n{out}")
+
+        code, out, mod = self._run(d, core, expect=self.BOTH,
+                                   extra_base=self._bare,
+                                   controls=_both_controls_green,
+                                   arrangements=[_PROBE_ARM, _BARE_ARM])
+        self.assertIn("[bare_row] PROVEN", out, out)
+        self.assertEqual(code, mod.CLEAN, out)
+        self.assertIn("went dark under at least one arrangement: 2 of 2",
+                      out, out)
+        self.assertEqual(
+            _never_dark(out), set(),
+            "an arrangement darkened the row and the never-dark set did not "
+            f"shrink — the readout is not reading the walk:\n{out}")
+
+    def test_the_unproven_list_is_still_printed_beside_the_coverage(self):
+        """MUST NOT MOVE: a row with NO recorded mutation is still LISTED.
+        The coverage readout is a second question, not a replacement."""
+        d, core, _target = self._fixture()
+        _code, out, _mod = self._run(
+            d, core, expect=self.BOTH, extra_base={"bare_row": "2/named"},
+            controls=_both_controls_green)
+        self.assertIn("rows with a recorded mutation: 1 of 2", out, out)
+        self.assertIn("rows with NO mutation recorded", out, out)
+        self.assertEqual(_never_dark(out), {"bare_row"}, out)
+
+    def test_a_PARTIAL_run_says_its_coverage_is_not_the_rosters(self):
+        """A run over named idents walked part of the table. Its never-dark
+        set is a fact about that selection, and a reader must not take it
+        for the roster's."""
+        d, core, _target = self._fixture()
+        code, out, mod = self._run(
+            d, core, expect=self.BOTH, extra_base=self._bare,
+            arrangements=[_PROBE_ARM, _BARE_ARM], argv=("probe_row",),
+            controls=_both_controls_green)
+        self.assertEqual(code, mod.CLEAN, out)
+        self.assertIn("PARTIAL RUN", out, out)
+        self.assertIn("1 of 2 recorded arrangement(s)", out, out)
+
+        _code, full, _mod = self._run(
+            d, core, expect=self.BOTH, extra_base=self._bare,
+            arrangements=[_PROBE_ARM, _BARE_ARM],
+            controls=_both_controls_green)
+        self.assertNotIn("PARTIAL RUN", full, full)
 
 
 if __name__ == "__main__":

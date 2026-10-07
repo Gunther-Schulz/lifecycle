@@ -36,6 +36,26 @@ A ROW WHOSE MUTATION DARKENS NOTHING is the loud case: the condition it
 names is not what produces its verdict, so the row is passing for a reason
 nobody wrote down.
 
+AND NO CONTROL CHANGES (lc-200). The pair above is about PLANTS, so it proves
+a refusal's AXIS — the row can be made to stop firing — and never its REACH,
+which is proven by the arm that must stay SILENT. Every roster row already
+declares that arm as its `control`; each mutation is therefore also run
+against every control, compared with that control's own unmutated answer. A
+control that goes RED — moves to any answer but clean — means the mutation
+broke more than the condition it names, and the arrangement FAILS; one that
+raises instead of answering is could-not-verify; one that moves TO clean was
+sitting on the disabled condition itself and is printed, not judged. The
+assurance is exactly as wide as that
+predicate: it watches the controls the roster DECLARES, one legitimate input
+per row, so a legitimate case no row's control exercises is watched by
+nothing here.
+
+COVERAGE IS PRINTED, NOT INFERRED FROM THE ARRANGEMENT COUNT (lc-200). The
+closing lines say how many rows' plants went dark under at least one
+arrangement of this run and name each row none darkened (`NEVER DARK`). That
+is a different list from "rows with NO mutation recorded" and both are
+printed: one reads the table, the other reads the walk.
+
 RESTORE IS BY FILE COPY, never `git checkout`/`restore`/`stash` — those take
 the whole tree, and this runs in a work tree that has uncommitted work in it
 by construction. `__pycache__` is cleared around every arm: a stale `.pyc`
@@ -818,19 +838,27 @@ MUTATIONS = [
     # PER-ROW, NEVER ONE GATE FOR BOTH. The check these two rows share is a
     # generic loop, so mutating its gate would darken BOTH and prove neither —
     # lc-30's class, named in `_predicate_lint`'s own comment. Each mutation
-    # instead retypes ONE rule entry so that slot's want matches the plant's
-    # blocker (`NONE` -> "none"): the plant stops firing while the other row
-    # and the control are untouched.
+    # therefore exempts ONE row at the loop's single decision, by name: that
+    # row's plant stops firing, the other row keeps reading real input, and
+    # every legitimate pairing is graded exactly as before.
+    #
+    # RE-POINTED BY lc-200, and the old spelling is kept as a note because it
+    # held for the wrong reason. It RETYPED the rule entry (`"evidence"` ->
+    # `"none"`) so the slot's want matched the plant's blocker. That silences
+    # the plant — and makes the LEGITIMATE pairing the misplaced one, so the
+    # row's own control went 0 -> 2 under it. The comment here said the
+    # control was untouched; nothing ran a control under a mutation, so
+    # nothing could have said otherwise. A swap is not a removal.
     ("blocker_exercise_misplaced", "items.py",
-     '    BLOCKER_EXERCISE: ("evidence", "blocker_exercise_misplaced",',
-     '    BLOCKER_EXERCISE: ("none", "blocker_exercise_misplaced",',
+     "        if kind_ != want:",
+     '        if kind_ != want and row != "blocker_exercise_misplaced":',
      "the exercise slot's type pairing — an exercise record beside a blocker "
      "that runs no predicate is then accepted, recording an act that cannot "
      "have happened"),
 
     ("not_derivable_misplaced", "items.py",
-     '    NOT_DERIVABLE: ("decision", "not_derivable_misplaced",',
-     '    NOT_DERIVABLE: ("none", "not_derivable_misplaced",',
+     "        if kind_ != want:",
+     '        if kind_ != want and row != "not_derivable_misplaced":',
      "the derivability slot's type pairing — a statement about why a QUESTION "
      "is not derivable is then accepted beside a blocker that asks none"),
 
@@ -1684,6 +1712,39 @@ def verdicts(only=None) -> dict:
     return json.loads(r.stdout.strip().split("\n")[-1])
 
 
+def control_verdicts() -> dict:
+    """`{ident: signature}` for every row's CONTROL, in a fresh interpreter.
+
+    THE ARM THAT MUST STAY SILENT (lc-200). `verdicts` runs each row's plant;
+    this runs the other half of the same pair, which the roster already
+    declares on every row and this tool never called. The signature is the
+    exit code alone — a control has no row name to print, it is the case in
+    which nothing fires — or `RAISED: <type>` where it did not answer.
+
+    A fresh process, for `verdicts`' own reason: the mutated module is
+    imported once per interpreter.
+    """
+    src = (
+        "import json, sys\n"
+        f"sys.path.insert(0, {str(WORK_ROOT or CLI)!r})\n"
+        "from lifecycle_core import refusals\n"
+        "out = {}\n"
+        "for row in refusals.ROWS:\n"
+        "    try:\n"
+        "        out[row.ident] = str(row.control().code)\n"
+        "    except Exception as exc:\n"
+        "        out[row.ident] = 'RAISED: ' + type(exc).__name__\n"
+        "print(json.dumps(out))\n"
+    )
+    r = subprocess.run([sys.executable, "-c", src], capture_output=True,
+                       text=True, cwd=str(REPO))
+    if r.returncode != 0:
+        raise SystemExit(f"the roster's controls could not be read:\n"
+                         f"{r.stderr[-2000:]}")
+    import json
+    return json.loads(r.stdout.strip().split("\n")[-1])
+
+
 def sibling_map() -> dict:
     """`{ident: finding_row}` read from the UNMUTATED roster, once.
 
@@ -1870,10 +1931,31 @@ def main(argv) -> int:
         print(f"    COULD NOT VERIFY [{ident}] {why}.")
     off_baseline = {ident for ident, _sig, _want in disagree}
 
+    # THE CONTROLS' OWN BASELINE (lc-200), taken once over the unmutated
+    # copy. It is the REFERENCE each arm's control run is compared with, not
+    # a grade: whether a control is a good control is the roster's question
+    # (`lifecycle --test` reports a blind pair), and re-deciding it here
+    # would be a second body for that verdict. A control that RAISED at HEAD
+    # is no reference at all, and is said so rather than compared.
+    base_ctl = control_verdicts()
+    ctl_unreadable = sorted(k for k, v in base_ctl.items()
+                            if str(v).startswith("RAISED:"))
+    print(f"\nCONTROLS at baseline: {len(base_ctl)} run, "
+          f"{len(base_ctl) - len(ctl_unreadable)} answered. Every arm below "
+          "re-runs them UNDER its mutation: a control that goes red there "
+          "means the mutation broke more than the condition it names.")
+    for ident in ctl_unreadable:
+        print(f"    COULD NOT VERIFY [{ident}] its control raised at HEAD "
+              f"({base_ctl[ident]}), so no arm can be asked whether it "
+              "stays silent.")
+
     failures = []
 
     raised = []
     stale = []
+    #: Every row whose plant ANSWERED DIFFERENTLY under some judged arm.
+    dark = set()
+    walked = 0
     for ident, fname, anchor, replacement, what in rows:
         if ident in off_baseline:
             print(f"\n[{ident}] NOT JUDGED — its baseline already disagrees "
@@ -1897,9 +1979,13 @@ def main(argv) -> int:
                             encoding="utf-8")
             clear_pycache()
             after = verdicts()
+            # INSIDE THE WINDOW, before the restore: asked afterwards, this
+            # would be a second baseline and every arm would read silent.
+            after_ctl = control_verdicts()
         finally:
             shutil.copy2(backup / fname, path)   # BY FILE COPY
             clear_pycache()
+        walked += 1
 
         changed = sorted(k for k in base
                          if base.get(k) != after.get(k))
@@ -1908,6 +1994,47 @@ def main(argv) -> int:
         strays = [k for k in changed if siblings.get(k, k) != refusal]
         ok_named = ident in changed
         ok_alone = not strays
+        # COVERAGE (lc-200): a row counts as darkened when its plant ANSWERED
+        # and answered differently. A plant that raised did not go dark — it
+        # stopped answering — for the reason the crash rule below gives.
+        dark.update(k for k in changed
+                    if not str(after.get(k, "")).startswith("RAISED:"))
+
+        # REACH (lc-200). The two assertions above are about PLANTS: the row
+        # fired differently, and no other refusal's plant did. Neither looks
+        # at the legitimate case. A control that answers differently under
+        # the mutation says the mutation reached past the condition it names
+        # — it disabled a refusal AND broke the input that refusal must stay
+        # silent on — and the pair above cannot see that, because a plant
+        # going dark looks the same either way.
+        #
+        # Compared with ITS OWN baseline, never with a fixed "clean": a
+        # control may legitimately exit non-zero (it is the input on which
+        # ITS row stays silent, and another refusal may fire there), so what
+        # the arm is asked is whether the mutation MOVED one.
+        #
+        # RED IS A DIRECTION, NOT ANY MOVE. A control that moves TO clean has
+        # not gone red: it sat on the very condition this mutation disables,
+        # seen through another row's pair, and going quiet with it is the
+        # mutation doing what it says. Measured on the first full walk of
+        # this assertion: `kind_grew_without_exit`'s mutation takes
+        # `exit_log_machine_local`'s control 2 -> 0, because that control IS
+        # a kind that grew without an exit. Counting it would fire on an
+        # honest arrangement. It is printed, and not judged.
+        moved_ctl = sorted(k for k in base_ctl
+                           if k not in ctl_unreadable
+                           and base_ctl.get(k) != after_ctl.get(k))
+        crashed_ctl = [k for k in moved_ctl
+                       if str(after_ctl.get(k, "")).startswith("RAISED:")
+                       or k not in after_ctl]
+        quiet_ctl = [k for k in moved_ctl
+                     if str(after_ctl.get(k)) == str(CLEAN)]
+        red_ctl = [k for k in moved_ctl
+                   if k not in crashed_ctl and k not in quiet_ctl]
+
+        def _moves(keys):
+            return ", ".join(f"{k} ({base_ctl.get(k)} -> "
+                             f"{after_ctl.get(k, 'ABSENT')})" for k in keys)
 
         # A CRASH IS NOT A RED, AND THIS TOOL WAS COUNTING IT AS ONE.
         # `verdicts()` renders an exception as its own signature, so a
@@ -1935,13 +2062,34 @@ def main(argv) -> int:
         raised_after = str(after.get(ident, "")).startswith("RAISED:")
         if raised_base or raised_after:
             verdict = "COULD NOT VERIFY"
+        elif not (ok_named and ok_alone) or red_ctl:
+            verdict = "FAILED"
+        elif crashed_ctl:
+            # The plant pair held and no control went red, but one stopped
+            # answering: the same third answer as a plant that raised.
+            verdict = "COULD NOT VERIFY"
         else:
-            verdict = "PROVEN" if (ok_named and ok_alone) else "FAILED"
+            verdict = "PROVEN"
         print(f"\n[{ident}] {verdict}")
         print(f"    disabled: {what}")
         print(f"    {fname}: {anchor.splitlines()[0][:66]}…")
         print(f"    verdict {base.get(ident)} -> {after.get(ident)}")
         print(f"    rows changed: {', '.join(changed) or 'NONE'}")
+        if red_ctl:
+            print(f"    -> control(s) went RED under this mutation: "
+                  f"{_moves(red_ctl)}. A control is the input its refusal "
+                  "must stay SILENT on, so the mutation broke more than the "
+                  "condition it names: this arm shows the row can be made to "
+                  "stop firing, and nothing about where it must not fire.")
+        if crashed_ctl:
+            print(f"    -> control(s) RAISED under this mutation: "
+                  f"{_moves(crashed_ctl)}. A crash is not a red: the control "
+                  "did not answer, which is could-not-verify and not a "
+                  "failed proof.")
+        if quiet_ctl:
+            print(f"    control(s) that moved TO clean, printed and not "
+                  f"judged: {_moves(quiet_ctl)} — a control that was sitting "
+                  "on the condition this mutation disables.")
         if len(family) > 1:
             print(f"    refusal {refusal!r} is proven by {len(family)} roster "
                   f"row(s): {', '.join(family)} — a mutation at the single "
@@ -1954,7 +2102,9 @@ def main(argv) -> int:
             print(f"    -> row(s) proving ANOTHER refusal changed: "
                   f"{', '.join(strays)}. This mutation removed adjacent "
                   "machinery, so it proves nothing about any one row.")
-        if verdict == "COULD NOT VERIFY":
+        if verdict == "COULD NOT VERIFY" and not (raised_base or raised_after):
+            raised.append(ident)
+        elif verdict == "COULD NOT VERIFY":
             side = ("at HEAD, before the mutation" if raised_base
                     else "under the mutation")
             print(f"    -> the arm RAISED {side}. A crash is not a red: it "
@@ -1976,12 +2126,40 @@ def main(argv) -> int:
               "all — listed, never omitted):")
         for ident in unproven:
             print(f"    {ident}")
+
+    # COVERAGE (lc-200) — a SECOND question beside the list above, and the
+    # two part company in both directions. "No mutation recorded" is about
+    # the arrangement table; "never dark" is about what the walk did. A row
+    # with no arrangement of its own is darkened when a sibling's mutation
+    # sits at the site that decides both; a row WITH one is darkened by
+    # nothing when its arm failed, crashed, or was not judged. Counting
+    # arrangements reads the first as the second.
+    never = sorted(set(base) - dark)
+    print(f"\nrows whose plant went dark under at least one arrangement: "
+          f"{len(dark)} of {len(base)}")
+    if walked != len(MUTATIONS):
+        print(f"    PARTIAL RUN — this run walked {walked} of "
+              f"{len(MUTATIONS)} recorded arrangement(s), so the figure "
+              "above is about that selection and is NOT the roster's "
+              "coverage. The rows it leaves are not listed: on a partial "
+              "run that list is the selection's complement, not a finding.")
+    elif never:
+        print("rows NO arrangement in this run darkened (a green roster row "
+              "here rests on its own plant/control pair and on no mutation):")
+        for ident in never:
+            print(f"    NEVER DARK  {ident}")
+
     if raised:
         print(f"\nCOULD NOT VERIFY: {', '.join(raised)} — the arm crashed "
               "rather than answering, so nothing here says whether the row "
               "discriminates.")
         return COULD_NOT_VERIFY
     if stale:
+        return COULD_NOT_VERIFY
+    if ctl_unreadable:
+        print(f"\nCOULD NOT VERIFY: the control of "
+              f"{', '.join(ctl_unreadable)} raised at HEAD, so no arm here "
+              "was asked whether that case stays silent.")
         return COULD_NOT_VERIFY
     if ungraded:
         print(f"\nCOULD NOT VERIFY: the baseline of "
@@ -1997,8 +2175,9 @@ def main(argv) -> int:
               "judged.")
     if failures or disagree:
         return FINDING
-    print("\nevery recorded arrangement held: the named row went dark, and "
-          "nothing proving another refusal went dark with it.")
+    print("\nevery recorded arrangement held: the named row went dark, "
+          "nothing proving another refusal went dark with it, and no "
+          "control went red.")
     return CLEAN
 
 
