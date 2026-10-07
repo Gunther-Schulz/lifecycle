@@ -2536,5 +2536,21 @@ closed-met: none
 closed-decided: none
 closed-ref: f88ad1a20f0a8c4892ecc6420226f96a89a3ca67
 
+## lc-34
+grade: DONE
+requirement: A two-run merge has an UNENFORCED precondition: both runs must write to the SAME --report path, or the provenance chain silently keeps only the last source. The pin keys on the report path, so a merge writing to a fresh path finds no prior report to carry forward and the earlier sources blob lines are simply absent — no warning, no could-not-verify — record: measured at step 4, 2026-08-27
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a --merge run whose --report path carries no prior report for the EXISTING carrier says so — could-not-verify or an explicit note that earlier sources pins are not carried — rather than writing a report that silently documents one source; red-first on the measured pair below
+evidence: measured 2026-08-27 on the wave-2 blobs with tool 9e33c81. DIFFERENT report paths (root -> reports/root.md, merge -> reports/merged.md): merged.md carries ONE source-blob line, (claude/BACKLOG.md) only; the root line is absent and nothing says so. SAME report path (both -> reports/M.md): BOTH lines present, (claude/BACKLOG.md) and (BACKLOG.md). So the carry-forward lane B3 built works exactly as reported; what is missing is any signal when the precondition is not met
+blocked-by: NONE
+amend-reason: 2026-09-13 Drain desk 2026-09-13, settled at the dispatch join rather than left to the executing tier. The entry's criterion offered two shapes — 'could-not-verify or an explicit note' — and an unsettled choice in a criterion is a design decision that gets made at the cheaper tier, which is the failure the brief exists to prevent. The repo's own exit doctrine decides it: COULD_NOT_VERIFY outranks FINDING (exits.py:40-56), so using it for a report-provenance gap would suppress a real finding from the same run. Also recorded here because the cohort was checked as a whole: lc-33 and lc-68 DID need their write-sets widened for a roster row and this one does NOT, since a report note is not a FINDING emit site — the write-set stands as declared.
+amended-done-criterion: 2026-09-13 a --merge run whose --report path carries no prior report for the EXISTING carrier writes an EXPLICIT line in the report saying that earlier sources' provenance pins are NOT carried, and why (no prior report found at this path) — rather than writing a report that silently documents one source. THE EXIT CODE IS UNCHANGED and this is the settled half the entry left open: exits.py:40-56 states COULD_NOT_VERIFY means the tool could not form a verdict at all AND that it OUTRANKS FINDING, so raising it here would mask a real finding from the same run, and the merge did form its verdict. The gap is a property of the REPORT ARTIFACT, so the artifact states it. RED-FIRST on the measured pair in the evidence slot: assert the note is ABSENT today on the different-report-path arm, present after. MUST-NOT-MOVE: the SAME-report-path arm keeps carrying BOTH source-blob lines unchanged, which is the control proving the note is not simply printed always.
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 A merge whose report path holds no prior report says the provenance pins were not carried. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 8423053b437528439ce6834daa58fccb68af64c5
+
 ## Archive (pre-migration)
 
