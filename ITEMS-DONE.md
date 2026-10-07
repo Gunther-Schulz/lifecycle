@@ -2361,5 +2361,19 @@ closed-met: lc-316
 closed-decided: none
 closed-ref: 38c8ff29021cb10c3b987f77578bf3c66341ab7e
 
+## lc-195
+grade: DONE
+requirement: THE PROVENANCE REFUSAL COVERS 12 OF 21 CORE MODULES. prove-rows refuses to start when a file it would mutate already differs from HEAD, and dirty_targets compares only the files the MUTATIONS table names — while the work copy is taken from the working tree over ALL of the package. So refusals.py, which holds every plant, control and expectation, plus exits.py and seven others, are never compared. A lane RAN it: with refusals.py uncommitted and a row ident renamed, no refusal fired, the run printed PROVEN and 92 of 110, exit 0. The precondition this tool own docstring calls the one it cannot run without is checked over a narrower set than the one it copies.
+goal: enforce-the-invariants
+write-set: tools/prove-rows.py,test/test_prove_rows.py
+done-criterion: the startup provenance check covers every file the run COPIES, not only the files it mutates. RED-FIRST, the lane own arrangement: an uncommitted edit to refusals.py must refuse the run, where today it proceeds and prints PROVEN. MUST-NOT-MOVE: a clean tree still starts, the refusal message keeps naming the offending file and its two shas, and the check stays sha-based rather than git-status-based for the reason the docstring already records.
+evidence: RELAYED from review lane 2 via lifecycle-6f, carried as theirs and RUN by them: refusals.py uncommitted with a row ident renamed produced no refusal, PROVEN, 92 of 110, exit 0. DERIVED: this is the same class as the docstring-versus-branch finding in the other lane — an assurance whose reach is narrower than its subject — and here the subject is the whole copied package while the assurance covers the mutation list.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The provenance refusal covers every file the run copies. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: a4e2708dfe5188acddf041032cc0b251dfd8512b
+
 ## Archive (pre-migration)
 
