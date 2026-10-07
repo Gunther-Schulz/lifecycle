@@ -3358,5 +3358,19 @@ closed-met: none
 closed-decided: none
 closed-ref: b026cc34c8c2b56a6cd01aca0b0713e2575fa59d
 
+## lc-139
+grade: DONE
+requirement: item waves computes its join over WRITE sets only, so a lane that edits a shared VERIFICATION INSTRUMENT collides with every lane that RUNS that instrument and the join reports the two as disjoint. The verb prints that the lanes are disjoint by construction and that the whole set of lanes is the PARALLEL set — an assurance wider than its predicate establishes, which is what stops anyone looking. Record: drain wave 1 composition, 2026-09-15, desk dotfiles-f1.
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/cli.py,test/test_waves.py
+done-criterion: The join either REPORTS an instrument-read collision or its own output states, in the verb text, that its predicate covers write-write only and names what it therefore cannot see. Red-first on the measured wave-1 case: tools/prove-rows.py in one lane write-set while three sibling lanes run it as their verifier — today the verb reports 1 lane over 47 path-valued items and no collision, and the GROUPS cut places the prove-rows group beside groups whose verification executes it. An assertion FAILURE at the defect, not an error. MUST-NOT-MOVE: the honest COULD NOT VERIFY line for items outside the lanes keeps its exact text, and no item gains a phantom collision — the discriminating pair is an instrument-read collision that IS reported beside an ordinary disjoint pair that is NOT.
+evidence: Measured while composing drain wave 1 at 2387394, desk dotfiles-f1: item waves --grouped put tools/prove-rows.py in the lane-B write set and placed the items.py, init.py, cli.py and test-file groups in the parallel set beside it, reporting no collision between them — while this repo declared Verify section makes python3 tools/prove-rows.py a verifier every one of those lanes runs. The desk had to serialize by hand and mandate a private clone per lane. Sharpened by lc-133: prove-rows mutates core files in whatever tree it runs in and restores at the end of each arm, so the unseen collision is not merely a stale read but a live mutation in a co-writer tree. Class named in the dispatch skill escalation ladder (overlap counts any agent READ-OR-EXECUTE set against another write set, not only write against write) — opened at that text, 2026-09-15; what is novel here is that this repo join cannot express it. Booking assigned by the judgment desk dotfiles-89, 2026-09-15, which declined the corpus mint as a duplicate home and routed the tool gap here.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 Statement arm: item waves says its join is write-write only and names what it cannot see. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: 402a16cda3dddacaf1e1f0604ed48b03da290724, d33b1c3a51016c69389593f13b5d7300cef30315
+
 ## Archive (pre-migration)
 
