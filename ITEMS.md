@@ -67,21 +67,6 @@ amend-reason: 2026-10-04 the blocker waited on the lc-161 after-measurement verd
 amended-blocked-by: 2026-10-04 decision narrow freeze exit for lc-8 - has its own pre-registered probe passed the admission bar, and has the operator granted its exit at ship time with the per-arc arm switch in the ship set
 amended-not-derivable: 2026-10-04 Not derivable: release is per mechanism (LEDGER:177, 2026-10-04). This item names no pre-registered probe yet, and the narrow exit is the operator's at ship time, asked per mechanism; no ledger line grants either for this item.
 
-## lc-23
-grade: STANDBY
-requirement: init creates the declaration and lane stubs but no carrier files, so a greenfield repo (no old carrier to migrate FROM) gets a declaration whose three carriers do not exist and kind check answers COULD NOT VERIFY forever — record: wave-3 handoff step 6, claude/records/lifecycle-wave3-handoff-2026-08-27.md
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py,decision:who-seeds-greenfield-carriers
-done-criterion: a greenfield repo after init has the three carriers resolvable, kind check answering CLEAN rather than COULD NOT VERIFY on them; red-first on a bare repo showing the three could-not-verifies before and their absence after
-evidence: init.py:6-13 states it verbatim: "It does NOT create carrier files (ITEMS.md, ITEMS-DONE.md, LEDGER.md) — those are migrate job for a repo with an old carrier to convert FROM, or a human for a truly greenfield one ... That is a real gap in the wave-2 design this verb inherited". grep -i seed over ITEMS.md at f2c37fe returns 0 hits (positive control: carrier returns 19), so no item carried this
-blocked-by: decision whether init seeds the three carriers on a greenfield repo, or the design assigns that act elsewhere — init.py argues the settled design never asked for it
-amend-reason: 2026-09-13 the ledger decision verb refuses the ' — ' slot separator inside a question, so this blocker as originally typed is mechanically unanswerable (the lc-62 class from the minting side); re-typed separator-free, the operator's answer is already in the ledger
-amended-blocked-by: 2026-09-13 decision whether init seeds the three carriers on a greenfield repo, or the design assigns that act elsewhere
-bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
-amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over). The decision is ANSWERED at LEDGER.md:72: init SEEDS the three carriers on a greenfield repo, empty bodies, headers only, skip-if-present, no separate verb. That is the first branch of this entry and the done-criterion already describes it, so only the blocker and the write-set move: the write-set drops its decision pseudo-path, which named the question now answered. Stays STANDBY.
-amended-write-set: 2026-10-05 plugin/cli/lifecycle_core/init.py,test/test_init.py
-amended-blocked-by: 2026-10-05 NONE
-
 ## lc-24
 grade: PARKED
 requirement: test/absence-scan.test.mjs asserts the walk collects a file under a LITERAL directory list including proxy/ and that the tree holds >500 files — both are claude-code-cache-fix tree facts, so the shared test is red in lifecycle by construction — record: wave-3 step-0 Verify baseline, judgment-desk ruling carve-out 5

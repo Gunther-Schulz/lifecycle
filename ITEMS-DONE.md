@@ -3184,5 +3184,24 @@ closed-met: none
 closed-decided: none
 closed-ref: 79894e1d4c68b07104583381a56c3d7a9da16fa7
 
+## lc-23
+grade: DONE
+requirement: init creates the declaration and lane stubs but no carrier files, so a greenfield repo (no old carrier to migrate FROM) gets a declaration whose three carriers do not exist and kind check answers COULD NOT VERIFY forever — record: wave-3 handoff step 6, claude/records/lifecycle-wave3-handoff-2026-08-27.md
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py,decision:who-seeds-greenfield-carriers
+done-criterion: a greenfield repo after init has the three carriers resolvable, kind check answering CLEAN rather than COULD NOT VERIFY on them; red-first on a bare repo showing the three could-not-verifies before and their absence after
+evidence: init.py:6-13 states it verbatim: "It does NOT create carrier files (ITEMS.md, ITEMS-DONE.md, LEDGER.md) — those are migrate job for a repo with an old carrier to convert FROM, or a human for a truly greenfield one ... That is a real gap in the wave-2 design this verb inherited". grep -i seed over ITEMS.md at f2c37fe returns 0 hits (positive control: carrier returns 19), so no item carried this
+blocked-by: NONE
+amend-reason: 2026-09-13 the ledger decision verb refuses the ' — ' slot separator inside a question, so this blocker as originally typed is mechanically unanswerable (the lc-62 class from the minting side); re-typed separator-free, the operator's answer is already in the ledger
+amended-blocked-by: 2026-09-13 decision whether init seeds the three carriers on a greenfield repo, or the design assigns that act elsewhere
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over). The decision is ANSWERED at LEDGER.md:72: init SEEDS the three carriers on a greenfield repo, empty bodies, headers only, skip-if-present, no separate verb. That is the first branch of this entry and the done-criterion already describes it, so only the blocker and the write-set move: the write-set drops its decision pseudo-path, which named the question now answered. Stays STANDBY.
+amended-write-set: 2026-10-05 plugin/cli/lifecycle_core/init.py,test/test_init.py
+amended-blocked-by: 2026-10-05 NONE
+closed-reason: 2026-10-07 init seeds the three carriers on a greenfield repo. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: 62f423cc1124f7736082222a8995c4b09fe9dac2
+
 ## Archive (pre-migration)
 
