@@ -2630,5 +2630,21 @@ closed-met: none
 closed-decided: none
 closed-ref: e2797749690d092f87f37c49a8a6fb896fe3c7e9
 
+## lc-138
+grade: DONE
+requirement: the ledger verb commits its carrier WHOLESALE: `ledger add decision` stages and commits LEDGER.md entire, so any pending hand edit to that file rides into the verb's commit under a message that does not describe it. MOVED HERE from statiker st-72 on the operator's venue decision of 2026-09-15. SCOPE NARROWED IN THE MOVE, stated so nothing is silently dropped: st-72 carried three observations. (a) the wholesale commit is this item. (b) the missing Co-Authored-By trailer on verb-composed commits is ALREADY BOOKED HERE as lc-52, found by the booking desk before writing, so it is NOT duplicated into a sibling. (c) the 300-char --answer cap was recorded by st-72 as CORRECT behaviour and explicitly not a defect claim; it needs nothing and is carried only as context
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: ONE of three directions has landed, or been declined with a reason: commit by a pathspec of the lines the verb itself wrote; or refuse to commit when the carrier is dirty on entry; or document the wholesale-commit contract so callers stage deliberately. The choice is this repo's and is the blocker below. Whichever lands, the red-first case is a carrier dirty with an unrelated hand edit at verb entry, and the must-not-move is that a clean-carrier invocation still commits exactly what the verb wrote
+evidence: INCIDENT verified at the artifact 2026-09-14 at the statiker desk: a hand-appended fact line to statiker LEDGER.md (that carrier's own declaration names `session` a writer for ledger lines, and the verb has no fact form) was absorbed by the verb's commit 03ce106 'lifecycle: ledger decision'. Read back with git show --stat: 1 file changed, 2 insertions, both lines intended, nothing else swept, so NO DAMAGE in that instance. The hazard is the general shape, where the absorbed edit is another writer's or is not yet meant to land. SECOND OBSERVATION, same shape, 2026-09-15: the same verb was invoked four times in one session against a carrier the desk was also hand-editing. GOAL SLOT chosen by the foreign desk and owned by this repo's reader: re-grade if lean-machinery-strict-checks is the wrong family
+blocked-by: NONE
+not-derivable: 2026-09-24 searched LEDGER.md, CLAUDE.md, ITEMS.md, and docs/ for “pathspec”, “refuse-on-dirty”, “dirty”, and “commit contract”; no decision line chooses among the three repair directions. (drafted by codex luna, graded at desk)
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+blocker-moot: which of the three repair directions this repo takes: pathspec-scoped commit, refuse-on-dirty, or document the contract (answered in the ledger before this item closed)
+closed-reason: 2026-10-07 ledger add refuses a carrier dirty at entry and writes nothing; new row ledger_carrier_dirty, admitted on the pair. The sibling verbs are booked as lc-318. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: lc-318
+closed-decided: LEDGER.md:204
+closed-ref: 582e304317dfd8bb602b0eb3599309b9f8f2e3ea
+
 ## Archive (pre-migration)
 
