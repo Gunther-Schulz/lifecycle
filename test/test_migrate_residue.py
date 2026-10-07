@@ -234,8 +234,13 @@ class TheClassesNotBooked(unittest.TestCase):
 
     def test_no_item_mentions_the_method_file(self):
         migrate_run(self.repo)
+        # lc-83: the evidence slot now QUOTES each consumer's matched line,
+        # and this fixture's consumer says "The method file" in its own words.
+        # The item's own prose is what the ban grades, so the quoted line is
+        # left out of the body.
         body = " ".join(v for it in tend_items(self.repo)
-                        for v in it.slots.values()).lower()
+                        for k, v in it.slots.items()
+                        if k != "evidence").lower()
         for banned in ("method file", "decompos", "dev-loop.md — "):
             self.assertNotIn(banned, body)
 

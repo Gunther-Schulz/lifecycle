@@ -1680,8 +1680,8 @@ def dispose_source(disposition: str, src: Path, src_name: str,
 
 
 def live_carrier_readers(repo: Path, names, excluded) -> tuple:
-    """`(paths, why-unverified)` — TRACKED files that still name the old
-    carriers.
+    """`({path: first matched line}, why-unverified)` — TRACKED files that
+    still name the old carriers, each with the line that names one.
 
     TRACKED IS THE POPULATION (§3.1b): `git grep` searches exactly the files
     git tracks, and a reader nobody tracks is not a consumer the migration
@@ -1700,22 +1700,38 @@ def live_carrier_readers(repo: Path, names, excluded) -> tuple:
     real failure, and folding those together would turn an unrunnable git
     into a clean repo — a zero shaped exactly like an absence.
     """
+    basenames = [Path(name).name for name in names]
     patterns = []
-    for name in names:
-        patterns += ["-e", Path(name).name]
+    for base in basenames:
+        patterns += ["-e", base]
     if not patterns:
-        return [], "no source carrier name to search for"
+        return {}, "no source carrier name to search for"
     try:
         p = subprocess.run(
-            ["git", "-C", str(repo), "grep", "-l", "-I", "-F", *patterns],
+            ["git", "-C", str(repo), "grep", "-z", "-n", "-I", "-F",
+             *patterns],
             capture_output=True, text=True)
     except OSError as exc:
-        return [], f"`git grep` could not be run ({exc!r})"
+        return {}, f"`git grep` could not be run ({exc!r})"
     if p.returncode not in (0, 1):
-        return [], (f"`git grep` exited {p.returncode}: "
+        return {}, (f"`git grep` exited {p.returncode}: "
                     f"{p.stderr.strip()[:200]!r}")
-    hits = [ln.strip() for ln in p.stdout.split("\n") if ln.strip()]
-    return [h for h in hits if h not in excluded], ""
+    # lc-83: the -F candidate is only a CANDIDATE. A match counts when the
+    # basename stands as a whole path component: no name character on its
+    # left (`FEATURE-BACKLOG.md`, `MY_BACKLOG.md`) and none on its right
+    # (`BACKLOG.md.bak`, `BACKLOG.mdx`).
+    whole = re.compile(
+        r"(?<![\w.-])(?:" + "|".join(re.escape(b) for b in basenames)
+        + r")(?![\w-]|\.\w)")
+    hits = {}
+    for rec in p.stdout.split("\n"):
+        parts = rec.split("\0", 2)
+        if len(parts) != 3 or parts[0] in excluded or parts[0] in hits:
+            continue
+        if whole.search(parts[2]):
+            hits[parts[0]] = (f"line {parts[1]}: "
+                              f"{parts[2].strip()[:160]}")
+    return hits, ""
 
 
 #: The residue item's own identity (lc-71): the carrier label its requirement
@@ -1781,7 +1797,8 @@ def residue_blocks(readers, src_label: str, ident: str) -> list:
             f"{src_label}, or each remaining one is recorded as a declared "
             "exemption"),
         "evidence": f"tracked files naming {src_label} at migration time: "
-                    f"{shown}",
+                    + "; ".join(f"{path} ({readers[path]})"
+                                for path in readers),
         "blocked-by": blocked,
     })]
 
@@ -4259,9 +4276,9 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
           "`write-set` and `evidence` naming every one of them:")
         a("")
         for path in readers:
-            a(f"- `{path}`")
+            a(f"- `{path}` — {readers[path]}")
         a("")
-        a("SEARCHED: the files git TRACKS (`git grep -l -I -F` over the work "
+        a("SEARCHED: the files git TRACKS (`git grep -n -I -F` over the work "
           "tree), fixed-string so a `.` in a basename cannot match any "
           "character. EXCLUDED: the source carriers, the successor homes and "
           "this report — each of which names the old carrier by "

@@ -33,5 +33,32 @@ class SecondMergeBooksNoSecondResidue(unittest.TestCase):
                          "the second --merge appended another residue item")
 
 
+class ReadersAreWholePathComponents(unittest.TestCase):
+    """lc-83 — the consumer list names carrier-name matches, not substrings."""
+
+    def test_a_longer_name_is_not_a_consumer_and_the_matched_line_is_shown(self):
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        commit(d, "doc.md", "see FEATURE-BACKLOG.md for the other repo\n")
+        commit(d, "genuine.md", "intro\nThe queue lives in BACKLOG.md here.\n")
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        ev = tend_items(d)[0].slots["evidence"]
+        self.assertIn("genuine.md", ev)
+        self.assertIn("The queue lives in BACKLOG.md here.", ev)
+        self.assertNotIn("doc.md", ev)
+
+    def test_a_path_component_spelling_is_still_a_consumer(self):
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        commit(d, "a.md", "cat ./BACKLOG.md\n")
+        commit(d, "b.md", "`BACKLOG.md`, weekly\n")
+        commit(d, "c.md", "BACKLOG.md.bak and MY_BACKLOG.md\n")
+        migrate_run(d)
+        ev = tend_items(d)[0].slots["evidence"]
+        self.assertIn("a.md", ev)
+        self.assertIn("b.md", ev)
+        self.assertNotIn("c.md", ev)
+
+
 if __name__ == "__main__":
     unittest.main()
