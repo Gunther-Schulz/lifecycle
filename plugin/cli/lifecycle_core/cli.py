@@ -348,6 +348,14 @@ def cmd_item_check(args, out, err=None) -> int:
             "checked; a length-one unclearable terminal still was. This is "
             "a narrower answer, never a clean one.")
 
+    # WHERE EACH READY ITEM'S WRITE LANDS (lc-111). Here rather than in
+    # `check_file` for the reason the blocker checks sit here: the answer
+    # needs the REPO — what git tracks — and a single-home shape check has
+    # only a path. Asked of git once, for the whole board.
+    tree, tree_why = items_mod.tracked_tree(ctx.repo)
+    code = exits.worst([code, items_mod.check_write_set_venues(
+        items_parsed, out, tree, tree_why, ctx.prefix)])
+
     # THE DONE HOME'S OWN SHAPE CHECK. It is a KIND with the TOOL as its
     # writer, so shape applies to it exactly as it applies to the live
     # carrier — and until this wave nothing checked it: the done home was

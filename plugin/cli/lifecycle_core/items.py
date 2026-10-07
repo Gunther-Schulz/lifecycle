@@ -4128,6 +4128,192 @@ def classify_write_set(value: str):
     return WAVE_PATHS, [wave_normalize(e) for e in entries], None
 
 
+# --- what a write-set element RESOLVES to (lc-111) -----------------------------
+
+@dataclass(frozen=True)
+class TrackedTree:
+    """What git tracks in ONE repo, as the two sets resolution asks about.
+
+    `files` are the tracked repo-relative paths; `tops` the top-level
+    DIRECTORIES that hold at least one of them. Built once per run by
+    `tracked_tree` and handed down, so a verdict over fifty items asks git
+    once rather than fifty times.
+    """
+    files: frozenset
+    tops: frozenset
+
+    def resolves(self, entry: str) -> bool:
+        """Does this path element name something HERE?
+
+        A tracked file, a tracked directory, or a NEW file under a tracked
+        top-level directory. RESOLVABILITY-OR-NEW, NEVER MERE EXISTENCE: an
+        item is booked before its file exists, so a check that demanded the
+        file would refuse every booking of new work.
+
+        WHAT IT THEREFORE CANNOT SEE, stated rather than left to be found:
+        a misspelled BASENAME under a real directory reads exactly like a
+        new file. The carrier has no way to declare "this entry creates its
+        file", so the two are not told apart here; only a spelling that
+        leaves every tracked top-level directory is caught.
+        """
+        e = wave_normalize(entry).rstrip("/")
+        return e in self.files or e.split("/", 1)[0] in self.tops
+
+
+def tracked_tree(repo: Path):
+    """`(TrackedTree, why-not)` — git's own list of what `repo` tracks.
+
+    The `_git_blob` shape: a failure is never folded into an empty tree,
+    because against an empty tree EVERY path is unresolved and the caller
+    would report a carrier full of misspellings over a repo git simply
+    could not list.
+    """
+    try:
+        p = subprocess.run(["git", "-C", str(repo), "ls-files", "-z"],
+                           capture_output=True, text=True,
+                           timeout=_GIT_TIMEOUT)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, f"`git ls-files` could not run ({exc!r})"
+    if p.returncode != 0:
+        detail = (p.stderr or "").strip().splitlines()
+        return None, (f"`git ls-files` exited {p.returncode}"
+                      + (f": {detail[0]}" if detail else ""))
+    files = frozenset(f for f in p.stdout.split("\0") if f)
+    return TrackedTree(files, frozenset(f.split("/", 1)[0] for f in files
+                                        if "/" in f)), ""
+
+
+def _bare_repo_entry(entry: str, tree: TrackedTree) -> bool:
+    """`<repo> <path>` — a bare repo NAME in front of a path (lc-24's form).
+
+    `cache-fix test/absence-scan.test.mjs`: two tokens, the second a path,
+    the first a single name that is no top-level directory and no file of
+    this repo. Deliberately this narrow. A single bare token is NOT read as
+    a repo name: `NOTES.md` booked before it exists has that exact shape,
+    and a refusal that fired on it would be firing on a correct booking.
+    """
+    parts = entry.split()
+    if len(parts) != 2 or not all(_WAVE_PATH_ENTRY.match(p) for p in parts):
+        return False
+    name = parts[0]
+    return "/" not in name and name not in tree.tops and name not in tree.files
+
+
+def check_write_set_venues(parsed: Parsed, out, tree, tree_why: str,
+                           prefix: str | None) -> int:
+    """Grade every READY item's write-set ELEMENT BY ELEMENT (lc-111).
+
+    The slot was graded for PRESENCE and never for where it lands, so an
+    item whose realizing write sits in ANOTHER repo read schedulable on the
+    ready board — caught three times in one day only because a person read
+    the slot before dispatching.
+
+    THREE ANSWERS PER ELEMENT, split on comma:
+
+    1. it resolves here (`TrackedTree.resolves`) — pass;
+    2. it names a boundary OUTSIDE this repo — `_wave_foreign_entry`'s forms
+       (`<path>@<repo>`, absolute, `~`, `../`) or a bare repo name before a
+       path — AND the item carries no blocker: FINDING. The board is calling
+       dispatchable an item this desk cannot complete;
+    3. the declared transitional literal `UNKNOWN`: COULD NOT VERIFY.
+
+    THE REFUSAL IS THE MISSING BLOCKER, NEVER THE FOREIGN VENUE. An item
+    that names another repo and waits behind a typed blocker is booked
+    correctly, and a check that reddened it would fire on legitimate work.
+
+    EVERY ELEMENT IS SPLIT HERE RATHER THAN BY `verbs.write_set_entries`,
+    and that is not a second body for one fact: that split DROPS the
+    sentinels, which is right for a join and wrong for this verdict, whose
+    third answer is about one of them.
+
+    WHAT IS NOT GRADED IS COUNTED. A prose element, a `decision:` venue and
+    a path under no tracked top-level directory are none of the three
+    answers; `item waves` names each of them. Here they are counted on a
+    line of their own and move no exit code — silence over them would read
+    as "resolved".
+    """
+    ready = [it for it in parsed.items if it.grade == "READY"]
+    if tree is None:
+        out(f"write-set venues: COULD NOT VERIFY — {tree_why}, so no "
+            f"write-set element of the {len(ready)} READY item(s) was "
+            "resolved against this repo's tracked tree. Nothing was graded.")
+        return exits.COULD_NOT_VERIFY
+    if not ready:
+        out("write-set venues: no READY item, so no write-set was graded — "
+            "an empty board, not a board whose every boundary resolved.")
+        return exits.CLEAN
+
+    here = blocked = 0
+    findings, unknown = [], []
+    unresolved, venues, prose = [], [], []
+    for it in ready:
+        kind, _detail = classify_blocker(it.slots.get("blocked-by", ""), prefix)
+        for raw in effective_write_set(it).split(","):
+            e = raw.strip()
+            if not e or e.upper() == BLOCKER_NONE:
+                continue
+            if e.upper() == UNKNOWN:
+                unknown.append(it.ident)
+            elif _wave_foreign_entry(e) or _bare_repo_entry(e, tree):
+                if kind == "none":
+                    findings.append((it.ident, e))
+                else:
+                    blocked += 1
+            elif _WAVE_PATH_ENTRY.match(e):
+                if tree.resolves(e):
+                    here += 1
+                else:
+                    unresolved.append(it.ident)
+            elif _WAVE_VENUE_ENTRY.match(e):
+                venues.append(it.ident)
+            else:
+                prose.append(it.ident)
+
+    for ident, e in findings:
+        out(f"FINDING [write_set_foreign_unblocked] {ident} is READY with "
+            f"`blocked-by: NONE`, and its write-set names a boundary outside "
+            f"this repo: {e!r}. The ready board is calling dispatchable an "
+            "item this desk cannot complete from here. The refusal is the "
+            "MISSING BLOCKER, never the foreign venue: park it behind a "
+            "typed blocker naming what has to happen there, or rewrite the "
+            "slot to what lands in this repo.")
+
+    def named(idents):
+        return ", ".join(dict.fromkeys(idents))
+
+    counts = (f"{len(ready)} READY item(s): {here} resolve here, {blocked} "
+              f"foreign under a blocker, {len(findings)} foreign with none, "
+              f"{len(unknown)} UNKNOWN")
+    ungraded = len(unresolved) + len(venues) + len(prose)
+    if ungraded:
+        out(f"write-set venues: NOT GRADED — {ungraded} element(s) this "
+            "verdict has no answer for, counted rather than passed: "
+            f"{len(unresolved)} path(s) under no tracked top-level directory "
+            "(a new tree and a misspelling read alike)"
+            + (f" [{named(unresolved)}]" if unresolved else "")
+            + f", {len(venues)} venue"
+            + (f" [{named(venues)}]" if venues else "")
+            + f", {len(prose)} prose"
+            + (f" [{named(prose)}]" if prose else "")
+            + ". `item waves` names each one.")
+    code = exits.CLEAN
+    if unknown:
+        out(f"write-set venues: COULD NOT VERIFY — {len(unknown)} READY "
+            f"write-set element(s) are the transitional literal `{UNKNOWN}` "
+            f"[{named(unknown)}], so where that work lands was not graded. "
+            f"({counts}.)")
+        code = exits.COULD_NOT_VERIFY
+    if findings:
+        out(f"write-set venues: FINDING — {counts}.")
+        return exits.worst([code, exits.FINDING])
+    if not unknown:
+        out(f"write-set venues: CLEAN — {counts}. A new file and a "
+            "misspelled basename under a tracked directory are not told "
+            "apart; only a spelling that leaves every tracked top-level "
+            "directory is.")
+    return code
+
+
 def wave_covers(entry: str, other: str) -> bool:
     """Does `entry` — a DIRECTORY entry — contain `other`?
 

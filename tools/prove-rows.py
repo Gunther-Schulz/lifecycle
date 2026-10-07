@@ -1251,6 +1251,19 @@ MUTATIONS = [
      "                pass",
      "the recording of a detected ring, the cycle half of this refusal"),
 
+    # lc-111. THE RECORDING OF AN UNBLOCKED FOREIGN ELEMENT, rerouted to the
+    # branch beside it. Folded this way the plant's element is still SEEN as
+    # foreign and is counted as correctly booked behind a blocker, so the
+    # verdict line goes CLEAN — the exact defect: a board that cannot tell an
+    # item waiting on another repo from one it is calling dispatchable.
+    # Mutating the foreignness test instead would send the element on to path
+    # resolution and darken the row for a neighbouring reason.
+    ("write_set_foreign_unblocked", "items.py",
+     "                    findings.append((it.ident, e))",
+     "                    blocked += 1",
+     "the recording of a foreign write-set element on a READY item that "
+     "carries no blocker"),
+
     # lc-176. THE COMPARISON ITSELF, which is where this refusal is decided.
     # Anchoring the `if mismatches:` below it would grade the PRINTING, and
     # anchoring the `res`-side output would leave the comparison intact and

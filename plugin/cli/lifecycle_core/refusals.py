@@ -1341,6 +1341,15 @@ CYCLE_ITEMS = (
     + _blocked_block("xx-2", "PARKED", "xx-1")
 )
 
+#: `SEED_ITEMS` with its one write-set element made FOREIGN (lc-111): the
+#: carrier's own `<path>@<repo>` form, on a READY block that still reads
+#: `blocked-by: NONE`. DERIVED from the seed, so the plant differs from every
+#: other row's clean control in this one slot.
+FOREIGN_WRITE_SET_ITEMS = SEED_ITEMS.replace(
+    "write-set: tools/harvest.mjs\n",
+    "write-set: tools/harvest.mjs@cache-fix\n", 1)
+assert FOREIGN_WRITE_SET_ITEMS != SEED_ITEMS, "the seed's write-set moved"
+
 #: lc-193's UNCLEARABLE CHAIN: `xx-1` blocked-by `xx-2`, `xx-2` blocked-by
 #: the literal, provably-dead `evidence false`. `xx-1` is the ANCESTOR this
 #: check must also name — it is exactly as unschedulable as `xx-2`, and
@@ -2009,6 +2018,30 @@ VERB_ROWS = [
         control=lambda: _blocker_graph_run(
             CYCLE_ITEMS.replace("blocked-by: xx-1\n", "blocked-by: NONE\n")),
         stage="lc-193",
+    ),
+    Row(
+        ident="write_set_foreign_unblocked",
+        refusal="a READY item with NO blocker whose write-set names a "
+                "boundary outside this repo (lc-111) — `<path>@<repo>`, an "
+                "absolute / `~` / `../` path, or a bare repo name before a "
+                "path. The slot was graded for presence and never for where "
+                "it lands, so the ready board called dispatchable an item "
+                "this desk cannot complete. The refusal is the MISSING "
+                "BLOCKER, never the foreign venue",
+        firing_input="`item check` over a carrier whose READY block, "
+                     "`blocked-by: NONE`, carries `write-set: "
+                     "tools/harvest.mjs@cache-fix`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "check"], items=FOREIGN_WRITE_SET_ITEMS),
+        # THE BLOCKER ALONE differs: the same foreign element, now behind a
+        # typed blocker, is a correct booking (lc-67's shape). A control
+        # that rewrote the write-set to a local path would prove the check
+        # can see foreignness and nothing about what it refuses.
+        control=lambda: _cli(
+            ["item", "check"],
+            items=_mutate(FOREIGN_WRITE_SET_ITEMS, "blocked-by: NONE",
+                          "blocked-by: external the other repo's release")),
+        stage="drain wave C (lc-111)",
     ),
     Row(
         ident="parked_without_typed_blocker",
