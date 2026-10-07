@@ -73,10 +73,23 @@ timestamp can leave a changed one reading clean.
     python3 tools/prove-rows.py            # every row that has a mutation
     python3 tools/prove-rows.py <ident>…   # only these
 
-Exit: 0 every proof held · 2 a proof failed, OR a file this run would mutate
-already differs from HEAD (the refusal above) · 3 a mutation anchor was not
-found (the source moved under the arrangement — the arrangement is stale,
-which is a finding about THIS file, not about the row).
+THE BASELINE IS GRADED, NOT ONLY PRINTED (lc-196). Every proof here is a
+DIFFERENCE between the unmutated roster and a mutated one, and a difference
+says nothing about whether the unmutated side was right: a row whose plant
+already exits the wrong code at HEAD still "changes" under its mutation and
+would earn PROVEN. So each row's baseline code is compared against the code
+its own roster row DECLARES (`Row.expect`) before any mutation is judged. A
+row that disagrees is a finding about the ROSTER — reported under that name,
+its arrangement NOT JUDGED rather than folded into a proof — and a row whose
+baseline cannot be graded at all (it raised, or the roster declares no
+expectation this run could read) is could-not-verify, never a pass.
+
+Exit: 0 every proof held · 2 a proof failed, OR a row's baseline disagrees
+with what its roster row declares, OR a file this run would mutate already
+differs from HEAD (the refusal above) · 3 a mutation anchor was not found
+(the source moved under the arrangement — the arrangement is stale, which is
+a finding about THIS file, not about the row), OR an arm raised, OR a
+baseline could not be graded.
 """
 
 import atexit
@@ -1521,6 +1534,59 @@ def sibling_map() -> dict:
     return json.loads(r.stdout.strip().split("\n")[-1])
 
 
+def expectations() -> dict:
+    """`{ident: expect}` — the exit code each roster row DECLARES, read once.
+
+    Read from the UNMUTATED roster in a fresh interpreter, exactly as
+    `sibling_map` reads the finding-row mapping and for the same reason: the
+    declaration is the roster's own, and a copy of it here would be a second
+    body that goes stale the day a row is added.
+    """
+    src = (
+        "import json, sys\n"
+        f"sys.path.insert(0, {str(WORK_ROOT or CLI)!r})\n"
+        "from lifecycle_core import refusals\n"
+        "print(json.dumps({r.ident: r.expect for r in refusals.ROWS}))\n"
+    )
+    r = subprocess.run([sys.executable, "-c", src], capture_output=True,
+                       text=True, cwd=str(REPO))
+    if r.returncode != 0:
+        raise SystemExit(f"the roster's expectations could not be read:\n"
+                         f"{r.stderr[-2000:]}")
+    import json
+    return json.loads(r.stdout.strip().split("\n")[-1])
+
+
+def grade_baseline(base: dict, expect: dict):
+    """`(disagree, ungraded)` — the baseline against what each row DECLARED.
+
+    `disagree` is `[(ident, signature, declared)]`: the plant ran and exited
+    a code other than the one its row promises. `ungraded` is
+    `[(ident, why)]`: there is no code to compare (the arm raised) or no
+    declaration to compare it with. THREE answers, so an ungradable baseline
+    is never counted on either side of the comparison.
+
+    THE CODE HALF of the signature is what is graded. The name half is
+    carried in the signature and compared across the mutation, but it is not
+    graded against a declaration here: several could-not-verify rows print
+    no `[row]` tag in their own message, and demanding one would report
+    those rows broken for a property their emitting code never had.
+    """
+    disagree, ungraded = [], []
+    for ident, sig in sorted(base.items()):
+        sig = str(sig)
+        if sig.startswith("RAISED:"):
+            ungraded.append((ident, f"the plant raised at HEAD ({sig})"))
+            continue
+        if ident not in expect:
+            ungraded.append((ident, "the roster declares no expectation "
+                                    "this run could read for it"))
+            continue
+        if sig.split("/", 1)[0] != str(expect[ident]):
+            disagree.append((ident, sig, expect[ident]))
+    return disagree, ungraded
+
+
 def main(argv) -> int:
     wanted = set(argv) or None
     rows = [m for m in MUTATIONS if wanted is None or m[0] in wanted]
@@ -1605,11 +1671,33 @@ def main(argv) -> int:
     for ident, code in sorted(base.items()):
         print(f"    {ident:<34} {code}")
 
+    # GRADED BEFORE ANY MUTATION IS JUDGED (lc-196). The listing above is
+    # where this tool used to stop: a baseline printed and compared with
+    # nothing, so a row already broken at HEAD went on to earn PROVEN the
+    # moment its mutation moved its signature.
+    disagree, ungraded = grade_baseline(base, expectations())
+    print(f"\nBASELINE GRADED against each row's declared exit code: "
+          f"{len(base) - len(disagree) - len(ungraded)} of {len(base)} agree, "
+          f"{len(disagree)} disagree, {len(ungraded)} could not be graded.")
+    for ident, sig, want in disagree:
+        print(f"    FINDING about the ROSTER, not about any mutation: "
+              f"[{ident}] fired {sig} at HEAD and its row declares exit "
+              f"{want}.")
+    for ident, why in ungraded:
+        print(f"    COULD NOT VERIFY [{ident}] {why}.")
+    off_baseline = {ident for ident, _sig, _want in disagree}
+
     failures = []
 
     raised = []
     stale = []
     for ident, fname, anchor, replacement, what in rows:
+        if ident in off_baseline:
+            print(f"\n[{ident}] NOT JUDGED — its baseline already disagrees "
+                  "with what its roster row declares (above). A mutation "
+                  "moving an already-wrong verdict proves nothing about the "
+                  "condition it names; repair the row, then re-run.")
+            continue
         path = WORK_CORE / fname
         text = path.read_text(encoding="utf-8")
         hits = anchor_hits(text, anchor)
@@ -1712,8 +1800,19 @@ def main(argv) -> int:
         return COULD_NOT_VERIFY
     if stale:
         return COULD_NOT_VERIFY
+    if ungraded:
+        print(f"\nCOULD NOT VERIFY: the baseline of "
+              f"{', '.join(i for i, _ in ungraded)} could not be graded, so "
+              "this run cannot say every unmutated row does what it declares.")
+        return COULD_NOT_VERIFY
     if failures:
         print(f"\nFAILED: {', '.join(failures)}")
+    if disagree:
+        print(f"\nROSTER FINDING: the baseline of "
+              f"{', '.join(i for i, _s, _w in disagree)} disagrees with its "
+              "row's declared exit code. No arrangement for such a row was "
+              "judged.")
+    if failures or disagree:
         return FINDING
     print("\nevery recorded arrangement held: the named row went dark, and "
           "nothing proving another refusal went dark with it.")

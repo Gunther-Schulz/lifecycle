@@ -120,9 +120,16 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
         git("commit", "-q", "-m", "fixture")
         return d, core, target
 
-    def _run(self, d, core):
-        """`main([])` over the fixture, its exit code and everything it said."""
+    def _run(self, d, core, *, expect=None, extra_base=None):
+        """`main([])` over the fixture, its exit code and everything it said.
+
+        `expect` is what the roster DECLARES for each row (lc-196) — by
+        default the code the verdict stub's baseline really carries, so every
+        arm that is not about the baseline runs over one that agrees.
+        `extra_base` adds rows to the baseline that carry NO arrangement.
+        """
         mod = _prove_rows()
+        declared = {"probe_row": 2} if expect is None else expect
         self._live_during = []
         arrangements = [("probe_row", "probe_mod.py", ANCHOR, REPLACEMENT,
                          "the fixture module's one decided condition")]
@@ -154,11 +161,22 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
             self._live_during.append(
                 self._sha((core / "probe_mod.py").read_bytes()))
             text = (watched / "probe_mod.py").read_text(encoding="utf-8")
-            return {"probe_row": "0/unnamed" if REPLACEMENT in text
-                    else "2/named"}
+            out = {"probe_row": "0/unnamed" if REPLACEMENT in text
+                   else "2/named"}
+            out.update(extra_base or {})
+            return out
 
         buf = io.StringIO()
-        with mock.patch.object(mod, "REPO", d), \
+        # `create=True` ON THE EXPECTATION READER ONLY, and for the reason
+        # this file's header gives: the red-first proof of lc-196 runs these
+        # arms against a tool that has no such name, and an AttributeError
+        # there would prove the module is old, never that the arm
+        # discriminates. With it, the old tool simply never consults the
+        # declaration — which is the defect — and the arm fails on its
+        # assertion.
+        with mock.patch.object(mod, "expectations", lambda: dict(declared),
+                               create=True), \
+                mock.patch.object(mod, "REPO", d), \
                 mock.patch.object(mod, "CORE", core), \
                 mock.patch.object(mod, "MUTATIONS", arrangements), \
                 mock.patch.object(mod, "sibling_map",
@@ -315,6 +333,71 @@ class TheStartupRefusalOverADirtyMutationTarget(unittest.TestCase):
                          "while the walk ran: a reader of this checkout "
                          "would have seen a disabled check, and the end "
                          "state cannot show it")
+
+
+class TheBaselineIsGradedAgainstWhatEachRowDeclares(
+        TheStartupRefusalOverADirtyMutationTarget):
+    """lc-196 — a row already BROKEN at HEAD must not earn PROVEN.
+
+    A proof here is a DIFFERENCE between the unmutated roster and a mutated
+    one. A difference cannot say the unmutated side was right: a plant that
+    exits the wrong code at HEAD still moves under its mutation. So the
+    baseline is graded against the code each roster row DECLARES before any
+    mutation is judged.
+
+    INHERITS THE FIXTURE AND `_run` rather than restating them — and, with
+    them, the parent's arms, which re-run here over the same code. That is
+    the price of one fixture body; a second copy would be the drift.
+    """
+
+    def test_the_same_walk_is_PROVEN_when_the_baseline_agrees_and_not_when_it_does_not(self):
+        """THE PAIR, over one fixture and one walk, differing in the
+        DECLARATION alone. The plant exits 2 in both arms; the roster says 2
+        in one and 3 in the other."""
+        d, core, _target = self._fixture()
+        code, out, mod = self._run(d, core, expect={"probe_row": 2})
+        self.assertIn("[probe_row] PROVEN", out, out)
+        self.assertEqual(code, mod.CLEAN, out)
+
+        code, out, mod = self._run(d, core, expect={"probe_row": 3})
+        self.assertNotIn(
+            "[probe_row] PROVEN", out,
+            "a row whose plant exits 2 at HEAD while its roster row declares "
+            "3 was granted PROVEN: the baseline was printed and never "
+            f"graded, so a row already broken reads as a proven one:\n{out}")
+        self.assertIn(
+            "FINDING about the ROSTER", out,
+            f"the disagreement was not reported as a roster finding:\n{out}")
+        self.assertIn("[probe_row] fired 2/named", out, out)
+        self.assertIn("declares exit 3", out, out)
+        self.assertEqual(
+            code, mod.FINDING,
+            f"a baseline disagreement did not reach the exit code:\n{out}")
+
+    def test_a_disagreeing_row_with_NO_arrangement_is_reported_too(self):
+        """The grade is over the ROSTER, not over the arrangement table: a
+        row nobody wrote a mutation for is exactly the row whose baseline
+        nothing else in this tool ever looks at."""
+        d, core, _target = self._fixture()
+        code, out, mod = self._run(
+            d, core, expect={"probe_row": 2, "bare_row": 2},
+            extra_base={"bare_row": "0/unnamed"})
+        self.assertIn("[bare_row] fired 0/unnamed", out, out)
+        self.assertIn(
+            "[probe_row] PROVEN", out,
+            "another row's broken baseline suppressed a proof it has "
+            f"nothing to do with:\n{out}")
+        self.assertEqual(code, mod.FINDING, out)
+
+    def test_a_baseline_with_no_declaration_to_grade_it_is_COULD_NOT_VERIFY(self):
+        """THE THIRD ANSWER. A row the roster declares nothing for was not
+        graded; that is neither agreement nor a finding, and it must not
+        share an exit code with either."""
+        d, core, _target = self._fixture()
+        code, out, mod = self._run(d, core, expect={})
+        self.assertIn("COULD NOT VERIFY [probe_row]", out, out)
+        self.assertNotIn("FINDING about the ROSTER", out, out)
+        self.assertEqual(code, mod.COULD_NOT_VERIFY, out)
 
 
 if __name__ == "__main__":
