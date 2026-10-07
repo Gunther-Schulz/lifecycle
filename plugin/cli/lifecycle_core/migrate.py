@@ -3437,6 +3437,10 @@ def run(args, out, ctx) -> int:
         atomic.write_text(ctx.ledger_path, ledger_mod.head_text(), encoding="utf-8")
     lparsed, lwhy = ledger_mod.read(ctx.ledger_path)
     ledger_count = None if lparsed is None else len(lparsed.lines)
+    # lc-150 ARM 2: ledger.parse answers THREE ways (lines, unreadable,
+    # problems). A count over `lines` alone folds an unreadable line into a
+    # zero that reads as clean, so the unreadable ones travel beside it.
+    ledger_unreadable = [] if lparsed is None else list(lparsed.unreadable)
 
     # --- the report
     #
@@ -3593,7 +3597,9 @@ def run(args, out, ctx) -> int:
         f"    archive bodies WOULD be:  {archive_count} → "
         f"{ctx.done_path.name}, verbatim (nothing written)")
     out(f"    ledger lines:             {ledger_count} (nothing migrates into "
-        "the ledger — §3.6, §4 row 1)")
+        "the ledger — §3.6, §4 row 1)"
+        + (f"; {len(ledger_unreadable)} UNREADABLE line(s) NOT counted"
+           if ledger_unreadable else ""))
     # STATED IN EVERY MODE, INCLUDING UNTOUCHED. An omitted line reads as
     # "checked and clean" and a source nobody touched reads as nothing at all;
     # those are different answers and the three-answers rule does not let them
@@ -3642,6 +3648,13 @@ def run(args, out, ctx) -> int:
     if ledger_count is None:
         out(f"COULD NOT VERIFY: the ledger could not be read, so 'zero "
             f"entries routed to the ledger' was not checked. {lwhy}")
+        code = exits.worst([code, exits.COULD_NOT_VERIFY])
+    elif ledger_unreadable and ledger_count == 0:
+        out(f"COULD NOT VERIFY: {ctx.ledger_path.name} has "
+            f"{len(ledger_unreadable)} line(s) the ledger parser cannot "
+            f"classify (first at line {ledger_unreadable[0][0]}), so 'zero "
+            "ledger lines' was counted over the readable ones only and is "
+            "not a clean answer.")
         code = exits.worst([code, exits.COULD_NOT_VERIFY])
     elif ledger_count != 0:
         out(f"FINDING [migration_ledger_nonzero] {ledger_count} ledger "

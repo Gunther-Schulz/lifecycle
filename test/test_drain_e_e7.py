@@ -67,5 +67,49 @@ class TruncatedRequirementIsMarked(unittest.TestCase):
         self.assertFalse([n for n in extra if "record" in n.lower()], extra)
 
 
+class UnreadableLedgerLineIsNotZero(unittest.TestCase):
+    """lc-150 ARM 2 ONLY (wave E ruling: the absolute count stays, arm 1 is
+    withdrawn). An unreadable ledger line is could-not-verify with its
+    reason, never folded into 'ledger lines: 0' and CLEAN."""
+
+    ENTRY = "# old\n\n## Open\n\n- **READY 2026-01-03 — one.** body\n"
+
+    def seeded(self, line: str):
+        d = build(self.ENTRY)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        with open(d / "LEDGER.md", "a", encoding="utf-8") as fh:
+            fh.write(line + "\n")
+        return d
+
+    def test_an_unclassifiable_line_is_could_not_verify_never_clean(self):
+        from lifecycle_core import ledger as ledger_mod
+        line = "this line is in no ledger kind at all"
+        self.assertIsNone(ledger_mod.parse_line(line))
+        d = self.seeded(line)
+        code, out = migrate_run(d)
+        self.assertIn("UNREADABLE", out)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("COULD NOT VERIFY", out)
+        self.assertIn("LEDGER.md", out)
+        self.assertNotIn("migrate: CLEAN", out)
+
+    def test_control_one_well_formed_line_still_gives_the_finding(self):
+        from lifecycle_core import ledger as ledger_mod
+        line = ledger_mod.render("superseded", {
+            "id": "x-1", "by": "x-2", "reason": "a reason"})
+        self.assertIsNotNone(ledger_mod.parse_line(line))
+        d = self.seeded(line)
+        code, out = migrate_run(d)
+        self.assertIn("FINDING [migration_ledger_nonzero]", out)
+        self.assertEqual(code, exits.FINDING, out)
+
+    def test_control_a_clean_ledger_stays_clean(self):
+        d = build(self.ENTRY)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("COULD NOT VERIFY", out)
+
+
 if __name__ == "__main__":
     unittest.main()
