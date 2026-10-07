@@ -230,18 +230,6 @@ amend-reason: 2026-10-04 the blocker waited on the lc-161 after-measurement verd
 amended-blocked-by: 2026-10-04 decision narrow freeze exit for lc-68 - has its own pre-registered probe passed the admission bar, and has the operator granted its exit at ship time with the per-arc arm switch in the ship set
 amended-not-derivable: 2026-10-04 Not derivable: release is per mechanism (LEDGER:177, 2026-10-04). This item names no pre-registered probe yet, and the narrow exit is the operator's at ship time, asked per mechanism; no ledger line grants either for this item.
 
-## lc-70
-grade: STANDBY
-requirement: tend feature completeness (lc-64 escalations, not in its done-criterion): (a) a declaration LISTING tend in goals is silently absorbed by the union, but 3.1b says 'not declarable per repo'; (b) orientation (cli.py:144) prints DECLARED goals, so tend is invisible there — assurance narrower than reality; record: lc-64 build report
-goal: one-home-per-kind
-write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py
-done-criterion: kind check reports a declaration listing the reserved tend as a redundant-declaration finding (red-first); orientation shows the EFFECTIVE goal set (or marks tend reserved)
-evidence: lc-64 build report, escalations (a) and (b)
-blocked-by: NONE
-amend-reason: 2026-09-15 LAW 24 FIRING PROSPECTIVELY, at its first opportunity since it was widened hours ago (b031846, J22). This entry's done-criterion emits a NEW finding — 'kind check reports a declaration listing the reserved tend as a redundant-declaration finding (red-first)' — and its write set named cli.py and declaration.py only. Law 2 makes every refusal a registry row with its firing input; a refusal's realizing file is always refusals.py; so the boundary as written commissions work that cannot be finished inside it. That is the identical shape that cost this repo three lanes in wave 1 (lc-31 shipped it and went red, lc-30 could not be built, and lane A's older instance is recorded in lc-30's own evidence). Caught here BEFORE dispatch rather than by a halted lane, which is the entire point of moving the catch upstream of the commit. test/test_declaration.py added alongside, since the red-first arm for a kind check finding lands there rather than in the carrier tests.
-amended-write-set: 2026-09-15 plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/refusals.py,test/test_declaration.py
-bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
-
 ## lc-74
 grade: STANDBY
 requirement: the emit-site coverage scanner (--test) detects finding emissions by grepping the literal 'FINDING [row]' bracket idiom, so a site that returns exits.FINDING without the bracket — measured: cmd_item_statusline's unknown-grade '!n?' suffix, lc-45 dispatch report 2026-09-11 — is invisible to the scanner rather than red: the coverage check degrades silently exactly where a new one-line-output verb cannot afford the bracket. Two halves: register the statusline unknown-grade FINDING as a refusals.py row, and re-key the scanner on what cannot be omitted (exits.FINDING returns) rather than the bracket literal

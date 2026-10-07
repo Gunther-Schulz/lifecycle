@@ -3168,5 +3168,21 @@ closed-met: none
 closed-decided: none
 closed-ref: 66d9cdfe198ed6d7109afcfe168fb9a432548a95
 
+## lc-70
+grade: DONE
+requirement: tend feature completeness (lc-64 escalations, not in its done-criterion): (a) a declaration LISTING tend in goals is silently absorbed by the union, but 3.1b says 'not declarable per repo'; (b) orientation (cli.py:144) prints DECLARED goals, so tend is invisible there — assurance narrower than reality; record: lc-64 build report
+goal: one-home-per-kind
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py
+done-criterion: kind check reports a declaration listing the reserved tend as a redundant-declaration finding (red-first); orientation shows the EFFECTIVE goal set (or marks tend reserved)
+evidence: lc-64 build report, escalations (a) and (b)
+blocked-by: NONE
+amend-reason: 2026-09-15 LAW 24 FIRING PROSPECTIVELY, at its first opportunity since it was widened hours ago (b031846, J22). This entry's done-criterion emits a NEW finding — 'kind check reports a declaration listing the reserved tend as a redundant-declaration finding (red-first)' — and its write set named cli.py and declaration.py only. Law 2 makes every refusal a registry row with its firing input; a refusal's realizing file is always refusals.py; so the boundary as written commissions work that cannot be finished inside it. That is the identical shape that cost this repo three lanes in wave 1 (lc-31 shipped it and went red, lc-30 could not be built, and lane A's older instance is recorded in lc-30's own evidence). Caught here BEFORE dispatch rather than by a halted lane, which is the entire point of moving the catch upstream of the commit. test/test_declaration.py added alongside, since the red-first arm for a kind check finding lands there rather than in the carrier tests.
+amended-write-set: 2026-09-15 plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/refusals.py,test/test_declaration.py
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 A declaration listing the reserved goal is a finding; kind list shows the effective goals. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: 79894e1d4c68b07104583381a56c3d7a9da16fa7
+
 ## Archive (pre-migration)
 
