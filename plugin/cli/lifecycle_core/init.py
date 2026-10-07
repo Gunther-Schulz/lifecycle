@@ -294,6 +294,32 @@ def cmd_init(args, out, repo: Path) -> int:
             "overwrite. A silent overwrite of a declaration is not available.")
         return exits.FINDING
 
+    # AN UNSAFE LANE NAME IS REFUSED BEFORE ANYTHING IS WRITTEN (lc-317), by
+    # the predicate `lane new` applies to the same word (lc-202) and under
+    # the same finding. A `--lane` name becomes a path component
+    # (`lanes/<name>.md`) and the literal string the declaration carries, so
+    # `../escape` wrote outside the lanes directory, a name with a `/`
+    # crashed after the declaration was already on disk, and the empty
+    # string wrote `lanes/.md`. EVERY name is checked before the first
+    # write: one bad name among several refuses the whole init, since a
+    # half-written one leaves a declaration whose `lanes` list names a body
+    # that was never laid down.
+    unsafe = [name for name in (getattr(args, "lane", None) or [])
+              if not name or lanes_mod._UNSAFE_FOR_FILENAME.search(name)]
+    if unsafe:
+        for name in unsafe:
+            out(f"FINDING [lane_new_unsafe_door] {name!r} cannot name a "
+                f"lane. A `--lane` name becomes a path component "
+                f"(`{lanes_mod.LANES_DIR}/<name>.md`) and the name this "
+                "repo's declaration carries, so it is letters, digits, `.`, "
+                "`_` and `-` only, and not empty: a `/` in it would write "
+                "outside the lanes directory. Refused rather than folded "
+                "to something safe — folding would silently rename your "
+                "lane.")
+        out("Nothing was written: no declaration, no `.gitignore` line, no "
+            "lane stub.")
+        return exits.FINDING
+
     if args.id_prefix:
         prefix = args.id_prefix
         out(f"id-prefix: {prefix!r} (explicit --id-prefix)")

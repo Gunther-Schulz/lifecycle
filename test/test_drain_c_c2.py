@@ -7,7 +7,11 @@ One class per item, each carrying the arms its done-criterion names.
 import _isolation  # noqa: F401  # lc-183: before any verb runs
 
 import io
+import json
+import shutil
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -119,6 +123,92 @@ class TheRosterNameCheckIsNotGatedOnFinding(unittest.TestCase):
                    and ln.split()[:1] in (["PASS"], ["FAIL"])]
         self.assertEqual(len(verdict), 1, lines)
         self.assertTrue(verdict[0].startswith("PASS"), verdict[0])
+
+
+# --- lc-317 ------------------------------------------------------------------
+
+ENTRY = Path(__file__).resolve().parents[1] / "plugin" / "cli" / "lifecycle"
+
+
+class InitRefusesAnUnsafeLaneName(unittest.TestCase):
+    """lc-317: `init --lane <name>` builds `lanes/<name>.md` from the
+    caller's word. An unsafe one is refused BEFORE ANY WRITE, under the same
+    finding `lane new` gives the same input.
+
+    Every arm drives the REAL ENTRY POINT in a child process, because one of
+    the three inputs used to end in a traceback and the question is the
+    PROCESS exit code: a crash is a 1, and a 1 is none of the three answers.
+    """
+
+    def setUp(self):
+        # The repo sits one level DOWN inside the scratch root, so a name
+        # that climbs out of it (`../escape`) lands somewhere this test can
+        # see and removes afterwards.
+        self.root = Path(tempfile.mkdtemp(prefix="lifecycle-c2-init-"))
+        self.repo = self.root / "outer" / "repo"
+        self.repo.mkdir(parents=True)
+        self._git("init", "-q", "-b", "main")
+        self._git("config", "core.hooksPath", str(self.repo / ".nohooks"))
+        self._git("config", "user.email", "op@example.invalid")
+        self._git("config", "user.name", "operator")
+        (self.repo / "README.md").write_text("scratch\n", encoding="utf-8")
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def _git(self, *argv):
+        r = subprocess.run(["git", "-C", str(self.repo), *argv],
+                           capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+
+    def _tree(self) -> dict:
+        """Every file under the scratch ROOT outside `.git`, with its bytes —
+        the root and not the repo, so a write that escapes is in the view."""
+        return {str(p.relative_to(self.root)): p.read_bytes()
+                for p in sorted(self.root.rglob("*"))
+                if p.is_file() and ".git" not in p.relative_to(self.root).parts}
+
+    def _init(self, *lanes):
+        argv = [sys.executable, str(ENTRY), "--repo", str(self.repo), "init",
+                "--id-prefix", "zz"]
+        for name in lanes:
+            argv += ["--lane", name]
+        r = subprocess.run(argv, capture_output=True, text=True)
+        return r.returncode, r.stdout + r.stderr
+
+    def _assert_refused_and_nothing_written(self, *lanes):
+        before = self._tree()
+        code, out = self._init(*lanes)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [lane_new_unsafe_door]", out)
+        self.assertNotIn("Traceback", out)
+        self.assertEqual(self._tree(), before,
+                         "the refusal wrote something anyway")
+
+    def test_a_name_that_climbs_out_of_the_lanes_directory(self):
+        self._assert_refused_and_nothing_written("../escape")
+
+    def test_a_name_carrying_a_slash(self):
+        self._assert_refused_and_nothing_written("bad/door")
+
+    def test_the_empty_name(self):
+        self._assert_refused_and_nothing_written("")
+
+    def test_one_unsafe_name_refuses_the_safe_one_beside_it(self):
+        """Before ANY write: the safe sibling's stub and the declaration are
+        not written either, whichever order the names came in."""
+        self._assert_refused_and_nothing_written("goodlane", "../escape")
+
+    def test_a_safe_name_still_writes_its_stub(self):
+        """CONTROL: the same verb in the same repo, the name's characters the
+        only difference."""
+        code, out = self._init("goodlane")
+        self.assertNotIn("[lane_new_unsafe_door]", out)
+        self.assertNotIn(code, (1, exits.FINDING), out)
+        self.assertTrue((self.repo / "lanes" / "goodlane.md").is_file(), out)
+        doc = json.loads((self.repo / ".claude" / "lifecycle.json")
+                         .read_text(encoding="utf-8"))
+        self.assertEqual(doc["lanes"], ["goodlane"])
 
 
 if __name__ == "__main__":
