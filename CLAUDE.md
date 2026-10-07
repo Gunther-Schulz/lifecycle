@@ -370,15 +370,21 @@ does not say.
 - **The leak scan runs before the irreversible boundary.**
   `tools/absence-scan.mjs` runs on every push, because this repo is
   where workflow templates extracted from PRIVATE repos will land.
-  THE ROUTE IS THE MACHINE-WIDE HOOKS PATH, not this repo's own files:
-  `core.hooksPath` points at the dotfiles hooks directory, and a set
-  `core.hooksPath` overrides `.git/hooks` entirely — so
-  `tools/git-hooks/pre-push` and the `.git/hooks` symlink to it both
-  exist and are currently UNREACHABLE. The effect is real and verified;
-  the wiring this file used to claim was not the live one. Whether this
-  repo should carry its own reachable wiring rather than depend on a
-  machine-wide path is finding (i) on the decision round's agenda and is
-  deliberately still open.
+  THE HOOK THAT EXECUTES IS THIS REPO'S OWN, BY TWO ROUTES, and git
+  consults exactly one hooks directory, so which route is live depends
+  on the machine. Where `core.hooksPath` is set (here: the dotfiles
+  hooks directory) git never reads `.git/hooks`; the machine-wide
+  `pre-push` runs its own gates and then CHAINS
+  `.git/hooks/pre-push` — the symlink to `tools/git-hooks/pre-push` —
+  with the pushed ref lines, and that file's exit wins (dotfiles
+  df-254, df-272). Where `core.hooksPath` is unset the same symlink is
+  git's own hook. Both arms are shown, not read: the chain called over
+  one real ref line prints the scan's scope line and `absence-scan:
+  clean`; a push with the hooks path pointed back at `.git/hooks`
+  prints the full-tree scan. WHAT IS NOT PROTECTED: a `core.hooksPath`
+  repointed at a directory whose `pre-push` does not chain, and a clone
+  made without the symlink — the symlink lives in `.git/` and is not
+  tracked, so a fresh clone has no hook until it is laid down.
 - **Nothing crosses the seam.** Templates carry no project
   identifiers upward; a repo file declares and never restates
   downward.
