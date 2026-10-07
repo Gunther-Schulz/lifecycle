@@ -11,7 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
 from lifecycle_core import exits  # noqa: E402
 
-from test_migrate import MERGE_SOURCE_B, build, migrate_run  # noqa: E402
+from test_migrate import (MERGE_SOURCE_B, build, commit_all, migrate_run,  # noqa: E402
+                          run_cli)
 from test_migrate_residue import commit, tend_items  # noqa: E402
 
 
@@ -58,6 +59,65 @@ class ReadersAreWholePathComponents(unittest.TestCase):
         self.assertIn("a.md", ev)
         self.assertIn("b.md", ev)
         self.assertNotIn("c.md", ev)
+
+
+class ArchiveMarkersAreNotItemProvenance(unittest.TestCase):
+    """lc-94 — an archive's `## Done` pseudo-ident must not skip a new body."""
+
+    CLOSED = ("# second\n\n## Open\n\n"
+              "- **READY 2026-09-01 — alpha.** body\n\n"
+              "## Done\n\n"
+              "- **DONE 2026-08-01 — closed two.** body\n")
+
+    def _first_merge(self):
+        d = build("# old\n\n## Open\n\n- **READY 2026-08-03 — first.** body\n")
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        migrate_run(d)
+        commit_all(d, "m0")
+        (d / "SECOND.md").write_text(self.CLOSED, encoding="utf-8")
+        commit_all(d, "s")
+        self.assertEqual(migrate_run(
+            d, "--from", "SECOND.md", "--from-done", "NONE", "--merge")[0],
+            exits.CLEAN)
+        commit_all(d, "m1")
+        return d
+
+    def _remerge(self, d, text):
+        (d / "SECOND.md").write_text(text, encoding="utf-8")
+        return run_cli(d, "migrate", "--report", "docs/audits/r2.md",
+                       "--from", "SECOND.md", "--from-done", "NONE",
+                       "--merge")
+
+    def test_a_new_open_entry_at_an_archived_closures_range_is_written(self):
+        d = self._first_merge()
+        # The first merge archived a closure marker for SECOND.md:15-16
+        # (measured: the pseudo-ident `Done` in provenance_index). The
+        # rewritten source puts a NEW open entry on exactly that range.
+        pad = "\n".join(f"filler line {n}" for n in range(1, 10))
+        new = ("# second\n\n## Open\n\n" + pad + "\n\n"
+               "- **READY 2026-10-01 — brand new work.** body\n")
+        self.assertEqual(new.split("\n").index(
+            "- **READY 2026-10-01 — brand new work.** body") + 1, 15)
+        code, out = self._remerge(d, new)
+        # The exit is deliberately not graded: the rewritten source dropped
+        # two entries the homes still hold, so the per-source arithmetic is
+        # a separate, genuine COULD NOT VERIFY. The defect is the SKIP.
+        self.assertNotIn("already migrated as Done", out)
+        self.assertEqual(
+            (d / "ITEMS.md").read_text(encoding="utf-8")
+            .count("brand new work"), 1,
+            "the new body was skipped as a re-import of the pseudo-ident")
+
+    def test_a_body_in_a_done_home_block_is_still_a_reimport(self):
+        """MUST NOT MOVE: the live blocks of both homes still answer 'is this
+        body already present'."""
+        d = self._first_merge()
+        code, out = self._remerge(d, (d / "SECOND.md").read_text(
+            encoding="utf-8"))
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual((d / "ITEMS.md").read_text(encoding="utf-8")
+                         .count("alpha"), 1)
+        self.assertIn("RE-IMPORTS skipped:       2 ", out)
 
 
 if __name__ == "__main__":

@@ -1944,9 +1944,10 @@ def provenance_index(*texts) -> dict:
     SO A CALLER THAT WANTS ITEM SCOPE CUTS ITS INPUT at
     `items.ARCHIVE_HEADING` before calling — an archive body is not an ITEM.
     `per_source_counts` is that caller and does exactly this (`live_region`,
-    below); the RE-IMPORT detector deliberately does not, because "is this
-    body already present in the successor" is a question the archive answers
-    too. The assurance this paragraph used to give was wider than the
+    below), and since lc-94 so is the RE-IMPORT detector: it once read the
+    archive too and skipped a NEW open entry as "already migrated as Done".
+    Closures, which live in the archive, are answered by their markers
+    (`rearchived_closures`). The assurance this paragraph used to give was wider than the
     predicate that backs it, which is what made it worth nobody's second
     look.
 
@@ -3033,8 +3034,15 @@ def run(args, out, ctx) -> int:
         # to make, so it is skipped and counted. Only what is left — a
         # headline collision at DIFFERENT provenance — is genuinely ambiguous,
         # and that refusal is unchanged.
-        reimported = reimported_bodies(read.entries, src_name,
-                                       provenance_index(*home_texts))
+        # CUT AT THE ARCHIVE (lc-94). The archive holds source carriers
+        # verbatim, so a `## Done` heading inside it re-opens attribution and
+        # an archived closure's marker enters the index under the pseudo-ident
+        # `Done` -- a NEW open entry on that range was then skipped as
+        # "already migrated as Done". An archive body is not an item; the
+        # closure half is answered from the markers by `rearchived_closures`.
+        reimported = reimported_bodies(
+            read.entries, src_name,
+            provenance_index(*[live_region(t) for t in home_texts]))
         # A CLOSURE COMES BACK THE SAME WAY AND IS RECOGNISED THE SAME WAY
         # (lc-309) — by its archive marker, since it has no block. Marked
         # here, beside the open half, so everything below reads ONE field.
