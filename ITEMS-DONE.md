@@ -2688,5 +2688,19 @@ closed-met: lc-317
 closed-decided: none
 closed-ref: f5e469cdba1c4d93aa3fbd7ebfcadcb14416e870
 
+## lc-230
+grade: DONE
+requirement: THE VERIFY VERB COLLAPSES THREE ANSWERS INTO TWO AT THE EXACT BOUNDARY IT EXISTS TO DEFEND. run_one (verify.py:87-94) maps a wrapped command's exit to three verdicts, but the mapping sends every non-zero code outside COULD_NOT_START to ran-failed, so rc=3 -- this CLI's own COULD NOT VERIFY -- is indistinguishable from rc=1. cmd_verify then prints RAN, FAILED and exits FINDING [verify_check_failed] 'ran and returned non-zero'. A wrapped tool that honestly said it could not verify is booked as verified-wrong, inside the instrument whose whole purpose is law 1. Record: queue item 2 of directive addendum 3, measured at this desk 2026-09-19.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verify.py,plugin/cli/lifecycle_core/refusals.py,test/test_verify.py
+done-criterion: run_one returns a FOURTH verdict for the wrapped could-not-verify code, and cmd_verify reports it apart from failures and folds it into the run's exit by exits.worst, so a registered command that could not verify makes the whole verify run COULD NOT VERIFY rather than a FINDING. RED-FIRST, the discriminating pair, and both arms are required because a change that merely moves rc=3 somewhere new proves nothing: 'exit 3' must stop sharing a verdict with 'exit 1', AND 'exit 1' must still report as a failure. MUST-NOT-MOVE: rc=127 and rc=126 stay did-not-run, and rc=0 stays ran-clean -- those two boundaries already discriminate and this change must not disturb them. The refusal row carries the firing input and is proven red first per law 2.
+evidence: MEASURED AT THIS DESK 2026-09-19, executed rather than read, calling run_one directly with a four-command pair: 'exit 3' -> verdict 'ran-failed' code 3; 'exit 1' -> verdict 'ran-failed' code 1; 'exit 0' -> 'ran-clean'; 'exit 127' -> 'did-not-run'. The two boundaries that work are shown working, which is what makes the collapsed one a reading and not a guess. LIVE AND REACHABLE IN THIS REPO TODAY, not hypothetical: CLAUDE.md's Verify block registers six commands, of which 'lifecycle audit' and 'tools/prove-rows.py' both exit 3. I ran the first -- 'lifecycle audit' exits 3 and prints 'lifecycle audit: COULD NOT VERIFY'. So 'lifecycle verify' run here today reports this repo's own honest could-not-verify as RAN, FAILED. RELAYED and NOT reproduced here: the driving desk cachyos-setup-b3 confirmed the same classifier reading independently, COULD_NOT_START = (126, 127). SCOPE, so this is not over-read: addendum 3 KILLED the second arm of this defect. An earlier report that the verify verb's own exit contract was wrong rested on an rc=0 that was zsh pipe-status -- tail's exit, not the verb's -- and the executing desk's own re-run refuted it. Only the classifier arm is booked here.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 verify gives a wrapped exit 3 its own verdict and row, verify_check_could_not_verify. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 370f58dc60468d20b336cede850e7aa7968ce36f
+
 ## Archive (pre-migration)
 
