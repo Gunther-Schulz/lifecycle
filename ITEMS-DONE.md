@@ -2444,5 +2444,19 @@ closed-met: none
 closed-decided: none
 closed-ref: b20b0dee5a0333c62ac410e611c02008c4873ff9
 
+## lc-207
+grade: DONE
+requirement: A FREEZE-BLOCKED WRITING RUN SAYS 'DRY RUN — THIS RUN WRITES NO SUCCESSOR STATE' WHILE WRITING BOTH CARRIERS, AND THE PERSISTED REPORT OPENS WITH THE SAME FALSE CLAIM. Console at migrate.py:2537-2539 and the report's opening paragraph at 2809-2812 both key off disposition == DISPOSED_UNTOUCHED, which is a fact about the SOURCE only. UNTOUCHED is set at TWO sites: 2180 for --report-only, correct; and 2184 for a WRITING run whose freeze is blocked by unpinned anchors. By the time 2536 renders, the merge branch at 2434-2482 has already written both homes. IT FAILS ITS OWN DEFINITION: the module docstring's line 12 defines UNTOUCHED as 'any run that writes no successor state'. The report file is the worse half — it is the durable artifact and it OPENS with the false claim.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: The DRY RUN sentence is keyed to whether this run WROTE, never to the source's disposition. A freeze-blocked writing run says what it did — it wrote both homes and did not freeze the source — in the console AND in the report's opening paragraph. MUST-NOT-BUILD: the fix is not softening the docstring's definition of UNTOUCHED to match the code; the definition is the correct half and the two 2180/2184 sites are what disagree with it. RED-FIRST, arrangement recorded and already run once by the lc-192 lane: a --merge run whose source carries an unpinned citation, md5 of both carriers before and after. Before the fix the console and report both say no successor state was written while both md5s change. After, neither does. CONTROL that must stay green: the same repo with the pins intact reports the source READ and then FROZEN.
+evidence: RELAYED from the lc-192 lane, md5 pairs pasted in its report, NOT reproduced at this desk — and it is booked at that grade deliberately rather than upgraded: ITEMS.md before cdaa067192741789870825a5fde04105 / after c85a4c0aac479d69589cfa628da0882a, ITEMS-DONE.md before cf775c846a525f325b01e62eeeb85239 / after 4a8f069ee0c9b18c44249a2b1e53389f, with the console printing 'this run writes no successor state' and the report opening '**A DRY RUN**'. Its control differed — the same repo with pins intact reported the source READ and then FROZEN — so the arm that must differ did differ. MEASURED at this desk: the module docstring line 12 does define UNTOUCHED as 'any run that writes no successor state', so the definition-derived half of the wrongness claim is opened here rather than inherited. DERIVED from the lane's read, not executed here: that 2184 is the writing-run site and 2434-2482 has already written by 2536. FIRST ACT OF BUILDING THIS: reproduce the md5 pair at the desk, since a wrongness claim this item rests on is currently relayed.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 A freeze-blocked writing run no longer announces a dry run. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 17a81784447cedb597183292ec6004e0f1cca16d
+
 ## Archive (pre-migration)
 
