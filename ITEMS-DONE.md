@@ -2291,5 +2291,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 36b02729d50658e36854aed0e41c8baaaeae99ee
 
+## lc-107
+grade: DONE
+requirement: audit and retire DISCARD every declaration-level finding whenever the declaration is READABLE, which is the normal case. cli.py's _walk_verb calls _report(res, out) only inside 'if res.declaration is None'; on the readable path the whole decl.read Result — every finding, every could-not-verify, and res.code — is dropped and only res.declaration is passed to cmd_audit/cmd_retire. So a repo whose declaration parses but violates a declaration rule gets a verdict that never mentions it, from two verbs. This is the three-answers law broken at the verb: the checker HAS the finding and does not print it, and a reader sees a verdict shaped exactly like clean — record: surfaced by the lc-103 lane while measuring whether its new could-not-verify branch was distinguishable, 2026-09-13, and verified at this desk at cli.py:689-706
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/cli.py,test/
+done-criterion: audit and retire surface the declaration Result on the READABLE path too — findings printed, could-not-verifies printed, and res.code folded into the verb's exit rather than discarded, so a declaration finding cannot leave a verb reporting clean. Red-first is in hand and cheap: a fixture whose declaration parses but carries a declaration-level finding (the lc-103 symlink hook is one, kind check surfaces it at exit 3) run through audit TODAY prints nothing about it and exits on cmd_audit's own code; the same fixture after the change names it. MUST-NOT-MOVE: the unreadable-declaration path keeps its current wording and code exactly; audit's own walk findings are not duplicated or reordered; and a repo with a clean declaration still exits exactly as now
+evidence: VERIFIED AT THIS DESK 2026-09-13 by reading cli.py:689-706: 'res = decl.read(repo)' then 'if res.declaration is None: _report(res, out) ... return res.code' and, past that branch, 'return retire_mod.cmd_audit(args, out, repo, res.declaration)' — res itself never reaches _report again and res.code is never consulted. The lane's executed half, relayed and consistent with the read: over its symlink fixture 'kind check' moved 0 -> 3 and NAMED the path and reason, while 'audit' over the same fixture was unchanged from baseline in both output and exit code. Scope is EVERY declaration check, not the lc-103 branch that exposed it — the lane found it while measuring whether its own new could-not-verify was distinguishable from the pre-existing exit 3, which is the collision I had asked it to rule out
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 audit and retire print the declaration findings on the readable path and fold its exit code. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: b78bda5473576a225ba63763bfaba667801d9c4d
+
 ## Archive (pre-migration)
 
