@@ -136,6 +136,29 @@ CORE = CLI / "lifecycle_core"
 
 CLEAN, FINDING, COULD_NOT_VERIFY = 0, 2, 3
 
+#: The thirteen source lines BETWEEN the two tests `retire_source_laws_absent`
+#: is decided by, quoted once because its arrangement below needs them in
+#: both its anchor and its replacement (lc-324). An anchor is a run of
+#: complete lines, so a mutation that folds two `if`s has to quote what sits
+#: between them — and quoting it twice would be two bodies for one fact.
+#: Reword any of these lines in `migrate.py` and that arrangement goes to
+#: COULD NOT VERIFY, loudly, which is the intended failure.
+_RETIRE_LAWS_BETWEEN = (
+    '        return ("retire_source_laws_absent", (\n'
+    '            "`--retire-source` in a repo whose declaration names no `laws` "\n'
+    '            "file. The deletion record\'s home is the declared laws file — "\n'
+    '            "never a filename this tool picks — and with none declared there "\n'
+    '            "is nowhere to write the record that justifies the deletion. A "\n'
+    '            "deletion with no record is exactly the state this whole stage "\n'
+    '            "exists to stop happening by accident."))\n'
+    "    # THE DECLARATION'S OWN CHECK, not a second resolver beside it. It answers\n"
+    "    # into a `Result`, so one is handed to it and read back — a reimplemented\n"
+    "    # `path.is_file()` here would be the second body that diverges the day the\n"
+    "    # declaration's own rule about untracked laws files changes.\n"
+    "    res = decl.Result(exits.CLEAN)\n"
+    "    decl.check_laws_present(ctx.repo, laws_rel.strip(), res)\n"
+)
+
 #: (row ident, file, anchor, replacement, what the anchor IS).
 #:
 #: The anchor is the single place the row's finding is DECIDED — not a place
@@ -844,6 +867,69 @@ MUTATIONS = [
      "the refusal to overwrite an existing successor carrier — a second "
      "migration then replaces real work with a re-derivation of the carrier "
      "it replaced"),
+
+    # lc-324. THE FOUR PRECONDITIONS OF `--retire-source`, each its own row
+    # and each decided in `retire_refusal`, in order. Every fold below lets
+    # the run go PAST the precondition it names in a scratch repo: the arms
+    # RUN and answer, none raises.
+    # All four admitted on the lc-142 pair — PROVEN at these anchors, "rows
+    # changed: NONE" re-pointed at an inert comment line.
+    #
+    # (a) TWO LINES, because `if not writing_run:` alone occurs twice in the
+    # module. Folded, a `--report-only` run is allowed to retire its source
+    # and answers CLEAN.
+    ("retire_source_not_writing", "migrate.py",
+     "    if not writing_run:\n"
+     '        return ("retire_source_not_writing", (',
+     "    if False:\n"
+     '        return ("retire_source_not_writing", (',
+     "the test that a run retiring its source writes a successor at all"),
+
+    # (b) THE LOOKUP, NOT EITHER COMPARISON. The row is decided by two tests
+    # over one value — nothing is committed, or what is committed is not
+    # what was read — and its plant (an uncommitted carrier) is caught by
+    # the second the moment the first is folded: `None != <blob>`. So the
+    # value both read is what is replaced, by the bytes this run read; both
+    # comparisons then agree by construction, and the uncommitted carrier is
+    # retired with a CLEAN answer. One line, and the control — a committed
+    # carrier, where the two values are already equal — cannot move.
+    ("retire_source_uncommitted", "migrate.py",
+     "    committed = committed_blob(ctx.repo, src_name)",
+     "    committed = src_blob",
+     "the read of what is COMMITTED at the source's path, which both "
+     "committed-content tests compare against"),
+
+    # (c) BOTH TESTS, and why one fold is not enough is a finding about the
+    # ROW. Its plant is a declaration whose `laws` is blank, which the first
+    # test names — and with that test alone folded, the blank value reaches
+    # the declaration's own presence check, resolves to the repo directory,
+    # is not a file, and is refused by the SECOND test under the same row
+    # (measured before this entry was recorded: `verdict 2/named ->
+    # 2/named`, `rows changed: NONE`, FAILED). The undeclared half and the
+    # absent-file half are therefore not separable by this plant, and the
+    # arrangement folds the pair. It does NOT touch
+    # `declaration.check_laws_present`, whose own branch belongs to
+    # `laws_absent_could_not_verify`: the fold is of what THIS function does
+    # with that check's answer. Folded, the run goes past the precondition
+    # and answers COULD NOT VERIFY further on (`2/named -> 3/unnamed`) —
+    # which later step refuses it was not traced here.
+    ("retire_source_laws_absent", "migrate.py",
+     "    if not isinstance(laws_rel, str) or not laws_rel.strip():\n"
+     + _RETIRE_LAWS_BETWEEN
+     + "    if res.unverified or res.findings:",
+     "    if False:\n"
+     + _RETIRE_LAWS_BETWEEN
+     + "    if False:",
+     "both tests that the deletion record has a declared, readable laws "
+     "file to go to"),
+
+    # (d) Folded, a `--merge` run is no longer refused over a successor that
+    # still points into the source by bare line number; it answers COULD NOT
+    # VERIFY further on (`2/named -> 3/unnamed`), at a step not traced here.
+    ("retire_source_unpinned_anchor", "migrate.py",
+     "    if loose:",
+     "    if False:",
+     "the test that no anchor into the source is left without its blob pin"),
 
     # ANCHORED ON THE MESSAGE, not on `if unclassified:` — the schema wave
     # added a SECOND `if unclassified:` in `run_schema`, and an anchor that
