@@ -28,6 +28,7 @@ line like any other, and a walk that went on answering NOT CHECKED for the
 kinds it serves was reporting the absence of a reader that was there.
 """
 
+import fnmatch
 import os
 import re
 from pathlib import Path
@@ -771,7 +772,11 @@ def _home_claims(home: str, rel: str) -> bool:
 
     Anchored on PATH SEGMENTS, never on a substring: `docs/audits/*.md` and
     `docs/audits-old/x.md` share a prefix, and a substring test would claim
-    the second — a prefix match in an equality's costume.
+    the second — a prefix match in an equality's costume. A GLOB home is
+    anchored at the repo root too, by DEPTH: it claims a path only when the
+    path has as many segments as the pattern and each segment matches its
+    pattern segment. (`Path.match` is right-anchored for a relative pattern
+    and would have claimed `plugin/docs/notes.md` for `docs/*.md`; lc-184.)
     """
     # `removeprefix`, NEVER `lstrip("./")`. `lstrip` takes a CHARACTER SET, so
     # it eats the leading dot of every dotfile: `.gitignore` became
@@ -781,7 +786,10 @@ def _home_claims(home: str, rel: str) -> bool:
     home = home.strip().removeprefix("./")
     rel = rel.strip().removeprefix("./")
     if "*" in home:
-        return Path(rel).match(home)
+        home_parts = Path(home).parts
+        rel_parts = Path(rel).parts
+        return len(home_parts) == len(rel_parts) and all(
+            fnmatch.fnmatchcase(r, h) for h, r in zip(home_parts, rel_parts))
     if home == rel:
         return True
     home_parts = Path(home).parts
