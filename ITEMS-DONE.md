@@ -3013,5 +3013,18 @@ closed-met: none
 closed-decided: none
 closed-ref: e98c4cdd456e91d86fb59ad7c46ed8f7c8121564
 
+## lc-322
+grade: DONE
+requirement: AN AMENDED external BLOCKER RIDES INTO THE CLOSURE HOME ALIVE, the route lc-105 repaired for evidence blockers, one type over: the close exits 0 and the next item check exits 2 with blocked_in_done_home, and no close writes a record for it - record: wave C lane C1 closing report 2026-10-07, gap G3
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
+done-criterion: item close over a live external blocker has a stated disposition, by the same shape lc-105 gave evidence: refused for a DONE close with the two exits named, recorded as abandoned under --drop; no closed body reaches the done home in a state the done-home check then reds. Red-first on an amended external blocker.
+evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, measured there: an amended external blocker closes exit 0 and the next item check exits 2 with blocked_in_done_home.
+blocked-by: NONE
+closed-reason: 2026-10-07 A DONE close over a live external blocker is refused with both exits named; a drop records the wait as abandoned. Wave D 2026-10-07, verified on main at deede51: suite 1612 OK no skips, --test 157 of 157, prove-rows 152 of 152 held with every row dark under some arrangement and no control red, leak battery 62 of 62; item check and item ready unchanged in exit code across all ten rostered repos.
+closed-met: lc-328
+closed-decided: none
+closed-ref: 1eda56f51f51fae34f922699fcc6475c813d6a43
+
 ## Archive (pre-migration)
 

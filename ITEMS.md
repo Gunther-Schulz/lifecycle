@@ -1367,15 +1367,6 @@ blocked-by: NONE
 amend-reason: 2026-10-06 the booked slot carried a comma inside one venue phrase and the tool split it into two paths; restated as one venue with no comma. Nothing else changes.
 amended-write-set: 2026-10-06 venue: .claude/lifecycle.json of each governed repo - nine repos and one commit per repo - outside this working copy
 
-## lc-322
-grade: STANDBY
-requirement: AN AMENDED external BLOCKER RIDES INTO THE CLOSURE HOME ALIVE, the route lc-105 repaired for evidence blockers, one type over: the close exits 0 and the next item check exits 2 with blocked_in_done_home, and no close writes a record for it - record: wave C lane C1 closing report 2026-10-07, gap G3
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
-done-criterion: item close over a live external blocker has a stated disposition, by the same shape lc-105 gave evidence: refused for a DONE close with the two exits named, recorded as abandoned under --drop; no closed body reaches the done home in a state the done-home check then reds. Red-first on an amended external blocker.
-evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, measured there: an amended external blocker closes exit 0 and the next item check exits 2 with blocked_in_done_home.
-blocked-by: NONE
-
 ## lc-323
 grade: STANDBY
 requirement: FOUR NAMING LEFTOVERS FROM lc-316 AND lc-317: conservation prints two could-not-verify lines where one would do; the laws row carries its name inside the message rather than in the bracket form the emit-site scan reads, and its unreadable-file sibling is unnamed; the init refusal of an unsafe lane name has no roster row or prover arrangement of its own; init refusing an existing declaration prints no row name - record: wave C lane C2 closing report 2026-10-07, gaps G2 to G5
