@@ -1696,6 +1696,27 @@ def dispose_source(disposition: str, src: Path, src_name: str,
         "this tool writes.")
 
 
+#: The opening of every report `render_report` writes — ONE spelling, shared
+#: by the writer and by `live_carrier_readers`, which recognises an EARLIER
+#: run's report by it whatever path that run was given (lc-319).
+REPORT_TITLE_PREFIX = "# Migration report — "
+
+
+def _is_migration_report(repo: Path, rel: str) -> bool:
+    """Is the tracked file `rel` a report an earlier run of this tool wrote?
+
+    Decided by the file's FIRST LINE, not by its path: the report path is a
+    flag, so an earlier run's report sits wherever its caller put it. An
+    unreadable file is NOT excluded — it stays a candidate reader, because
+    dropping what could not be read would turn a failure into an absence.
+    """
+    try:
+        with open(repo / rel, encoding="utf-8") as fh:
+            return fh.readline().startswith(REPORT_TITLE_PREFIX)
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
 def live_carrier_readers(repo: Path, names, excluded) -> tuple:
     """`({path: first matched line}, why-unverified)` — TRACKED files that
     still name the old carriers, each with the line that names one.
@@ -1745,7 +1766,7 @@ def live_carrier_readers(repo: Path, names, excluded) -> tuple:
         parts = rec.split("\0", 2)
         if len(parts) != 3 or parts[0] in excluded or parts[0] in hits:
             continue
-        if whole.search(parts[2]):
+        if whole.search(parts[2]) and not _is_migration_report(repo, parts[0]):
             hits[parts[0]] = (f"line {parts[1]}: "
                               f"{parts[2].strip()[:160]}")
     return hits, ""
@@ -3786,7 +3807,7 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     L = []
     a = L.append
     heading_shape = read.entry_shape == ENTRY_SHAPE_HEADING
-    a(f"# Migration report — {src_name} → {ctx.items_path.name} "
+    a(f"{REPORT_TITLE_PREFIX}{src_name} → {ctx.items_path.name} "
       f"({date.today().isoformat()})")
     a("")
     # THE HEADER FOLLOWS THE DISPOSITION (lc-86). It read "**A DRY RUN**: …

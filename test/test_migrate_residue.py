@@ -264,5 +264,39 @@ class ReportOnlyWritesNothing(unittest.TestCase):
         self.assertIn("docs/dev-loop.md", report)
 
 
+class AnEarlierReportIsNotAReader(unittest.TestCase):
+    """lc-319. The exclusion list held only THIS run's report path, so a
+    report an earlier run wrote (committed, at any path) — which names the
+    carrier throughout — was booked as a consumer the migration broke."""
+
+    @staticmethod
+    def _earlier_report_text() -> str:
+        donor = build(SOURCE)
+        migrate_run(donor, "--report-only")
+        return (donor / REPORT).read_text(encoding="utf-8")
+
+    def test_a_tracked_earlier_report_alone_books_nothing(self):
+        text = self._earlier_report_text()
+        self.assertIn("BACKLOG.md", text, "fixture premise: the report names "
+                                           "the carrier")
+        repo = build(SOURCE)
+        commit(repo, "docs/audits/2026-01-01-earlier-migration.md", text)
+        migrate_run(repo)
+        self.assertEqual(tend_items(repo), [], "an earlier migration report "
+                                               "was offered as a live reader")
+
+    def test_a_genuine_consumer_beside_an_earlier_report_still_books(self):
+        text = self._earlier_report_text()
+        repo = build(SOURCE)
+        commit(repo, "docs/audits/2026-01-01-earlier-migration.md", text)
+        commit(repo, "docs/dev-loop.md", "see BACKLOG.md\n")
+        migrate_run(repo)
+        got = tend_items(repo)
+        self.assertEqual(len(got), 1, [i.ident for i in got])
+        ev = got[0].slots["evidence"]
+        self.assertIn("docs/dev-loop.md", ev)
+        self.assertNotIn("earlier-migration.md", ev)
+
+
 if __name__ == "__main__":
     unittest.main()
