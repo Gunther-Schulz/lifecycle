@@ -209,6 +209,7 @@ decision: is the 2026-09-24 freeze (LEDGER:138) lifted in general, not per mecha
 decision: does law 2 reach the could-not-verify answer (lc-216) → YES, scoped by EXIT: a site that RETURNS could-not-verify is a refusal and registry-bearing; a printed could-not-verify line beside another verdict is not. The coverage check states its channels and COUNTS unadmitted exit-3 sites; no row is added to settle it. Desk ruling 2026-10-07.
 decision: how the kill test is run: which moment, which work, and who grades the loss → RETROSPECTIVE FIRST: sessions the environment ended mid-work (usage limit, crash, no close) and their successors, from the transcripts; the environment picks the moment. A sonnet lane grades loss from both transcripts. A staged kill only if under five specimens exist. Desk ruling 2026-10-07.
 decision: whether to spend sessions running comparable work WITHOUT the desk/peer split to create a control arm → DECLINED - operator, first-hand at the drain desk 2026-10-07, per the desk recommendation: the arm costs operator attention, which is what the split exists to save, and the catch study already shows the split pays through independent artifact reads (about 21 of 25 cross catches).
+dropped: lc-117 — Overtaken: the prover has mutated a copy since lc-163; wave E lane E5 polled a scratch clone through a single-ident run, 0 dirty states of 183 with a positive control showing 1.
 
 ## Archive (pre-migration)
 
