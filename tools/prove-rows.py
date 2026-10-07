@@ -42,7 +42,8 @@ by construction. `__pycache__` is cleared around every arm: a stale `.pyc`
 would let the unmutated module answer for the mutated source, which reads
 exactly like a row that does not discriminate.
 
-IT REFUSES TO START OVER A MUTATION TARGET THAT ALREADY DIFFERS FROM HEAD,
+IT REFUSES TO START OVER A COPIED FILE THAT ALREADY DIFFERS FROM HEAD — every
+module of the package it copies, mutation target or not (lc-195) —
 and the restore under `try/finally` is not a substitute for that check. The
 `finally` covers an ordinary exception; it covers neither a SIGKILL nor a
 harness timeout nor an operator Ctrl-C, and a run cut down between the write
@@ -56,7 +57,7 @@ The startup refusal is the half that survives that kill, and it turns BOTH
 hazards into ONE computable predicate: residue from an earlier crashed run,
 and a co-writer's uncommitted work in a file this tool is about to overwrite.
 Neither needs the question "is this checkout shared?", which is not
-computable. A dirty mutation target is a FINDING rather than a
+computable. A dirty copied file is a FINDING rather than a
 could-not-verify because the tool DID form a verdict — it read both sides and
 found them different; what it refuses is to proceed, not to answer.
 
@@ -85,7 +86,7 @@ baseline cannot be graded at all (it raised, or the roster declares no
 expectation this run could read) is could-not-verify, never a pass.
 
 Exit: 0 every proof held · 2 a proof failed, OR a row's baseline disagrees
-with what its roster row declares, OR a file this run would mutate already
+with what its roster row declares, OR a file this run would copy already
 differs from HEAD (the refusal above) · 3 a mutation anchor was not found
 (the source moved under the arrangement — the arrangement is stale, which is
 a finding about THIS file, not about the row), OR an arm raised, OR a
@@ -1426,15 +1427,28 @@ def head_blob(rel: str):
     return r.stdout if r.returncode == 0 else None
 
 
+def copied_files() -> list:
+    """Every file this run copies into its work tree — and therefore imports.
+
+    ONE enumeration, read by the startup refusal and by both copies in
+    `main`. The refusal's subject is whatever a `PROVEN` cites, and that is
+    the whole copied package: the mutated file, and every module the arms
+    import beside it.
+    """
+    return sorted(CORE.glob("*.py"))
+
+
 def dirty_targets(paths) -> list:
     """`[(rel, why)]` for every file whose working bytes differ from HEAD's.
 
     THE PRECONDITION THIS TOOL CANNOT RUN WITHOUT, checked before anything is
-    written. Every path here is one the run would overwrite and then restore
-    from a backup taken moments earlier — so a file already carrying somebody's
-    uncommitted work, or residue from a crashed earlier run, is not a tree this
-    tool may touch: the backup would capture the FOREIGN state and the restore
-    would write it back as though it were the original.
+    written. Every path here is one the run copies from the working tree and
+    proves rows against — so a file already carrying somebody's uncommitted
+    work, or residue from a crashed earlier run, is not a tree this tool may
+    certify: the copy would capture the FOREIGN state and the `PROVEN` it
+    prints would cite code no commit contains. (Before lc-163 the same paths
+    were overwritten in place and restored, which made it a clobbering
+    hazard as well.)
 
     A path absent from HEAD counts as differing. The tool cannot establish what
     it would be restoring such a file TO, and proceeding on an unknown baseline
@@ -1600,10 +1614,20 @@ def main(argv) -> int:
     # BEFORE the backup, because the backup is what makes a dirty target
     # dangerous: it would capture the foreign state and the restore would
     # write it back under this tool's hand.
-    dirty = dirty_targets({CORE / fname for _, fname, *_ in rows})
+    #
+    # OVER EVERY FILE THE RUN COPIES, NOT ONLY THE ONES IT MUTATES (lc-195).
+    # This compared the mutation targets alone while the work copy took the
+    # whole package from the working tree — so the roster module, which
+    # holds every plant, control and expectation and is named by no
+    # arrangement, was copied and imported uncompared. Measured by a review
+    # lane: `refusals.py` uncommitted with a row ident renamed, no refusal,
+    # PROVEN, exit 0. `copied_files` is the one enumeration both this check
+    # and the two copies below read, so the reach of the refusal cannot
+    # drift from the reach of the copy again.
+    dirty = dirty_targets(copied_files())
     if dirty:
         print(f"REFUSING TO START — {len(dirty)} file(s) this run would "
-              "mutate already differ from HEAD:")
+              "copy and import already differ from HEAD:")
         for rel, why in dirty:
             print(f"    {rel}")
             print(f"        {why}")
@@ -1631,7 +1655,7 @@ def main(argv) -> int:
     # `backup` stays as the restore source BETWEEN rows: a pristine copy, so
     # one row's mutation cannot leak into the next.
     backup = Path(tempfile.mkdtemp(prefix="prove-rows-"))
-    for f in CORE.glob("*.py"):
+    for f in copied_files():
         shutil.copy2(f, backup / f.name)
 
     # THE FIRE LOG IS ISOLATED FOR THIS RUN (lc-183). Every arm here runs the
@@ -1656,7 +1680,7 @@ def main(argv) -> int:
     WORK_ROOT = Path(tempfile.mkdtemp(prefix="prove-rows-work-"))
     WORK_CORE = WORK_ROOT / CORE.name
     WORK_CORE.mkdir()
-    for f in CORE.glob("*.py"):
+    for f in copied_files():
         shutil.copy2(f, WORK_CORE / f.name)
     print(f"mutating a COPY (lc-163): {WORK_CORE}")
     print("the live checkout is never written by this run, so a roster read "

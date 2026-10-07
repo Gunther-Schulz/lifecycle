@@ -400,5 +400,63 @@ class TheBaselineIsGradedAgainstWhatEachRowDeclares(
         self.assertEqual(code, mod.COULD_NOT_VERIFY, out)
 
 
+class TheProvenanceRefusalCoversEveryFileTheRunCopies(
+        TheStartupRefusalOverADirtyMutationTarget):
+    """lc-195 — the refusal's reach is the COPY, not the mutation list.
+
+    The work copy is taken from the working tree over the WHOLE package, and
+    every arm imports from it. A module no arrangement names — the roster
+    itself, which holds every plant, control and expectation — is therefore
+    as much a part of what a PROVEN cites as the file being mutated. Compared
+    over the mutation targets alone, an uncommitted edit to such a module
+    was copied, run and certified with no refusal.
+
+    Inherits the fixture and `_run`, and with them the parent's arms.
+    """
+
+    #: A module the fixture's one arrangement does NOT name.
+    BYSTANDER_REL = "plugin/cli/lifecycle_core/bystander_mod.py"
+
+    def _fixture_with_bystander(self):
+        d, core, target = self._fixture()
+        bystander = core / "bystander_mod.py"
+        bystander.write_text('"""Copied by the run, mutated by nothing."""\n'
+                             "ROWS = ()\n", encoding="utf-8")
+        for args in (("add", self.BYSTANDER_REL),
+                     ("commit", "-q", "-m", "bystander")):
+            r = subprocess.run(("git", "-C", str(d)) + args,
+                               capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return d, core, target, bystander
+
+    def test_an_uncommitted_edit_to_a_copied_but_unmutated_module_refuses(self):
+        """THE PAIR, over one fixture: the bystander committed and clean,
+        then the same bystander with one uncommitted line."""
+        d, core, _target, bystander = self._fixture_with_bystander()
+        code, out, mod = self._run(d, core)
+        self.assertNotIn(
+            "REFUSING TO START", out,
+            "a clean tree no longer starts — an arm that refuses everything "
+            f"would score as the dirty one does:\n{out}")
+        self.assertIn("[probe_row] PROVEN", out, out)
+        self.assertEqual(code, mod.CLEAN, out)
+
+        committed = bystander.read_bytes()
+        bystander.write_text(bystander.read_text(encoding="utf-8")
+                             + "# uncommitted\n", encoding="utf-8")
+        working = bystander.read_bytes()
+        code, out, mod = self._run(d, core)
+        self.assertIn(
+            "REFUSING TO START", out,
+            "a module this run COPIES and imports carried uncommitted work "
+            "and the run proceeded: its PROVEN cites code no commit "
+            f"contains:\n{out}")
+        self.assertNotIn("[probe_row]", out, out)
+        self.assertIn(self.BYSTANDER_REL, out, out)
+        self.assertIn(self._sha(working), out, out)
+        self.assertIn(self._sha(committed), out, out)
+        self.assertEqual(code, mod.FINDING, out)
+
+
 if __name__ == "__main__":
     unittest.main()
