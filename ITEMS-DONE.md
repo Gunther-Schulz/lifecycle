@@ -2646,5 +2646,19 @@ closed-met: lc-318
 closed-decided: LEDGER.md:204
 closed-ref: 582e304317dfd8bb602b0eb3599309b9f8f2e3ea
 
+## lc-211
+grade: DONE
+requirement: THE --repo FLAG-ORDER ERROR TELLS A CALLER THEIR REPO PATH IS BAD WHEN THE FAULT IS ARGUMENT ORDER. 'lifecycle kind check --repo X' exits 3 on an argparse usage error. The exit code is RIGHT — could-not-verify, per the tool's own contract — and the MESSAGE is wrong: it reads as a bad repo path and sends the caller to check a path that is fine. A misleading true verdict costs more than a missing one, because it spends the reader's attention in the wrong place and they leave believing they checked something. argparse can see a --repo token sitting after the subcommand.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,test/test_refusals.py
+done-criterion: A --repo appearing AFTER the subcommand produces a message naming FLAG ORDER as the fault and showing the correct spelling, rather than one a reader takes as a bad path. The exit code stays 3 — the contract is already right and is not touched. RED-FIRST: 'lifecycle kind check --repo <a path that exists>' currently exits 3 with a path-shaped message; after the change the message names the order and the path is not implicated. CONTROL that must stay green: '--repo <bad path>' BEFORE the subcommand still reports a bad path, because that is the case where the path really is the fault — and that arm is what proves the new message discriminates rather than replacing one blanket wording with another.
+evidence: RELAYED from the verb-io-surface audit (docs/audits/2026-09-18-verb-io-surface.md, commit 9600455, lower-ranked cells) and from lifecycle-6f, who REVERSED their own not-item-shaped call on it and asked for it to be booked — carried as their judgment, which I agree with. DERIVED: the audit's own framing is that the contract is right and the message misleads. MEASURED at this desk: nothing yet — the first build step is to run the invocation and read the message, since the wrongness claim here is about message TEXT and I have not opened it.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 A --repo after the subcommand is reported as a flag-order fault with the correct spelling. At base the message was the generic unrecognized-arguments line, not a path complaint. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 6b0f262c263fe19f0e73ac61adc4c53b9d9beb50
+
 ## Archive (pre-migration)
 
