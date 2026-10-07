@@ -1001,6 +1001,8 @@ done-criterion: a producer: reference that names nothing is a finding WHEREVER i
 evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs: declaration.py 1184-1198 and 1258-1271, the pool built from writers and the references resolved against it, graded real but narrow. DERIVED: this is the same-parentage rule in the corpus, an expectation read off the body it grades, and the route-set green is what hides it — the roster can be green and the coverage complete while one direction of the route can never fail.
 blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 2026-10-07 dispatched in wave A and returned as a gap: the repair needs a schema field
+amended-evidence: 2026-10-07 RELAYED from wave A lane F 2026-10-07 at base 3eb0f98, not re-run at the desk: ref_world (declaration.py near 1666) builds the producer pool only from kind writers, and no other producer registry exists in the declaration or plugin.json (grep). DERIVED: making a writer-named producer dangle needs an INDEPENDENT pool, which is a new declaration field, a schema change, outside the defect-repair exemption of the 2026-09-24 freeze. Not buildable as a repair.
 
 ## lc-194
 grade: STANDBY
