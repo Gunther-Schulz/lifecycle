@@ -114,5 +114,31 @@ class TestWalkVerbsSurfaceTheDeclaration(unittest.TestCase):
             self.assertNotIn("declaration check", text)
 
 
+class TestKindCheckStatesTheHookCount(unittest.TestCase):
+    """lc-108."""
+
+    def test_empty_guarded_set_is_a_stated_zero_and_still_a_pass(self):
+        with _Repo() as r:
+            r.commit()
+            code, text = r.run("kind", "check")
+            self.assertIn("CLEAN", text)
+            self.assertIn("0 shipped git hook(s) checked", text)
+            self.assertEqual(code, exits.CLEAN, text)
+
+    def test_one_hook_is_a_stated_one(self):
+        with _Repo() as r:
+            r.hook(0o755)
+            r.commit()
+            code, text = r.run("kind", "check")
+            self.assertIn("1 shipped git hook(s) checked", text)
+            self.assertEqual(code, exits.CLEAN, text)
+
+    def test_unborn_head_has_its_own_wording(self):
+        with _Repo() as r:
+            code, text = r.run("kind", "check")
+            self.assertIn("no commit yet", text)
+            self.assertNotIn("0 shipped git hook(s) checked", text)
+
+
 if __name__ == "__main__":
     unittest.main()

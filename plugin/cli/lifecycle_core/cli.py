@@ -121,8 +121,19 @@ def cmd_kind(args, out) -> int:
         _report(res, out)
         if res.code == exits.CLEAN:
             n = len(res.declaration.get("kinds", {})) if res.declaration else 0
+            # lc-108: state the hook count. {} (git answered, nothing shipped)
+            # is a stated zero and still a pass; an unborn HEAD gets its own
+            # wording, because nothing was askable rather than nothing found.
+            if decl.head_commit(repo) is True:
+                modes, _declared = decl.hook_population(repo)
+                hooks = (f"{len(modes)} shipped git hook(s) checked"
+                         if modes is not None else
+                         "git hooks not counted (git could not read HEAD's tree)")
+            else:
+                hooks = ("no commit yet, so nothing is committed to check "
+                         "for shipped git hooks")
             out(f"kind check: CLEAN — {n} kind(s) registered, every stage "
-                f"declared, declaration visible to git.")
+                f"declared, declaration visible to git, {hooks}.")
         else:
             out(f"kind check: {exits.word(res.code)} — "
                 f"{len(res.findings)} finding(s), "
