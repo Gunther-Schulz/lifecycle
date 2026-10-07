@@ -1460,6 +1460,21 @@ MUTATIONS = [
      "(lc-188) — a record emptied of its lines then reads CLEAN, "
      "byte-identical to one that was examined and found sound"),
 
+    # lc-225. THE ROUND-SERIES TESTS, at the two sites that decide them.
+    # Folding the numbering test lets a skipped round read CLEAN; folding the
+    # unreadable-yield test lets a yield-less round vanish from the series.
+    # Each reads only its own list, so neither arrangement mutates an
+    # expression the other row's verdict is computed from.
+    ("record_round_series_broken", "records.py",
+     "    if rounds[2]:",
+     "    if False:",
+     "the test that a record's ROUND lines are numbered in order"),
+
+    ("record_round_unreadable", "records.py",
+     "        for bad_round in rounds[1]:",
+     "        for bad_round in []:",
+     "the report of a ROUND line carrying no readable yield"),
+
     ("record_tag_unknown", "records.py",
      "    if bad_tag:",
      "    if False:",

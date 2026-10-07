@@ -89,6 +89,14 @@ _TAG_LINE = re.compile(r'^\[(?P<tag>[A-Za-z_]+)\]\s*(?P<body>.*)$', re.S)
 _ROUTE = re.compile(r'\broute:\s*(?P<route>[A-Za-z]+)')
 _PROBE = re.compile(r'\bprobe:\s*\S')
 
+#: A round line in MOVES (lc-225): an optional date, the word ROUND and the
+#: round's number, then the round's `yield:`. The series is read OFF THE
+#: RECORD's own lines, never counted from the composing session's memory —
+#: the item's MUST-NOT-BUILD.
+_ROUND_LINE = re.compile(
+    r'^(?:\d{4}-\d{2}-\d{2}\s+)?ROUND\s+(?P<n>\d+)\b(?P<rest>.*)$', re.S)
+_ROUND_YIELD = re.compile(r'\byield:\s*(?P<y>\S+)')
+
 
 def records_dir() -> Path:
     """`$XDG_STATE_HOME/claude/investigations`, the XDG default applied.
@@ -153,6 +161,55 @@ def split_slots(text: str) -> dict:
     return out
 
 
+def parse_rounds(move_lines):
+    """`(series, unreadable, broken)` from a record's MOVES lines (lc-225).
+
+    `series` is `[(n, yield)]` for every round line that names both; a round
+    line whose yield is absent or not a non-negative integer is UNREADABLE
+    (the series cannot be trusted whole, so it is could-not-verify and never
+    a silently shorter series); round numbers that are not 1, 2, 3 ... in
+    order are BROKEN (a repeated or skipped round means the count printed
+    would not be the series the record holds).
+    """
+    series, unreadable, broken = [], [], []
+    for line in move_lines:
+        m = _ROUND_LINE.match(line.strip())
+        if not m:
+            continue
+        n = int(m.group("n"))
+        ym = _ROUND_YIELD.search(m.group("rest"))
+        if not ym or not ym.group("y").isdigit():
+            unreadable.append(line.strip()[:70])
+            continue
+        series.append((n, int(ym.group("y"))))
+    for i, (n, _y) in enumerate(series, start=1):
+        if n != i:
+            broken.append(f"line {i} is ROUND {n}")
+            break
+    return series, unreadable, broken
+
+
+def series_line(name: str, series) -> str:
+    """The series, printed where the next round's composer reads it: the
+    next round's number, every round's yield (a zero as an explicit `0`),
+    and the trailing zero run named as such. Judges nothing — the two
+    method questions are the composer's."""
+    k = len(series)
+    parts = ", ".join(f"round {n}: yield {y}" for n, y in series)
+    zeros = 0
+    for _n, y in reversed(series):
+        if y:
+            break
+        zeros += 1
+    if zeros:
+        tail = (f"the last {zeros} round(s) returned nothing new (yield 0) "
+                "— is another round owed, and is the FORM failing?")
+    else:
+        tail = f"the last round yielded {series[-1][1]}"
+    return (f"  ROUNDS {name}: {k} round(s) so far, round {k + 1} is next "
+            f"({parts}); {tail}")
+
+
 def nothing_graded_line(name: str) -> str:
     """The answer for an open record whose graded slots hold no line (lc-188).
 
@@ -177,6 +234,10 @@ def check_one(path: Path):
     is how it came to be a finding. A closed record grades none BY DESIGN,
     and its caller says so on that record's own line.
 
+    The SIXTH element is the round series (lc-225): `(series, unreadable,
+    broken)` from the MOVES lines, empty tuple parts for a record carrying no
+    round line.
+
     `findings` are whole message strings, one per CLASS per record rather
     than one per offending line: a record of loose prose yields hundreds of
     line-level faults, and a finding list nobody reads to the end is a
@@ -186,7 +247,7 @@ def check_one(path: Path):
     try:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as e:
-        return [], f"{path.name} — {type(e).__name__}: {e}", 0, False, 0
+        return [], f"{path.name} — {type(e).__name__}: {e}", 0, False, 0, ([], [], [])
 
     findings = []
     slots = split_slots(text)
@@ -209,7 +270,7 @@ def check_one(path: Path):
                 "pointer to where everything went; a closure that says only "
                 "that it happened leaves every graduated line unfindable, "
                 "which is the same loss as deleting them.")
-        return findings, None, 0, True, 0
+        return findings, None, 0, True, 0, ([], [], [])
 
     missing = [s for s in SLOTS if s not in slots]
     if missing:
@@ -298,7 +359,14 @@ def check_one(path: Path):
             "consistent with either answer decides nothing — naming it is "
             f"what makes the question answerable. First: {unprobed[0]!r}")
 
-    return findings, None, waiting, False, graded
+    rounds = parse_rounds(slots.get("MOVES", []))
+    if rounds[2]:
+        findings.append(
+            f"FINDING [record_round_series_broken] {name}: the ROUND lines in "
+            f"MOVES are not numbered 1, 2, 3 ... in order ({rounds[2][0]}). "
+            "A repeated or skipped round number means the series printed "
+            "below is not the series the record holds.")
+    return findings, None, waiting, False, graded, rounds
 
 
 def cmd_record_check(args, out) -> int:
@@ -319,8 +387,16 @@ def cmd_record_check(args, out) -> int:
 
     all_findings, unreadable, waiting, closed = [], [], 0, []
     graded, ungraded = 0, []
+    series_lines, unreadable_rounds = [], []
     for p in files:
-        f, bad, w, is_closed, n = check_one(p)
+        f, bad, w, is_closed, n, rounds = check_one(p)
+        if rounds[0]:
+            series_lines.append(series_line(p.name, rounds[0]))
+        for bad_round in rounds[1]:
+            unreadable_rounds.append(
+                f"COULD NOT VERIFY [record_round_unreadable] {p.name}: a "
+                f"ROUND line names no `yield:` integer, so the round series "
+                f"cannot be read whole: {bad_round!r}")
         all_findings += f
         if bad:
             unreadable.append(bad)
@@ -344,6 +420,10 @@ def cmd_record_check(args, out) -> int:
         out(f"  COULD NOT VERIFY: {bad}")
     for name in ungraded:
         out("  " + nothing_graded_line(name))
+    for line in series_lines:
+        out(line)
+    for line in unreadable_rounds:
+        out(f"  {line}")
 
     if waiting:
         # NOT a finding. A question legitimately waiting on the reporter is
@@ -367,10 +447,11 @@ def cmd_record_check(args, out) -> int:
     span = (f"{graded} line(s) graded in "
             f"{len(files) - len(unreadable) - len(closed)} open record(s), "
             f"{len(closed)} closed (closure gate only)")
-    if unreadable or ungraded:
+    if unreadable or ungraded or unreadable_rounds:
         out(f"record check: COULD NOT VERIFY — {len(unreadable)} record(s) "
-            f"could not be read and {len(ungraded)} open record(s) had no "
-            f"line to grade; {len(all_findings)} finding(s) among the "
+            f"could not be read, {len(ungraded)} open record(s) had no "
+            f"line to grade and {len(unreadable_rounds)} round line(s) "
+            f"carried no readable yield; {len(all_findings)} finding(s) among the "
             f"{len(files) - len(unreadable)} that could be read. {span}.")
         return exits.COULD_NOT_VERIFY
     if all_findings:

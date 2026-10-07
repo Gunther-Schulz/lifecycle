@@ -4880,6 +4880,34 @@ RECORD_ROWS = [
         stage="lc-188",
     ),
     Row(
+        ident="record_round_series_broken",
+        refusal="a record whose ROUND lines in MOVES are not numbered 1, 2, "
+                "3 ... in order (lc-225) — the series printed for the next "
+                "round's composer would not be the series the record holds",
+        firing_input="the conformant record with two ROUND lines numbered 1 "
+                     "and 3 — round 2 skipped",
+        expect=exits.FINDING,
+        fire=lambda: _record_run(_GOOD_RECORD + "ROUND 1 yield: 1 — a\n"
+                                 "ROUND 3 yield: 0 — c\n"),
+        control=lambda: _record_run(_GOOD_RECORD + "ROUND 1 yield: 1 — a\n"
+                                    "ROUND 2 yield: 0 — c\n"),
+        stage="lc-225",
+    ),
+    Row(
+        ident="record_round_unreadable",
+        refusal="a ROUND line naming no `yield:` integer (lc-225) — the "
+                "series cannot be read whole, and a silently shorter series "
+                "is a count shaped like an answer",
+        firing_input="the conformant record with a ROUND line carrying no "
+                     "`yield:` at all",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _record_run(_GOOD_RECORD + "ROUND 1 yield: 1 — a\n"
+                                 "ROUND 2 — forgot the yield\n"),
+        control=lambda: _record_run(_GOOD_RECORD + "ROUND 1 yield: 1 — a\n"
+                                    "ROUND 2 yield: 0 — c\n"),
+        stage="lc-225",
+    ),
+    Row(
         ident="record_tag_unknown",
         refusal="a tag outside the closed set — counted by nothing, draining "
                 "through every gate",
