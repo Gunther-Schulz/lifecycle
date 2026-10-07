@@ -685,6 +685,30 @@ MUTATIONS = [
      "D-f's report of entries no rule covers — they are then absent from "
      "both the carrier and the run's verdict, which is a silent loss"),
 
+    # lc-221. THE READ-BACK'S OWN VERDICT, the one branch where this refusal
+    # is decided whichever target disagreed (a carrier head, the declaration's
+    # schema, a derived trigger). The row's plant is a writer that reports
+    # the head correctly and writes elsewhere, so under this fold the run
+    # prints its `written:` lines over a carrier it did not change and goes
+    # on to claim APPLIED, exit 0 — lc-205's shape with nothing left to
+    # catch it, which is what the row exists to refuse. Not the comparison
+    # above it (`elif got != m:`): that is one of three ways into `disagreed`
+    # and folding it would leave the row's refusal half-proven under a name
+    # that claims all of it.
+    # This row was proven red-first BY HAND on 2026-09-18, in the other
+    # direction — the defect reintroduced into the writer and the read-back
+    # seen to fire. That proof lived in message traffic. This entry is the
+    # re-runnable half: admitted on the lc-142 pair — PROVEN at this anchor
+    # (`verdict 2/named -> 0/unnamed`, `rows changed:
+    # migration_readback_disagrees`), `rows changed: NONE` and FAILED
+    # re-pointed at an inert comment line in the same function.
+    ("migration_readback_disagrees", "migrate.py",
+     "    if disagreed:",
+     "    if False:",
+     "the read-back's verdict on an artifact that does not hold what the "
+     "run reported writing — folded, a schema apply prints `written:` over "
+     "a carrier it left unchanged and then claims APPLIED"),
+
     # --- THE SCHEMA WAVE (1d). Each folds one VERDICT into another; none
     # removes machinery, because a mutation that crashes proves the branch is
     # reached and not that the row discriminates.
