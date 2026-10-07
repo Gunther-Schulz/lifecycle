@@ -2458,5 +2458,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 17a81784447cedb597183292ec6004e0f1cca16d
 
+## lc-209
+grade: DONE
+requirement: THE MIGRATION REPORT RENDERS AN UNREADABLE ITEMS.md AS 'None yet ... expected'. routed_items (migrate.py:2776-2779) swallows OSError and UnicodeDecodeError and returns an empty list; the render at 3234-3238 then prints the empty-table paragraph. That paragraph's own framing at 3230 names exactly TWO readings of an empty table — that the routing has not happened rather than that there was nothing to route — and misses the third, which is that the carrier could not be read at all. Reachable on --report-only without --merge, the one path that never opens ITEMS.md earlier; under --merge an unreadable home is correctly caught at 2277.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: An unreadable routing home is the THIRD answer in that section — could-not-verify with its reason — never the empty table. The section's framing paragraph gains that third reading, since it currently enumerates two and the enumeration is what makes the omission invisible. RED-FIRST, the pair: a readable ITEMS.md citing the report renders its row and '1 finding(s) routed'; the same repo with ITEMS.md made undecodable must NOT render 'None yet' and CLEAN.
+evidence: RELAYED from the lc-192 lane with its executed pair pasted, NOT reproduced here: control renders the lc-1 row and '1 finding(s) routed'; probe with an invalid-UTF-8 ITEMS.md renders 'None yet. On the FIRST run of a migration this is expected' at CLEAN exit 0. DERIVED from the lane's read: the swallow is at 2776-2779 and the two-reading framing at 3230. MEASURED at this desk: nothing — this one is booked entirely on relayed evidence and its first build step is to reproduce the pair.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 An unreadable routing home renders COULD NOT VERIFY. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 8116248680dd3dbb4ecd79478c75af23dddeba05
+
 ## Archive (pre-migration)
 
