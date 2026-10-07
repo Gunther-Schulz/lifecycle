@@ -376,6 +376,8 @@ amended-write-set: 2026-09-18 plugin/cli/lifecycle_core,test/
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
 amend-reason: 2026-10-07 mechanism 1 lands in wave E; mechanism 2 stays open
 amended-evidence: 2026-10-07 RELAYED from wave E lane E1 2026-10-07: mechanism 1 built (prefix mismatch refused before existence at 13 doors; four ledger doors had exited 0 on a foreign id, three writing it). MECHANISM 2 NOT BUILT by desk ruling: machine readers of stdout exist (dotfiles statusline renderer and session-scan re-render item check, kind list, item ready --head, arc status; item slots --json; lane list --json), so stream and exempt verbs need a design. Also uncovered: ids passed as secondary arguments (--join, --met, --by, --blocked-by).
+amend-reason: 2026-10-07 name the landed commit
+amended-evidence: 2026-10-07 MEASURED 2026-10-07 at the desk: mechanism 1 is in main as 26eb681 (wave E lane E1), verified with the rest of the wave. Mechanism 2 stays open as recorded.
 
 ## lc-127
 grade: STANDBY
