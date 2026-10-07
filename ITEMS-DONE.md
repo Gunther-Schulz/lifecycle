@@ -2825,5 +2825,18 @@ closed-met: none
 closed-decided: none
 closed-ref: af01320ee263351336caadfb9b9f2ca7385c1929
 
+## lc-319
+grade: DONE
+requirement: A TRACKED PRIOR MIGRATION REPORT IS LISTED AS A CARRIER READER BY THE NEXT RUN: the residue scan excludes only the current report path, so an earlier report that quotes the carrier name is offered as a consumer needing an update - record: wave B lane M2b closing report 2026-10-07, finding 3
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate_residue.py
+done-criterion: A migration report written by an earlier run is not listed as a live carrier reader by a later run, whatever its path; a genuine consumer in the same repo still is. Red-first: a repo holding a tracked earlier report.
+evidence: RELAYED from lane M2b (sonnet) 2026-10-07 at 3390d71, observed while fixing lc-83, not fixed and not re-run at the desk: the report name is absent from residue_excluded unless it is the current report path.
+blocked-by: NONE
+closed-reason: 2026-10-07 An earlier migration report is not listed as a live carrier reader. Wave C 2026-10-07, verified on main at 5e77b52: suite 1531 OK no skips, --test 153 of 153, prove-rows 134 of 134 held with no control red, leak battery 62 of 62; item check unchanged in exit code across all ten rostered repos.
+closed-met: none
+closed-decided: none
+closed-ref: 0ef742404c620e8f5d4a89ce503ccdaddce8d3b2
+
 ## Archive (pre-migration)
 

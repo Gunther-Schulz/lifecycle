@@ -1472,15 +1472,6 @@ done-criterion: Every verb that writes and commits a carrier checks, before its 
 evidence: RELAYED from lane R1 (opus) 2026-10-07 at 431190d: ledger.append followed by a whole-file commit also runs in item supersede and in item close decision and drop branches, and every item verb commits ITEMS.md whole by the same route. RELAYED from peer session dotfiles-2b the same day: after a refused drop left three files dirty, the next verb (an item amend on another item) committed ITEMS.md whole, carrying the half-finished deletion under an unrelated message.
 blocked-by: NONE
 
-## lc-319
-grade: STANDBY
-requirement: A TRACKED PRIOR MIGRATION REPORT IS LISTED AS A CARRIER READER BY THE NEXT RUN: the residue scan excludes only the current report path, so an earlier report that quotes the carrier name is offered as a consumer needing an update - record: wave B lane M2b closing report 2026-10-07, finding 3
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate_residue.py
-done-criterion: A migration report written by an earlier run is not listed as a live carrier reader by a later run, whatever its path; a genuine consumer in the same repo still is. Red-first: a repo holding a tracked earlier report.
-evidence: RELAYED from lane M2b (sonnet) 2026-10-07 at 3390d71, observed while fixing lc-83, not fixed and not re-run at the desk: the report name is absent from residue_excluded unless it is the current report path.
-blocked-by: NONE
-
 ## lc-320
 grade: STANDBY
 requirement: arc advance AND arc close RETIRE A DEADLINE LANE AND DO NOT COMMIT IT: the declaration row and the lane body are changed on disk while the verb commits only the arc paths, so the tree is left dirty behind a verb that reported success - record: wave C lane C1 closing report 2026-10-07, gap G1
