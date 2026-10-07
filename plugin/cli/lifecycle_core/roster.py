@@ -530,6 +530,140 @@ def check_input_classes(out) -> None:
         "code.")
 
 
+def door_of(argv) -> str | None:
+    """The VERB an argv enters by — `item add`, `ledger add decision`.
+
+    Read off the CLI's OWN parser, never off a list of verbs kept here: the
+    walk descends the subparser tree for as long as the next token names a
+    registered subcommand, so a verb added tomorrow is a door tomorrow.
+    `None` where the first token names no verb at all.
+    """
+    import argparse
+    from . import cli as cli_mod
+
+    parser, path = cli_mod.build_parser(), []
+    for tok in argv:
+        subs = [a for a in parser._actions
+                if isinstance(a, argparse._SubParsersAction)]
+        if not subs or tok not in subs[0].choices:
+            break
+        path.append(tok)
+        parser = subs[0].choices[tok]
+    return " ".join(path) or None
+
+
+def arm_door(arm) -> dict | None:
+    """`{"verb", "flags"}` for an arm that is DATA, else `None`.
+
+    `flags` maps each `--flag` the argv passes to the value after it (or
+    `True` for a bare flag). A blocker's TYPE is read with the carrier's own
+    classifier, because a demand on a blocker is a demand on one type of it
+    and the type lives inside the flag's value.
+
+    `None` is the third answer: the arm is an opaque callable and its door
+    was not read — which is never the same as "walks no door".
+    """
+    if not isinstance(arm, refusals.Call):
+        return None
+    from . import items as items_mod
+
+    argv = arm.argv
+    flags = {}
+    for i, tok in enumerate(argv):
+        if isinstance(tok, str) and tok.startswith("--"):
+            nxt = argv[i + 1] if i + 1 < len(argv) else None
+            flags[tok] = (nxt if isinstance(nxt, str)
+                          and not nxt.startswith("--") else True)
+    blocker = None
+    if isinstance(flags.get("--blocked-by"), str):
+        kind, _detail = items_mod.classify_blocker(flags["--blocked-by"],
+                                                   None)
+        blocker = kind or "untyped-or-item-id"
+    return {"verb": door_of(argv), "flags": flags, "blocker": blocker}
+
+
+def controls_through(verb: str | None = None, flag: str | None = None,
+                     blocker: str | None = None) -> list:
+    """Idents of the rows whose CONTROL walks this door — the blast radius of
+    a demand added there, readable BEFORE the demand is written (lc-178).
+
+    A door is a verb, a flag, a blocker type, or any conjunction of them:
+    `flag="--blocked-by", blocker="decision"` is the door lc-169's
+    derivability demand was added at. Rows whose control is opaque are not
+    listed here and are not silently clean either — `check_doors` names them.
+    """
+    out = []
+    for row in refusals.ROWS:
+        door = arm_door(row.control)
+        if door is None:
+            continue
+        if verb is not None and door["verb"] != verb:
+            continue
+        if flag is not None and flag not in door["flags"]:
+            continue
+        if blocker is not None and door["blocker"] != blocker:
+            continue
+        out.append(row.ident)
+    return out
+
+
+def check_doors(out) -> None:
+    """THE DOORS THE ROSTER'S CONTROLS WALK (lc-178) — a READOUT, no code.
+
+    A roster control is a fixture that must pass cleanly. A new demand at the
+    door it walks through makes it fail for a reason that has nothing to do
+    with the row it proves, and until this listing the population was found
+    by running the suite after the change: four times in one day, 22 rows in
+    one of them. This is the same population, readable first.
+
+    NEVER A REFUSAL. A guard that blocked a door demand until its controls
+    were updated would fire on legitimate work; the contamination is
+    legitimate and merely unseen.
+
+    GROUPED BY THE ARGV EACH CONTROL RUNS — the arm is data (`refusals.Call`)
+    and nothing here is a list of which row uses which door.
+    """
+    out("")
+    out("DOORS (lc-178) — the write door each row's CONTROL walks, read off "
+        "the argv the arm itself runs. A demand added at a door reaches "
+        "every control listed under it: read this before writing one. "
+        "Grouped by verb, then by each flag the control passes; "
+        "`--blocked-by` is split by blocker TYPE.")
+    by_verb, by_flag, opaque = {}, {}, []
+    for row in refusals.ROWS:
+        door = arm_door(row.control)
+        if door is None:
+            opaque.append(row.ident)
+            continue
+        verb = door["verb"] or "(no verb)"
+        by_verb.setdefault(verb, []).append(row.ident)
+        for flag in door["flags"]:
+            key = (verb, flag if flag != "--blocked-by"
+                   else f"--blocked-by <{door['blocker']}>")
+            by_flag.setdefault(key, []).append(row.ident)
+    for verb in sorted(by_verb):
+        out(f"    {verb}: {len(by_verb[verb])} control(s) — "
+            f"{', '.join(by_verb[verb])}")
+        for (v, flag) in sorted(k for k in by_flag if k[0] == verb):
+            names = by_flag[(v, flag)]
+            # A flag every control of the verb passes is the verb's own
+            # baseline; naming the same rows again under each such flag
+            # buries the lines that differ.
+            out(f"        {flag}: {len(names)} — "
+                + ("every control above" if len(names) > 1
+                   and len(names) == len(by_verb[verb])
+                   else ", ".join(names)))
+    if opaque:
+        out(f"    DOOR UNDECLARED  {len(opaque)} control(s) are not one CLI "
+            "invocation held as data, so the door each walks was NOT read: "
+            f"{', '.join(opaque)}")
+    listed = sum(len(v) for v in by_verb.values())
+    out(f"    controls with a door read: {listed} of {len(refusals.ROWS)}; "
+        f"door undeclared: {len(opaque)}. An undeclared control may walk any "
+        "door above — this listing is a floor for those rows, never a "
+        "ceiling.")
+
+
 def cmd_list(out) -> int:
     """`--test --list` — the roster as DATA, nothing executed.
 
@@ -549,6 +683,13 @@ def cmd_list(out) -> int:
             + (f"   (its text also names: "
                f"{', '.join(row.names_input)})"
                if getattr(row, "names_input", ()) else ""))
+        door = arm_door(row.control)
+        out("    control door:  "
+            + ("UNDECLARED (an opaque callable — not read)" if door is None
+               else (door["verb"] or "(no verb)")
+               + "".join(f" {f}" if f != "--blocked-by"
+                         else f" --blocked-by <{door['blocker']}>"
+                         for f in door["flags"])))
         out(f"    expects:       {exits.word(row.expect)}")
         out(f"    finding row:   {row.expected_finding_row}")
         out(f"    stage:         {row.stage}")
@@ -575,6 +716,7 @@ def cmd_list(out) -> int:
     for name, why in refusals.PROSE_REST:
         out(f"    {name}")
         out(f"        {why}")
+    check_doors(out)
     return exits.CLEAN
 
 

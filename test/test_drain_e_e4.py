@@ -306,5 +306,106 @@ class EveryRosterRowDeclaresItsInputClass(unittest.TestCase):
                          out)
 
 
+class TheControlsThroughADoorAreListable(unittest.TestCase):
+    """lc-178: a demand at a write door contaminates every control walking
+    through it, and that population was found only by running the suite.
+
+    THE INCIDENT IS THE FIXTURE. lc-169 put a derivability demand on booking
+    a `decision` blocker and four neighbours' controls went red at once,
+    because each proved its own row with a clean control that books one. The
+    listing for that door must name those four, and must NOT name the rows
+    whose control walks `item add` with no decision blocker — a listing that
+    names every `item add` row, or none, discriminates nothing.
+
+    THE DOOR IS READ OFF THE ARM, never restated beside it: an arm is data
+    (`refusals.Call`) and its door is the argv it runs.
+    """
+
+    #: The four controls lc-169 contaminated, from the item's own criterion.
+    INCIDENT = {"blocker_untyped", "blocker_unstorable",
+                "parked_without_typed_blocker", "new_without_typed_blocker"}
+
+    @staticmethod
+    def _through(**kw):
+        from lifecycle_core import roster
+        fn = getattr(roster, "controls_through", None)
+        return None if fn is None else fn(**kw)
+
+    def test_the_decision_blocker_door_names_the_four_contaminated_controls(self):
+        got = self._through(flag="--blocked-by", blocker="decision")
+        self.assertIsNotNone(got, "the roster cannot list a door's controls")
+        self.assertEqual(
+            self.INCIDENT - set(got), set(),
+            "the listing for the decision-blocker door leaves out a control "
+            f"lc-169's demand contaminated. Listed: {sorted(got)}")
+
+    def test_that_listing_is_not_every_control_through_item_add(self):
+        """The discriminating half. `item add` is the widest door on the
+        roster; the decision-blocker door is a small part of it."""
+        narrow = self._through(flag="--blocked-by", blocker="decision")
+        wide = self._through(verb="item add")
+        self.assertIsNotNone(narrow, "the roster cannot list a door's controls")
+        self.assertGreater(len(wide), len(narrow))
+        self.assertIn("unknown_grade_write", wide)
+        self.assertNotIn(
+            "unknown_grade_write", narrow,
+            "a control that books NO blocker was listed at the decision "
+            "door — the listing is naming a verb, not a door")
+        self.assertNotIn("blocker_predicate_broken", narrow,
+                         "an EVIDENCE blocker's control was listed at the "
+                         "decision door")
+
+    def test_the_rows_listed_beyond_the_four_all_book_a_decision_blocker(self):
+        """The world moved since lc-169: its own row and later ones also
+        book a decision blocker in their control. Each extra name is checked
+        at the argv it runs, so the listing is never wider than its door."""
+        from lifecycle_core import refusals
+        got = self._through(flag="--blocked-by", blocker="decision")
+        self.assertIsNotNone(got, "the roster cannot list a door's controls")
+        rows = {r.ident: r for r in refusals.ROWS}
+        for ident in got:
+            argv = rows[ident].control.argv
+            value = argv[argv.index("--blocked-by") + 1]
+            self.assertTrue(value.startswith("decision "), (ident, value))
+
+    def test_an_arm_that_is_not_one_invocation_is_named_as_undeclared(self):
+        """Three answers: a control whose door could not be read is listed
+        under its own heading, never dropped and never counted at a door."""
+        out = _run_readout("check_doors", [
+            _row("opaque_control"),
+        ])
+        self.assertIsNotNone(out, "the roster has no door listing")
+        named = [l for l in out.split("\n") if "DOOR UNDECLARED" in l]
+        self.assertEqual(len(named), 1, out)
+        self.assertIn("opaque_control", named[0])
+
+    def test_a_declared_arm_runs_exactly_the_argv_it_declares(self):
+        """MUST NOT MOVE (2): the door is the roster's own structure. The
+        argv a `Call` shows is the argv its runner receives."""
+        from lifecycle_core import refusals
+        seen = []
+
+        def runner(argv, **kw):
+            seen.append((list(argv), kw))
+            return refusals.Fired(0, "")
+
+        arm = refusals.Call(runner, ["item", "add", "--goal", "g"], items="X")
+        arm()
+        self.assertEqual(seen, [(arm.argv, {"items": "X"})])
+
+    def test_the_listing_is_printed_by_the_rosters_list_and_runs_no_row(self):
+        """MUST NOT MOVE (1): a READOUT. It rides `--test --list`, which
+        executes nothing and exits CLEAN."""
+        from lifecycle_core import exits, roster
+        buf = []
+        code = roster.cmd_test(buf.append, list_only=True)
+        text = "\n".join(buf)
+        self.assertEqual(code, exits.CLEAN)
+        self.assertIn("DOORS (lc-178)", text,
+                      "`--test --list` carries no door listing")
+        self.assertIn("    control door:", text,
+                      "no row's entry states the door its control walks")
+
+
 if __name__ == "__main__":
     unittest.main()

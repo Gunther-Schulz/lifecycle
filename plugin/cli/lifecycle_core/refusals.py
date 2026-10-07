@@ -111,6 +111,42 @@ class Fired:
     output: str
 
 
+class Call:
+    """A roster arm AS DATA: the runner, and the argv it hands the CLI.
+
+    WHY AN ARM IS NOT A LAMBDA WHERE IT CAN BE THIS (lc-178). A demand added
+    at a write door — `item add`, a blocker type, a new required flag — makes
+    every CONTROL that walks through that door fail for a reason that has
+    nothing to do with the row it proves. Which controls those are was
+    answerable only by running the suite after the change, because the door
+    sat inside a lambda body and no derivation over the roster can see into
+    one. Held here, the argv IS the declaration: the door is read off the
+    very list the arm runs, so it cannot be restated beside the arm and
+    cannot drift from it.
+
+    Calling it runs the arm exactly as the lambda it replaced did. `argv`
+    may be a zero-argument callable where the list is built by a helper
+    defined later in this module; it is resolved on read, never at import.
+
+    AN ARM THAT IS NOT ONE CLI INVOCATION STAYS A PLAIN CALLABLE — a helper
+    that builds a repo and calls a function, or runs two verbs in sequence.
+    Its door is UNDECLARED, and the roster's door listing names every such
+    row rather than leaving it out.
+    """
+
+    def __init__(self, runner, argv, **kw):
+        self.runner = runner
+        self._argv = argv
+        self.kw = kw
+
+    @property
+    def argv(self) -> list:
+        return list(self._argv() if callable(self._argv) else self._argv)
+
+    def __call__(self) -> "Fired":
+        return self.runner(self.argv, **self.kw)
+
+
 #: THE INPUT CLASSES A PLANT CAN BE (lc-326) — closed at four, decided before
 #: any row was classed:
 #:
@@ -1092,7 +1128,7 @@ ROWS = [
                 "not re-closable and one never opened has nothing to move",
         firing_input="`arc close <slug>` with no such arc",
         expect=exits.FINDING,
-        fire=lambda: _arc_cli(["arc", "close", "never-opened"]),
+        fire=Call(_arc_cli, ["arc", "close", "never-opened"]),
         control=lambda: _arc_cli_open_then_close(),
     ),
     Row(
@@ -1760,8 +1796,8 @@ VERB_ROWS = [
         refusal="unknown grade word on write",
         firing_input="`item add --grade FOO`",
         expect=exits.FINDING,
-        fire=lambda: _cli(GOOD_ADD + ["--grade", "FOO"]),
-        control=lambda: _cli(GOOD_ADD + ["--grade", "READY"]),
+        fire=Call(_cli, GOOD_ADD + ["--grade", "FOO"]),
+        control=Call(_cli, GOOD_ADD + ["--grade", "READY"]),
         stage="wave 1, stage 4",
     ),
     Row(
@@ -1770,10 +1806,10 @@ VERB_ROWS = [
         refusal="public repo, foreign-origin item",
         firing_input="`item add` from another repo's cwd against `public: true`",
         expect=exits.FINDING,
-        fire=lambda: _cli_foreign(GOOD_ADD, public=True),
+        fire=Call(_cli_foreign, GOOD_ADD, public=True),
         # SAME public repo, SAME add — only the cwd differs, so origin is
         # what separates them and not the `public` flag.
-        control=lambda: _cli(GOOD_ADD, public=True),
+        control=Call(_cli, GOOD_ADD, public=True),
         stage="wave 1, stage 4",
     ),
     Row(
@@ -1784,12 +1820,13 @@ VERB_ROWS = [
         firing_input="an `item add` whose write-set path a live item already "
                      "carries, with no `--join`",
         expect=exits.FINDING,
-        fire=lambda: _cli(
-            _mutate_add("--write-set", "tools/harvest.mjs"), items=SEED_ITEMS),
+        fire=Call(_cli,
+            lambda: _mutate_add("--write-set", "tools/harvest.mjs"),
+            items=SEED_ITEMS),
         # The identical add against a carrier holding the SAME item under a
         # different write-set and different requirement words: the join runs
         # and finds nothing, so the refusal is the MATCH and not the join.
-        control=lambda: _cli(GOOD_ADD, items=SEED_ITEMS),
+        control=Call(_cli, GOOD_ADD, items=SEED_ITEMS),
         stage="wave 1, stage 4",
     ),
     Row(
@@ -1807,7 +1844,7 @@ VERB_ROWS = [
         firing_input="`item add --blocked-by 'decision <question>'` with no "
                      "`--not-derivable`",
         expect=exits.FINDING,
-        fire=lambda: _cli(GOOD_ADD + ["--blocked-by",
+        fire=Call(_cli, GOOD_ADD + ["--blocked-by",
                                       "decision which window is canonical"]),
         # THE SAME ADD, THE SAME QUESTION, the statement supplied: the arms
         # differ in the statement alone, so neither `item add` nor the
@@ -1815,7 +1852,7 @@ VERB_ROWS = [
         # the undecidable case — this row must pass on exactly the question
         # that belongs to the operator, or the refusal would be deciding the
         # kind split by predicate.
-        control=lambda: _cli(GOOD_ADD + [
+        control=Call(_cli, GOOD_ADD + [
             "--blocked-by", "decision which window is canonical",
             "--not-derivable", "a preference with no precedent in the "
                                "ledger — constitutively the operator's"]),
@@ -1836,7 +1873,7 @@ VERB_ROWS = [
         firing_input="`item add --evidence <prose carrying none of "
                      "MEASURED / DERIVED / RECALLED / RELAYED>`",
         expect=exits.FINDING,
-        fire=lambda: _cli(_mutate_add(
+        fire=Call(_cli, lambda: _mutate_add(
             "--evidence", "the deploy path re-reads the config on every "
                           "start, so the gate is looking at the wrong file")),
         # THE SAME ADD, THE SAME SENTENCE, one word longer: the claim is now
@@ -1844,7 +1881,7 @@ VERB_ROWS = [
         # so neither `item add` nor the sentence's content is what separates
         # them — which is the whole predicate, since this check grades
         # PRESENCE and never truth.
-        control=lambda: _cli(_mutate_add(
+        control=Call(_cli, lambda: _mutate_add(
             "--evidence", "DERIVED the deploy path re-reads the config on "
                           "every start, so the gate is looking at the wrong "
                           "file")),
@@ -1856,10 +1893,10 @@ VERB_ROWS = [
         refusal="`new` is taken only with a named absence (§3.2)",
         firing_input="`item add` with no `--absence`",
         expect=exits.FINDING,
-        fire=lambda: _cli([a for i, a in enumerate(GOOD_ADD)
+        fire=Call(_cli, [a for i, a in enumerate(GOOD_ADD)
                            if a != "--absence"
                            and GOOD_ADD[i - 1] != "--absence"]),
-        control=lambda: _cli(GOOD_ADD),
+        control=Call(_cli, GOOD_ADD),
         stage="wave 1, stage 4",
     ),
     Row(
@@ -1870,10 +1907,10 @@ VERB_ROWS = [
         firing_input="`item add --hunks 1` over a one-path write-set, "
                      "source session",
         expect=exits.FINDING,
-        fire=lambda: _cli(_mutate_add("--hunks", "1")),
+        fire=Call(_cli, lambda: _mutate_add("--hunks", "1")),
         # The SAME one-file one-hunk add, from the OPERATOR: the veto is
         # skipped, the join never is. So the arms differ in the source alone.
-        control=lambda: _cli(_mutate_add("--hunks", "1")
+        control=Call(_cli, lambda: _mutate_add("--hunks", "1")
                              + ["--source", "operator"]),
         stage="wave 1, stage 4",
     ),
@@ -1884,9 +1921,9 @@ VERB_ROWS = [
                 "count not stated. COULD NOT VERIFY, never a pass",
         firing_input="`item add` over a one-path write-set with no `--hunks`",
         expect=exits.COULD_NOT_VERIFY,
-        fire=lambda: _cli([a for i, a in enumerate(GOOD_ADD)
+        fire=Call(_cli, [a for i, a in enumerate(GOOD_ADD)
                            if a != "--hunks" and GOOD_ADD[i - 1] != "--hunks"]),
-        control=lambda: _cli(GOOD_ADD),
+        control=Call(_cli, GOOD_ADD),
         stage="wave 1, stage 4",
     ),
     Row(
@@ -1896,9 +1933,9 @@ VERB_ROWS = [
                 "closed edge types",
         firing_input="`item add --blocked-by 'we should think about it'`",
         expect=exits.FINDING,
-        fire=lambda: _cli(GOOD_ADD + ["--blocked-by",
+        fire=Call(_cli, GOOD_ADD + ["--blocked-by",
                                       "we should think about it"]),
-        control=lambda: _cli(GOOD_ADD + ["--blocked-by",
+        control=Call(_cli, GOOD_ADD + ["--blocked-by",
                                          "decision which window is canonical",
                                          "--not-derivable",
                                          "a preference with no ledger "
@@ -1917,7 +1954,7 @@ VERB_ROWS = [
                      "unbalanced parenthesis>'` — `sh -n` exits 2 and nothing "
                      "is executed",
         expect=exits.FINDING,
-        fire=lambda: _cli(GOOD_ADD + [
+        fire=Call(_cli, GOOD_ADD + [
             "--blocked-by",
             "evidence an operating interval has passed since the burst "
             "(measure then cut: the timing rule; the next review is the "
@@ -1936,7 +1973,7 @@ VERB_ROWS = [
         # The exit-1 spelling keeps the property the control was chosen for
         # (parses, is not refused) under a predicate the sibling row does
         # not claim.
-        control=lambda: _cli(GOOD_ADD + [
+        control=Call(_cli, GOOD_ADD + [
             "--blocked-by", "evidence test -f /nonexistent-lifecycle-probe"]),
         stage="wave 1, stage 4 (lc-130)",
     ),
@@ -1956,7 +1993,7 @@ VERB_ROWS = [
                      "through `head -0`, which emits nothing, so `test -z` "
                      "held whatever was running",
         expect=exits.FINDING,
-        fire=lambda: _cli(GOOD_ADD + [
+        fire=Call(_cli, GOOD_ADD + [
             "--blocked-by",
             "evidence test -z \"$(printf 'a-process' | head -0)\""]),
         # THE SAME VERB, THE SAME BLOCKER TYPE, the same `head -0` SHAPE —
@@ -1965,7 +2002,7 @@ VERB_ROWS = [
         # thing the refusal is about: whether the booking run could have come
         # back anything but 0. A control spelled with an unrelated predicate
         # would have scored a lint that refuses every evidence blocker.
-        control=lambda: _cli(GOOD_ADD + [
+        control=Call(_cli, GOOD_ADD + [
             "--blocked-by",
             "evidence test -z \"$(printf 'a-process' | head -1)\""]),
         stage="wave 1, stage 4 (lc-164)",
@@ -1979,14 +2016,14 @@ VERB_ROWS = [
                 "is permanent and reads exactly like a good one (lc-44)",
         firing_input="`item close xx-1 --ref <a 40-hex sha no object has>`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none", "--ref",
+        fire=Call(_cli, ["item", "close", "xx-1", "--met", "none", "--decided", "none", "--ref",
                            "0123456789abcdef0123456789abcdef01234567"],
                           items=SEED_ITEMS),
         # THE SAME CLOSE with a ref that DOES resolve — the arms differ in
         # the ref alone, so neither the close nor the flag is what separates
         # them. `HEAD` rather than a literal sha because the scratch repo's
         # own commit is not knowable from here.
-        control=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none", "--ref", "HEAD"],
+        control=Call(_cli, ["item", "close", "xx-1", "--met", "none", "--decided", "none", "--ref", "HEAD"],
                              items=SEED_ITEMS),
         stage="wave 1, stage 5",
     ),
@@ -2000,10 +2037,10 @@ VERB_ROWS = [
                 "unsaid",
         firing_input="`item close xx-1` with neither `--met` nor `--decided`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1"], items=SEED_ITEMS),
+        fire=Call(_cli, ["item", "close", "xx-1"], items=SEED_ITEMS),
         # THE SAME CLOSE with both statements given as `none` — the arms
         # differ in the two options alone.
-        control=lambda: _cli(["item", "close", "xx-1", "--met", "none",
+        control=Call(_cli, ["item", "close", "xx-1", "--met", "none",
                               "--decided", "none"], items=SEED_ITEMS),
         stage="close statements",
     ),
@@ -2017,11 +2054,11 @@ VERB_ROWS = [
                 "that resolves",
         firing_input="`item close xx-1 --met xx-99999 --decided none`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1", "--met", "xx-99999",
+        fire=Call(_cli, ["item", "close", "xx-1", "--met", "xx-99999",
                            "--decided", "none"], items=SEED_ITEMS),
         # THE SAME CLOSE with a `--met` naming an item that DOES exist (the
         # item being closed is a member of the live carrier at the check).
-        control=lambda: _cli(["item", "close", "xx-1", "--met", "xx-1",
+        control=Call(_cli, ["item", "close", "xx-1", "--met", "xx-1",
                               "--decided", "none"], items=SEED_ITEMS),
         stage="close statements",
     ),
@@ -2073,7 +2110,7 @@ VERB_ROWS = [
         firing_input="`item supersede-closure xx-2 --ref <a 40-hex sha no "
                      "object has>` against a done home holding xx-2",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "supersede-closure", "xx-2", "--ref",
+        fire=Call(_cli, ["item", "supersede-closure", "xx-2", "--ref",
                            "0123456789abcdef0123456789abcdef01234567",
                            "--line", "the closure reason was falsified the "
                                      "same hour"],
@@ -2083,7 +2120,7 @@ VERB_ROWS = [
         # nor the flag nor the closed body is what separates them — the
         # control would otherwise score identically against a build that
         # refused every supersede-closure.
-        control=lambda: _cli(["item", "supersede-closure", "xx-2", "--ref",
+        control=Call(_cli, ["item", "supersede-closure", "xx-2", "--ref",
                               "HEAD",
                               "--line", "the closure reason was falsified the "
                                         "same hour"],
@@ -2103,13 +2140,13 @@ VERB_ROWS = [
         firing_input="`item close xx-1` where xx-1 is blocked by xx-2 and "
                      "xx-2 is still live",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"],
+        fire=Call(_cli, ["item", "close", "xx-1", "--met", "none", "--decided", "none"],
                           items=BLOCKER_TARGET_LIVE_ITEMS),
         # THE SAME CLOSE over the SAME blocker, with xx-2 CLOSED: the arms
         # differ in the target's state alone, so neither the close nor the
         # blocker's presence is what separates them. A control with no blocker
         # at all would pass whether or not this refusal read the target.
-        control=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"],
+        control=Call(_cli, ["item", "close", "xx-1", "--met", "none", "--decided", "none"],
                              items=BLOCKER_TARGET_CLOSED_ITEMS,
                              done=BLOCKER_TARGET_CLOSED_DONE),
         stage="wave 1, stage 5",
@@ -2134,7 +2171,7 @@ VERB_ROWS = [
         firing_input="`item close xx-1` where xx-1 is blocked by `evidence "
                      "test -e the-evidence.flag` and no such file exists",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none",
+        fire=Call(_cli, ["item", "close", "xx-1", "--met", "none",
                            "--decided", "none"],
                           items=EVIDENCE_QUIET_ITEMS),
         # THE SAME CLOSE over the same blocker TYPE, with a predicate that
@@ -2142,7 +2179,7 @@ VERB_ROWS = [
         # the close nor the presence of an evidence blocker is what separates
         # them. A control with no blocker would pass whether or not this
         # refusal ran the predicate at all.
-        control=lambda: _cli(["item", "close", "xx-1", "--met", "none",
+        control=Call(_cli, ["item", "close", "xx-1", "--met", "none",
                               "--decided", "none"],
                              items=EVIDENCE_FIRED_ITEMS),
         stage="drain wave C, lane C1 (lc-105)",
@@ -2164,14 +2201,14 @@ VERB_ROWS = [
         firing_input="`item close xx-1` where xx-1 is blocked by `external "
                      "the vendor ships a fix`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none",
+        fire=Call(_cli, ["item", "close", "xx-1", "--met", "none",
                            "--decided", "none"],
                           items=EXTERNAL_LIVE_ITEMS),
         # THE SAME CARRIER, closed as a DROP: the arms differ in the close's
         # grade alone, which is the only thing that can separate them for a
         # type no state answers. A control with no blocker would pass
         # whether or not this refusal looked at the blocker at all.
-        control=lambda: _cli(["item", "close", "xx-1", "--drop", "--reason",
+        control=Call(_cli, ["item", "close", "xx-1", "--drop", "--reason",
                               "overtaken"],
                              items=EXTERNAL_LIVE_ITEMS),
         stage="drain wave D, lane D1 (lc-322)",
@@ -2196,13 +2233,13 @@ VERB_ROWS = [
         firing_input="`item close xx-1` where xx-1's requirement carries the "
                      "lc-22 clause in its own words, from dotfiles `bb8edd4`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"],
+        fire=Call(_cli, ["item", "close", "xx-1", "--met", "none", "--decided", "none"],
                           items=CARRIED_POINTER_ITEMS),
         # THE SAME 384 BYTES with the marker respelled as ordinary prose. The
         # arms differ in the DECLARED MARKER alone, so neither the subject
         # matter nor the words "carrier" and "pointer" is what separates them
         # — which is what makes this control the over-fire probe as well.
-        control=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"],
+        control=Call(_cli, ["item", "close", "xx-1", "--met", "none", "--decided", "none"],
                              items=CARRIED_POINTER_PROSE_ITEMS),
         stage="wave 1, stage 5",
     ),
@@ -2217,14 +2254,14 @@ VERB_ROWS = [
         firing_input="`item add --blocked-by 'decision <q> — <q>'`, the "
                      "ledger's own slot separator inside the question",
         expect=exits.FINDING,
-        fire=lambda: _cli(GOOD_ADD + [
+        fire=Call(_cli, GOOD_ADD + [
             "--blocked-by",
             "decision does the desk accept X — or does it not"]),
         # THE SAME QUESTION, REPHRASED — the arms differ in the separator
         # alone. A control differing in the TYPE or in the whole sentence
         # would be red for a neighbouring reason and would prove nothing
         # about storability.
-        control=lambda: _cli(GOOD_ADD + [
+        control=Call(_cli, GOOD_ADD + [
             "--blocked-by",
             "decision does the desk accept X or does it not",
             "--not-derivable", "a preference with no ledger precedent"]),
@@ -2239,9 +2276,9 @@ VERB_ROWS = [
                 "declaration half is `dangling_reference` above)",
         firing_input="`item add --blocked-by xx-9999`",
         expect=exits.FINDING,
-        fire=lambda: _cli(GOOD_ADD + ["--blocked-by", "xx-9999"],
+        fire=Call(_cli, GOOD_ADD + ["--blocked-by", "xx-9999"],
                           items=SEED_ITEMS),
-        control=lambda: _cli(GOOD_ADD + ["--blocked-by", "xx-1"],
+        control=Call(_cli, GOOD_ADD + ["--blocked-by", "xx-1"],
                              items=SEED_ITEMS),
         stage="wave 1, stage 4",
     ),
@@ -2281,12 +2318,12 @@ VERB_ROWS = [
                      "`xx-9999`, beside blocks carrying the three other "
                      "blocker forms",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "check"], items=FOUR_BLOCKER_ITEMS),
+        fire=Call(_cli, ["item", "check"], items=FOUR_BLOCKER_ITEMS),
         # The SAME carrier with the SAME four forms, the item blocker
         # retargeted to the live `xx-4`: the arms differ in the ID ALONE. The
         # control is doing double duty — it also proves the other three forms
         # stay quiet, which is the half that decides whether this ships.
-        control=lambda: _cli(["item", "check"],
+        control=Call(_cli, ["item", "check"],
                              items=_mutate(FOUR_BLOCKER_ITEMS,
                                            "blocked-by: xx-9999",
                                            "blocked-by: xx-4")),
@@ -2334,12 +2371,12 @@ VERB_ROWS = [
                      "`blocked-by: NONE`, carries `write-set: "
                      "tools/harvest.mjs@cache-fix`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "check"], items=FOREIGN_WRITE_SET_ITEMS),
+        fire=Call(_cli, ["item", "check"], items=FOREIGN_WRITE_SET_ITEMS),
         # THE BLOCKER ALONE differs: the same foreign element, now behind a
         # typed blocker, is a correct booking (lc-67's shape). A control
         # that rewrote the write-set to a local path would prove the check
         # can see foreignness and nothing about what it refuses.
-        control=lambda: _cli(
+        control=Call(_cli,
             ["item", "check"],
             items=_mutate(FOREIGN_WRITE_SET_ITEMS, "blocked-by: NONE",
                           "blocked-by: external the other repo's release")),
@@ -2351,9 +2388,9 @@ VERB_ROWS = [
         refusal="PARKED without a typed blocker",
         firing_input="`item park <id>` with prose only",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
+        fire=Call(_cli, ["item", "park", "xx-1", "--blocked-by",
                            "we should think about it"], items=SEED_ITEMS),
-        control=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
+        control=Call(_cli, ["item", "park", "xx-1", "--blocked-by",
                               "decision which window is canonical",
                               "--not-derivable", "a preference with no ledger precedent"],
                              items=SEED_ITEMS),
@@ -2399,14 +2436,14 @@ VERB_ROWS = [
         firing_input="`item park <id> --blocked-by <typed>` on a block "
                      "carrying a superseding `amended-blocked-by:` line",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
+        fire=Call(_cli, ["item", "park", "xx-1", "--blocked-by",
                            "decision which window is canonical",
                            "--not-derivable", "a preference with no ledger precedent"],
                           items=PARK_AMENDED_ITEMS),
         # The SAME park of the SAME block, the amendment group ALONE removed:
         # the arms differ in the superseding line and in nothing else, so the
         # refusal is the supersession and not the park path.
-        control=lambda: _cli(["item", "park", "xx-1", "--blocked-by",
+        control=Call(_cli, ["item", "park", "xx-1", "--blocked-by",
                               "decision which window is canonical",
                               "--not-derivable", "a preference with no ledger precedent"],
                              items=PARK_UNAMENDED_ITEMS),
@@ -2420,11 +2457,11 @@ VERB_ROWS = [
                 "append-only ethic exist to keep out of the carrier",
         firing_input="`item amend <id> --goal <g>` with no `--reason`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "amend", "xx-1", "--goal", "verify"],
+        fire=Call(_cli, ["item", "amend", "xx-1", "--goal", "verify"],
                           items=SEED_ITEMS),
         # The SAME amendment WITH its reason: the arms differ in the reason
         # alone, so the refusal is the missing prose and not the amend path.
-        control=lambda: _cli(["item", "amend", "xx-1", "--goal", "verify",
+        control=Call(_cli, ["item", "amend", "xx-1", "--goal", "verify",
                               "--reason", "the goal was mis-recorded at "
                                           "intake"],
                              items=SEED_ITEMS),
@@ -2439,12 +2476,12 @@ VERB_ROWS = [
                 "carrier does not say there was one",
         firing_input="`item promote <id>` with neither `--by` nor `--reason`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "promote", "xx-1"], items=SEED_ITEMS),
+        fire=Call(_cli, ["item", "promote", "xx-1"], items=SEED_ITEMS),
         # The SAME promotion WITH both halves of the record: the arms differ
         # in the flags alone, so the refusal is the missing judgment and not
         # the promote path — which is a real risk here, because this verb is
         # new and a control that also refused would prove nothing.
-        control=lambda: _cli(["item", "promote", "xx-1",
+        control=Call(_cli, ["item", "promote", "xx-1",
                               "--by", "the wave-4 desk",
                               "--reason", "the slots are filled and a fresh "
                                           "context could execute this now"],
@@ -2460,7 +2497,7 @@ VERB_ROWS = [
         firing_input="`item promote <id>` on an item whose `decision` blocker "
                      "no ledger line answers",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "promote", "xx-1",
+        fire=Call(_cli, ["item", "promote", "xx-1",
                            "--by", "the wave-4 desk",
                            "--reason", "the slots are filled"],
                           items=_mutate(SEED_ITEMS, "blocked-by: NONE",
@@ -2468,7 +2505,7 @@ VERB_ROWS = [
                                         "is canonical")),
         # The SAME promotion on the SAME item with nothing blocking it: the
         # arms differ in the blocker alone.
-        control=lambda: _cli(["item", "promote", "xx-1",
+        control=Call(_cli, ["item", "promote", "xx-1",
                               "--by", "the wave-4 desk",
                               "--reason", "the slots are filled"],
                              items=SEED_ITEMS),
@@ -2488,14 +2525,14 @@ VERB_ROWS = [
                 "the fact",
         firing_input="`item promote <id>` on an item whose `goal` is UNKNOWN",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "promote", "xx-1",
+        fire=Call(_cli, ["item", "promote", "xx-1",
                            "--by", "the wave-4 desk",
                            "--reason", "the slots are filled"],
                           items=_mutate(SEED_ITEMS, "goal: mitigate",
                                         "goal: UNKNOWN")),
         # The SAME promotion with the goal filled: the arms differ in the one
         # slot, exactly as the read-path row's pair does.
-        control=lambda: _cli(["item", "promote", "xx-1",
+        control=Call(_cli, ["item", "promote", "xx-1",
                               "--by", "the wave-4 desk",
                               "--reason", "the slots are filled"],
                              items=SEED_ITEMS),
@@ -2509,12 +2546,12 @@ VERB_ROWS = [
                 "correction that was made",
         firing_input="`item amend <id> --reason <why>` with no slot flag",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "amend", "xx-1", "--reason",
+        fire=Call(_cli, ["item", "amend", "xx-1", "--reason",
                            "the goal was mis-recorded at intake"],
                           items=SEED_ITEMS),
         # The SAME call with ONE slot named: the arms differ in whether a
         # value was given, never in the reason.
-        control=lambda: _cli(["item", "amend", "xx-1", "--reason",
+        control=Call(_cli, ["item", "amend", "xx-1", "--reason",
                               "the goal was mis-recorded at intake",
                               "--goal", "verify"],
                              items=SEED_ITEMS),
@@ -2534,12 +2571,12 @@ VERB_ROWS = [
         # baseline 2 so CONSERVATION balances in both arms: without that the
         # plant would go red for two reasons and the row would not know
         # which one it proved.
-        fire=lambda: _cli(
+        fire=Call(_cli,
             ["item", "check"],
             items=_mutate(SEED_ITEMS, "baseline: 1", "baseline: 2"),
             done=EMPTY_DONE + "\n" + SEED_ITEMS.split("\n\n", 1)[1].replace(
                 "grade: READY", "grade: DONE")),
-        control=lambda: _cli(
+        control=Call(_cli,
             ["item", "check"],
             items=_mutate(SEED_ITEMS, "baseline: 1", "baseline: 2"),
             done=EMPTY_DONE + "\n" + SEED_ITEMS.split("\n\n", 1)[1].replace(
@@ -2553,10 +2590,10 @@ VERB_ROWS = [
                 "is not a closure",
         firing_input="a body deleted by hand → the delta fails",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "check"],
+        fire=Call(_cli, ["item", "check"],
                           items=_mutate(SEED_ITEMS, "baseline: 1",
                                         "baseline: 2")),
-        control=lambda: _cli(["item", "check"], items=SEED_ITEMS),
+        control=Call(_cli, ["item", "check"], items=SEED_ITEMS),
         stage="wave 1, stage 5",
     ),
     Row(
@@ -2578,12 +2615,12 @@ VERB_ROWS = [
         firing_input="a carrier whose head under-counts what the two homes "
                      "hold (here: the interrupted move's two copies)",
         expect=exits.FINDING,
-        fire=lambda: _cli(
+        fire=Call(_cli,
             ["item", "check"],
             items=SEED_ITEMS,
             done=EMPTY_DONE + "\n" + SEED_ITEMS.split("\n\n", 1)[1].replace(
                 "grade: READY", "grade: DONE").replace("## xx-1", "## xx-2")),
-        control=lambda: _cli(["item", "check"], items=SEED_ITEMS),
+        control=Call(_cli, ["item", "check"], items=SEED_ITEMS),
         stage="wave 1, stage 5",
     ),
     Row(
@@ -2594,9 +2631,9 @@ VERB_ROWS = [
                 "identity",
         firing_input="a carrier head with `baseline` removed",
         expect=exits.COULD_NOT_VERIFY,
-        fire=lambda: _cli(["item", "check"],
+        fire=Call(_cli, ["item", "check"],
                           items=SEED_ITEMS.replace("baseline: 1\n", "", 1)),
-        control=lambda: _cli(["item", "check"], items=SEED_ITEMS),
+        control=Call(_cli, ["item", "check"], items=SEED_ITEMS),
         stage="wave 1, stage 5",
     ),
     Row(
@@ -2606,10 +2643,10 @@ VERB_ROWS = [
                 "decision event (§3.6)",
         firing_input="a `ledger add` whose reason spans more than one line",
         expect=exits.FINDING,
-        fire=lambda: _cli(["ledger", "add", "dropped", "xx-1", "--reason",
+        fire=Call(_cli, ["ledger", "add", "dropped", "xx-1", "--reason",
                            "overtaken by the rework\n\nand here is the body "
                            "that does not belong in a ledger"]),
-        control=lambda: _cli(["ledger", "add", "dropped", "xx-1", "--reason",
+        control=Call(_cli, ["ledger", "add", "dropped", "xx-1", "--reason",
                               "overtaken by the rework"]),
         stage="wave 1, stage 6",
     ),
@@ -2627,13 +2664,13 @@ VERB_ROWS = [
         firing_input="`ledger add dropped` in a repo whose committed ledger "
                      "carries one more, uncommitted, hand-appended line",
         expect=exits.FINDING,
-        fire=lambda: _cli_over_hand_edited_ledger(
+        fire=Call(_cli_over_hand_edited_ledger,
             ["ledger", "add", "dropped", "xx-1", "--reason",
              "overtaken by the rework"]),
         # THE SAME ADD over the same seeded repo with the ledger as
         # committed: the arms differ in the pending hand edit alone, so the
         # refusal is the DIRT and not the verb or the line.
-        control=lambda: _cli(["ledger", "add", "dropped", "xx-1", "--reason",
+        control=Call(_cli, ["ledger", "add", "dropped", "xx-1", "--reason",
                               "overtaken by the rework"]),
         stage="drain wave B, lane R1 (lc-138)",
     ),
@@ -2660,11 +2697,11 @@ VERB_ROWS = [
         firing_input="`item amend xx-2` in a repo whose committed item "
                      "carrier carries an uncommitted hand edit to xx-1",
         expect=exits.FINDING,
-        fire=lambda: _cli_over_hand_edited_items(_AMEND_SECOND_ITEM),
+        fire=Call(_cli_over_hand_edited_items, _AMEND_SECOND_ITEM),
         # THE SAME AMEND over the same seeded carrier AS COMMITTED: the arms
         # differ in the pending hand edit alone, so the refusal is the DIRT
         # and not the verb, the item or the slot.
-        control=lambda: _cli(_AMEND_SECOND_ITEM, items=TWO_SEED_ITEMS),
+        control=Call(_cli, _AMEND_SECOND_ITEM, items=TWO_SEED_ITEMS),
         stage="drain wave C, lane C1 (lc-318)",
     ),
     Row(
@@ -2681,7 +2718,7 @@ VERB_ROWS = [
                      "`MATCH_MIN_TOKENS`-or-more informative tokens with an "
                      "existing `decision:` line, with no `--join`",
         expect=exits.FINDING,
-        fire=lambda: _cli(
+        fire=Call(_cli,
             ["ledger", "add", "decision", "--question",
              "should the retirement pass run on a fixed cadence too",
              "--answer", "yes"],
@@ -2692,7 +2729,7 @@ VERB_ROWS = [
         # join runs and finds nothing, so the refusal is the MATCH and not
         # the verb — the same discriminating shape `join_undisposed`'s own
         # control uses one carrier over.
-        control=lambda: _cli(
+        control=Call(_cli,
             ["ledger", "add", "decision", "--question",
              "should the retirement pass run on a fixed cadence too",
              "--answer", "yes"],
@@ -2860,10 +2897,10 @@ LANE_ROWS = [
                 "exactly like one on which every lane is quiet",
         firing_input="rm the roster; run `lane list`",
         expect=exits.FINDING,
-        fire=lambda: _lane_cli(["lane", "list"], roster_lines=None),
+        fire=Call(_lane_cli, ["lane", "list"], roster_lines=None),
         # The SAME repo with a roster that lists it: only the roster's
         # existence differs.
-        control=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"]),
+        control=Call(_lane_cli, ["lane", "list"], roster_lines=["@repo"]),
         stage="wave 1, stage 7",
     ),
     Row(
@@ -2877,14 +2914,14 @@ LANE_ROWS = [
                 "roster)",
         firing_input="a roster file carrying no entry; run `lane list`",
         expect=exits.FINDING,
-        fire=lambda: _lane_cli(["lane", "list"], roster_lines=[]),
+        fire=Call(_lane_cli, ["lane", "list"], roster_lines=[]),
         # The SAME roster file with ONE entry, a repo that resolves and
         # declares zero lanes: the arms differ in whether the roster lists
         # anything, and in nothing else. It is also the case that BOUNDS the
         # refusal — a board of zero lanes over a listed repo is the
         # documented good case, so a control with a lane on it would pass
         # for a build that refused every zero-lane board.
-        control=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"]),
+        control=Call(_lane_cli, ["lane", "list"], roster_lines=["@repo"]),
         stage="drain wave B (lc-212)",
     ),
     Row(
@@ -2895,9 +2932,9 @@ LANE_ROWS = [
                 "broken one",
         firing_input="a roster line naming a moved repo",
         expect=exits.FINDING,
-        fire=lambda: _lane_cli(["lane", "list"],
+        fire=Call(_lane_cli, ["lane", "list"],
                                roster_lines=["/nonexistent/moved-repo"]),
-        control=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"]),
+        control=Call(_lane_cli, ["lane", "list"], roster_lines=["@repo"]),
         stage="wave 1, stage 7",
     ),
     Row(
@@ -2909,12 +2946,12 @@ LANE_ROWS = [
                 "not work",
         firing_input="a lane whose `Trigger:` predicate exits 2",
         expect=exits.FINDING,
-        fire=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"],
+        fire=Call(_lane_cli, ["lane", "list"], roster_lines=["@repo"],
                                lanes=["x"],
                                lane_files={"x": _lane_body("exit 2")}),
         # The SAME lane with a QUIET predicate: the arms differ in the
         # predicate's exit code alone, which is the reserved value under test.
-        control=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"],
+        control=Call(_lane_cli, ["lane", "list"], roster_lines=["@repo"],
                                   lanes=["x"],
                                   lane_files={"x": _lane_body("exit 1")}),
         stage="wave 1, stage 7",
@@ -2930,14 +2967,14 @@ LANE_ROWS = [
         firing_input="a lane carrying `Decides:`, `Trigger:` and `Ends:` and "
                      "no decision table; `lane list`",
         expect=exits.FINDING,
-        fire=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"],
+        fire=Call(_lane_cli, ["lane", "list"], roster_lines=["@repo"],
                                lanes=["x"],
                                lane_files={"x": _lane_body_no_table("exit 1")}),
         # The SAME lane WITH the table: the arms differ in that part alone,
         # both triggers are the quiet `exit 1`, and the control asserts
         # nothing about the probed property — so a FINDING arriving for any
         # other reason fails the pair rather than passing it.
-        control=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"],
+        control=Call(_lane_cli, ["lane", "list"], roster_lines=["@repo"],
                                   lanes=["x"],
                                   lane_files={"x": _lane_body("exit 1")}),
         stage="wave 2 (lc-12)",
@@ -2948,8 +2985,8 @@ LANE_ROWS = [
         refusal="a verb naming an item no live home holds",
         firing_input="`item ready xx-9999`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "ready", "xx-9999"], items=SEED_ITEMS),
-        control=lambda: _cli(["item", "ready", "xx-1"], items=SEED_ITEMS),
+        fire=Call(_cli, ["item", "ready", "xx-9999"], items=SEED_ITEMS),
+        control=Call(_cli, ["item", "ready", "xx-1"], items=SEED_ITEMS),
         stage="wave 1, stage 8 (found by the emit-site coverage check)",
     ),
     Row(
@@ -2984,8 +3021,8 @@ LANE_ROWS = [
                 "source would decide the cost test's veto silently",
         firing_input="`item add --source somebody`",
         expect=exits.FINDING,
-        fire=lambda: _cli(GOOD_ADD + ["--source", "somebody"]),
-        control=lambda: _cli(GOOD_ADD + ["--source", "operator"]),
+        fire=Call(_cli, GOOD_ADD + ["--source", "somebody"]),
+        control=Call(_cli, GOOD_ADD + ["--source", "operator"]),
         stage="wave 1, stage 8 (found by the emit-site coverage check)",
     ),
     Row(
@@ -3005,10 +3042,10 @@ LANE_ROWS = [
         # what surfaced this.
         firing_input="`item add --write-set UNKNOWN` with no `--blocked-by`",
         expect=exits.FINDING,
-        fire=lambda: _cli(_mutate_add("--write-set", "UNKNOWN")),
+        fire=Call(_cli, lambda: _mutate_add("--write-set", "UNKNOWN")),
         # The SAME incomplete add WITH a typed blocker: the arms differ in
         # the blocker alone, not in slot completeness.
-        control=lambda: _cli(_mutate_add("--write-set", "UNKNOWN")
+        control=Call(_cli, lambda: _mutate_add("--write-set", "UNKNOWN")
                              + ["--blocked-by", "decision which window",
                                 "--not-derivable",
                                 "a preference with no ledger precedent"]),
@@ -3022,9 +3059,9 @@ LANE_ROWS = [
                 "failing, not the move",
         firing_input="`item close` in a repo whose commit is refused",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"], items=SEED_ITEMS,
+        fire=Call(_cli, ["item", "close", "xx-1", "--met", "none", "--decided", "none"], items=SEED_ITEMS,
                           fail_commit=True),
-        control=lambda: _cli(["item", "close", "xx-1", "--met", "none", "--decided", "none"], items=SEED_ITEMS),
+        control=Call(_cli, ["item", "close", "xx-1", "--met", "none", "--decided", "none"], items=SEED_ITEMS),
         stage="wave 1, stage 8 (found by the emit-site coverage check)",
     ),
     Row(
@@ -3034,9 +3071,9 @@ LANE_ROWS = [
                 "version cannot be refused by a future tool",
         firing_input="a `LEDGER.md` whose first line is a ledger entry",
         expect=exits.FINDING,
-        fire=lambda: _cli(["ledger", "check"],
+        fire=Call(_cli, ["ledger", "check"],
                           ledger_text="dropped: xx-1 — overtaken\n"),
-        control=lambda: _cli(["ledger", "check"],
+        control=Call(_cli, ["ledger", "check"],
                              ledger_text=ledger_mod.head_text()
                                          + "dropped: xx-1 — overtaken\n"),
         stage="wave 1, stage 8 (found by the emit-site coverage check)",
@@ -3047,8 +3084,8 @@ LANE_ROWS = [
         refusal="`kind show` naming a kind the declaration does not register",
         firing_input="`kind show nosuchkind`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["kind", "show", "nosuchkind"]),
-        control=lambda: _cli(["kind", "show", "items"]),
+        fire=Call(_cli, ["kind", "show", "nosuchkind"]),
+        control=Call(_cli, ["kind", "show", "items"]),
         stage="wave 1, stage 8 (found by the emit-site coverage check)",
     ),
     Row(
@@ -3060,8 +3097,8 @@ LANE_ROWS = [
                 "show`, over a distinct emit site (lc-255, O6 §4 Part C)",
         firing_input="`kind read nosuchkind`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["kind", "read", "nosuchkind"]),
-        control=lambda: _cli(["kind", "read", "items"]),
+        fire=Call(_cli, ["kind", "read", "nosuchkind"]),
+        control=Call(_cli, ["kind", "read", "items"]),
         stage="wave 2, O6 D3a (lc-255)",
     ),
     Row(
@@ -3441,11 +3478,11 @@ LANE_ROWS = [
                 "declaration it writes",
         firing_input="`lane new x` where `lanes/x.md` already exists",
         expect=exits.FINDING,
-        fire=lambda: _cli(["lane", "new", "x"],
+        fire=Call(_cli, ["lane", "new", "x"],
                           lane_files={"x": _lane_body("exit 1")}),
         # The SAME existing file, WITH --force: the arms differ in the flag
         # alone.
-        control=lambda: _cli(["lane", "new", "x", "--force"],
+        control=Call(_cli, ["lane", "new", "x", "--force"],
                              lane_files={"x": _lane_body("exit 1")}),
         stage="wave 2",
     ),
@@ -3459,13 +3496,13 @@ LANE_ROWS = [
         firing_input="`init` in a repo that already carries "
                      "`.claude/lifecycle.json`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["init"]),
+        fire=Call(_cli, ["init"]),
         # The SAME repo and the SAME existing declaration, WITH --force: the
         # arms differ in the flag alone. It exits COULD NOT VERIFY rather
         # than CLEAN — a scratch repo tracks no laws file for `init` to
         # resolve — which is what this legitimate input answers, and is not
         # the finding.
-        control=lambda: _cli(["init", "--force"]),
+        control=Call(_cli, ["init", "--force"]),
         stage="drain wave D (lc-323)",
     ),
     Row(
@@ -3481,10 +3518,10 @@ LANE_ROWS = [
                      "repo ROOT, declared the literal `../escape`, and exited "
                      "CLEAN",
         expect=exits.FINDING,
-        fire=lambda: _cli(["lane", "new", "../escape"]),
+        fire=Call(_cli, ["lane", "new", "../escape"]),
         # The SAME verb in the SAME repo with a door of the same letters and
         # no path separator: the arms differ in the door's characters alone.
-        control=lambda: _cli(["lane", "new", "escape"]),
+        control=Call(_cli, ["lane", "new", "escape"]),
         stage="drain wave B (lc-202)",
     ),
     Row(
@@ -3499,7 +3536,7 @@ LANE_ROWS = [
                      "`escape.md` outside the lanes directory and a "
                      "declaration naming the literal `../escape`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["init", "--force", "--lane", "../escape"]),
+        fire=Call(_cli, ["init", "--force", "--lane", "../escape"]),
         # The SAME verb, flags and repo with a name of the same letters and
         # no path separator: the arms differ in the name's characters alone.
         # `--force` rides in BOTH arms because the scratch repo is seeded
@@ -3507,7 +3544,7 @@ LANE_ROWS = [
         # refusal would answer for both. The control exits COULD NOT VERIFY,
         # not CLEAN: a scratch repo tracks no laws file for `init` to
         # resolve.
-        control=lambda: _cli(["init", "--force", "--lane", "escape"]),
+        control=Call(_cli, ["init", "--force", "--lane", "escape"]),
         stage="drain wave D (lc-323)",
         # Two roster rows, two firing inputs, ONE finding — declared, never
         # derived from the ident.
@@ -3524,12 +3561,12 @@ LANE_ROWS = [
         firing_input="`kind check` in a repo carrying `lanes/x.md` whose "
                      "declared `lanes` list is empty",
         expect=exits.FINDING,
-        fire=lambda: _cli(["kind", "check"],
+        fire=Call(_cli, ["kind", "check"],
                           lane_files={"x": _lane_body("exit 1")}),
         # The SAME body on disk, DECLARED: the arms differ in the declaration's
         # `lanes` list alone, not in whether a lane file exists. A control that
         # simply omitted the file would pass whether or not the scan works.
-        control=lambda: _cli(["kind", "check"], lanes=["x"],
+        control=Call(_cli, ["kind", "check"], lanes=["x"],
                              lane_files={"x": _lane_body("exit 1")}),
         stage="wave 2 (lc-13)",
     ),
@@ -4454,7 +4491,7 @@ SCHEMA_ROWS = [
                 "and a small one that never drains does",
         firing_input="a carrier that admitted four items and closed none",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "ratio"], items=NO_DRAIN_ITEMS),
+        fire=Call(_cli, ["item", "ratio"], items=NO_DRAIN_ITEMS),
         # The SAME carrier with a real closure behind it: the arms differ in
         # the DRAIN and not in the size, which is the whole point of the row.
         control=lambda: _ratio_after_close(),
@@ -4613,10 +4650,10 @@ DESK_ROWS = [
                 "decays",
         firing_input="`desk state BOGUS`",
         expect=exits.FINDING,
-        fire=lambda: _desk_cli(["desk", "state", "BOGUS"]),
+        fire=Call(_desk_cli, ["desk", "state", "BOGUS"]),
         # The SAME verb, a value the closed vocabulary actually carries: the
         # arms differ in the value word alone.
-        control=lambda: _desk_cli(["desk", "state", "DONE",
+        control=Call(_desk_cli, ["desk", "state", "DONE",
                                    "--desk", "row-desk-vocab"]),
         stage="wave 2",
     ),
@@ -4627,11 +4664,11 @@ DESK_ROWS = [
                 "required argument",
         firing_input="`desk state REPORTED` with no message id",
         expect=exits.FINDING,
-        fire=lambda: _desk_cli(["desk", "state", "REPORTED",
+        fire=Call(_desk_cli, ["desk", "state", "REPORTED",
                                 "--desk", "row-desk-shape"]),
         # The SAME value, WITH its required argument: the arms differ in the
         # argument's presence alone.
-        control=lambda: _desk_cli(["desk", "state", "REPORTED", "msg-1",
+        control=Call(_desk_cli, ["desk", "state", "REPORTED", "msg-1",
                                    "--desk", "row-desk-shape"]),
         stage="wave 2",
     ),
@@ -4686,13 +4723,13 @@ WORKFLOW_ROWS = [
         firing_input="`workflow bind t1` where `template-bindings.t1` "
                      "already exists",
         expect=exits.FINDING,
-        fire=lambda: _workflow_cli(
+        fire=Call(_workflow_cli,
             ["workflow", "bind", "t1"],
             templates={"t1": "Slots: a\n\nprocedure\n"},
             declaration=_decl_with_binding({"t1": {"a": "UNKNOWN"}})),
         # The SAME existing binding, WITH --force: the arms differ in the
         # flag alone.
-        control=lambda: _workflow_cli(
+        control=Call(_workflow_cli,
             ["workflow", "bind", "t1", "--force"],
             templates={"t1": "Slots: a\n\nprocedure\n"},
             declaration=_decl_with_binding({"t1": {"a": "UNKNOWN"}})),
@@ -5734,7 +5771,7 @@ MARK_ROWS = [
         # matched, so the presence check fires and this row would be proven
         # by a refusal that is not its own. With `MEASURED` beside it the
         # presence check passes, and this row is the only thing left looking.
-        fire=lambda: _cli(_mutate_add(
+        fire=Call(_cli, lambda: _mutate_add(
             "--evidence", "MEASURED the pool held 41 rows at 09:00. "
                           "PERISHABLE, this drifts — re-check it later")),
         # THE SAME SLOT WITH THE MARK SPELLED. Both arms carry the valid
@@ -5742,7 +5779,7 @@ MARK_ROWS = [
         # the FORM alone — a control with no PERISHABLE at all would differ
         # in two properties and would pass over a check that had stopped
         # reading the form entirely.
-        control=lambda: _cli(_mutate_add(
+        control=Call(_cli, lambda: _mutate_add(
             "--evidence", "MEASURED the pool held 41 rows at 09:00. "
                           "PERISHABLE(2026-09-19, re-derive: "
                           "tools/pool-count.py) — it drifts with intake")),
@@ -5909,10 +5946,10 @@ STANDBY_ROWS = [
         firing_input="`item check` over a STANDBY block, declaration without "
                      "`grades-extra`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "check"], items=STANDBY_SEED),
+        fire=Call(_cli, ["item", "check"], items=STANDBY_SEED),
         # The SAME carrier, the declaration opting in: the arms differ in the
         # declaration alone.
-        control=lambda: _cli(["item", "check"], items=STANDBY_SEED,
+        control=Call(_cli, ["item", "check"], items=STANDBY_SEED,
                              declaration=STANDBY_DECLARATION),
         stage="lc-294",
     ),
@@ -5923,9 +5960,9 @@ STANDBY_ROWS = [
                 "verb would write a grade the repo's own check then refuses",
         firing_input="`item bench <id> --reason <why>` with no `grades-extra`",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "bench", "xx-1", "--reason",
+        fire=Call(_cli, ["item", "bench", "xx-1", "--reason",
                            _BENCH_REASON], items=SEED_ITEMS),
-        control=lambda: _cli(["item", "bench", "xx-1", "--reason",
+        control=Call(_cli, ["item", "bench", "xx-1", "--reason",
                               _BENCH_REASON], items=SEED_ITEMS,
                              declaration=STANDBY_DECLARATION),
         stage="lc-294",
@@ -5938,12 +5975,12 @@ STANDBY_ROWS = [
                 "would grade it decision-complete without anyone judging so",
         firing_input="`item bench <id>` on a NEW item, STANDBY declared",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "bench", "xx-1", "--reason",
+        fire=Call(_cli, ["item", "bench", "xx-1", "--reason",
                            _BENCH_REASON],
                           items=SEED_ITEMS.replace("grade: READY",
                                                    "grade: NEW", 1),
                           declaration=STANDBY_DECLARATION),
-        control=lambda: _cli(["item", "bench", "xx-1", "--reason",
+        control=Call(_cli, ["item", "bench", "xx-1", "--reason",
                               _BENCH_REASON], items=SEED_ITEMS,
                              declaration=STANDBY_DECLARATION),
         stage="lc-294",
@@ -5956,9 +5993,9 @@ STANDBY_ROWS = [
                 "grade that moved",
         firing_input="`item bench <id>` with no `--reason`, STANDBY declared",
         expect=exits.FINDING,
-        fire=lambda: _cli(["item", "bench", "xx-1"], items=SEED_ITEMS,
+        fire=Call(_cli, ["item", "bench", "xx-1"], items=SEED_ITEMS,
                           declaration=STANDBY_DECLARATION),
-        control=lambda: _cli(["item", "bench", "xx-1", "--reason",
+        control=Call(_cli, ["item", "bench", "xx-1", "--reason",
                               _BENCH_REASON], items=SEED_ITEMS,
                              declaration=STANDBY_DECLARATION),
         stage="lc-294",
