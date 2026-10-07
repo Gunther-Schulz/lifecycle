@@ -2298,12 +2298,17 @@ def _ratio_flow(args, out, ctx: Ctx, final: bool = True) -> int:
             "live items is a STOCK and would answer a different question.")
         return exits.COULD_NOT_VERIFY
 
-    closed = len(done_parsed.items)
+    # DRAIN = done-home bodies + the head's `compacted` counter (lc-293). By
+    # conservation open + done = baseline + added - compacted: a compacted body
+    # LEFT the done home by a recorded exit, so counting only the bodies still
+    # there makes a compaction read as capture with no drain.
+    compacted = parsed.head.get("compacted") or 0
+    closed = len(done_parsed.items) + compacted
     archive = items_mod.archive_entries(done_parsed.archive_text)
     census = items_mod.census(parsed)
 
     out(f"capture (added since the carrier was created): {added}")
-    out(f"drain    (closed bodies, archive excluded):    {closed}")
+    out(f"drain    (done bodies + compacted, archive excluded): {closed}")
     out(f"archive  (pre-migration stock, NOT in the ratio): {archive}")
     out(f"live: open {census['open']}  closed-in-carrier {census['closed']}  "
         f"unknown-grade {sum(census['unknown'].values())}")
@@ -2338,8 +2343,10 @@ def _ratio_flow(args, out, ctx: Ctx, final: bool = True) -> int:
         if final:
             out(f"item ratio: {exits.word(exits.FINDING)}")
         return exits.FINDING
-    code = _net_growth(ctx, (added, parsed.head.get("compacted") or 0, closed),
-                       out)
+    # `_net_growth` reads compaction as its own column, so it takes the done
+    # BODIES here, not the drain total above (counting it twice would read a
+    # compaction as double drain).
+    code = _net_growth(ctx, (added, compacted, len(done_parsed.items)), out)
     if final:
         out(f"item ratio: {exits.word(code)}")
     return code
