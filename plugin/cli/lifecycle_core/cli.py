@@ -11,6 +11,7 @@ verify — for every verb here, without exception.
 import argparse
 import functools
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -503,6 +504,25 @@ class _Parser(argparse.ArgumentParser):
     what tells a human which of the two happened.
     """
 
+    def parse_args(self, args=None, namespace=None):
+        """argparse's own `parse_args`, with ONE stray token read before it
+        is reported (lc-211).
+
+        The body argparse runs is `parse_known_args`, then `error` over the
+        leftovers. It is spelled out here so the leftovers are in hand as a
+        LIST: `--repo` belongs to `lifecycle` itself, a sub-parser does not
+        know it, so one typed after the subcommand falls out as a leftover
+        and was reported as `unrecognized arguments: --repo <path>` — true,
+        and read as "your path is bad" by a caller whose path was fine. The
+        test is over the parsed leftovers, never over the rendered message.
+        """
+        argv = list(sys.argv[1:] if args is None else args)
+        parsed, stray = self.parse_known_args(argv, namespace)
+        if stray:
+            self.error(_repo_after_verb(argv, stray)
+                       or "unrecognized arguments: " + " ".join(stray))
+        return parsed
+
     def error(self, message):
         self.print_usage(_sys_stderr())
         _sys_stderr().write(
@@ -521,6 +541,53 @@ class _Parser(argparse.ArgumentParser):
 
 def _sys_stderr():
     return sys.stderr
+
+
+def _is_repo_flag(token: str) -> bool:
+    return token == "--repo" or token.startswith("--repo=")
+
+
+def _repo_after_verb(argv, stray):
+    """The FLAG-ORDER message for a `--repo` among the leftovers, else None.
+
+    None for every other leftover: a flag no parser knows is not an ordering
+    fault, and giving it this wording would swap one blanket message for
+    another. The path is deliberately NOT inspected — it was never read, so
+    this message cannot say it is good, only that nothing here says it is
+    bad; `--repo <bad path>` BEFORE the subcommand still reaches
+    `resolve_repo` and is reported there as a path.
+    """
+    hits = [j for j, tok in enumerate(stray) if _is_repo_flag(tok)]
+    if not hits:
+        return None
+    j = hits[-1]
+    # The LAST occurrence in argv: leftovers come from after the subcommand,
+    # so a correctly placed `--repo` earlier on the line is never this one.
+    at = max(i for i, tok in enumerate(argv) if _is_repo_flag(tok))
+    drop, value = {at}, None
+    if "=" in argv[at]:
+        value = argv[at].split("=", 1)[1]
+    elif (at + 1 < len(argv) and j + 1 < len(stray)
+          and stray[j + 1] == argv[at + 1]
+          and not argv[at + 1].startswith("-")):
+        # Its value is the next token only where argparse left THAT over
+        # too; a following flag the sub-parser consumed is not a path.
+        value = argv[at + 1]
+        drop.add(at + 1)
+    rest = [tok for i, tok in enumerate(argv) if i not in drop]
+    said = (f"The path {value!r} was not examined and is not implicated"
+            if value else "No path was read")
+    if any(_is_repo_flag(tok) for tok in rest):
+        spelling = ("a `--repo` already precedes the subcommand, so remove "
+                    "the second one: lifecycle " + shlex.join(rest))
+    else:
+        spelling = ("lifecycle --repo "
+                    + (shlex.quote(value) if value else "<path>")
+                    + " " + shlex.join(rest))
+    return ("FLAG ORDER: `--repo` was given AFTER the subcommand. It is a "
+            "flag of `lifecycle` itself and no subcommand takes it, so it "
+            f"goes BEFORE the subcommand. {said} — the fault is where the "
+            f"flag sits. Correct spelling: {spelling}")
 
 
 #: The prose slots that take a `--<slot>-file PATH` twin beside their inline

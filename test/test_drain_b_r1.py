@@ -24,7 +24,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
@@ -254,6 +254,81 @@ class TheDirtyQuestionHasAThirdAnswer(unittest.TestCase):
         self.assertIs(verbs.carrier_dirty(d, d / "LEDGER.md")[0], False)
         hand_edit(d)
         self.assertIs(verbs.carrier_dirty(d, d / "LEDGER.md")[0], True)
+
+
+def run_raw(*argv):
+    """`cli.main` over argv EXACTLY as typed — no `--repo` prepended, which
+    is the whole subject here. A usage error leaves by `SystemExit`, and its
+    text goes to stderr; both are returned."""
+    out, err = io.StringIO(), io.StringIO()
+    with redirect_stdout(out), redirect_stderr(err):
+        try:
+            code = cli.main(list(argv))
+        except SystemExit as exc:
+            code = exc.code
+    return code, out.getvalue(), err.getvalue()
+
+
+class TheRepoFlagAfterTheSubcommandNamesFlagOrder(unittest.TestCase):
+    """lc-211. The exit code was always right (3, could-not-verify) and is
+    asserted in every arm so the repair cannot move it."""
+
+    def test_a_repo_flag_after_the_subcommand_names_ORDER_and_the_spelling(self):
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out, err = run_raw("kind", "check", "--repo", str(d))
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, err)
+        # RED-FIRST: the unmodified message is argparse's bare
+        # "unrecognized arguments: --repo <path>", which names neither.
+        self.assertIn("FLAG ORDER", err)
+        self.assertIn(f"lifecycle --repo {d} kind check", err)
+        # THE PATH IS NOT IMPLICATED, and the message says so rather than
+        # leaving the reader to infer it from an absence.
+        self.assertIn("was not examined", err)
+        self.assertNotIn("is not a directory", out + err)
+        self.assertNotIn("unrecognized arguments", err)
+
+    def test_the_equals_form_is_the_same_fault(self):
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, _out, err = run_raw("item", "check", f"--repo={d}")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, err)
+        self.assertIn("FLAG ORDER", err)
+        self.assertIn(f"lifecycle --repo {d} item check", err)
+
+    def test_a_trailing_repo_flag_with_no_value_still_names_order(self):
+        code, _out, err = run_raw("kind", "check", "--repo")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, err)
+        self.assertIn("FLAG ORDER", err)
+        self.assertIn("lifecycle --repo <path> kind check", err)
+
+    def test_CONTROL_a_bad_path_BEFORE_the_subcommand_still_blames_the_path(self):
+        """The arm that proves the new message DISCRIMINATES: here the path
+        really is the fault, and the order is right."""
+        bad = str(Path(tempfile.gettempdir()) / "lifecycle-drain-b-r1-no-such")
+        code, out, err = run_raw("--repo", bad, "kind", "check")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out + err)
+        self.assertIn("is not a directory", out)
+        self.assertIn(bad, out)
+        self.assertNotIn("FLAG ORDER", out + err)
+
+    def test_CONTROL_another_stray_flag_is_still_an_unrecognized_argument(self):
+        """MUST NOT MOVE: the order message is for `--repo` alone. A flag no
+        parser knows is not an ordering fault and keeps argparse's wording."""
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, _out, err = run_raw("--repo", str(d), "kind", "check",
+                                  "--no-such-flag")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, err)
+        self.assertIn("unrecognized arguments: --no-such-flag", err)
+        self.assertNotIn("FLAG ORDER", err)
+
+    def test_CONTROL_the_correct_order_runs_the_verb(self):
+        d = build()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out, err = run_raw("--repo", str(d), "ledger", "check")
+        self.assertEqual(code, exits.CLEAN, out + err)
+        self.assertNotIn("FLAG ORDER", out + err)
 
 
 if __name__ == "__main__":
