@@ -2821,9 +2821,21 @@ def cmd_item_park(args, out, ctx: Ctx) -> int:
 
     with items_mod.carrier_lock(ctx.items_path):
         text = ctx.items_path.read_text(encoding="utf-8")
-        new, ok = _set_slots(text, args.ident, {"grade": "PARKED",
-                                                "blocked-by": value},
-                             insert=conditional)
+        # lc-232: where the block already carries an `amended-blocked-by:`
+        # line, that line IS the value in force and the base line is the
+        # history its `amend-reason` describes a change FROM. The write below
+        # is graded afterwards (lc-112) by asking the reader's resolver, and
+        # a caller passing the EFFECTIVE value passes that grade by
+        # construction, so the grade cannot protect the base. The base is
+        # therefore left untouched: the amendment already governs, the grade
+        # alone moves, and the history stays readable at the block (law 8).
+        # A block with no amendment keeps the in-place write (append_amendment's
+        # own design reason for a transition the tool owns end to end).
+        updates = {"grade": "PARKED", "blocked-by": value}
+        if _block_has_slot(text, args.ident,
+                           items_mod.AMEND_PREFIX + "blocked-by"):
+            del updates["blocked-by"]
+        new, ok = _set_slots(text, args.ident, updates, insert=conditional)
         if not ok:
             out(f"FINDING [unknown_item] no live block {args.ident!r} in "
                 f"{ctx.items_path.name}.")
@@ -3422,6 +3434,27 @@ def _set_slots(text: str, ident: str, updates: dict, insert: dict | None = None,
 
 
 # --- `item close` (stage 5) ---------------------------------------------------
+
+def _block_has_slot(text: str, ident: str, slot: str) -> bool:
+    """Whether the live block `ident` carries a `slot:` line, found and ended
+    by the same grammar `_set_slots` uses (lc-40) so the two cannot disagree
+    about where the block is."""
+    inside = False
+    for ln in text.split("\n"):
+        if ln.strip() == grammar.ARCHIVE_HEADING:
+            return False
+        found = grammar.heading_ident(ln)
+        if found is not None:
+            if inside:
+                return False
+            inside = found == ident
+            continue
+        if inside and grammar.ends_block(ln):
+            return False
+        if inside and grammar.is_slot(ln, slot):
+            return True
+    return False
+
 
 def _effective_slot(text: str, ident: str, slot: str):
     """The value `items.parse` puts IN FORCE for one slot of one block.

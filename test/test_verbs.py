@@ -2942,6 +2942,89 @@ def _pair(fired):
     return fired.code, fired.output
 
 
+class ParkKeepsTheBaseBlockerOfAnAmendedBlock(unittest.TestCase):
+    """lc-232: `item park` rewrote the BASE `blocked-by:` slot of a block that
+    already carried `amended-blocked-by:`, destroying the prose the
+    amendment's own reason describes a change from.
+
+    THE SPECIMEN IS REAL: lc-37 as `14df96e^:ITEMS.md` carried it, verbatim
+    but for the heading id and goal (the fixture's prefix and vocabulary) and
+    the grade. Parking it with the EFFECTIVE blocker is the measured case.
+    """
+
+    BASE = ("evidence the sweep has not been run over any real carrier; which "
+            "carriers are in scope (lifecycle ITEMS.md, dotfiles ITEMS.md, "
+            "cache-fix ITEMS.md) is the first thing it must decide")
+    SPECIMEN = (
+        "## xx-1\n"
+        "grade: NEW\n"
+        "requirement: No sweep has been run for items currently "
+        "MIS-UNBLOCKED by an existing moot ledger line\n"
+        "goal: mitigate\n"
+        "write-set: UNKNOWN\n"
+        "done-criterion: every live item whose decision blocker resolved "
+        "against a moot line before 9800163 is listed with its new board "
+        "reading\n"
+        "evidence: G4 closing report slot (g), lifecycle 9800163\n"
+        f"blocked-by: {BASE}\n"
+        "amend-reason: 2026-09-13 2026-09-13 Completing the evidence-predicate "
+        "repair pass of 3352097. Prose predicate; converted to the carrier's "
+        "own executable form. Blocked state unchanged.\n"
+        "amended-blocked-by: 2026-09-13 evidence false  # the sweep has not "
+        "been run over any real carrier\n")
+
+    #: What `items.parse` puts in force: the amendment's value, comment
+    #: included. A caller passing "the effective value" passes exactly this.
+    EFFECTIVE = ("evidence false  # the sweep has not been run over any real "
+                 "carrier")
+
+    def _items(self):
+        head = refusals.EMPTY_ITEMS.replace("baseline: 0", "baseline: 1")
+        return head + "\n" + self.SPECIMEN
+
+    def _park(self, items, value):
+        with refusals._Repo(items=items) as r:
+            fired = refusals._cli_in(
+                r, ["item", "park", "xx-1", "--blocked-by", value,
+                    "--not-derivable", "no record settles the sweep scope",
+                    "--blocker-exercise", "positive: the sweep ran, exit 0; "
+                    "negative: the sweep has not run, exit 1"])
+            text = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        return fired.code, fired.output, text
+
+    def test_parking_with_the_EFFECTIVE_value_leaves_the_base_line_readable(self):
+        """RED-FIRST: the base line lost the prose predicate and became
+        byte-identical to the amendment, leaving a reason that describes a
+        no-op."""
+        code, out, text = self._park(self._items(), self.EFFECTIVE)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn(f"blocked-by: {self.BASE}\n", text, out)
+        self.assertIn("amended-blocked-by: 2026-09-13 evidence false", text)
+        self.assertIn("grade: PARKED", text)
+
+    def test_a_block_with_NO_amendment_still_takes_the_in_place_write(self):
+        """MUST-NOT-MOVE (append_amendment's own design reason for in-place
+        on a state transition the tool owns)."""
+        with refusals._Repo(items=refusals.SEED_ITEMS) as r:
+            fired = refusals._cli_in(
+                r, ["item", "park", "xx-1", "--blocked-by",
+                    "external an event nobody can compute"])
+            text = (r.dir / "ITEMS.md").read_text(encoding="utf-8")
+        self.assertEqual(fired.code, exits.CLEAN, fired.output)
+        self.assertIn("blocked-by: external an event nobody can compute\n",
+                      text)
+        self.assertNotIn("blocked-by: NONE", text)
+
+    def test_the_lc112_refusal_keeps_its_behaviour(self):
+        """MUST-NOT-MOVE: a value that would not GOVERN is still refused and
+        nothing is written."""
+        items = self._items()
+        code, out, text = self._park(items, "external the prose is not in force")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("park_over_superseding_amendment", out)
+        self.assertEqual(text, items)
+
+
 class TheStandbyGrade(unittest.TestCase):
     """lc-294: `item bench`, its return path, and the two schedule triggers.
 
