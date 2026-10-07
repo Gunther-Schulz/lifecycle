@@ -407,5 +407,120 @@ class TheControlsThroughADoorAreListable(unittest.TestCase):
                       "no row's entry states the door its control walks")
 
 
+def _prove_rows():
+    """`tools/prove-rows.py` as a module — the real object, never a re-parse
+    of its text (the form `test_refusals` uses, for its reason)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "prove_rows_e4", REPO / "tools" / "prove-rows.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+class TheFourProofShapeLeftovers(unittest.TestCase):
+    """lc-328: two two-test rows, one unproven route, one recogniser.
+
+    The arrangements themselves are proven by RUNNING the prover — each new
+    one admitted on the pair, a real anchor and an inert one. What these arms
+    hold is the part a later edit could quietly undo: that each second firing
+    input is a row of the SAME refusal, that the arrangement meant to disable
+    still disables, and that the recogniser tells an external record from a
+    decision one.
+    """
+
+    def _row(self, ident):
+        from lifecycle_core import refusals
+        rows = [r for r in refusals.ROWS if r.ident == ident]
+        self.assertEqual(len(rows), 1, f"no roster row {ident!r}")
+        return rows[0]
+
+    def _arrangements(self, ident):
+        return [m for m in _prove_rows().MUTATIONS if m[0] == ident]
+
+    def test_the_committed_content_test_has_its_own_plant_and_arrangement(self):
+        row = self._row("retire_source_uncommitted_content")
+        self.assertEqual(row.expected_finding_row, "retire_source_uncommitted")
+        arms = self._arrangements("retire_source_uncommitted_content")
+        self.assertEqual(len(arms), 1)
+        self.assertEqual(arms[0][2], "    if committed != src_blob:")
+        self.assertEqual(arms[0][3], "    if False:")
+
+    def test_the_uncommitted_rows_own_arrangement_DISABLES_and_swaps_nothing(self):
+        arms = self._arrangements("retire_source_uncommitted")
+        self.assertEqual(len(arms), 1)
+        _ident, _file, anchor, replacement, _what = arms[0]
+        self.assertNotIn(
+            "committed = src_blob", replacement,
+            "the arrangement swaps the value both tests read instead of "
+            "switching the tests off — the comparisons then agree by "
+            "construction, which is not a disabled check")
+        self.assertEqual(replacement.count("    if False:"), 2)
+        self.assertIn("    if committed is None:", anchor)
+        self.assertIn("    if committed != src_blob:", anchor)
+
+    def test_the_compaction_route_has_a_plant_and_an_arrangement(self):
+        row = self._row("carrier_dirty_at_entry_compact")
+        self.assertEqual(row.expected_finding_row, "carrier_dirty_at_entry")
+        arms = self._arrangements("carrier_dirty_at_entry_compact")
+        self.assertEqual(len(arms), 1)
+        self.assertEqual(arms[0][1], "retire.py",
+                         "the compaction's route is decided in the module "
+                         "that calls the entry check, not in the check")
+
+    def test_the_laws_row_says_why_it_keeps_one_arrangement_for_two_tests(self):
+        """The criterion's other branch: stated, with the reason, where the
+        arrangement is. A second plant there would move under a NEIGHBOUR's
+        recorded mutation and retire that row's proof."""
+        text = (REPO / "tools" / "prove-rows.py").read_text(encoding="utf-8")
+        arms = self._arrangements("retire_source_laws_absent")
+        self.assertEqual(len(arms), 1)
+        self.assertEqual(arms[0][3].count("    if False:"), 2)
+        self.assertIn("(c) BOTH TESTS", text)
+
+    # --- the conditional-slot recogniser ---------------------------------
+
+    @staticmethod
+    def _closed_body(moot: str) -> str:
+        from lifecycle_core import refusals
+        return (refusals.EMPTY_DONE
+                + refusals.DONE_BLOCK.replace("grade: DONE", "grade: DROPPED")
+                .rstrip("\n")
+                + f"\n{refusals._NOT_DERIVABLE_LINE}\nblocker-moot: {moot}\n")
+
+    def _misplaced(self, moot: str) -> bool:
+        from lifecycle_core import items as items_mod
+        parsed = items_mod.parse(self._closed_body(moot))
+        self.assertEqual([it.ident for it in parsed.items], ["xx-1"],
+                         "the fixture's closed block did not parse as one "
+                         "item, so no verdict below is about it")
+        return any(p[0] == "not_derivable_misplaced" for p in parsed.problems)
+
+    def test_an_EXTERNAL_moot_record_does_not_stand_for_a_decision(self):
+        """`not-derivable:` is legal beside a DECISION blocker only. A closed
+        body whose moot record is the external one never had a decision, so
+        the slot beside it records something that cannot have happened."""
+        from lifecycle_core import items as items_mod
+        self.assertTrue(
+            self._misplaced(items_mod.external_moot_record(
+                "the vendor ships a fix")),
+            "a `not-derivable:` slot beside an EXTERNAL moot record was "
+            "accepted: the recogniser read the record as a decision's")
+
+    def test_a_DECISION_moot_record_still_stands_for_one(self):
+        """MUST NOT MOVE (lc-269): the bare question, and the answered form,
+        each keep a closed decision body's `not-derivable:` legal."""
+        from lifecycle_core import items as items_mod
+        self.assertFalse(self._misplaced("which window is canonical"))
+        self.assertFalse(self._misplaced(
+            items_mod.decision_moot_record("which window is canonical")))
+
+    def test_a_decision_QUESTION_that_opens_with_the_word_external_is_one(self):
+        """The over-fire arm. A decision's moot record is its bare question,
+        and a question may begin `external …`. Only the external record's
+        whole shape — its opener AND its fixed tail — is an external one."""
+        self.assertFalse(self._misplaced("external review or internal only"))
+
+
 if __name__ == "__main__":
     unittest.main()

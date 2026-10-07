@@ -1105,9 +1105,25 @@ def _close_block(out: Parsed, item: Item, seen_order: list) -> None:
         # slot beside NONE and this rule refused the body the close had just
         # written. The evidence record names its own type, so it is tested
         # FIRST: it stands for `evidence` and never for a decision.
+        #
+        # AN EXTERNAL RECORD IS NOT A DECISION'S EITHER (lc-322, lc-328). The
+        # arm below reads every record that is not an item-id one as a mooted
+        # decision, which was the whole remainder until a DROP began writing
+        # a record for an `external` blocker too. That record then stood for
+        # a decision here, and a `not-derivable:` beside it passed. Its shape
+        # is read off the template its one writer formats — the opener AND
+        # the fixed tail — because a decision's record is its bare question
+        # and a question may itself begin with the word.
         moot = item.slots.get("blocker-moot")
+        ext_tail = _EXTERNAL_MOOT_ABANDONED.format(event="")[
+            len(_EXTERNAL_MOOT_OPEN):]
+        m_ = (moot or "").strip()
         if kind_ in (None, "none") and moot and is_evidence_moot_record(moot):
             kind_ = "evidence"
+        elif (kind_ in (None, "none") and m_.startswith(_EXTERNAL_MOOT_OPEN)
+                and m_.endswith(ext_tail)
+                and len(m_) > len(_EXTERNAL_MOOT_OPEN) + len(ext_tail)):
+            kind_ = "external"
         elif (kind_ in (None, "none") and moot and want == "decision"
                 and not is_item_moot_record(moot)):
             kind_ = "decision"

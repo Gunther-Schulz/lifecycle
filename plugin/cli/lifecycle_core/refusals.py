@@ -3414,6 +3414,27 @@ LANE_ROWS = [
         stage="wave 3 (lc-86)",
     ),
     Row(
+        ident="retire_source_uncommitted_content",
+        input_class="well-formed",
+        refusal="the SAME refusal on its second firing input: a carrier that "
+                "IS committed and whose working-tree content is not what is "
+                "committed. The row above plants an untracked carrier, which "
+                "the first of the two tests names — and which the second "
+                "would refuse on its own, so that plant never showed the "
+                "second test was there at all (lc-328)",
+        firing_input="`migrate --retire-source` where `BACKLOG.md` is "
+                     "committed and then gains one more entry in the working "
+                     "tree, uncommitted",
+        expect=exits.FINDING,
+        fire=lambda: _retire_run(edit_after_commit=True),
+        # The SAME carrier, the SAME commit, WITHOUT the later edit: the arms
+        # differ in whether the bytes read are the bytes committed, and in
+        # nothing else.
+        control=lambda: _retire_run(),
+        stage="drain wave E, lane E4 (lc-328)",
+        finding_row="retire_source_uncommitted",
+    ),
+    Row(
         ident="retire_source_laws_absent",
         input_class="malformed",
         names_input=("absent",),
@@ -3445,6 +3466,16 @@ LANE_ROWS = [
         # proven by the row that owns that site, and this row proves the half
         # that is decided here. The other half is exercised end-to-end in
         # `test_migrate.RetireSource`.
+        #
+        # SO THIS ROW TAKES NO SECOND FIRING INPUT (lc-328), where its
+        # neighbour `retire_source_uncommitted` did. A plant for the
+        # absent-file half is refused by `check_laws_present`'s own answer,
+        # and `laws_absent_could_not_verify`'s recorded arrangement folds
+        # exactly that answer — so the new row would move under a mutation
+        # proving ANOTHER refusal, and retire that row's proof. Its one
+        # arrangement folds BOTH tests and says so; the roster's input-class
+        # readout names this refusal as naming `absent` input it does not
+        # plant, which is the honest state rather than a gap to hide.
         stage="wave 3 (lc-86)",
     ),
     Row(
@@ -3776,7 +3807,7 @@ PINNED_ANCHOR_ITEMS = (
 
 def _retire_run(*, merge=False, report_only=False, commit_source=True,
                 laws_present=True, laws_declared=True, items=None,
-                **repo_kw) -> Fired:
+                edit_after_commit=False, **repo_kw) -> Fired:
     """Run `migrate --retire-source` in a scratch repo carrying an old carrier.
 
     THE FLAG IS ON THE COMMAND LINE AND THE RUN GOES THROUGH `cli.main`, which
@@ -3828,6 +3859,16 @@ def _retire_run(*, merge=False, report_only=False, commit_source=True,
                 return Fired(-1, "SETUP FAILED: BACKLOG.md is not committed, "
                                  "so this row measured an uncommitted repo. "
                                  f"git said: {ls.stderr.strip()!r}")
+        if edit_after_commit:
+            # COMMITTED, THEN CHANGED (lc-328): the path resolves at HEAD and
+            # the bytes this run reads are not the bytes committed — the
+            # second of the two tests `retire_source_uncommitted` is decided
+            # by, which the untracked plant never reaches. One more ordinary
+            # entry, so the carrier still parses and nothing else refuses.
+            src = r.dir / "BACKLOG.md"
+            src.write_text(src.read_text(encoding="utf-8")
+                           + "- **READY 2026-01-02 — an entry nobody "
+                             "committed.** body\n", encoding="utf-8")
         if not laws_present:
             (r.dir / "LAWS.md").unlink(missing_ok=True)
         argv = ["--repo", str(r.dir), "migrate",
@@ -4995,7 +5036,7 @@ _COMPACT_REASON = ("the checker went red on the real defect and green after, "
 _COMPACT_REASON_EDITED = _COMPACT_REASON.replace("red on", "RED on")
 
 
-def _compact_run(*, edited: bool) -> Fired:
+def _compact_run(*, edited: bool, pending_ledger: bool = False) -> Fired:
     """`item compact` over a repo that has actually CLOSED a body.
 
     THE ARMS DIFFER IN ONE DIMENSION: whether the closed body was edited after
@@ -5029,6 +5070,16 @@ def _compact_run(*, edited: bool) -> Fired:
                                      "done home after the write, so this arm "
                                      "never carried the difference under "
                                      "test and its verdict says nothing.")
+            if pending_ledger:
+                # AN UNRELATED PENDING CHANGE in one of the three carriers
+                # the compaction commits (lc-328): a well-formed ledger line
+                # appended by hand and not committed. Unrelated to the body,
+                # so `compaction_would_strip` has nothing to say and the
+                # entry check is what answers.
+                led = r.dir / "LEDGER.md"
+                led.write_text(led.read_text(encoding="utf-8")
+                               + "dropped: zz-7 — a hand edit nobody "
+                                 "committed\n", encoding="utf-8")
             buf = io.StringIO()
             with redirect_stdout(buf):
                 code = cli_mod.main(["--repo", str(r.dir), "item", "compact",
@@ -5055,6 +5106,25 @@ COMPACT_ROWS = [
         # whether the body still matches what git holds, and in nothing else.
         control=lambda: _compact_run(edited=False),
         stage="lc-58 + lc-47",
+    ),
+    Row(
+        ident="carrier_dirty_at_entry_compact",
+        input_class="well-formed",
+        refusal="the SAME refusal by its second ROUTE: `item compact`, which "
+                "commits three carriers by pathspec from another module and "
+                "reaches the entry check through its own call. The row above "
+                "proves the check through `item amend`; nothing proved the "
+                "compaction's call was there, so it could be deleted with "
+                "every arrangement still reading PROVEN (lc-321, lc-328)",
+        firing_input="`item compact xx-1` over a closed body, with an "
+                     "uncommitted hand-appended line in the ledger",
+        expect=exits.FINDING,
+        fire=lambda: _compact_run(edited=False, pending_ledger=True),
+        # THE SAME close and the SAME compaction with nothing pending: the
+        # arms differ in the ledger's uncommitted line alone.
+        control=lambda: _compact_run(edited=False),
+        stage="drain wave E, lane E4 (lc-328)",
+        finding_row="carrier_dirty_at_entry",
     ),
 ]
 

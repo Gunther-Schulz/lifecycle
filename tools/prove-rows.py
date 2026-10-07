@@ -159,6 +159,20 @@ _RETIRE_LAWS_BETWEEN = (
     "    decl.check_laws_present(ctx.repo, laws_rel.strip(), res)\n"
 )
 
+#: The eight source lines BETWEEN the two tests `retire_source_uncommitted`
+#: is decided by (lc-328), quoted once for the reason the block above is: its
+#: arrangement folds both `if`s and an anchor is a run of complete lines.
+_RETIRE_UNCOMMITTED_BETWEEN = (
+    '        return ("retire_source_uncommitted", (\n'
+    '            f"`--retire-source` over {src_name}, which `git rev-parse "\n'
+    '            f"HEAD:{src_name}` does not resolve — it is untracked, or tracked "\n'
+    '            "and never committed. Every citation this migration writes "\n'
+    '            "resolves through `git cat-file -p <blob>`, and a blob that is in "\n'
+    '            "no commit is gone with the file: the deletion would take the "\n'
+    '            "bodies with it and leave pointers to nothing. Commit the carrier "\n'
+    '            "first, then retire it."))\n'
+)
+
 #: (row ident, file, anchor, replacement, what the anchor IS).
 #:
 #: The anchor is the single place the row's finding is DECIDED — not a place
@@ -454,6 +468,22 @@ MUTATIONS = [
      "the refusal of a carrier dirty at verb entry — the verb then writes "
      "beside the pending change and commits the file whole, under its own "
      "message"),
+
+    # THE COMPACTION'S OWN ROUTE INTO THAT REFUSAL (lc-321, lc-328). The
+    # helper above has one emit site, and `item compact` reaches it through a
+    # call of its own in another module: with only the entry above, that call
+    # could be deleted and every arrangement would still read PROVEN, because
+    # no plant walked it. Anchored on what the compaction DOES with the
+    # helper's answer — the helper keeps reading real input, so the amend
+    # row beside it cannot move.
+    # Admitted on the lc-142 pair — PROVEN at this anchor, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("carrier_dirty_at_entry_compact", "retire.py",
+     "        if dirty_code != exits.CLEAN:",
+     "        if False:",
+     "the compaction acting on the entry check's answer — folded, `item "
+     "compact` writes beside a pending change and commits three carriers "
+     "whole under its own message"),
 
     # R7 (lc-289). ANCHORED ON THE SINGLE EARLY RETURN THAT DECIDES WHETHER
     # THE JOIN HAS ANYTHING TO SAY, not on any of the three FINDING branches
@@ -917,19 +947,43 @@ MUTATIONS = [
      '        return ("retire_source_not_writing", (',
      "the test that a run retiring its source writes a successor at all"),
 
-    # (b) THE LOOKUP, NOT EITHER COMPARISON. The row is decided by two tests
-    # over one value — nothing is committed, or what is committed is not
-    # what was read — and its plant (an uncommitted carrier) is caught by
-    # the second the moment the first is folded: `None != <blob>`. So the
-    # value both read is what is replaced, by the bytes this run read; both
-    # comparisons then agree by construction, and the uncommitted carrier is
-    # retired with a CLEAN answer. One line, and the control — a committed
-    # carrier, where the two values are already equal — cannot move.
+    # (b) BOTH TESTS FOLDED, AND WHY THE FIRST HAS NO ARRANGEMENT OF ITS OWN
+    # (lc-328). The refusal is decided by two tests over one value — nothing
+    # is committed, or what is committed is not what was read. The first
+    # test's plant is an untracked carrier, and with that test ALONE folded
+    # the `None` it leaves falls into the second (`None != <blob>`) and is
+    # refused under the same name: no plant reaches the first test without
+    # also failing the second, so the first cannot be darkened by itself.
+    # This entry therefore disables the pair, and the entry below it gives
+    # the second test the arrangement that IS separable.
+    #
+    # It used to SWAP the value both tests read (`committed = src_blob`),
+    # which made the comparisons agree by construction rather than switching
+    # a check off — and a swap is the shape that reddens controls (wave D,
+    # change 1). Both of the refusal's roster rows go dark here; they are one
+    # family and that is not a stray.
     ("retire_source_uncommitted", "migrate.py",
-     "    committed = committed_blob(ctx.repo, src_name)",
-     "    committed = src_blob",
-     "the read of what is COMMITTED at the source's path, which both "
-     "committed-content tests compare against"),
+     "    if committed is None:\n"
+     + _RETIRE_UNCOMMITTED_BETWEEN
+     + "    if committed != src_blob:",
+     "    if False:\n"
+     + _RETIRE_UNCOMMITTED_BETWEEN
+     + "    if False:",
+     "both tests that the source's content is in a commit — the path "
+     "resolving at HEAD, and the bytes read being the bytes committed"),
+
+    # THE SECOND TEST ALONE (lc-328), on the plant that reaches it: a carrier
+    # committed and then changed. The untracked plant above is refused by the
+    # first test before this line runs, so folding this leaves that row
+    # reading real input and only this one moves.
+    # Admitted on the lc-142 pair — PROVEN at this anchor, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("retire_source_uncommitted_content", "migrate.py",
+     "    if committed != src_blob:",
+     "    if False:",
+     "the test that the bytes this run read are the bytes committed — "
+     "folded, a carrier changed since its commit is retired and its "
+     "citations are pinned to content only the deleted file held"),
 
     # (c) BOTH TESTS, and why one fold is not enough is a finding about the
     # ROW. Its plant is a declaration whose `laws` is blank, which the first
