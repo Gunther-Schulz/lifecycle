@@ -279,18 +279,6 @@ amend-reason: 2026-09-15 LAW 24 FIRING PROSPECTIVELY, at its first opportunity s
 amended-write-set: 2026-09-15 plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/refusals.py,test/test_declaration.py
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
 
-## lc-71
-grade: STANDBY
-requirement: migrate --merge run twice in one repo appends a SECOND residue item: the generated block is not source-derived so duplicate_bodies (reads source headlines) does not see it; --force rebuilds wholesale and is unaffected; record: lc-65 build report, surfaced item 2
-goal: every-refusal-red-first
-write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
-done-criterion: a second --merge run books no duplicate residue item (dedup on the residue's own identity, not source headlines); red-first: two --merge runs produce exactly one residue item
-evidence: lc-65 build report, merge dedup
-blocked-by: decision is merge-of-N-carriers a real path worth the dedup, or is --merge-twice out of scope
-bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
-amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over). The decision is ANSWERED at LEDGER.md:37: merge re-runs are a real path, so a second run must not double-book residue; dedup on residue identity. The done-criterion already states it. Not checked here: whether lc-309, READY, which concerns a second merge run re-archiving closures, overlaps this write-set closely enough to build together; the two name the same two files. Stays STANDBY.
-amended-blocked-by: 2026-10-05 NONE
-
 ## lc-74
 grade: STANDBY
 requirement: the emit-site coverage scanner (--test) detects finding emissions by grepping the literal 'FINDING [row]' bracket idiom, so a site that returns exits.FINDING without the bracket — measured: cmd_item_statusline's unknown-grade '!n?' suffix, lc-45 dispatch report 2026-09-11 — is invisible to the scanner rather than red: the coverage check degrades silently exactly where a new one-line-output verb cannot afford the bracket. Two halves: register the statusline unknown-grade FINDING as a refusals.py row, and re-key the scanner on what cannot be omitted (exits.FINDING returns) rather than the bracket literal

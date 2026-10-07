@@ -2552,5 +2552,21 @@ closed-met: none
 closed-decided: none
 closed-ref: 8423053b437528439ce6834daa58fccb68af64c5
 
+## lc-71
+grade: DONE
+requirement: migrate --merge run twice in one repo appends a SECOND residue item: the generated block is not source-derived so duplicate_bodies (reads source headlines) does not see it; --force rebuilds wholesale and is unaffected; record: lc-65 build report, surfaced item 2
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: a second --merge run books no duplicate residue item (dedup on the residue's own identity, not source headlines); red-first: two --merge runs produce exactly one residue item
+evidence: lc-65 build report, merge dedup
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over). The decision is ANSWERED at LEDGER.md:37: merge re-runs are a real path, so a second run must not double-book residue; dedup on residue identity. The done-criterion already states it. Not checked here: whether lc-309, READY, which concerns a second merge run re-archiving closures, overlaps this write-set closely enough to build together; the two name the same two files. Stays STANDBY.
+amended-blocked-by: 2026-10-05 NONE
+closed-reason: 2026-10-07 A second merge books no second residue item. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: a269773f546d6850251e957edf9f32a545c4b68c
+
 ## Archive (pre-migration)
 
