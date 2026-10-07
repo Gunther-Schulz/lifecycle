@@ -1742,8 +1742,9 @@ def report_conservation(c: dict, out) -> int:
         f"baseline {c['baseline']} + added {c['added']} − compacted "
         f"{c['compacted']} = {c['expected']}")
     if c["ok"]:
-        out("conservation: CLEAN — nothing left the carrier by a path that "
-            "is not a closure.")
+        out("conservation: CLEAN — the totals reconcile. A count identity "
+            "cannot show that no body left by a non-closure path: "
+            "compensating errors leave it unmoved.")
         return exits.CLEAN
     delta = c["actual"] - c["expected"]
     # THE SIGN IS THE DIAGNOSIS, and one message for both signs told the

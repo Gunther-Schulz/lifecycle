@@ -3089,3 +3089,44 @@ class TheCommitGateReadsTheOptIn(unittest.TestCase):
         got = self._hook_over_standby(GOOD_FULL_DECLARATION)
         self.assertEqual(got.returncode, 1, got.stderr)
         self.assertIn("standby_undeclared", got.stderr)
+
+
+class TheConservationVerdictStatesWhatTheSumProves(unittest.TestCase):
+    """lc-190: the CLEAN sentence claims what a count identity can establish.
+
+    The old sentence, quoted below, asserted that nothing left the carrier by
+    a non-closure path. A sum cannot show that: a hand-deleted live block
+    plus an unrelated appended done body leaves the total unmoved. The
+    identity and its arithmetic are NOT touched; only the sentence is graded.
+    """
+
+    OLD = ("conservation: CLEAN — nothing left the carrier by a path that "
+           "is not a closure.")
+
+    def _clean(self):
+        head = (f"schema: {items.SCHEMA_FLOOR}\nbaseline: 1\nadded: 0\n"
+                "compacted: 0\n\n")
+        block = ("## xx-1\ngrade: READY\nrequirement: a body — record: "
+                 "LEDGER.md\ngoal: mitigate\nwrite-set: tools/thing.py\n"
+                 "done-criterion: done\nevidence: none yet\n"
+                 "blocked-by: NONE\n")
+        live = items.parse(head + block)
+        done = items.parse(f"schema: {items.SCHEMA_FLOOR}\n")
+        buf = []
+        c = items.conservation(live, done)
+        code = items.report_conservation(c, buf.append)
+        return code, "\n".join(buf)
+
+    def test_the_clean_verdict_no_longer_asserts_the_absence_of_other_paths(self):
+        code, out = self._clean()
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn(self.OLD, out)
+        self.assertNotIn("nothing left the carrier", out)
+
+    def test_the_clean_verdict_states_that_the_totals_reconcile(self):
+        code, out = self._clean()
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn(
+            "conservation: CLEAN — the totals reconcile. A count identity "
+            "cannot show that no body left by a non-closure path: "
+            "compensating errors leave it unmoved.", out)
