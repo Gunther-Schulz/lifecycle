@@ -3983,6 +3983,12 @@ WAVE_UNSET = "missing/UNKNOWN/NONE"
 WAVE_PROSE = "prose"
 WAVE_VENUE = "venue"
 WAVE_FOREIGN = "other-repo"
+#: A slot that READS as paths, one of which names nothing in this repo's
+#: tracked tree (lc-185). Its own bucket rather than a lane, because a path
+#: nobody resolved collides with nothing by construction: a misspelled copy
+#: of a shared file came back as a tidy standalone lane, the join's worst
+#: misread presenting as its cleanest answer.
+WAVE_UNRESOLVED = "unresolved"
 
 #: WHY a bucket sits outside the lanes — two reasons, not one, and they route
 #: to different repairs. The join COULD NOT READ a missing slot or a prose
@@ -3998,7 +4004,11 @@ WAVE_FOREIGN = "other-repo"
 #: same sentence was already false of `<path>@<repo>`, which this report had
 #: called unreadable since lc-123 — the venue bucket is what made the older
 #: instance visible.
-WAVE_UNREADABLE = (WAVE_UNSET, WAVE_PROSE)
+#:
+#: `WAVE_UNRESOLVED` SITS WITH THE READING FAILURES: the join could not read
+#: such a slot AS THIS REPO'S PATHS, and its repair is the same one — somebody
+#: rewrites the slot, or confirms the tree it names is new.
+WAVE_UNREADABLE = (WAVE_UNSET, WAVE_PROSE, WAVE_UNRESOLVED)
 WAVE_NOT_A_FILE_HERE = (WAVE_VENUE, WAVE_FOREIGN)
 
 #: The non-lane buckets, in report order. COMPOSED from the two reasons rather
@@ -4077,7 +4087,7 @@ def effective_write_set(item: Item) -> str:
     return item.slots.get("write-set", "")
 
 
-def classify_write_set(value: str):
+def classify_write_set(value: str, tree=None):
     """`(bucket, paths, why)` for ONE effective write-set slot.
 
     `paths` is non-empty only for `WAVE_PATHS`; `why` is the quoted evidence
@@ -4086,6 +4096,14 @@ def classify_write_set(value: str):
     clustered: a join over the parsing half would be a lane assertion resting
     on a partial read of the slot, and it would read exactly like a complete
     one.
+
+    `tree` IS THE RESOLUTION STEP (lc-185): a `TrackedTree`, and with one a
+    slot whose every entry parses is still not path-valued until each entry
+    RESOLVES in it. One unresolved entry demotes the whole slot, for the
+    mixed-slot reason above — a lane built on the entries that did resolve
+    would rest on a partial read. WITHOUT a tree the grade is the string
+    grade it always was, and the caller that joins on it owes the reader
+    that sentence: `report_waves` says so and does not answer CLEAN.
     """
     # Deferred: `verbs` imports THIS module, so the dependency only runs one
     # way at import time. The split itself is single-sourced there on purpose
@@ -4125,6 +4143,15 @@ def classify_write_set(value: str):
                 f"does not parse as a path: {unparsed[0]!r} "
                 f"({len(parses)} of {len(entries)} entry/entries parse as "
                 "paths — a MIXED slot is not clustered on its parsing half)")
+    if tree is not None:
+        lost = [e for e in entries if not tree.resolves(e)]
+        if lost:
+            return (WAVE_UNRESOLVED, [],
+                    f"names no tracked file and no tracked top-level "
+                    f"directory here: {lost[0]!r} ({len(entries) - len(lost)} "
+                    f"of {len(entries)} entry/entries resolve — a NEW tree "
+                    "and a MISSPELLED path read alike, so the slot is not "
+                    "joined on a path nobody resolved)")
     return WAVE_PATHS, [wave_normalize(e) for e in entries], None
 
 
@@ -4507,7 +4534,8 @@ def wave_group_serializations(rows, groups):
 
 
 def report_waves(schedulable, out, *, ready_n, live_n, excluded,
-                 grouped=False) -> int:
+                 grouped=False, tree=None,
+                 tree_why="no tracked tree was handed to the join") -> int:
     """`item waves` — the join, printed. WRITES NOTHING, decides no sizing.
 
     `schedulable` is `[Item]` already through the blocker gate (the caller
@@ -4524,6 +4552,13 @@ def report_waves(schedulable, out, *, ready_n, live_n, excluded,
     withdraws. It never returns FINDING: whether a prose write-set is a defect
     is `item check`'s question and lc-111's item, and a planning verb that
     also graded the carrier would be two checkers with one exit code.
+
+    PATH-VALUED MEANS RESOLVED, NOT PATH-SHAPED (lc-185). `tree` is the
+    repo's `TrackedTree`; a slot whose path names nothing in it goes to the
+    `unresolved` bucket and is never joined. With NO tree — git could not
+    list the repo — the lanes are printed as what they then are, a join over
+    strings nobody resolved, and the run answers COULD NOT VERIFY: a CLEAN
+    there would be the claim this repair withdraws.
     """
     out("item waves — the write-set join over the schedulable READY set. "
         "READ-ONLY: it writes no carrier and schedules nothing.")
@@ -4549,7 +4584,7 @@ def report_waves(schedulable, out, *, ready_n, live_n, excluded,
     buckets: dict = {key: [] for key in WAVE_NON_PATH}
     rows = []
     for it in schedulable:
-        bucket, paths, why = classify_write_set(effective_write_set(it))
+        bucket, paths, why = classify_write_set(effective_write_set(it), tree)
         if bucket == WAVE_PATHS:
             rows.append((it.ident, paths))
         else:
@@ -4634,9 +4669,22 @@ def report_waves(schedulable, out, *, ready_n, live_n, excluded,
             f"{unreadable} with a write-set this join could not read, and "
             f"{elsewhere} whose write-set it read and which name no file in "
             "this repo. Either way the lanes above are a plan over "
-            f"{len(rows)} item(s) and NOT the whole schedulable set.")
+            f"{len(rows)} item(s) and NOT the whole schedulable set."
+            + ("" if tree is not None else
+               f" And no path above was resolved against this repo's tracked "
+               f"tree ({tree_why})."))
+        return exits.COULD_NOT_VERIFY
+    if tree is None:
+        out(f"item waves: COULD NOT VERIFY — {tree_why}, so the "
+            f"{len(rows)} write-set(s) above were joined as STRINGS and "
+            "never resolved against this repo's tracked tree. Two items on "
+            "one file, one of them misspelled, would read here as two "
+            "disjoint lanes.")
         return exits.COULD_NOT_VERIFY
     out(f"item waves: CLEAN — every one of the {len(rows)} schedulable "
-        "item(s) carries a path-valued write-set, so the mapping above covers "
-        "the whole population.")
+        "item(s) carries a path-valued write-set and every path RESOLVES "
+        "here: a tracked file or directory, or a new file under a tracked "
+        "top-level directory. The mapping above covers the whole population "
+        "at that grain and no finer — a misspelled basename under a tracked "
+        "directory still reads as a new file.")
     return exits.CLEAN

@@ -212,5 +212,92 @@ class WriteSetVenueVerdict(Base):
         self.assertIn("exited 128", verdict[0])
 
 
+# --- lc-185 -------------------------------------------------------------------
+
+REAL = "plugin/cli/lifecycle_core/refusals.py"
+TYPO = "plguin/cli/lifecycle_core/refusals.py"
+
+
+class TheJoinResolvesItsPaths(Base):
+    """lc-185 — a write-set path nobody resolved is not joined.
+
+    THE PAIR IS THE INSTRUMENT: two items on one file, one of them
+    misspelled, against the same two items spelled alike. Before the repair
+    the first arm printed two disjoint lanes — an instruction to dispatch
+    two writers onto one file — and the second printed one, so the join was
+    live and only resolution was missing.
+    """
+
+    def test_a_MISSPELLED_shared_file_does_NOT_return_two_lanes(self):
+        with self._repo([block("xx-1", REAL), block("xx-2", TYPO)]) as r:
+            code, out = self._run(r, "item", "waves")
+            self.assertNotIn("LANES: 2", out)
+            self.assertNotIn("xx-2 alone", out)
+            self.assertIn("LANES: 1 over 1 path-valued item(s)", out)
+            self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+
+    def test_the_misspelled_item_is_NAMED_with_the_path_that_did_not_resolve(self):
+        with self._repo([block("xx-1", REAL), block("xx-2", TYPO)]) as r:
+            _code, out = self._run(r, "item", "waves")
+            self.assertIn(f"  {items.WAVE_UNRESOLVED}: 1", out)
+            named = [ln for ln in out.splitlines()
+                     if ln.strip().startswith("xx-2:")]
+            self.assertEqual(len(named), 1, out)
+            self.assertIn(TYPO, named[0])
+
+    def test_CONTROL_both_spelled_correctly_is_ONE_serialized_lane(self):
+        with self._repo([block("xx-1", REAL), block("xx-2", REAL)]) as r:
+            code, out = self._run(r, "item", "waves")
+            self.assertIn("LANES: 1 over 2 path-valued item(s)", out)
+            self.assertIn(f"shared {REAL}: xx-1, xx-2", out)
+            self.assertEqual(code, exits.CLEAN, out)
+
+    def test_a_path_the_entry_CREATES_stays_legal(self):
+        """MUST-NOT-MOVE (1): resolvability-or-new, never mere existence."""
+        with self._repo([block(
+                "xx-1", "plugin/cli/lifecycle_core/not_written_yet.py")]) as r:
+            code, out = self._run(r, "item", "waves")
+            self.assertIn("LANES: 1 over 1 path-valued item(s)", out)
+            self.assertIn(f"  {items.WAVE_UNRESOLVED}: 0", out)
+            self.assertEqual(code, exits.CLEAN, out)
+
+    def test_the_trailing_slash_directory_form_still_binds(self):
+        """MUST-NOT-MOVE (2): `test/` covers a file under it, as before."""
+        with self._repo([block("xx-1", "test/"),
+                         block("xx-2", "test/absence-scan.test.mjs")]) as r:
+            code, out = self._run(r, "item", "waves")
+            self.assertIn("LANES: 1 over 2 path-valued item(s)", out)
+            self.assertIn("shared test/ — a DIRECTORY entry", out)
+            self.assertEqual(code, exits.CLEAN, out)
+
+    def test_the_CLEAN_line_claims_what_was_resolved_and_no_more(self):
+        """MUST-NOT-MOVE (3): true of the ITEMS was never true of the FILES."""
+        with self._repo([block("xx-1", REAL)]) as r:
+            _code, out = self._run(r, "item", "waves")
+            clean = [ln for ln in out.splitlines()
+                     if ln.startswith("item waves: CLEAN")]
+            self.assertEqual(len(clean), 1, out)
+            self.assertIn("RESOLVES", clean[0])
+            self.assertIn("misspelled basename", clean[0])
+
+    def test_an_unlisted_tree_is_COULD_NOT_VERIFY_and_says_so(self):
+        """No tree to resolve against: the lanes are a join over strings,
+        and the verdict must not read CLEAN over them."""
+        parsed = items.parse(carrier([block("xx-1", REAL)]))
+        lines = []
+        code = items.report_waves(
+            parsed.items, lines.append, ready_n=1, live_n=1, excluded=[],
+            tree=None, tree_why="`git ls-files` exited 128")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, lines)
+        self.assertNotIn("item waves: CLEAN", "\n".join(lines))
+        self.assertIn("exited 128", "\n".join(lines))
+
+    def test_classify_without_a_tree_is_the_string_grade_it_always_was(self):
+        """The library call that hands no tree keeps its answer — a caller
+        outside any repo is not told its paths were resolved."""
+        bucket, paths, _why = items.classify_write_set(TYPO)
+        self.assertEqual((bucket, paths), (items.WAVE_PATHS, [TYPO]))
+
+
 if __name__ == "__main__":
     unittest.main()

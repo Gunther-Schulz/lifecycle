@@ -495,9 +495,14 @@ def cmd_item_waves(args, out) -> int:
         excluded.append((it.ident, state + (
             "; UNKNOWN slot(s): " + ", ".join(unknown) if unknown else "")))
 
+    # THE TREE THE PATHS ARE RESOLVED AGAINST (lc-185) — git's own list, the
+    # same one `item check` grades write-sets by. A listing that failed is
+    # handed down as `None` with its reason and never as an empty tree.
+    tree, tree_why = items_mod.tracked_tree(ctx.repo)
     return exits.worst([code, items_mod.report_waves(
         schedulable, out, ready_n=len(ready), live_n=len(parsed.items),
-        excluded=excluded, grouped=getattr(args, "grouped", False))])
+        excluded=excluded, grouped=getattr(args, "grouped", False),
+        tree=tree, tree_why=tree_why)])
 
 
 class _Parser(argparse.ArgumentParser):

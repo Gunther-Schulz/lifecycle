@@ -60,8 +60,21 @@ def block(ident, write_set, *, grade="READY", blocked_by="NONE", extra=()):
 
 class WavesBase(unittest.TestCase):
 
+    #: The top-level directories this battery's write-sets name. Since lc-185
+    #: the join RESOLVES a path against what git tracks, and a scratch repo
+    #: tracking none of these would grade every fixture `unresolved` — the
+    #: battery's paths were phantoms, which is the shape that item repaired.
+    TRACKED_TOPS = ("tools", "test", "testing", "docs")
+
     def _repo(self, blocks):
-        return refusals._Repo(items=carrier(blocks))
+        repo = refusals._Repo(items=carrier(blocks))
+        for top in self.TRACKED_TOPS:
+            (repo.dir / top).mkdir(exist_ok=True)
+            (repo.dir / top / ".keep").write_text("", encoding="utf-8")
+        repo._run(["git", "add", "--"] + [f"{t}/.keep"
+                                          for t in self.TRACKED_TOPS])
+        repo._run(["git", "commit", "-qm", "the tracked tree"])
+        return repo
 
     def _waves(self, repo, *, grouped=False):
         here = os.getcwd()
