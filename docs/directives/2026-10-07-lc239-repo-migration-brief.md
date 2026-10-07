@@ -68,7 +68,10 @@ step 2 and report what the dry run names.
 
 ## Report
 
-One message to the lifecycle desk (`lifecycle-72`, or whichever
-lifecycle session is listed) when done or stopped: the commit hash, the
-closing lines of `kind check`, the `item check` exit code before and
-after, and anything the procedure did not cover.
+The commit in your repo is the record. The desk that wrote this brief
+(`lifecycle-72`) closed on 2026-10-07, so nothing is owed to it. If a
+lifecycle session is listed when you finish or stop, send it one
+message: the commit hash, the closing lines of `kind check`, the
+`item check` exit code before and after, and anything the procedure did
+not cover. If none is listed, a successor reads the result off
+`kind check` over the roster (lifecycle item lc-239).
