@@ -3343,5 +3343,20 @@ closed-met: none
 closed-decided: none
 closed-ref: e76378b68498fbbb72a9d183941ae4c11749d740
 
+## lc-325
+grade: DONE
+requirement: A MISSPELLED WRITE-SET PATH STILL BOOKS READY, and a misspelled file name under a real directory reads as a new file: lc-185 stopped the wave join from joining an unresolved path, but item add decides the grade without resolving, and nothing lets an entry declare that it creates a file - record: wave C lane C4 closing report 2026-10-07, gaps G3 and G4
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
+done-criterion: item add resolves each write-set path at booking by the predicate the wave join now uses and does not grade READY an entry whose path resolves to nothing it does not itself create; how an entry says it creates a file is decided and stated. Red-first: the misspelled-directory pair booked today as READY.
+evidence: RELAYED from lane C4 (opus) 2026-10-07 at 2313550: booking-time demotion sits in item add (verbs.py near line 886), outside that lane; both new CLEAN lines of the join state the basename grain as their limit.
+blocked-by: NONE
+amend-reason: 2026-10-07 2026-10-07 built in wave D and shelved: the desk ruling it implemented refuses honest bookings
+amended-evidence: 2026-10-07 MEASURED by wave D lane D1 2026-10-07 at edb4d2e and relayed, not re-run at the desk: the parent-directory rule the desk ruled, built and red-first proven (6 of 10 arms red, 10 of 10 green after), turned 66 existing tests red in 13 modules, each opened one a booking naming a path under a directory its scratch repo does not track; 29 stayed red after one fixture correction. DERIVED at the desk: an entry creating a file in a directory it also creates is an ordinary booking, so the ruling was wrong and is withdrawn; the patch and the direction for the pickup are in docs/directives/2026-10-07-lc325-built-not-landed.md.
+closed-reason: 2026-10-07 By desk ruling item add STATES what each write-set path resolves to and leaves the grade alone; a misspelled path still books READY, which is the stated residue. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: b026cc34c8c2b56a6cd01aca0b0713e2575fa59d
+
 ## Archive (pre-migration)
 
