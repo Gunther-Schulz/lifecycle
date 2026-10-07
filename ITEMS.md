@@ -1411,6 +1411,8 @@ evidence: MEASURED 2026-10-07 at the drain desk: the full walk took roughly ten 
 blocked-by: NONE
 amend-reason: 2026-10-07 the mutates-the-checkout premise was wrong at booking; corrected on a lane measurement
 amended-evidence: 2026-10-07 RELAYED from wave E lane E5 2026-10-07 at 83eaa73, not re-run at the desk: the walk already mutates a COPY (lc-163) - a scratch clone polled every 50 ms during a single-ident run showed 0 dirty states of 183, with a positive control showing 1. So the half of this item about writing the checkout it runs in is OVERTAKEN; what stands is the serial walk. RELAYED from lane E2: one full walk took about 20 minutes with eight other walks on the machine.
+amend-reason: 2026-10-07 add the no-progress-output observation
+amended-evidence: 2026-10-07 RELAYED from wave E lane E4 2026-10-07: the walk prints nothing to a redirected file until it exits, so a running walk reads like a hung one; a flush per arrangement belongs with this item.
 
 ## lc-332
 grade: STANDBY
