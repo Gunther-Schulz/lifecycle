@@ -2263,5 +2263,19 @@ blocked-by: NONE
 closed-reason: 2026-10-05 A repeated --merge now recognises the closures it already archived (marker-keyed re-import) and no longer rewrites the done home when a merge archives nothing. Built in a scratch clone by two trial lanes of the gap sweep (T10: one stopped mid-build, its successor told only Continue), cherry-picked here as 3e43f33 and verified at this desk: the new tests fail against the previous migrate.py on assertions, suite 1231 OK, --test CLEAN, prove-rows held.
 closed-ref: 3e43f33
 
+## lc-149
+grade: DONE
+requirement: An EMPTY carrier counts as one instance, so a kind whose home exists and is empty fires kind_grew_without_exit while the SAME home absent reports clean. retire.py list_home decides a file's notion by SHAPE: it asks for a heading prefix, and a carrier holding only its head has none, so it falls through to the plain-file branch and returns one instance. Measured by the lc-148/lc-145 lane on the `items` kind at 9e681e3; the desk confirmed the mechanism by reading retire.py:149-153 at db50df2 (derived from source, not separately measured for the other kinds). Under lc-145 the miscount now reaches `compacted` kinds too, which is why lc-145's must-not-move (a repo with no done bodies reports the kind CLEAN) holds only for an ABSENT home.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/retire.py,test/test_retire.py
+done-criterion: list_home answers zero instances for a carrier holding only its `schema:` head, and the discriminator is that schema head (law 14: every carrier has one, no ordinary file does) rather than the heading prefix. Proven by a PAIR, not by a green: an arm that builds an empty carrier and asserts the count is 0 and the kind reports CLEAN, plus a mutation of the discriminator that reds that arm as an assertion FAILURE (failures=1, errors=0 read off the split). No arm may assert the current miscount.
+evidence: lane opus-lc148-145 closing report part 2a, gap 1, measured at 9e681e3 on the items kind; desk source read at db50df2, retire.py:139-153 — absent home returns [] at :140, empty carrier returns [home] at :153.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 An empty carrier counts zero. The booked discriminator (schema head alone) misread arcs/INDEX as an empty block carrier; the desk repair takes the carrier set from the declaration. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 5777ad9d8aaffe57d690114d81aa8542ddcc6b73, d5a20afb22155f2f28ef1ea21a6f42eff438e5ee
+
 ## Archive (pre-migration)
 

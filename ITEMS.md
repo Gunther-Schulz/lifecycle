@@ -785,16 +785,6 @@ amend-reason: 2026-09-19 Re-typed from `evidence false` at the contract's build 
 amended-blocked-by: 2026-09-19 external cf-342 closes in claude-code-cache-fix, which owns the canonical tools/absence-scan.mjs this repo declares its copy byte-identical to
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
 
-## lc-149
-grade: STANDBY
-requirement: An EMPTY carrier counts as one instance, so a kind whose home exists and is empty fires kind_grew_without_exit while the SAME home absent reports clean. retire.py list_home decides a file's notion by SHAPE: it asks for a heading prefix, and a carrier holding only its head has none, so it falls through to the plain-file branch and returns one instance. Measured by the lc-148/lc-145 lane on the `items` kind at 9e681e3; the desk confirmed the mechanism by reading retire.py:149-153 at db50df2 (derived from source, not separately measured for the other kinds). Under lc-145 the miscount now reaches `compacted` kinds too, which is why lc-145's must-not-move (a repo with no done bodies reports the kind CLEAN) holds only for an ABSENT home.
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/retire.py,test/test_retire.py
-done-criterion: list_home answers zero instances for a carrier holding only its `schema:` head, and the discriminator is that schema head (law 14: every carrier has one, no ordinary file does) rather than the heading prefix. Proven by a PAIR, not by a green: an arm that builds an empty carrier and asserts the count is 0 and the kind reports CLEAN, plus a mutation of the discriminator that reds that arm as an assertion FAILURE (failures=1, errors=0 read off the split). No arm may assert the current miscount.
-evidence: lane opus-lc148-145 closing report part 2a, gap 1, measured at 9e681e3 on the items kind; desk source read at db50df2, retire.py:139-153 — absent home returns [] at :140, empty carrier returns [home] at :153.
-blocked-by: NONE
-bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
-
 ## lc-150
 grade: STANDBY
 requirement: migration_ledger_nonzero OVER-FIRES: it tests that the ledger count is not zero, where the count is the ledger lines AFTER the run rather than the lines the run itself routed. So every repo that has ever recorded a decision — a compaction included — gets a FINDING from any --merge, and the merge still writes. Law 11 shape: a guard firing on legitimate work, which trains the reader to discount the red that will one day be real. Found by the lc-148/lc-145 lane because its migrate arm needs a fixture carrying a compaction record.
