@@ -1406,13 +1406,13 @@ MUTATIONS = [
     # successful close — so that is the mutation, and the arm still returns
     # a verdict.
     ("unknown_arc", "verbs.py",
-     "    if not live.exists():\n"
+     "    if not _arc_slug_usable(slug) or not live.exists():\n"
      "        out(f\"FINDING [unknown_arc] no live arc {slug!r} in \"\n"
      "            f\"{arcs.ARCS_DIR}/. A closed arc is not re-closable and a "
      "slug \"\n"
      "            \"that was never opened has nothing to move.\")\n"
      "        return exits.FINDING",
-     "    if not live.exists():\n"
+     "    if not _arc_slug_usable(slug) or not live.exists():\n"
      "        return exits.CLEAN",
      "the `arc close` test that there is a live body to move — the absence "
      "then folds into CLEAN and a close over nothing reports as a close"),
