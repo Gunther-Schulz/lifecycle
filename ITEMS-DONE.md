@@ -3327,5 +3327,21 @@ closed-met: none
 closed-decided: none
 closed-ref: 131978f776df07832614699ee33b7911689853aa
 
+## lc-270
+grade: DONE
+requirement: item close takes a bare id and moves whatever body carries it, so an id carried from a session summary rather than re-read at the carrier closes the wrong item; the only signal is the moved body printed after the act. Record: course-corrections line 2026-09-24 lifecycle 09020605 (lc-260 closed in place of lc-261, caught only because the close failed on lc-269).
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: item close accepts an optional --expect TEXT; when given, the close refuses (exit 2, nothing moved) unless TEXT occurs case-insensitively in the item resolved requirement, and the refusal prints the requirement head so the caller sees which item the id names. Without --expect behaviour is unchanged (pit of success is not forced here: making it mandatory would break every existing caller and the tool own closes). Verifier: test closing with a matching --expect succeeds, with a non-matching one refuses and leaves both homes byte-identical; red-first against the pre-change tree (unknown flag). Must-not-move: close semantics without the flag.
+evidence: MEASURED 2026-09-24: item close lc-260 moved the desk/peer control-arm body while the session intended the four-audit-arms item (lc-261); the mislabel originated in the session own status summary and travelled into ledger line 6fff837 and commit a53e131 before the close echoed the real body. Recovered only because lc-269 made that close fail uncommitted.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 2026-10-07 dispatched in wave B and returned as a gap: the repair is a new flag
+amended-evidence: 2026-10-07 RELAYED from wave B lane V2 2026-10-07 at base fb91697: the done-criterion is a new flag on item close (an expected-text argument), confirmed absent. DERIVED: a new CLI surface is a new mechanism under the 2026-09-24 freeze, so this is not buildable as a defect repair until the operator releases it.
+closed-reason: 2026-10-07 item close takes --expect TEXT and refuses a mismatched id before anything moves. The flag is optional, as the criterion asked. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: e76378b68498fbbb72a9d183941ae4c11749d740
+
 ## Archive (pre-migration)
 

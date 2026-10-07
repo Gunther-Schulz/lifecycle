@@ -979,18 +979,6 @@ evidence: MEASURED this session, ugrep --no-ignore-files: zero hits for behaviou
 blocked-by: decision the behaviour-channel probe design, specifically its dependent variable
 not-derivable: 2026-09-21 Looked for a design in docs/audits/: the roster-channel probe design (2026-09-19-erosion-probe-design.md) is the nearest and does NOT supply one - its dependent variable is per-row survival across refusals.py row-pair transitions, a roster/retrieval quantity. Looked for an entry in ITEMS.md, ITEMS-DONE.md and LEDGER.md: zero hits. What counts as degraded BEHAVIOUR is constitutively a scope call - purpose.md states a strong model steered too tightly performs BELOW its own default, which names the effect and not an observable.
 
-## lc-270
-grade: STANDBY
-requirement: item close takes a bare id and moves whatever body carries it, so an id carried from a session summary rather than re-read at the carrier closes the wrong item; the only signal is the moved body printed after the act. Record: course-corrections line 2026-09-24 lifecycle 09020605 (lc-260 closed in place of lc-261, caught only because the close failed on lc-269).
-goal: lean-machinery-strict-checks
-write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
-done-criterion: item close accepts an optional --expect TEXT; when given, the close refuses (exit 2, nothing moved) unless TEXT occurs case-insensitively in the item resolved requirement, and the refusal prints the requirement head so the caller sees which item the id names. Without --expect behaviour is unchanged (pit of success is not forced here: making it mandatory would break every existing caller and the tool own closes). Verifier: test closing with a matching --expect succeeds, with a non-matching one refuses and leaves both homes byte-identical; red-first against the pre-change tree (unknown flag). Must-not-move: close semantics without the flag.
-evidence: MEASURED 2026-09-24: item close lc-260 moved the desk/peer control-arm body while the session intended the four-audit-arms item (lc-261); the mislabel originated in the session own status summary and travelled into ledger line 6fff837 and commit a53e131 before the close echoed the real body. Recovered only because lc-269 made that close fail uncommitted.
-blocked-by: NONE
-bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
-amend-reason: 2026-10-07 2026-10-07 dispatched in wave B and returned as a gap: the repair is a new flag
-amended-evidence: 2026-10-07 RELAYED from wave B lane V2 2026-10-07 at base fb91697: the done-criterion is a new flag on item close (an expected-text argument), confirmed absent. DERIVED: a new CLI surface is a new mechanism under the 2026-09-24 freeze, so this is not buildable as a defect repair until the operator releases it.
-
 ## lc-275
 grade: STANDBY
 requirement: The duplicate check at item add fails in both directions: it did not flag lc-264 (surfaced-vs-read counter, booked 2026-09-24) against lc-256 (the same counter, booked 2026-09-20), so the booking even claimed no item carried it; and it flagged lc-266 as a match for lc-268 on two shared words (record, stay) that carry no meaning. A token-overlap join trains the booker to dismiss the prompt and still misses the real duplicate. Record: lc-256 amendment 2026-09-24; the item add output for lc-268 (match: shares 2 requirement token(s): record, stay).
