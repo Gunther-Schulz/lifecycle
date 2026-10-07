@@ -52,7 +52,7 @@ from . import declaration as decl
 # restated, so the two sites cannot drift apart. What differs is the USE:
 # desk state FOLDS an unsafe id (an identity it must not lose), while
 # `lane new` REFUSES an unsafe door (a name the declaration carries).
-from .desk import _UNSAFE_FOR_FILENAME
+from .desk import _UNSAFE_FOR_FILENAME, say_not_committed
 
 #: The roster: one repo path per line. `#` comments and blank lines ignored.
 #: Under `$XDG_CONFIG_HOME` (defaulting per the XDG spec) rather than
@@ -721,6 +721,10 @@ def cmd_lane_new(args, out, repo: Path) -> int:
         # working registration from a no-op (`lane register`'s own rule).
         out(f"declared: {door!r} was already in this repo's `lanes` list — "
             "nothing written to the declaration.")
+    say_not_committed(
+        out, repo, [path] + ([repo / decl.DECLARATION_REL] if added else []),
+        "`lane new` writes a STUB a person then fills, so the body and its "
+        "declaration are not committed until it is.")
     return exits.CLEAN
 
 

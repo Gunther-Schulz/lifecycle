@@ -33,6 +33,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import declaration as decl
+from . import desk as desk_mod
 from . import exits
 from . import items as items_mod
 
@@ -218,4 +219,9 @@ def cmd_workflow_bind(args, out, repo: Path) -> int:
     out(f"filled: {', '.join(filled) or '(none)'}")
     out(f"UNKNOWN: {', '.join(left_unknown) or '(none)'}")
     out(f"wrote {decl.DECLARATION_REL} ({decl_path})")
+    desk_mod.say_not_committed(
+        out, repo, [decl_path],
+        "`workflow bind` writes the declaration and leaves the unanswered "
+        "slots UNKNOWN for a person to fill, so the binding is not "
+        "committed until they are.")
     return exits.CLEAN

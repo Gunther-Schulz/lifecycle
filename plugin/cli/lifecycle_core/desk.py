@@ -40,6 +40,34 @@ from pathlib import Path
 from . import declaration as decl
 from . import exits, firelog
 
+def say_not_committed(out, repo, written, reason: str) -> None:
+    """The commit-or-say line (lc-41) for a carrier-writing verb that does
+    NOT commit its own write: `NOT COMMITTED: <reason>`, naming each path
+    written (repo-relative where the path is inside the repo) and the one
+    command that makes the set durable by pathspec.
+
+    ONE BODY for every verb that says it, so the sentence a caller greps for
+    cannot drift into several spellings of one refusal. The commit itself
+    happens in `verbs.commit_paths` for the item, ledger and arc verbs; this
+    is the other half of the same contract (LEDGER decision: every
+    carrier-WRITING verb commits its write or prints NOT COMMITTED).
+    """
+    shown = []
+    for path in written:
+        try:
+            shown.append(str(Path(path).relative_to(repo)))
+        except ValueError:
+            shown.append(str(path))
+    inside = [p for p in shown if not os.path.isabs(p)]
+    out(f"NOT COMMITTED: {reason}")
+    if inside:
+        out("  written: " + ", ".join(shown))
+        out("  a co-writer's pathspec commit over these files would carry "
+            "this write out under their message. Commit it as its own act: "
+            "`git add -N -- " + " ".join(inside) + "` for any NEW file, then "
+            "`git commit -m \"<what this is>\" -- " + " ".join(inside) + "`.")
+
+
 REPORTED = "REPORTED"
 WAITING_ON = "WAITING-ON"
 BLOCKED = "BLOCKED"
@@ -197,4 +225,11 @@ def cmd_desk_state(args, out, repo) -> int:
     out(f"recorded at {path} — OVERWRITES any prior state for this desk; "
         "there is no history.")
     out(_delegation_line(repo))
+    # lc-41: the desk-state kind's home is machine-wide XDG state, outside
+    # every repo, so there is nothing for the repo's version control to hold.
+    # Said, not silent.
+    say_not_committed(
+        out, repo, [path],
+        "desk state is written to a machine-wide state file outside every "
+        "repo, so there is no repo carrier to commit.")
     return exits.CLEAN

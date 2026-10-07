@@ -31,6 +31,7 @@ from pathlib import Path
 from . import declaration as decl
 from . import exits
 from . import lanes as lanes_mod
+from .desk import say_not_committed
 
 
 def derive_id_prefix(repo: Path) -> str:
@@ -429,9 +430,12 @@ def cmd_init(args, out, repo: Path) -> int:
 
     decl_path.parent.mkdir(parents=True, exist_ok=True)
     decl_path.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+    written = [decl_path]
     out(f"wrote {decl.DECLARATION_REL} ({decl_path})")
 
     added = ensure_gitignore(repo)
+    if added:
+        written.append(repo / ".gitignore")
     if added:
         out(f".gitignore: added {', '.join(added)}")
     else:
@@ -481,6 +485,7 @@ def cmd_init(args, out, repo: Path) -> int:
                 "carrier only where none exists).")
             continue
         carrier.write_text(_seed_body(kind_name), encoding="utf-8")
+        written.append(carrier)
         out(f"seeded {home} (empty body, headers only, schema "
             f"{decl.SCHEMA_FLOOR}).")
 
@@ -501,5 +506,11 @@ def cmd_init(args, out, repo: Path) -> int:
         # this one.
         lane_path.write_text(lanes_mod.lane_stub(name), encoding="utf-8")
         out(f"wrote lane stub: {lane_path}")
+        written.append(lane_path)
 
+    say_not_committed(
+        out, repo, written,
+        "`init` writes a bootstrap set (the declaration, its .gitignore "
+        "lines, the seeded carriers, the lane stubs) for a person to read "
+        "before it enters history, so none of it is committed.")
     return code
