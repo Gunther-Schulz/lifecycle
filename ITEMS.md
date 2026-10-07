@@ -1102,6 +1102,8 @@ blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
 amend-reason: 2026-10-07 2026-10-07 dispatched in wave C and returned as a gap: needs a new slot and flag
 amended-evidence: 2026-10-07 RELAYED from wave C lane C4 2026-10-07: the two existing blocker-only slots are bound to other meanings by BLOCKER_SLOT_RULES, so the criterion needs a new slot, a new flag on add and park plus the amend slot map, and a door refusal. DERIVED: a new slot and flag are a schema change and a new CLI surface, outside the defect-repair exemption of the 2026-09-24 freeze.
+amend-reason: 2026-10-07 measured; needs a wider write-set
+amended-evidence: 2026-10-07 RELAYED from wave E lane E2 2026-10-07: a scratch door refusal reddened 33 tests, 26 in six files outside one lane (test_drain_c_c1 6, test_refusals 6, test_vocab 6, test_verbs 5, test_live_block_removal 2, test_init 1) and left four roster rows could-not-verify. Names approved by the desk: slot blocker-decides, flag --blocker-decides, rows evidence_decides_unstated and blocker_decides_misplaced. A builder needs those six test files and four row fixtures in the write-set; lc-178 door listing (landed this wave) names the controls through a door.
 
 ## lc-258
 grade: NEW
