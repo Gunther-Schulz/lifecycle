@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 317
+added: 318
 compacted: 0
 
 ## lc-3
@@ -1553,4 +1553,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
 done-criterion: item add resolves each write-set path at booking by the predicate the wave join now uses and does not grade READY an entry whose path resolves to nothing it does not itself create; how an entry says it creates a file is decided and stated. Red-first: the misspelled-directory pair booked today as READY.
 evidence: RELAYED from lane C4 (opus) 2026-10-07 at 2313550: booking-time demotion sits in item add (verbs.py near line 886), outside that lane; both new CLEAN lines of the join state the basename grain as their limit.
+blocked-by: NONE
+
+## lc-326
+grade: STANDBY
+requirement: NO ROSTER ROW STATES WHAT CLASS OF INPUT FIRES IT, so a refusal whose text names malformed, unreadable or absent input can be proven only on a well-formed one and nothing reports it: the input-axis third of lc-200 - record: wave C lane C5 closing report 2026-10-07, gap 1
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/roster.py,tools/prove-rows.py,test/test_refusals.py
+done-criterion: Each roster row declares the input class of its firing input from a closed vocabulary decided first; a row whose refusal names malformed, unreadable or absent input carries a plant of that class or is reported by name. The class lives on the row, graded by the roster run, unless the pickup shows the arrangement is the better home.
+evidence: RELAYED from lane C5 (opus) 2026-10-07 at f95c75f: the arrangement table is a five-tuple unpacked by test_refusals near line 159, the firing input belongs to the row, 149 existing plants are unclassed, and a word-presence test over refusal prose would fire on text that only discusses the word. DERIVED: a declared class is a new field on the row, which the 2026-09-24 freeze reads as a schema change until released.
 blocked-by: NONE
