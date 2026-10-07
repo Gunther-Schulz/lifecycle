@@ -2430,5 +2430,19 @@ closed-met: none
 closed-decided: none
 closed-ref: cbd07d6b79dc036beed6918c2bbc14fb7fc4667b
 
+## lc-206
+grade: DONE
+requirement: THE MIGRATION REPORT'S CONSERVATION SENTENCE IS x == x, AND IT SAYS IT WAS COMPUTED ON THE PRODUCED FILES. migrate.py:2918-2922 persists: 'Conservation (§3.1), computed on the produced files: items N + done M = S; baseline B + added 0 − compacted 0 = B. HOLDS.' baseline is ASSIGNED n_items + n_residue + archive_count at 2407, and the verdict at 2922 is HOLDS if n_items + n_residue + archive_count == baseline — the same expression on both sides. It reads HOLDS in every mode over any input, and the green sits in a PERSISTED artifact that claims to have checked the files. Law 22: a partition exact by construction is reported as could-not-verify arithmetic, never as a green row.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: The sentence either RE-READS the produced files and compares independently derived figures, or it stops claiming to have been computed on them and is rendered as could-not-verify arithmetic. The honest version already exists in the same file: merge_conservation (2663-2730) re-reads both figures from disk and answers a disagreement COULD NOT VERIFY rather than as a finding — this line sits in the same report making the same claim without doing it. MUST-NOT-BUILD: the identity itself is not touched; the two carrier invariants are load-bearing and the repo's laws file says the math is not to be changed. RED-FIRST: a produced file that disagrees with the in-memory counters must make this sentence say something other than HOLDS. Under the current code no input can do that, which is the proof the check is unfalsifiable rather than passing.
+evidence: MEASURED at this desk, read at the artifact rather than taken on the lane's report: migrate.py:2407 assigns baseline = n_items + n_residue + archive_count, and 2922 renders HOLDS if n_items + n_residue + archive_count == baseline. Both lines read directly. RELAYED from the lc-192 lane and not re-executed here: that baseline is never reassigned across 2350-2950, its only other appearances being the head string at 2409, bump_head at 2448 which changes the FILE and not the local, and the two render_report call sites. DERIVED: therefore the sentence is a tautology in every mode. MEASURED context that makes it worse: the lane found merge_conservation is the soundest code in the file, and its CALL SITE is guarded 'if merge and not report_only' (2611), so a first or --force migration writes both carriers with no conservation verdict at all — and the thing standing in for it in the report is this x == x line.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The report conservation sentence re-reads the produced files. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: b20b0dee5a0333c62ac410e611c02008c4873ff9
+
 ## Archive (pre-migration)
 
