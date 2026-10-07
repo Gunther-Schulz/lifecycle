@@ -190,7 +190,10 @@ they were open before it and remain so: direction drift has no mechanism
 HERE — the external half moved 2026-09-24: the 2026-09-18 survey's zero is
 refuted, prior art exists (`docs/audits/2026-09-24-prior-art-problem-side-synthesis.md`,
 finding 1); completeness-as-distinct-from-decay is
-unmeasured; and there is no control arm for whether the desk/peer split helps.
+unmeasured; and there is no control arm for whether the desk/peer split helps
+— DECLINED 2026-10-07 (operator; `LEDGER.md:211`, lc-260): the arm would cost
+the operator attention the split exists to save, so this stays a named,
+deliberately unmeasured gap rather than an unrouted one.
 
 ## How to use this, and its own honest limit
 
