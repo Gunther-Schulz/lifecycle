@@ -3102,5 +3102,20 @@ closed-met: none
 closed-decided: none
 closed-ref: 5cc8e24cf0304e68f7b5b824d41b2860b5c89c5d
 
+## lc-260
+grade: DONE
+requirement: The desk/peer control arm is one of three gaps the gap map deliberately does not claim to have closed, and it has no carrier: the catch study measured WHO catches, never whether the split beats a single session. Record: docs/the-loop.md:176-179 and docs/audits/2026-09-18-desk-peer-catch-study.md.
+goal: lean-machinery-strict-checks
+write-set: UNKNOWN
+done-criterion: A control arm exists OR is recorded as declined: either a comparison carrying a second arm of comparable work run single-session, result in docs/audits/; or a dated one-line decline in LEDGER.md naming the spend as the reason. Verifier: one of those two artifacts exists AND docs/the-loop.md:176-179 is amended to cite it, so the gap map stops carrying an unrouted gap. Must-not-move: the catch study numbers and their FLOOR labelling stay unchanged.
+evidence: RELAYED from docs/audits/2026-09-18-desk-peer-catch-study.md, not re-derived here: it EXECUTED and produced numbers on a DIFFERENT question - 103 events graded across 3 sonnet lanes over 9 real sessions, SELF 63 CROSS 25 MECHANISM 5 ESCAPED 10; of 25 cross catches ~21 cite an artifact read against ~4 reasoning-only; cleanest lane direction split 8:1 peer-to-desk. All counts labelled FLOORS by the study, and no positive control on any lane sampling scorer. The study disclaims this item in its own words: no control arm exists and none is possible here; it measures who catches, never whether desk/peer beats a single session. Decision-theoretic prior, RELAYED from docs/answerable-not-felt.md:20-23: role separation over the SAME information is dominated by a single centralized decision maker (arXiv:2603.26993), so the split pays only through independent artifact reads - which is exactly what a control arm would test.
+blocked-by: NONE
+not-derivable: 2026-09-21 Looked in ITEMS.md, ITEMS-DONE.md and LEDGER.md: grep control arm returns only lc-161 evidence line and an unrelated retire.py code literal (ITEMS-DONE.md:1078/1081), neither a desk/peer-split study; positive control, the same phrase returns hits in docs/the-loop.md and in the catch study. The catch study itself states no control arm exists and none is possible retrospectively. Constitutively the operator call: the control data does not exist and can only be created PROSPECTIVELY by deliberately running comparable work single-session, which is a spend decision on the very operator time the split exists to save.
+blocker-moot: whether to spend sessions running comparable work WITHOUT the desk/peer split to create a control arm (answered in the ledger before this item closed)
+closed-reason: 2026-10-07 Control arm declined by the operator 2026-10-07 on the spend; the gap map cites the ledger line, the catch study numbers and their FLOOR labelling untouched.
+closed-met: none
+closed-decided: LEDGER.md:211
+closed-ref: 4f6047a5ff53bc9279a0bc8b2e07ee0dc05c99ea
+
 ## Archive (pre-migration)
 
