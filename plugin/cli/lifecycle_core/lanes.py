@@ -39,6 +39,7 @@ rather than implying it read the whole lane.
 import json
 import os
 import re
+import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -197,6 +198,92 @@ class Trigger:
     timed_out: bool = False
 
 
+#: A producer killed by SIGPIPE (128 + 13) because its reader closed early —
+#: `yes | grep -q y` — is a predicate that FIRED, not a stage that broke.
+SIGPIPE_EXIT = 141
+
+
+@dataclass
+class ShellRun:
+    """One command run through a shell, with the exit status of EVERY stage
+    of its last pipeline (lc-194).
+
+    A shell reports the LAST process of a pipeline, so `returncode` alone
+    answers for the stage that was not the one asked about. `stages` is the
+    last pipeline's statuses in order, or `None` when they were not observed
+    (no `bash` to ask, or the command left the shell before the probe ran
+    with `exit`/`exec`) — and `None` is the declared state in which the
+    verdict is the last stage's, as it always was."""
+    returncode: int
+    stdout: str
+    stderr: str
+    stages: list | None = None
+
+    def broken_stage(self):
+        """`(position, code)`, 1-based, of the first stage BEFORE the last
+        that cannot have succeeded: 126/127 (never started) or >=2 (the
+        reserved BROKEN band, §3.3) — 141 excepted, which is a reader closing
+        the pipe on a producer that was working. `None` if there is none."""
+        for i, code in enumerate((self.stages or [])[:-1], 1):
+            if code in (126, 127) or (code >= 2 and code != SIGPIPE_EXIT):
+                return i, code
+        return None
+
+    def cannot_discriminate(self) -> str:
+        """A one-sentence declaration when an earlier stage exited 1: that is
+        a failed stage and an honest empty answer at once, so the last
+        stage's verdict is all there is. Empty when nothing is in doubt."""
+        if self.stages and len(self.stages) > 1 and 1 in self.stages[:-1]:
+            return ("pipeline stage "
+                    f"{self.stages.index(1) + 1} of {len(self.stages)} exited "
+                    "1 and a shell reports the LAST stage: this verdict "
+                    "cannot discriminate a failing stage from an empty answer.")
+        return ""
+
+
+def run_shell(command: str, cwd: Path | None = None,
+              timeout: float | None = None) -> ShellRun:
+    """Run `command` in a POSIX-mode shell and return `ShellRun`.
+
+    THE ONE PLACE THIS STACK ASKS A SHELL FOR A VERDICT (lc-194): both
+    `evaluate_trigger` and `verify.run_one` come here, so the last-stage
+    blindness is repaired once. The command is followed by a probe that
+    writes `$?` and `PIPESTATUS` to a private descriptor; the child's own
+    stdout and stderr are untouched. Where `bash` is not on PATH the command
+    runs exactly as before and `stages` is `None`."""
+    bash = shutil.which("bash")
+    where = str(cwd) if cwd else None
+    if bash is None:
+        p = subprocess.run(command, shell=True, cwd=where,
+                           capture_output=True, text=True, timeout=timeout)
+        return ShellRun(p.returncode, p.stdout, p.stderr, None)
+    rfd, wfd = os.pipe()
+    try:
+        wrapped = (f"{command}\nprintf '%s %s\\n' \"$?\" "
+                   f"\"${{PIPESTATUS[*]}}\" >&{wfd}\n")
+        p = subprocess.run([bash, "--posix", "-c", wrapped], cwd=where,
+                           capture_output=True, text=True, timeout=timeout,
+                           pass_fds=(wfd,))
+        os.close(wfd)
+        wfd = -1
+        # Non-blocking: a background process the command left running may
+        # still hold the write end, and a blocking read would wait on it.
+        os.set_blocking(rfd, False)
+        try:
+            raw = os.read(rfd, 4096).decode("ascii", "replace")
+        except (BlockingIOError, OSError):
+            raw = ""
+    finally:
+        if wfd != -1:
+            os.close(wfd)
+        os.close(rfd)
+    probe = raw.strip().splitlines()[-1].split() if raw.strip() else []
+    if len(probe) >= 2 and all(t.isdigit() for t in probe):
+        stages = [int(t) for t in probe[1:]]
+        return ShellRun(int(probe[0]), p.stdout, p.stderr, stages)
+    return ShellRun(p.returncode, p.stdout, p.stderr, None)
+
+
 def evaluate_trigger(command: str, cwd: Path | None = None,
                      timeout: float = TRIGGER_TIMEOUT_S) -> Trigger:
     """Run a `Trigger:` predicate and map its exit code to a state word.
@@ -218,8 +305,7 @@ def evaluate_trigger(command: str, cwd: Path | None = None,
                        "the predicate is empty. A lane with no `Trigger:` "
                        "command has no state, and no state is not quiet.")
     try:
-        p = subprocess.run(command, shell=True, cwd=str(cwd) if cwd else None,
-                           capture_output=True, text=True, timeout=timeout)
+        p = run_shell(command, cwd=cwd, timeout=timeout)
     except subprocess.TimeoutExpired:
         return Trigger(BROKEN, None,
                        f"the predicate did not answer within {timeout:g}s. A "
@@ -230,6 +316,18 @@ def evaluate_trigger(command: str, cwd: Path | None = None,
         return Trigger(BROKEN, None, f"the predicate could not be run ({exc!r}).")
     code = p.returncode
     tail = (p.stderr or p.stdout or "").strip().replace("\n", " ")[:200]
+    bad = p.broken_stage()
+    if bad is not None:
+        # A shell's exit is the LAST stage's; an earlier stage that never
+        # started or exited in the reserved band is a dead predicate whatever
+        # the last stage then said (lc-194).
+        return Trigger(BROKEN, code,
+                       f"pipeline stage {bad[0]} of {len(p.stages)} exited "
+                       f"{bad[1]}; a shell reports the LAST stage ({code}), "
+                       f"so this predicate is BROKEN, not quiet. {tail}")
+    doubt = p.cannot_discriminate()
+    if doubt:
+        tail = f"{doubt} {tail}".strip()
     if code == 0:
         return Trigger(FIRE, 0, tail)
     if code == 1:
