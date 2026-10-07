@@ -203,6 +203,7 @@ decision: join disposition of LEDGER:201 beside LEDGER:193, LEDGER:195, LEDGER:1
 decision: standort 2026-10-06 (laptop, session lifecycle-69): where does lifecycle stand and does the approach still hold → TWEAK; kill condition 1 is the leg to re-evaluate (LEDGER:169 no drop, per-arc form ungraded). Suite, --test and leak bites re-run green here. Booked lc-314, lc-315. Phases 2 and 4 COULD NOT VERIFY on this machine: transcripts and state carriers sit on the building machine
 decision: which of the three repair directions this repo takes: pathspec-scoped commit, refuse-on-dirty, or document the contract → REFUSE-ON-DIRTY (desk 2026-10-07, operator direction to drain on desk recommendations). A pathspec is file-granular and cannot split a hand hunk from the verb line in one file; a documented contract leaves the hazard. The hand edit is committed first, under its own message. lc-138
 dropped: lc-233 — Overtaken: blocker_unstorable (8a5d664, lc-49) already refuses the separator at item add, park and amend, each exit 2, control exit 0; measured by wave C lane C3 at 63712a8, 2026-10-07. The standing population is unmeasured and not in this criterion.
+dropped: lc-122 — Overtaken, 2026-10-07: half (a) not reproduced by wave C lane C6 at 63712a8 (blocker-moot after a wrapped value is credited); half (b) repaired today by lc-50 at 96b0a4c (closed-ref stores the full sha).
 
 ## Archive (pre-migration)
 

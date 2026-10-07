@@ -2785,5 +2785,17 @@ evidence: MEASURED AT THIS DESK 2026-09-19, executed rather than reasoned: `ledg
 blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
 
+## lc-122
+grade: DROPPED
+requirement: two smaller CLI/checker defects, one booking, both measured 2026-09-13 in the dotfiles carrier at the df-193 repair. (a) Slot parsing stops CREDITING slots after wrapped/non-slot lines inside a block: dotfiles df-196 carries a well-formed blocker-moot: as its last line and item check still reports the block carries none — so blocked_in_done_home is unfixable by the checker's own prescribed repair on any block with a wrapped value. (b) item close --ref stores the raw argument: --ref HEAD wrote the literal symbol, which drifts with every commit (repaired by hand, dotfiles 40f7d3a); the verb validates the ref against the repo but should WRITE the resolved sha
+goal: enforce-the-invariants
+write-set: plugin (slot parser continuation handling; close verb ref resolution) + battery
+done-criterion: a slot line after a wrapped value is credited (red case: the df-196 shape, blocker-moot last); close --ref HEAD stores the sha (red case: symbolic arg, stored value compared to rev-parse); battery green
+evidence: dotfiles ITEMS-DONE.md df-196 block (live reproduction), item check output 2026-09-13; the HEAD-symbol close and its hand repair 40f7d3a
+blocked-by: NONE
+amend-reason: 2026-09-18 2026-09-18 write-set repaired to PATHS ONLY. The slot carried a real path with a parenthetical glued to it, which does not parse as a path and made item waves exit COULD NOT VERIFY for the whole carrier. The doctrine demote-to-parked clause is for a boundary genuinely UNKNOWN; this was the inverse, a known path made unparseable by commentary. The commentary is not lost: it restates what the requirement already says. Found by the build desk, ruled by this desk.
+amended-write-set: 2026-09-18 plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,test/
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+
 ## Archive (pre-migration)
 
