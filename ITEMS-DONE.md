@@ -2987,5 +2987,18 @@ closed-met: none
 closed-decided: none
 closed-ref: 1b88d44f11dfc30dacc448a203d850a7438df03f
 
+## lc-321
+grade: DONE
+requirement: TWO COMMITTING SITES STILL TAKE A DIRTY CARRIER: item repair --shape and the retire compaction call the commit path with no entry check, the remainder lc-318 named - record: wave C lane C1 closing report 2026-10-07, gap G2
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/retire.py,test/test_repair.py,test/test_retire.py
+done-criterion: Each of the two sites either runs the dirty-carrier entry check before its first write, or states in its own output why it does not: item repair --shape exists to rewrite a damaged and possibly uncommitted carrier, so refusing there is a design choice to be made and written down, not assumed. Red-first for whichever refuses.
+evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, read not executed: cli.py near line 437 and retire.py near line 1333 call commit_paths without refuse_dirty_carriers.
+blocked-by: NONE
+closed-reason: 2026-10-07 Compaction takes the dirty-carrier entry check; item repair --shape says it commits the carrier whole and what was already pending. Wave D 2026-10-07, verified on main at deede51: suite 1612 OK no skips, --test 157 of 157, prove-rows 152 of 152 held with every row dark under some arrangement and no control red, leak battery 62 of 62; item check and item ready unchanged in exit code across all ten rostered repos.
+closed-met: lc-328
+closed-decided: none
+closed-ref: 0cc8ee7bb82d72efbab72feb91d456c66c564f4e
+
 ## Archive (pre-migration)
 

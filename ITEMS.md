@@ -1376,15 +1376,6 @@ done-criterion: arc advance and arc close commit every path they write, the decl
 evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, measured there on a scratch repo, not re-run at the desk: after open, deadline, then advance or close, exit 0 and git status shows the declaration modified and lanes/<name>.md deleted, uncommitted. Found because the lc-318 entry check, as first built, turned two tests in test_arcs.DeadlineGeneratesItsObserver red.
 blocked-by: NONE
 
-## lc-321
-grade: STANDBY
-requirement: TWO COMMITTING SITES STILL TAKE A DIRTY CARRIER: item repair --shape and the retire compaction call the commit path with no entry check, the remainder lc-318 named - record: wave C lane C1 closing report 2026-10-07, gap G2
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/retire.py,test/test_repair.py,test/test_retire.py
-done-criterion: Each of the two sites either runs the dirty-carrier entry check before its first write, or states in its own output why it does not: item repair --shape exists to rewrite a damaged and possibly uncommitted carrier, so refusing there is a design choice to be made and written down, not assumed. Red-first for whichever refuses.
-evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, read not executed: cli.py near line 437 and retire.py near line 1333 call commit_paths without refuse_dirty_carriers.
-blocked-by: NONE
-
 ## lc-322
 grade: STANDBY
 requirement: AN AMENDED external BLOCKER RIDES INTO THE CLOSURE HOME ALIVE, the route lc-105 repaired for evidence blockers, one type over: the close exits 0 and the next item check exits 2 with blocked_in_done_home, and no close writes a record for it - record: wave C lane C1 closing report 2026-10-07, gap G3
