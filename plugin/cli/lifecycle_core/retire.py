@@ -88,6 +88,30 @@ EXIT_VERBS = {
     ("closed arcs", "compact"): ("arc compact",),
 }
 
+#: WHAT EACH MAPPED EXIT LEAVES IN THE TREE (lc-314), keyed exactly as
+#: `EXIT_VERBS` is and for the reason stated there. `(destination kind,
+#: folded)`: a MOVE deposits its body in another registered kind's home, and
+#: a COMPACT writes a ledger record — `folded` says that record counts.
+#:
+#: WHY THIS EXISTS BESIDE THE VERB MAP. The verbs are looked for in the fire
+#: log, and the fire log lives under `XDG_STATE_HOME`: it never leaves the
+#: machine that wrote it, while these traces travel with the repo. MEASURED
+#: 2026-10-06 on a second machine whose log began the day before: the walk
+#: printed three `kind_grew_without_exit` findings, "not draining at all",
+#: over a carrier `item ratio` read as 11 drained that week.
+#:
+#: `items` reads BOTH: a body closed and later compacted has left the done
+#: home, so the destination alone would fire on the best-drained carrier.
+#: `done bodies` reads the record ONLY — the done home's bodies are that
+#: kind's own population, never its exit's trace. `closed arcs` has no entry:
+#: nothing in the tree records an arc compaction this module can read, and an
+#: absent entry is "no trace shown", which leaves the alarm standing.
+EXIT_TRACES = {
+    ("items", "move"): ("done bodies", True),
+    ("arcs", "move"): ("closed arcs", False),
+    ("done bodies", "compact"): (None, True),
+}
+
 
 # --- the fire log, read back --------------------------------------------------
 
@@ -320,10 +344,68 @@ def list_home(repo: Path, home: str, *, block_carrier: bool = False) -> tuple:
     return [home], f"{home!r}: a single file, one instance"
 
 
+# --- what an exit leaves in the tree (lc-314) ---------------------------------
+
+def tracked_exits(repo: Path, doc: dict, name: str, action) -> tuple:
+    """`(taken, where)` — exits the TREE shows were taken for one kind.
+
+    THE SECOND INSTRUMENT ON A QUANTITY THE FIRE LOG ALSO COUNTS, and the
+    only one of the two that travels with the repo. It is consulted when the
+    log shows nothing, to tell "this kind is not draining" from "this
+    machine's log never saw it drain" — the same zero, and opposite facts.
+
+    `where` names every place read WITH its count, zeros included, because
+    both callers print it: the could-not-verify needs its evidence and the
+    finding needs to say the tree was read and held none. A home that could
+    not be read contributes zero and SAYS so; it is never evidence of an
+    exit, so an unreadable tree leaves the alarm where it was.
+
+    Homes resolve through `declaration.carrier_homes` — the closure home by
+    the top-level key first, the ledger by its fallback — so this reads the
+    same files every other reader of them does (law 26: that resolution
+    already existed, one import away).
+    """
+    dest, folded = EXIT_TRACES.get((name, action), (None, False))
+    homes = decl.carrier_homes(doc)
+    taken, parts = 0, []
+    if dest:
+        body = (doc.get("kinds") or {}).get(dest)
+        home = homes.get(dest) or (body.get("home")
+                                   if isinstance(body, dict) else None)
+        if isinstance(home, str) and home.strip():
+            instances, note = list_home(
+                repo, home, block_carrier=home in set(homes.values()))
+            if instances is None:
+                parts.append(f"{home!r} could not be examined ({note})")
+            else:
+                taken += len(instances)
+                parts.append(f"{len(instances)} instance(s) in {home!r}, the "
+                             f"`{dest}` home this exit moves a body into")
+        else:
+            parts.append(f"no `{dest}` home is declared, so the place this "
+                         "exit moves a body into could not be read")
+    if folded:
+        ledger_rel = homes.get("ledger lines")
+        folded_home, why = compacted_home_at(repo / ledger_rel)
+        if folded_home is None:
+            parts.append(f"{ledger_rel!r} could not be read ({why})")
+        else:
+            taken += len(folded_home.items)
+            parts.append(f"{len(folded_home.items)} compaction record(s) in "
+                         f"{ledger_rel!r}")
+    return taken, "; ".join(parts)
+
+
 # --- the growth question, on its own ------------------------------------------
 
-def check_growth(name, mode, action, count, log, log_present, out):
+def check_growth(name, mode, action, count, log, log_present, out, *,
+                 trace=None):
     """`(code, state)` for ONE kind's growth. FLOW, never size.
+
+    `trace` (lc-314) is a zero-argument callable returning `tracked_exits`'
+    pair. A CALLABLE, because the tree is read only when the log shows
+    nothing: the common case never opens a carrier it has no question for.
+    Left out, this function answers from the log alone, exactly as it did.
 
     ITS OWN FUNCTION because the walk's overall answer is COULD NOT VERIFY by
     construction — the per-kind staleness predicate needs pass history and
@@ -372,6 +454,28 @@ def check_growth(name, mode, action, count, log, log_present, out):
     events = [r for r in log if str(r.get("verb", "")) in verbs_]
     out(f"    exit events: {len(events)} ({', '.join(verbs_)}) recorded for "
         "this repo")
+    # lc-314: ZERO EVENTS IN A MACHINE-LOCAL LOG IS A FACT ABOUT THE MACHINE.
+    # The log sits under XDG_STATE_HOME and never leaves the machine that
+    # wrote it, so on a second machine, a fresh clone or a moved checkout a
+    # kind that has been draining for months reads here as never having
+    # drained. Where the TREE shows the exit was taken, the log's silence
+    # cannot carry a finding about the kind — and it cannot carry CLEAN
+    # either, since nothing here says the kind is STILL draining. Its own
+    # branch AHEAD of the alarm rather than a condition inside it: the alarm's
+    # test stays the one line it was, so each answer can be folded alone.
+    taken, where = trace() if (trace and count and not events) else (0, "")
+    if taken:
+        out(f"    COULD NOT VERIFY [exit_log_machine_local] kind {name!r} "
+            f"holds {count} instance(s) and the fire log on THIS machine "
+            f"records no {' / '.join(verbs_)} for this repo — but the tree "
+            f"shows the exit WAS taken: {where}. The fire log is "
+            "MACHINE-LOCAL (under XDG_STATE_HOME; it does not travel with "
+            "the repo, and it is keyed by the checkout's path), so zero "
+            "events here is what a second machine, a fresh clone or a moved "
+            "checkout reads over a kind that is draining. NOT a finding "
+            "about the kind, and NOT clean: whether it is draining NOW is "
+            "not answerable from this log.")
+        return exits.COULD_NOT_VERIFY, "unchecked"
     if count and not events:
         # THE DECLARED MODE, READ rather than restated: this message named
         # `bounded-by-exit` while the gate above admitted one mode, and the
@@ -382,7 +486,9 @@ def check_growth(name, mode, action, count, log, log_present, out):
             "has recorded NOTHING. The alarm is FLOW: the count above is not "
             "the finding and no size would be — a large kind draining "
             "steadily is fine and this one is not draining at all. A recorded "
-            "DROP clears this exactly as a completion does.")
+            "DROP clears this exactly as a completion does."
+            + (f" The tree was read as well as this machine's log, and it "
+               f"shows no exit either: {where}." if where else ""))
         return exits.FINDING, "grew"
     if not count:
         # NOT THE SAME CLEAN. A kind whose home holds nothing has not grown,
@@ -443,8 +549,10 @@ def growth_verdict(repo: Path, doc: dict, out) -> int:
             code = exits.worst([code, exits.COULD_NOT_VERIFY])
             continue
         out(f"kind: {name}")
-        g_code, _state = check_growth(name, mode, ex.get("action"),
-                                      len(instances), log, log_present, out)
+        g_code, _state = check_growth(
+            name, mode, ex.get("action"), len(instances), log, log_present,
+            out, trace=lambda: tracked_exits(repo, doc, name,
+                                             ex.get("action")))
         code = exits.worst([code, g_code])
     return code
 
@@ -509,8 +617,9 @@ def walk(repo: Path, doc: dict, out, *, acting: bool) -> int:
         out(f"    count:  {len(instances)}   ({note})")
 
         # THE GROWTH QUESTION, and it is a FLOW question.
-        g_code, g_state = check_growth(name, mode, action, len(instances),
-                                       log, log_present, out)
+        g_code, g_state = check_growth(
+            name, mode, action, len(instances), log, log_present, out,
+            trace=lambda: tracked_exits(repo, doc, name, action))
         if g_state == "grew":
             grew.append(name)
         elif g_state == "unchecked":
@@ -527,7 +636,10 @@ def walk(repo: Path, doc: dict, out, *, acting: bool) -> int:
         else:
             out(f"    staleness check: NOT RUN — the per-kind predicate needs "
                 f"pass history (N = {STALE_PASSES_N}, {STALE_PASSES_STATUS}), "
-                "and this is the first walk. Reported rather than answered: a "
+                "and THIS MACHINE holds none: no walk records what it saw, "
+                "and the fire log that would show an earlier pass is "
+                "machine-local, so this line speaks for this machine and "
+                "not for the repo. Reported rather than answered: a "
                 "staleness check with no history returns 'nothing is stale' "
                 "over every repo, which is a number shaped like a pass.")
             code = exits.worst([code, exits.COULD_NOT_VERIFY])

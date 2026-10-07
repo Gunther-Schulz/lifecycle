@@ -929,6 +929,23 @@ MUTATIONS = [
      "out of, `compacted` among them — not `bounded-by-exit` alone, which is "
      "what this line said while the predicate had already widened under it"),
 
+    # lc-314. THE TREE'S ANSWER, on its own branch AHEAD of the alarm, which
+    # is what lets each of the two be folded alone: the alarm's mutation
+    # above leaves this branch returning before it, and this one leaves the
+    # alarm's test untouched — so neither proof retires the other (CLAUDE.md,
+    # "ADDING A ROW CAN RETIRE A NEIGHBOUR'S PROOF"; re-checked, not assumed).
+    # Folded, the plant falls through to the alarm and exits FINDING under
+    # the neighbour's name: 3/named becomes 2/unnamed. Admitted on the lc-142
+    # pair — PROVEN at this anchor, "rows changed: NONE" re-pointed at an
+    # inert comment line.
+    ("exit_log_machine_local", "retire.py",
+     "    if taken:",
+     "    if False:",
+     "the tree's evidence that an exit was taken (lc-314) — on a second "
+     "machine, a fresh clone or a moved checkout a kind that has been "
+     "draining for months then reads as never having drained, because the "
+     "fire log that would show it never left the machine that wrote it"),
+
     ("unregistered_persisted_thing", "retire.py",
      "    if not unregistered:",
      "    if True:",

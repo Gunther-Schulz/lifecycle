@@ -3560,6 +3560,70 @@ def _retire_growth(*, closed: bool) -> Fired:
             os.chdir(here)
 
 
+def _second_machine_growth(*, closed_elsewhere: bool) -> Fired:
+    """`retire`'s growth question on a machine whose fire log never saw the
+
+    repo's exits (lc-314).
+
+    TWO STATE DIRECTORIES, because that is what two machines are: the close
+    runs through the real verb under the FIRST `XDG_STATE_HOME`, which writes
+    the done body into the tree and the exit event into that machine's log;
+    the walk then runs under a SECOND one. The tree travelled and the log did
+    not, which is the whole defect, reproduced rather than described.
+
+    THE SECOND LOG IS PRESENT, and holds a record for this repo that is not
+    an exit. An absent log is could-not-verify by another branch entirely, so
+    an arm that left it absent would read 3 for the wrong reason and pass.
+    That record goes through `firelog.fire` — the tool's own writer — and it
+    is deliberately NOT the evidence either arm turns on: it only makes the
+    instrument live.
+
+    THE ARMS DIFFER IN WHETHER AN EXIT WAS EVER TAKEN, ANYWHERE. The control
+    is the same repo with no close on any machine, where the alarm must still
+    fire: a repair that went quiet there would have removed R22's alarm from
+    every repo whose log is young.
+    """
+    import io
+    from contextlib import redirect_stdout
+    from . import cli as cli_mod
+    from . import firelog as firelog_mod
+    from . import retire as retire_mod
+
+    first = Path(tempfile.mkdtemp(prefix="lifecycle-xdg-a-"))
+    second = Path(tempfile.mkdtemp(prefix="lifecycle-xdg-b-"))
+    old = os.environ.get("XDG_STATE_HOME")
+    here = os.getcwd()
+    try:
+        with _Repo(items=TWO_SEED_ITEMS) as r:
+            os.chdir(str(r.dir))
+            os.environ["XDG_STATE_HOME"] = str(first)
+            if closed_elsewhere:
+                argv = ["item", "close", "xx-1", "--met", "none",
+                        "--decided", "none"]
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    rc = cli_mod.main(["--repo", str(r.dir)] + argv)
+                if rc != exits.CLEAN:
+                    return Fired(-1, f"SETUP FAILED: {' '.join(argv)} "
+                                     f"exited {rc}\n{buf.getvalue()[-600:]}")
+            os.environ["XDG_STATE_HOME"] = str(second)
+            if not firelog_mod.fire("item check", repo=str(r.dir)):
+                return Fired(-1, "SETUP FAILED: the second machine's fire "
+                                 "log could not be written")
+            buf = []
+            code = retire_mod.growth_verdict(r.dir, GOOD_FULL_DECLARATION,
+                                             buf.append)
+            return Fired(code, "\n".join(buf))
+    finally:
+        os.chdir(here)
+        if old is None:
+            os.environ.pop("XDG_STATE_HOME", None)
+        else:
+            os.environ["XDG_STATE_HOME"] = old
+        shutil.rmtree(first, ignore_errors=True)
+        shutil.rmtree(second, ignore_errors=True)
+
+
 def _sweep_run(*, stray: bool) -> Fired:
     """`kind sweep` over a scratch repo, with and without an unregistered file."""
     import io
@@ -3848,6 +3912,24 @@ SCHEMA_ROWS = [
         # recorded, not a line this row wrote into a log.
         control=lambda: _retire_growth(closed=True),
         stage="wave 1d, the schema wave",
+    ),
+    Row(
+        ident="exit_log_machine_local",
+        refusal="the growth alarm asked of a fire log that never saw this "
+                "repo's exits — the log is machine-local and the carriers "
+                "are not, so where the TREE shows the exit was taken, zero "
+                "events is a fact about the machine and the walk answers "
+                "could-not-verify, never `kind_grew_without_exit`",
+        firing_input="a repo whose item was closed under one XDG_STATE_HOME "
+                     "and is walked under another: the done home holds the "
+                     "closed body, the second log holds no `item close`",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _second_machine_growth(closed_elsewhere=True),
+        # The SAME repo, the SAME second log, and no close on any machine:
+        # nothing in the log and nothing in the tree, where the alarm must
+        # still fire.
+        control=lambda: _second_machine_growth(closed_elsewhere=False),
+        stage="lc-314",
     ),
     Row(
         ident="unregistered_persisted_thing",
