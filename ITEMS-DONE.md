@@ -3269,5 +3269,25 @@ closed-met: none
 closed-decided: none
 closed-ref: 78db780632a04b2c2635c7dd789a26fd3420b30d, a5d7219d94af4cff085ddbbdfed1459995ae62ca
 
+## lc-136
+grade: DONE
+requirement: AN EXPLICIT-ZERO ASSERTION IS SATISFIED BY A DEAD PRODUCER, so it is never the arm that proves the producer runs — and this repo applies explicit-zero discipline WIDELY, because law 1 requires a stated zero rather than an omitted key. Measured instance, lc-124's battery: the arm asserting 'SERIALIZE: 0 — none' over a no-crossing fixture stayed GREEN under a mutation that dropped EVERY warning, because a fixture with no crossings legitimately expects that line whether the producer runs or not. Only the cross-group arm discriminated. The explicit-zero arm and the cross-group arm LOOK like a pair and are not. Unknown: how many other explicit-zero assertions in this repo's batteries have the same shape — an arm that would stay green if the thing it reports on stopped being computed — record: lc-124 closing report slot (e) lesson 2, 2026-09-15, found by the lane in its own battery rather than shipped
+goal: every-refusal-red-first
+write-set: UNKNOWN
+done-criterion: every explicit-zero assertion in the batteries is either PAIRED with a non-zero arm over the same producer, or recorded as unpaired with the reason no non-zero case exists. Red-first per repaired arm: disable the producer and the PAIR goes red where the zero arm alone stayed green — assertion FAILURES, read off the failures=/errors= split per arm. The sweep's own output names every explicit-zero arm found and its disposition, so a zero count here is itself a stated zero rather than an omitted key
+evidence: The lc-124 instance is measured, not reasoned: mutation dropping every SERIALIZE warning -> failures=1, the cross-group arm, with the 'SERIALIZE: 0 — none' arm GREEN in the same run. The lane reported it as a candidate lesson rather than letting the passing arm imply coverage it does not have. Why this is worth a sweep rather than a note: law 1's stated-zero rule is applied across this repo's checkers and batteries, so the shape recurs wherever someone wrote an explicit zero and stopped — and the failure is silent by construction, since the arm passes
+blocked-by: NONE
+amend-reason: 2026-09-24 Gap-fill drafted by a codex luna read-only lane 2026-09-24, graded at the desk (session 09020605): search claims spot-checked both ways (lc-138 zero hits confirmed, lc-41 control found), every write-set path verified to exist, goals verified declared.
+amended-write-set: 2026-09-24 test/test_waves.py,test/test_items.py
+amend-reason: 2026-10-05 Blocker RE-TYPED from evidence false to NONE (gap-sweep desk lifecycle-b5, 2026-10-05, on the driving desk directive). The predicate false can never fire. What it stood for, in its own comment, is that the sweep over explicit-zero arms has not been run: that sweep is this item own first step, not a wait on anything outside it, so no typed edge is honest.
+amended-blocked-by: 2026-10-05 NONE
+promote-reason: 2026-10-05 Decision-complete on its own slots once the unfirable blocker is gone: the done-criterion states the sweep, the pairing rule and the red-first per repaired arm, and names its own output. The write-set names the two batteries where the measured instance and its nearest siblings live; arms the sweep finds elsewhere widen it by amendment at that time, which the entry cannot know before the sweep runs. Promoted only as the step to STANDBY in the same batch: it is not on the scheduled head.
+promoted-by: 2026-10-05 lifecycle-b5
+bench-reason: 2026-10-05 Off the scheduled head: no open arc cites it, and it was PARKED only because its blocker was a predicate that could never fire. A PARKED item needs a typed blocker and this one has no honest one.
+closed-reason: 2026-10-07 Every stated-zero arm in test_waves and test_items is derived by a sweep and shown paired with a non-zero arm. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: 43796738273159744b7b0ccf93735a7df6a4a594
+
 ## Archive (pre-migration)
 
