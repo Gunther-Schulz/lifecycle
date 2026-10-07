@@ -27,6 +27,7 @@ that got the distinction right:
 
 import _isolation  # noqa: F401  # lc-183: before any verb runs
 
+import hashlib
 import io
 import json
 import re
@@ -3789,6 +3790,50 @@ class TheReportConservationSentenceReadsTheFiles(unittest.TestCase):
         line = self._sentence((d / REPORT).read_text(encoding="utf-8"))
         self.assertIn("**Conservation (§3.1): COULD NOT VERIFY**", line)
         self.assertNotIn("HOLDS", line)
+
+
+class AFreezeBlockedWritingRunIsNotCalledADryRun(unittest.TestCase):
+    """lc-207 — UNTOUCHED describes the SOURCE; a `--merge` run whose freeze
+    is blocked by an unpinned citation still WRITES both homes, and its
+    console and report must not open with the dry-run claim."""
+
+    def _merged_twice(self, unpinned):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d, "--merge")[0], exits.CLEAN)
+        if unpinned:
+            p = d / "ITEMS.md"
+            p.write_text(p.read_text(encoding="utf-8").replace(
+                "evidence:", "evidence: see BACKLOG.md:3 and", 1),
+                encoding="utf-8")
+        md5 = lambda f: hashlib.md5((d / f).read_bytes()).hexdigest()  # noqa: E731
+        before = (md5("ITEMS.md"), md5("ITEMS-DONE.md"))
+        code, out = migrate_run(d, "--merge")
+        after = (md5("ITEMS.md"), md5("ITEMS-DONE.md"))
+        return d, code, out, before, after
+
+    def test_the_blocked_writing_run_says_what_it_did(self):
+        d, code, out, before, after = self._merged_twice(unpinned=True)
+        self.assertNotEqual(before, after, "the arrangement must WRITE")
+        self.assertIn("NOT frozen", out)
+        self.assertNotIn("DRY RUN", out)
+        self.assertNotIn("writes no successor state", out.split(
+            "DISPOSITION")[0])
+        report = (d / REPORT).read_text(encoding="utf-8")
+        self.assertNotIn("A DRY RUN", report)
+        self.assertIn("WROTE the successor homes", report)
+
+    def test_control_report_only_is_still_a_dry_run(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        code, out = migrate_run(d, "--report-only")
+        self.assertIn("migrate: DRY RUN", out)
+        self.assertIn("A DRY RUN", (d / REPORT).read_text(encoding="utf-8"))
+
+    def test_control_pinned_anchors_report_frozen(self):
+        d, code, out, before, after = self._merged_twice(unpinned=False)
+        self.assertIn("FROZEN", out)
+        self.assertNotIn("DRY RUN", out)
 
 
 if __name__ == "__main__":

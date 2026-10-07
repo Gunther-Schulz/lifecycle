@@ -3227,7 +3227,7 @@ def run(args, out, ctx) -> int:
                       lwhy, report_rel, closures, anchor_blob, done_blob,
                       carried_src, carried_done, readers, readers_why,
                       src_label, n_residue, reimported, disposition,
-                      n_level3=n_level3),
+                      n_level3=n_level3, wrote=writing_run),
         encoding="utf-8")
 
     # --- the run's own answer
@@ -3237,7 +3237,15 @@ def run(args, out, ctx) -> int:
     # under a FROZEN or DELETED disposition that is now simply false — a
     # summary line contradicting the stage three lines below it is the
     # paraphrase every reader believes over the body.
-    if disposition == DISPOSED_UNTOUCHED:
+    if disposition == DISPOSED_UNTOUCHED and writing_run:
+        # lc-207: UNTOUCHED is a fact about the SOURCE; whether this run wrote
+        # is a different fact, and a freeze blocked by unpinned anchors is the
+        # writing run that leaves its source alone.
+        out(f"migrate: {src_name} and {done_name} are READ and neither is "
+            "edited, moved or deleted (NOT frozen — see DISPOSITION below), "
+            f"but this run WROTE {ctx.items_path.name} and "
+            f"{ctx.done_path.name}.")
+    elif disposition == DISPOSED_UNTOUCHED:
         out(f"migrate: DRY RUN — {src_name} and {done_name} are READ and "
             "neither is edited, moved or deleted: this run writes no "
             "successor state.")
@@ -3521,7 +3529,7 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
                   done_blob="", carried_src=None, carried_done=None,
                   readers=(), readers_why="", src_label="", n_residue=0,
                   reimported=(), disposition=DISPOSED_UNTOUCHED,
-                  n_level3=0) -> str:
+                  n_level3=0, wrote=False) -> str:
     """The classification report.
 
     IT DESCRIBES ENTRIES; IT DOES NOT QUOTE THEM. Every entry appears as its
@@ -3541,7 +3549,14 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     # report opening with that over a run that just froze or deleted the
     # carrier is a paraphrase contradicting its own body — the half a reader
     # believes, because it is the half at the top.
-    if disposition == DISPOSED_UNTOUCHED:
+    if disposition == DISPOSED_UNTOUCHED and wrote:
+        a("Produced by `lifecycle migrate`. The source carriers "
+          f"`{src_name}` and `{done_name}` were READ. They are not edited, "
+          "not moved and not deleted, and the source is **NOT FROZEN** (see "
+          "its disposition below) — but this was **NOT a dry run**: the run "
+          f"WROTE the successor homes `{ctx.items_path.name}` and "
+          f"`{ctx.done_path.name}`.")
+    elif disposition == DISPOSED_UNTOUCHED:
         a("Produced by `lifecycle migrate`. **A DRY RUN**: the source carriers "
           f"`{src_name}` and `{done_name}` were READ. They are not edited, not "
           "moved and not deleted — this run wrote no successor state, so there "
