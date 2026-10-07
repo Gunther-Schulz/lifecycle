@@ -2586,6 +2586,11 @@ def run_schema(args, out, ctx) -> int:
     changes, unclassified = _plan_schema(repo, doc, from_n, to_n)
 
     carrier_changes = []
+    #: WHAT THIS RUN ACTUALLY OPENED, per kind (lc-215) — the closing
+    #: sentences below name these rather than saying "every carrier", which
+    #: was a claim about a population this loop never enumerated.
+    examined = []
+    not_examined = []
     for kind, home in decl.carrier_homes(doc).items():
         # A HOME MAY BE A GLOB (lc-242), so the plan is per BODY rather than
         # per home: each body carries its own `schema:` line and the bump has
@@ -2595,6 +2600,15 @@ def run_schema(args, out, ctx) -> int:
         paths = decl.carrier_paths(repo, home)
         if "*" in home and not paths:
             continue
+        if decl.carrier_absent_by_default(repo, doc, kind, home):
+            # A FILE THE REPO NEVER DECLARED (lc-215). This refused the whole
+            # migration before any plan printed. The predicate is the
+            # checker's own — `check_schema_agreement` asks the same function
+            # — so the bump and the check cannot disagree about which
+            # carriers a repo has.
+            not_examined.append((kind, home))
+            continue
+        examined.append((kind, home, len(paths)))
         for path in paths:
             n, why = decl.carrier_schema(path)
             where = str(path.relative_to(repo)) \
@@ -2613,6 +2627,36 @@ def run_schema(args, out, ctx) -> int:
     out(f"carrier `schema:` lines to bump: {len(carrier_changes)}")
     for home, n, m in carrier_changes:
         out(f"    {home}: {n} -> {m}")
+
+    # THE SCOPE, STATED (lc-215). Everything this command says about
+    # "carriers" is about the files named on the next line and no others.
+    n_files = sum(n for _kind, _home, n in examined)
+    kinds_examined = ", ".join(
+        f"{kind} ({home}" + (f": {n} file(s))" if "*" in home else ")")
+        for kind, home, n in examined) or "(none)"
+    out(f"carriers examined for a `schema:` line: {n_files} file(s) — "
+        f"{kinds_examined}")
+    for kind, home in not_examined:
+        out(f"    not examined: `{kind}` — {home} is this tool's default "
+            f"home for it, and this repo declares no `{kind}` kind and has "
+            "no file there, so there is no carrier to bump. Declaring the "
+            "kind, or creating the file, puts it in the line above.")
+    unreached = decl.unreached_schema_carriers(repo, doc)
+    if unreached:
+        by_kind = {}
+        for kind, where, n in unreached:
+            by_kind.setdefault(kind, []).append(f"{where} (schema {n})")
+        shown = "; ".join(
+            f"{kind}: " + ", ".join(files[:3])
+            + (f", and {len(files) - 3} more" if len(files) > 3 else "")
+            for kind, files in by_kind.items())
+        out(f"    NOT REACHED by this command: {len(unreached)} file(s) "
+            f"carrying a `schema:` line under declared kinds outside the "
+            f"ones examined — {shown}. They are not bumped here and `kind "
+            "check` does not grade them against the declaration. That is "
+            "the design for a RECORD home, which is pinned at the schema "
+            "it closed at; a LIVE carrier in this list is outside "
+            "one-schema-per-repo and nothing is watching its version.")
     out(f"UNCLASSIFIED (blocking the apply FOR THIS REPO): {len(unclassified)}")
     for key, why in unclassified:
         out(f"    {key}")
@@ -2636,8 +2680,17 @@ def run_schema(args, out, ctx) -> int:
         return exits.CLEAN
 
     if not changes and not carrier_changes:
+        # NAMES WHAT IT EXAMINED (lc-215). This sentence said "in every
+        # carrier" over the kinds `carrier_homes` resolves — a CLEAN wider
+        # than the loop that earned it.
         out("migrate --schema-from: nothing to do — this repo is already at "
-            f"schema {to_n} in the declaration and in every carrier.")
+            f"schema {to_n} in the declaration and in the {n_files} carrier "
+            "file(s) examined ("
+            + (", ".join(kind for kind, _home, _n in examined) or "none")
+            + ")."
+            + (f" {len(unreached)} schema-bearing file(s) under other "
+               "declared kinds were NOT examined; they are listed above."
+               if unreached else ""))
         return exits.CLEAN
 
     new_doc = json.loads(json.dumps(doc))

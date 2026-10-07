@@ -2452,6 +2452,19 @@ def check_hook_modes(repo: Path, res: Result) -> None:
 SCHEMA_CARRIER_KINDS = ("items", "done bodies", "ledger lines")
 
 
+#: THE LEDGER'S HOME WHERE A REPO DECLARES NONE, and why it is unconditional
+#: (lc-215 asked for the default to be justified in the code's own words or
+#: removed). It is `verbs.context`'s own fallback — `ledger add` writes HERE
+#: in a repo that registers no `ledger lines` kind — so a file sitting at
+#: this path IS that repo's ledger whether or not a kind names it, and a
+#: schema bump that skipped it would leave a live carrier behind at the old
+#: version. So the default stays in `carrier_homes`. What does NOT follow is
+#: that the file must exist: a repo that neither declared a ledger nor has
+#: one is missing nothing, and `carrier_defaults` is how a consumer tells
+#: that repo from one whose DECLARED carrier has gone missing.
+LEDGER_DEFAULT_HOME = "LEDGER.md"
+
+
 def carrier_homes(doc: dict) -> dict:
     """`{label: repo-relative path}` for every carrier that carries a version.
 
@@ -2466,6 +2479,32 @@ def carrier_homes(doc: dict) -> dict:
     reported success, because the bump resolved homes through the KINDS alone
     while the closure home is named at the top level.
     """
+    return _carrier_homes(doc)[0]
+
+
+def carrier_defaults(doc: dict) -> frozenset:
+    """The `carrier_homes` labels whose home is the TOOL's default, not the
+    repo's declaration (lc-215).
+
+    WHY A CONSUMER NEEDS IT. `carrier_homes` answers "where would this
+    carrier be" and deliberately answers it for the ledger even where the
+    repo declares none (`LEDGER_DEFAULT_HOME`). A consumer that then demands
+    the file refuses a repo for lacking something it never said it had:
+    measured, `migrate --schema-from` returned COULD NOT VERIFY before
+    printing any plan, and `kind check` reported one-schema-per-repo
+    unverifiable, over a repo with no ledger at all. An ABSENT file under a
+    label in this set is "no such carrier here"; an absent file under any
+    other label is still a declared carrier gone missing, and still refuses.
+
+    ONE BODY WITH `carrier_homes`, not a second reading of the declaration
+    beside it: both come out of `_carrier_homes`, so the day another home
+    gains a default this set gains its label in the same edit.
+    """
+    return _carrier_homes(doc)[1]
+
+
+def _carrier_homes(doc: dict):
+    """`(homes, defaulted)` — the one resolution behind both readers above."""
     def kind_home(kind, *, allow_glob=False):
         body = (doc.get("kinds") or {}).get(kind)
         h = body.get("home") if isinstance(body, dict) else None
@@ -2482,7 +2521,11 @@ def carrier_homes(doc: dict) -> dict:
         else kind_home("done bodies")
     if closure and "*" not in closure:
         out["done bodies"] = closure
-    out["ledger lines"] = kind_home("ledger lines") or "LEDGER.md"
+    defaulted = set()
+    ledger_home = kind_home("ledger lines")
+    if not ledger_home:
+        defaulted.add("ledger lines")
+    out["ledger lines"] = ledger_home or LEDGER_DEFAULT_HOME
 
     # THE GLOB EXCLUSION IS REVERSED FOR THE LIVE ARC HOME, AND ONLY IT
     # (lc-242; arc design N9/T-a2). A kind whose bodies are `arcs/*.md` sat
@@ -2509,6 +2552,78 @@ def carrier_homes(doc: dict) -> dict:
     arcs_home = kind_home("arcs", allow_glob=True)
     if arcs_home:
         out["arcs"] = arcs_home
+    return out, frozenset(defaulted)
+
+
+def carrier_absent_by_default(repo: Path, doc: dict, kind: str,
+                              home: str) -> bool:
+    """True where `kind`'s home is the tool's default AND nothing is there.
+
+    The one predicate both schema consumers ask before demanding a carrier's
+    file (`check_schema_agreement` here, `migrate.run_schema`). Kept as a
+    function rather than two inline tests because the two sites are the two
+    sides of one agreement check: if each decided "is this carrier really
+    missing?" for itself, the day they differed the migration would bump a
+    file the checker never grades, or the reverse, and neither would say so.
+
+    `exists`, not `is_file`: a DIRECTORY at the default path is not "no
+    ledger here", it is something this build cannot read, and it falls
+    through to the caller's ordinary could-not-verify.
+    """
+    return kind in carrier_defaults(doc) and not (repo / home).exists()
+
+
+def unreached_schema_carriers(repo: Path, doc: dict) -> list:
+    """`[(kind, repo-relative path, n)]` — files that carry a `schema:` head
+    under a DECLARED kind one-schema-per-repo does not reach (lc-215).
+
+    WHY IT EXISTS. `carrier_homes` names the kinds the schema check and the
+    schema bump both walk. Both resolve through it, so neither can notice a
+    carrier it omits: the two sides of that comparison share one blind spot,
+    and a report saying "every carrier" over them was an assurance wider
+    than its predicate. This reads the OTHER declared kinds' homes and
+    returns the files there that carry a version, so a report can say what
+    it did not examine instead of claiming it examined everything.
+
+    IT DOES NOT WIDEN `carrier_homes`, and that is deliberate. Some of what
+    it returns is unreached BY DESIGN — a record home is pinned at the
+    schema it closed at, and its absence from `carrier_homes` is the pin
+    (CLAUDE.md, the record-home exemption). Which of these files is a pinned
+    record and which is a live carrier nobody governs is not derivable from
+    the declaration; a kind joins `carrier_homes` by being added to it,
+    visibly. So this function REPORTS and grades nothing: it adds no finding
+    and changes no exit code.
+
+    A home that is not a repo-relative path or glob (prose, an absolute or
+    `~` path, a pattern `glob` rejects) contributes nothing: there is no
+    file in this repo to read a head from.
+    """
+    reached = carrier_homes(doc)
+    reached_homes = set(reached.values())
+    kinds = doc.get("kinds")
+    out = []
+    if not isinstance(kinds, dict):
+        return out
+    for name, body in kinds.items():
+        if name in reached or not isinstance(body, dict):
+            continue
+        home = body.get("home")
+        if not (isinstance(home, str) and home.strip()) \
+                or home in reached_homes:
+            continue
+        try:
+            paths = carrier_paths(repo, home)
+        except (ValueError, NotImplementedError, OSError):
+            continue
+        for path in paths:
+            if not path.is_file():
+                continue
+            n, _why = carrier_schema(path)
+            if n is None:
+                continue
+            where = str(path.relative_to(repo)) \
+                if path.is_relative_to(repo) else str(path)
+            out.append((name, where, n))
     return out
 
 
@@ -2615,6 +2730,14 @@ def check_schema_agreement(repo: Path, doc: dict, res: Result) -> None:
             # which is the ordinary state of an optional carrier before its
             # first instance. Silence here would read as "checked and
             # agreeing" over a population that was never examined.
+            continue
+        if carrier_absent_by_default(repo, doc, kind, home):
+            # NO SUCH CARRIER HERE (lc-215): the home is the tool's default,
+            # the repo declares no such kind, and nothing is at the path.
+            # There are not two spellings of the version to compare, so this
+            # is the glob-matching-nothing case above and not an unreadable
+            # carrier. A DECLARED home that is absent still falls through to
+            # could-not-verify below.
             continue
         for path in paths:
             n, why = carrier_schema(path)
