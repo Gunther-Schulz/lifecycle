@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 321
+added: 322
 compacted: 0
 
 ## lc-3
@@ -1396,4 +1396,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,test/test_items.py
 done-criterion: A reading verb lists, per live item, the commits that touched a file of its write-set after the item's booking commit or its newest amendment, with the count; an item with none says so; an item whose write-set is UNKNOWN, a venue, or a path git does not track is listed as NOT GRADED with the reason, never as unchanged. The list FINDS and moves nothing: no grade changes and no drop (law 10). Red-first: in a fixture repo an item whose write-set file is committed after its booking is listed and a sibling whose file is untouched is not. Before FIXED the line count is measured over every rostered repo and reported.
 evidence: MEASURED 2026-10-07 at the drain desk: a search for stale, overtaken, aged over items.py and verbs.py finds no per-item check, and the items kind in .claude/lifecycle.json declares staleness as change-coupling on a record pointer. DERIVED: the flow ratio reads the trend of the whole carrier and says nothing about one item.
+blocked-by: NONE
+
+## lc-330
+grade: STANDBY
+requirement: THE OLD-AGAINST-NEW COMPARISON OVER THE GOVERNED REPOS IS RUN BY HAND AT EVERY INTEGRATION. A change that adds or widens a finding is safe only once the reading verbs are compared, base tree against new tree, over every repo in the roster. On 2026-10-07 that comparison caught lc-62 (about 300 new lines on one repo), lc-194 (statiker ready from exit 0 to 2) and lc-325 (66 bookings refused), and its absence is how lc-279 shipped the finding lc-315 records (9 of 9 declarations failing). The desk re-typed it four times, once with an unsplit shell variable that read every repo as unchanged. Record: docs/directives/2026-10-07-drain-wave-d.md
+goal: every-refusal-red-first
+write-set: tools/compare-governed.py,test/test_compare_governed.py,CLAUDE.md
+done-criterion: tools/compare-governed.py takes two checkouts (base and new) and runs item check, item ready, kind check and audit read-only over every roster repo with state on scratch, printing per repo and verb the exit code before and after and the count of changed output lines; it exits 0 on no change, 2 on any change, 3 naming a repo or verb that could not be run. It writes nothing in any repo, asserted by a status read before and after. Red-first: a planted new finding in the new checkout shows as a change over a fixture roster, and two identical checkouts show none. The Verify section of CLAUDE.md names it for changes that add or widen a finding.
+evidence: MEASURED 2026-10-07 at the drain desk: the comparison was run by hand at the integration of waves B, C and D and for the lc-149 desk repair; three lane changes were reverted or shelved on its output. The first run printed rc 3 to 3 for every repo because zsh did not split a variable holding the verb words; a control over a known change exposed it.
 blocked-by: NONE
