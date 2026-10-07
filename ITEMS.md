@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 319
+added: 320
 compacted: 0
 
 ## lc-3
@@ -1453,4 +1453,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/roster.py,test/test_roster.py
 done-criterion: The roster run reads source from the package it was launched from whatever the cwd, or names in its output which tree it read; red-first: the base tree exported to a scratch directory and run with cwd inside a checkout that differs from it. If the observation does not reproduce in a git checkout, the item is dropped with that measurement.
 evidence: RELAYED from lane D4 (opus) 2026-10-07, observed once and not traced: an export of ec9d941 run from the lane worktree cwd printed an emit_site_unregistered finding for a name only the worktree held and counted 129 emitted names, while the same export run from its own directory printed 126 and CLEAN. The export was not a git repo, which may be the whole cause.
+blocked-by: NONE
+
+## lc-328
+grade: STANDBY
+requirement: FOUR PROOF-SHAPE LEFTOVERS FROM WAVE D: two retire-source rows are decided by two tests over one value, so one arrangement folds both tests and the other swaps a value where the rule says disable; the compaction site is a new route into carrier_dirty_at_entry with no arrangement of its own; and the conditional-slot recogniser reads an external moot record as a decision one - record: wave D lanes D4 (gaps C1, C2), D2 (gap 4) and D1 (gap 3) closing reports 2026-10-07
+goal: enforce-the-invariants
+write-set: tools/prove-rows.py,plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/items.py,test/test_prove_rows.py
+done-criterion: Each two-test row either gets a second firing input so each test has its own arrangement, or its combined arrangement is stated as covering both with the reason; the compaction route has an admitted arrangement; the recogniser has an external arm with a test, or the reason it cannot be reached is written at the site.
+evidence: RELAYED from the three lanes 2026-10-07: retire_source_laws_absent folded alone reads 2/named to 2/named, rows changed NONE; retire_source_uncommitted is recorded as committed = src_blob; the compaction refusal is covered by test_drain_d_d2 only; items.py near line 1102 was read, not executed.
 blocked-by: NONE
