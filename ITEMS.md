@@ -264,6 +264,8 @@ done-criterion: the statusline unknown-grade FINDING maps to a refusals.py row, 
 evidence: lc-45 closing report 2026-09-11 (lane finding 2, confirmed at the desk: --test CLEAN over the bracket-less FINDING path); verbs.py cmd_item_statusline FINDING branch at e98c3a4
 blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 measured; two design choices open
+amended-evidence: 2026-10-07 RELAYED from wave E lane E4 2026-10-07: half 1 is blocked by lc-316 (a row plant must print its bracketed name; the statusline finding line is pinned by equality in test_verbs); half 2 over-fires: of 71 functions returning a finding, 4 name no row in their own body and 3 of those are legitimate (a helper prints it). Needs a choice: the statusline prints its row name, or Row gains a declared non-bracket signature; and half 2 needs dataflow or a declared exemption.
 
 ## lc-75
 grade: PARKED
