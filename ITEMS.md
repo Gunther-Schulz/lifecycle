@@ -1435,15 +1435,6 @@ blocked-by: NONE
 amend-reason: 2026-10-06 the booked slot carried a comma inside one venue phrase and the tool split it into two paths; restated as one venue with no comma. Nothing else changes.
 amended-write-set: 2026-10-06 venue: .claude/lifecycle.json of each governed repo - nine repos and one commit per repo - outside this working copy
 
-## lc-316
-grade: STANDBY
-requirement: FIVE COULD-NOT-VERIFY ROWS PRINT NO ROW NAME IN THEIR OWN OUTPUT, SO THE PROVER GRADES THEM ON EXIT CODE 3 ALONE. The residue of lc-196's second half: laws_absent_could_not_verify, unknown_grade_read, grade_arm_malformed, cost_test_unverified and conservation_unverified exit 3 without a bracketed row tag, while the other five could-not-verify rows are named; roster.py gates the name check on a FINDING expectation - record: wave A lane B closing report 2026-10-07, gap G1 (docs/directives/2026-10-07-drain-wave-a.md)
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/roster.py,test/test_roster.py
-done-criterion: Every roster row is named in its own output whatever its expected code: the five rows above print their bracketed name on the could-not-verify path, and the roster's name check no longer skips rows whose expectation is not FINDING. Red-first: the name check, ungated, over the unmodified emitters goes red on exactly these five and no other row. MUST-NOT-MOVE: no exit code changes, and prove-rows' baseline grading (lc-196) still reads 143 of 143 agree, or whatever the roster count then is.
-evidence: RELAYED from lane B (opus) 2026-10-07 at base 3eb0f98, not re-run at the booking desk: the five rows each read code 3, named False; the gate is at roster.py:533-536. The lane could not build it because the emitting messages sit in declaration.py, items.py and verbs.py, outside its write set.
-blocked-by: NONE
-
 ## lc-317
 grade: STANDBY
 requirement: init --lane WRITES THROUGH AN UNSAFE LANE NAME, the third site of the defect lc-202 repaired at lane new: a name like ../escape lands outside lanes/, a name with a slash crashes exit 1, and the empty string writes lanes/.md - record: wave B lane R3 closing report 2026-10-07, part 3 finding 1

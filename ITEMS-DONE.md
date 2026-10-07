@@ -2852,5 +2852,18 @@ closed-met: none
 closed-decided: none
 closed-ref: bdd0852f2798baae31d5e5abc0a052d66b2057e7
 
+## lc-316
+grade: DONE
+requirement: FIVE COULD-NOT-VERIFY ROWS PRINT NO ROW NAME IN THEIR OWN OUTPUT, SO THE PROVER GRADES THEM ON EXIT CODE 3 ALONE. The residue of lc-196's second half: laws_absent_could_not_verify, unknown_grade_read, grade_arm_malformed, cost_test_unverified and conservation_unverified exit 3 without a bracketed row tag, while the other five could-not-verify rows are named; roster.py gates the name check on a FINDING expectation - record: wave A lane B closing report 2026-10-07, gap G1 (docs/directives/2026-10-07-drain-wave-a.md)
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/roster.py,test/test_roster.py
+done-criterion: Every roster row is named in its own output whatever its expected code: the five rows above print their bracketed name on the could-not-verify path, and the roster's name check no longer skips rows whose expectation is not FINDING. Red-first: the name check, ungated, over the unmodified emitters goes red on exactly these five and no other row. MUST-NOT-MOVE: no exit code changes, and prove-rows' baseline grading (lc-196) still reads 143 of 143 agree, or whatever the roster count then is.
+evidence: RELAYED from lane B (opus) 2026-10-07 at base 3eb0f98, not re-run at the booking desk: the five rows each read code 3, named False; the gate is at roster.py:533-536. The lane could not build it because the emitting messages sit in declaration.py, items.py and verbs.py, outside its write set.
+blocked-by: NONE
+closed-reason: 2026-10-07 The five unnamed could-not-verify rows print their name and the roster name check runs for every row. Wave C 2026-10-07, verified on main at 5e77b52: suite 1531 OK no skips, --test 153 of 153, prove-rows 134 of 134 held with no control red, leak battery 62 of 62; item check unchanged in exit code across all ten rostered repos.
+closed-met: lc-323
+closed-decided: none
+closed-ref: 78e207e77c157b619d61f3f3ce11caa1d7992502
+
 ## Archive (pre-migration)
 
