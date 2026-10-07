@@ -223,7 +223,7 @@ def _shown(path: Path, repo: Path) -> str:
         return str(path)
 
 
-def list_home(repo: Path, home: str) -> tuple:
+def list_home(repo: Path, home: str, *, block_carrier: bool = False) -> tuple:
     """`(instances, note)` for one kind's declared home, RE-LISTED now.
 
     Three home shapes, each counted by what an INSTANCE of that kind is:
@@ -301,15 +301,19 @@ def list_home(repo: Path, home: str) -> tuple:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         return None, f"{home!r} could not be read ({exc!r})"
-    # lc-149: THE DISCRIMINATOR IS THE SCHEMA HEAD (law 14: every carrier has
-    # one, no ordinary file does), not a heading prefix. A carrier holding
-    # only its head has no `## ` block, so the prefix test sent it to the
-    # plain-file branch below and counted it as ONE instance, firing
-    # kind_grew_without_exit on an empty kind while the same home absent read
-    # clean. The heading tests stay, so a file already read as a carrier by
-    # shape keeps its reading.
+    # lc-149: A CARRIER HOLDING ONLY ITS HEAD HAS NO `## ` BLOCK, so the
+    # prefix test sent it to the plain-file branch below and counted it as
+    # ONE instance, firing kind_grew_without_exit on an empty kind while the
+    # same home absent read clean. The schema head is what marks it (law
+    # 14) — but ONLY for a home the DECLARATION names a block carrier
+    # (`block_carrier`, from `declaration.carrier_homes`). The head alone
+    # does not discriminate: `arcs/INDEX` carries a schema line and is one
+    # fixed file, and read by its head it counted zero under a note calling
+    # it a block carrier. The heading tests stay, so a file already read as
+    # a carrier by shape keeps its reading.
     parsed = items_mod.parse(text)
-    if ("schema" in parsed.head or f"\n{grammar.HEADING_PREFIX}" in text
+    if ((block_carrier and "schema" in parsed.head)
+            or f"\n{grammar.HEADING_PREFIX}" in text
             or grammar.starts_section(text)):
         return [it.ident for it in parsed.items], \
             f"carrier {home!r}: one instance per fixed-slot block"
@@ -411,6 +415,7 @@ def growth_verdict(repo: Path, doc: dict, out) -> int:
         return exits.COULD_NOT_VERIFY
     log = read_fire_log(repo)
     log_present = fire_log_readable()
+    block_carriers = set(decl.carrier_homes(doc).values())
     code = exits.CLEAN
     for name, body in kinds.items():
         # lc-187: an unexaminable kind answers COULD NOT VERIFY with its
@@ -430,7 +435,8 @@ def growth_verdict(repo: Path, doc: dict, out) -> int:
             out("    " + NO_HOME_LINE)
             code = exits.worst([code, exits.COULD_NOT_VERIFY])
             continue
-        instances, note = list_home(repo, home)
+        instances, note = list_home(repo, home,
+                                    block_carrier=home in block_carriers)
         if instances is None:
             out(f"kind: {name}")
             out("    " + unresolvable_line(note))
@@ -456,6 +462,7 @@ def walk(repo: Path, doc: dict, out, *, acting: bool) -> int:
 
     log = read_fire_log(repo)
     log_present = fire_log_readable()
+    block_carriers = set(decl.carrier_homes(doc).values())
     code = exits.CLEAN
     grew = []
     unchecked = []
@@ -492,7 +499,8 @@ def walk(repo: Path, doc: dict, out, *, acting: bool) -> int:
             out("")
             continue
 
-        instances, note = list_home(repo, home)
+        instances, note = list_home(repo, home,
+                                    block_carrier=home in block_carriers)
         if instances is None:
             out("    " + unresolvable_line(note))
             code = exits.worst([code, exits.COULD_NOT_VERIFY])

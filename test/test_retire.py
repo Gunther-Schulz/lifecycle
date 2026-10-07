@@ -787,7 +787,7 @@ class AnAbsenceClaimNamesWhatProvesTheInstrumentWasLive(unittest.TestCase):
         d = self._tmp()
         (d / "ITEMS.md").write_text("schema: 2\nbaseline: 0\nadded: 0\n",
                                     encoding="utf-8")
-        instances, note = retire.list_home(d, "ITEMS.md")
+        instances, note = retire.list_home(d, "ITEMS.md", block_carrier=True)
         self.assertEqual(instances, [], note)
         doc = {"kinds": {"items": {
             "home": "ITEMS.md", "growth": "bounded-by-exit",
@@ -795,6 +795,29 @@ class AnAbsenceClaimNamesWhatProvesTheInstrumentWasLive(unittest.TestCase):
         buf = []
         code = retire.growth_verdict(d, doc, buf.append)
         self.assertEqual(code, exits.CLEAN, "\n".join(buf))
+
+    def test_a_schema_headed_file_no_declaration_calls_a_carrier_is_ONE_instance(self):
+        """lc-149, the reach the booked discriminator missed. The schema
+        head alone does not make a file a block carrier: the arc index
+        carries one and is a single fixed file. Read through the verdict,
+        which takes the carrier set from the declaration, it stays ONE
+        instance under the single-file note."""
+        d = self._tmp()
+        (d / "arcs").mkdir()
+        (d / "arcs" / "INDEX").write_text(
+            "schema: 6\n\nbaseline: 0\nopened: 2\nclosed: 0\n",
+            encoding="utf-8")
+        doc = {"kinds": {"arc index": {
+            "home": "arcs/INDEX", "growth": "bounded-by-exit",
+            "exit": {"action": "move"}}}}
+        instances, note = retire.list_home(d, "arcs/INDEX")
+        self.assertEqual(instances, ["arcs/INDEX"], note)
+        self.assertIn("a single file, one instance", note)
+        named = "arcs/INDEX" in set(decl.carrier_homes(doc).values())
+        self.assertFalse(named, "the declaration names no such carrier")
+        instances, note = retire.list_home(d, "arcs/INDEX",
+                                           block_carrier=named)
+        self.assertEqual(instances, ["arcs/INDEX"], note)
 
     def test_a_plain_file_without_a_schema_head_is_still_one_instance(self):
         """MUST-NOT-MOVE: the schema head, not file shape, separates a
