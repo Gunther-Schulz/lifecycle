@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 327
+added: 328
 compacted: 0
 
 ## lc-3
@@ -1448,4 +1448,13 @@ goal: one-home-per-kind
 write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/migrate.py,test/test_schema.py
 done-criterion: DECIDED and built one way: either the arc index joins the homes one-schema-per-repo reaches (bumped by migrate --schema-from, graded by kind check, red-first on an index left one version behind), or its schema line is declared outside that rule in the code that names the homes, with the reason, and migrate's NOT REACHED line says it is deliberate. Whichever is taken, a bump over a repo with arcs leaves no file whose schema line disagrees silently.
 evidence: RELAYED from wave E lane E8 2026-10-07: migrate --schema-from 6 dry run in its worktree printed NOT REACHED by this command: 1 file - arc index: arcs/INDEX (schema 6). MEASURED at the desk the same day from the other side: retire.list_home needed a narrowing (d5a20af) because arcs/INDEX carries a schema head while not being a carrier home.
+blocked-by: NONE
+
+## lc-336
+grade: STANDBY
+requirement: migrate WRITES CARRIERS, COMMITS NOTHING AND DOES NOT SAY SO. lc-41 made init, lane new, workflow bind and desk state print NOT COMMITTED with the paths and the commit command; migrate (the carrier migration and --schema-from --apply) still writes tracked files and ends on its APPLIED line with no word that the tree is now dirty. The next carrier verb then refuses at entry on a dirty carrier, and a co-writer's pathspec commit can carry the migration out under its own message. Record: docs/directives/2026-10-07-drain-wave-e.md
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py,test/test_migrate.py
+done-criterion: Every migrate run that wrote a tracked file ends by naming the files written and either commits them by pathspec or prints NOT COMMITTED with the commit command, through the one body lc-41 added (desk.say_not_committed); a dry run and a run that wrote nothing print neither. migrate leaves the UNCLAIMED class in the lc-41 enumeration test. Red-first: an applying run over a scratch repo prints no such line today.
+evidence: RELAYED from wave E lane E9 2026-10-07: migrate left UNCLAIMED in its commit-or-say enumeration because migrate.py and cli.py were outside its write set. MEASURED at the desk the same day: three --schema-from --apply runs (begehung, daneel, claude-code-cache-fix) each left four modified files and printed only the APPLIED line. Also observed there: the apply re-serializes the declaration, turning escaped dashes and section signs into literal characters, lines the plan never listed.
 blocked-by: NONE
