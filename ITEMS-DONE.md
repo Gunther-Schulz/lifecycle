@@ -3221,5 +3221,21 @@ closed-met: none
 closed-decided: none
 closed-ref: e20f7d8c15bdc3dccb95b6bee28cf7cc6cac19b4
 
+## lc-41
+grade: DONE
+requirement: Not every carrier-writing verb commits its own write or says NOT COMMITTED. lc-25 fixed item add joins; the invariant it rests on is wider and unenforced: a carrier write left uncommitted rides out under a co-writer pathspec commit, which is the absorption one-writer-per-copy exists to prevent
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/lanes.py,plugin/cli/lifecycle_core/workflows.py,plugin/cli/lifecycle_core/desk.py,plugin/cli/lifecycle_core/init.py,plugin/cli/lifecycle_core/ledger.py,test/test_lanes.py
+done-criterion: every verb that writes a declared carrier either commits by pathspec or prints NOT COMMITTED with its reason; red-first per verb against the old binary, and the enumeration derived from the RUNNING parser rather than restated, so a verb added later is covered by construction
+evidence: observed 2026-08-27 by the wave-4 desk: ledger add decision left M LEDGER.md in the dotfiles tree and printed nothing, while item add and item amend commit theirs. SWEEP, derived by reading the parser (every cmd_* whose body or whose called helper writes a carrier): commits today = item promote, item amend, item close; silent today = desk state, init, lane new, item park, workflow bind, ledger add, migrate. THE SWEEP OWN LIMITS, measured not assumed: it marks item add as NOT committing, which is a FALSE NEGATIVE (observed committing lc-35) because the commit sits in the helper, and its helper match collides with ordinary list append in cmd_test and item head. So the list above is a starting set, not the verdict; the item first step is the precise per-verb enumeration from the running parser
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over). The decision is ANSWERED at LEDGER.md:71: every carrier-WRITING verb commits its write or prints NOT COMMITTED; genuinely read-only verbs are outside by construction; migrate dry-run artifacts are exempt and its carrier writes are not. The done-criterion already states that contract. Stays STANDBY.
+amended-blocked-by: 2026-10-05 NONE
+closed-reason: 2026-10-07 init, lane new, workflow bind and desk state say NOT COMMITTED; every CLI leaf is classified. migrate is the residue, booked as lc-336. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: d83f4c06a75f22f4ea32dd9632b99622e5a5e2a4
+
 ## Archive (pre-migration)
 
