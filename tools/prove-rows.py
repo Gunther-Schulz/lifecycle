@@ -364,6 +364,20 @@ MUTATIONS = [
      "the refusal of a ledger dirty at verb entry — the pending hand edit "
      "then rides out in the verb's own commit, under its message"),
 
+    # lc-318. THE SAME SHAPE ONE CARRIER OVER, anchored on the helper's
+    # DIRTY branch and not on its could-not-verify one above it: the `None`
+    # answer must keep reading real input, so the mutation switches off the
+    # refusal and nothing else. ONE HELPER, ONE EMIT SITE, so this single
+    # arrangement is the row's whole decision — which verb reached it is a
+    # question of the per-verb arms in test/test_drain_c_c1.py, not of a
+    # second anchor here.
+    ("carrier_dirty_at_entry", "verbs.py",
+     "    if uncommitted:",
+     "    if False:",
+     "the refusal of a carrier dirty at verb entry — the verb then writes "
+     "beside the pending change and commits the file whole, under its own "
+     "message"),
+
     # R7 (lc-289). ANCHORED ON THE SINGLE EARLY RETURN THAT DECIDES WHETHER
     # THE JOIN HAS ANYTHING TO SAY, not on any of the three FINDING branches
     # below it: disabling this one collapses `_check_decision_join` to an

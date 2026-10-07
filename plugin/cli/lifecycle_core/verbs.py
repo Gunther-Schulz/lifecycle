@@ -732,6 +732,80 @@ def carrier_dirty(repo: Path, path: Path):
     return bool(pending), "; ".join(ln.strip() for ln in pending)
 
 
+def refuse_dirty_carriers(ctx: Ctx, paths, out, skip: bool = False) -> int:
+    """Refuse BEFORE THE FIRST WRITE where a carrier this verb will commit
+    already differs from what is committed (lc-318).
+
+    THE LEDGER RULING, EXTENDED TO EVERY CARRIER. `commit_paths` commits by
+    pathspec and a pathspec is FILE-granular: it cannot split a pending hunk
+    from the lines this verb is about to write, so whatever sat uncommitted
+    in the file rode out under this verb's message. lc-138 refused that for
+    `ledger add`. Every other carrier verb took the same commit path, and
+    the measured case is worse than a hand edit: a close whose commit a gate
+    refused left its move half-recorded on disk, and the NEXT verb — an
+    amend of another item — committed the carrier whole, so the deletion
+    half of the move went out under `lifecycle: amend` (relayed from a peer
+    desk, on lc-105 and lc-318).
+
+    CALLED BY THE VERB, NOT BY `commit_paths`, for the reason `ledger add`
+    gives: the remedy is to write NOTHING, and by the time the commit runs
+    the write is already in the file.
+
+    `paths` IS EVERY PATH THE VERB'S COMMIT WILL NAME, all graded before any
+    is written — a verb that writes two carriers and found the second dirty
+    after writing the first would have made the half-done state itself.
+
+    THREE ANSWERS (law 1), and `carrier_dirty`'s `None` is carried through:
+    git unable to say is neither clean nor dirty, and a verb that proceeded
+    over it would do so over exactly the state this question exists to
+    refuse.
+
+    `skip` IS `--no-commit`: that caller is batching and owns the commit, so
+    a carrier dirty with its own earlier writes is its ordinary state and it
+    is not asked.
+    """
+    if skip:
+        return exits.CLEAN
+    verb = f"`{ctx.verb}`" if ctx.verb else "this verb"
+    unanswered, uncommitted = [], []
+    for path in paths:
+        dirty, why = carrier_dirty(ctx.repo, Path(path))
+        if dirty is None:
+            unanswered.append(why)
+        elif dirty:
+            uncommitted.append((_rel_to_repo(ctx, path), why))
+    if unanswered:
+        out(f"COULD NOT VERIFY: whether the carrier(s) {verb} commits hold "
+            f"uncommitted changes — {'; '.join(unanswered)}. Nothing was "
+            "written: the verb commits each carrier whole, and without that "
+            "answer it cannot say what its commit would carry.")
+        return exits.COULD_NOT_VERIFY
+    if uncommitted:
+        named = ", ".join(rel for rel, _why in uncommitted)
+        out(f"FINDING [carrier_dirty_at_entry] REFUSING TO WRITE: "
+            f"{named} already differ(s) from what is committed ("
+            + "; ".join(why for _rel, why in uncommitted)
+            + f"). {verb} commits each carrier it writes by pathspec, and a "
+            "pathspec is file-granular — the pending change would ride out "
+            "under this verb's message, which does not describe it. NOTHING "
+            "was written and nothing committed. Commit the pending change "
+            "first, under its own message (`git commit -m \"<what it is>\" "
+            f"-- {' '.join(rel for rel, _why in uncommitted)}`), then "
+            "re-run. If it is an EARLIER VERB's write whose commit was "
+            "refused, it is that verb's work and takes that verb's message; "
+            "`git diff` shows which. A caller batching several writes passes "
+            "`--no-commit` and owns that commit.")
+        return exits.FINDING
+    return exits.CLEAN
+
+
+def _rel_to_repo(ctx: Ctx, path) -> str:
+    try:
+        return str(Path(path).relative_to(ctx.repo))
+    except ValueError:
+        return str(path)
+
+
 def commit_paths(ctx: Ctx, paths, msg: str, out, skip: bool = False,
                  what: str = "the move", stage_new: bool = False) -> int:
     """Commit exactly the files this act wrote, BY PATHSPEC, never the index.
@@ -1392,6 +1466,13 @@ def _do_supersede(args, ctx: Ctx, parsed, slots, out) -> int:
         return exits.FINDING
 
     with items_mod.carrier_lock(ctx.items_path):
+        # ALL THREE, BEFORE ANY IS WRITTEN (lc-318): this join appends an
+        # item, moves another and ledgers the reason in one commit.
+        dirty_code = refuse_dirty_carriers(
+            ctx, (ctx.items_path, ctx.done_path, ctx.ledger_path), out,
+            skip=args.no_commit)
+        if dirty_code != exits.CLEAN:
+            return dirty_code
         parsed2, why = _load(ctx.items_path)
         if parsed2 is None:
             out(f"COULD NOT VERIFY: {why}")
@@ -1487,6 +1568,10 @@ def _do_new(args, ctx: Ctx, parsed, done_parsed, done_why, slots, source, out) -
         return exits.COULD_NOT_VERIFY
 
     with items_mod.carrier_lock(ctx.items_path):
+        dirty_code = refuse_dirty_carriers(ctx, (ctx.items_path,), out,
+                                           skip=args.no_commit)
+        if dirty_code != exits.CLEAN:
+            return dirty_code
         parsed2, why = _load(ctx.items_path)
         if parsed2 is None:
             out(f"COULD NOT VERIFY: {why}")
@@ -2909,6 +2994,10 @@ def cmd_item_park(args, out, ctx: Ctx) -> int:
     conditional = {k: v for k, v in conditional.items() if v}
 
     with items_mod.carrier_lock(ctx.items_path):
+        dirty_code = refuse_dirty_carriers(ctx, (ctx.items_path,), out,
+                                           skip=args.no_commit)
+        if dirty_code != exits.CLEAN:
+            return dirty_code
         text = ctx.items_path.read_text(encoding="utf-8")
         # lc-232: where the block already carries an `amended-blocked-by:`
         # line, that line IS the value in force and the base line is the
@@ -3057,6 +3146,10 @@ def cmd_item_promote(args, out, ctx: Ctx) -> int:
 
     date = _today()
     with items_mod.carrier_lock(ctx.items_path):
+        dirty_code = refuse_dirty_carriers(ctx, (ctx.items_path,), out,
+                                           skip=args.no_commit)
+        if dirty_code != exits.CLEAN:
+            return dirty_code
         text = ctx.items_path.read_text(encoding="utf-8")
         # THE RECORD IS COMPOSED BEFORE THE GRADE (invariant 6: a decision is
         # recorded with its basis BEFORE the act), and both land in ONE write:
@@ -3135,6 +3228,10 @@ def cmd_item_bench(args, out, ctx: Ctx) -> int:
 
     date = _today()
     with items_mod.carrier_lock(ctx.items_path):
+        dirty_code = refuse_dirty_carriers(ctx, (ctx.items_path,), out,
+                                           skip=args.no_commit)
+        if dirty_code != exits.CLEAN:
+            return dirty_code
         text = ctx.items_path.read_text(encoding="utf-8")
         new, ok = items_mod.append_bench(text, args.ident, date, reason)
         if ok:
@@ -3364,6 +3461,10 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
 
     date = _today()
     with items_mod.carrier_lock(ctx.items_path):
+        dirty_code = refuse_dirty_carriers(ctx, (ctx.items_path,), out,
+                                           skip=args.no_commit)
+        if dirty_code != exits.CLEAN:
+            return dirty_code
         text = ctx.items_path.read_text(encoding="utf-8")
         if stranded:
             text, ok = _set_slots(text, args.ident, {}, remove=stranded)
@@ -4235,6 +4336,21 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
             note_lines.append(f"{items_mod.CLOSED_DECIDED}: {decided_value}")
             if ref_value:
                 note_lines.append(f"{items_mod.CLOSED_REF}: {ref_value}")
+        # EVERY CARRIER THIS CLOSE WILL COMMIT, GRADED BEFORE THE MOVE
+        # (lc-318). Two always; the ledger as well where the close writes it
+        # — a drop's `dropped:` line, or the `decision:` line for a question
+        # this close makes moot. The same predicate decides the write below,
+        # so the set checked here is the set committed and never a guess at
+        # it.
+        ledger_owed = bool(args.drop) or bool(
+            moot and not ledger.check_prose(moot,
+                                            "the moot decision question"))
+        dirty_code = refuse_dirty_carriers(
+            ctx, [ctx.items_path, ctx.done_path]
+            + ([ctx.ledger_path] if ledger_owed else []), out,
+            skip=args.no_commit)
+        if dirty_code != exits.CLEAN:
+            return dirty_code
         code = move_to_done(ctx, args.ident, grade, "\n".join(note_lines), out)
         if code != exits.CLEAN:
             return code
@@ -4399,6 +4515,10 @@ def cmd_item_supersede_closure(args, out, ctx: Ctx) -> int:
                 "closure home and one holding no such body are different "
                 "answers, and neither is 'appended'.")
             return exits.COULD_NOT_VERIFY
+        dirty_code = refuse_dirty_carriers(ctx, (ctx.done_path,), out,
+                                           skip=args.no_commit)
+        if dirty_code != exits.CLEAN:
+            return dirty_code
         text = ctx.done_path.read_text(encoding="utf-8")
         new, ok = items_mod.append_closure_pointer(text, args.ident, date,
                                                    ref_value, line)
@@ -4850,6 +4970,14 @@ def cmd_arc_open(args, out, ctx: Ctx) -> int:
             "without being told which this arc is running.")
         return exits.FINDING
 
+    # THE INDEX IS REWRITTEN WHOLE BELOW, so a pending edit of it would be
+    # overwritten as well as committed (lc-318). The body is new and cannot
+    # be dirty; it is named because the commit names it.
+    dirty_code = refuse_dirty_carriers(
+        ctx, [live, arcs.index_path(ctx.repo)], out)
+    if dirty_code != exits.CLEAN:
+        return dirty_code
+
     idx = arcs.read_index(ctx.repo)
     counters = dict(idx.counters) if idx.counters else {
         "baseline": 0, "opened": 0, "closed": 0}
@@ -4953,6 +5081,13 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
             "whether anything was lost.")
         return exits.COULD_NOT_VERIFY
 
+    # BEFORE THE FIRST WRITE (lc-318), which here is the lane retirement
+    # below and not the body move.
+    dirty_code = refuse_dirty_carriers(
+        ctx, [live, closed, arcs.index_path(ctx.repo)], out)
+    if dirty_code != exits.CLEAN:
+        return dirty_code
+
     body = live.read_text(encoding="utf-8")
     if args.abandon:
         # ABANDON IS A CLOSE WITH A DIFFERENT REASON, not a third path. The
@@ -5018,6 +5153,9 @@ def _arc_append(ctx: Ctx, slug: str, line: str, out, msg: str, *,
         out(f"FINDING [unknown_arc] no live arc {slug!r} in "
             f"{arcs.ARCS_DIR}/.")
         return exits.FINDING
+    dirty_code = refuse_dirty_carriers(ctx, [live], out, skip=skip)
+    if dirty_code != exits.CLEAN:
+        return dirty_code
     text = live.read_text(encoding="utf-8")
     text = arcs.refresh_header(text.rstrip("\n") + "\n" + line + "\n")
     atomic.write_text(live, text, encoding="utf-8")
@@ -5091,6 +5229,11 @@ def cmd_arc_reopen(args, out, ctx: Ctx) -> int:
             "then demands could never be satisfied honestly.")
         return exits.FINDING
 
+    dirty_code = refuse_dirty_carriers(
+        ctx, [live], out, skip=getattr(args, "no_commit", False))
+    if dirty_code != exits.CLEAN:
+        return dirty_code
+
     affected = [args.ident] + arcs.citers(text, args.ident)
     reason = args.reason.strip()
     lines = [f"{arcs.REDERIVE_LINE}: {i} {_today()} "
@@ -5161,6 +5304,13 @@ def cmd_arc_advance(args, out, ctx: Ctx) -> int:
             "re-derived|accepted-stale --reason <why>`.")
         return exits.FINDING
 
+    # BEFORE THE FIRST WRITE (lc-318), which here is the lane retirement
+    # below and not the body rewrite.
+    dirty_code = refuse_dirty_carriers(
+        ctx, [live], out, skip=getattr(args, "no_commit", False))
+    if dirty_code != exits.CLEAN:
+        return dirty_code
+
     to = args.to.strip()
     arc_obj, _probs = arcs.parse_arc(text, slug)
     # THE LEAVING STAGE'S DEADLINES END WITH IT (astra-a8). A deadline belongs
@@ -5224,6 +5374,10 @@ def cmd_arc_narrow(args, out, ctx: Ctx) -> int:
             "cannot tell whether the new text eliminates a candidate or adds "
             "one to a palette.")
         return exits.FINDING
+    dirty_code = refuse_dirty_carriers(
+        ctx, [live], out, skip=getattr(args, "no_commit", False))
+    if dirty_code != exits.CLEAN:
+        return dirty_code
     # R3 SEAM (refocus round, 2026-09-24, lc-288) — see `cmd_arc_advance`'s
     # own comment for the full rationale; the shape is identical here.
     _record_seam_goal(args, "narrow",
@@ -5276,6 +5430,10 @@ def cmd_arc_yield(args, out, ctx: Ctx) -> int:
         out(f"FINDING [unknown_arc] no live arc {slug!r} in "
             f"{arcs.ARCS_DIR}/.")
         return exits.FINDING
+    dirty_code = refuse_dirty_carriers(
+        ctx, [live], out, skip=getattr(args, "no_commit", False))
+    if dirty_code != exits.CLEAN:
+        return dirty_code
     text = live.read_text(encoding="utf-8")
     line = f"{arcs.YIELD_LINE}: {args.ident} {_today()} {args.text.strip()}"
     text = arcs.set_slot(text, "yield", args.summary.strip())
@@ -5379,6 +5537,26 @@ def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
             "share a door, and retiring either would take the other's row "
             "off the board.")
         return exits.FINDING
+
+    # GRADED BEFORE THE LANE BODY IS WRITTEN (lc-318) — the arc body and the
+    # lane body, and NOT the third path this verb commits.
+    #
+    # THE DECLARATION IS LEFT OUT, AND THAT IS A NAMED REMAINDER RATHER THAN
+    # A JUDGMENT THAT IT IS SAFE. This verb registers the lane there and
+    # commits the file whole, so the pathspec hazard is the same one. But
+    # `arc advance` and `arc close` retire a stage's deadline lanes by
+    # rewriting the declaration and deleting the lane body, and commit
+    # neither (measured 2026-10-07: after an advance that retired one lane,
+    # `git status` shows the declaration modified and the lane body
+    # deleted). So the declaration is ROUTINELY dirty when this verb is next
+    # run, by this tool's own hand, and grading it here refused the ordinary
+    # advance-then-deadline sequence — a guard firing on legitimate work
+    # (law 11). The repair is upstream: those two verbs commit what they
+    # write, and then this list gains its third path.
+    dirty_code = refuse_dirty_carriers(
+        ctx, [live, body], out, skip=getattr(args, "no_commit", False))
+    if dirty_code != exits.CLEAN:
+        return dirty_code
 
     body.parent.mkdir(parents=True, exist_ok=True)
     body.write_text(

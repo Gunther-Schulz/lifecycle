@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
 from lifecycle_core import cli, exits, lanes  # noqa: E402
 from lifecycle_core import ledger as ledger_mod  # noqa: E402
+from lifecycle_core import refusals as R  # noqa: E402
 from lifecycle_core.refusals import (  # noqa: E402
     EMPTY_DONE, GOOD_FULL_DECLARATION, SEED_ITEMS)
 
@@ -280,6 +281,409 @@ class TheDoneHomeMessageNoLongerOverReads(unittest.TestCase):
         self.assertEqual(code, exits.FINDING, out)
         self.assertIn("FINDING [blocked_in_done_home]", out)
         self.assertNotIn("so it did not arrive here by a close", flat(out))
+
+
+# --- lc-318 -------------------------------------------------------------------
+#
+# EVERY CARRIER VERB COMMITS ITS CARRIER BY PATHSPEC, and a pathspec is
+# FILE-granular: whatever else sat uncommitted in that file at verb entry rode
+# out under the verb's own message. lc-138 refused that for `ledger add`; the
+# ruling (LEDGER.md, REFUSE-ON-DIRTY) is extended here to every other verb.
+
+HAND = "a hand note nobody has committed yet"
+ROW = "FINDING [carrier_dirty_at_entry]"
+
+
+def two_items(declaration=None, done=None, items=None) -> Path:
+    d = build(items if items is not None else R.TWO_SEED_ITEMS)
+    extra = False
+    if declaration is not None:
+        (d / ".claude" / "lifecycle.json").write_text(
+            json.dumps(declaration), encoding="utf-8")
+        extra = True
+    if done is not None:
+        (d / "ITEMS-DONE.md").write_text(done, encoding="utf-8")
+        extra = True
+    if extra:
+        subprocess.run(["git", "-C", str(d), "commit", "-qam", "fixture"],
+                       capture_output=True, text=True)
+    return d
+
+
+def plain() -> Path:
+    return two_items()
+
+
+def standby() -> Path:
+    return two_items(declaration=R.STANDBY_DECLARATION)
+
+
+def with_closed() -> Path:
+    """Two live items and one closed body, xx-9, the identity balanced."""
+    return two_items(
+        items=R.TWO_SEED_ITEMS.replace("baseline: 2", "baseline: 3", 1),
+        done=R.EMPTY_DONE + R._blocked_block("xx-9", "DONE", "NONE"))
+
+
+def decision_blocked() -> Path:
+    """xx-2 waits on an unanswered decision, so a DONE close ledgers it moot
+    — the DONE route into the ledger."""
+    head_, one, two = R.TWO_SEED_ITEMS.split("\n\n", 2)
+    two = two.replace("blocked-by: NONE",
+                      "blocked-by: decision which window is canonical")
+    return two_items(items="\n\n".join((head_, one, two)))
+
+
+def arc_open() -> Path:
+    d = plain()
+    for argv in (R._ARC_OPEN, R._ARC_BELIEF):
+        code, out = run_cli(d, *argv)
+        assert code == exits.CLEAN, out
+    return d
+
+
+def arc_reopened() -> Path:
+    d = arc_open()
+    code, out = run_cli(d, "arc", "reopen", "freeze", "--ident", "b1",
+                        "--reason", "a capture contradicts it")
+    assert code == exits.CLEAN, out
+    return d
+
+
+def edit(rel: str, old: str | None = None):
+    """A hand edit of one tracked file: replace `old` once, or append a line."""
+    def apply(d: Path) -> str:
+        p = d / rel
+        text = p.read_text(encoding="utf-8")
+        if old is None:
+            p.write_text(text.rstrip("\n") + "\n" + HAND_LINES[rel] + "\n",
+                         encoding="utf-8")
+        else:
+            assert old in text, (rel, old)
+            p.write_text(text.replace(old, HAND, 1), encoding="utf-8")
+        return rel
+    return apply
+
+
+#: What a hand would plausibly append to each file — WELL-FORMED on purpose,
+#: so the refusal under test is the DIRT and never a shape check firing first.
+HAND_LINES = {
+    "LEDGER.md": f"dropped: zz-7 — {HAND}",
+    "arcs/freeze.md": f"premise: p9 2026-10-07 {HAND}",
+    "arcs/INDEX": f"# {HAND}",
+}
+
+ITEMS_EDIT = edit("ITEMS.md", "none yet")       # xx-1's evidence slot
+DONE_EDIT = edit("ITEMS-DONE.md", "none yet")   # xx-9's evidence slot
+LEDGER_EDIT = edit("LEDGER.md")
+ARC_EDIT = edit("arcs/freeze.md")
+INDEX_EDIT = edit("arcs/INDEX")
+
+
+AMEND = ("item", "amend", "xx-2", "--done-criterion", "two fires per window",
+         "--reason", "the criterion moved")
+CLOSE = ("item", "close", "xx-2", "--met", "none", "--decided", "none")
+DROP = ("item", "close", "xx-2", "--drop", "--reason", "overtaken")
+SUPERSEDE = tuple(R.GOOD_ADD) + ("--join", "supersede xx-2", "--reason",
+                                 "replaced by the reworked entry")
+PREMISE = ("arc", "premise", "freeze", "--ident", "p1", "--text",
+           "the capture is representative")
+DEADLINE = ("arc", "deadline", "freeze", "--date", "2099-01-01", "--what",
+            "the capture window closes")
+
+#: (name, fixture, the hand edit, argv, takes --no-commit). ONE ROW PER VERB
+#: AND PER CARRIER IT COMMITS — a verb committing three carriers appears three
+#: times, because "checks both before writing either" is a claim about each.
+ARMS = [
+    ("add over ITEMS", plain, ITEMS_EDIT, tuple(R.GOOD_ADD), True),
+    ("add-supersede over ITEMS", plain, ITEMS_EDIT, SUPERSEDE, True),
+    ("add-supersede over DONE", with_closed, DONE_EDIT, SUPERSEDE, True),
+    ("add-supersede over LEDGER", plain, LEDGER_EDIT, SUPERSEDE, True),
+    ("amend over ITEMS", plain, ITEMS_EDIT, AMEND, True),
+    ("park over ITEMS", plain, ITEMS_EDIT,
+     ("item", "park", "xx-2", "--blocked-by",
+      "external the vendor ships a fix"), True),
+    ("promote over ITEMS", plain, ITEMS_EDIT,
+     ("item", "promote", "xx-2", "--by", "the c1 desk", "--reason",
+      "the slots are filled"), True),
+    ("bench over ITEMS", standby, ITEMS_EDIT,
+     ("item", "bench", "xx-2", "--reason", R._BENCH_REASON), True),
+    ("close over ITEMS", plain, ITEMS_EDIT, CLOSE, True),
+    ("close over DONE", with_closed, DONE_EDIT, CLOSE, True),
+    ("close-moot over LEDGER", decision_blocked, LEDGER_EDIT, CLOSE, True),
+    ("drop over ITEMS", plain, ITEMS_EDIT, DROP, True),
+    ("drop over DONE", with_closed, DONE_EDIT, DROP, True),
+    ("drop over LEDGER", plain, LEDGER_EDIT, DROP, True),
+    ("supersede-closure over DONE", with_closed, DONE_EDIT,
+     ("item", "supersede-closure", "xx-9", "--ref", "HEAD", "--line",
+      "the closure reason was falsified the same hour"), True),
+    ("arc open over INDEX", arc_open, INDEX_EDIT,
+     ("arc", "open", "thaw", "--goal", "a second question", "--narrowing",
+      "eliminative"), False),
+    ("arc close over the body", arc_open, ARC_EDIT,
+     ("arc", "close", "freeze"), False),
+    ("arc close over INDEX", arc_open, INDEX_EDIT,
+     ("arc", "close", "freeze"), False),
+    ("arc premise", arc_open, ARC_EDIT, PREMISE, True),
+    ("arc belief", arc_open, ARC_EDIT,
+     ("arc", "belief", "freeze", "--ident", "b2", "--claim", "a second claim",
+      "--basis", "one capture", "--kill", "none known"), True),
+    ("arc verdict", arc_open, ARC_EDIT,
+     ("arc", "verdict", "freeze", "--ident", "v1", "--text",
+      "the operator prefers the first form"), True),
+    ("arc reopen", arc_open, ARC_EDIT,
+     ("arc", "reopen", "freeze", "--ident", "b1", "--reason",
+      "a capture contradicts it"), True),
+    ("arc disposition", arc_reopened, ARC_EDIT,
+     ("arc", "disposition", "freeze", "--ident", "b1", "--how", "re-derived",
+      "--reason", "re-run over the new capture"), True),
+    ("arc advance", arc_open, ARC_EDIT,
+     ("arc", "advance", "freeze", "--to", "measuring", "--reason",
+      "the instrument is built"), True),
+    ("arc narrow", arc_open, ARC_EDIT,
+     ("arc", "narrow", "freeze", "--text", "the GPU path is ruled out"), True),
+    ("arc yield", arc_open, ARC_EDIT,
+     ("arc", "yield", "freeze", "--ident", "y1", "--text", "one tracer",
+      "--summary", "one tracer so far"), True),
+    ("arc deadline over the body", arc_open, ARC_EDIT, DEADLINE, True),
+]
+
+
+def snapshot(d: Path) -> dict:
+    """Every file outside `.git`, by bytes — "nothing was written" stated
+    over the whole tree and not only the carrier the arm dirtied.
+
+    `*.lock` IS LEFT OUT, and it is the one exclusion: the carrier lock is an
+    empty, git-ignored file the verb creates in order to ASK the question
+    under mutual exclusion. It is the instrument, not a write to a carrier.
+    """
+    return {str(p.relative_to(d)): p.read_bytes()
+            for p in sorted(d.rglob("*"))
+            if p.is_file() and ".git" not in p.relative_to(d).parts
+            and p.suffix != ".lock"}
+
+
+class EveryCarrierVerbRefusesACarrierDirtyAtEntry(unittest.TestCase):
+    """lc-318, red-first per verb family: a carrier dirty with an unrelated
+    hand edit at verb entry."""
+
+    def test_a_hand_edit_is_NOT_absorbed_and_nothing_is_written(self):
+        for name, fixture, dirty, argv, _nc in ARMS:
+            with self.subTest(arm=name):
+                d = fixture()
+                self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+                rel = dirty(d)
+                before, tree = head(d), snapshot(d)
+
+                code, out = run_cli(d, *argv)
+
+                # THE DEFECT, at the effect site: no commit this verb made
+                # carries the hand edit.
+                self.assertNotIn(HAND, git(d, "show", f"HEAD:{rel}"),
+                                 "the verb's commit carried a hand edit its "
+                                 "message does not describe:\n" + out)
+                self.assertEqual(head(d), before, "a refused run moved HEAD")
+                # NOTHING WAS WRITTEN — the pending edit is intact, and no
+                # OTHER carrier this verb commits was touched either.
+                self.assertEqual(snapshot(d), tree, out)
+                self.assertEqual(code, exits.FINDING, out)
+                self.assertIn(ROW, out)
+                self.assertIn(rel, out)
+                self.assertIn("own message", flat(out))
+
+    def test_CONTROL_the_same_invocation_on_a_clean_tree_commits(self):
+        """MUST-NOT-MOVE, and what makes the arm above discriminate: every
+        invocation in the table is VALID, so the refusal is the DIRT."""
+        for name, fixture, _dirty, argv, _nc in ARMS:
+            with self.subTest(arm=name):
+                d = fixture()
+                self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+                before = head(d)
+                code, out = run_cli(d, *argv)
+                self.assertEqual(code, exits.CLEAN, out)
+                self.assertNotIn("carrier_dirty_at_entry", out)
+                self.assertEqual(
+                    git(d, "rev-list", "--count", f"{before}..HEAD").strip(),
+                    "1", out)
+                # Everything the verb wrote is in that one commit.
+                self.assertEqual(git(d, "status", "--porcelain"), "", out)
+
+    def test_no_commit_is_NOT_refused_over_a_dirty_carrier(self):
+        """The ruling's boundary: the batching caller owns that commit, and a
+        carrier dirty with its own earlier writes is its ordinary state."""
+        for name, fixture, dirty, argv, takes_no_commit in ARMS:
+            if not takes_no_commit:
+                continue
+            with self.subTest(arm=name):
+                d = fixture()
+                self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+                dirty(d)
+                before = head(d)
+                code, out = run_cli(d, *argv, "--no-commit")
+                self.assertEqual(code, exits.CLEAN, out)
+                self.assertNotIn("carrier_dirty_at_entry", out)
+                self.assertEqual(head(d), before)
+
+    def test_a_STAGED_hand_edit_is_refused_too(self):
+        d = plain()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        ITEMS_EDIT(d)
+        git(d, "add", "--", "ITEMS.md")
+        before = head(d)
+        code, out = run_cli(d, *AMEND)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn(ROW, out)
+        self.assertEqual(head(d), before)
+
+    def test_CONTROL_a_dirty_SIBLING_file_refuses_nothing(self):
+        """The predicate is about the carriers the verb COMMITS. A dirty tree
+        elsewhere is the shared-checkout norm."""
+        d = plain()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        (d / "LAWS.md").write_text("law\nanother\n", encoding="utf-8")
+        LEDGER_EDIT(d)   # `item amend` does not commit the ledger
+        code, out = run_cli(d, *AMEND)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(
+            git(d, "show", "--name-only", "--format=", "HEAD").split(),
+            ["ITEMS.md"])
+        self.assertNotIn(HAND, git(d, "show", "HEAD:LEDGER.md"))
+
+    def test_after_the_hand_edit_is_committed_the_same_verb_lands(self):
+        """The repair the message names works, on one tree."""
+        d = plain()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        ITEMS_EDIT(d)
+        code, out = run_cli(d, *AMEND)
+        self.assertEqual(code, exits.FINDING, out)
+        r = subprocess.run(["git", "-C", str(d), "commit", "-qm",
+                            "the hand edit, under its own message", "--",
+                            "ITEMS.md"], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        code, out = run_cli(d, *AMEND)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("two fires per window", git(d, "show", "HEAD:ITEMS.md"))
+
+
+class TheOrdinaryArcSequenceIsNotRefused(unittest.TestCase):
+    """lc-318, the boundary the entry check was drawn at (law 11).
+
+    `arc advance` retires the leaving stage's deadline lanes by rewriting the
+    declaration and deleting the lane body, and commits neither. So the
+    declaration is dirty, by the tool's own hand, when `arc deadline` next
+    runs — and a check that graded it refused this sequence. The declaration
+    is therefore NOT in `arc deadline`'s graded set, which the verb says in
+    its own comment; what this pins is that the sequence still works. It
+    does NOT pin that the leftover is right: that is a separate defect.
+    """
+
+    def test_a_deadline_after_an_advance_that_retired_a_lane_still_lands(self):
+        d = arc_open()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        for argv in (DEADLINE,
+                     ("arc", "advance", "freeze", "--to", "measuring",
+                      "--reason", "the instrument is built")):
+            code, out = run_cli(d, *argv)
+            self.assertEqual(code, exits.CLEAN, out)
+        code, out = run_cli(d, "arc", "deadline", "freeze", "--date",
+                            "2099-06-01", "--what", "the second window")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn("carrier_dirty_at_entry", out)
+
+
+class AHalfDoneVerbIsNotSweptUpByTheNextOne(unittest.TestCase):
+    """The measured incident (dotfiles, relayed on lc-105 and lc-318): a
+    close whose commit was refused left its carriers dirty, and the next
+    verb — an amend of ANOTHER item — committed ITEMS.md whole, so the
+    deletion half of the move rode out under `lifecycle: amend`."""
+
+    def test_the_next_verb_refuses_instead_of_committing_the_deletion(self):
+        d = plain()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        hooks = d / ".hooks"
+        hooks.mkdir()
+        hook = hooks / "pre-commit"
+        hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+        hook.chmod(0o755)
+        git(d, "config", "core.hooksPath", str(hooks))
+        code, out = run_cli(d, *CLOSE)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [move_uncommitted]", out)
+        # The gate that refused is gone; the half-done move is still on disk.
+        git(d, "config", "core.hooksPath", str(d / ".nohooks"))
+        before = head(d)
+
+        code, out = run_cli(d, "item", "amend", "xx-1", "--done-criterion",
+                            "two fires per window", "--reason",
+                            "the criterion moved")
+
+        self.assertIn("## xx-2", git(d, "show", "HEAD:ITEMS.md"),
+                      "the next verb's commit carried the deletion half of "
+                      "an earlier, uncommitted move:\n" + out)
+        self.assertEqual(head(d), before)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn(ROW, out)
+
+
+class GitUnableToAnswerIsTheThirdAnswer(unittest.TestCase):
+    """lc-318: the could-not-verify branch, END TO END. `git status` is made
+    to fail for real — a shim on PATH that refuses that one subcommand and
+    hands every other to the real git — so the verb runs its own code down
+    to the branch, with nothing stubbed inside this package."""
+
+    def _shim(self) -> Path:
+        real = shutil.which("git")
+        self.assertTrue(real, "no git on PATH")
+        box = Path(tempfile.mkdtemp(prefix="lifecycle-drain-c-c1-shim-"))
+        self.addCleanup(shutil.rmtree, box, ignore_errors=True)
+        shim = box / "git"
+        shim.write_text(
+            "#!/bin/sh\n"
+            'for a in "$@"; do\n'
+            '  if [ "$a" = status ]; then\n'
+            '    echo "fatal: simulated: git cannot answer" >&2\n'
+            "    exit 128\n"
+            "  fi\n"
+            "done\n"
+            f'exec "{real}" "$@"\n', encoding="utf-8")
+        shim.chmod(0o755)
+        return box
+
+    def test_the_verb_writes_nothing_and_exits_COULD_NOT_VERIFY(self):
+        import os
+        box = self._shim()
+        for name, fixture, argv in (
+                ("amend", plain, AMEND),
+                ("close", plain, CLOSE),
+                ("drop", plain, DROP),
+                ("arc premise", arc_open, PREMISE)):
+            with self.subTest(arm=name):
+                d = fixture()
+                self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+                before, tree = head(d), snapshot(d)
+                path = box.as_posix() + os.pathsep + os.environ.get("PATH", "")
+                with mock.patch.dict(os.environ, {"PATH": path}):
+                    code, out = run_cli(d, *argv)
+                self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+                self.assertIn("COULD NOT VERIFY", out)
+                self.assertIn("simulated: git cannot answer", out)
+                self.assertNotIn("FINDING [", out)
+                self.assertEqual(head(d), before)
+                self.assertEqual(snapshot(d), tree, out)
+
+    def test_CONTROL_the_shim_alone_does_not_break_a_no_commit_verb(self):
+        """The shim is the variable: a caller that is never asked the dirty
+        question runs through it untouched."""
+        import os
+        box = self._shim()
+        d = plain()
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        path = box.as_posix() + os.pathsep + os.environ.get("PATH", "")
+        with mock.patch.dict(os.environ, {"PATH": path}):
+            code, out = run_cli(d, *AMEND, "--no-commit")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("two fires per window",
+                      (d / "ITEMS.md").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

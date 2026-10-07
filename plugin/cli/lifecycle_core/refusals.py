@@ -1572,6 +1572,29 @@ def _cli_over_hand_edited_ledger(argv) -> Fired:
         return _cli_in(repo, argv)
 
 
+def _cli_over_hand_edited_items(argv) -> Fired:
+    """Same, with an UNCOMMITTED hand edit in the ITEM carrier (lc-318).
+
+    Made AFTER the seed commit, for the reason the ledger twin above gives.
+    The edit is to `xx-1`'s evidence slot and leaves the block WELL-FORMED,
+    while `argv` acts on `xx-2`: the pending change is unrelated to what the
+    verb writes, which is the measured case, and no shape check fires first.
+    """
+    with _Repo(items=TWO_SEED_ITEMS) as repo:
+        car = repo.dir / "ITEMS.md"
+        text = car.read_text(encoding="utf-8")
+        car.write_text(_mutate(text, "evidence: none yet",
+                               "evidence: a hand edit nobody committed"),
+                       encoding="utf-8")
+        return _cli_in(repo, argv)
+
+
+#: The one invocation both arms of `carrier_dirty_at_entry` run.
+_AMEND_SECOND_ITEM = ["item", "amend", "xx-2", "--done-criterion",
+                      "two fires per window", "--reason",
+                      "the criterion moved"]
+
+
 def _mutate(text: str, old: str, new: str) -> str:
     assert old in text, f"the plant's anchor {old!r} is not in the text"
     return text.replace(old, new, 1)
@@ -2367,6 +2390,35 @@ VERB_ROWS = [
         control=lambda: _cli(["ledger", "add", "dropped", "xx-1", "--reason",
                               "overtaken by the rework"]),
         stage="drain wave B, lane R1 (lc-138)",
+    ),
+    Row(
+        # ITS OWN ROW, NOT A SIBLING OF THE ONE ABOVE, and the reason is the
+        # NAME: `ledger_carrier_dirty` is spelled and worded for one carrier
+        # and one verb, and printed over ITEMS.md it would mislabel the file
+        # the operator has to go and commit. The ANSWER CLASS is shared —
+        # commit the pending change first — so folding the two under one name
+        # is a consolidation worth making; it renames a shipped row, which
+        # this repair was not asked to do (surfaced to the desk).
+        ident="carrier_dirty_at_entry",
+        refusal="a carrier verb over a carrier that holds UNCOMMITTED "
+                "changes at verb entry — `item add`/`amend`/`park`/"
+                "`promote`/`bench`/`close`/`supersede-closure` and every "
+                "writing `arc` verb. Each commits the carriers it writes by "
+                "pathspec, a pathspec is file-granular, so the pending "
+                "change would ride out under that verb's message. Refused "
+                "BEFORE the first write, with every carrier the commit will "
+                "name graded before any is written (lc-318, the ledger's "
+                "REFUSE-ON-DIRTY decision extended). `--no-commit` callers "
+                "own their commit and are not asked",
+        firing_input="`item amend xx-2` in a repo whose committed item "
+                     "carrier carries an uncommitted hand edit to xx-1",
+        expect=exits.FINDING,
+        fire=lambda: _cli_over_hand_edited_items(_AMEND_SECOND_ITEM),
+        # THE SAME AMEND over the same seeded carrier AS COMMITTED: the arms
+        # differ in the pending hand edit alone, so the refusal is the DIRT
+        # and not the verb, the item or the slot.
+        control=lambda: _cli(_AMEND_SECOND_ITEM, items=TWO_SEED_ITEMS),
+        stage="drain wave C, lane C1 (lc-318)",
     ),
     Row(
         ident="ledger_join_undisposed",
