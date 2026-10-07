@@ -165,16 +165,6 @@ bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 
 amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over). The decision is ANSWERED at LEDGER.md:71: every carrier-WRITING verb commits its write or prints NOT COMMITTED; genuinely read-only verbs are outside by construction; migrate dry-run artifacts are exempt and its carrier writes are not. The done-criterion already states that contract. Stays STANDBY.
 amended-blocked-by: 2026-10-05 NONE
 
-## lc-50
-grade: STANDBY
-requirement: closed-ref: stores the caller's spelling verbatim, so `--ref HEAD` writes the literal string HEAD into a permanent closure record that then stops being edited: a moving label where the record's whole point is content. Surfaced by the lane that built it, from its own must-not-move arm, record: opus-lc44-48-49 report gap 2, 2026-08-27
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
-done-criterion: _resolve_refs resolves every accepted ref to its full 40-hex sha before writing, keeping the --ref HEAD convenience and storing content. DECIDED by the desk 2026-08-27, option (A) of the three the lane named: (B) refusing a non-sha drops the convenience for nothing, (C) leaving it stores a label the dotfiles devbook's own label-versus-content rule forbids, and lc-44's criterion already said closed-ref: <sha>. The docstring's counter-argument (rewriting puts a value in the file nobody typed) is answered: the full sha IS what the caller meant by HEAD at that instant, and the record must survive the ref moving. Red-first on --ref HEAD writing the literal string. Must-not-move: an unresolvable ref is still refused before the move; a full sha passed in is written unchanged; a comma list still resolves elementwise
-evidence: verbs.py:1584-1598 read at the artifact by the desk: the docstring states WRITTEN AS GIVEN, not resolved to a full sha, so this is the built design and not a slip. The predicate git rev-parse --verify <ref>^{commit} accepts HEAD, which is what makes the label writable
-blocked-by: NONE
-bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
-
 ## lc-52
 grade: PARKED
 requirement: every carrier verb that commits composes its own message and writes NO Co-Authored-By trailer, so an agent-authored carrier commit is unclaimable by trailer and the operator corpus's AI-attribution rule is unmet on this path, record: opus-lc44-48-49 report gap 5, 2026-08-27

@@ -2389,5 +2389,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 6b9e5fc5a54337edfa59c554124b0920fc65cd3f
 
+## lc-50
+grade: DONE
+requirement: closed-ref: stores the caller's spelling verbatim, so `--ref HEAD` writes the literal string HEAD into a permanent closure record that then stops being edited: a moving label where the record's whole point is content. Surfaced by the lane that built it, from its own must-not-move arm, record: opus-lc44-48-49 report gap 2, 2026-08-27
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_verbs.py
+done-criterion: _resolve_refs resolves every accepted ref to its full 40-hex sha before writing, keeping the --ref HEAD convenience and storing content. DECIDED by the desk 2026-08-27, option (A) of the three the lane named: (B) refusing a non-sha drops the convenience for nothing, (C) leaving it stores a label the dotfiles devbook's own label-versus-content rule forbids, and lc-44's criterion already said closed-ref: <sha>. The docstring's counter-argument (rewriting puts a value in the file nobody typed) is answered: the full sha IS what the caller meant by HEAD at that instant, and the record must survive the ref moving. Red-first on --ref HEAD writing the literal string. Must-not-move: an unresolvable ref is still refused before the move; a full sha passed in is written unchanged; a comma list still resolves elementwise
+evidence: verbs.py:1584-1598 read at the artifact by the desk: the docstring states WRITTEN AS GIVEN, not resolved to a full sha, so this is the built design and not a slip. The predicate git rev-parse --verify <ref>^{commit} accepts HEAD, which is what makes the label writable
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 closed-ref stores the resolved full sha. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 96b0a4c8fbc021ff9f4fc7455b23b2284531c1df
+
 ## Archive (pre-migration)
 
