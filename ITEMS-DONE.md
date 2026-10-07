@@ -2616,5 +2616,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 92c4256560283c94bcfaba2e7accfcbaf2a74f7c
 
+## lc-214
+grade: DONE
+requirement: THE DELETION-RECORD IDEMPOTENCE TEST IS TWO INDEPENDENT SUBSTRING TESTS, NOT A ROW MATCH, ON THE IRREVERSIBLE BRANCH. migrate.py:1295-1296 computes already = (f'| `{src_name}` |' in laws_old AND f'`{blob}`' in laws_old). Its own comment claims 'a record already naming THIS path at THIS blob'; what it examines is that this path occurs SOMEWHERE in the file and this blob occurs SOMEWHERE in the file, not that they occur in the SAME ROW. The corpus's substring-test-over-rendered-text class — a prefix match in an equality's costume. It matters because src.unlink() at 1306 runs regardless on the DELETE path, and the returned disposition line at 1313-1318 states unconditionally that the deletion record is appended, which is also false on an ordinary already-recorded re-run.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate_residue.py
+done-criterion: The idempotence test matches a ROW — this path AND this blob in the same record — rather than two independent substring hits anywhere in the file. The disposition line says what actually happened rather than asserting a record was appended when the already-branch skipped it. RED-FIRST, and the discriminating input is NOT constructed but drawn from a realistic laws file: a file already holding a deletion record for the same path at an EARLIER blob, with this run's blob cited anywhere else in the same file. Today already is True, no record is written, and the unlink still runs. MUST-NOT-BUILD: nothing changes about WHEN the delete happens; this is about what the idempotence test establishes and what the disposition line claims.
+evidence: RELAYED from the lc-192 lane, explicitly DERIVED-only on its side too — it read 1295-1296 and 1306 and 1313-1318 and did NOT exercise the --retire-source delete path. MEASURED at this desk: nothing. So this entry is two levels from an execution and is booked at that grade deliberately. FIRST BUILD STEP: exercise the delete path against the discriminating laws file, because a wrongness claim on an IRREVERSIBLE branch that has never been run is exactly the one that must not be repaired from reading alone.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The deletion-record idempotence test matches a whole row. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: e2797749690d092f87f37c49a8a6fb896fe3c7e9
+
 ## Archive (pre-migration)
 
