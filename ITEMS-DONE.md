@@ -3117,5 +3117,22 @@ closed-met: none
 closed-decided: LEDGER.md:211
 closed-ref: 4f6047a5ff53bc9279a0bc8b2e07ee0dc05c99ea
 
+## lc-36
+grade: DONE
+requirement: migrate TRUNCATES the requirement slot at a fixed ~277 chars with an ellipsis, then appends " — record: <carrier>:<line>" — measured 23 of 133 items in the dotfiles migration; the full body survives only in the source carrier, so the truncation is a silent information loss the conservation identity does not see
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: either the full requirement body travels into the item, or the slot says TRUNCATED and carries its source range explicitly; red-first on a source entry longer than the cut width, asserting the item is not silently shortened
+evidence: wave-4 desk, executed 2026-08-27 over dotfiles/ITEMS.md: 23 of 133 requirement lines carry the mid-sentence ellipsis at len 277-278 (df-2, df-3, df-8 sampled and read in full). All 133 evidence slots are line-range pointers into the old carriers (85 BACKLOG.md, 48 claude/BACKLOG.md), which is what makes the loss recoverable TODAY and unrecoverable once those ranges stop resolving
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-05 Re-grade (gap-sweep desk lifecycle-b5, 2026-10-05; named by the head pass at b97eb32 as a wait that is over), and on the driving desk directive naming this entry. THREE ledger lines bear on it and the head pass shows only the one whose question text equals the blocker: LEDGER.md:70 (full body, no truncation), LEDGER.md:185 (a multi-paragraph body goes to its own record file), and LEDGER.md:190, the operator first-hand today, which supersedes 185 and narrows 70 to what fits a slot. The done-criterion is rewritten to the state those three leave in force. Not built now, reason named: it needs the migrator body-transport path read at HEAD after today changes to it (lc-308, lc-312), and this desk remaining attention is committed to the sweep. Stays STANDBY.
+amended-done-criterion: 2026-10-05 a migrated requirement body that FITS one slot line travels whole into the slot (LEDGER.md:70); one that does not fit is never silently shortened: the slot says TRUNCATED and carries its source range explicitly, and NO per-item record file is written for it (LEDGER.md:190, operator first-hand 2026-10-05, superseding LEDGER.md:185). Red-first on a source entry longer than the cut width, asserting the item slot carries the TRUNCATED mark and the range rather than a bare ellipsis.
+amended-blocked-by: 2026-10-05 NONE
+closed-reason: 2026-10-07 A cut requirement is marked TRUNCATED with a pointer to the full text. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: a84af08a8d37096577583b22f313152983c57ca8
+
 ## Archive (pre-migration)
 
