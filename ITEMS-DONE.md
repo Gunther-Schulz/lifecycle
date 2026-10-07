@@ -2305,5 +2305,19 @@ closed-met: none
 closed-decided: none
 closed-ref: b78bda5473576a225ba63763bfaba667801d9c4d
 
+## lc-108
+grade: DONE
+requirement: kind check's CLEAN line does not say how many git hooks it checked, so a repo where the guarded set is EMPTY reads byte-identically to one where every hook was checked and found sound. MEASURED on a repo with a real HEAD, a valid declaration and no hook anywhere: population 0 members, check_hook_modes contributes 0 findings and 0 unverified, and the verdict prints 'kind check: CLEAN — 1 kind(s) registered, every stage declared…' exit 0, with no mention of hooks at all. That is the 0/0 failure this repo family has already paid for once — a checker that printed 0/0 read exactly like 'checked and clean' when it meant 'there was nothing to check' — record: lc-103 lane halt at the write boundary, refinement 1, 2026-09-13
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/cli.py,test/
+done-criterion: the CLEAN verdict states the COUNT it checked, so an empty guarded set is a stated zero and never silence. The two states are already distinct IN THE DATA and only unstated in the output — decl.hook_population returns modes=={} for a hookless repo (git answered, the tree carries nothing) and modes is None for an unborn HEAD (git could not be asked) — so {} prints an honest '0 shipped git hook(s) checked' and the None branch gets its OWN wording, which is the decision this item still owes: 'no commit yet, so nothing is committed to check' is a candidate, not a ruling. MUST-NOT-MOVE, measured by the lane before it halted: EMPTY MAPS TO A PASS, never could-not-verify — mapping it to 3 flips declaration_ignored_tracked's control from CLEAN to 3, takes test_control_is_clean_where_the_row_is_about_a_valid_input red, and flips every consumer repo's kind check from 0 to 3. COLLIDES WITH lc-107: same file (cli.py), different verbs — serialize or bundle, do not run in parallel
+evidence: MEASURED BY THE LANE AND REPORTED WITH ITS OUTPUT, 2026-09-13: population modes={} declared=[] -> 0 members; check_hook_modes alone code=0 findings=0 unverified=0; decl.read code=0 findings=0 unverified=0; kind check exit 0 with no hook line. The lane HALTED here rather than shipping it, correctly: the verdict printer is cli.py:101-104, outside its write set, and the one-line change it drafted is recorded in its addendum. This desk independently ran a hookless fixture and saw 'COULD NOT VERIFY — 4 check(s)' and could NOT tell whether any was the hook check; the lane's instrumented run answers that it contributes none of them, so the four belong to that fixture's unrelated gaps. Nothing was guessed: the {}-vs-None split is read off a run, not argued
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 kind check states how many shipped git hooks it checked; zero is a stated zero. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 024531b5322b39a0550836a7892b4fa16911e99f
+
 ## Archive (pre-migration)
 
