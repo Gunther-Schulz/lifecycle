@@ -360,6 +360,26 @@ def read_roster(path: Path):
     return out, None
 
 
+def roster_empty_message(path: Path) -> str:
+    """ONE BODY for the empty-roster finding, read by both renderers — the
+    same reason `table_absent_message` exists (lc-212).
+
+    IT NAMES ITS OWN REPAIR, which is what separates it from the absent
+    case: there the file is missing, here the file is present and lists
+    nothing, so the repair is to register a repo rather than to create a
+    roster.
+    """
+    return (f"the roster at {path} exists and lists no repo. The router is "
+            "GENERATED over this file, so a roster listing nothing is a board "
+            "that was never pointed at anything — it renders exactly like a "
+            "board on which every lane is quiet. This is not the absent case: "
+            "the file is there, and what it lacks is an entry. `lifecycle "
+            "lane register <repo>` adds one. That verb writes the header and "
+            "the first entry in one operation, so it never leaves this state "
+            "behind — an empty roster was emptied, hand-made, or cut short "
+            "mid-write.")
+
+
 #: THE ROSTER'S OWN CONTRACT LINE (lc-246). The roster either IS the
 #: declared-repo population or is a deliberate SUBSET of it, and those are
 #: different files with different meanings for every mechanism generated over
@@ -810,6 +830,11 @@ class RosterRunResult:
     roster_absent: bool
     roster_error: str | None = None
     roster_count: int = 0
+    #: The roster file EXISTS and lists nothing (lc-212). Its own flag and
+    #: its own row, never `roster_absent` widened: a missing file and a file
+    #: with nothing in it have different repairs, and an operator told only
+    #: "your board is empty" cannot tell which one is owed.
+    roster_empty: bool = False
     repos: list = field(default_factory=list)                # RepoRunResult
     total_lanes: int = 0
     fired: int = 0
@@ -837,6 +862,20 @@ def gather_lane_list(args) -> RosterRunResult:
     run = RosterRunResult(roster_path=path, roster_absent=False,
                           roster_count=len(entries))
     codes = [exits.CLEAN]
+    # A ROSTER LISTING NOTHING IS A FINDING, NOT A QUIET BOARD (lc-212). The
+    # loop below runs zero times over it, so every counter stays at zero and
+    # the walk used to exit CLEAN — between an ABSENT roster and an
+    # UNRESOLVABLE entry, which both refuse. `read_roster`'s own words for the
+    # absent case describe this one exactly: an empty board renders like a
+    # board on which every lane is quiet. A FINDING and not a could-not-verify
+    # on the absent case's own argument — a roster listing no repo is a state
+    # of the system, not a limit of this run.
+    # KEYED ON THE ROSTER, NEVER ON THE LANE COUNT: a roster listing one repo
+    # that declares zero lanes is the documented good case and says so in a
+    # line of its own, so a test on `total_lanes` here would refuse it.
+    if not entries:
+        run.roster_empty = True
+        codes.append(exits.FINDING)
     for raw in entries:
         row = resolve_repo_row(raw)
         rr = RepoRunResult(raw=raw, resolution=row.resolution,
@@ -924,6 +963,8 @@ def render_lane_list_longhand(run: RosterRunResult, out) -> None:
 
     out(f"roster: {run.roster_path}")
     out(f"roster count: {run.roster_count} repo(s) listed")
+    if run.roster_empty:
+        out(f"FINDING [roster_empty] {roster_empty_message(run.roster_path)}")
     out("")
 
     for rr in run.repos:
@@ -1090,6 +1131,12 @@ def render_lane_list_json(run: RosterRunResult, out) -> None:
         "code": exits.word(run.code),
         "exit": run.code,
     }
+    if run.roster_empty:
+        # The same top-level `findings` list the absent-roster document
+        # carries, and the longhand's own message body: one finding, two
+        # renderings, never two wordings.
+        doc["findings"] = [{"row": "roster_empty",
+                            "message": roster_empty_message(run.roster_path)}]
     out(json.dumps(doc, indent=2))
 
 

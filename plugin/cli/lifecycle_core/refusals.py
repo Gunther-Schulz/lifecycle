@@ -2485,6 +2485,26 @@ LANE_ROWS = [
         stage="wave 1, stage 7",
     ),
     Row(
+        ident="roster_empty",
+        refusal="roster EMPTY — the file exists and lists no repo. The "
+                "router is generated over it, so the board was never pointed "
+                "at anything and renders exactly like one on which every "
+                "lane is quiet. Its own row and not `roster_absent` widened: "
+                "the repairs differ (register a repo, versus create the "
+                "roster)",
+        firing_input="a roster file carrying no entry; run `lane list`",
+        expect=exits.FINDING,
+        fire=lambda: _lane_cli(["lane", "list"], roster_lines=[]),
+        # The SAME roster file with ONE entry, a repo that resolves and
+        # declares zero lanes: the arms differ in whether the roster lists
+        # anything, and in nothing else. It is also the case that BOUNDS the
+        # refusal — a board of zero lanes over a listed repo is the
+        # documented good case, so a control with a lane on it would pass
+        # for a build that refused every zero-lane board.
+        control=lambda: _lane_cli(["lane", "list"], roster_lines=["@repo"]),
+        stage="drain wave B (lc-212)",
+    ),
+    Row(
         ident="repo_unresolved",
         refusal="a listed repo that does not resolve is NAMED — a router that "
                 "dropped the line would print a shorter board rather than a "

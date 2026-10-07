@@ -532,6 +532,19 @@ MUTATIONS = [
      "so a missing board reads as a limit of the run rather than a state of "
      "the system"),
 
+    # lc-212. THE EMPTY-ROSTER TEST ITSELF, on the gather pass and not on a
+    # renderer, for the reason recorded above this group. Folded, a roster
+    # listing nothing walks its zero entries, every counter stays at zero,
+    # and the board exits CLEAN — the state this row exists to refuse. The
+    # absent-roster return above it is a different branch (`entries is
+    # None`) and is not reached by an EXISTING file, so the two rows stay
+    # separable: this fold leaves `roster_absent`'s plant firing.
+    ("roster_empty", "lanes.py",
+     "    if not entries:",
+     "    if False:",
+     "the test that the roster LISTS anything — a present file with no entry "
+     "then reads as a quiet board"),
+
     ("repo_unresolved", "lanes.py",
      '                           repo_unresolved=row.resolution.startswith("UNRESOLVED"))',
      "                           repo_unresolved=False)",
