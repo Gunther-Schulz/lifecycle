@@ -201,6 +201,7 @@ decision: join disposition of LEDGER:199 beside LEDGER:151, LEDGER:169, LEDGER:1
 decision: are the close statement and the deletion-side check accepted into main as built by the lane (9c4c5c5, 3063fd1, 36126b5)? → YES (desk lifecycle-03, 2026-10-05, on LEDGER:199). Desk re-ran suite, --test, prove-rows, the history replay (18 of 1389, 0 tool-written) and both under the real commit hook: commit b781cba. Beyond the brief: a conditional slot rewritten in place is exempt (36126b5).
 decision: join disposition of LEDGER:201 beside LEDGER:193, LEDGER:195, LEDGER:197, LEDGER:199 → new: LEDGER:199 decides the release; no line accepts the built commits or names their shas
 decision: standort 2026-10-06 (laptop, session lifecycle-69): where does lifecycle stand and does the approach still hold → TWEAK; kill condition 1 is the leg to re-evaluate (LEDGER:169 no drop, per-arc form ungraded). Suite, --test and leak bites re-run green here. Booked lc-314, lc-315. Phases 2 and 4 COULD NOT VERIFY on this machine: transcripts and state carriers sit on the building machine
+decision: which of the three repair directions this repo takes: pathspec-scoped commit, refuse-on-dirty, or document the contract → REFUSE-ON-DIRTY (desk 2026-10-07, operator direction to drain on desk recommendations). A pathspec is file-granular and cannot split a hand hunk from the verb line in one file; a documented contract leaves the hazard. The hand edit is committed first, under its own message. lc-138
 
 ## Archive (pre-migration)
 
