@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 326
+added: 327
 compacted: 0
 
 ## lc-3
@@ -1439,4 +1439,13 @@ goal: every-refusal-red-first
 write-set: plugin/cli/lifecycle_core/roster.py,test/test_roster.py
 done-criterion: The scan counts a bracketed row name only where it is code that can execute: a name inside a docstring or a comment is not an emit site. Red-first, both directions: a planted module whose ONLY mention of a registered row is in a docstring makes that row read as not emitted where the real sites are removed; and a docstring naming an unregistered row raises no emit_site_unregistered. Control: every row emitted today is still counted, and the count per row is printed before and after so a dropped real site shows.
 evidence: RELAYED from wave E lane E4 2026-10-07 at 83eaa73, not re-run at the desk: emit_sites() for trigger_broken returns lanes.py:1031, lanes.py:1046, verbs.py:2570, verbs.py:2576, verbs.py:2891, and 2570 and 2576 are prose inside a docstring.
+blocked-by: NONE
+
+## lc-335
+grade: STANDBY
+requirement: THE ARC INDEX CARRIES A SCHEMA LINE THE SCHEMA BUMP DOES NOT REACH. arcs/INDEX sits under the declared kind arc index and opens with a schema line, and it is outside carrier_homes: migrate --schema-from would bump the declaration and the other carriers and leave it behind, and kind check does not grade its version. Found by the scope line lc-215 added on its first run over this repo. Record: docs/directives/2026-10-07-drain-wave-e.md
+goal: one-home-per-kind
+write-set: plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/migrate.py,test/test_schema.py
+done-criterion: DECIDED and built one way: either the arc index joins the homes one-schema-per-repo reaches (bumped by migrate --schema-from, graded by kind check, red-first on an index left one version behind), or its schema line is declared outside that rule in the code that names the homes, with the reason, and migrate's NOT REACHED line says it is deliberate. Whichever is taken, a bump over a repo with arcs leaves no file whose schema line disagrees silently.
+evidence: RELAYED from wave E lane E8 2026-10-07: migrate --schema-from 6 dry run in its worktree printed NOT REACHED by this command: 1 file - arc index: arcs/INDEX (schema 6). MEASURED at the desk the same day from the other side: retire.list_home needed a narrowing (d5a20af) because arcs/INDEX carries a schema head while not being a carrier home.
 blocked-by: NONE
