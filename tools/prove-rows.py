@@ -1127,6 +1127,20 @@ MUTATIONS = [
      "the report of lines carrying no tag — the class that otherwise passes "
      "by having no tagged line to fault"),
 
+    # lc-188. THE ZERO-GRADED TEST, at the one site that decides it. Folded,
+    # a record with nothing under ESTABLISHED or OPEN falls through to the
+    # CLEAN line it used to print: 3/named becomes 0/unnamed. It reads the
+    # per-record count and touches no finding list, so no neighbour's
+    # arrangement mutates an expression this row's verdict is computed from.
+    # Admitted on the lc-142 pair — PROVEN at this anchor, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("record_nothing_graded", "records.py",
+     "        if not is_closed and not bad and not n:",
+     "        if False:",
+     "the test that an open, readable record graded any line at all "
+     "(lc-188) — a record emptied of its lines then reads CLEAN, "
+     "byte-identical to one that was examined and found sound"),
+
     ("record_tag_unknown", "records.py",
      "    if bad_tag:",
      "    if False:",

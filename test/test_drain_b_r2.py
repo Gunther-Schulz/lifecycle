@@ -1,4 +1,5 @@
-"""Drain wave B, lane R2 — the walk on a second machine (lc-314).
+"""Drain wave B, lane R2 — the walk on a second machine (lc-314), and the
+record that graded nothing (lc-188, the second half of this file).
 
 WHAT THESE ARMS HOLD APART. `kind_grew_without_exit` counts exit events in
 the fire log, and the fire log lives under `XDG_STATE_HOME`: it does not
@@ -32,7 +33,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
 from lifecycle_core import exits, firelog, retire  # noqa: E402
 from lifecycle_core import ledger as ledger_mod  # noqa: E402
-from lifecycle_core.refusals import EMPTY_DONE, SEED_ITEMS  # noqa: E402
+from lifecycle_core import records as rec  # noqa: E402
+from lifecycle_core.refusals import (  # noqa: E402
+    EMPTY_DONE, SEED_ITEMS, _GOOD_RECORD)
 
 #: The seed carrier's one block, re-headed as a body the done home holds. Cut
 #: from `SEED_ITEMS` rather than written out again, so the two cannot drift.
@@ -247,6 +250,138 @@ class TheWalkSaysWhichMachineItSpeaksFor(_SecondMachine):
         self.assertEqual(len(stale), 1, out)
         self.assertNotIn("this is the first walk", stale[0])
         self.assertIn("THIS MACHINE", stale[0])
+
+
+# --- lc-188: a record with zero graded lines ---------------------------------
+#
+# `record check` grades the lines under ESTABLISHED and OPEN. A record whose
+# two slots hold no line produces an empty finding list — the same value a
+# sound record produces — and printed CLEAN with no count, so the two outputs
+# were byte-identical. `record_line_untagged` closed the prose case; this is
+# the same case with the prose removed.
+
+ESTABLISHED_LINE = ("[VERIFIED] the fold works — test_records.py::test_fold, "
+                    "green\n")
+OPEN_LINE = ("[PENDING] does the gate fire — route: measure — probe: plant a "
+             "closed record; red = it fires, green = it is blind\n")
+
+#: The conformant record with both graded slots EMPTIED, headings standing.
+#: Cut from the roster's own control so the arms differ in those two lines
+#: and in nothing else.
+NOTHING_TO_GRADE = _GOOD_RECORD.replace(ESTABLISHED_LINE, "").replace(
+    OPEN_LINE, "")
+
+NOTHING = "[record_nothing_graded]"
+
+
+def record_check(**files):
+    d = Path(tempfile.mkdtemp(prefix="lifecycle-r2-records-"))
+    try:
+        for name, text in files.items():
+            (d / f"{name}.md").write_text(text, encoding="utf-8")
+
+        class _Args:
+            dir = str(d)
+        said = []
+        code = rec.cmd_record_check(_Args(), said.append)
+        return code, "\n".join(said)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+class ARecordThatGradedNothing(unittest.TestCase):
+
+    def test_the_fixture_differs_from_the_control_in_two_lines(self):
+        """The arrangement: both replacements landed, and the five headings
+        still stand — so the red below is the empty slots and not a missing
+        heading answering under another name."""
+        self.assertEqual(_GOOD_RECORD.count(ESTABLISHED_LINE), 1)
+        self.assertEqual(_GOOD_RECORD.count(OPEN_LINE), 1)
+        for slot in rec.SLOTS:
+            self.assertIn(f"## {slot}", NOTHING_TO_GRADE)
+        self.assertNotIn("[VERIFIED]", NOTHING_TO_GRADE)
+        self.assertNotIn("[PENDING]", NOTHING_TO_GRADE)
+
+    def test_zero_graded_lines_is_could_not_verify_not_clean(self):
+        """lc-188 RED-FIRST."""
+        code, out = record_check(record=NOTHING_TO_GRADE)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("COULD NOT VERIFY " + NOTHING, out)
+        self.assertIn("record.md", out)
+        self.assertIn("0 line(s) graded", out)
+        self.assertNotIn("record check: CLEAN", out)
+        self.assertNotIn("FINDING", out)
+
+    def test_the_clean_path_prints_its_denominator(self):
+        """MUST-NOT-MOVE, and the criterion's other half: a count printed
+        only when something is wrong is a count nobody reads."""
+        code, out = record_check(record=_GOOD_RECORD)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("record check: CLEAN", out)
+        self.assertIn("2 line(s) graded", out)
+        self.assertNotIn(NOTHING, out)
+
+    def test_a_wrapped_line_is_one_graded_line(self):
+        """The count is of LOGICAL lines — what the checker grades — so a
+        wrap does not inflate the denominator."""
+        wrapped = _GOOD_RECORD.replace(
+            "works — test_records.py::test_fold, green",
+            "works —\n    test_records.py::test_fold, green")
+        self.assertNotEqual(wrapped, _GOOD_RECORD)
+        code, out = record_check(record=wrapped)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("2 line(s) graded", out)
+
+    def test_a_finding_keeps_its_verdict_and_gains_the_count(self):
+        """MUST-NOT-MOVE: real graded lines, one of them faulty."""
+        bad = _GOOD_RECORD.replace("[VERIFIED] the fold", "[CONFIRMED] the fold")
+        code, out = record_check(record=bad)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [record_tag_unknown] record.md: 1 line(s)", out)
+        self.assertIn("2 line(s) graded", out)
+        self.assertNotIn(NOTHING, out)
+
+    def test_untagged_prose_is_graded_and_stays_a_finding(self):
+        """The neighbour's case must not be absorbed: a prose line IS a
+        graded line — it is what `record_line_untagged` faults."""
+        prose = NOTHING_TO_GRADE.replace(
+            "## ESTABLISHED\n", "## ESTABLISHED\n- the fold works, we checked\n")
+        code, out = record_check(record=prose)
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("[record_line_untagged]", out)
+        self.assertIn("1 line(s) graded", out)
+        self.assertNotIn(NOTHING, out)
+
+    def test_one_empty_record_withdraws_clean_from_the_whole_run(self):
+        """The run's promise is over every record: one that graded nothing
+        outranks the sound one beside it, whose count still prints."""
+        code, out = record_check(good=_GOOD_RECORD, hollow=NOTHING_TO_GRADE)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn(NOTHING + " hollow.md", out)
+        self.assertNotIn(NOTHING + " good.md", out)
+        self.assertIn("2 line(s) graded", out)
+
+    def test_it_outranks_a_finding_and_the_finding_still_prints(self):
+        """`exits.worst`'s order, at this site: a record missing its graded
+        slots is a finding AND graded nothing, and the code says the list is
+        not whole while the list prints in full."""
+        gone = NOTHING_TO_GRADE.replace("## OPEN", "## QUESTIONS")
+        code, out = record_check(record=gone)
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("[record_slot_missing]", out)
+        self.assertIn(NOTHING, out)
+
+    def test_a_closed_record_keeps_its_answer(self):
+        """A CLOSED record is shape-ungraded BY DESIGN and already says so
+        on its own line; test_records.py pins it CLEAN. It has no graded
+        line and is not this refusal's case."""
+        closed = _GOOD_RECORD.replace(OPEN_LINE, "") + (
+            "\n## CLOSED\ngraduated to LEDGER.md:12\n")
+        code, out = record_check(record=closed)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("CLOSED record.md", out)
+        self.assertNotIn(NOTHING, out)
+        self.assertIn("1 closed", out)
 
 
 if __name__ == "__main__":

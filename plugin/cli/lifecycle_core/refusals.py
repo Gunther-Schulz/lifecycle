@@ -4535,6 +4535,27 @@ RECORD_ROWS = [
         stage="lc-156",
     ),
     Row(
+        ident="record_nothing_graded",
+        refusal="the same case with the prose REMOVED (lc-188) — an open "
+                "record with no line under ESTABLISHED or OPEN, where every "
+                "line-shape check runs over nothing and the empty finding "
+                "list is the value a sound record returns",
+        firing_input="the conformant record with its one ESTABLISHED line "
+                     "and its one OPEN line deleted, all five headings left "
+                     "standing",
+        expect=exits.COULD_NOT_VERIFY,
+        fire=lambda: _record_run(
+            _GOOD_RECORD.replace(
+                "[VERIFIED] the fold works — test_records.py::test_fold, "
+                "green\n", "")
+            .replace(
+                "[PENDING] does the gate fire — route: measure — probe: "
+                "plant a closed record; red = it fires, green = it is "
+                "blind\n", "")),
+        control=lambda: _record_run(_GOOD_RECORD),
+        stage="lc-188",
+    ),
+    Row(
         ident="record_tag_unknown",
         refusal="a tag outside the closed set — counted by nothing, draining "
                 "through every gate",

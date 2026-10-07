@@ -153,8 +153,29 @@ def split_slots(text: str) -> dict:
     return out
 
 
+def nothing_graded_line(name: str) -> str:
+    """The answer for an open record whose graded slots hold no line (lc-188).
+
+    ONE BODY, so the ident and the sentence cannot drift into two spellings
+    of one refusal — the idiom `retire.unresolvable_line` already uses for
+    the walk's own could-not-verify.
+    """
+    return (f"COULD NOT VERIFY [record_nothing_graded] {name}: 0 line(s) "
+            "graded — no line stands under ESTABLISHED or OPEN, so the tag, "
+            "basis, route and probe checks ran over nothing and found "
+            "nothing. That is not a sound record; it is one no line-shape "
+            "check examined, and an empty finding list is exactly what a "
+            "sound record returns.")
+
+
 def check_one(path: Path):
-    """`(findings, unreadable, waiting_asks, closed)` for one record.
+    """`(findings, unreadable, waiting_asks, closed, graded)` for one record.
+
+    `graded` is the DENOMINATOR (lc-188): how many logical lines under
+    ESTABLISHED and OPEN the line-shape checks actually examined. Every such
+    line counts, a faulty one included — an untagged line was graded, which
+    is how it came to be a finding. A closed record grades none BY DESIGN,
+    and its caller says so on that record's own line.
 
     `findings` are whole message strings, one per CLASS per record rather
     than one per offending line: a record of loose prose yields hundreds of
@@ -165,7 +186,7 @@ def check_one(path: Path):
     try:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as e:
-        return [], f"{path.name} — {type(e).__name__}: {e}", 0, False
+        return [], f"{path.name} — {type(e).__name__}: {e}", 0, False, 0
 
     findings = []
     slots = split_slots(text)
@@ -188,7 +209,7 @@ def check_one(path: Path):
                 "pointer to where everything went; a closure that says only "
                 "that it happened leaves every graduated line unfindable, "
                 "which is the same loss as deleting them.")
-        return findings, None, 0, True
+        return findings, None, 0, True, 0
 
     missing = [s for s in SLOTS if s not in slots]
     if missing:
@@ -207,8 +228,10 @@ def check_one(path: Path):
 
     untagged, bad_tag, unbasised, unrouted, badroute, unprobed = [], [], [], [], [], []
     waiting = 0
+    graded = 0
     for slot in ("ESTABLISHED", "OPEN"):
         for line in slots.get(slot, []):
+            graded += 1
             stripped = line.strip()
             m = _TAG_LINE.match(stripped)
             if not m:
@@ -275,7 +298,7 @@ def check_one(path: Path):
             "consistent with either answer decides nothing — naming it is "
             f"what makes the question answerable. First: {unprobed[0]!r}")
 
-    return findings, None, waiting, False
+    return findings, None, waiting, False, graded
 
 
 def cmd_record_check(args, out) -> int:
@@ -295,14 +318,21 @@ def cmd_record_check(args, out) -> int:
         return exits.COULD_NOT_VERIFY
 
     all_findings, unreadable, waiting, closed = [], [], 0, []
+    graded, ungraded = 0, []
     for p in files:
-        f, bad, w, is_closed = check_one(p)
+        f, bad, w, is_closed, n = check_one(p)
         all_findings += f
         if bad:
             unreadable.append(bad)
         waiting += w
+        graded += n
         if is_closed:
             closed.append(p.name)
+        # lc-188: AN OPEN, READABLE RECORD THAT GRADED NO LINE. Not a closed
+        # one — that is shape-ungraded by design and its line below says so —
+        # and not an unreadable one, which already has its own answer.
+        if not is_closed and not bad and not n:
+            ungraded.append(p.name)
 
     out(f"records: {len(files)} at {d}")
     for name in closed:
@@ -312,6 +342,8 @@ def cmd_record_check(args, out) -> int:
         out(f"  {line}")
     for bad in unreadable:
         out(f"  COULD NOT VERIFY: {bad}")
+    for name in ungraded:
+        out("  " + nothing_graded_line(name))
 
     if waiting:
         # NOT a finding. A question legitimately waiting on the reporter is
@@ -326,16 +358,26 @@ def cmd_record_check(args, out) -> int:
     # that failed to read part of its input cannot promise the findings below
     # are the complete list. The findings are still printed in full — only
     # the promise of completeness is withdrawn.
-    if unreadable:
+    #
+    # A RECORD THAT GRADED NOTHING IS THE SAME WITHDRAWAL (lc-188), one step
+    # in: it was read, and no line-shape check had a line to examine. THE
+    # DENOMINATOR IS ON EVERY PATH — a count printed only when something is
+    # wrong is a count nobody reads, and without it CLEAN over two graded
+    # lines and CLEAN over none were the same bytes.
+    span = (f"{graded} line(s) graded in "
+            f"{len(files) - len(unreadable) - len(closed)} open record(s), "
+            f"{len(closed)} closed (closure gate only)")
+    if unreadable or ungraded:
         out(f"record check: COULD NOT VERIFY — {len(unreadable)} record(s) "
-            f"could not be read, {len(all_findings)} finding(s) among the "
-            f"{len(files) - len(unreadable)} that could.")
+            f"could not be read and {len(ungraded)} open record(s) had no "
+            f"line to grade; {len(all_findings)} finding(s) among the "
+            f"{len(files) - len(unreadable)} that could be read. {span}.")
         return exits.COULD_NOT_VERIFY
     if all_findings:
         out(f"record check: {len(all_findings)} finding(s) across "
-            f"{len(files)} record(s).")
+            f"{len(files)} record(s). {span}.")
         return exits.FINDING
-    out(f"record check: CLEAN — {len(files)} record(s): five slots each, "
-        "every tagged line carrying a basis, every PENDING line routed and "
-        "probed, every closure pointed and drained.")
+    out(f"record check: CLEAN — {len(files)} record(s), {span}: five slots "
+        "each, every tagged line carrying a basis, every PENDING line routed "
+        "and probed, every closure pointed and drained.")
     return exits.CLEAN
