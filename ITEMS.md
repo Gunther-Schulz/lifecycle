@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 310
+added: 311
 compacted: 0
 
 ## lc-3
@@ -1698,4 +1698,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_verbs.py
 done-criterion: Every verb that writes and commits a carrier checks, before its first write, that each carrier it will commit is clean, by the carrier_dirty helper lc-138 added, and refuses with nothing written where one is not; the ledger ruling of 2026-10-07 (REFUSE-ON-DIRTY) extended to every carrier. Red-first per verb family: a carrier dirty with an unrelated hand edit at verb entry. MUST-NOT-MOVE: a clean invocation commits exactly what the verb wrote; --no-commit callers are not refused; a verb that writes two carriers checks both before writing either. The could-not-verify branch (git cannot answer) is exercised end to end by a test.
 evidence: RELAYED from lane R1 (opus) 2026-10-07 at 431190d: ledger.append followed by a whole-file commit also runs in item supersede and in item close decision and drop branches, and every item verb commits ITEMS.md whole by the same route. RELAYED from peer session dotfiles-2b the same day: after a refused drop left three files dirty, the next verb (an item amend on another item) committed ITEMS.md whole, carrying the half-finished deletion under an unrelated message.
+blocked-by: NONE
+
+## lc-319
+grade: STANDBY
+requirement: A TRACKED PRIOR MIGRATION REPORT IS LISTED AS A CARRIER READER BY THE NEXT RUN: the residue scan excludes only the current report path, so an earlier report that quotes the carrier name is offered as a consumer needing an update - record: wave B lane M2b closing report 2026-10-07, finding 3
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate_residue.py
+done-criterion: A migration report written by an earlier run is not listed as a live carrier reader by a later run, whatever its path; a genuine consumer in the same repo still is. Red-first: a repo holding a tracked earlier report.
+evidence: RELAYED from lane M2b (sonnet) 2026-10-07 at 3390d71, observed while fixing lc-83, not fixed and not re-run at the desk: the report name is absent from residue_excluded unless it is the current report path.
 blocked-by: NONE
