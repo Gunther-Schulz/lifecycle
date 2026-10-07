@@ -1102,15 +1102,6 @@ amended-evidence: 2026-10-07 MEASURED at the lifecycle desk 2026-10-07, on opera
 amend-reason: 2026-10-07 dotfiles repaired; outcome recorded
 amended-evidence: 2026-10-07 MEASURED 2026-10-07 at this desk: dotfiles repaired by its own session (dotfiles 7f0ee2f, unpushed there): kind check over dotfiles exits 0, 0 dangling_reference lines, CLEAN with 5 kinds. Five of nine repos now fixed (begehung, daneel, dispatch-guards, skill-craft, dotfiles); remaining: statiker, CachyOS-Setup, beat-the-books (live sessions), claude-code-cache-fix (its gate, lc-239).
 
-## lc-328
-grade: STANDBY
-requirement: FOUR PROOF-SHAPE LEFTOVERS FROM WAVE D: two retire-source rows are decided by two tests over one value, so one arrangement folds both tests and the other swaps a value where the rule says disable; the compaction site is a new route into carrier_dirty_at_entry with no arrangement of its own; and the conditional-slot recogniser reads an external moot record as a decision one - record: wave D lanes D4 (gaps C1, C2), D2 (gap 4) and D1 (gap 3) closing reports 2026-10-07
-goal: enforce-the-invariants
-write-set: tools/prove-rows.py,plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/items.py,test/test_prove_rows.py
-done-criterion: Each two-test row either gets a second firing input so each test has its own arrangement, or its combined arrangement is stated as covering both with the reason; the compaction route has an admitted arrangement; the recogniser has an external arm with a test, or the reason it cannot be reached is written at the site.
-evidence: RELAYED from the three lanes 2026-10-07: retire_source_laws_absent folded alone reads 2/named to 2/named, rows changed NONE; retire_source_uncommitted is recorded as committed = src_blob; the compaction refusal is covered by test_drain_d_d2 only; items.py near line 1102 was read, not executed.
-blocked-by: NONE
-
 ## lc-329
 grade: STANDBY
 requirement: NOTHING FLAGS A LIVE ITEM WHOSE GROUND HAS MOVED SINCE IT WAS BOOKED. The items kind declares staleness as a record pointer that no longer resolves, and no verb reads whether the files in an item's write-set changed after its booking. On 2026-10-07 the drain waves found items already repaired or overtaken (lc-233 and lc-122 dropped, several NOT-REPRODUCED) only because each lane reproduced before building. Operator question, first-hand 2026-10-07: do governed repos judge backlog items as they pile up, since they may be superseded or need adjusting. Record: docs/directives/2026-10-07-drain-wave-e.md

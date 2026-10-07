@@ -3473,5 +3473,18 @@ closed-met: none
 closed-decided: none
 closed-ref: c1116555590dcff97968933ec5ccbbcfe8d1e93a
 
+## lc-328
+grade: DONE
+requirement: FOUR PROOF-SHAPE LEFTOVERS FROM WAVE D: two retire-source rows are decided by two tests over one value, so one arrangement folds both tests and the other swaps a value where the rule says disable; the compaction site is a new route into carrier_dirty_at_entry with no arrangement of its own; and the conditional-slot recogniser reads an external moot record as a decision one - record: wave D lanes D4 (gaps C1, C2), D2 (gap 4) and D1 (gap 3) closing reports 2026-10-07
+goal: enforce-the-invariants
+write-set: tools/prove-rows.py,plugin/cli/lifecycle_core/refusals.py,plugin/cli/lifecycle_core/items.py,test/test_prove_rows.py
+done-criterion: Each two-test row either gets a second firing input so each test has its own arrangement, or its combined arrangement is stated as covering both with the reason; the compaction route has an admitted arrangement; the recogniser has an external arm with a test, or the reason it cannot be reached is written at the site.
+evidence: RELAYED from the three lanes 2026-10-07: retire_source_laws_absent folded alone reads 2/named to 2/named, rows changed NONE; retire_source_uncommitted is recorded as committed = src_blob; the compaction refusal is covered by test_drain_d_d2 only; items.py near line 1102 was read, not executed.
+blocked-by: NONE
+closed-reason: 2026-10-07 Four proof-shape leftovers closed with three rows admitted on the pair. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: 7ead407954818c076f55c07342419d21a0839c72
+
 ## Archive (pre-migration)
 
