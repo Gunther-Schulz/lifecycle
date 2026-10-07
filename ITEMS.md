@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 314
+added: 315
 compacted: 0
 
 ## lc-3
@@ -1538,4 +1538,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
 done-criterion: item close over a live external blocker has a stated disposition, by the same shape lc-105 gave evidence: refused for a DONE close with the two exits named, recorded as abandoned under --drop; no closed body reaches the done home in a state the done-home check then reds. Red-first on an amended external blocker.
 evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, measured there: an amended external blocker closes exit 0 and the next item check exits 2 with blocked_in_done_home.
+blocked-by: NONE
+
+## lc-323
+grade: STANDBY
+requirement: FOUR NAMING LEFTOVERS FROM lc-316 AND lc-317: conservation prints two could-not-verify lines where one would do; the laws row carries its name inside the message rather than in the bracket form the emit-site scan reads, and its unreadable-file sibling is unnamed; the init refusal of an unsafe lane name has no roster row or prover arrangement of its own; init refusing an existing declaration prints no row name - record: wave C lane C2 closing report 2026-10-07, gaps G2 to G5
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/init.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_roster.py
+done-criterion: Each of the four is repaired or declined with a reason: one conservation line with its arrangement re-anchored in the same commit; the laws row in the bracket form with its sibling branch named; a roster row and admitted arrangement for the init site; the existing-declaration refusal named. MUST-NOT-MOVE: no exit code changes.
+evidence: RELAYED from lane C2 (opus) 2026-10-07 at 03a40f3, read and partly measured there, not re-run at the desk.
 blocked-by: NONE
