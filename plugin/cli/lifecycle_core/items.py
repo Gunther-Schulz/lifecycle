@@ -2644,6 +2644,11 @@ def check_file(path: Path, out, prefix: str | None = None, *,
                 # which, since the door demands the statement, is every
                 # blocker booked after lc-169. The census counts are still
                 # taken from the two names above and do not move.
+                #
+                # A MIGRATION RE-GRADE IS LEFT OUT, by the predicate `item
+                # ready` already answers it with: that verb tells such an
+                # item "a ledger answer is not the route", and a near-match
+                # line here would tell it to ledger one.
                 unmatched = []
                 for it in parsed.items:
                     kind, detail = classify_blocker(
@@ -2652,7 +2657,8 @@ def check_file(path: Path, out, prefix: str | None = None, *,
                         continue
                     is_answered = bool(
                         ledger.decision_for(led, detail, for_item=it.ident))
-                    if not is_answered:
+                    if (not is_answered
+                            and not grammar.is_migration_question(detail)):
                         unmatched.append((it.ident, detail))
                     value = (it.slots.get(NOT_DERIVABLE) or "").strip()
                     if (value and value.upper() != UNKNOWN
@@ -2666,13 +2672,25 @@ def check_file(path: Path, out, prefix: str | None = None, *,
                     f"{answered} ANSWERED by the ledger (no statement needed), "
                     f"{len(unanswered)} UNSTATED (no `{NOT_DERIVABLE}:` record). "
                     + tail)
-                for ident, detail in unmatched:
-                    for ln, how in ledger.near_decisions_for(led, detail):
-                        out(f"  near-match: {ident} blocks on {detail!r}; "
-                            f"the ledger answers {ln.slots['question']!r} "
-                            f"({ledger_path.name}:{ln.lineno}) — {how}. NOT "
-                            "resolved: equality is the rule; amend the blocker "
-                            "or ledger the exact question.")
+                # ONE LINE PER DISTINCT QUESTION, never one per item: the
+                # per-item form printed about 300 lines on one governed repo
+                # where a single question is shared by hundreds of items.
+                asked = dict(unmatched)
+                for question, idents in ledger.near_groups(unmatched):
+                    near = {}
+                    for ident in idents:
+                        for ln, how in ledger.near_decisions_for(
+                                led, asked[ident], for_item=ident):
+                            near.setdefault(ln.lineno, (ln, how))
+                    if not near:
+                        continue
+                    out(f"  near-match: {ledger.render_near_items(idents)} "
+                        f"block on {question!r}; the ledger answers "
+                        + ledger.render_near_lines(
+                            ledger_path.name,
+                            [near[n] for n in sorted(near)])
+                        + ". NOT resolved: equality is the rule; amend the "
+                        "blocker or ledger the exact question.")
 
     c = census(parsed)
     out(f"census: open {c['open']}  closed {c['closed']}  "

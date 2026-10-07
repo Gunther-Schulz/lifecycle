@@ -2829,7 +2829,7 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why,
                     "with the item whose closure wrote it. This is a "
                     "different item and still needs the answer."
                     ), exits.CLEAN, ""
-        near = ledger.near_decisions_for(led, detail)
+        near = ledger.near_decisions_for(led, detail, for_item=it.ident)
         if near:
             # NAMED, for the reason the moot branch above gives (lc-62). The
             # flat sentence below told a desk that had ANSWERED this blocker
@@ -4753,6 +4753,47 @@ def _append_join_disposition(ctx: Ctx, written: str, disposition, out) -> None:
     out(f"ledger: {line}")
 
 
+def _near_standing_blockers(ctx: Ctx, question) -> list:
+    """The ANSWER-time half of lc-62: the standing `decision` blockers the
+    question about to be written NEARLY names and does not equal, one entry
+    per distinct blocker question — `[(question, [ident, ...], how), ...]`,
+    `how` being the first carrying item's (its own id suffix, where it has
+    one, is part of what was compared).
+
+    The desk writing an answer is the one party still holding the choice of
+    words, and it was told nothing: the line landed, the item stayed blocked,
+    and the miss surfaced only when somebody next ran `item ready`. Same
+    comparison (`ledger.near_how`), same grouping and the same two gates as
+    the reading side, so the two cannot disagree about what a near-miss is:
+    a migration re-grade is not answered through the ledger at all, and a
+    blocker whose own question the ledger already answers waits on nothing.
+
+    A REPORT AND NEVER A GATE. An unreadable carrier or ledger returns
+    nothing: this verb's job is the ledger line, and the checks that grade
+    those two files are the ones that say so.
+    """
+    parsed, _why = _load(ctx.items_path)
+    led, _led_why = ledger.read(ctx.ledger_path)
+    if parsed is None:
+        return []
+    waiting, hows = [], {}
+    for it in parsed.items:
+        kind, detail = items_mod.classify_blocker(
+            it.slots.get("blocked-by", ""), ctx.prefix)
+        if kind != "decision" or grammar.is_migration_question(detail):
+            continue
+        how = ledger.near_how(detail, question)
+        if how is None:
+            continue
+        if led is not None and ledger.decision_for(
+                led, detail, for_item=it.ident):
+            continue
+        waiting.append((it.ident, detail))
+        hows[it.ident] = how
+    return [(q, idents, hows[idents[0]])
+            for q, idents in ledger.near_groups(waiting)]
+
+
 # --- `ledger add` (stage 6) ---------------------------------------------------
 
 def cmd_ledger_add(args, out, ctx: Ctx) -> int:
@@ -4843,9 +4884,23 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
         if code != exits.CLEAN:
             return code
 
+    # READ BEFORE THE APPEND, so "already answered" is judged against the
+    # ledger this line is about to join and not against the line itself.
+    near_blockers = (_near_standing_blockers(ctx, args.question)
+                     if args.line_kind == "decision" else [])
+
     line = ledger.append(ctx.ledger_path, args.line_kind,
                          {k: str(v).strip() for k, v in slots.items()})
     out(f"ledger: {line}")
+    for question, idents, how in near_blockers:
+        out(f"  near-match: {ledger.render_near_items(idents)} block on "
+            f"{question!r}, and the question just written is "
+            f"{str(args.question).strip()!r} — {how}. NOT resolved: a "
+            "decision blocker resolves by question-slot EQUALITY, so this "
+            "line answers none of them and nothing here decides whether it "
+            "was meant to. If it was, `item amend <id> --blocked-by 'decision "
+            "<the question just written, copied>' --reason <why they are one "
+            "question>`; if it was not, the blocker stands.")
     disposition = getattr(args, "join_disposition", None)
     if disposition:
         _append_join_disposition(ctx, line, disposition, out)

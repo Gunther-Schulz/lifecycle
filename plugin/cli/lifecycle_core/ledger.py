@@ -446,7 +446,35 @@ def _norm_question(s: str) -> str:
     return " ".join(s.split())
 
 
-def near_decisions_for(parsed: Parsed, question: str) -> list:
+def near_how(a: str, b: str) -> str | None:
+    """How question `a` NEARLY names question `b`: `NEAR_EQUAL`,
+    `NEAR_CONTAINS`, or None — and None when the two are EQUAL, since an
+    equal pair is a match and not a miss.
+
+    THE ONE COMPARISON behind every near-match report (lc-62): the reading
+    side (`near_decisions_for`) and the answering side (`ledger add
+    decision`) both ask it, so they cannot come to disagree about what a
+    near-miss is. Containment is over WORDS, so `gate` is not found inside
+    `investigate`, and the contained side must be `_NEAR_MIN_WORDS` long.
+    """
+    a = (a or "").strip()
+    b = (b or "").strip()
+    if not a or not b or a == b:
+        return None
+    na, nb = _norm_question(a), _norm_question(b)
+    if not na or not nb:
+        return None
+    if na == nb:
+        return NEAR_EQUAL
+    short, long_ = (na, nb) if len(na) <= len(nb) else (nb, na)
+    if (len(short.split()) >= _NEAR_MIN_WORDS
+            and f" {short} " in f" {long_} "):
+        return NEAR_CONTAINS
+    return None
+
+
+def near_decisions_for(parsed: Parsed, question: str, *,
+                       for_item: str | None = None) -> list:
     """`(line, how)` for every `decision:` line whose question NEARLY names
     `question` and does not equal it (lc-62). `how` is `NEAR_EQUAL` or
     `NEAR_CONTAINS`.
@@ -460,31 +488,94 @@ def near_decisions_for(parsed: Parsed, question: str) -> list:
     (measured, df-130: the blocker was a sentence ABOUT the question, the
     ledger held the bare question, and no answer could ever have equalled it).
 
-    Containment is over WORDS, so `gate` is not found inside `investigate`,
-    and the contained side must be `_NEAR_MIN_WORDS` long.
+    A MOOT LINE IS NOBODY'S NEAR-ANSWER, by `decision_for`'s own second gate
+    and with its scoping: it speaks for its closer and for no other asker.
+    Without the gate this reported every moot line a retirement pass had
+    written as the answer a waiting item nearly had — measured on the real
+    carriers, 445 of 445 near-match lines across three repos — and sent the
+    reader to copy a question whose only line could never unblock them.
     """
-    q = (question or "").strip()
-    nq = _norm_question(q)
-    if not nq:
-        return []
+    asker = (for_item or "").strip()
     out = []
     for ln in parsed.lines:
         if ln.kind != "decision":
             continue
-        other = (ln.slots.get("question") or "").strip()
-        if not other or other == q:
+        how = near_how(question, ln.slots.get("question") or "")
+        if how is None:
             continue
-        no = _norm_question(other)
-        if not no:
+        closer = moot_closer(ln)
+        if closer is not None and (not asker or closer != asker):
             continue
-        if no == nq:
-            out.append((ln, NEAR_EQUAL))
-            continue
-        short, long_ = (no, nq) if len(no) <= len(nq) else (nq, no)
-        if (len(short.split()) >= _NEAR_MIN_WORDS
-                and f" {short} " in f" {long_} "):
-            out.append((ln, NEAR_CONTAINS))
+        out.append((ln, how))
     return out
+
+
+#: How many item ids one near-match line names. The count beside them is the
+#: whole population; the ids are where to start looking.
+NEAR_EXAMPLES = 3
+
+
+def near_groups(pairs) -> list:
+    """`pairs` of `(ident, question)` folded to ONE entry per DISTINCT
+    question: `[(question, [ident, ...]), ...]`, in first-seen order.
+
+    WHY THIS EXISTS (lc-62, measured before it landed): a near-match printed
+    once per item was about 300 lines on one governed repo, where a single
+    blocker question is shared by hundreds of items. A report its reader has
+    to scroll past is one they stop reading, so the unit is the QUESTION and
+    the items are its count.
+
+    DISTINCT IS JUDGED WITHOUT THE ITEM'S OWN SUFFIX. `grammar.for_item`
+    makes a shared question one item's own by appending `(item <its id>)`,
+    so two items on one question hold two different strings; comparing those
+    would put every item back in a group of one. Only the carrying item's
+    OWN suffix is taken off, and it is built by the function that mints it —
+    a question that merely mentions another item's id is left as written.
+    """
+    groups: dict = {}
+    for ident, question in pairs:
+        q = (question or "").strip()
+        own = grammar.for_item("", ident)
+        if q.endswith(own):
+            q = q[:-len(own)].strip()
+        groups.setdefault(q, []).append(ident)
+    return list(groups.items())
+
+
+def render_near_items(idents) -> str:
+    """`a, b, c (+K more) [N item(s)]`: at most `NEAR_EXAMPLES` ids, then the
+    count of the whole population. One spelling for both reports that print
+    it.
+
+    THE IDS LEAD, so a line about one item still opens `near-match: <id>` —
+    the form this report had before it was grouped, which its readers and
+    the arms that pin it already key on.
+    """
+    shown = ", ".join(idents[:NEAR_EXAMPLES])
+    more = len(idents) - NEAR_EXAMPLES
+    tail = f" (+{more} more)" if more > 0 else ""
+    return f"{shown}{tail} [{len(idents)} item(s)]"
+
+
+def render_near_lines(name: str, near) -> str:
+    """The ledger side of a near-match line: each DISTINCT ledger question
+    once, with the lines that carry it (at most `NEAR_EXAMPLES` numbers) and
+    how it differs — `'<q>' (LEDGER.md:3, 4) — <how>`, joined by `; `.
+
+    A question answered three times is one question; listing it three times
+    is the per-item flood on the other axis.
+    """
+    by_q: dict = {}
+    for ln, how in near:
+        key = ((ln.slots.get("question") or "").strip(), how)
+        by_q.setdefault(key, []).append(ln.lineno)
+    parts = []
+    for (question, how), linenos in by_q.items():
+        shown = ", ".join(str(n) for n in linenos[:NEAR_EXAMPLES])
+        more = len(linenos) - NEAR_EXAMPLES
+        tail = f" +{more} more" if more > 0 else ""
+        parts.append(f"{question!r} ({name}:{shown}{tail}) — {how}")
+    return "; ".join(parts)
 
 
 def counts(parsed: Parsed) -> dict:
