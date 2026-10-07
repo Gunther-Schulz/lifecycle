@@ -472,5 +472,35 @@ class AContaminatedControlIsCouldNotVerify(unittest.TestCase):
         self.assertEqual(code, exits.CLEAN, whole)
 
 
+class TheCoverageLimitStatesThePredicatesReach(unittest.TestCase):
+    """lc-191: the printed LIMIT paragraph is graded, not only printed.
+
+    The paragraph is the firing input, quoted whole: a later edit that lets
+    the statement drift wider than the predicate (or narrower than it was
+    repaired to) fails here. The check's BEHAVIOUR is unchanged by this item
+    and a matcher for a relayed row name is deliberately NOT built: no such
+    site exists, and a check built for an absent site reports clean forever.
+    """
+
+    LIMIT = (
+        "LIMIT, stated rather than left to be discovered: this check "
+        "reads the SOURCE, so it catches a refusal the code emits under no "
+        "registered row. It CANNOT catch a refusal the PROSE requires and "
+        "the code LACKS — that site does not exist, so no scan finds it. "
+        "Nor can it catch a row name RELAYED into an emitted string by "
+        "another route: it matches names at literal emit sites and at the "
+        "patterns it knows, and a relay site is counted and named but its "
+        "name is not followed to where it is assembled. "
+        "That remainder is found only by an end-to-end walk of design §3.9, "
+        "and saying so is part of the check.")
+
+    def test_the_limit_paragraph_is_exactly_the_stated_reach(self):
+        buf = []
+        roster.check_coverage(buf.append)
+        printed = [l.strip() for l in buf if "LIMIT, stated" in l]
+        self.assertEqual(len(printed), 1, buf)
+        self.assertEqual(" ".join(printed[0].split()), self.LIMIT)
+
+
 if __name__ == "__main__":
     unittest.main()

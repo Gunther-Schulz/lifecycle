@@ -322,6 +322,10 @@ def check_coverage(out, root: Path = CORE, reach: list | None = None) -> int:
         "reads the SOURCE, so it catches a refusal the code emits under no "
         "registered row. It CANNOT catch a refusal the PROSE requires and "
         "the code LACKS — that site does not exist, so no scan finds it. "
+        "Nor can it catch a row name RELAYED into an emitted string by "
+        "another route: it matches names at literal emit sites and at the "
+        "patterns it knows, and a relay site is counted and named but its "
+        "name is not followed to where it is assembled. "
         "That remainder is found only by an end-to-end walk of design §3.9, "
         "and saying so is part of the check.")
 
