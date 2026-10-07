@@ -1602,6 +1602,20 @@ def retire_refusal(ctx, src_name: str, src_blob: str, writing_run: bool,
     return (None, "")
 
 
+def deletion_row_present(laws_text: str, src_name: str, blob: str) -> bool:
+    """True when ONE line of the laws file is the record's own table row for
+    this path at this blob (lc-214).
+
+    A ROW MATCH, not two independent substring hits: "this path occurs
+    somewhere" and "this blob occurs somewhere" are satisfied by an earlier
+    deletion of the same path plus any other mention of the blob, and the
+    irreversible unlink then ran with no record of THIS deletion. The row is
+    compared whole, as a parsed line, not searched for inside the file.
+    """
+    row = f"| `{src_name}` | `{blob}` |"
+    return any(ln.strip() == row for ln in laws_text.split("\n"))
+
+
 def dispose_source(disposition: str, src: Path, src_name: str,
                    bannered: bytes, banner_what: str, laws_rel: str,
                    record: str, blob: str, ctx) -> tuple:
@@ -1653,8 +1667,7 @@ def dispose_source(disposition: str, src: Path, src_name: str,
         # spends itself on the one content it names; a re-created carrier has
         # a different blob". A record already naming THIS path at THIS blob is
         # the same fact, and two bodies for one fact diverge.
-        already = (f"| `{src_name}` |" in laws_old
-                   and f"`{blob}`" in laws_old)
+        already = deletion_row_present(laws_old, src_name, blob)
         if not already:
             laws_path.write_text(laws_old.rstrip("\n") + "\n" + record,
                                  encoding="utf-8")
@@ -1671,9 +1684,13 @@ def dispose_source(disposition: str, src: Path, src_name: str,
             f"{src_name} could not be deleted ({exc!r}). The record claims a "
             "deletion that did not happen; remove the file by hand, or revert "
             "the record.")
+    recorded = (f"the deletion record is appended to {laws_rel}"
+                if not already else
+                f"{laws_rel} ALREADY held the record row for this path at "
+                "this blob, so nothing was appended")
     return exits.CLEAN, (
         f"    DISPOSITION (lc-86):      {DISPOSED_DELETED} — {src_name} is "
-        f"UNLINKED and the deletion record is appended to {laws_rel}. The "
+        f"UNLINKED and {recorded}. The "
         "file is deleted in the WORKING TREE and is NOT staged or committed: "
         "committing is the caller's act here, as it is for every other file "
         "this tool writes.")

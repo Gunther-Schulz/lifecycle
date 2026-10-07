@@ -9,10 +9,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "plugin" / "cli"))
 
-from lifecycle_core import exits  # noqa: E402
+from lifecycle_core import exits, migrate  # noqa: E402
 
-from test_migrate import (MERGE_SOURCE_B, build, commit_all, migrate_run,  # noqa: E402
-                          run_cli)
+from test_migrate import (LIVE_HEAD, MERGE_SOURCE_B, build, commit_all,  # noqa: E402
+                          migrate_run, retire_run, run_cli)
 from test_migrate_residue import commit, tend_items  # noqa: E402
 
 
@@ -193,6 +193,50 @@ class ReimportResolvesThePinnedBlob(unittest.TestCase):
             d, (d / "SECOND.md").read_text(encoding="utf-8") + (
                 "- **READY 2026-09-09 — gamma work.** gamma body\n"))
         self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+
+
+class DeletionRecordIdempotenceIsARowMatch(unittest.TestCase):
+    """lc-214 — `already` is a ROW (this path AND this blob in one record)."""
+
+    def _laws_with(self, d, text):
+        (d / "LAWS.md").write_text(text, encoding="utf-8")
+        commit_all(d, "laws")
+
+    def test_an_earlier_blob_row_plus_this_blob_elsewhere_still_records(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        sha = migrate.blob_sha((d / "BACKLOG.md").read_bytes())
+        earlier = "e" * 40
+        # The discriminating input, drawn from a realistic laws file: the
+        # same path at an EARLIER blob, and this run's blob cited in prose.
+        self._laws_with(d, (
+            "law\n\n## Deletion record — BACKLOG.md (2026-01-01)\n\n"
+            "| path | blob deleted |\n|---|---|\n"
+            f"| `BACKLOG.md` | `{earlier}` |\n\n"
+            f"Note: the file now being retired was read at `{sha}`.\n"))
+        code, out = retire_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertFalse((d / "BACKLOG.md").exists())
+        laws = (d / "LAWS.md").read_text(encoding="utf-8")
+        self.assertIn(f"| `BACKLOG.md` | `{sha}` |", laws,
+                      "no record of THIS blob was written")
+        self.assertIn("deletion record is appended", out)
+
+    def test_a_row_already_naming_this_path_and_blob_is_not_duplicated(self):
+        """MUST NOT MOVE: the same fact is recorded once, and the
+        disposition line says the record was already there."""
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        sha = migrate.blob_sha((d / "BACKLOG.md").read_bytes())
+        self._laws_with(d, "law\n" + migrate.deletion_record(
+            "BACKLOG.md", "ITEMS.md", sha, "2026-01-01"))
+        before = (d / "LAWS.md").read_text(encoding="utf-8")
+        code, out = retire_run(d)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual((d / "LAWS.md").read_text(encoding="utf-8"), before)
+        self.assertFalse((d / "BACKLOG.md").exists())
+        self.assertNotIn("deletion record is appended", out)
+        self.assertIn("already", out.split("DISPOSITION (lc-86):")[1].lower())
 
 
 if __name__ == "__main__":
