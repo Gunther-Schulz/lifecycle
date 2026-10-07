@@ -27,7 +27,7 @@ import { fileURLToPath } from "node:url";
 import { scanDocument, scanContent, isAllowlisted, exemptClasses, CLASSES, findingId,
          SOURCE_SCANNABLE, SCANNABLE, skipEntry, exemptEntry, formatAllowlistLine,
          CLASS_NAMES, SYNTHETIC_UUID_ALLOWLIST, NAME_UUID_PREFIX,
-         isDeclaredSyntheticUuid, scopeKey, classesFor, HOME_PATH } from "../tools/absence-scan.mjs";
+         isDeclaredSyntheticUuid, scopeKey, classesFor, HOME_PATH, UUID } from "../tools/absence-scan.mjs";
 import { homedir } from "node:os";
 
 const TOOL = join(dirname(fileURLToPath(import.meta.url)), "..", "tools", "absence-scan.mjs");
@@ -991,8 +991,15 @@ test("foreign-path: a path under THIS REPO's own root does not fire", () => {
   // repeating a literal that could drift from it.
   const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
   const doc = { ...CLEAN, cwd: `${root}/tools/some-other-tool.mjs` };
-  assert.deepEqual(scanDocument(doc).findings.map((f) => f.class), [],
-    "this repo's own checkout is not a foreign project");
+  // lc-32: THE ASSERTION DOES NOT SPEAK FOR THE CHECKOUT'S OWN PATH. A copy of
+  // this repo under a path that carries a UUID (every Claude Code scratchpad
+  // does) makes `capture-uuid` fire on the root the document embeds, which is
+  // the scanner working: the expectation is therefore DERIVED from the root
+  // (a UUID in it fires exactly that class, none otherwise) instead of
+  // pinned to the empty set only the UUID-free checkout happens to satisfy.
+  assert.deepEqual(scanDocument(doc).findings.map((f) => f.class).sort(),
+    UUID.test(root) ? ["capture-uuid"] : [],
+    "this repo's own checkout is not a foreign project (and nothing but its UUID, if it has one, fires)");
 });
 
 test("foreign-path: a path under each known XDG root (env default) does not fire", () => {
@@ -1017,7 +1024,10 @@ test("foreign-path: scoped to the corpus — the same value outside test/fixture
 test("foreign-path: a value carrying one legitimate path beside one foreign one still fires", () => {
   const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
   const doc = { ...CLEAN, cwd: `${root} vs /home/otheruser/dev/other-project` };
-  assert.deepEqual(scanDocument(doc).findings.map((f) => f.class), ["foreign-path"],
+  // lc-32: same derivation as the arm above — a UUID in the root adds
+  // `capture-uuid` and nothing else; `foreign-path` must still fire either way.
+  assert.deepEqual(scanDocument(doc).findings.map((f) => f.class).sort(),
+    UUID.test(root) ? ["capture-uuid", "foreign-path"] : ["foreign-path"],
     "one non-exempt path in the string must not be laundered by an exempt one beside it");
 });
 
