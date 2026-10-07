@@ -1435,15 +1435,6 @@ blocked-by: NONE
 amend-reason: 2026-10-06 the booked slot carried a comma inside one venue phrase and the tool split it into two paths; restated as one venue with no comma. Nothing else changes.
 amended-write-set: 2026-10-06 venue: .claude/lifecycle.json of each governed repo - nine repos and one commit per repo - outside this working copy
 
-## lc-317
-grade: STANDBY
-requirement: init --lane WRITES THROUGH AN UNSAFE LANE NAME, the third site of the defect lc-202 repaired at lane new: a name like ../escape lands outside lanes/, a name with a slash crashes exit 1, and the empty string writes lanes/.md - record: wave B lane R3 closing report 2026-10-07, part 3 finding 1
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/init.py,test/test_init.py
-done-criterion: init --lane refuses an unsafe name before any write, by the same imported predicate lane new uses and under the existing lane_new_unsafe_door finding or a sibling of it; the three inputs above exit 2 with nothing written and no exit 1. Control: a safe name still writes its stub. The sweep that lc-202 owed is re-run over every site that builds a path from a caller-supplied name, and its hits are listed.
-evidence: RELAYED from lane R3 (opus) 2026-10-07 at a4dfdcd, executed there in scratch, not re-run at the desk: init --lane ../escape wrote repo/escape.md; init --lane bad/door exit 1 with FileNotFoundError; init --lane with the empty string wrote repo/lanes/.md; control goodlane wrote lanes/goodlane.md. Site: init.py near line 438. arc open already refuses the same inputs; workflows.read_template was not probed.
-blocked-by: NONE
-
 ## lc-318
 grade: STANDBY
 requirement: EVERY CARRIER VERB BUT ledger add STILL COMMITS ITS CARRIER WHOLE OVER A PENDING HAND EDIT. lc-138 made ledger add refuse a carrier dirty at entry; item add, amend, park, close, supersede and the arc verbs take the same commit path, so a hand edit or an earlier verb half-written state rides out under an unrelated message - record: wave B lane R1 closing report 2026-10-07 gap 1, and the dotfiles incident on lc-105
