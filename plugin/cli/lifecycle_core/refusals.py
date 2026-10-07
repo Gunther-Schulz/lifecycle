@@ -791,6 +791,7 @@ ROWS = [
         # neighbour at that site is "`goals` contains duplicates"), so it is
         # a new INPUT and not a new name.
         ident="declaration_malformed_reserved_goal",
+        input_class="malformed",
         finding_row="declaration_malformed",
         refusal="a redundant declaration — `goals` lists the plugin-reserved "
                 "goal, which is in every repo's effective set and is not "
@@ -2064,6 +2065,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="close_expect_mismatch",
+        input_class="well-formed",
         refusal="an `item close --expect TEXT` whose TEXT does not occur, "
                 "case-insensitively, in the requirement in force for the id "
                 "given — a close takes a bare id and moves whatever body "
@@ -2996,6 +2998,7 @@ LANE_ROWS = [
         # Opposite repairs do not share a name (the lc-30 case), and the
         # whole defect was the first answer being given for the second.
         ident="ident_prefix_mismatch",
+        input_class="well-formed",
         refusal="an `item` or `ledger` verb given an id shaped "
                 "`<other-prefix>-<n>` — another repo's id. Refused BEFORE "
                 "existence is asked: a verb run in the wrong repo failed "
@@ -3119,6 +3122,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="user_global_roots_diverged",
+        input_class="well-formed",
         refusal="the published set of user-global roots — the environment "
                 "variables under which the tool keeps state outside every "
                 "repo — differs from the set the package's own source "
@@ -5264,6 +5268,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_round_series_broken",
+        input_class="malformed",
         refusal="a record whose ROUND lines in MOVES are not numbered 1, 2, "
                 "3 ... in order (lc-225) — the series printed for the next "
                 "round's composer would not be the series the record holds",
@@ -5278,6 +5283,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_round_unreadable",
+        input_class="malformed",
         refusal="a ROUND line naming no `yield:` integer (lc-225) — the "
                 "series cannot be read whole, and a silently shorter series "
                 "is a count shaped like an answer",
