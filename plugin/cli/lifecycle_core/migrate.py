@@ -3412,7 +3412,15 @@ def run(args, out, ctx) -> int:
             out(f"    {src_name}:{e.line}  {e.unclassified_why}")
             out(f"        entry: {title_of(e)}")
         code = exits.worst([code, exits.FINDING])
-    out(f"migrate: {exits.word(code)}")
+    if code == exits.CLEAN and not read.entries and not n_items:
+        # lc-85: a reconciliation of 0 read == 0 written is an answer (exit
+        # 0 stays — zero entries is settled by the BulletShapeOverNoEntries
+        # tests), but it is not the answer a migration that MOVED something
+        # gives, so the summary does not print a bare CLEAN.
+        out("migrate: CLEAN (vacuous — 0 source entries read, 0 written; "
+            "this run examined no entry)")
+    else:
+        out(f"migrate: {exits.word(code)}")
     return code
 
 
