@@ -780,6 +780,30 @@ class AnAbsenceClaimNamesWhatProvesTheInstrumentWasLive(unittest.TestCase):
         self.assertIsNotNone(instances)
         self.assertTrue(note)
 
+    def test_a_carrier_holding_only_its_head_counts_ZERO_and_the_kind_is_clean(self):
+        """lc-149. An EMPTY carrier is zero instances, not one. The
+        discriminator is the `schema:` head (law 14), not a heading prefix.
+        The arm asserts the CORRECT count; it never pins the old miscount."""
+        d = self._tmp()
+        (d / "ITEMS.md").write_text("schema: 2\nbaseline: 0\nadded: 0\n",
+                                    encoding="utf-8")
+        instances, note = retire.list_home(d, "ITEMS.md")
+        self.assertEqual(instances, [], note)
+        doc = {"kinds": {"items": {
+            "home": "ITEMS.md", "growth": "bounded-by-exit",
+            "exit": {"action": "move"}}}}
+        buf = []
+        code = retire.growth_verdict(d, doc, buf.append)
+        self.assertEqual(code, exits.CLEAN, "\n".join(buf))
+
+    def test_a_plain_file_without_a_schema_head_is_still_one_instance(self):
+        """MUST-NOT-MOVE: the schema head, not file shape, separates a
+        carrier from an ordinary file."""
+        d = self._tmp()
+        (d / "NOTES.txt").write_text("just some notes\n", encoding="utf-8")
+        instances, _ = retire.list_home(d, "NOTES.txt")
+        self.assertEqual(instances, ["NOTES.txt"])
+
     def test_a_glob_over_a_missing_directory_reports_what_it_searched(self):
         """Also CLEAN — an in-tree directory's absence is an observation —
         but the denominator must say there was nothing to match, or the zero

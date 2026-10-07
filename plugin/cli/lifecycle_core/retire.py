@@ -292,8 +292,16 @@ def list_home(repo: Path, home: str) -> tuple:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         return None, f"{home!r} could not be read ({exc!r})"
-    if f"\n{grammar.HEADING_PREFIX}" in text or grammar.starts_section(text):
-        parsed = items_mod.parse(text)
+    # lc-149: THE DISCRIMINATOR IS THE SCHEMA HEAD (law 14: every carrier has
+    # one, no ordinary file does), not a heading prefix. A carrier holding
+    # only its head has no `## ` block, so the prefix test sent it to the
+    # plain-file branch below and counted it as ONE instance, firing
+    # kind_grew_without_exit on an empty kind while the same home absent read
+    # clean. The heading tests stay, so a file already read as a carrier by
+    # shape keeps its reading.
+    parsed = items_mod.parse(text)
+    if ("schema" in parsed.head or f"\n{grammar.HEADING_PREFIX}" in text
+            or grammar.starts_section(text)):
         return [it.ident for it in parsed.items], \
             f"carrier {home!r}: one instance per fixed-slot block"
     return [home], f"{home!r}: a single file, one instance"
