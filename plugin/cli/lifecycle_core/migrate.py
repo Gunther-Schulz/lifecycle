@@ -3492,7 +3492,9 @@ def blocker_types(entries) -> dict:
     PER TYPE, never a total. "All migrated items are blocked" is satisfied by
     an untyped blocker and by a blocker written into a closed body; the per-
     type counts are the only form in which the criterion can be checked, and
-    `untyped` appearing at all is the finding.
+    `untyped` appearing at all would be worth a look, but nothing converts
+    it into a finding and no input reaches it (lc-210): the rows are
+    arithmetic over what the write-rules emit, not a check.
     """
     out = {"decision": 0, "evidence": 0, "item-id": 0, "NONE": 0, "untyped": 0}
     for e in entries:
@@ -3808,8 +3810,17 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
     for typ in ("decision", "evidence", "item-id", "NONE", "untyped"):
         a(f"| `{typ}` | {bt.get(typ, 0)} |")
     a("")
-    a(f"`untyped` and `NONE` are both **{bt.get('untyped', 0) + bt.get('NONE', 0)}"
-      "**, and either being non-zero is a finding rather than a statistic. "
+    # lc-210: THE OLD SENTENCE CALLED A NON-ZERO `untyped`/`NONE` "A FINDING"
+    # AND NOTHING CONVERTED ONE. `blocker_types` feeds only these tables, and
+    # `migration_blocker` can emit no blocker that classifies as `item-id`,
+    # `NONE` or `untyped`, so those rows are 0 by construction: a check no
+    # input can falsify is deleted (law 22), and a claim in prose beside a
+    # mechanism that does not exist is held by nothing (law 26). The rows stay
+    # as arithmetic; the finding claim does not.
+    a("The `item-id`, `NONE` and `untyped` rows are 0 BY CONSTRUCTION: the "
+      "write-rules emit only `decision`-led blockers, so no input can put an "
+      "entry in them. They are printed as arithmetic over what the rules "
+      "emit, NOT as a check — nothing here turns a non-zero into a finding. "
       "Under the closed goal vocabulary nearly every migrated open item is "
       "slot-incomplete anyway, so the `decision` count will LOOK like \"all\" "
       "— which is precisely why the criterion is stated per type.")

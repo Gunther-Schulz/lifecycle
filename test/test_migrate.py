@@ -3907,5 +3907,37 @@ class AReportOnlyRunPrintsNoWrittenCountForAbsentFiles(unittest.TestCase):
         self.assertRegex(out, r"archive bodies:\s+1 → ITEMS-DONE\.md")
 
 
+class TheBlockerTypeTableMakesNoCheckClaim(unittest.TestCase):
+    """lc-210 — no input can put anything in the `item-id`, `NONE` or
+    `untyped` rows, and nothing converts a non-zero there into a finding, so
+    a sentence calling either a finding is a claim held by nothing (law 22,
+    law 26)."""
+
+    GRADES = ("READY", "RECORD", "PARKED", "NEW", "TODO", "OPEN")
+
+    def test_the_premise_only_decision_is_reachable(self):
+        """The enumeration the item asked to be re-run: every grade word the
+        classifier knows, through the real blocker function."""
+        seen = set()
+        for word in self.GRADES:
+            for text in ("plain", "PARKED on a decision from the operator",
+                         "PARKED, needs evidence: a measurement"):
+                e = entry(f"- **{word} 2026-08-03 — x.** {text}")
+                blocked, _why = migrate.migration_blocker(
+                    e, slots_incomplete=True)
+                seen.add(blocked.split(" ", 1)[0])
+        self.assertEqual(seen, {"decision"}, seen)
+
+    def test_the_report_does_not_call_a_zero_row_a_finding(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        report = (d / REPORT).read_text(encoding="utf-8")
+        self.assertNotIn("is a finding rather than a statistic", report)
+        self.assertNotIn("are both", report)
+        self.assertIn("BY CONSTRUCTION", report)
+        self.assertIn("| `untyped` | 0 |", report)
+
+
 if __name__ == "__main__":
     unittest.main()
