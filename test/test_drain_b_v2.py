@@ -162,5 +162,118 @@ class DeclinedByExemptionReachesTheRegister(_CostTestBase):
         self.assertEqual(self._uses(r), [])
 
 
+
+# --- lc-275: the intake join's candidate predicate -----------------------------
+#
+# THE BODIES BELOW ARE THE REAL ONES, copied from ITEMS-DONE.md (lc-256, lc-266
+# as they stood live; lc-264 and lc-268 as the booking texts). Embedded rather
+# than read, because the closure home is a live carrier that moves.
+
+REQ_256 = (
+    'SURFACED-AND-NOT-READ IS THE QUESTION THE WHOLE DESIGN RESTS'
+    ' ON AND NOTHING COUNTS IT: with the surfacing (lc-254) and t'
+    'he read verb (lc-255) both emitting into the fire log, the a'
+    'bsence of a read line after a surfacing line is the measurab'
+    'le event, and no verb reads that pair. Add the counter, wind'
+    'owed, reporting the ratio per kind. Record: the booked desig'
+    'n docs/directives/2026-09-20-o6-surfacing-design.md §4 Part '
+    "C, §5 D4 and §7's third table row — the row that today has n"
+    'o observer of any kind. ORDERING BEYOND THE TYPED EDGE: also'
+    ' after lc-252 (this counter reads the very detail word lc-25'
+    '2 repairs — the design status header states the order) and a'
+    'fter lc-254; the single typed edge below carries the longest'
+    ' pole.'
+)
+WS_256 = 'plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/refusals.py,test/test_verbs.py,tools/prove-rows.py'
+
+REQ_264 = (
+    'O6 transition table row 3 - a moment surfaced and never read'
+    ' - names the surfaced-vs-read counter as its observer and ca'
+    'lls it the row that decides whether the design is worth buil'
+    'ding; no item carries it. Record: docs/directives/2026-09-20'
+    '-o6-surfacing-design.md sections 6-8.'
+)
+WS_264 = 'plugin/cli/lifecycle_core/firelog.py,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/retire.py,test/test_declaration.py,test/test_retire.py'
+
+REQ_266 = (
+    'The blocker_untyped finding says a bad blocked-by value reac'
+    'hed the file by a path that did not pass the door, but propo'
+    'ses no repair token and cannot distinguish a bypassed door f'
+    'rom an author that has no door (an agent without the plugin)'
+    ': the bad values stay in the carrier as the visible idiom an'
+    'd neighbouring entries teach the defect faster than the chec'
+    'k corrects it. Record: peer session cachyos-setup-33 reports'
+    ' 2026-09-24; plugin/cli/lifecycle_core/items.py:1843-1851.'
+)
+WS_266 = 'plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/verbs.py,test/test_items.py'
+
+REQ_268 = (
+    'The robustness review of 2026-09-18 commissioned a second la'
+    'ne over the INSTRUMENTS themselves - which recorded proofs p'
+    'rove less than they claim, under the lens: a pair proves the'
+    ' refusal AXIS and never its REACH; reach is proven by the ar'
+    'm that must stay SILENT - and that lane never returned; its '
+    'output is unrecoverable and the question was never re-asked.'
+    ' Record: docs/audits/2026-09-18-robustness-clean-without-loo'
+    'king.md, heading Lane 2; lc-260 disposition.'
+)
+WS_268 = 'docs/audits/2026-09-18-robustness-clean-without-looking.md'
+
+
+
+def _item(ident, requirement, write_set):
+    return (f"## {ident}\ngrade: READY\nrequirement: {requirement}\n"
+            f"goal: verify\nwrite-set: {write_set}\n"
+            "done-criterion: x\nevidence: x\nblocked-by: NONE\n")
+
+
+#: Two unrelated live items. They exist so the carrier has the population a
+#: real one has: the rarity filter (MATCH_MAX_DOC_FRACTION) is relative to it,
+#: and in a two-item carrier every shared token sits at 100% and is dropped.
+FILLER = (
+    _item("lc-901", "the deploy roster drifts from the machines it names, "
+                    "so a rebuilt laptop misses two services", "deploy/roster.toml")
+    + "\n" +
+    _item("lc-902", "photo exports lose their capture timestamps after the "
+                    "converter rewrites sidecar metadata", "tools/export.sh")
+)
+
+
+class TheIntakeJoinOffersTheSameDeliverableOnly(unittest.TestCase):
+    """lc-275: a live item with the same deliverable is offered, and one that
+    shares only common words is not — over the two real pairs."""
+
+    def _parsed(self):
+        from lifecycle_core import items as items_mod
+        text = "\n".join([_item("lc-256", REQ_256, WS_256),
+                          _item("lc-266", REQ_266, WS_266), FILLER])
+        return items_mod.parse(text)
+
+    def _offered(self, requirement, write_set):
+        return {it.ident: why for it, why in
+                verbs.candidates(self._parsed(), requirement, write_set)}
+
+    def test_the_counter_booking_is_offered_its_live_duplicate(self):
+        # Write-set left UNKNOWN so the arm exercises the REQUIREMENT half
+        # alone; the shared cli.py in the real write-sets would offer it anyway.
+        got = self._offered(REQ_264, "UNKNOWN")
+        self.assertIn("lc-256", got)
+        self.assertTrue(any("counter" in w for w in got["lc-256"]), got)
+
+    def test_two_common_words_do_not_offer_an_unrelated_item(self):
+        got = self._offered(REQ_268, WS_268)
+        self.assertNotIn("lc-266", got, got)
+
+    def test_the_matched_terms_are_printed_and_no_stopword_is_among_them(self):
+        got = self._offered(REQ_264, "UNKNOWN")
+        reasons = " ".join(got["lc-256"])
+        self.assertNotIn(" stay,", reasons + ",")
+        self.assertIn("shares", reasons)
+
+    def test_the_stopwords_never_count_as_tokens(self):
+        toks = verbs.requirement_tokens("stay stays the counter")
+        self.assertEqual(toks, {"counter"})
+
+
 if __name__ == "__main__":
     unittest.main()

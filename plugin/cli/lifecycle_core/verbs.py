@@ -98,12 +98,20 @@ DECISION_MATCH_MAX_DOC_FRACTION = 0.05
 #: short on purpose: a long stopword list is a second vocabulary to maintain,
 #: and `MATCH_MAX_DOC_FRACTION` above — not this list and not the token
 #: threshold alone — is what carries a systematic tail.
+#: The last line (`stay stays`) is the lc-275 addition and is MEASURED, not a
+#: fit: `item add` for lc-268 offered lc-266 on exactly two shared tokens,
+#: `record` and `stay`, at 84 candidates over 133 live items. `stay` is an
+#: ordinary verb and describes nothing about either item. `record` is NOT
+#: listed: it is the migration-tail token the rarity filter above exists to
+#: handle (test_verbs.RarityWeightedJoin asserts it stays a live token), so
+#: dropping `stay` leaves one shared token, below MATCH_MIN_TOKENS.
 STOPWORDS = frozenset("""
 that this with from have been were will would should could when what which
 they them then than there their these those into over under after before
 because while about above below only just also more most some such very
 than does done doing make makes made take takes need needs must never
 always where whose whom else same both each other another every
+stay stays
 """.split())
 
 _TOKEN = re.compile(r"[a-z0-9][a-z0-9-]{3,}")
