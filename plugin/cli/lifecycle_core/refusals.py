@@ -111,6 +111,24 @@ class Fired:
     output: str
 
 
+#: THE INPUT CLASSES A PLANT CAN BE (lc-326) — closed at four, decided before
+#: any row was classed:
+#:
+#:   well-formed  the input parses in its own grammar; the refusal is about
+#:                its CONTENT or the state it describes. A command line that
+#:                omits a flag the verb demands is well-formed.
+#:   malformed    the input is there and readable and does not hold the shape
+#:                its grammar requires — bytes that are not JSON, a block or
+#:                a head missing a required member, prose in a typed slot.
+#:   unreadable   the input is there and cannot be read or resolved at all —
+#:                undecodable bytes, a home whose path cannot be resolved.
+#:   absent       the file, home or command the check reads is not there.
+#:
+#: A REFERENCE to something missing is not `absent`: `item ready xx-9999` is
+#: a well-formed invocation naming an id no home holds.
+INPUT_CLASSES = ("well-formed", "malformed", "unreadable", "absent")
+
+
 @dataclass
 class Row:
     #: Matches the `row` field a Finding carries, so the finding and the
@@ -143,6 +161,20 @@ class Row:
     #: whole ident for every ident lacking the magic substring — which reads
     #: as "no mapping needed" whether or not one is.
     finding_row: str | None = None
+    #: THE CLASS OF INPUT THIS ROW'S PLANT IS (lc-326), one of
+    #: `INPUT_CLASSES`. A green pair proves the refusal fires on the input it
+    #: was GIVEN, and until this field nothing said what kind of input that
+    #: was — so a refusal about an unreadable file could be proven on a
+    #: well-formed one alone. `None` is UNDECLARED, the default on purpose:
+    #: a row written without the field must not read as a well-formed plant,
+    #: and the roster run names every such row.
+    input_class: str | None = None
+    #: The input classes this refusal's TEXT names BEYOND its own plant's.
+    #: Declared by whoever reads the text; no predicate reads prose, because
+    #: a word-presence test fires on text that only discusses the word. The
+    #: roster run compares these, per refusal, with the classes its rows
+    #: plant and names each class nothing plants.
+    names_input: tuple = ()
 
     @property
     def expected_finding_row(self) -> str:
@@ -650,6 +682,7 @@ def _verify_run(commands: str) -> Fired:
 ROWS = [
     Row(
         ident="verify_check_failed",
+        input_class="well-formed",
         refusal="a registered verify command RAN and returned non-zero",
         firing_input="a laws file whose `## Verify` block names a command "
                      "that exits non-zero (`false`), beside one that passes",
@@ -664,6 +697,7 @@ ROWS = [
     ),
     Row(
         ident="verify_expectation_wrong",
+        input_class="well-formed",
         refusal="a registered command's declared `# expect:` does not match "
                 "what it actually did",
         firing_input="a laws file whose `## Verify` block names a command "
@@ -684,6 +718,7 @@ ROWS = [
     ),
     Row(
         ident="declaration_absent",
+        input_class="absent",
         refusal="public undeclared — a repo with no declaration",
         firing_input="a repo with no `.claude/lifecycle.json` at all",
         expect=exits.FINDING,
@@ -692,6 +727,7 @@ ROWS = [
     ),
     Row(
         ident="declaration_malformed",
+        input_class="malformed",
         refusal="public undeclared — a malformed declaration",
         firing_input="`.claude/lifecycle.json` whose bytes are not valid JSON",
         expect=exits.FINDING,
@@ -701,6 +737,7 @@ ROWS = [
     ),
     Row(
         ident="declaration_malformed_missing_key",
+        input_class="malformed",
         finding_row="declaration_malformed",
         refusal="public undeclared — `public` absent, so the repo is neither "
                 "declared public nor declared private",
@@ -741,6 +778,7 @@ ROWS = [
     ),
     Row(
         ident="declaration_ignored",
+        input_class="well-formed",
         refusal="ignored declaration",
         firing_input="`.gitignore` swallowing `lifecycle.json` (`.claude/*` "
                      "with no negation)",
@@ -756,6 +794,7 @@ ROWS = [
     ),
     Row(
         ident="declaration_ignored_tracked",
+        input_class="well-formed",
         finding_row="declaration_ignored",
         refusal="ignored declaration — the TRACKED case, which is every "
                 "declaration a real repo has once it is committed",
@@ -781,6 +820,7 @@ ROWS = [
     ),
     Row(
         ident="kind_stage_undeclared",
+        input_class="malformed",
         refusal="a kind with an undeclared stage",
         firing_input="a registry row missing `exit`",
         expect=exits.FINDING,
@@ -790,6 +830,7 @@ ROWS = [
     ),
     Row(
         ident="migration_readback_disagrees",
+        input_class="well-formed",
         refusal="a schema apply whose ARTIFACT disagrees with what it reported",
         firing_input="a carrier head the writer leaves unchanged while the run "
                      "prints `written:` for it — lc-205's own shape",
@@ -803,6 +844,7 @@ ROWS = [
     ),
     Row(
         ident="trigger_verb_unknown",
+        input_class="well-formed",
         refusal="a kind whose trigger names a verb this build does not have",
         firing_input="`trigger: verb item clsoe` — a misspelled command path",
         expect=exits.FINDING,
@@ -815,6 +857,7 @@ ROWS = [
     ),
     Row(
         ident="dangling_reference",
+        input_class="well-formed",
         refusal="dangling typed reference in the declaration",
         firing_input="a `lifecycle.json` row naming `lane: nope`",
         expect=exits.FINDING,
@@ -824,6 +867,7 @@ ROWS = [
     ),
     Row(
         ident="binding_slot_unbound",
+        input_class="well-formed",
         refusal="a `template-bindings` entry with any slot whose value is "
                 "UNKNOWN — an explicit unanswered slot, never a default",
         firing_input="a binding for `t1` holding `{\"a\": \"UNKNOWN\"}`",
@@ -851,6 +895,7 @@ ROWS = [
         # correction code this plant read CLEAN, indistinguishable from a
         # complete binding.
         ident="binding_slot_unbound_absent_key",
+        input_class="malformed",
         finding_row="binding_slot_unbound",
         refusal="the SAME finding as `binding_slot_unbound` above, on its "
                 "second firing input: a required slot ABSENT from the "
@@ -875,6 +920,7 @@ ROWS = [
     ),
     Row(
         ident="binding_template_missing",
+        input_class="absent",
         refusal="a `template-bindings` entry naming a template with no "
                 "file under `plugin/workflows/` — nothing dangles, in "
                 "either direction: a lane naming a missing workflow "
@@ -897,6 +943,7 @@ ROWS = [
     ),
     Row(
         ident="binding_template_unparsable",
+        input_class="malformed",
         refusal="a `template-bindings` entry naming a template whose FILE "
                 "exists but whose `Slots:` header does not parse — a "
                 "template that cannot be read has no required-slot set to "
@@ -924,6 +971,7 @@ ROWS = [
         # checks a different property — SCOPE, not size — so the size figure
         # it prints decides nothing and no input can make it fire on length.
         ident="laws_scope_audit",
+        input_class="well-formed",
         refusal="a line in the declared laws file carries ANOTHER KIND's "
                 "marker — a numbered step sequence (workflow), a dated "
                 "incident (journal), a measured figure with a unit (audit), a "
@@ -945,6 +993,7 @@ ROWS = [
         # lc-303. The tally used to skip such a line without a word, so a
         # damaged log and a whole one printed the same table.
         ident="fire_log_malformed",
+        input_class="malformed",
         refusal="a finished line in the fire log carries a surfacing or read "
                 "token and is not a JSON object — the surfaced-vs-read "
                 "figures are then a floor, and the audit says so beside them",
@@ -958,6 +1007,7 @@ ROWS = [
     ),
     Row(
         ident="laws_absent_could_not_verify",
+        input_class="absent",
         refusal="the laws file the declaration names is not in the working "
                 "tree — COULD NOT VERIFY, never a clean zero",
         firing_input="a declaration naming a laws file that is not there "
@@ -968,6 +1018,7 @@ ROWS = [
     ),
     Row(
         ident="laws_unreadable_could_not_verify",
+        input_class="unreadable",
         refusal="the laws file the declaration names is in the working tree "
                 "and cannot be READ — COULD NOT VERIFY, never a clean zero. "
                 "The sibling branch of the absent file, which answered under "
@@ -984,6 +1035,7 @@ ROWS = [
     ),
     Row(
         ident="schema_above_floor",
+        input_class="well-formed",
         refusal="schema above floor",
         firing_input="`schema: <n+1>` in the carrier head",
         expect=exits.FINDING,
@@ -994,6 +1046,7 @@ ROWS = [
     ),
     Row(
         ident="item_shape",
+        input_class="malformed",
         refusal="item written outside the tool",
         firing_input="a hand-edited block missing a slot",
         expect=exits.FINDING,
@@ -1004,6 +1057,7 @@ ROWS = [
     ),
     Row(
         ident="duplicate_id",
+        input_class="well-formed",
         refusal="duplicate on move (a crash between the append and the commit)",
         firing_input="two copies of one id in the carrier",
         expect=exits.FINDING,
@@ -1012,6 +1066,7 @@ ROWS = [
     ),
     Row(
         ident="unknown_grade_read",
+        input_class="well-formed",
         refusal="unknown grade word READ (merge / old tool) — the census's "
                 "third answer, not a crash and not folded into open or closed",
         firing_input="a file line with `grade: FOO`",
@@ -1021,6 +1076,7 @@ ROWS = [
     ),
     Row(
         ident="arc_exists",
+        input_class="well-formed",
         refusal="`arc open` over a slug that is already open — a live "
                 "narrowing is the one thing this carrier exists to keep, and "
                 "opening over it would overwrite it silently",
@@ -1031,6 +1087,7 @@ ROWS = [
     ),
     Row(
         ident="unknown_arc",
+        input_class="well-formed",
         refusal="`arc close` over a slug with no live body — a closed arc is "
                 "not re-closable and one never opened has nothing to move",
         firing_input="`arc close <slug>` with no such arc",
@@ -1040,6 +1097,7 @@ ROWS = [
     ),
     Row(
         ident="arc_conservation",
+        input_class="absent",
         refusal="the arc index and the arc homes disagree — SHORT means a "
                 "body left by a path that is not a closure (the LOSS side), "
                 "OVER means an interrupted close and is recoverable",
@@ -1050,6 +1108,7 @@ ROWS = [
     ),
     Row(
         ident="arc_undispositioned",
+        input_class="well-formed",
         refusal="`arc close` while a belief flagged for re-derivation has no "
                 "disposition — the close files a doubt as a settled record "
                 "in the home nobody re-reads",
@@ -1060,6 +1119,7 @@ ROWS = [
     ),
     Row(
         ident="arc_shape",
+        input_class="malformed",
         refusal="an arc body whose shape is broken — a slot missing, a slot "
                 "written twice, or a narrowing whose FORM is not one the "
                 "vocabulary declares",
@@ -1078,6 +1138,7 @@ ROWS = [
     ),
     Row(
         ident="grade_arm_malformed",
+        input_class="malformed",
         finding_row="unknown_grade_read",
         # A SECOND FIRING INPUT OF ONE REFUSAL, not a second refusal — the
         # census's third answer reached by the other road. `unknown_grade_read`
@@ -1695,6 +1756,7 @@ def _mutate(text: str, old: str, new: str) -> str:
 VERB_ROWS = [
     Row(
         ident="unknown_grade_write",
+        input_class="well-formed",
         refusal="unknown grade word on write",
         firing_input="`item add --grade FOO`",
         expect=exits.FINDING,
@@ -1704,6 +1766,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="foreign_origin_item",
+        input_class="well-formed",
         refusal="public repo, foreign-origin item",
         firing_input="`item add` from another repo's cwd against `public: true`",
         expect=exits.FINDING,
@@ -1715,6 +1778,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="join_undisposed",
+        input_class="well-formed",
         refusal="intake is a MERGE: candidates found, no disposition given "
                 "(§3.2 — the caller answers merge-into / supersede / new)",
         firing_input="an `item add` whose write-set path a live item already "
@@ -1730,6 +1794,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="decision_not_derivable_unstated",
+        input_class="well-formed",
         refusal="a `decision` blocker booked without saying why the question "
                 "is NOT DERIVABLE from the record. Measured at this desk, two "
                 "of six: lc-166's answer sat one kind over in this repo's own "
@@ -1758,6 +1823,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="evidence_unmarked",
+        input_class="well-formed",
         refusal="an evidence slot written with no mark saying which of its "
                 "claims this session RAN and which it CONCLUDED. Measured "
                 "over a desk's full day of booking: every item booked from "
@@ -1786,6 +1852,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="new_without_absence",
+        input_class="well-formed",
         refusal="`new` is taken only with a named absence (§3.2)",
         firing_input="`item add` with no `--absence`",
         expect=exits.FINDING,
@@ -1797,6 +1864,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="cost_test_veto",
+        input_class="well-formed",
         refusal="the cost test — a one-file, one-hunk write-set with the "
                 "session live is do-it-now, not book-it (§3.2)",
         firing_input="`item add --hunks 1` over a one-path write-set, "
@@ -1811,6 +1879,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="cost_test_unverified",
+        input_class="well-formed",
         refusal="the cost test could not be evaluated — one file named, hunk "
                 "count not stated. COULD NOT VERIFY, never a pass",
         firing_input="`item add` over a one-path write-set with no `--hunks`",
@@ -1822,6 +1891,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="blocker_untyped",
+        input_class="malformed",
         refusal="a blocker that is prose rather than one of §3.1's three "
                 "closed edge types",
         firing_input="`item add --blocked-by 'we should think about it'`",
@@ -1837,6 +1907,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="blocker_predicate_broken",
+        input_class="malformed",
         refusal="an `evidence` blocker whose predicate cannot work — prose "
                 "booked into a shell slot, or a command that is BROKEN on "
                 "one probe run. The item then waits in nobody's court: every "
@@ -1871,6 +1942,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="blocker_predicate_satisfied_at_booking",
+        input_class="well-formed",
         refusal="an `evidence` blocker whose predicate EXITS 0 on its booking "
                 "run — the blocker mapping reads that as evidence ARRIVED, so "
                 "the item is blocked by nothing. Either it is schedulable "
@@ -1900,6 +1972,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="closed_ref_unresolvable",
+        input_class="well-formed",
         refusal="`item close --ref` naming something that is not a commit in "
                 "this repo — a closure record is written once onto a body "
                 "that then stops being edited, so an unresolvable ref there "
@@ -1919,6 +1992,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="close_statement_missing",
+        input_class="well-formed",
         refusal="a DONE `item close` without `--met` and `--decided` — the "
                 "close demands the two STATEMENTS about the work it ends "
                 "(`none` is a valid statement), because a close that can be "
@@ -1935,6 +2009,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="close_statement_unresolved",
+        input_class="well-formed",
         refusal="a DONE `item close` whose `--met` names an item id or "
                 "commit that does not exist, or whose `--decided` names a "
                 "`<ledger home>:<line>` that is not a `decision:` line — a "
@@ -1989,6 +2064,7 @@ VERB_ROWS = [
         # one cause for two defects. Two firing inputs, one refusal, declared
         # through `finding_row` rather than derived by string surgery.
         ident="closure_pointer_ref_unresolvable",
+        input_class="well-formed",
         finding_row="closed_ref_unresolvable",
         refusal="`item supersede-closure --ref` naming something that is not "
                 "a commit in this repo — the pointer is appended to a CLOSED "
@@ -2016,6 +2092,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="close_over_live_blocker",
+        input_class="well-formed",
         refusal="a DONE close over an item-id blocker whose target has NOT "
                 "closed — the move clears the `blocked-by:` line and a closed "
                 "body can never be amended, so a wait ended this way is a "
@@ -2045,6 +2122,7 @@ VERB_ROWS = [
         # differs is who holds the answer (the target item's state there, the
         # predicate's own exit here), which is a second FIRING INPUT.
         ident="close_over_live_blocker_evidence",
+        input_class="well-formed",
         finding_row="close_over_live_blocker",
         refusal="a DONE close over an `evidence` blocker whose predicate is "
                 "QUIET — the close RUNS the predicate through the one "
@@ -2075,6 +2153,7 @@ VERB_ROWS = [
         # holder of the answer — here NOBODY, which is why the type refuses
         # on the blocker still standing rather than on anything it reads.
         ident="close_over_live_blocker_external",
+        input_class="well-formed",
         finding_row="close_over_live_blocker",
         refusal="a DONE close over an `external` blocker — nothing evaluates "
                 "such a wait, its ending is an act somebody records by "
@@ -2099,6 +2178,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="close_carries_pointer",
+        input_class="well-formed",
         refusal="a close whose live body carries a DECLARED forward-carrier "
                 "clause — the uppercase marker `CARRIED POINTER`, an optional "
                 "parenthetical, then a colon. The move files that body in the "
@@ -2128,6 +2208,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="blocker_unstorable",
+        input_class="malformed",
         refusal="a `decision` blocker the LEDGER cannot store — the question "
                 "would be written into the carrier and nothing could ever "
                 "answer it, because `ledger add decision` refuses the line "
@@ -2151,6 +2232,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="dangling_reference_item",
+        input_class="well-formed",
         finding_row="dangling_reference",
         refusal="dangling typed reference — `blocked-by <item-id>` naming an "
                 "id no home holds (the ITEM half of §3.9's row; the "
@@ -2165,6 +2247,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="dangling_reference_carrier",
+        input_class="well-formed",
         finding_row="dangling_reference",
         # THE THIRD firing input of ONE refusal, not a third refusal. The
         # declaration half resolves a typed reference; `dangling_reference_item`
@@ -2211,6 +2294,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="blocker_softlock",
+        input_class="well-formed",
         refusal="the blocker GRAPH traversed, never just its edges (lc-193) "
                 "— a CYCLE among item-id blockers, or a CHAIN of them "
                 "terminating in a member whose evidence predicate is the "
@@ -2238,6 +2322,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="write_set_foreign_unblocked",
+        input_class="well-formed",
         refusal="a READY item with NO blocker whose write-set names a "
                 "boundary outside this repo (lc-111) — `<path>@<repo>`, an "
                 "absolute / `~` / `../` path, or a bare repo name before a "
@@ -2262,6 +2347,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="parked_without_typed_blocker",
+        input_class="malformed",
         refusal="PARKED without a typed blocker",
         firing_input="`item park <id>` with prose only",
         expect=exits.FINDING,
@@ -2275,6 +2361,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="parked_without_typed_blocker_carrier",
+        input_class="well-formed",
         finding_row="parked_without_typed_blocker",
         # THE SECOND firing input of ONE refusal: the row above fires at the
         # WRITE path (`item park`), this one over a block already sitting in
@@ -2302,6 +2389,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="park_over_superseding_amendment",
+        input_class="well-formed",
         refusal="`item park` returning CLEAN over a blocker that would NOT "
                 "govern — the base `blocked-by:` slot written while an "
                 "`amended-blocked-by:` line supersedes it, so the grade moves "
@@ -2326,6 +2414,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="amend_without_reason",
+        input_class="well-formed",
         refusal="an amendment with no recorded WHY — which is an in-place "
                 "rewrite with a date on it, and the thing law 8 and the "
                 "append-only ethic exist to keep out of the carrier",
@@ -2343,6 +2432,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="promote_without_judgment",
+        input_class="well-formed",
         refusal="a promotion to READY with no record of WHO judged it and "
                 "WHY — a grade that appeared. READY is a judgment (law 10) "
                 "and the next reader cannot ask the desk that made it if the "
@@ -2363,6 +2453,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="promote_while_blocked",
+        input_class="well-formed",
         refusal="a promotion over a STANDING blocker — READY recorded "
                 "against a wait nobody cleared, which is then the thing a "
                 "reader resolves through",
@@ -2385,6 +2476,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="ready_with_unknown_slot_promote",
+        input_class="well-formed",
         finding_row="ready_with_unknown_slot",
         # THE SECOND FIRING INPUT of ONE refusal, not a second refusal. The
         # row below it reads a grade already written; this stops the grade
@@ -2411,6 +2503,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="amend_nothing_to_amend",
+        input_class="well-formed",
         refusal="an amendment naming no slot — a reason line in the carrier "
                 "and no value changed, which reads in every later diff as a "
                 "correction that was made",
@@ -2429,6 +2522,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="duplicate_id_cross_home",
+        input_class="well-formed",
         finding_row="duplicate_id",
         refusal="duplicate on move, ACROSS THE TWO HOMES — the within-file "
                 "row above cannot see this one: a close appends to the done "
@@ -2454,6 +2548,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="conservation_short",
+        input_class="well-formed",
         refusal="conservation short — a body left the carrier by a path that "
                 "is not a closure",
         firing_input="a body deleted by hand → the delta fails",
@@ -2466,6 +2561,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="conservation_surplus",
+        input_class="well-formed",
         refusal="conservation OVER — the homes hold more bodies than were "
                 "ever admitted. NOT loss, and it must not be repaired as if "
                 "it were: the ordinary cause is an interrupted close, UNLESS "
@@ -2492,6 +2588,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="conservation_unverified",
+        input_class="malformed",
         refusal="the conservation identity could not be computed — the head "
                 "declares no baseline. COULD NOT VERIFY, never a clean "
                 "identity",
@@ -2504,6 +2601,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="ledger_body",
+        input_class="malformed",
         refusal="the ledger carries NO BODIES — one fixed-slot line per "
                 "decision event (§3.6)",
         firing_input="a `ledger add` whose reason spans more than one line",
@@ -2517,6 +2615,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="ledger_carrier_dirty",
+        input_class="well-formed",
         refusal="`ledger add` over a ledger that holds UNCOMMITTED changes "
                 "at verb entry: the verb commits its carrier by pathspec, a "
                 "pathspec is file-granular, so the pending edit would ride "
@@ -2547,6 +2646,7 @@ VERB_ROWS = [
         # is a consolidation worth making; it renames a shipped row, which
         # this repair was not asked to do (surfaced to the desk).
         ident="carrier_dirty_at_entry",
+        input_class="well-formed",
         refusal="a carrier verb over a carrier that holds UNCOMMITTED "
                 "changes at verb entry — `item add`/`amend`/`park`/"
                 "`promote`/`bench`/`close`/`supersede-closure` and every "
@@ -2569,6 +2669,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="ledger_join_undisposed",
+        input_class="well-formed",
         refusal="the ledger's own intake join (R7, lc-289): a `decision:` "
                 "question near-matching one already in the ledger, with no "
                 "disposition — the item carrier's `join_undisposed` (above), "
@@ -2602,6 +2703,7 @@ VERB_ROWS = [
     ),
     Row(
         ident="closure_home_split",
+        input_class="well-formed",
         refusal="the declaration names TWO closure homes — one fact, one "
                 "home (§3.1's closure MOVE has one destination)",
         firing_input="`closure-home` and the `done bodies` kind's `home` "
@@ -2752,6 +2854,7 @@ def _lane_body_no_table(trigger: str) -> str:
 LANE_ROWS = [
     Row(
         ident="roster_absent",
+        input_class="absent",
         refusal="roster absent — the router is GENERATED over the roster, so "
                 "with no roster there is no board, and an empty board renders "
                 "exactly like one on which every lane is quiet",
@@ -2765,6 +2868,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="roster_empty",
+        input_class="well-formed",
         refusal="roster EMPTY — the file exists and lists no repo. The "
                 "router is generated over it, so the board was never pointed "
                 "at anything and renders exactly like one on which every "
@@ -2785,6 +2889,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="repo_unresolved",
+        input_class="absent",
         refusal="a listed repo that does not resolve is NAMED — a router that "
                 "dropped the line would print a shorter board rather than a "
                 "broken one",
@@ -2797,6 +2902,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="trigger_broken",
+        input_class="well-formed",
         refusal="trigger BROKEN — a predicate exiting >=2 (§3.3's reserved "
                 "code) is a FINDING, never folded into quiet: a dead lane "
                 "that renders quiet is a clean board over a router that does "
@@ -2815,6 +2921,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="lane_table_absent",
+        input_class="malformed",
         refusal="a lane body carrying no decision table — §3.3 names FOUR "
                 "parsed parts and the table is the one with NO label, so the "
                 "`startswith` scan that finds the other three cannot reach "
@@ -2837,6 +2944,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="unknown_item",
+        input_class="well-formed",
         refusal="a verb naming an item no live home holds",
         firing_input="`item ready xx-9999`",
         expect=exits.FINDING,
@@ -2871,6 +2979,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="unknown_source",
+        input_class="well-formed",
         refusal="a `--source` outside the closed door set — an unrecognised "
                 "source would decide the cost test's veto silently",
         firing_input="`item add --source somebody`",
@@ -2881,6 +2990,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="new_without_typed_blocker",
+        input_class="well-formed",
         refusal="an item whose slots are incomplete is NEW, and a NEW item "
                 "carries a TYPED blocker saying what it waits for. An "
                 "incomplete item with nothing to wait for ages in nobody's "
@@ -2906,6 +3016,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="move_uncommitted",
+        input_class="well-formed",
         refusal="the move is on disk but was NOT committed, so its two halves "
                 "are not durable together — the third step of the move "
                 "failing, not the move",
@@ -2918,6 +3029,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="ledger_shape",
+        input_class="malformed",
         refusal="a ledger with no `schema:` head line — a carrier without a "
                 "version cannot be refused by a future tool",
         firing_input="a `LEDGER.md` whose first line is a ledger entry",
@@ -2931,6 +3043,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="unregistered_kind",
+        input_class="well-formed",
         refusal="`kind show` naming a kind the declaration does not register",
         firing_input="`kind show nosuchkind`",
         expect=exits.FINDING,
@@ -2940,6 +3053,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="read_kind_unregistered",
+        input_class="well-formed",
         refusal="`kind read` naming a kind the declaration does not "
                 "register — the read verb's own unregistered-kind check, "
                 "the same predicate `unregistered_kind` proves for `kind "
@@ -2952,6 +3066,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="emit_site_unregistered",
+        input_class="well-formed",
         refusal="ASSIGNED ITEM B — a site in the code emits a FINDING under a "
                 "row the roster does not register: no plant, no control, no "
                 "line in the §3.9 snapshot, so the roster's green says "
@@ -2984,6 +3099,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="migrate_would_overwrite",
+        input_class="well-formed",
         refusal="`migrate` over a repo whose successor carrier already exists "
                 "— a second run would replace real work with a re-derivation "
                 "of the carrier it replaced",
@@ -2997,6 +3113,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="migrate_repeated_from",
+        input_class="well-formed",
         refusal="a repeated `--from` in ONE `migrate` invocation. argparse's "
                 "plain dest OVERWRITES, so `--from A.md --from B.md` keeps "
                 "B.md alone and silently discards A.md: the caller believes "
@@ -3023,6 +3140,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="migration_unclassified",
+        input_class="well-formed",
         refusal="an entry whose grade word no rule in §4 row 1 or §3.1 covers "
                 "(D-f): reported with its grade word and line number, never "
                 "given a plausible mapping",
@@ -3040,6 +3158,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="migration_ambiguous_closure",
+        input_class="well-formed",
         finding_row="migration_unclassified",
         # THE SECOND FIRING INPUT OF ONE REFUSAL, not a second refusal. Both
         # shapes below reach `migrate._refuse` and surface under
@@ -3087,6 +3206,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="migration_heading_shape_empty",
+        input_class="malformed",
         refusal="`migrate --entry-shape heading` over a source carrier that "
                 "holds NO level-3 heading. In that shape an entry IS a "
                 "level-3 heading, so the read holds zero entries, and zero "
@@ -3118,6 +3238,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="migration_bullet_shape_empty",
+        input_class="malformed",
         refusal="`migrate` in the `bullet` entry shape — the DEFAULT, so "
                 "also every run that names no shape — reading ZERO entries "
                 "from a source carrier that itself shows the shape does not "
@@ -3150,6 +3271,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="merge_duplicate_body",
+        input_class="well-formed",
         refusal="`migrate --merge` where a source entry's HEADLINE is already "
                 "carried by a body in the successor homes — the live carrier "
                 "or the closed one. The merge appends, so writing it would "
@@ -3177,6 +3299,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="merge_source_self_duplicate",
+        input_class="well-formed",
         refusal="`migrate --merge` where two non-re-imported entries in the "
                 "incoming source carry equal parsed HEADLINEs. The WHOLE RUN "
                 "refuses and nothing is written: a merge appends, so writing "
@@ -3194,6 +3317,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="migration_ledger_nonzero",
+        input_class="well-formed",
         refusal="the acceptance criterion 'zero entries routed to the ledger' "
                 "(§3.6, §4 row 1) is checked at the ARTIFACT and not only in "
                 "the report",
@@ -3215,6 +3339,7 @@ LANE_ROWS = [
     # four, which is the row whose text is wider than what its sites decide.
     Row(
         ident="retire_source_not_writing",
+        input_class="well-formed",
         refusal="`--retire-source` on a run that writes no successor state — "
                 "`--report-only`, or the `--schema-from` path, which reads no "
                 "old carrier at all. Deleting the source there would leave "
@@ -3232,6 +3357,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="retire_source_uncommitted",
+        input_class="well-formed",
         refusal="`--retire-source` over a carrier whose content is not in a "
                 "commit. Every citation the migration writes resolves through "
                 "`git cat-file -p <blob>`, and a blob in no commit dies with "
@@ -3252,6 +3378,8 @@ LANE_ROWS = [
     ),
     Row(
         ident="retire_source_laws_absent",
+        input_class="malformed",
+        names_input=("absent",),
         refusal="`--retire-source` where the declared `laws` file is not "
                 "there to receive the deletion record. The record's home is "
                 "the DECLARED laws file and never a filename this tool picks, "
@@ -3284,6 +3412,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="retire_source_unpinned_anchor",
+        input_class="well-formed",
         refusal="`--retire-source` while the successor carrier still holds an "
                 "anchor into the source carrying no ` at blob <sha>` pin. A "
                 "bare `<path>:<line>` resolves against whatever the file "
@@ -3306,6 +3435,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="lane_new_exists",
+        input_class="well-formed",
         refusal="`lane new` refuses to overwrite an existing lane body — "
                 "no silent overwrite, the same rule `init` applies to the "
                 "declaration it writes",
@@ -3321,6 +3451,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="init_declaration_exists",
+        input_class="well-formed",
         refusal="`init` refuses to overwrite a declaration that already "
                 "exists — no silent overwrite. The rule `lane new` cites for "
                 "its own body, at the site that states it; it exited FINDING "
@@ -3339,6 +3470,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="lane_new_unsafe_door",
+        input_class="malformed",
         refusal="`lane new` refuses a door that cannot safely name a lane — "
                 "one carrying a character outside letters, digits, `.`, `_` "
                 "and `-`, or the empty string. The door becomes a path "
@@ -3357,6 +3489,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="init_lane_unsafe_door",
+        input_class="malformed",
         refusal="`init --lane` refuses the same unsafe name `lane new` "
                 "refuses, BEFORE its first write. ONE refusal at a second "
                 "site in another module: the row above proves `lane new`'s "
@@ -3382,6 +3515,7 @@ LANE_ROWS = [
     ),
     Row(
         ident="lane_undeclared",
+        input_class="well-formed",
         refusal="§3.8b — a lane BODY the declaration does not list is "
                 "UNREGISTERED. The registration invariant held one way only: "
                 "a declared lane with no file was caught, a file with no "
@@ -4100,6 +4234,7 @@ def _named_list(names) -> str:
 SCHEMA_ROWS = [
     Row(
         ident="declaration_retired_key",
+        input_class="well-formed",
         refusal="a declaration carrying a key this schema WITHDREW — "
                 "`ready-cap`, whose whole premise R22 removed",
         firing_input="a declaration still carrying `ready-cap: 10`",
@@ -4113,6 +4248,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="leak_scan_undeclared_reason",
+        input_class="well-formed",
         refusal="the source-scope foreign-path class turned OFF with no "
                 "reason declared (§3.3 — the enabling decision is the repo's "
                 "and it is written down)",
@@ -4136,6 +4272,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="reference_untyped",
+        input_class="malformed",
         refusal="PROSE in a `reader`/`writer` slot — §3.8c's reference types "
                 "are closed, and prose cannot be resolved",
         firing_input="a kind whose `reader` says \"the drain lane\"",
@@ -4155,6 +4292,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="schema_mismatch",
+        input_class="well-formed",
         refusal="ONE schema version per repo — the declaration and a carrier "
                 "disagree (§3.8c). Not a floor question: the floor asks what "
                 "this BUILD can read, this asks whether the REPO agrees with "
@@ -4171,6 +4309,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="done_slot_on_live_item",
+        input_class="well-formed",
         # THE ENUMERATION IS DERIVED from the module that owns the set, never
         # restated. It read "`superseded-by:` or `blocker-moot:`" while
         # `items.DONE_ONLY_SLOTS` held four — lc-44 added `closed-reason:`
@@ -4188,6 +4327,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="open_grade_in_done_home",
+        input_class="well-formed",
         refusal="an OPEN grade in the closure home — a body that arrived by "
                 "some path that is not a close",
         firing_input="a `READY` block in `ITEMS-DONE.md`",
@@ -4205,6 +4345,7 @@ SCHEMA_ROWS = [
         # graded DROPPED while it sat in `ITEMS.md` read CLEAN and was counted
         # closed while live.
         ident="closed_grade_in_live_home",
+        input_class="well-formed",
         refusal="a CLOSED grade in the live carrier — a closure that never "
                 "took its exit, counted closed while it is live",
         firing_input="a `DROPPED` block in `ITEMS.md`",
@@ -4217,6 +4358,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="blocked_in_done_home",
+        input_class="well-formed",
         refusal="a closed body still carrying a blocker — a wait recorded "
                 "against something that has stopped waiting, which is what "
                 "leaves an unanswerable question in the operator's queue "
@@ -4231,6 +4373,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="unknown_slot_misplaced",
+        input_class="well-formed",
         refusal="UNKNOWN in a slot that may never hold it — a grade is one of "
                 "the five and a blocker is typed or NONE, so UNKNOWN there is "
                 "a value nothing can ever fill in",
@@ -4243,6 +4386,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="blocker_exercise_misplaced",
+        input_class="well-formed",
         refusal="`blocker-exercise:` beside a `blocked-by` that runs no "
                 "predicate — the slot records a PREDICATE's live exit and its "
                 "two constructed arms, and only an `evidence` blocker has "
@@ -4267,6 +4411,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="not_derivable_misplaced",
+        input_class="well-formed",
         refusal="`not-derivable:` beside a `blocked-by` that asks no "
                 "question — the slot records why a QUESTION is not derivable "
                 "from the record, and only a `decision` blocker has one",
@@ -4289,6 +4434,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="ready_with_unknown_slot",
+        input_class="well-formed",
         refusal="READY, or its off-head twin STANDBY, over a slot nobody has "
                 "ever written (§3.1) — UNKNOWN is the migration's declared "
                 "marker and the grade workflow fills it BEFORE either grade",
@@ -4302,6 +4448,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="capture_dominated",
+        input_class="well-formed",
         refusal="booking outrunning shipped-plus-dropped — a RATIO, never a "
                 "size (R22). A large carrier draining steadily owes nothing "
                 "and a small one that never drains does",
@@ -4315,6 +4462,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="net_growth",
+        input_class="well-formed",
         refusal="the open count grew in BOTH halves of the window while the "
                 "ratio sat under the 3:1 tripwire — the band the spike test "
                 "never fires in, and one that grows without bound (lc-291)",
@@ -4329,6 +4477,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="kind_grew_without_exit",
+        input_class="well-formed",
         refusal="a kind that GREW WITHOUT AN EXIT EVENT (the design's own "
                 "replacement for a cap) — its home holds instances, it "
                 "declares a growth mode whose control IS an exit "
@@ -4344,6 +4493,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="exit_log_machine_local",
+        input_class="well-formed",
         refusal="the growth alarm asked of a fire log that never saw this "
                 "repo's exits — the log is machine-local and the carriers "
                 "are not, so where the TREE shows the exit was taken, zero "
@@ -4362,6 +4512,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="unregistered_persisted_thing",
+        input_class="well-formed",
         refusal="invariant 1 — a tracked file that resolves to no registered "
                 "kind",
         firing_input="a tracked file under a home no kind claims",
@@ -4372,6 +4523,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="route_set_unwatched",
+        input_class="well-formed",
         refusal="a refusal whose TEXT names an effect WIDER than the routes "
                 "the code watches — round 4's cross-row cure. The row fires "
                 "correctly on the routes it does watch, so its green says "
@@ -4388,6 +4540,7 @@ SCHEMA_ROWS = [
     ),
     Row(
         ident="route_set_unnamed",
+        input_class="well-formed",
         refusal="the MIRROR of the row above: a refusal whose CODE watches a "
                 "route its own TEXT does not name. It catches MORE than it "
                 "says, so an entry refused by it is refused under a text that "
@@ -4453,6 +4606,7 @@ def _desk_cli(argv) -> Fired:
 DESK_ROWS = [
     Row(
         ident="desk_state_unknown_value",
+        input_class="well-formed",
         refusal="a `desk state` value outside the closed vocabulary "
                 "(REPORTED / WAITING-ON / BLOCKED / DONE) is a refusal, not "
                 "a coercion — the vocabulary is closed and an open one "
@@ -4468,6 +4622,7 @@ DESK_ROWS = [
     ),
     Row(
         ident="desk_state_shape",
+        input_class="well-formed",
         refusal="a closed-vocabulary `desk state` value missing its own "
                 "required argument",
         firing_input="`desk state REPORTED` with no message id",
@@ -4523,6 +4678,7 @@ def _workflow_cli(argv, *, templates=None, **repo_kw) -> Fired:
 WORKFLOW_ROWS = [
     Row(
         ident="workflow_binding_exists",
+        input_class="well-formed",
         refusal="`workflow bind` refuses to overwrite an existing "
                 "`template-bindings` entry for the same template — no "
                 "silent overwrite, the same rule `init` and `lane new` "
@@ -4749,6 +4905,7 @@ def _hook_mode_run(mode: int, *, declared_by_manifest: bool = False) -> Fired:
 HOOK_ROWS = [
     Row(
         ident="hook_not_executable",
+        input_class="well-formed",
         refusal="a git hook the repo SHIPS committed without its executable "
                 "bit — a gate git cannot launch, so it fails open while every "
                 "content check over it reports clean",
@@ -4763,6 +4920,7 @@ HOOK_ROWS = [
     ),
     Row(
         ident="hook_not_executable_declared",
+        input_class="well-formed",
         finding_row="hook_not_executable",
         refusal="the SAME refusal on its second firing input: a hook the "
                 "plugin manifest DECLARES, which is the half the carrier's "
@@ -4846,6 +5004,7 @@ def _compact_run(*, edited: bool) -> Fired:
 COMPACT_ROWS = [
     Row(
         ident="compaction_would_strip",
+        input_class="well-formed",
         refusal="`item compact` refuses a closed body whose text is NOT "
                 "recoverable at the blob pin the record would carry — the "
                 "carrier would shrink and the text would be nowhere, and "
@@ -4936,6 +5095,7 @@ def _watched_record_routes() -> set:
 RECORD_ROWS = [
     Row(
         ident="record_slot_missing",
+        input_class="malformed",
         refusal="a record missing one of the five declared slots",
         firing_input="a record whose `## MOVES` heading is renamed, so the "
                      "slot is absent rather than empty",
@@ -4946,6 +5106,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_now_empty",
+        input_class="well-formed",
         refusal="NOW present and empty — the anti-blinders slot saying "
                 "nothing",
         firing_input="a record whose NOW heading stands with no line under it",
@@ -4958,6 +5119,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_line_untagged",
+        input_class="malformed",
         refusal="prose under the right heading — a line in ESTABLISHED or "
                 "OPEN carrying no `[TAG]`, which passes every check written "
                 "over tagged lines BY HAVING NONE",
@@ -4973,6 +5135,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_nothing_graded",
+        input_class="well-formed",
         refusal="the same case with the prose REMOVED (lc-188) — an open "
                 "record with no line under ESTABLISHED or OPEN, where every "
                 "line-shape check runs over nothing and the empty finding "
@@ -5022,6 +5185,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_tag_unknown",
+        input_class="well-formed",
         refusal="a tag outside the closed set — counted by nothing, draining "
                 "through every gate",
         firing_input="`[CONFIRMED]`, a plausible word the vocabulary does "
@@ -5034,6 +5198,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_line_unbasised",
+        input_class="malformed",
         refusal="a tagged claim with no basis after the em dash — the label "
                 "standing where the evidence should be",
         firing_input="a `[VERIFIED]` line whose basis is deleted, the rest "
@@ -5047,6 +5212,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_line_unbasised_hyphen",
+        input_class="malformed",
         finding_row="record_line_unbasised",
         refusal="the SEPARATOR half of the same refusal: a hyphen is a "
                 "different character from an em dash, and admitting both "
@@ -5061,6 +5227,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_route_invalid",
+        input_class="malformed",
         refusal="a PENDING line that names no route, or names one outside "
                 "the closed set — \"I don't know\" left as a terminal state "
                 "instead of a claim about what would make it known",
@@ -5072,6 +5239,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_route_outside_set",
+        input_class="well-formed",
         finding_row="record_route_invalid",
         refusal="the VOCABULARY half of the same refusal: a fourth word "
                 "routes the question nowhere, the three carrying different "
@@ -5085,6 +5253,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_probe_missing",
+        input_class="malformed",
         refusal="a PENDING line naming no probe — a question nobody but its "
                 "author can settle",
         firing_input="a PENDING line with its `probe:` clause removed, the "
@@ -5098,6 +5267,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_closed_undrained",
+        input_class="well-formed",
         refusal="a record marked closed over undrained [PENDING] lines — "
                 "closure is GRADUATION, never deletion and never silence",
         firing_input="a `## CLOSED` heading with pointers, added to a record "
@@ -5119,6 +5289,7 @@ RECORD_ROWS = [
     ),
     Row(
         ident="record_closed_unpointed",
+        input_class="well-formed",
         refusal="a closure with no pointer to where anything went — the same "
                 "loss as deleting the graduated lines, minus the honesty",
         firing_input="a `## CLOSED` heading standing empty over a fully "
@@ -5330,6 +5501,7 @@ def _list_home_run(home: str) -> Fired:
 HOME_ROWS = [
     Row(
         ident="home_unresolvable",
+        input_class="unreadable",
         refusal="a declared home this walk never resolved — counted as 0 and "
                 "reported CLEAN, which is an absence claim over a population "
                 "no instrument ever saw",
@@ -5359,6 +5531,7 @@ HOME_ROWS = [
 RECORDS_KIND_ROWS = [
     Row(
         ident="records_kind_undeclared",
+        input_class="well-formed",
         refusal="investigation records EXIST for a repo whose declaration "
                 "registers no kind for them — invariant 1 reaching a home "
                 "the tracked-file sweep structurally cannot see",
@@ -5375,6 +5548,7 @@ RECORDS_KIND_ROWS = [
     ),
     Row(
         ident="desk_state_kind_undeclared",
+        input_class="well-formed",
         refusal="desk-state files WRITTEN IN THIS REPO exist and no registered "
                 "kind names their home — the plugin governing its own state "
                 "everywhere except the file a shipped verb writes about the "
@@ -5401,6 +5575,7 @@ RECORDS_KIND_ROWS = [
 GOAL_ROWS = [
     Row(
         ident="verify_check_did_not_run",
+        input_class="absent",
         refusal="a registered verify command that never EXECUTED — reported "
                 "COULD NOT VERIFY, never as a pass with fewer checks",
         firing_input="a laws file whose `## Verify` block names a command "
@@ -5418,6 +5593,7 @@ GOAL_ROWS = [
     ),
     Row(
         ident="verify_check_could_not_verify",
+        input_class="well-formed",
         refusal="a registered verify command that RAN and exited this CLI's "
                 "own COULD NOT VERIFY code — carried through as could-not-"
                 "verify, never booked as a failure: a wrapped tool that said "
@@ -5438,6 +5614,7 @@ GOAL_ROWS = [
     ),
     Row(
         ident="emit_site_unregistered_could_not_verify",
+        input_class="well-formed",
         finding_row="emit_site_unregistered",
         refusal="the COULD-NOT-VERIFY half of the coverage check's reach: a "
                 "site emitting a refusal under that verdict word with no "
@@ -5456,6 +5633,7 @@ GOAL_ROWS = [
     ),
     Row(
         ident="goal_query_undeclared",
+        input_class="well-formed",
         refusal="a goal filter naming a goal the repo does not declare — "
                 "answered COULD NOT VERIFY, never as an empty listing",
         firing_input="`item ready --goal mitigat`, one character off a "
@@ -5495,6 +5673,7 @@ GOAL_ROWS = [
 ROSTER_POPULATION_ROWS = [
     Row(
         ident="roster_population_undeclared",
+        input_class="malformed",
         refusal="a repo roster that does not say whether it IS the declared "
                 "repo population or a deliberate SUBSET of it — the two "
                 "readings are indistinguishable by content, so an "
@@ -5512,6 +5691,7 @@ ROSTER_POPULATION_ROWS = [
     ),
     Row(
         ident="roster_population_diverges",
+        input_class="well-formed",
         refusal="a roster that DECLARES itself the declared-repo population "
                 "and does not match it — every mechanism generated over the "
                 "file is then scoped to a population nobody chose, and "
@@ -5537,6 +5717,7 @@ ROSTER_POPULATION_ROWS = [
 MARK_ROWS = [
     Row(
         ident="evidence_mark_malformed",
+        input_class="malformed",
         refusal="an evidence slot that NAMES `PERISHABLE` and does not "
                 "spell it — the mark's date and re-derivation command are "
                 "what make the staleness answerable, and a mark missing "
@@ -5573,6 +5754,7 @@ MARK_ROWS = [
 MOMENT_ROWS = [
     Row(
         ident="reader_moment_broken",
+        input_class="well-formed",
         refusal="a kind whose reader moment is a predicate that could not be "
                 "evaluated — the moment is UNKNOWN, and unknown is not quiet",
         firing_input="a reader `when` of `predicate` naming a command that "
@@ -5592,6 +5774,7 @@ MOMENT_ROWS = [
     ),
     Row(
         ident="reader_moment_malformed",
+        input_class="malformed",
         refusal="a reader `when` that is PRESENT and invalid — a moment "
                 "nobody could have executed, reported as its own answer "
                 "rather than folded into the absent-moment default",
@@ -5718,6 +5901,7 @@ _BENCH_REASON = ("decision-complete, and no open arc schedules it this "
 STANDBY_ROWS = [
     Row(
         ident="standby_undeclared",
+        input_class="well-formed",
         refusal="a block graded STANDBY in a repo whose declaration does not "
                 "opt in with `grades-extra` — the third READY grade is "
                 "per-repo, and an undeclared one is a grade this repo never "
@@ -5734,6 +5918,7 @@ STANDBY_ROWS = [
     ),
     Row(
         ident="bench_undeclared",
+        input_class="well-formed",
         refusal="`item bench` in a repo that does not declare STANDBY — the "
                 "verb would write a grade the repo's own check then refuses",
         firing_input="`item bench <id> --reason <why>` with no `grades-extra`",
@@ -5747,6 +5932,7 @@ STANDBY_ROWS = [
     ),
     Row(
         ident="bench_not_ready",
+        input_class="well-formed",
         refusal="`item bench` on an item that is not READY — STANDBY is "
                 "READY's off-head twin, and benching a NEW or PARKED item "
                 "would grade it decision-complete without anyone judging so",
@@ -5764,6 +5950,7 @@ STANDBY_ROWS = [
     ),
     Row(
         ident="bench_without_reason",
+        input_class="well-formed",
         refusal="`item bench` with no recorded WHY — moving an item off the "
                 "head is a judgment (law 10), and one nobody reasoned is a "
                 "grade that moved",
@@ -5778,6 +5965,7 @@ STANDBY_ROWS = [
     ),
     Row(
         ident="ready_outgrows_head",
+        input_class="well-formed",
         refusal="READY outgrowing the scheduled head — more READY items sit "
                 "outside every open arc than left READY over the window, so "
                 "the grade asserts a schedule nobody holds; a bench pass is "
@@ -5791,6 +5979,7 @@ STANDBY_ROWS = [
     ),
     Row(
         ident="head_draining",
+        input_class="well-formed",
         refusal="the scheduled head draining while STANDBY holds work — the "
                 "head is empty, or shrank in both halves of the window; a "
                 "return pass (`item promote`) is owed",
@@ -5862,6 +6051,7 @@ def _staged_run(staged_items: str, *, head_items: str = STAGED_REMOVAL_HEAD,
 STAGED_ROWS = [
     Row(
         ident="live_block_line_removed",
+        input_class="well-formed",
         refusal="a staged edit that REMOVES a line from an item block which "
                 "stays live — an in-place edit is a removal plus an "
                 "addition, and the removed text is then in no file; a block "

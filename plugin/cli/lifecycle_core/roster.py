@@ -460,6 +460,76 @@ def check_routes(out) -> int:
     return code
 
 
+def check_input_classes(out) -> None:
+    """THE INPUT CLASS PER ROW (lc-326) — a READOUT, and it returns no code.
+
+    A row's pair proves its refusal fires on the input it was GIVEN. This
+    says what kind of input that was, and names every refusal whose own TEXT
+    names a class of input no row plants. `emit_site`-style coverage cannot
+    see that gap: the site exists, the row exists, the pair is green.
+
+    PER REFUSAL, NOT PER ROSTER ROW. Two rows can prove two firing inputs of
+    one refusal (`Row.finding_row`), so the class one row names may be
+    planted by its sibling — the grouping is the roster's own mapping, the
+    one `prove-rows` reads its sibling families from.
+
+    WHY THIS MOVES NO EXIT CODE. An unplanted class is a statement about what
+    the roster has NOT proven, the same kind of statement as the prover's
+    "rows with NO mutation recorded": listed, counted, never folded into a
+    green line and never a refusal of its own. THE LIMIT, printed below
+    because it is the half nothing computes: which classes a refusal's text
+    names is DECLARED by a reader (`Row.names_input`). A row declaring none
+    is read as naming only its own plant's class.
+    """
+    out("")
+    out("INPUT CLASSES (lc-326) — beside its firing input, a row declares "
+        "what CLASS of input its plant is, from a closed vocabulary: "
+        f"{', '.join(refusals.INPUT_CLASSES)}. A green pair proves the "
+        "refusal fires on the input it was given, and says nothing about a "
+        "class of input it was never given.")
+    by_class = {c: [] for c in refusals.INPUT_CLASSES}
+    unclassed, foreign = [], []
+    planted, named = {}, {}
+    for row in refusals.ROWS:
+        cls = getattr(row, "input_class", None)
+        ref = row.expected_finding_row
+        if cls is None:
+            unclassed.append(row.ident)
+        elif cls not in by_class:
+            foreign.append(f"{row.ident} ({cls!r})")
+        else:
+            by_class[cls].append(row.ident)
+            planted.setdefault(ref, set()).add(cls)
+        for c in getattr(row, "names_input", ()) or ():
+            named.setdefault(ref, set()).add(c)
+    out("    rows per class: "
+        + ", ".join(f"{c}: {len(by_class[c])}"
+                    for c in refusals.INPUT_CLASSES))
+    for ident in unclassed:
+        out(f"    UNCLASSED  {ident}  declares no input class — counted in "
+            "no class above, and never read as a well-formed plant")
+    for what in foreign:
+        out(f"    OUTSIDE THE VOCABULARY  {what} — the vocabulary is closed, "
+            "so this row is counted in no class above")
+    gaps = 0
+    for ref in sorted(named):
+        for c in sorted(named[ref] - planted.get(ref, set())):
+            gaps += 1
+            have = ", ".join(sorted(planted.get(ref, ()))) or "none classed"
+            out(f"    UNPLANTED  {ref}  names `{c}` input and no row proving "
+                f"it plants one (planted: {have}). Its green says the "
+                "refusal fires on the input it was given, and nothing about "
+                f"`{c}` input.")
+    out(f"    refusals naming a class no row plants: {gaps}; rows declaring "
+        f"no class: {len(unclassed)}; rows outside the vocabulary: "
+        f"{len(foreign)}")
+    out("    LIMIT: the class of a plant and the classes a refusal's text "
+        "NAMES are both DECLARED on the row by whoever read the text. "
+        "Nothing here reads the prose, so a row declaring no named class is "
+        "read as naming only its own plant's. A READOUT: it moves no exit "
+        "code.")
+
+
 def cmd_list(out) -> int:
     """`--test --list` — the roster as DATA, nothing executed.
 
@@ -474,6 +544,11 @@ def cmd_list(out) -> int:
         out(f"{row.ident}")
         out(f"    refusal:       {row.refusal}")
         out(f"    firing input:  {row.firing_input}")
+        out(f"    input class:   "
+            f"{getattr(row, 'input_class', None) or 'UNCLASSED'}"
+            + (f"   (its text also names: "
+               f"{', '.join(row.names_input)})"
+               if getattr(row, "names_input", ()) else ""))
         out(f"    expects:       {exits.word(row.expect)}")
         out(f"    finding row:   {row.expected_finding_row}")
         out(f"    stage:         {row.stage}")
@@ -615,6 +690,7 @@ def cmd_test(out, list_only: bool = False) -> int:
 
     code = check_coverage(out, reach=reach)
     code = exits.worst([code, check_routes(out)])
+    check_input_classes(out)     # a readout: it contributes no code
 
     out("")
     out(f"rows: {len(refusals.ROWS)}   {passed} passed, {failed} failed, "

@@ -143,5 +143,168 @@ class TheRosterReadsTheTreeItWasLaunchedFrom(unittest.TestCase):
         self._assert_cwd_is_not_an_input(git=True)
 
 
+def _row(ident, **kw):
+    """A constructed roster row whose arms answer a fixed pair.
+
+    The arms pass the roster's own grading (plant FINDING and named, control
+    CLEAN), so an arm driving `cmd_test` over it measures the READOUT under
+    test and not a failing row.
+    """
+    from lifecycle_core import exits, refusals
+    return refusals.Row(
+        ident=ident,
+        refusal=kw.pop("refusal", "a constructed row — this arm grades the "
+                                  "roster's own readout, never a refusal"),
+        firing_input="not a real input",
+        expect=exits.FINDING,
+        fire=kw.pop("fire", lambda: refusals.Fired(
+            exits.FINDING, f"FINDING [{kw.get('finding_row') or ident}] x")),
+        control=kw.pop("control", lambda: refusals.Fired(exits.CLEAN, "")),
+        **kw)
+
+
+def _run_readout(name, rows):
+    """One roster readout over a SWAPPED roster: its printed text.
+
+    `None` where this build has no such readout — asserted by the caller, so
+    a missing mechanism is an assertion failure and not an AttributeError.
+    """
+    from unittest import mock
+    from lifecycle_core import refusals, roster
+    fn = getattr(roster, name, None)
+    if fn is None:
+        return None
+    buf = []
+    with mock.patch.object(refusals, "ROWS", list(rows)):
+        fn(buf.append)
+    return "\n".join(buf)
+
+
+class EveryRosterRowDeclaresItsInputClass(unittest.TestCase):
+    """lc-326: the class of input that fires a row is DECLARED and graded.
+
+    THE DEFECT: a refusal whose text names malformed, unreadable or absent
+    input could be proven on a well-formed plant alone, and nothing said so.
+    A green pair proves the refusal fires on the input it was GIVEN.
+
+    WHAT IS COMPUTABLE AND WHAT IS NOT. The class of a plant, and the classes
+    a refusal's text names, are both DECLARED on the row — no predicate reads
+    prose, because a word-presence test fires on text that merely discusses
+    the word. What is computed is the comparison: per refusal, the classes
+    named against the classes planted.
+    """
+
+    VOCABULARY = ("well-formed", "malformed", "unreadable", "absent")
+
+    def test_the_vocabulary_is_closed_at_the_four_the_criterion_names(self):
+        from lifecycle_core import refusals
+        self.assertEqual(getattr(refusals, "INPUT_CLASSES", None),
+                         self.VOCABULARY)
+
+    def test_every_real_row_declares_a_class_from_the_vocabulary(self):
+        from lifecycle_core import refusals
+        bad = [(r.ident, getattr(r, "input_class", None))
+               for r in refusals.ROWS
+               if getattr(r, "input_class", None) not in self.VOCABULARY]
+        self.assertEqual(
+            bad, [],
+            f"{len(bad)} of {len(refusals.ROWS)} roster row(s) declare no "
+            "input class from the closed vocabulary. A row added without one "
+            "takes the field's default, which is the UNDECLARED value: add "
+            "`input_class=` beside its `ident=`.")
+
+    def test_every_class_a_real_row_NAMES_is_in_the_vocabulary_too(self):
+        from lifecycle_core import refusals
+        bad = [(r.ident, c) for r in refusals.ROWS
+               for c in getattr(r, "names_input", ())
+               if c not in self.VOCABULARY]
+        self.assertEqual(bad, [])
+
+    def test_a_refusal_naming_a_class_no_plant_carries_is_reported_by_name(self):
+        out = _run_readout("check_input_classes", [
+            _row("reads_a_file", input_class="well-formed",
+                 names_input=("unreadable",)),
+            _row("quiet_neighbour", input_class="well-formed"),
+        ])
+        self.assertIsNotNone(out, "the roster has no input-class readout")
+        named = [l for l in out.split("\n") if "UNPLANTED" in l]
+        self.assertEqual(len(named), 1, out)
+        self.assertIn("reads_a_file", named[0])
+        self.assertIn("unreadable", named[0])
+        self.assertNotIn("quiet_neighbour", "\n".join(named))
+
+    def test_a_SIBLING_plant_of_that_class_silences_the_report(self):
+        """The control, and the reason the comparison is per REFUSAL: two
+        roster rows can prove two firing inputs of one refusal, so the class
+        one row names may be planted by its sibling."""
+        out = _run_readout("check_input_classes", [
+            _row("reads_a_file", input_class="well-formed",
+                 names_input=("unreadable",)),
+            _row("reads_a_file_unreadable", finding_row="reads_a_file",
+                 input_class="unreadable"),
+        ])
+        self.assertIsNotNone(out, "the roster has no input-class readout")
+        self.assertNotIn("UNPLANTED", out)
+
+    def test_an_UNCLASSED_row_is_named_and_never_counted_as_well_formed(self):
+        """The field's default is the undeclared value. A row another lane
+        adds without it must not read as a well-formed plant."""
+        out = _run_readout("check_input_classes", [
+            _row("classed", input_class="malformed"),
+            _row("arrived_without_one"),
+        ])
+        self.assertIsNotNone(out, "the roster has no input-class readout")
+        named = [l for l in out.split("\n") if "UNCLASSED" in l]
+        self.assertEqual(len(named), 1, out)
+        self.assertIn("arrived_without_one", named[0])
+        self.assertNotIn("classed,", named[0])
+        self.assertIn("well-formed: 0", out)
+
+    def test_a_class_outside_the_vocabulary_is_named_as_such(self):
+        out = _run_readout("check_input_classes", [
+            _row("typo", input_class="mal-formed"),
+        ])
+        self.assertIsNotNone(out, "the roster has no input-class readout")
+        self.assertIn("OUTSIDE THE VOCABULARY", out)
+        self.assertIn("typo", out)
+
+    def test_the_readout_rides_the_roster_run_and_moves_no_exit_code(self):
+        """MUST NOT MOVE: reported by name is a READOUT. An unplanted class
+        is a statement about what the roster has NOT proven, as the prover's
+        unproven list is, and a roster of passing rows stays CLEAN."""
+        from unittest import mock
+        from lifecycle_core import exits, refusals, roster
+        rows = [_row("reads_a_file", input_class="well-formed",
+                     names_input=("unreadable",))]
+        buf = []
+        with mock.patch.object(refusals, "ROWS", rows), \
+                mock.patch.object(roster, "check_coverage",
+                                  lambda out, root=None, reach=None:
+                                  exits.CLEAN), \
+                mock.patch.object(roster, "check_routes",
+                                  lambda out: exits.CLEAN):
+            code = roster.cmd_test(buf.append)
+        text = "\n".join(buf)
+        self.assertIn("UNPLANTED", text,
+                      "the roster run does not carry the readout")
+        self.assertEqual(code, exits.CLEAN, text)
+
+    def test_the_real_roster_names_exactly_the_refusals_it_leaves_unplanted(self):
+        """The readout over the REAL rows, pinned to what was measured when
+        the classes were declared. ONE refusal: `--retire-source`'s laws
+        refusal names a laws file that is NOT THERE and is planted only on a
+        declaration carrying no `laws` value. A refusal that starts naming a
+        class it does not plant shows up here by name."""
+        from lifecycle_core import refusals
+        out = _run_readout("check_input_classes", refusals.ROWS)
+        self.assertIsNotNone(out, "the roster has no input-class readout")
+        lines = [l.split() for l in out.split("\n")]
+        self.assertEqual(
+            sorted(l[1] for l in lines if l[:1] == ["UNPLANTED"]),
+            ["retire_source_laws_absent"], out)
+        self.assertEqual([l for l in lines if l[:1] == ["UNCLASSED"]], [],
+                         out)
+
+
 if __name__ == "__main__":
     unittest.main()
