@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 324
+added: 325
 compacted: 0
 
 ## lc-3
@@ -1407,4 +1407,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_items.py
 done-criterion: An amend that changes a blocker's type leaves a block item check reads CLEAN, whatever earlier amendments the block carries: the re-type clears every line that is legal only beside the old blocker type, amended ones included, or keeps them as history in a form the shape check accepts. Red-first: a parked block with a decision blocker and an amended-not-derivable line, amended to blocked-by NONE, goes item_shape today and CLEAN after; control: a block with no amended line is unchanged by the fix. The commit gate accepts the amend's own commit.
 evidence: MEASURED 2026-10-07 at the drain desk on the live carrier with --no-commit: item amend lc-154 --blocked-by NONE removed one line (the base not-derivable) and added two; item check then printed FINDING item_shape, block lc-154, amended-not-derivable amends a slot the block does not carry. The carrier was restored from the committed copy and reads CLEAN again.
+blocked-by: NONE
+
+## lc-333
+grade: STANDBY
+requirement: QUESTIONS WAITING ON THE OPERATOR REACH NO OPERATOR. 49 open items are blocked on a decision; the count prints in the session-start banner, which sessions read and the operator does not, and no verb lists the questions in plain words or says which a desk may answer. On 2026-10-07, 32 of them were waiting only on the freeze exit the operator had just granted, and the operator said first-hand they were not aware items were stuck on missing design. A blocker that only a person can clear and that no person is shown is a wait nobody is in. Record: LEDGER.md decision line 2026-10-07, lifted in general
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
+done-criterion: One reading verb prints the decision queue for a person: each open decision blocker once per distinct question, in plain words, with the items it holds, its age, and the not-derivable statement shortened to one line; questions a ledger line already answers are listed as ANSWERED AND STILL PARKED with the line. The session-start banner and the session close each print the queue's count and its three oldest questions, so the list arrives without being asked for. It decides nothing and moves no grade. Red-first: a fixture carrier with two items on one question and one answered question prints one line with both ids and one ANSWERED line; a carrier with no decision blocker says so.
+evidence: MEASURED 2026-10-07 at the drain desk through item slots over all 96 open items: 49 blocked on a decision (8 NEW, 39 PARKED, 2 STANDBY), 31 of them worded as a narrow freeze exit for the item itself plus lc-282 asking whether the freeze is lifted; the banner line reads 49 with a derivability statement, 0 answered by the ledger.
 blocked-by: NONE
