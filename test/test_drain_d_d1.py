@@ -203,5 +203,125 @@ class ArcVerbsCommitTheLaneTheyRetire(unittest.TestCase):
         self.assertNotEqual(status(repo), "")
 
 
+# --- lc-322 -------------------------------------------------------------------
+#
+# AN `external` BLOCKER WAS THE ONE TYPE NO CLOSE SPOKE FOR. `move_to_done`
+# clears the base `blocked-by:` LINE and an `amended-blocked-by:` line
+# survives it, so an amended external blocker reached the closure home alive:
+# the close exited 0 and the next `item check` reported `blocked_in_done_home`
+# against a body no verb can repair. A base one was cleared with no record.
+
+EVENT = "the vendor ships a fix"
+HEAD = (f"schema: {R.items_mod.SCHEMA_FLOOR}\n"
+        "baseline: 1\nadded: 0\ncompacted: 0\n")
+#: The blocker on the BASE slot line.
+EXTERNAL_BASE = HEAD + R._blocked_block("xx-1", "PARKED", f"external {EVENT}")
+#: The blocker on an AMENDMENT over a base line reading NONE — the form that
+#: survives the move.
+EXTERNAL_AMENDED = (
+    HEAD + R._blocked_block("xx-1", "PARKED", "NONE")
+    + "amend-reason: 2026-10-07 the wait turned out to be on the vendor\n"
+    + f"amended-blocked-by: 2026-10-07 external {EVENT}\n")
+
+CLOSE = ("item", "close", "xx-1", "--met", "none", "--decided", "none")
+DROP = ("item", "close", "xx-1", "--drop", "--reason", "overtaken")
+ROW = "FINDING [close_over_live_blocker]"
+
+
+def tracked_changes(repo: Path) -> str:
+    """Pending changes to TRACKED files. The carrier lock is an untracked
+    sibling this fixture's repo does not ignore, and it is not a write."""
+    return git(repo, "status", "--porcelain", "--untracked-files=no")
+
+
+def flat(text: str) -> str:
+    return " ".join(text.split())
+
+
+class ACloseSpeaksForAnExternalBlocker(unittest.TestCase):
+
+    def _repo(self, items: str) -> Path:
+        r = R._Repo(items=items)
+        self.addCleanup(r.close)
+        return r.dir
+
+    def _done(self, repo: Path) -> str:
+        return (repo / "ITEMS-DONE.md").read_text(encoding="utf-8")
+
+    # --- the red-first arms ---------------------------------------------------
+
+    def test_a_DONE_close_over_an_AMENDED_external_blocker_is_REFUSED(self):
+        repo = self._repo(EXTERNAL_AMENDED)
+        code, outp = run(repo, *CLOSE)
+        self.assertEqual(code, exits.FINDING, outp)
+        self.assertIn(ROW, outp)
+        self.assertIn("NOT CLOSED", outp)
+        # THE TWO EXITS ARE NAMED, which is the criterion's own wording.
+        self.assertIn("item amend xx-1 --blocked-by NONE", flat(outp))
+        self.assertIn("--drop", outp)
+        # NOTHING MOVED: the refusal is before the first write.
+        self.assertEqual(tracked_changes(repo), "", outp)
+        self.assertNotIn("xx-1", self._done(repo))
+
+    def test_a_DONE_close_over_a_BASE_external_blocker_is_REFUSED(self):
+        repo = self._repo(EXTERNAL_BASE)
+        code, outp = run(repo, *CLOSE)
+        self.assertEqual(code, exits.FINDING, outp)
+        self.assertIn(ROW, outp)
+        self.assertEqual(tracked_changes(repo), "", outp)
+        self.assertNotIn("xx-1", self._done(repo))
+
+    def test_a_DROP_over_an_AMENDED_external_blocker_records_it_ABANDONED(self):
+        """The body the old close left behind: `item check` reds it."""
+        repo = self._repo(EXTERNAL_AMENDED)
+        code, outp = run(repo, *DROP)
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn(f"blocker-moot: external {EVENT} (", self._done(repo))
+        self.assertIn("dropped", self._done(repo))
+        code, outp = run(repo, "item", "check")
+        self.assertNotIn("blocked_in_done_home", outp)
+        self.assertEqual(code, exits.CLEAN, outp)
+
+    def test_a_DROP_over_a_BASE_external_blocker_records_it_ABANDONED(self):
+        repo = self._repo(EXTERNAL_BASE)
+        code, outp = run(repo, *DROP)
+        self.assertEqual(code, exits.CLEAN, outp)
+        self.assertIn(f"blocker-moot: external {EVENT} (", self._done(repo))
+        self.assertIn("blocker-moot: external", outp,
+                      "the record was written and not spoken")
+        code, outp = run(repo, "item", "check")
+        self.assertEqual(code, exits.CLEAN, outp)
+
+    # --- the controls ---------------------------------------------------------
+
+    def test_CONTROL_the_first_named_exit_WORKS(self):
+        """The refusal says `item amend … --blocked-by NONE`; a refusal whose
+        own remedy is refused would be a door with no handle."""
+        repo = self._repo(EXTERNAL_AMENDED)
+        code, outp = run(repo, "item", "amend", "xx-1", "--blocked-by",
+                         "NONE", "--reason", "the vendor shipped 4.2")
+        self.assertEqual(code, exits.CLEAN, outp)
+        code, outp = run(repo, *CLOSE)
+        self.assertEqual(code, exits.CLEAN, outp)
+        code, outp = run(repo, "item", "check")
+        self.assertEqual(code, exits.CLEAN, outp)
+
+    def test_CONTROL_a_record_about_ANOTHER_event_discharges_nothing(self):
+        """EQUALITY, as for every other type: the discharge must name the
+        very event the effective blocker names."""
+        repo = self._repo(HEAD.replace("baseline: 1", "baseline: 0"))
+        body = (R._blocked_block("xx-1", "DROPPED", "NONE")
+                + "amend-reason: 2026-10-07 retyped\n"
+                + f"amended-blocked-by: 2026-10-07 external {EVENT}\n"
+                + "blocker-moot: external some other event entirely (an "
+                  "external event is observed by no close; this item was "
+                  "dropped with the wait unanswered)\n")
+        (repo / "ITEMS-DONE.md").write_text(
+            R.EMPTY_DONE + body, encoding="utf-8")
+        code, outp = run(repo, "item", "check")
+        self.assertEqual(code, exits.FINDING, outp)
+        self.assertIn("FINDING [blocked_in_done_home]", outp)
+
+
 if __name__ == "__main__":
     unittest.main()

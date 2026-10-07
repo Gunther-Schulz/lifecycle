@@ -933,6 +933,19 @@ MUTATIONS = [
      "a live wait deleted, and an amended one left standing in the closure "
      "home"),
 
+    # lc-322, the THIRD firing input of the same row, anchored on its own
+    # message tail for the reason the two above are. The DROP arm above the
+    # refusal keeps reading real input, so the row's control stays CLEAN
+    # under the mutation. Admitted on the pair: PROVEN here, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("close_over_live_blocker_external", "verbs.py",
+     "        \"abandoned and unanswered.\")\n    return None, exits.FINDING",
+     "        \"abandoned and unanswered.\")\n    return None, exits.CLEAN",
+     "the refusal of a DONE close over a live external blocker — the close "
+     "then moves the body with no record, which is lc-322's defect: a base "
+     "blocker cleared silently, and an amended one left standing in the "
+     "closure home"),
+
     # lc-303. THE VERDICT FOLDED, per the note above `net_growth`: the tag
     # still prints, only the code moves. Admitted on the lc-142 pair —
     # PROVEN at this anchor, "rows changed: NONE" re-pointed at an inert

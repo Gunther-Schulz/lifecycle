@@ -1368,6 +1368,16 @@ EVIDENCE_FIRED_ITEMS = (
     + _blocked_block("xx-1", "READY", "evidence test -e ITEMS.md")
 )
 
+#: lc-322's ONE CARRIER FOR BOTH ARMS. Nothing evaluates an `external` wait,
+#: so no carrier state separates a refused close from an allowed one — the
+#: close's own GRADE does (DONE refused, DROP recorded), and the arms differ
+#: in that alone.
+EXTERNAL_LIVE_ITEMS = (
+    (f"schema: {items_mod.SCHEMA_FLOOR}\n"
+     "baseline: 1\nadded: 0\ncompacted: 0\n")
+    + _blocked_block("xx-1", "PARKED", "external the vendor ships a fix")
+)
+
 #: lc-193's RING: `xx-1` and `xx-2` block each other by id. Neither is
 #: dangling and neither is DROPPED, so `check_blocker_targets` reads this
 #: carrier CLEAN — the whole reason a GRAPH traversal is a different check
@@ -1972,6 +1982,34 @@ VERB_ROWS = [
                               "--decided", "none"],
                              items=EVIDENCE_FIRED_ITEMS),
         stage="drain wave C, lane C1 (lc-105)",
+    ),
+    Row(
+        # THE THIRD FIRING INPUT OF THE SAME REFUSAL (lc-322), a sibling for
+        # the reason the row above is: one cause, one repair, a different
+        # holder of the answer — here NOBODY, which is why the type refuses
+        # on the blocker still standing rather than on anything it reads.
+        ident="close_over_live_blocker_external",
+        finding_row="close_over_live_blocker",
+        refusal="a DONE close over an `external` blocker — nothing evaluates "
+                "such a wait, its ending is an act somebody records by "
+                "clearing the blocker with a reason, so one still standing "
+                "at close is live and the move would end it by deleting it "
+                "(lc-322). A DROP records the wait as abandoned and "
+                "unanswered",
+        firing_input="`item close xx-1` where xx-1 is blocked by `external "
+                     "the vendor ships a fix`",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["item", "close", "xx-1", "--met", "none",
+                           "--decided", "none"],
+                          items=EXTERNAL_LIVE_ITEMS),
+        # THE SAME CARRIER, closed as a DROP: the arms differ in the close's
+        # grade alone, which is the only thing that can separate them for a
+        # type no state answers. A control with no blocker would pass
+        # whether or not this refusal looked at the blocker at all.
+        control=lambda: _cli(["item", "close", "xx-1", "--drop", "--reason",
+                              "overtaken"],
+                             items=EXTERNAL_LIVE_ITEMS),
+        stage="drain wave D, lane D1 (lc-322)",
     ),
     Row(
         ident="close_carries_pointer",

@@ -3679,8 +3679,9 @@ def _effective_blocker(ctx: Ctx, ident: str):
     predecessor never had, a refusal, because an item-id blocker names a target
     whose state decides whether the wait was answered or is still live — and an
     `evidence` one is disposed by `_evidence_blocker_disposition` (lc-105),
-    which asks the predicate itself. `external` is the type no close speaks
-    for.
+    which asks the predicate itself. `external` was the type no close spoke
+    for until lc-322: `_external_blocker_disposition` refuses a DONE close
+    over one and records a drop as abandoned.
     """
     try:
         parsed = items_mod.parse(ctx.items_path.read_text(encoding="utf-8"))
@@ -3826,6 +3827,45 @@ def _evidence_blocker_disposition(ctx: Ctx, ident: str, detail: str,
         f"predicate, or clear the blocker — `item amend {ident} --blocked-by "
         "NONE --reason <why the wait no longer holds>` — and close again.")
     return None, exits.COULD_NOT_VERIFY
+
+
+def _external_blocker_disposition(ident: str, detail: str, dropping: bool,
+                                  out) -> tuple[str | None, int]:
+    """`(the `blocker-moot:` record for an external blocker, code)` — lc-322.
+
+    THE LAST TYPE NO CLOSE SPOKE FOR. The move cleared a base `external`
+    blocker with no record, and an AMENDED one survived into the closure
+    home, where the next `item check` reds a body `item amend` correctly
+    refuses to repair (relayed from a peer lane, re-measured 2026-10-07).
+
+    TWO ANSWERS, NOT THREE, and the missing one is the type's own shape.
+    Nothing evaluates an external wait — no target to read, no predicate to
+    run — so this close cannot learn that the event happened. Its ending is
+    an ACT (`classify_blocker`): somebody records it by clearing the blocker
+    with a reason. A blocker still standing at close is therefore LIVE by the
+    only record there is:
+
+      * a DONE close — REFUSED, with the two exits named. Proceeding would
+        end a live wait by deleting it, on a body nothing can amend.
+      * a DROP — an exit of equal standing; the record says the wait was
+        ABANDONED unanswered and claims no discharge.
+
+    THE SAME ROW AS THE ITEM-ID AND EVIDENCE REFUSALS, not a third name: one
+    cause (a DONE close over a wait that is still live) and one repair.
+    """
+    if dropping:
+        return items_mod.external_moot_record(detail), exits.CLEAN
+    out(f"FINDING [close_over_live_blocker] {ident} is blocked by the "
+        f"external event ({detail!r}) and nothing here records that it "
+        "happened. NOT CLOSED. An external blocker is evaluated by nothing — "
+        "its ending is an act somebody records — so one still standing at "
+        "close is a live wait, and a close that moved this body would end it "
+        "by deleting it; a closed body cannot be amended afterwards. If the "
+        "event has happened, say so first — `item amend "
+        f"{ident} --blocked-by NONE --reason <what happened and where it is "
+        "recorded>` — or close it with --drop, which records the wait as "
+        "abandoned and unanswered.")
+    return None, exits.FINDING
 
 
 def _decision_blocker_disposition(
@@ -4285,6 +4325,14 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
                 ctx, args.ident, detail, args.drop, out)
             if evidence_code != exits.CLEAN:
                 return evidence_code
+        # THE EXTERNAL TYPE, the last one (lc-322): refused for DONE,
+        # recorded abandoned for a drop — before the write, as above.
+        external_moot = None
+        if kind == "external" and detail:
+            external_moot, external_code = _external_blocker_disposition(
+                args.ident, detail, args.drop, out)
+            if external_code != exits.CLEAN:
+                return external_code
         # R3 SEAM (refocus round, 2026-09-24, lc-288), printed before the
         # move: the already-required `--reason` prose below is the written
         # answer this treatment arm was measuring for; this is only the READ
@@ -4304,6 +4352,8 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
             note_lines.append(f"blocker-moot: {item_moot}")
         elif evidence_moot:
             note_lines.append(f"blocker-moot: {evidence_moot}")
+        elif external_moot:
+            note_lines.append(f"blocker-moot: {external_moot}")
         if not args.drop:
             if reason:
                 note_lines.append(
@@ -4405,6 +4455,15 @@ def cmd_item_close(args, out, ctx: Ctx) -> int:
                 "Recorded on the moved body; no ledger line, because an "
                 "evidence blocker is a fact a command settles and never a "
                 "question in the operator's queue.")
+            moot_code = exits.CLEAN
+        elif external_moot:
+            # SPOKEN, and NOT LEDGERED: the drop's own `dropped:` line below
+            # is this close's ledger record, and the wait is no question in
+            # anybody's queue for a `decision:` line to take out of it.
+            out(f"blocker-moot: {external_moot}. Nothing evaluates an "
+                "external wait, so this close did not learn whether the "
+                "event happened and the record claims no discharge. Recorded "
+                "on the moved body.")
             moot_code = exits.CLEAN
         else:
             moot_code = exits.CLEAN

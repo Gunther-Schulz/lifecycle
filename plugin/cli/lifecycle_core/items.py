@@ -2971,6 +2971,33 @@ def is_evidence_moot_record(moot: str) -> bool:
     return False
 
 
+#: THE `blocker-moot:` RECORD FOR AN `external` BLOCKER (lc-322) — the last
+#: type a close did not speak for. An amended one survived the cleared
+#: `blocked-by:` line into the closure home exactly as the other three had,
+#: and the next `item check` reported `blocked_in_done_home` against a body
+#: the close had just written.
+#:
+#: ONE FORM, NOT TWO, and that is the type's own shape rather than an
+#: omission. An item-id blocker and an evidence one each have an ANSWERED
+#: form because something this tool can read says the wait ended — the
+#: target's closure, the predicate's exit. An external blocker is evaluated
+#: by nothing (`classify_blocker`): its ending is an ACT somebody records
+#: with `item amend --blocked-by NONE --reason …`, after which there is no
+#: blocker left for a close to record. So the only close that reaches a LIVE
+#: one and proceeds is a DROP, and the record claims no discharge.
+_EXTERNAL_MOOT_OPEN = "external "
+_EXTERNAL_MOOT_ABANDONED = (_EXTERNAL_MOOT_OPEN + "{event} (an external event "
+                            "is observed by no close; this item was dropped "
+                            "with the wait unanswered)")
+
+
+def external_moot_record(event: str) -> str:
+    """The `blocker-moot:` value a DROP writes for the external blocker
+    `event`. The single writer of this shape, read back by EQUALITY in
+    `_moot_discharges` — see the note above."""
+    return _EXTERNAL_MOOT_ABANDONED.format(event=(event or "").strip())
+
+
 #: THE `blocker-moot:` RECORD FOR A `decision` BLOCKER THE LEDGER ALREADY
 #: ANSWERS (lc-55) — the THIRD fact a close can honestly report about a
 #: blocker, beside `item_moot_record`'s two, and here for the same reason
@@ -3028,8 +3055,12 @@ def _moot_discharges(item: Item, detail: str, kind: str = "decision") -> bool:
     THREE TYPES SINCE lc-105. A close now RUNS an `evidence` blocker's
     predicate and records what it answered (`evidence_moot_record`'s two
     forms), and this discharges on either — for the PREDICATE the effective
-    blocker actually names, by the same equality. An `external` blocker is the
-    remainder: no close records one, so the type test below keeps it a finding.
+    blocker actually names, by the same equality.
+
+    FOUR SINCE lc-322, which leaves no type a close is silent about. A DROP
+    over a live `external` blocker records it abandoned
+    (`external_moot_record`, one form — a DONE close over one is refused) and
+    this discharges on it, for the EVENT the effective blocker names.
 
     THE `decision` TYPE HAS TWO RECORD FORMS NOW (lc-55), and both discharge
     for the question the effective blocker actually names: the bare question,
@@ -3052,6 +3083,9 @@ def _moot_discharges(item: Item, detail: str, kind: str = "decision") -> bool:
         return bool(predicate) and moot in (
             evidence_moot_record(predicate, abandoned=False),
             evidence_moot_record(predicate, abandoned=True))
+    if kind == "external":
+        event = (detail or "").strip()
+        return bool(event) and moot == external_moot_record(event)
     if kind != "decision":
         return False
     question = (detail or "").strip()
@@ -3103,13 +3137,13 @@ def check_done_file(path: Path, out, prefix: str | None = None, *,
     RUNS the predicate through the trigger evaluator and records what it
     answered (`evidence_moot_record`), or refuses.
 
-    WHAT IS LEFT IS `external`, and the message below says so instead of
-    over-reading. No close records an `external` blocker — it waits on an
-    event nothing evaluates — so an amended one still survives a close and
-    reaches this row (measured 2026-10-07 on a scratch repo). The finding used
-    to conclude the body "did not arrive here by a close"; that is a claim
-    about provenance this check never read, and it was false for every type
-    in turn. It now names both readings.
+    `external` WAS THE LAST, and lc-322 closed it: nothing evaluates such a
+    wait, so a DONE close over a live one is refused and a DROP records it
+    abandoned (`external_moot_record`). The finding used to conclude the body
+    "did not arrive here by a close"; that is a claim about provenance this
+    check never read, and it was false for every type in turn. It still names
+    both readings, because a body closed under a build that predates its
+    type's record reads exactly like one that never passed a close.
     """
     if text is None:
         if not path.exists():
@@ -3171,14 +3205,14 @@ def check_done_file(path: Path, out, prefix: str | None = None, *,
                     f"`blocked-by: {it.slots.get('blocked-by', '')}`. A "
                     "closed item waits for nothing, and this body carries no "
                     "`blocker-moot:` naming that blocker. A close records one "
-                    "for a `decision`, an item-id and an `evidence` blocker, "
-                    "precisely so nothing keeps listing a wait after the item "
-                    "that held it is gone. So EITHER this body reached the "
-                    "closure home by a path that is not a close, OR it was "
-                    "closed over a blocker no close records (an `external` "
-                    "one, or any type under a build that predates its "
-                    "record). This check read the body, not how it got "
-                    "here, and cannot say which.", it.ident)
+                    "for every blocker type it moves a body over — "
+                    "`decision`, item-id, `evidence`, and `external` under a "
+                    "drop — precisely so nothing keeps listing a wait after "
+                    "the item that held it is gone. So EITHER this body "
+                    "reached the closure home by a path that is not a close, "
+                    "OR it was closed under a build that predates the record "
+                    "for its blocker's type. This check read the body, not "
+                    "how it got here, and cannot say which.", it.ident)
 
     n = len(parsed.items)
     out(f"done home: {n} closed block(s), archive {parsed.archive_lines} "
