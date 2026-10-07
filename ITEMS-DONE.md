@@ -2333,5 +2333,19 @@ closed-met: none
 closed-decided: none
 closed-ref: c6ed3d4f41c9da41c0662fd9a9eb1f49aba58edf
 
+## lc-190
+grade: DONE
+requirement: THE CONSERVATION SENTENCE CLAIMS MORE THAN THE SUM ESTABLISHES. The identity items plus done equals baseline plus added minus compacted is arithmetic and is correct; the line printed beside it says nothing left the carrier by a path that is not a closure, which a SUM cannot establish. A hand-deleted live block plus an unrelated appended done body leaves the total unmoved, and check_move_integrity sees no shared id, so both verbs report CLEAN. Compensating errors are inherent to a count identity — the defect is the WORDING, and a claim in prose beside a mechanism inherits the mechanism authority to every reader while no check grades it.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: the conservation verdict states what the identity PROVES — that the totals reconcile — and no longer asserts the absence of non-closure paths, which no sum can show. RED-FIRST: the current sentence is the firing input and is quoted in the arm, so a later edit that widens it again fails. MUST-NOT-MOVE, and it is the whole boundary: THE IDENTITY AND ITS ARITHMETIC DO NOT CHANGE, the two sign rows keep their exact current meanings and messages, and the SHORT and OVER diagnoses stay two rows — this is a wording repair and any code change beyond the message is out of scope.
+evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs and graded by them as wording rather than math, with the explicit instruction not to touch the identity: items.py 1184 and 1198. DERIVED: this is law 26 second clause on the repo own output — an assurance wider than its predicate, in the sentence a reader trusts most because a number stands beside it.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The conservation CLEAN line says what a count identity cannot show. Wave A 2026-10-07, verified on main at cb08711: suite 1364 OK no skips, --test 143 of 143, prove-rows 124 of 124 held, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 14e1c5cb2dc87dd17c655f8c2abb70e5ac37704e
+
 ## Archive (pre-migration)
 
