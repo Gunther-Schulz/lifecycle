@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 312
+added: 313
 compacted: 0
 
 ## lc-3
@@ -1520,4 +1520,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/verbs.py,test/test_arcs.py
 done-criterion: arc advance and arc close commit every path they write, the declaration and the retired lane body included, or say NOT COMMITTED by name; after either verb over an arc with a deadline lane, git status is clean. Then arc deadline grades the declaration in its dirty-carrier entry check (lc-318 left it out because of this leftover). Red-first: open, deadline, advance, then git status.
 evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, measured there on a scratch repo, not re-run at the desk: after open, deadline, then advance or close, exit 0 and git status shows the declaration modified and lanes/<name>.md deleted, uncommitted. Found because the lc-318 entry check, as first built, turned two tests in test_arcs.DeadlineGeneratesItsObserver red.
+blocked-by: NONE
+
+## lc-321
+grade: STANDBY
+requirement: TWO COMMITTING SITES STILL TAKE A DIRTY CARRIER: item repair --shape and the retire compaction call the commit path with no entry check, the remainder lc-318 named - record: wave C lane C1 closing report 2026-10-07, gap G2
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/retire.py,test/test_repair.py,test/test_retire.py
+done-criterion: Each of the two sites either runs the dirty-carrier entry check before its first write, or states in its own output why it does not: item repair --shape exists to rewrite a damaged and possibly uncommitted carrier, so refusing there is a design choice to be made and written down, not assumed. Red-first for whichever refuses.
+evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, read not executed: cli.py near line 437 and retire.py near line 1333 call commit_paths without refuse_dirty_carriers.
 blocked-by: NONE
