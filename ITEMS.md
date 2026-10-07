@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 329
+added: 330
 compacted: 0
 
 ## lc-3
@@ -1466,4 +1466,13 @@ goal: lean-machinery-strict-checks
 write-set: test/absence-scan.test.mjs,tools/verify-claude-md.py
 done-criterion: node --test test/absence-scan.test.mjs gives the same counts with XDG_STATE_HOME unset, set to its default, and set to a scratch directory; the arm pins the root it means inside the test and never reads the caller's value. Red-first: the scratch setting fails one bite today. tools/verify-claude-md.py then stops special-casing node commands.
 evidence: RELAYED from wave E lane E5 2026-10-07, not re-run at the desk: with XDG_STATE_HOME on scratch the bite named foreign-path: a path under each known XDG root (env default) fails, 61 pass 1 fail against 62 pass; the lane limited its scratch override to python commands for that reason.
+blocked-by: NONE
+
+## lc-338
+grade: STANDBY
+requirement: A LIFECYCLE VERB KILLED AT ITS CALLER'S TIME BUDGET LEAVES ITS git CHILD RUNNING. The CLI starts git as a plain child; a caller that kills the verb's process at a bound (the dotfiles session-start hook does) kills the verb and not the grandchild, so a git that never answers stays behind, one per call. Nothing in the CLI bounds its own git calls or puts them in a group the caller can kill. Record: docs/directives/2026-10-07-drain-wave-e.md
+goal: lean-machinery-strict-checks
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/retire.py,test/test_verbs.py
+done-criterion: DECIDED which side owns it and built there: either every git call the CLI makes carries a timeout and a kill of its own process group, answering COULD NOT VERIFY with the reason when git did not answer, or the CLI documents in --help that a caller bounding it must kill by group and the dotfiles hook does. Red-first with a git stub that never answers first on PATH: after the verb is cut off no stub process started by it remains.
+evidence: RELAYED from peer session dotfiles-2b 2026-10-07, lane-reported there and not re-measured at either desk: with a git stub (exec sleep 100) first on PATH, the dotfiles session-start hook cut the lifecycle CLI off at its bound and two orphaned stub processes remained, started by the CLI; they were retired by PID.
 blocked-by: NONE
