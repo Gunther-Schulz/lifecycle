@@ -30,10 +30,12 @@ HOW IT IS REACHED. The machine's global `core.hooksPath` dispatcher runs
 first and CHAINS this file (dotfiles `git/hooks/pre-push`,
 `chain_local_hook`); `.git/hooks/pre-push` is a symlink to this tracked
 source, so the wiring is visible in the tree rather than only in `.git/`.
-When the dispatcher chains with an empty stdin (this repo has no remote in
-its guarded set), the fallback below scans everything reachable from HEAD
-rather than nothing — a scan of no range is the vacuous pass this hook
-exists to prevent.
+Where no ref line reaches this hook on stdin — the dispatcher chained it
+with nothing parseable — the fallback below scans everything reachable from
+HEAD rather than nothing: a scan of no range is the vacuous pass this hook
+exists to prevent. (Relayed by the dotfiles desk 2026-10-07, not exercised
+here: since dotfiles 3cd86f7 the dispatcher hands a chained hook git's own
+ref lines, so the pushed range is the ordinary case and this the fallback.)
 """
 
 import os
