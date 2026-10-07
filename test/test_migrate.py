@@ -3721,5 +3721,32 @@ class ARepeatedMergeArchivesEachClosureOnce(unittest.TestCase):
         self.assertEqual(code, exits.CLEAN, out)
 
 
+class SchemaPathRefusesAnEntryShapeItWouldIgnore(unittest.TestCase):
+    """lc-310 — `--entry-shape` describes the OLD carrier and the schema path
+    reads none, so accepting the pair silently tells the caller an option was
+    honoured that was not. Explicit `bullet` counts: it is the default's
+    spelling, but a caller who typed it believes it did something."""
+
+    def _combined(self, *shape):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        return run_cli(d, "migrate", "--schema-from", "1", *shape)
+
+    def test_heading_with_schema_from_is_refused_by_name(self):
+        code, out = self._combined("--entry-shape", "heading")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("--entry-shape", out)
+        self.assertIn("--schema-from", out)
+
+    def test_an_explicit_bullet_is_refused_too(self):
+        code, out = self._combined("--entry-shape", "bullet")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertIn("--entry-shape", out)
+
+    def test_control_schema_from_alone_is_not_refused_for_the_option(self):
+        code, out = self._combined()
+        self.assertNotIn("--entry-shape", out)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -2647,6 +2647,16 @@ def other_marker_note(read: Read, src_name: str) -> str:
 def run(args, out, ctx) -> int:
     retire = getattr(args, "retire_source", False)
     if args.schema_from is not None:
+        if getattr(args, "entry_shape_given", False):
+            # lc-310: `--entry-shape` names what an entry is in the OLD
+            # carrier and the schema path reads none; accepting the pair
+            # would tell the caller an option was honoured that was not.
+            out("COULD NOT VERIFY: `--entry-shape` with `--schema-from`. The "
+                "schema path reads no old carrier, so the option would be "
+                "ignored; refusing the combination rather than accepting it "
+                "silently. Drop `--entry-shape`, or drop `--schema-from` to "
+                "run the carrier path.")
+            return exits.COULD_NOT_VERIFY
         if retire:
             # THE SCHEMA PATH HAS NO SOURCE CARRIER AT ALL (§3.8c): it bumps
             # this repo's own declaration and carrier heads. There is nothing

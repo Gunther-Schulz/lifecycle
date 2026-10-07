@@ -1212,6 +1212,18 @@ def build_parser() -> argparse.ArgumentParser:
                            "through, so the check is exercisable without "
                            "writing to the machine's live records")
 
+    class _RecordedChoice(argparse.Action):
+        """Store the value AND record that the caller typed the option (lc-310).
+
+        The default stays `bullet`, so the value alone cannot tell an omitted
+        `--entry-shape` from an explicit `--entry-shape bullet`; the schema path
+        refuses the second and must be able to see it.
+        """
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            setattr(namespace, self.dest, values)
+            setattr(namespace, self.dest + "_given", True)
+
     mig = sub.add_parser("migrate", help="the old carrier → ITEMS.md, "
                                          "ITEMS-DONE.md and a report; or a "
                                          "SCHEMA bump. DRY RUN by default")
@@ -1227,6 +1239,7 @@ def build_parser() -> argparse.ArgumentParser:
                           "different question from --from, so a different "
                           "spelling")
     mig.add_argument("--entry-shape", dest="entry_shape",
+                     action=_RecordedChoice,
                      choices=migrate_mod.ENTRY_SHAPES,
                      default=migrate_mod.ENTRY_SHAPE_BULLET,
                      help="what an ENTRY is in the old carrier. DECLARED, "
