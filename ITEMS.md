@@ -1228,6 +1228,8 @@ done-criterion: the write path (add / park / amend) demands, beside an evidence 
 evidence: RELAYED 2026-09-20, operator-pasted transcript from an ungoverned image-generation repo, carried as that session own account and not re-measured here: a rewrite was held on an expensive probe booked as its GATE (loaded model, render, timings) while the rewrite justification depended on no outcome of it; the session own correction re-graded the probe from gate to first build step, and the deciding fact was one query on an instrument it had already run twice for other questions. The catching instrument was the operator, twice in one day there. DERIVED at this desk: in this carrier vocabulary that is an evidence blocker whose clearing decides nothing, a shape no current check watches, the mirror of blocker_softlock.
 blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 2026-10-07 dispatched in wave C and returned as a gap: needs a new slot and flag
+amended-evidence: 2026-10-07 RELAYED from wave C lane C4 2026-10-07: the two existing blocker-only slots are bound to other meanings by BLOCKER_SLOT_RULES, so the criterion needs a new slot, a new flag on add and park plus the amend slot map, and a door refusal. DERIVED: a new slot and flag are a schema change and a new CLI surface, outside the defect-repair exemption of the 2026-09-24 freeze.
 
 ## lc-258
 grade: NEW
