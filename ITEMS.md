@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 311
+added: 312
 compacted: 0
 
 ## lc-3
@@ -1511,4 +1511,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate_residue.py
 done-criterion: A migration report written by an earlier run is not listed as a live carrier reader by a later run, whatever its path; a genuine consumer in the same repo still is. Red-first: a repo holding a tracked earlier report.
 evidence: RELAYED from lane M2b (sonnet) 2026-10-07 at 3390d71, observed while fixing lc-83, not fixed and not re-run at the desk: the report name is absent from residue_excluded unless it is the current report path.
+blocked-by: NONE
+
+## lc-320
+grade: STANDBY
+requirement: arc advance AND arc close RETIRE A DEADLINE LANE AND DO NOT COMMIT IT: the declaration row and the lane body are changed on disk while the verb commits only the arc paths, so the tree is left dirty behind a verb that reported success - record: wave C lane C1 closing report 2026-10-07, gap G1
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,test/test_arcs.py
+done-criterion: arc advance and arc close commit every path they write, the declaration and the retired lane body included, or say NOT COMMITTED by name; after either verb over an arc with a deadline lane, git status is clean. Then arc deadline grades the declaration in its dirty-carrier entry check (lc-318 left it out because of this leftover). Red-first: open, deadline, advance, then git status.
+evidence: RELAYED from lane C1 (opus) 2026-10-07 at b77a8a8, measured there on a scratch repo, not re-run at the desk: after open, deadline, then advance or close, exit 0 and git status shows the declaration modified and lanes/<name>.md deleted, uncommitted. Found because the lc-318 entry check, as first built, turned two tests in test_arcs.DeadlineGeneratesItsObserver red.
 blocked-by: NONE
