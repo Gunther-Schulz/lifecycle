@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 328
+added: 329
 compacted: 0
 
 ## lc-3
@@ -1457,4 +1457,13 @@ goal: enforce-the-invariants
 write-set: plugin/cli/lifecycle_core/migrate.py,plugin/cli/lifecycle_core/cli.py,test/test_migrate.py
 done-criterion: Every migrate run that wrote a tracked file ends by naming the files written and either commits them by pathspec or prints NOT COMMITTED with the commit command, through the one body lc-41 added (desk.say_not_committed); a dry run and a run that wrote nothing print neither. migrate leaves the UNCLAIMED class in the lc-41 enumeration test. Red-first: an applying run over a scratch repo prints no such line today.
 evidence: RELAYED from wave E lane E9 2026-10-07: migrate left UNCLAIMED in its commit-or-say enumeration because migrate.py and cli.py were outside its write set. MEASURED at the desk the same day: three --schema-from --apply runs (begehung, daneel, claude-code-cache-fix) each left four modified files and printed only the APPLIED line. Also observed there: the apply re-serializes the declaration, turning escaped dashes and section signs into literal characters, lines the plan never listed.
+blocked-by: NONE
+
+## lc-337
+grade: STANDBY
+requirement: ONE LEAK-SCAN BITE FAILS WHEN XDG_STATE_HOME POINTS AT A SCRATCH PATH. The node battery's foreign-path arm for the known XDG roots (env default) reads the environment, so a caller that isolates state for a probe, as every brief here tells lanes to do, gets 61 pass and 1 fail where the same tree gives 62 pass. A battery whose verdict depends on the caller's isolation trains readers to discount its red. Record: docs/directives/2026-10-07-drain-wave-e.md
+goal: lean-machinery-strict-checks
+write-set: test/absence-scan.test.mjs,tools/verify-claude-md.py
+done-criterion: node --test test/absence-scan.test.mjs gives the same counts with XDG_STATE_HOME unset, set to its default, and set to a scratch directory; the arm pins the root it means inside the test and never reads the caller's value. Red-first: the scratch setting fails one bite today. tools/verify-claude-md.py then stops special-casing node commands.
+evidence: RELAYED from wave E lane E5 2026-10-07, not re-run at the desk: with XDG_STATE_HOME on scratch the bite named foreign-path: a path under each known XDG root (env default) fails, 61 pass 1 fail against 62 pass; the lane limited its scratch override to python commands for that reason.
 blocked-by: NONE
