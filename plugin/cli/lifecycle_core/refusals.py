@@ -2999,6 +2999,24 @@ LANE_ROWS = [
         stage="wave 2",
     ),
     Row(
+        ident="lane_new_unsafe_door",
+        refusal="`lane new` refuses a door that cannot safely name a lane — "
+                "one carrying a character outside letters, digits, `.`, `_` "
+                "and `-`, or the empty string. The door becomes a path "
+                "component and the name the declaration carries, so it is "
+                "REFUSED rather than folded: folding would silently rename "
+                "the caller's lane",
+        firing_input="`lane new ../escape` — which wrote `escape.md` at the "
+                     "repo ROOT, declared the literal `../escape`, and exited "
+                     "CLEAN",
+        expect=exits.FINDING,
+        fire=lambda: _cli(["lane", "new", "../escape"]),
+        # The SAME verb in the SAME repo with a door of the same letters and
+        # no path separator: the arms differ in the door's characters alone.
+        control=lambda: _cli(["lane", "new", "escape"]),
+        stage="drain wave B (lc-202)",
+    ),
+    Row(
         ident="lane_undeclared",
         refusal="§3.8b — a lane BODY the declaration does not list is "
                 "UNREGISTERED. The registration invariant held one way only: "

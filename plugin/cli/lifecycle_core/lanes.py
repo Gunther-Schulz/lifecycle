@@ -45,6 +45,14 @@ from pathlib import Path
 
 from . import exits
 from . import declaration as decl
+# THE PREDICATE, NOT A COPY OF IT (lc-202). `desk.py` already holds the
+# concept — which characters may not reach a filename built from a caller's
+# word — and its own comment names the hazard this module was missing: a
+# slash would let the caller's id escape the directory. Imported rather than
+# restated, so the two sites cannot drift apart. What differs is the USE:
+# desk state FOLDS an unsafe id (an identity it must not lose), while
+# `lane new` REFUSES an unsafe door (a name the declaration carries).
+from .desk import _UNSAFE_FOR_FILENAME
 
 #: The roster: one repo path per line. `#` comments and blank lines ignored.
 #: Under `$XDG_CONFIG_HOME` (defaulting per the XDG spec) rather than
@@ -655,8 +663,27 @@ def cmd_lane_new(args, out, repo: Path) -> int:
     VERIFIES ITS OWN WRITE against the real parser before returning CLEAN:
     a stub `read_lane` cannot read back is not a stub, it is a defect this
     verb would otherwise ship at scale.
+
+    AN UNSAFE DOOR IS REFUSED, NEVER FOLDED (lc-202), and before anything is
+    written. The door becomes a path component AND a name: `lanes/<door>.md`
+    on disk, and the literal string in the declaration's `lanes` list that
+    `lane list` resolves later. Folding it to something safe would silently
+    rename the caller's lane, where refusing costs one retry. The EMPTY
+    string is refused beside it: the predicate finds no unsafe character in
+    a word that has no characters, and `lanes/.md` under a declared `""` is
+    not a lane anyone asked for.
     """
     door = args.door
+    if not door or _UNSAFE_FOR_FILENAME.search(door):
+        out(f"FINDING [lane_new_unsafe_door] {door!r} cannot name a lane. "
+            "The door becomes a path component (`"
+            f"{LANES_DIR}/<door>.md`) and the name this repo's declaration "
+            "carries, so it is letters, digits, `.`, `_` and `-` only, and "
+            "not empty: a `/` in it would write outside the lanes "
+            "directory. Refused rather than folded to something safe — "
+            "folding would silently rename your lane. Nothing was written "
+            "and nothing was declared.")
+        return exits.FINDING
     lanes_dir = repo / LANES_DIR
     path = lanes_dir / f"{door}.md"
     if path.exists() and not getattr(args, "force", False):

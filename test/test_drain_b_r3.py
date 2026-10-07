@@ -150,5 +150,122 @@ class AnEmptyRosterIsAFinding(_ScratchRoster):
         self.assertEqual(row.expected_finding_row, "roster_empty")
 
 
+# --- lc-202 -------------------------------------------------------------------
+
+_ENTRY = Path(__file__).resolve().parents[1] / "plugin" / "cli" / "lifecycle"
+
+
+class LaneNewRefusesAnUnsafeDoor(unittest.TestCase):
+    """lc-202. `lane new` built `lanes/<door>.md` from its one positional
+    argument unchecked: `../escape` wrote to the repo ROOT and exited CLEAN,
+    `bad/door` died in an uncaught traceback at exit 1, and the empty string
+    wrote `lanes/.md`.
+
+    THE REAL ENTRY POINT, IN A CHILD PROCESS, and that is the instrument
+    rather than a style choice: the `bad/door` arm's defect IS the process
+    exit code. Driven in-process it would surface as a raised exception in
+    the test runner, which proves the code is wrong without ever observing
+    the exit 1 the item is about.
+
+    TWO SEPARATE RED ARMS because they took different branches before the
+    fix — one arm cannot certify the other — and the empty string is a third
+    input with its own assertion.
+    """
+
+    def setUp(self):
+        self.repo = refusals._Repo(lanes=[])
+        self.cfg = tempfile.mkdtemp(prefix="lifecycle-r3-cfg-")
+        self.state = tempfile.mkdtemp(prefix="lifecycle-r3-state-")
+
+    def tearDown(self):
+        self.repo.close()
+        shutil.rmtree(self.cfg, ignore_errors=True)
+        shutil.rmtree(self.state, ignore_errors=True)
+
+    def lane_new(self, *argv):
+        import subprocess
+        env = dict(os.environ, XDG_CONFIG_HOME=self.cfg,
+                   XDG_STATE_HOME=self.state)
+        p = subprocess.run(
+            [sys.executable, str(_ENTRY), "--repo", str(self.repo.dir),
+             "lane", "new", *argv],
+            capture_output=True, text=True, env=env, cwd=str(self.repo.dir))
+        return p.returncode, p.stdout + p.stderr
+
+    def declared(self):
+        doc = json.loads((self.repo.dir / ".claude" / "lifecycle.json")
+                         .read_text(encoding="utf-8"))
+        return doc["lanes"]
+
+    def files_outside_git(self):
+        """Every path in the scratch repo outside `.git`, relative — so an
+        arm asserts on what the verb WROTE, wherever it wrote it."""
+        return sorted(str(p.relative_to(self.repo.dir))
+                      for p in self.repo.dir.rglob("*")
+                      if ".git" not in p.relative_to(self.repo.dir).parts
+                      and p.is_file())
+
+    def assert_refused(self, door, code, out, before):
+        self.assertNotEqual(code, 1, f"exit 1 is outside the contract:\n{out}")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [lane_new_unsafe_door]", out)
+        self.assertNotIn("Traceback", out)
+        # REFUSED, not folded: nothing was written anywhere and nothing was
+        # declared — under the caller's spelling or any other.
+        self.assertEqual(self.files_outside_git(), before, out)
+        self.assertEqual(self.declared(), [], out)
+
+    def test_CONTROL_a_safe_door_is_still_written_and_declared(self):
+        code, out = self.lane_new("goodlane")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertTrue((self.repo.dir / "lanes" / "goodlane.md").is_file())
+        self.assertEqual(self.declared(), ["goodlane"])
+        self.assertNotIn("[lane_new_unsafe_door]", out)
+
+    def test_CONTROL_dots_dashes_and_underscores_are_safe(self):
+        # The predicate's own allowed set, exercised so the refusal is shown
+        # NOT to fire on a legitimate name carrying every allowed class.
+        code, out = self.lane_new("drain-wave_2.b")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(self.declared(), ["drain-wave_2.b"])
+
+    def test_arm_1_a_parent_escape_is_refused(self):
+        before = self.files_outside_git()
+        code, out = self.lane_new("../escape")
+        self.assert_refused("../escape", code, out, before)
+        self.assertFalse((self.repo.dir / "escape.md").exists())
+
+    def test_arm_2_a_slash_inside_the_door_is_refused_not_a_traceback(self):
+        before = self.files_outside_git()
+        code, out = self.lane_new("bad/door")
+        self.assert_refused("bad/door", code, out, before)
+
+    def test_arm_3_the_empty_string_is_refused(self):
+        before = self.files_outside_git()
+        code, out = self.lane_new("")
+        self.assert_refused("", code, out, before)
+        self.assertFalse((self.repo.dir / "lanes" / ".md").exists())
+
+    def test_force_does_not_buy_an_unsafe_door(self):
+        # `--force` is the overwrite permission and answers a different
+        # question; an escape with it is still an escape.
+        before = self.files_outside_git()
+        code, out = self.lane_new("../escape", "--force")
+        self.assert_refused("../escape", code, out, before)
+
+    def test_the_refusal_is_a_registry_row(self):
+        row = next((r for r in refusals.ROWS
+                    if r.ident == "lane_new_unsafe_door"), None)
+        self.assertIsNotNone(row, "no registry row for the unsafe-door refusal")
+        self.assertEqual(row.expect, exits.FINDING)
+
+    def test_the_predicate_is_desks_own_and_not_a_second_body(self):
+        # The criterion: REUSE `desk.py`'s predicate, as a predicate. One
+        # compiled pattern, one home — a copy in `lanes.py` would be a second
+        # body that drifts the day one of them gains a character class.
+        from lifecycle_core import desk
+        self.assertIs(lanes._UNSAFE_FOR_FILENAME, desk._UNSAFE_FOR_FILENAME)
+
+
 if __name__ == "__main__":
     unittest.main()

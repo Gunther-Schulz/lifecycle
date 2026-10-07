@@ -552,6 +552,20 @@ MUTATIONS = [
      "ordinary repo, the router prints it with no finding beside it, and the "
      "board is SHORTER rather than broken"),
 
+    # lc-202. THE DOOR TEST ITSELF, which sits ahead of every write in `lane
+    # new`. Folded, `../escape` is written to the scratch repo's ROOT,
+    # declared under its literal spelling, and the verb exits CLEAN — the
+    # exact state the item measured. The arm RUNS and answers under the fold
+    # (it does not raise: that is the `bad/door` input, which is why the
+    # row's plant is the escape and not the nested slash — a plant that
+    # crashed under its own mutation would be COULD NOT VERIFY, never a red).
+    # `lane_new_exists` is decided by a different test further down the same
+    # function and its plant's door is `x`, so this fold leaves it firing.
+    ("lane_new_unsafe_door", "lanes.py",
+     "    if not door or _UNSAFE_FOR_FILENAME.search(door):",
+     "    if False:",
+     "the test that a door may safely name a lane, ahead of every write"),
+
     ("trigger_broken", "lanes.py",
      "            if t.state == BROKEN:",
      "            if False:",
