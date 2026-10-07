@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 316
+added: 317
 compacted: 0
 
 ## lc-3
@@ -1556,4 +1556,13 @@ goal: enforce-the-invariants
 write-set: tools/prove-rows.py,test/test_prove_rows.py
 done-criterion: Each of the fourteen has a recorded arrangement admitted on the pair, or is listed with the reason none is possible; the prover closing line for rows never dark reads zero or names only the reasoned exceptions.
 evidence: RELAYED from lane C5 (opus) 2026-10-07 at f95c75f, from its full prover walk: 135 of 149 rows went dark under at least one arrangement and these fourteen under none.
+blocked-by: NONE
+
+## lc-325
+grade: STANDBY
+requirement: A MISSPELLED WRITE-SET PATH STILL BOOKS READY, and a misspelled file name under a real directory reads as a new file: lc-185 stopped the wave join from joining an unresolved path, but item add decides the grade without resolving, and nothing lets an entry declare that it creates a file - record: wave C lane C4 closing report 2026-10-07, gaps G3 and G4
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_verbs.py
+done-criterion: item add resolves each write-set path at booking by the predicate the wave join now uses and does not grade READY an entry whose path resolves to nothing it does not itself create; how an entry says it creates a file is decided and stated. Red-first: the misspelled-directory pair booked today as READY.
+evidence: RELAYED from lane C4 (opus) 2026-10-07 at 2313550: booking-time demotion sits in item add (verbs.py near line 886), outside that lane; both new CLEAN lines of the join state the basename grain as their limit.
 blocked-by: NONE
