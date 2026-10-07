@@ -3592,7 +3592,16 @@ def cmd_item_amend(args, out, ctx: Ctx) -> int:
             return dirty_code
         text = ctx.items_path.read_text(encoding="utf-8")
         if stranded:
-            text, ok = _set_slots(text, args.ident, {}, remove=stranded)
+            # AND ITS AMENDMENTS GO WITH IT (lc-332). An `amended-<slot>:`
+            # line supersedes a slot the block carries; with the base line
+            # cleared it supersedes nothing, and the shape check refuses the
+            # block this verb just wrote. It is the same conditional
+            # annotation one amendment later, not a record of the decision —
+            # the superseded `blocked-by:` line and its reason stay verbatim.
+            text, ok = _set_slots(
+                text, args.ident, {},
+                remove=list(stranded)
+                + [items_mod.AMEND_PREFIX + s for s in stranded])
             if not ok:
                 out(f"FINDING [unknown_item] no live block {args.ident!r} in "
                     f"{ctx.items_path.name}.")
