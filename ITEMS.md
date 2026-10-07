@@ -853,16 +853,6 @@ evidence: RELAYED (opus review lane, read-only at pinned sha 09ea70a, carried as
 blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
 
-## lc-188
-grade: STANDBY
-requirement: A RECORD WITH ZERO GRADED LINES READS CLEAN. record check (records.py) grades tagged lines and reports CLEAN when it finds no problems, without printing how many lines it graded — so a record whose prose carries no gradeable line at all passes every check, and the output is byte-identical to a record that was examined and found sound. The module docstring names this class in its own words: a record of pure prose passes every tag-shaped check ever written. record_line_untagged closes the prose case; it does not close the same case with the prose removed.
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/records.py,plugin/cli/lifecycle_core/refusals.py,test/test_records.py
-done-criterion: record check prints the number of lines it graded, and a record with ZERO graded lines answers COULD NOT VERIFY rather than CLEAN. RED-FIRST: a record file whose body carries no gradeable line reads CLEAN today and must answer could-not-verify after, naming that it graded nothing. MUST-NOT-MOVE: a record with real graded lines keeps its current verdict and its findings unchanged, and the denominator appears on the CLEAN path too — a count printed only when something is wrong is a count nobody reads.
-evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs: records.py 332-335, the clean return with no denominator, graded by them as real. MEASURED at this desk while building lc-156: the checker greps logical lines for tags and reports per-finding, so a body with no candidate lines produces an empty finding list, which is the same value a sound record produces. DERIVED: this is lc-172 remedy at a site lc-172 did not reach — an absence claim naming what proves its instrument was live.
-blocked-by: NONE
-bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
-
 ## lc-189
 grade: STANDBY
 requirement: THE PRODUCER ROUTE IS UNFALSIFIABLE IN ONE DIRECTION. declaration.py builds the producer pool by scanning every kind WRITER, then resolves producer: references against that same set — so a producer named in a writer can NEVER dangle, while the identical reference in a reader correctly FINDS. An expectation derived from the artifact it grades moves with the mutant and stays green on the corruption it exists to catch. It matters more than its size because the route-set check counts producer as a WATCHED route, so both the roster green and the route-set green hold over the hole.

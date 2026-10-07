@@ -2761,5 +2761,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 7cff2368317fe91c5228cd82464f4d379ab83a38
 
+## lc-188
+grade: DONE
+requirement: A RECORD WITH ZERO GRADED LINES READS CLEAN. record check (records.py) grades tagged lines and reports CLEAN when it finds no problems, without printing how many lines it graded — so a record whose prose carries no gradeable line at all passes every check, and the output is byte-identical to a record that was examined and found sound. The module docstring names this class in its own words: a record of pure prose passes every tag-shaped check ever written. record_line_untagged closes the prose case; it does not close the same case with the prose removed.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/records.py,plugin/cli/lifecycle_core/refusals.py,test/test_records.py
+done-criterion: record check prints the number of lines it graded, and a record with ZERO graded lines answers COULD NOT VERIFY rather than CLEAN. RED-FIRST: a record file whose body carries no gradeable line reads CLEAN today and must answer could-not-verify after, naming that it graded nothing. MUST-NOT-MOVE: a record with real graded lines keeps its current verdict and its findings unchanged, and the denominator appears on the CLEAN path too — a count printed only when something is wrong is a count nobody reads.
+evidence: RELAYED from the review lane via lifecycle-6f, carried as theirs: records.py 332-335, the clean return with no denominator, graded by them as real. MEASURED at this desk while building lc-156: the checker greps logical lines for tags and reports per-finding, so a body with no candidate lines produces an empty finding list, which is the same value a sound record produces. DERIVED: this is lc-172 remedy at a site lc-172 did not reach — an absence claim naming what proves its instrument was live.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 record check prints how many lines it graded; an open record that graded none is could-not-verify under record_nothing_graded. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: c9e38cc9842bcc00a1c0527de662924fa0f0bc10
+
 ## Archive (pre-migration)
 
