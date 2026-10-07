@@ -225,6 +225,27 @@ MUTATIONS = [
      "    if True:",
      "the test that this repo wrote desk state and no kind names its home"),
 
+    # lc-324. THE CLOSED VOCABULARY'S OWN TEST in `desk state`. Folded, a
+    # fifth value is recorded as a desk's state and the verb answers what any
+    # recording answers. The shape test below it reads the four known values
+    # and returns nothing for a word it does not know, so the fold leaves
+    # `desk_state_shape` firing on its own plant.
+    # Admitted on the lc-142 pair — PROVEN at this anchor, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("desk_state_unknown_value", "desk.py",
+     "    if value not in DESK_STATE_VALUES:",
+     "    if False:",
+     "the closed-vocabulary test on a desk-state value"),
+
+    # lc-324. THE SHAPE TEST's verdict. Folded, a value missing its required
+    # argument is recorded as though it were complete.
+    # Admitted on the lc-142 pair, as above.
+    ("desk_state_shape", "desk.py",
+     "    if problem:",
+     "    if False:",
+     "the test that a desk-state value carries the arguments its own shape "
+     "requires"),
+
     ("blocker_predicate_broken", "verbs.py",
      "    if broken is not None:",
      "    if False:",
@@ -658,6 +679,28 @@ MUTATIONS = [
      '    if decl_path.exists() and not getattr(args, "force", False):',
      "    if False:",
      "the refusal to overwrite a declaration that already exists"),
+
+    # lc-324. THE SAME RULE for a lane body, in `lane new`. Folded, an
+    # existing `lanes/x.md` is overwritten with the stub and the verb answers
+    # CLEAN. The control passes `--force`, which already skips this test.
+    # The refusal has a second site (the observer-lane verb, in
+    # verbs.py) that this arrangement does not reach: one row, one firing
+    # input, and the REACH section names the other.
+    # Admitted on the lc-142 pair — PROVEN at this anchor, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("lane_new_exists", "lanes.py",
+     '    if path.exists() and not getattr(args, "force", False):',
+     "    if False:",
+     "`lane new`'s refusal to overwrite a lane body that already exists"),
+
+    # lc-324. AND FOR A TEMPLATE BINDING, in `workflow bind`. Folded, an
+    # existing binding is replaced by a fresh one whose every slot reads
+    # UNKNOWN — the answered slots are gone and the verb reports a write.
+    # Admitted on the lc-142 pair, as above.
+    ("workflow_binding_exists", "workflows.py",
+     '    if template_id in tb and not getattr(args, "force", False):',
+     "    if False:",
+     "`workflow bind`'s refusal to overwrite a binding that already exists"),
 
     ("trigger_broken", "lanes.py",
      "            if t.state == BROKEN:",
@@ -1293,6 +1336,18 @@ MUTATIONS = [
      "    if False:",
      "the requirement that a PENDING line name a route at all"),
 
+    # lc-324. THE VOCABULARY HALF of the same refusal: a route is named, and
+    # it is a fourth word. The arrangement above folds the no-route test,
+    # which this row's plant never reaches — it names a route — so that one
+    # left this row firing. Two rows, one finding, two branches: each fold
+    # darkens its own row and leaves the other's plant reading real input.
+    # Admitted on the lc-142 pair — PROVEN at this anchor, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("record_route_outside_set", "records.py",
+     "    if badroute:",
+     "    if False:",
+     "the requirement that a PENDING line's route be one of the closed set"),
+
     ("record_probe_missing", "records.py",
      "    if unprobed:",
      "    if False:",
@@ -1346,6 +1401,25 @@ MUTATIONS = [
      "    if False:",
      "the test that a wrapped command's exit is this CLI's own COULD NOT "
      "VERIFY, which keeps it out of the failures"),
+
+    # lc-324. THE FAILURE VERDICT ITSELF — the row every other arrangement in
+    # this family is careful to leave firing, and which none of them proves.
+    # Folded, a registered command that ran and returned non-zero is listed
+    # as `RAN, FAILED` and the run then answers CLEAN: the count is still
+    # printed and nothing reads it. The plant's commands all run, so the
+    # did-not-run return above is not reached, and it declares no
+    # expectation, so the mismatch finding beside this one is silent too.
+    # ONE CONTROL MOVES TO CLEAN under this fold and is printed, not judged:
+    # `verify_check_could_not_verify`'s, which is a block holding a command
+    # that fails — the legitimate input for THAT row, sitting on this one's
+    # condition.
+    # Admitted on the lc-142 pair — PROVEN at this anchor, "rows changed:
+    # NONE" re-pointed at an inert comment line.
+    ("verify_check_failed", "verify.py",
+     "    if failed:",
+     "    if False:",
+     "the finding that a registered verify command ran and returned "
+     "non-zero"),
 
     # lc-193. THE RING DETECTION, which is where THIS ROW'S OWN PLANT is
     # decided. The row carries two shapes under one answer class (a set of
