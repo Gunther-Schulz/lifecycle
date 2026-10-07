@@ -2829,6 +2829,30 @@ def _blocker_state(it, ctx: Ctx, parsed, done_parsed, done_why,
                     "with the item whose closure wrote it. This is a "
                     "different item and still needs the answer."
                     ), exits.CLEAN, ""
+        near = ledger.near_decisions_for(led, detail)
+        if near:
+            # NAMED, for the reason the moot branch above gives (lc-62). The
+            # flat sentence below told a desk that had ANSWERED this blocker
+            # in its own words that no line names the question, and the item
+            # then waited forever on an answer already in the ledger. Still
+            # BLOCKED: equality is the rule and a near-match clears nothing.
+            # What the reader gets is the line, and its question SPELLED OUT,
+            # so the repair is a copy rather than a retyping.
+            where = "; ".join(
+                f"{ln.slots.get('question', '')!r} → "
+                f"{ln.slots.get('answer', '')!r} "
+                f"({ctx.ledger_path.name}:{ln.lineno}, {how})"
+                for ln, how in near)
+            return (f"BLOCKED — in the OPERATOR's court: {detail!r}. No "
+                    f"`decision:` line in {ctx.ledger_path.name} names this "
+                    f"question EXACTLY, and {len(near)} is a near-match: "
+                    f"{where}. A decision blocker resolves by question-slot "
+                    "EQUALITY, so this is NOT resolved and nothing here "
+                    "decides whether that line answers THIS question. If it "
+                    f"does, `item amend {it.ident} --blocked-by 'decision "
+                    "<that question, copied>' --reason <why they are one "
+                    "question>`; if it does not, the blocker stands."
+                    ), exits.CLEAN, ""
         return (f"BLOCKED — in the OPERATOR's court: {detail!r}. No "
                 f"`decision:` line in {ctx.ledger_path.name} names this "
                 "question, so it has not been answered. A decision blocker "

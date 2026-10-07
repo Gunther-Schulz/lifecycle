@@ -425,6 +425,68 @@ def moot_decisions_for(parsed: Parsed, question: str) -> list:
             and moot_closer(ln) is not None]
 
 
+#: How a near-miss differs from the question it nearly is. Two members, each
+#: the phrase a report prints, so the reader is told WHICH kind it is looking
+#: at: the first is a retyping, the second a rewording around the question.
+NEAR_EQUAL = "equal after normalising whitespace and punctuation"
+NEAR_CONTAINS = ("one contains the other, word for word, after normalising "
+                 "whitespace and punctuation")
+
+#: The shortest contained side that counts. A question of one or two words
+#: sits inside most sentences by accident, and a report line that fires on
+#: ordinary English is one its reader learns to skip.
+_NEAR_MIN_WORDS = 3
+
+
+def _norm_question(s: str) -> str:
+    """The near-match view of a decision question; never its resolver."""
+    s = (s or "").casefold()
+    s = re.sub(r"['’]s\b", "", s)
+    s = re.sub(r"[^\w\s]", "", s)
+    return " ".join(s.split())
+
+
+def near_decisions_for(parsed: Parsed, question: str) -> list:
+    """`(line, how)` for every `decision:` line whose question NEARLY names
+    `question` and does not equal it (lc-62). `how` is `NEAR_EQUAL` or
+    `NEAR_CONTAINS`.
+
+    A REPORT, NEVER A RESOLVER. `decision_for` above stays exact for the
+    reason its docstring gives — "which window" must not clear "which window
+    is canonical" — and nothing here feeds it. What this exists for is the
+    other half of that rule: equality with no near-miss report means a desk
+    that answered a blocker's substance in its own words left the item
+    blocked forever and was told only that no line names the question
+    (measured, df-130: the blocker was a sentence ABOUT the question, the
+    ledger held the bare question, and no answer could ever have equalled it).
+
+    Containment is over WORDS, so `gate` is not found inside `investigate`,
+    and the contained side must be `_NEAR_MIN_WORDS` long.
+    """
+    q = (question or "").strip()
+    nq = _norm_question(q)
+    if not nq:
+        return []
+    out = []
+    for ln in parsed.lines:
+        if ln.kind != "decision":
+            continue
+        other = (ln.slots.get("question") or "").strip()
+        if not other or other == q:
+            continue
+        no = _norm_question(other)
+        if not no:
+            continue
+        if no == nq:
+            out.append((ln, NEAR_EQUAL))
+            continue
+        short, long_ = (no, nq) if len(no) <= len(nq) else (nq, no)
+        if (len(short.split()) >= _NEAR_MIN_WORDS
+                and f" {short} " in f" {long_} "):
+            out.append((ln, NEAR_CONTAINS))
+    return out
+
+
 def counts(parsed: Parsed) -> dict:
     """Per-kind counts plus the unreadable tally — the third answer, always
     rendered even when zero, so a reader can tell "none" from "not asked"."""
