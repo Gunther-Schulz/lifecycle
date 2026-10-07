@@ -25,8 +25,7 @@ def _ratio(added, closed_bodies, compacted):
     `compacted` and whose done home holds `closed_bodies` bodies. The head is
     backdated past the window so the verb reaches its verdict instead of
     answering could-not-verify for want of history."""
-    items, done = refusals._flow_carrier(added, closed_bodies)
-    items = items.replace("compacted: 0", f"compacted: {compacted}")
+    items, done = refusals._flow_carrier(added, closed_bodies, compacted)
     with _Repo(items=items, done=done) as r:
         _backdate_head(r.dir)
         here = os.getcwd()

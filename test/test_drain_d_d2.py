@@ -189,7 +189,7 @@ class EveryReadingVerbStatesItsExtent(Base):
         identity, and `ready` must not call that carrier clean."""
         with self._repo(WHOLE.replace("baseline: 2\n", "", 1)) as r:
             code, out = self._run(r, "item", "ready", "xx-1")
-            self.assertIn("COULD NOT VERIFY: conservation", out)
+            self.assertIn("COULD NOT VERIFY [conservation_unverified] conservation", out)
             self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
 
 
