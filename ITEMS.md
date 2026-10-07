@@ -1346,6 +1346,8 @@ evidence: MEASURED 2026-10-06, one loop over every declaration found on this mac
 blocked-by: NONE
 amend-reason: 2026-10-06 the booked slot carried a comma inside one venue phrase and the tool split it into two paths; restated as one venue with no comma. Nothing else changes.
 amended-write-set: 2026-10-06 venue: .claude/lifecycle.json of each governed repo - nine repos and one commit per repo - outside this working copy
+amend-reason: 2026-10-07 2026-10-07 four of nine done; the remaining five named with what holds each
+amended-evidence: 2026-10-07 MEASURED at the lifecycle desk 2026-10-07, on operator direction to apply the fix repo by repo and skip any repo with a live session: FOUR repos fixed, one commit each, NOT pushed (all four are public; the push is each repo own outward act): begehung b92001b, daneel 0f5acbd, dispatch-guards cd466f3, skill-craft be50db1; in each, kind check now prints 0 dangling_reference lines (1 before). FIVE remain. SKIPPED for live sessions in the agent listing at 19:40: dotfiles, statiker, CachyOS-Setup, beat-the-books. REFUSED by its own commit gate: claude-code-cache-fix, whose declaration still leaves the trigger stage undeclared on five kinds, so any staged change to it is refused with kind_stage_undeclared until its schema migration (lc-239) lands; the edit there was undone and its tree left clean. The edit is one string in .claude/lifecycle.json: the ledger kind writer verb:ledger add becomes the four leaves decision, dropped, rejected, superseded.
 
 ## lc-325
 grade: STANDBY
