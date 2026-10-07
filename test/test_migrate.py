@@ -3836,5 +3836,49 @@ class AFreezeBlockedWritingRunIsNotCalledADryRun(unittest.TestCase):
         self.assertNotIn("DRY RUN", out)
 
 
+class AnUnreadableRoutingHomeIsNotAnEmptyTable(unittest.TestCase):
+    """lc-209 — the routed-findings section named two readings of an empty
+    table and missed the third: the carrier could not be read at all."""
+
+    def _report(self, d):
+        return (d / REPORT).read_text(encoding="utf-8")
+
+    def test_control_a_readable_home_renders_its_row(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        items_path = d / "ITEMS.md"
+        text = items_path.read_text(encoding="utf-8")
+        items_path.write_text(text.replace(
+            "evidence:", f"evidence: see {Path(REPORT).name} and", 1),
+            encoding="utf-8")
+        migrate_run(d, "--report-only")
+        report = self._report(d)
+        self.assertIn("1 finding(s) routed", report)
+        self.assertNotIn("None yet", report)
+
+    def test_an_undecodable_home_is_could_not_verify_not_none_yet(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        self.assertEqual(migrate_run(d)[0], exits.CLEAN)
+        (d / "ITEMS.md").write_bytes(b"\xff\xfe not utf-8\n")
+        migrate_run(d, "--report-only")
+        report = self._report(d)
+        self.assertNotIn("None yet", report)
+        self.assertIn("COULD NOT VERIFY — the routing home", report)
+
+    def test_control_an_absent_home_is_still_the_first_run_case(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        migrate_run(d, "--report-only")
+        self.assertIn("None yet", self._report(d))
+
+    def test_the_framing_names_the_third_reading(self):
+        d = build(LIVE_HEAD)
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        migrate_run(d, "--report-only")
+        self.assertIn("could not be read at all", self._report(d))
+
+
 if __name__ == "__main__":
     unittest.main()

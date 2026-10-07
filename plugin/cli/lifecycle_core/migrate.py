@@ -3515,10 +3515,16 @@ def routed_items(ctx, report_rel: str) -> list:
     which is where an intake naming this report puts it.
     """
     basename = Path(report_rel).name
+    if not ctx.items_path.exists():
+        # An ABSENT home is the ordinary first run: nothing has been routed
+        # because nothing exists to route into.
+        return []
     try:
         parsed = items_mod.parse(ctx.items_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError):
-        return []
+        # lc-209: a home that EXISTS and cannot be read is the third answer,
+        # not an empty table — None, so the caller renders could-not-verify.
+        return None
     return [it for it in parsed.items
             if basename in (it.slots.get("evidence") or "")]
 
@@ -4172,10 +4178,17 @@ def render_report(ctx, read, done_read, src_name, done_name, n_items,
       "carrying the findings itself. The table below is READ FROM THE "
       "CARRIER at report time — items whose `evidence` slot cites this file — "
       "so it cannot go stale against it, and an empty table means the routing "
-      "has not happened rather than that there was nothing to route.")
+      "has not happened rather than that there was nothing to route. There "
+      "is a third reading, and it is not an empty table: the carrier could "
+      "not be read at all, which is rendered as COULD NOT VERIFY.")
     a("")
     routed = routed_items(ctx, report_rel)
-    if not routed:
+    if routed is None:
+        a(f"**COULD NOT VERIFY — the routing home `{ctx.items_path.name}` "
+          "exists and could not be read** (unreadable or not valid UTF-8), so "
+          "which findings are routed to items is unknown. This is not the "
+          "first-run case and not an empty table.")
+    elif not routed:
         a("**None yet.** On the FIRST run of a migration this is expected and "
           "says so: the items are added after the report exists, and "
           "`lifecycle migrate --report-only` re-renders this section once "
