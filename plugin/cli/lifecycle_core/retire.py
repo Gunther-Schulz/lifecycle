@@ -743,6 +743,11 @@ def sweep(repo: Path, doc: dict, out) -> int:
         out(f"    home: {home:<28} kind: {name}")
     out("")
 
+    # lc-201: AHEAD of the verdict, so the verdict stays the last thing said
+    # and a reader of it has already been told what it does not cover.
+    wt_code = report_worktrees(repo, out)
+    out("")
+
     unregistered = []
     for f in tracked:
         if not any(_home_claims(home, f) for _n, home in homes):
@@ -751,7 +756,7 @@ def sweep(repo: Path, doc: dict, out) -> int:
     if not unregistered:
         out(f"sweep: CLEAN — all {len(tracked)} tracked file(s) resolve to a "
             "registered kind.")
-        return exits.CLEAN
+        return exits.worst([exits.CLEAN, wt_code])
 
     out(f"FINDING [unregistered_persisted_thing] {len(unregistered)} tracked "
         f"file(s) resolve to no registered kind:")
@@ -764,7 +769,109 @@ def sweep(repo: Path, doc: dict, out) -> int:
         "`.claude/lifecycle.json` with its own seven stages; or removed, with a "
         "ledger line naming the commit. A file whose NAME wears a kind's "
         "costume is the tell.")
-    return exits.FINDING
+    return exits.worst([exits.FINDING, wt_code])
+
+
+# --- git worktree registrations (lc-201) --------------------------------------
+
+def parse_worktree_list(text: str) -> list:
+    """The REGISTRATIONS in `git worktree list --porcelain` output.
+
+    Git prints one blank-line-separated block per worktree and the MAIN one
+    first, always. The main checkout is not a registration — nothing under
+    `.git/worktrees/` records it — so it is dropped here by position, which
+    is git's own contract, and never by comparing paths.
+
+    Each registration is a dict: `path`, `head`, `branch` (a full ref, or
+    None), `detached`, and `locked` / `prunable` (None when absent, else
+    git's reason, which may be the empty string).
+    """
+    blocks = []
+    current = None
+    for raw in text.split("\n"):
+        if not raw.strip():
+            current = None
+            continue
+        key, _sep, value = raw.partition(" ")
+        if key == "worktree":
+            current = {"path": value, "head": "", "branch": None,
+                       "detached": False, "locked": None, "prunable": None}
+            blocks.append(current)
+        elif current is None:
+            continue
+        elif key == "HEAD":
+            current["head"] = value
+        elif key == "branch":
+            current["branch"] = value
+        elif key == "detached":
+            current["detached"] = True
+        elif key in ("locked", "prunable"):
+            current[key] = value
+    return blocks[1:]
+
+
+def report_worktrees(repo: Path, out) -> int:
+    """Say which git worktrees are REGISTERED against this repo (lc-201).
+
+    A REGISTRATION IS A PERSISTED THING THIS SWEEP CANNOT REACH. It lives in
+    `.git/worktrees/`, and the sweep reads `git ls-files` — tracked files
+    only, with `.git` skipped by name. So a frozen reader left behind by
+    another session resolved to no registered kind and was mentioned by
+    nothing: invariant 1's population reached further than the only
+    instrument pointed at it.
+
+    IT REPORTS AND NEVER ACTS. Nothing here removes or prunes: what a party
+    is standing in is not moved under them, a live session may hold the
+    checkout, and a registration whose directory still exists is one `git
+    worktree prune` would leave alone anyway.
+
+    IT DECIDES NOTHING ABOUT THE TRACKED-FILE VERDICT EITHER. A registered
+    worktree is ordinary, legitimate state — every isolated agent lane is
+    one — so calling each a finding would be a guard firing on honest work.
+    Both arms print a line, because "none registered" and "nobody looked"
+    must not be the same silence. The one code this returns besides CLEAN is
+    COULD NOT VERIFY, for a list git would not give.
+    """
+    rc, text = _git(repo, "worktree", "list", "--porcelain")
+    if rc != 0:
+        out(f"COULD NOT VERIFY: `git worktree list --porcelain` exited {rc}: "
+            f"{text.strip()[:200]!r}, so whether any worktree is registered "
+            "against this repo is NOT KNOWN. Registrations live in "
+            "`.git/worktrees/`, outside the tracked files this sweep reads; "
+            "an unread list is not a list of none.")
+        return exits.COULD_NOT_VERIFY
+    regs = parse_worktree_list(text)
+    if not regs:
+        out("git worktree registrations: 0 — `git worktree list` WAS read "
+            "and names the main checkout alone. Said rather than left "
+            "silent: a registration lives in `.git/worktrees/`, which this "
+            "sweep of tracked files never walks.")
+        return exits.CLEAN
+    try:
+        here = repo.resolve()
+    except OSError:
+        here = repo
+    out(f"git worktree registrations: {len(regs)} — NOT SWEPT, and named "
+        "here because nothing else names them. Each is recorded in "
+        "`.git/worktrees/`, which a sweep of tracked files never walks, and "
+        "no registered kind claims one. The verdict below is about tracked "
+        "files and says nothing about these:")
+    for reg in regs:
+        state = [reg["head"][:7] or "no HEAD",
+                 reg["branch"] or ("detached" if reg["detached"]
+                                   else "no branch")]
+        for flag in ("locked", "prunable"):
+            if reg[flag] is not None:
+                state.append(flag + (f" ({reg[flag]})" if reg[flag] else ""))
+        try:
+            mine = Path(reg["path"]).resolve() == here
+        except OSError:
+            mine = False
+        out(f"    {reg['path']}   {', '.join(state)}"
+            + ("   <- this checkout" if mine else ""))
+    out("Reported, never removed or pruned: a registration may be the "
+        "checkout a live session is standing in.")
+    return exits.CLEAN
 
 
 def _home_claims(home: str, rel: str) -> bool:

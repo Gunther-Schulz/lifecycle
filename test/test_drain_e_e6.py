@@ -165,5 +165,115 @@ class ARetiredCarriersDeletionRecordIsNotALawsScopeFinding(unittest.TestCase):
         self.assertIn("[laws_scope_audit] 1 line(s)", out)
 
 
+# --- lc-201 -------------------------------------------------------------------
+
+def swept_repo() -> Path:
+    """A repo whose every tracked file a registered home claims, so the
+    tracked-file verdict is CLEAN and anything else in the output is about
+    the worktrees."""
+    return build({"LAWS.md": "law\n", "LEDGER.md": "schema: 2\n"})
+
+
+def add_worktree(test, repo: Path, *flags) -> Path:
+    """A worktree registered by the real `git worktree add`, OUTSIDE the
+    repo's own tree. Returns its path as git prints it."""
+    holder = Path(tempfile.mkdtemp(prefix="lifecycle-e6-wt-"))
+    test.addCleanup(shutil.rmtree, holder, ignore_errors=True)
+    wt = holder / "frozen-reader"
+    p = git(repo, "worktree", "add", "-q", *flags, str(wt))
+    assert p.returncode == 0, p.stderr
+    return wt.resolve()
+
+
+class TheSweepNamesTheWorktreeRegistrationsItCannotReach(unittest.TestCase):
+    """lc-201 — a registration lives in `.git/worktrees/`, which a sweep over
+    `git ls-files` never walks. It stops being invisible; it does not stop
+    existing."""
+
+    def setUp(self):
+        self.d = swept_repo()
+        self.addCleanup(shutil.rmtree, self.d, ignore_errors=True)
+
+    def test_a_registered_worktree_is_NAMED(self):
+        wt = add_worktree(self, self.d, "--detach")
+        code, out = run_cli(self.d, "kind", "sweep")
+        self.assertIn("git worktree registrations: 1", out)
+        self.assertIn(str(wt), out)
+        self.assertIn("detached", out)
+        # MUST-NOT-MOVE (lc-76): the tracked-file verdict and the exit code.
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("sweep: CLEAN — all 2 tracked file(s)", out)
+
+    def test_with_NONE_registered_the_sweep_SAYS_so(self):
+        """Not clean by silence: the list was read, and the line says it."""
+        code, out = run_cli(self.d, "kind", "sweep")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertIn("git worktree registrations: 0", out)
+        self.assertIn("WAS read", out)
+
+    def test_a_branch_and_a_lock_are_shown_as_git_reports_them(self):
+        wt = add_worktree(self, self.d, "-b", "side")
+        self.assertEqual(
+            git(self.d, "worktree", "lock", "--reason", "held", str(wt)
+                ).returncode, 0)
+        _code, out = run_cli(self.d, "kind", "sweep")
+        line = next(ln for ln in out.split("\n") if str(wt) in ln)
+        self.assertIn("refs/heads/side", line)
+        self.assertIn("locked", line)
+
+    def test_a_sweep_run_FROM_a_registered_worktree_marks_its_own(self):
+        wt = add_worktree(self, self.d, "--detach")
+        _code, out = run_cli(wt, "kind", "sweep")
+        line = next(ln for ln in out.split("\n") if str(wt) in ln)
+        self.assertIn("this checkout", line)
+
+    def test_NOTHING_is_removed_or_pruned(self):
+        """MUST-NOT-BUILD. What a party is standing in is not moved."""
+        wt = add_worktree(self, self.d, "--detach")
+        before = git(self.d, "worktree", "list", "--porcelain").stdout
+        run_cli(self.d, "kind", "sweep")
+        self.assertEqual(
+            git(self.d, "worktree", "list", "--porcelain").stdout, before)
+        self.assertTrue(wt.is_dir())
+
+    def test_a_stray_still_fires_with_its_text_beside_a_worktree(self):
+        add_worktree(self, self.d, "--detach")
+        (self.d / "TRACKING.md").write_text("stray\n", encoding="utf-8")
+        commit_all(self.d, "a stray")
+        code, out = run_cli(self.d, "kind", "sweep")
+        self.assertEqual(code, exits.FINDING, out)
+        self.assertIn("FINDING [unregistered_persisted_thing] 1 tracked "
+                      "file(s) resolve to no registered kind:", out)
+        self.assertIn("git worktree registrations: 1", out)
+
+    def test_an_unreadable_worktree_list_is_COULD_NOT_VERIFY(self):
+        """THREE ANSWERS: a list git would not give is not a list of none."""
+        real = retire._git
+
+        def failing(repo, *argv):
+            if argv[:1] == ("worktree",):
+                return 128, "fatal: planted"
+            return real(repo, *argv)
+        retire._git = failing
+        self.addCleanup(setattr, retire, "_git", real)
+        code, out = run_cli(self.d, "kind", "sweep")
+        self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
+        self.assertNotIn("git worktree registrations: 0", out)
+        self.assertIn("fatal: planted", out)
+
+
+class TheWorktreeListIsParsedAsGitWritesIt(unittest.TestCase):
+    def test_the_main_checkout_is_not_a_registration(self):
+        text = ("worktree /a/main\nHEAD " + "1" * 40 + "\nbranch "
+                "refs/heads/main\n\nworktree /b/side\nHEAD " + "2" * 40
+                + "\ndetached\nprunable gitdir file points to non-existent "
+                "location\n\n")
+        regs = retire.parse_worktree_list(text)
+        self.assertEqual([r["path"] for r in regs], ["/b/side"])
+        self.assertEqual(regs[0]["head"], "2" * 40)
+        self.assertTrue(regs[0]["detached"])
+        self.assertIn("non-existent", regs[0]["prunable"])
+
+
 if __name__ == "__main__":
     unittest.main()
