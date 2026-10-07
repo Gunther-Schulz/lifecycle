@@ -3026,5 +3026,19 @@ closed-met: lc-328
 closed-decided: none
 closed-ref: 1eda56f51f51fae34f922699fcc6475c813d6a43
 
+## lc-293
+grade: DONE
+requirement: item ratio lifetime tripwire reads drain as closed bodies only, excluding the carrier head compacted counter, so after an item compact the ratio inflates and capture_dominated fires falsely (10 added, 8 closed, 6 compacted reads 10:2 = 5:1). Record: found 2026-09-25 by lc-291 compaction test at 809e206, desk lifecycle-d8.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_schema.py
+done-criterion: cmd_item_ratio drain side = done-home bodies + head compacted (conservation: open + done = baseline + added - compacted); a compacted carrier under the tripwire reads CLEAN, red-first on the 10/8/6 plant (fires capture_dominated before, silent after); capture_dominated row and arrangement still PROVEN; suite and --test green.
+evidence: MEASURED 2026-09-25: plant 10 added / 8 closed / 6 compacted printed ratio 10:2 = 5.00:1 FINDING [capture_dominated] (lc-291 test run before its fixture was narrowed); every governed carrier reads compacted: 0 today, so the defect is latent, not live.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The ratio drain side counts done bodies plus the compacted counter. Wave D 2026-10-07, verified on main at deede51: suite 1612 OK no skips, --test 157 of 157, prove-rows 152 of 152 held with every row dark under some arrangement and no control red, leak battery 62 of 62; item check and item ready unchanged in exit code across all ten rostered repos.
+closed-met: none
+closed-decided: none
+closed-ref: 671beffa46d3ea64717cc909b1c39211015ed9ec
+
 ## Archive (pre-migration)
 

@@ -1251,16 +1251,6 @@ evidence: RELAYED from judge lifecycle-64 2026-09-24 (operator observation there
 blocked-by: decision which waking event, if any, is worth a pre-registered probe for a desk that ends its turn with a non-empty queue
 not-derivable: 2026-09-24 no ledger line or item designs a waking event; the admission bar requires a probe design before any build, and the choice of event is design judgment for a live desk.
 
-## lc-293
-grade: STANDBY
-requirement: item ratio lifetime tripwire reads drain as closed bodies only, excluding the carrier head compacted counter, so after an item compact the ratio inflates and capture_dominated fires falsely (10 added, 8 closed, 6 compacted reads 10:2 = 5:1). Record: found 2026-09-25 by lc-291 compaction test at 809e206, desk lifecycle-d8.
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_schema.py
-done-criterion: cmd_item_ratio drain side = done-home bodies + head compacted (conservation: open + done = baseline + added - compacted); a compacted carrier under the tripwire reads CLEAN, red-first on the 10/8/6 plant (fires capture_dominated before, silent after); capture_dominated row and arrangement still PROVEN; suite and --test green.
-evidence: MEASURED 2026-09-25: plant 10 added / 8 closed / 6 compacted printed ratio 10:2 = 5.00:1 FINDING [capture_dominated] (lc-291 test run before its fixture was narrowed); every governed carrier reads compacted: 0 today, so the defect is latent, not live.
-blocked-by: NONE
-bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
-
 ## lc-296
 grade: PARKED
 requirement: An ask queued for the operator has NO CARRIER: a session idle on a human answer renders identically to a session with nothing owed. Incident 2026-09-25 ~15:20: the lc-281/lc-294 confirmation sat invisible across two terminals while the operator asked the driving desk why the peer was idle. Record: operator-raised first-hand at lifecycle-64; the purpose doc says every ask queued for the operator is one only they could answer, and nothing holds that queue.
