@@ -3056,5 +3056,18 @@ closed-met: none
 closed-decided: none
 closed-ref: c38142e67379759d84e05c4184a02cb05b606c7c, aa7409ca0f5004f4a5a96fd0052a4bba483bab14
 
+## lc-323
+grade: DONE
+requirement: FOUR NAMING LEFTOVERS FROM lc-316 AND lc-317: conservation prints two could-not-verify lines where one would do; the laws row carries its name inside the message rather than in the bracket form the emit-site scan reads, and its unreadable-file sibling is unnamed; the init refusal of an unsafe lane name has no roster row or prover arrangement of its own; init refusing an existing declaration prints no row name - record: wave C lane C2 closing report 2026-10-07, gaps G2 to G5
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/init.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_roster.py
+done-criterion: Each of the four is repaired or declined with a reason: one conservation line with its arrangement re-anchored in the same commit; the laws row in the bracket form with its sibling branch named; a roster row and admitted arrangement for the init site; the existing-declaration refusal named. MUST-NOT-MOVE: no exit code changes.
+evidence: RELAYED from lane C2 (opus) 2026-10-07 at 03a40f3, read and partly measured there, not re-run at the desk.
+blocked-by: NONE
+closed-reason: 2026-10-07 One conservation line; the laws rows in the bracket form; roster rows and arrangements for the two init refusals. Wave D 2026-10-07, verified on main at deede51: suite 1612 OK no skips, --test 157 of 157, prove-rows 152 of 152 held with every row dark under some arrangement and no control red, leak battery 62 of 62; item check and item ready unchanged in exit code across all ten rostered repos.
+closed-met: lc-327
+closed-decided: none
+closed-ref: e9126c2439627c484c67d8e94294c24f9a95b50c
+
 ## Archive (pre-migration)
 

@@ -1345,15 +1345,6 @@ blocked-by: NONE
 amend-reason: 2026-10-06 the booked slot carried a comma inside one venue phrase and the tool split it into two paths; restated as one venue with no comma. Nothing else changes.
 amended-write-set: 2026-10-06 venue: .claude/lifecycle.json of each governed repo - nine repos and one commit per repo - outside this working copy
 
-## lc-323
-grade: STANDBY
-requirement: FOUR NAMING LEFTOVERS FROM lc-316 AND lc-317: conservation prints two could-not-verify lines where one would do; the laws row carries its name inside the message rather than in the bracket form the emit-site scan reads, and its unreadable-file sibling is unnamed; the init refusal of an unsafe lane name has no roster row or prover arrangement of its own; init refusing an existing declaration prints no row name - record: wave C lane C2 closing report 2026-10-07, gaps G2 to G5
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/declaration.py,plugin/cli/lifecycle_core/cli.py,plugin/cli/lifecycle_core/init.py,plugin/cli/lifecycle_core/refusals.py,tools/prove-rows.py,test/test_roster.py
-done-criterion: Each of the four is repaired or declined with a reason: one conservation line with its arrangement re-anchored in the same commit; the laws row in the bracket form with its sibling branch named; a roster row and admitted arrangement for the init site; the existing-declaration refusal named. MUST-NOT-MOVE: no exit code changes.
-evidence: RELAYED from lane C2 (opus) 2026-10-07 at 03a40f3, read and partly measured there, not re-run at the desk.
-blocked-by: NONE
-
 ## lc-324
 grade: STANDBY
 requirement: FOURTEEN ROSTER ROWS ARE DARKENED BY NO ARRANGEMENT, so nothing shows their checks can fail: binding_slot_unbound, binding_slot_unbound_absent_key, binding_template_missing, binding_template_unparsable, desk_state_shape, desk_state_unknown_value, lane_new_exists, record_route_outside_set, retire_source_laws_absent, retire_source_not_writing, retire_source_uncommitted, retire_source_unpinned_anchor, verify_check_failed, workflow_binding_exists - record: wave C lane C5 closing report 2026-10-07, gap 3
