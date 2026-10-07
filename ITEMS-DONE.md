@@ -2811,5 +2811,19 @@ closed-met: none
 closed-decided: none
 closed-ref: de2947b6cb92c0592aca217d76e44159b974637e
 
+## lc-101
+grade: DONE
+requirement: one roster row can abort the whole roster, and the abort reads as a finding. argparse calls parser.error on an unrecognised flag, which raises SystemExit; in-process that escapes the row, stops lifecycle --test mid-run, and leaves it exiting 3 with NO 'rows:' summary line - measured 2026-09-13 at 73 of 77 rows never reached. The rows that did not run are INVISIBLE rather than red, so a truncated roster is a could-not-verify wearing a finding's clothes, inside the very instrument that enforces this repo's three-answer law. lc-86's build lane repaired its own helper (_retire_run catches SystemExit and returns a named SETUP FAILED, so the row fails and its siblings finish) and correctly declined to generalize from inside its item - record: lc-86 lane addendum 2/3, 2026-09-13
+goal: every-refusal-red-first
+write-set: plugin/cli/lifecycle_core/refusals.py,test/
+done-criterion: no single row can truncate the roster: every row helper that builds an argv or invokes a CLI entry point contains its own SystemExit, fails by name, and lets the remaining rows run - proven by a row deliberately given an argv that cannot parse, after which lifecycle --test still reports all rows with a summary line and the deliberate row failing by name. MUST-NOT-MOVE: a row that genuinely raises an unexpected exception still surfaces loudly - this is about CONTAINING a parse failure to its own row, never about swallowing errors, and a caught exception that produces a passing row is the defect with the sign flipped
+evidence: MEASURED by the lc-86 build lane 2026-09-13 while proving its own conversion non-vacuous: removing the --retire-source declaration from a copy aborted the roster at the row before its four, exit 3, no summary line. Its repair is IN THE TREE at 2d70f71 for _retire_run only, which is the worked example and the pattern to follow. NOT RE-RUN AT THIS DESK - relayed from the lane's report; the reproduction is cheap and is the item's own red-first. The other _cli-style helpers are UNAUDITED: neither the lane nor this desk has enumerated which of them build an argv that could stop parsing, and that enumeration is the build's first step rather than a premise
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 A SystemExit raised by one roster row is contained to that row and reported by name. Wave C 2026-10-07, verified on main at 5e77b52: suite 1531 OK no skips, --test 153 of 153, prove-rows 134 of 134 held with no control red, leak battery 62 of 62; item check unchanged in exit code across all ten rostered repos.
+closed-met: none
+closed-decided: none
+closed-ref: af01320ee263351336caadfb9b9f2ca7385c1929
+
 ## Archive (pre-migration)
 
