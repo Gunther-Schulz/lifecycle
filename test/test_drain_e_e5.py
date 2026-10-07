@@ -257,5 +257,98 @@ class ExplicitZeroArmsAreEachPaired(unittest.TestCase):
              "test_a_prose_write_set_lands_in_the_prose_bucket"), derived)
 
 
+# --- lc-95: the Verify section is executed and its numbers derived ---------
+
+CHECK = REPO_ROOT / "tools" / "verify-claude-md.py"
+
+_NODE_TEST = """\
+import test from 'node:test';
+test('a', () => {});
+test('b', () => {});
+test('c', () => {});
+"""
+
+
+def _doc(prose: str, commands: str) -> Path:
+    """A throwaway repo dir holding a CLAUDE.md-shaped file and its inputs."""
+    d = Path(tempfile.mkdtemp(prefix="lane-e5-doc-"))
+    (d / "x.test.mjs").write_text(_NODE_TEST, encoding="utf-8")
+    (d / "noisy.py").write_text(
+        "import sys\nprint('fatal: Not a valid object name', file=sys.stderr)\n",
+        encoding="utf-8")
+    (d / "bad.py").write_text("import sys\nsys.exit(4)\n", encoding="utf-8")
+    (d / "CLAUDE.md").write_text(
+        f"# t\n\n## Verify\n\n```bash\n{commands}```\n\n{prose}\n\n## Next\n",
+        encoding="utf-8")
+    return d
+
+
+def _check(d: Path, *extra):
+    return subprocess.run(
+        [sys.executable, str(CHECK), "--repo", str(d), *extra],
+        capture_output=True, text=True, timeout=120)
+
+
+@unittest.skipIf(subprocess.run(["node", "--version"],
+                                capture_output=True).returncode != 0,
+                 "REACH ARM: node is not installed here")
+class VerifySectionIsExecutedAndDerived(unittest.TestCase):
+
+    def test_a_drifted_stated_count_is_a_FINDING_naming_both_numbers(self):
+        d = _doc("All 5 node bites pass here.",
+                 "node --test x.test.mjs             # the bites\n")
+        p = _check(d)
+        self.assertEqual(p.returncode, FINDING, p.stdout + p.stderr)
+        self.assertIn("derived tests=3", p.stdout)
+        self.assertIn("section says 5", p.stdout)
+
+    def test_the_same_section_with_the_true_count_is_CLEAN(self):
+        """Pair of the arm above: the figure is DERIVED, so the TRUE number
+        passes and the drifted one fails; a check carrying its own copy of
+        a count would fail one of the two."""
+        d = _doc("All 3 node bites pass here.",
+                 "node --test x.test.mjs\n")
+        p = _check(d)
+        self.assertEqual(p.returncode, CLEAN, p.stdout + p.stderr)
+        self.assertIn("AGREES", p.stdout)
+
+    def test_a_pass_fail_skipped_sentence_is_compared_field_by_field(self):
+        d = _doc("MEASURED: 3 pass, 1 fail, 0 skipped.",
+                 "node --test x.test.mjs\n")
+        p = _check(d)
+        self.assertEqual(p.returncode, FINDING, p.stdout + p.stderr)
+        self.assertIn("fail=0", p.stdout)
+
+    def test_a_documented_command_that_prints_fatal_is_a_FINDING(self):
+        """The lc-89 shape: exit 0, a `fatal:` line in the output."""
+        d = _doc("", "python3 noisy.py\n")
+        p = _check(d)
+        self.assertEqual(p.returncode, FINDING, p.stdout + p.stderr)
+        self.assertIn("fatal: Not a valid object name", p.stdout)
+
+    def test_a_command_that_exits_nonzero_is_a_FINDING(self):
+        d = _doc("", "python3 bad.py\n")
+        p = _check(d)
+        self.assertEqual(p.returncode, FINDING, p.stdout + p.stderr)
+        self.assertIn("exit 4", p.stdout)
+
+    def test_a_skipped_command_is_COULD_NOT_VERIFY_never_a_pass(self):
+        d = _doc("", "python3 bad.py\n")
+        p = _check(d, "--skip", "bad.py")
+        self.assertEqual(p.returncode, COULD_NOT_VERIFY, p.stdout + p.stderr)
+        self.assertIn("SKIPPED", p.stdout)
+
+    def test_a_stated_number_for_a_runner_that_did_not_run_is_named(self):
+        d = _doc("Ran 340 tests.", "python3 noisy.py\n")
+        p = _check(d, "--skip", "noisy.py")
+        self.assertEqual(p.returncode, COULD_NOT_VERIFY, p.stdout + p.stderr)
+        self.assertIn("which did not run", p.stdout)
+
+    def test_a_missing_section_is_COULD_NOT_VERIFY(self):
+        d = _doc("", "python3 noisy.py\n")
+        p = _check(d, "--section", "## Nowhere")
+        self.assertEqual(p.returncode, COULD_NOT_VERIFY, p.stdout + p.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
