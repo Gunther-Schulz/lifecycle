@@ -1133,15 +1133,6 @@ amended-evidence: 2026-10-07 RELAYED from wave E lane E5 2026-10-07 at 83eaa73, 
 amend-reason: 2026-10-07 add the no-progress-output observation
 amended-evidence: 2026-10-07 RELAYED from wave E lane E4 2026-10-07: the walk prints nothing to a redirected file until it exits, so a running walk reads like a hung one; a flush per arrangement belongs with this item.
 
-## lc-332
-grade: STANDBY
-requirement: item amend RE-TYPING A BLOCKER LEAVES THE BLOCK IN A SHAPE item check REFUSES. Amending a parked item from a decision blocker to NONE clears the base not-derivable line, as the verb says, and leaves an earlier amended-not-derivable line behind with nothing to supersede; item check then answers item_shape on the block. Found releasing lc-154 after the freeze lift: 32 parked items carry a freeze-exit decision blocker and each needs this amend. Record: LEDGER.md decision line 2026-10-07, lifted in general
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_items.py
-done-criterion: An amend that changes a blocker's type leaves a block item check reads CLEAN, whatever earlier amendments the block carries: the re-type clears every line that is legal only beside the old blocker type, amended ones included, or keeps them as history in a form the shape check accepts. Red-first: a parked block with a decision blocker and an amended-not-derivable line, amended to blocked-by NONE, goes item_shape today and CLEAN after; control: a block with no amended line is unchanged by the fix. The commit gate accepts the amend's own commit.
-evidence: MEASURED 2026-10-07 at the drain desk on the live carrier with --no-commit: item amend lc-154 --blocked-by NONE removed one line (the base not-derivable) and added two; item check then printed FINDING item_shape, block lc-154, amended-not-derivable amends a slot the block does not carry. The carrier was restored from the committed copy and reads CLEAN again.
-blocked-by: NONE
-
 ## lc-333
 grade: STANDBY
 requirement: QUESTIONS WAITING ON THE OPERATOR REACH NO OPERATOR. 49 open items are blocked on a decision; the count prints in the session-start banner, which sessions read and the operator does not, and no verb lists the questions in plain words or says which a desk may answer. On 2026-10-07, 32 of them were waiting only on the freeze exit the operator had just granted, and the operator said first-hand they were not aware items were stuck on missing design. A blocker that only a person can clear and that no person is shown is a wait nobody is in. Record: LEDGER.md decision line 2026-10-07, lifted in general
