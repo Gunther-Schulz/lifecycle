@@ -771,6 +771,8 @@ done-criterion: the carrier RENDERS the current effective value distinctly from 
 evidence: Peer desk cachyos-setup-33, 2026-09-18, from eight amendments in operation: cs-35 four amendments in about 90 minutes; cs-48 with its live requirement contradicted by its own later amendment. THIS DESK OWN INSTANCES THE SAME DAY: lc-158, lc-159 and lc-161 were each amended after booking, and lc-159 amendment reversed the scope fivefold, its original done-criterion reading as a cross-repo schema migration that the amendment kills. Law 8 two-reads rule is both the precedent and the boundary.
 blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+amend-reason: 2026-10-07 2026-10-07 dispatched in wave C and returned as a gap: the recorded repair is a schema line
+amended-evidence: 2026-10-07 RELAYED from wave C lane C3 2026-10-07 at 8a3e415: reproduced on a scratch amend (the raw block keeps the superseded requirement line first and the true value below it), and items.py near lines 1202-1220 already records the repair as a tool-written head line, a new line in the block that law 25 binds to a schema wave, with re-ordering rejected there. DERIVED: not buildable as a defect repair under the 2026-09-24 freeze; needs the operator release and a migration over every declared repo, or a re-scope to a rendering.
 
 ## lc-173
 grade: STANDBY
