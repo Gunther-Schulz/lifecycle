@@ -1129,15 +1129,6 @@ done-criterion: Each roster row declares the input class of its firing input fro
 evidence: RELAYED from lane C5 (opus) 2026-10-07 at f95c75f: the arrangement table is a five-tuple unpacked by test_refusals near line 159, the firing input belongs to the row, 149 existing plants are unclassed, and a word-presence test over refusal prose would fire on text that only discusses the word. DERIVED: a declared class is a new field on the row, which the 2026-09-24 freeze reads as a schema change until released.
 blocked-by: NONE
 
-## lc-327
-grade: STANDBY
-requirement: lifecycle --test MAY GRADE THE WRONG CHECKOUT: run with the process cwd inside a different checkout, its emit-site coverage section read that checkout files, not the files of the tool that was launched - record: wave D lane D4 closing report 2026-10-07, gap C3
-goal: enforce-the-invariants
-write-set: plugin/cli/lifecycle_core/roster.py,test/test_roster.py
-done-criterion: The roster run reads source from the package it was launched from whatever the cwd, or names in its output which tree it read; red-first: the base tree exported to a scratch directory and run with cwd inside a checkout that differs from it. If the observation does not reproduce in a git checkout, the item is dropped with that measurement.
-evidence: RELAYED from lane D4 (opus) 2026-10-07, observed once and not traced: an export of ec9d941 run from the lane worktree cwd printed an emit_site_unregistered finding for a name only the worktree held and counted 129 emitted names, while the same export run from its own directory printed 126 and CLEAN. The export was not a git repo, which may be the whole cause.
-blocked-by: NONE
-
 ## lc-328
 grade: STANDBY
 requirement: FOUR PROOF-SHAPE LEFTOVERS FROM WAVE D: two retire-source rows are decided by two tests over one value, so one arrangement folds both tests and the other swaps a value where the rule says disable; the compaction site is a new route into carrier_dirty_at_entry with no arrangement of its own; and the conditional-slot recogniser reads an external moot record as a decision one - record: wave D lanes D4 (gaps C1, C2), D2 (gap 4) and D1 (gap 3) closing reports 2026-10-07

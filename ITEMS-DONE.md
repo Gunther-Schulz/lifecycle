@@ -3425,5 +3425,18 @@ closed-met: none
 closed-decided: none
 closed-ref: 9350e126de30b8bcc8aeaac86b1d05adf02613bc
 
+## lc-327
+grade: DONE
+requirement: lifecycle --test MAY GRADE THE WRONG CHECKOUT: run with the process cwd inside a different checkout, its emit-site coverage section read that checkout files, not the files of the tool that was launched - record: wave D lane D4 closing report 2026-10-07, gap C3
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/roster.py,test/test_roster.py
+done-criterion: The roster run reads source from the package it was launched from whatever the cwd, or names in its output which tree it read; red-first: the base tree exported to a scratch directory and run with cwd inside a checkout that differs from it. If the observation does not reproduce in a git checkout, the item is dropped with that measurement.
+evidence: RELAYED from lane D4 (opus) 2026-10-07, observed once and not traced: an export of ec9d941 run from the lane worktree cwd printed an emit_site_unregistered finding for a name only the worktree held and counted 129 emitted names, while the same export run from its own directory printed 126 and CLEAN. The export was not a git repo, which may be the whole cause.
+blocked-by: NONE
+closed-reason: 2026-10-07 The roster reach resolves members against its own repo, not the cwd; a run from outside a checkout had graded zero files and printed CLEAN. Wave E, landed and verified in main 2026-10-07: suite 1774 OK no skips, --test 165 of 165, prove-rows no arrangement failed and no control red, node battery 62 of 62, exit codes unchanged over ten governed repos.
+closed-met: none
+closed-decided: none
+closed-ref: 152ee0c5aac6b2beef06a4bc178e1be8740b760f
+
 ## Archive (pre-migration)
 
