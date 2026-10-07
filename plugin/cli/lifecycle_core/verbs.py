@@ -4798,6 +4798,22 @@ def cmd_ledger_add(args, out, ctx: Ctx) -> int:
 
 # --- `arc` (lc-231b: the verb core) -------------------------------------------
 
+def _arc_slug_usable(slug) -> bool:
+    """Whether `slug` can name an arc body: a filename in the arc home.
+
+    ONE BODY FOR EVERY ARC VERB. `arc open` carried this test alone, and the
+    other verbs asked only whether `arcs/<slug>.md` EXISTS — so with a live
+    arc in place (the directory must exist for the path to resolve, which is
+    why a fresh repo read clean) `../README` named a root file, and premise,
+    belief, advance and yield appended to it, deadline declared a lane from
+    it, and close moved it into the closed home. Found by the sweep lc-317
+    owed, 2026-10-07.
+    """
+    slug = (slug or "").strip()
+    return bool(slug) and "/" not in slug and os.sep not in slug \
+        and slug != arcs.INDEX_STEM
+
+
 def _arc_paths(ctx: Ctx, slug: str):
     return (ctx.repo / arcs.ARCS_DIR / f"{slug}.md",
             ctx.repo / arcs.CLOSED_DIR / f"{slug}.md")
@@ -4943,7 +4959,7 @@ def cmd_arc_open(args, out, ctx: Ctx) -> int:
     desk acts on.
     """
     slug = args.slug.strip()
-    if not slug or "/" in slug or slug == arcs.INDEX_STEM:
+    if not _arc_slug_usable(slug):
         out(f"FINDING [arc_shape] {slug!r} is not a usable arc slug. It "
             "becomes a filename in the arc home, so it carries no path "
             f"separator, and it is not {arcs.INDEX_STEM!r}, which is the "
@@ -5046,7 +5062,7 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
     """
     slug = args.slug.strip()
     live, closed = _arc_paths(ctx, slug)
-    if not live.exists():
+    if not _arc_slug_usable(slug) or not live.exists():
         out(f"FINDING [unknown_arc] no live arc {slug!r} in "
             f"{arcs.ARCS_DIR}/. A closed arc is not re-closable and a slug "
             "that was never opened has nothing to move.")
@@ -5149,7 +5165,7 @@ def _arc_append(ctx: Ctx, slug: str, line: str, out, msg: str, *,
     writes owns the commit, the same escape every other carrier write has.
     """
     live, _closed = _arc_paths(ctx, slug)
-    if not live.exists():
+    if not _arc_slug_usable(slug) or not live.exists():
         out(f"FINDING [unknown_arc] no live arc {slug!r} in "
             f"{arcs.ARCS_DIR}/.")
         return exits.FINDING
@@ -5215,7 +5231,7 @@ def cmd_arc_reopen(args, out, ctx: Ctx) -> int:
     asked for the edge.
     """
     live, _closed = _arc_paths(ctx, args.slug)
-    if not live.exists():
+    if not _arc_slug_usable(args.slug) or not live.exists():
         out(f"FINDING [unknown_arc] no live arc {args.slug!r} in "
             f"{arcs.ARCS_DIR}/.")
         return exits.FINDING
@@ -5288,7 +5304,7 @@ def cmd_arc_advance(args, out, ctx: Ctx) -> int:
     """
     slug = args.slug.strip()
     live, _closed = _arc_paths(ctx, slug)
-    if not live.exists():
+    if not _arc_slug_usable(slug) or not live.exists():
         out(f"FINDING [unknown_arc] no live arc {slug!r} in "
             f"{arcs.ARCS_DIR}/.")
         return exits.FINDING
@@ -5360,7 +5376,7 @@ def cmd_arc_narrow(args, out, ctx: Ctx) -> int:
     """
     slug = args.slug.strip()
     live, _closed = _arc_paths(ctx, slug)
-    if not live.exists():
+    if not _arc_slug_usable(slug) or not live.exists():
         out(f"FINDING [unknown_arc] no live arc {slug!r} in "
             f"{arcs.ARCS_DIR}/.")
         return exits.FINDING
@@ -5426,7 +5442,7 @@ def cmd_arc_yield(args, out, ctx: Ctx) -> int:
     """
     slug = args.slug.strip()
     live, _closed = _arc_paths(ctx, slug)
-    if not live.exists():
+    if not _arc_slug_usable(slug) or not live.exists():
         out(f"FINDING [unknown_arc] no live arc {slug!r} in "
             f"{arcs.ARCS_DIR}/.")
         return exits.FINDING
@@ -5500,7 +5516,7 @@ def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
     """
     slug = args.slug.strip()
     live, _closed = _arc_paths(ctx, slug)
-    if not live.exists():
+    if not _arc_slug_usable(slug) or not live.exists():
         out(f"FINDING [unknown_arc] no live arc {slug!r} in "
             f"{arcs.ARCS_DIR}/.")
         return exits.FINDING
