@@ -27,6 +27,30 @@ from lifecycle_core import items  # noqa: E402
 from test_waves import WavesBase, block  # noqa: E402
 
 
+#: THE MEASURED WAVE-1 CASE (drain wave 1, 2026-09-15): one item's write-set
+#: is the mutation prover, and three sibling items — each on a file of its
+#: own — run that prover as their verifier. Nothing in a write-set says so.
+INSTRUMENT_CASE = [
+    block("xx-1", "tools/prove-rows.py"),
+    block("xx-2", "tools/items.py"),
+    block("xx-3", "tools/init.py"),
+    block("xx-4", "test/test_items.py"),
+]
+
+#: The verb's old assurance, quoted so its absence is asserted on the bytes.
+OLD_ASSURANCE = ("the lanes are disjoint by construction, so the whole set "
+                 "of lanes is the PARALLEL set")
+
+#: MUST-NOT-MOVE, byte for byte: the verdict over a population the lanes do
+#: not cover. Written out here rather than rebuilt from the source it grades.
+OUTSIDE_THE_LANES = (
+    "item waves: COULD NOT VERIFY — 1 of 3 schedulable item(s) are outside "
+    "the lanes: 1 with a write-set this join could not read, and 0 whose "
+    "write-set it read and which name no file in this repo. Either way the "
+    "lanes above are a plan over 2 item(s) and NOT the whole schedulable "
+    "set.")
+
+
 class TheJoinSaysWhatItsPredicateCovers(WavesBase):
     """lc-139 — an assurance no wider than a write-write predicate."""
 
