@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 323
+added: 324
 compacted: 0
 
 ## lc-3
@@ -1398,4 +1398,13 @@ goal: lean-machinery-strict-checks
 write-set: tools/prove-rows.py,test/test_prove_rows.py
 done-criterion: The full walk runs its arrangements in parallel, each worker on a PRIVATE COPY of the source it mutates under a temp directory, and never writes a tracked file of the checkout it was started from (asserted: git status identical before and after, also when a worker is killed). Verdicts are unchanged: the same PROVEN and FAILED per arrangement and the same rows-changed sets as the serial walk at the same commit, compared arrangement by arrangement. Wall time on this repo is quoted before and after on one machine and is at most half. Red-first for correctness: an arrangement re-pointed at an inert anchor still reads FAILED under the new walk. The output states how many arrangements ran and on how many workers.
 evidence: MEASURED 2026-10-07 at the drain desk: the full walk took roughly ten minutes at 124 arrangements before lc-200 and ran 152 arrangements with every control after it; it refuses to start while a core file differs from HEAD and restores by file copy. DERIVED: about twenty minutes per walk now; not timed with a clock at 152.
+blocked-by: NONE
+
+## lc-332
+grade: STANDBY
+requirement: item amend RE-TYPING A BLOCKER LEAVES THE BLOCK IN A SHAPE item check REFUSES. Amending a parked item from a decision blocker to NONE clears the base not-derivable line, as the verb says, and leaves an earlier amended-not-derivable line behind with nothing to supersede; item check then answers item_shape on the block. Found releasing lc-154 after the freeze lift: 32 parked items carry a freeze-exit decision blocker and each needs this amend. Record: LEDGER.md decision line 2026-10-07, lifted in general
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py,test/test_items.py
+done-criterion: An amend that changes a blocker's type leaves a block item check reads CLEAN, whatever earlier amendments the block carries: the re-type clears every line that is legal only beside the old blocker type, amended ones included, or keeps them as history in a form the shape check accepts. Red-first: a parked block with a decision blocker and an amended-not-derivable line, amended to blocked-by NONE, goes item_shape today and CLEAN after; control: a block with no amended line is unchanged by the fix. The commit gate accepts the amend's own commit.
+evidence: MEASURED 2026-10-07 at the drain desk on the live carrier with --no-commit: item amend lc-154 --blocked-by NONE removed one line (the base not-derivable) and added two; item check then printed FINDING item_shape, block lc-154, amended-not-derivable amends a slot the block does not carry. The carrier was restored from the committed copy and reads CLEAN again.
 blocked-by: NONE
