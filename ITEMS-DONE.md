@@ -2568,5 +2568,19 @@ closed-met: none
 closed-decided: none
 closed-ref: a269773f546d6850251e957edf9f32a545c4b68c
 
+## lc-83
+grade: DONE
+requirement: migrate's residue consumer list is built by a SUBSTRING match on the carrier basename, so it names files that reference a DIFFERENT repo's same-named carrier, and files whose own name merely ends with it. A desk acting on that list without opening each hit edits the wrong repo
+goal: tend
+write-set: plugin/cli/lifecycle_core/migrate.py,test/
+done-criterion: live_carrier_readers returns only files referencing the carrier as a whole path component, and the residue block carries the MATCHED LINE beside each consumer so a reader can judge ownership without opening the file. Red-first with the pair already measured below: the FEATURE-BACKLOG.md fixture is absent from the new output while the genuine consumer is still present
+evidence: Mechanism verified at the code by the drain-arc desk 2026-09-12, not taken from a report. live_carrier_readers (migrate.py:767) builds patterns as Path(name).name and runs git grep -l -I -F, matching the basename ANYWHERE in a tracked file's content. Two independent failures follow. (a) NO LEFT BOUNDARY: a fixed-string search for BACKLOG.md matches FEATURE-BACKLOG.md. Proven in a throwaway git repo with a discriminating pair, both tracked: doc.md containing only the text FEATURE-BACKLOG.md was RETURNED, clean.md was not. (b) NO OWNERSHIP CONTEXT: a sentence mentioning another repo's same-named carrier matches identically, which is how the dispatch-guards run named the cache-fix fork's BACKLOG.md and pbs-office's FEATURE-BACKLOG.md among 6 consumers (that 2-of-6 figure is the migration desk's, relayed and unverified here; the mechanism under it is verified). The docstring is what makes this worth fixing rather than noting: it explicitly defends -F as the protection against a regex matching BACKLOGxmd, the RIGHT-side boundary, while the left side has no boundary at all. An assurance wider than its predicate, in the mechanism's own words about itself
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 Residue consumers match the carrier as a whole path component, with the matching line quoted. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: lc-319
+closed-decided: none
+closed-ref: 24878c2cc7c712ed03ef17d26da81ed5d2566ddd
+
 ## Archive (pre-migration)
 
