@@ -1322,6 +1322,20 @@ def cmd_item_compact(args, out, ctx) -> int:
                 "record this exit. Nothing was written.")
             return exits.COULD_NOT_VERIFY
 
+        # THE ORDINARY ENTRY CHECK (lc-321), the one every other carrier verb
+        # takes: the commit below names three carriers by pathspec, so each
+        # goes out WHOLE and a change already pending in any of them would
+        # ride out under `lifecycle: compact`. HERE, after the refusals above
+        # and before the first write: each of those names something more
+        # specific about THIS body (a pending edit to the body itself is
+        # `compaction_would_strip`, whose remedy is the same commit), and
+        # this one asks about everything else the three files hold.
+        dirty_code = verbs_mod.refuse_dirty_carriers(
+            ctx, (ctx.ledger_path, ctx.done_path, ctx.items_path), out,
+            skip=getattr(args, "no_commit", False))
+        if dirty_code != exits.CLEAN:
+            return dirty_code
+
         # 1. THE RECORD, before the tree ever holds one body fewer.
         line = ledger_mod.append(ctx.ledger_path, "decision",
                                  {"question": compaction_question(ident),

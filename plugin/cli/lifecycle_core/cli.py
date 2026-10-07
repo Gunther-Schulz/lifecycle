@@ -409,6 +409,52 @@ def _carrier_extent(ctx, out, *, quiet_when_clean: bool = False) -> int:
     return code
 
 
+def _repair_commits_whole(ctx, written, pending) -> str:
+    """The line `item repair --shape` prints where it commits (lc-321).
+
+    EVERY OTHER CARRIER VERB REFUSES A CARRIER THAT ALREADY DIFFERS FROM WHAT
+    IS COMMITTED (`verbs.refuse_dirty_carriers`), because its pathspec commit
+    takes the file whole and a pending change would ride out under a message
+    that does not describe it. THIS VERB DOES NOT, BY DECISION: a damaged and
+    possibly uncommitted carrier is the input it exists for, and refusing it
+    would leave hand damage with no mechanical way back. The cost is the one
+    the refusal exists to prevent, so it is STATED rather than taken
+    silently — which carrier goes out whole, and what was already pending in
+    it before this run wrote.
+
+    `pending` is `verbs.carrier_dirty`'s own answer per path, taken before
+    the first write, and its three answers are carried through: git unable
+    to say is said, never folded into "nothing was pending".
+    """
+    named, unread = [], []
+    for path in written:
+        dirty, why = pending.get(path, (None, "it was not read at entry"))
+        rel = verbs._rel_to_repo(ctx, path)
+        if dirty is None:
+            unread.append(f"{rel} ({why})")
+        elif dirty:
+            named.append(f"{rel} ({why})")
+    whole = ", ".join(verbs._rel_to_repo(ctx, p) for p in written)
+    line = (f"COMMITS WHOLE: `item repair --shape` does NOT refuse a carrier "
+            "with uncommitted changes — a damaged and possibly uncommitted "
+            "carrier is what it exists to rewrite — and its commit is by "
+            f"pathspec, so {whole} go(es) out whole under the repair's "
+            "message. ")
+    if named:
+        line += ("ALREADY PENDING before this run wrote, and therefore in "
+                 f"that commit beside the repair: {'; '.join(named)}. `git "
+                 "show` on the commit below is where the two can be told "
+                 "apart.")
+    elif not unread:
+        line += ("At entry nothing was pending in what it reshaped, so the "
+                 "commit carries the repair alone.")
+    if unread:
+        line += (" COULD NOT READ whether a change was pending at entry in: "
+                 f"{'; '.join(unread)} — that is not the same answer as "
+                 "none.")
+    return line
+
+
 def cmd_item_repair(args, out) -> int:
     """`item repair --shape` (lc-129) — the MECHANICAL half of hand damage.
 
@@ -437,6 +483,9 @@ def cmd_item_repair(args, out) -> int:
     code = exits.CLEAN
     written = []
     judgments = []
+    # WHAT WAS PENDING AT ENTRY, per carrier, read BEFORE this verb writes
+    # (lc-321) — afterwards git cannot tell a hand edit from the repair.
+    pending = {}
     for path in (ctx.items_path, ctx.done_path):
         if not path.exists():
             out(f"COULD NOT VERIFY: no carrier at {path}. An absent file and "
@@ -444,6 +493,7 @@ def cmd_item_repair(args, out) -> int:
                 "repair.")
             code = exits.worst([code, exits.COULD_NOT_VERIFY])
             continue
+        pending[path] = verbs.carrier_dirty(ctx.repo, path)
         try:
             with items_mod.carrier_lock(path):
                 before = path.read_text(encoding="utf-8")
@@ -481,6 +531,8 @@ def cmd_item_repair(args, out) -> int:
         msg = (f"item repair --shape: {len(written)} carrier(s) reshaped "
                "(wrapped values joined, appended lines moved below the fixed "
                "slots)")
+        if not getattr(args, "no_commit", False):
+            out(_repair_commits_whole(ctx, written, pending))
         code = exits.worst([code, verbs.commit_paths(
             ctx, written, msg, out,
             skip=getattr(args, "no_commit", False),

@@ -193,5 +193,169 @@ class EveryReadingVerbStatesItsExtent(Base):
             self.assertEqual(code, exits.COULD_NOT_VERIFY, out)
 
 
+# --- lc-321 -------------------------------------------------------------------
+
+#: `SEED_ITEMS` with one slot value WRAPPED — the mechanical damage `item
+#: repair --shape` joins. Derived from the seed, so the two cannot drift.
+WRAPPED = refusals.SEED_ITEMS.replace(
+    "one fire per window, shown", "one fire per window,\n  shown", 1)
+assert WRAPPED != refusals.SEED_ITEMS, "the seed's done-criterion moved"
+
+#: A hand edit to a slot VALUE: shape-valid, so nothing but git knows it is
+#: pending. Applied to a committed carrier and left uncommitted.
+HAND_FROM, HAND_TO = "evidence: none yet", "evidence: MEASURED by hand, pending"
+
+#: The line `item repair --shape` owes where it commits (the lc-321 ruling):
+#: it does not refuse a dirty carrier, and says what its commit carries.
+WHOLE_LINE = "COMMITS WHOLE:"
+
+DIRTY_ROW = "FINDING [carrier_dirty_at_entry]"
+
+
+def hand_edit(repo, name="ITEMS.md"):
+    p = repo.dir / name
+    text = p.read_text(encoding="utf-8")
+    assert HAND_FROM in text, f"the hand edit's anchor is not in {name}"
+    p.write_text(text.replace(HAND_FROM, HAND_TO, 1), encoding="utf-8")
+
+
+def pending(repo, name):
+    """git's own answer for one path — never the verb's account of it."""
+    return git(repo, "status", "--porcelain", "--", name).stdout.strip()
+
+
+def head(repo):
+    return git(repo, "rev-parse", "HEAD").stdout.strip()
+
+
+class RepairSaysWhatItsCommitCarries(Base):
+    """lc-321, the `item repair --shape` site. It exists to rewrite a damaged
+    and possibly uncommitted carrier, so it does NOT take the dirty-carrier
+    refusal; it says that it commits the carrier whole and names what was
+    already pending."""
+
+    def _whole_lines(self, out):
+        return [ln for ln in out.splitlines() if ln.startswith(WHOLE_LINE)]
+
+    def test_a_pending_hand_edit_is_NAMED_and_the_repair_is_not_refused(self):
+        with refusals._Repo(items=WRAPPED) as r:
+            hand_edit(r)
+            self.assertTrue(pending(r, "ITEMS.md"), "the fixture is not dirty")
+            before = head(r)
+            code, out = self._run(r, "item", "repair", "--shape")
+            # NOT REFUSED: the repair landed and was committed.
+            self.assertEqual(code, exits.CLEAN, out)
+            self.assertNotIn(DIRTY_ROW, out)
+            self.assertIn("committed:", out)
+            self.assertNotEqual(head(r), before, out)
+            self.assertEqual(pending(r, "ITEMS.md"), "", out)
+            # ...and the hand edit DID ride out under the repair's message,
+            # which is the fact the line below is owed for.
+            self.assertIn(HAND_TO, git(r, "show", "HEAD:ITEMS.md").stdout)
+            lines = self._whole_lines(out)
+            self.assertEqual(len(lines), 1, out)
+            self.assertIn("ITEMS.md", lines[0])
+            self.assertIn("ALREADY PENDING", lines[0])
+            self.assertNotIn("nothing was pending", lines[0])
+
+    def test_a_CLEAN_damaged_carrier_says_nothing_was_pending(self):
+        """The control: the same damage, committed, no hand edit. The arms
+        differ in the pending edit alone."""
+        with refusals._Repo(items=WRAPPED) as r:
+            self.assertEqual(pending(r, "ITEMS.md"), "")
+            code, out = self._run(r, "item", "repair", "--shape")
+            self.assertEqual(code, exits.CLEAN, out)
+            lines = self._whole_lines(out)
+            self.assertEqual(len(lines), 1, out)
+            self.assertIn("nothing was pending", lines[0])
+            self.assertNotIn("ALREADY PENDING", lines[0])
+
+    def test_no_commit_and_nothing_to_repair_claim_no_commit(self):
+        """What must NOT appear: a statement about a commit that is not made.
+        `--no-commit` leaves the commit to its caller, and a run that
+        reshaped nothing commits nothing however dirty the carrier is."""
+        with refusals._Repo(items=WRAPPED) as r:
+            hand_edit(r)
+            _code, out = self._run(r, "item", "repair", "--shape",
+                                   "--no-commit")
+            self.assertEqual(self._whole_lines(out), [], out)
+            self.assertIn("NOT COMMITTED", out)
+        with refusals._Repo(items=refusals.SEED_ITEMS) as r:
+            hand_edit(r)
+            before = head(r)
+            _code, out = self._run(r, "item", "repair", "--shape")
+            self.assertEqual(self._whole_lines(out), [], out)
+            self.assertIn("NOT COMMITTED", out)
+            self.assertEqual(head(r), before, out)
+            self.assertTrue(pending(r, "ITEMS.md"), out)
+
+
+class CompactionRefusesADirtyCarrier(Base):
+    """lc-321, the `item compact` site: the ordinary entry check. Its commit
+    names the ledger, the done home and the live carrier, each by pathspec
+    and so each whole."""
+
+    def _closed(self):
+        """Two bodies, `xx-1` closed by the verb and committed by it."""
+        r = refusals._Repo(items=refusals.TWO_SEED_ITEMS)
+        self.addCleanup(r.close)
+        code, out = self._run(r, "item", "close", "xx-1", "--met", "none",
+                              "--decided", "none")
+        self.assertEqual(code, exits.CLEAN, out)
+        for name in ("ITEMS.md", "ITEMS-DONE.md", "LEDGER.md"):
+            self.assertEqual(pending(r, name), "", f"{name} after the close")
+        return r
+
+    def _texts(self, r):
+        return {n: (r.dir / n).read_text(encoding="utf-8")
+                for n in ("ITEMS.md", "ITEMS-DONE.md", "LEDGER.md")}
+
+    def test_a_pending_edit_to_a_carrier_it_commits_is_REFUSED(self):
+        for name in ("ITEMS.md", "LEDGER.md"):
+            with self.subTest(dirty=name):
+                r = self._closed()
+                if name == "ITEMS.md":
+                    hand_edit(r)
+                else:
+                    p = r.dir / name
+                    p.write_text(p.read_text(encoding="utf-8")
+                                 + "fact: a hand line nobody committed\n",
+                                 encoding="utf-8")
+                self.assertTrue(pending(r, name), "the fixture is not dirty")
+                before_head, before = head(r), self._texts(r)
+                code, out = self._run(r, "item", "compact", "xx-1")
+                self.assertEqual(code, exits.FINDING, out)
+                self.assertIn(DIRTY_ROW, out)
+                self.assertIn(name, out)
+                # THE HALF A MESSAGE CANNOT ASSERT: nothing written, nothing
+                # committed — read at the files and at git.
+                self.assertEqual(self._texts(r), before, out)
+                self.assertEqual(head(r), before_head, out)
+
+    def test_the_SAME_repo_CLEAN_compacts_and_commits(self):
+        """The control: the arms differ in the pending edit alone."""
+        r = self._closed()
+        before = head(r)
+        code, out = self._run(r, "item", "compact", "xx-1")
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertNotIn(DIRTY_ROW, out)
+        self.assertNotEqual(head(r), before, out)
+        self.assertNotIn("## xx-1",
+                         (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8"))
+
+    def test_a_no_commit_caller_is_not_refused(self):
+        """The batching caller owns the commit, so a carrier dirty with its
+        own earlier writes is its ordinary state (the lc-318 ruling)."""
+        r = self._closed()
+        hand_edit(r)
+        before = head(r)
+        code, out = self._run(r, "item", "compact", "xx-1", "--no-commit")
+        self.assertNotIn(DIRTY_ROW, out)
+        self.assertEqual(code, exits.CLEAN, out)
+        self.assertEqual(head(r), before, out)
+        self.assertNotIn("## xx-1",
+                         (r.dir / "ITEMS-DONE.md").read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()
