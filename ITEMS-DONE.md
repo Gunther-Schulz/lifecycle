@@ -2602,5 +2602,19 @@ closed-met: none
 closed-decided: none
 closed-ref: 9beaa4364983d05beebbfef28e758859edb24493
 
+## lc-114
+grade: DONE
+requirement: The re-import provenance lookup keys on MUTABLE state while an immutable pin sits in the same record: provenance_index/reimported_bodies key on (src, line, end), so an edit ABOVE a migrated entry makes the lookup MISS and a legitimate re-merge is REFUSED. The anchor rule violated inside the very mechanism that introduced the anchor (lc-86's blob pin) — record: lc-38 lane grounding round, 2026-09-13
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/migrate.py,test/test_migrate.py
+done-criterion: reimported_bodies resolves the PINNED BLOB and compares BODIES rather than line numbers against the freshly-read source. THREE answers, the third stated because it is where this will lie: (1) pin resolves -> compare bodies, match or no-match; (2) no match -> the existing refusal stands unchanged; (3) pin UNRESOLVABLE, or the anchor is legacy-unpinned -> COULD NOT VERIFY, surfaced, NEVER a silent fall-back to the (src,line,end) key — a fall-back would restore today's behaviour while reading as a fix. Red-first: an entry moved by an edit above its target, re-merged. MUST-NOT-FIRE arm, which decides shippability: a genuinely NEW duplicate body must STILL be refused — the repair must not turn merge_duplicate_body into a no-op, and that row's prove-rows anchor must survive (it sits in duplicate_bodies, a different function, so no anchor is in the path). CONSEQUENCE, deliberate and separate: test_migrate.py:1816's freeze stand-down is the same workaround from the other side and MAY lift once this lands — lifting it is its own act, never automatic.
+evidence: MEASURED BY THE lc-38 LANE, 2026-09-13, executed in a git archive HEAD snapshot whose own --test was green first; reported to this desk and graded here as the lane's measurement, not re-run at this desk. The lane PREDICTED a silent duplicate body and measured the opposite: the re-merge exits 2 with FINDING [merge_duplicate_body] '... carry a headline a body already in the successor homes carries AND carry provenance no successor block carries', with NOTHING written. So the headline detector backstops the miss and the failure is LOUD, not silent. That negative is what makes this a DIFFERENT item from lc-38 rather than a widening of it: lc-38's defect is silent staleness, this is an over-firing guard on legitimate work — same cause, opposite failure mode, different must-not-fire arm. VERIFIED AT THIS DESK, the half the ruling rests on: the pin the lookup declines to use is present and required — BLOB_PIN at migrate.py:836, source_blob REQUIRED with no default at :843, written into both anchors at :893 and :907. DESIGN RULING (drain desk, 2026-09-13): resolve the pin. The blob is the immutable anchor lc-86 introduced precisely because line numbers move; keying the provenance index on the mutable pair while the immutable one sits in the same record is the defect, and the third answer is what keeps the repair from becoming a silent widening.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The re-import lookup resolves the pinned blob and compares bodies; an unpinned or unresolvable anchor with an entry still unmatched is could-not-verify, nothing written. Wave B 2026-10-07, verified on main at c9e38cc: suite 1457 OK no skips, --test 149 of 149, prove-rows 130 of 130 held with baseline 149 of 149, leak battery 62 of 62.
+closed-met: none
+closed-decided: none
+closed-ref: 92c4256560283c94bcfaba2e7accfcbaf2a74f7c
+
 ## Archive (pre-migration)
 
