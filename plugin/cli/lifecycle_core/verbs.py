@@ -5073,14 +5073,19 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
             "whether anything was lost.")
         return exits.COULD_NOT_VERIFY
 
+    body = live.read_text(encoding="utf-8")
+    # EVERY REMAINING OBSERVER GOES, whatever stage set it (astra-a8), so
+    # the retirement's paths are part of what this close commits (lc-320).
+    retiring = arcs.deadline_lanes(body)
+
     # BEFORE THE FIRST WRITE (lc-318), which here is the lane retirement
     # below and not the body move.
     dirty_code = refuse_dirty_carriers(
-        ctx, [live, closed, arcs.index_path(ctx.repo)], out)
+        ctx, [live, closed, arcs.index_path(ctx.repo)]
+        + _arc_lane_paths(ctx, retiring), out)
     if dirty_code != exits.CLEAN:
         return dirty_code
 
-    body = live.read_text(encoding="utf-8")
     if args.abandon:
         # ABANDON IS A CLOSE WITH A DIFFERENT REASON, not a third path. The
         # bodies move the same way and conservation counts them the same way;
@@ -5094,7 +5099,7 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
     # closed arc's deadline lane is the clearest case of a door nobody can
     # act on: the thing it was watching for cannot matter any more, and the
     # abandoned-arc arm is the same act with a different reason.
-    _retire_arc_lanes(ctx, slug, body, arcs.deadline_lanes(body), out)
+    retired = _retire_arc_lanes(ctx, slug, body, retiring, out)
     closed.parent.mkdir(parents=True, exist_ok=True)
     # 1. APPEND — before the tree ever holds one copy fewer.
     atomic.write_text(closed, body, encoding="utf-8")
@@ -5114,7 +5119,7 @@ def cmd_arc_close(args, out, ctx: Ctx) -> int:
     out(f"  {cons.message}")
     args.fire_detail = f"{'abandon' if args.abandon else 'close'} {slug}"
     code = commit_paths(
-        ctx, [live, closed, arcs.index_path(ctx.repo)],
+        ctx, [live, closed, arcs.index_path(ctx.repo)] + retired,
         f"arcs: close {slug}", out, what="the arc close", stage_new=True)
     if code != exits.CLEAN:
         return code
@@ -5296,13 +5301,6 @@ def cmd_arc_advance(args, out, ctx: Ctx) -> int:
             "re-derived|accepted-stale --reason <why>`.")
         return exits.FINDING
 
-    # BEFORE THE FIRST WRITE (lc-318), which here is the lane retirement
-    # below and not the body rewrite.
-    dirty_code = refuse_dirty_carriers(
-        ctx, [live], out, skip=getattr(args, "no_commit", False))
-    if dirty_code != exits.CLEAN:
-        return dirty_code
-
     to = args.to.strip()
     arc_obj, _probs = arcs.parse_arc(text, slug)
     # THE LEAVING STAGE'S DEADLINES END WITH IT (astra-a8). A deadline belongs
@@ -5310,8 +5308,18 @@ def cmd_arc_advance(args, out, ctx: Ctx) -> int:
     # a date nothing is waiting for, and a board carrying doors nobody can act
     # on is how a reader learns to skim the board.
     leaving = (arc_obj.slots.get("stage") or "").strip()
-    _retire_arc_lanes(ctx, slug, text,
-                      arcs.deadline_lanes(text, stage=leaving), out)
+    retiring = arcs.deadline_lanes(text, stage=leaving)
+
+    # BEFORE THE FIRST WRITE (lc-318), which here is the lane retirement
+    # below and not the body rewrite. The retirement's own paths are graded
+    # with the body, because this verb now commits them (lc-320).
+    dirty_code = refuse_dirty_carriers(
+        ctx, [live] + _arc_lane_paths(ctx, retiring), out,
+        skip=getattr(args, "no_commit", False))
+    if dirty_code != exits.CLEAN:
+        return dirty_code
+
+    retired = _retire_arc_lanes(ctx, slug, text, retiring, out)
     # R3 SEAM (refocus round, 2026-09-24, lc-288): the treatment arm's
     # trigger moves from a brief directive (memory) to the verb itself. The
     # already-required `--reason` prose below is the written answer; this
@@ -5335,7 +5343,8 @@ def cmd_arc_advance(args, out, ctx: Ctx) -> int:
             "binds — where the act has a DRAFT stage the draft is the veto "
             "point, and where it has none the act and its reasoning are "
             "surfaced to the operator BEFORE it runs.")
-    return commit_paths(ctx, [live], f"arcs: advance {slug} to {to}", out,
+    return commit_paths(ctx, [live] + retired,
+                        f"arcs: advance {slug} to {to}", out,
                         what="the arc advance", stage_new=True,
                         skip=getattr(args, "no_commit", False))
 
@@ -5437,6 +5446,22 @@ def cmd_arc_yield(args, out, ctx: Ctx) -> int:
                         skip=getattr(args, "no_commit", False))
 
 
+def _arc_lane_paths(ctx: Ctx, names) -> list:
+    """The paths retiring `names` can write: the declaration, then each
+    lane body. EMPTY for no names — a verb that retires nothing writes no
+    row, so the declaration is not in its commit and not its to grade.
+
+    ONE LIST FOR THE ENTRY CHECK AND THE RETIREMENT (lc-320), so the set
+    graded before the first write is the set the retirement can touch and
+    never a second spelling of it.
+    """
+    names = list(names)
+    if not names:
+        return []
+    return [ctx.repo / decl.DECLARATION_REL] + [
+        ctx.repo / lanes.LANES_DIR / f"{name}.md" for name in names]
+
+
 def _retire_arc_lanes(ctx: Ctx, slug: str, text: str, names, out) -> list:
     """Remove generated observer lanes — BODY and ROW — and say which.
 
@@ -5445,8 +5470,22 @@ def _retire_arc_lanes(ctx: Ctx, slug: str, text: str, names, out) -> list:
     gone is a `kind check` finding that names itself, while a body whose row
     is gone is invisible to `lane list` and to everything else. If this dies
     between the two, the repo says so.
+
+    RETURNS THE PATHS THE CALLER'S COMMIT MUST NAME (lc-320). Both movement
+    verbs called this and then committed the arc paths alone, so the row and
+    the body were changed on disk behind a verb that printed `committed:` —
+    and `arc deadline`, which commits the declaration whole, could not grade
+    it at entry because this leftover made it routinely dirty.
+
+    ONLY PATHS GIT HAS A CHANGE FOR ARE RETURNED, asked of `carrier_dirty`
+    AFTER the write. A lane body that was never committed (a `--no-commit`
+    deadline) is gone from disk and unknown to git once unlinked, and a
+    pathspec naming it fails the whole commit; a row that was not declared
+    left the declaration untouched. `None` — git could not say — keeps the
+    path, so the commit names it and fails loudly rather than leaving it out.
     """
     removed = []
+    written = []
     for name in names:
         ok, why = decl.remove_lane(ctx.repo, name)
         if why:
@@ -5457,6 +5496,9 @@ def _retire_arc_lanes(ctx: Ctx, slug: str, text: str, names, out) -> list:
         had_body = body.exists()
         if had_body:
             body.unlink()
+            written.append(body)
+        if ok and ctx.repo / decl.DECLARATION_REL not in written:
+            written.insert(0, ctx.repo / decl.DECLARATION_REL)
         # ONLY WHAT THIS CALL REMOVED IS ANNOUNCED. The names come from the
         # arc's deadline lines, which outlive the lane they generated; an arc
         # that re-enters a stage and leaves it again asked for a lane the
@@ -5470,7 +5512,8 @@ def _retire_arc_lanes(ctx: Ctx, slug: str, text: str, names, out) -> list:
             + " — a deadline's lane belongs to the stage that set it, and one "
               "that outlived its stage keeps firing about a date nothing is "
               "waiting for.")
-    return removed
+    return [p for p in written
+            if carrier_dirty(ctx.repo, p)[0] is not False]
 
 
 def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
@@ -5530,23 +5573,20 @@ def cmd_arc_deadline(args, out, ctx: Ctx) -> int:
             "off the board.")
         return exits.FINDING
 
-    # GRADED BEFORE THE LANE BODY IS WRITTEN (lc-318) — the arc body and the
-    # lane body, and NOT the third path this verb commits.
+    # GRADED BEFORE THE LANE BODY IS WRITTEN (lc-318) — all three paths this
+    # verb commits. The declaration is registered into and committed WHOLE,
+    # so a pending edit of it would ride out under `arcs: deadline`.
     #
-    # THE DECLARATION IS LEFT OUT, AND THAT IS A NAMED REMAINDER RATHER THAN
-    # A JUDGMENT THAT IT IS SAFE. This verb registers the lane there and
-    # commits the file whole, so the pathspec hazard is the same one. But
-    # `arc advance` and `arc close` retire a stage's deadline lanes by
-    # rewriting the declaration and deleting the lane body, and commit
-    # neither (measured 2026-10-07: after an advance that retired one lane,
-    # `git status` shows the declaration modified and the lane body
-    # deleted). So the declaration is ROUTINELY dirty when this verb is next
-    # run, by this tool's own hand, and grading it here refused the ordinary
-    # advance-then-deadline sequence — a guard firing on legitimate work
-    # (law 11). The repair is upstream: those two verbs commit what they
-    # write, and then this list gains its third path.
+    # IT WAS LEFT OUT UNTIL lc-320, and the reason is worth keeping: `arc
+    # advance` and `arc close` retired a stage's lanes by rewriting the
+    # declaration and deleting the lane body and committed neither, so the
+    # declaration was ROUTINELY dirty by this tool's own hand and grading it
+    # here refused the ordinary advance-then-deadline sequence (law 11).
+    # Those two verbs now commit what they write, which is what lets this
+    # list hold its third path.
     dirty_code = refuse_dirty_carriers(
-        ctx, [live, body], out, skip=getattr(args, "no_commit", False))
+        ctx, [live, body, ctx.repo / decl.DECLARATION_REL], out,
+        skip=getattr(args, "no_commit", False))
     if dirty_code != exits.CLEAN:
         return dirty_code
 
