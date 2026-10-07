@@ -683,6 +683,8 @@ blocked-by: NONE
 bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
 amend-reason: 2026-10-07 2026-10-07 dispatched in wave C and returned as a gap: the recorded repair is a schema line
 amended-evidence: 2026-10-07 RELAYED from wave C lane C3 2026-10-07 at 8a3e415: reproduced on a scratch amend (the raw block keeps the superseded requirement line first and the true value below it), and items.py near lines 1202-1220 already records the repair as a tool-written head line, a new line in the block that law 25 binds to a schema wave, with re-ordering rejected there. DERIVED: not buildable as a defect repair under the 2026-09-24 freeze; needs the operator release and a migration over every declared repo, or a re-scope to a rendering.
+amend-reason: 2026-10-07 reproduced; the design choice is stated with its population
+amended-evidence: 2026-10-07 RELAYED from wave E lane E2 2026-10-07: reproduced; 375 of 746 live blocks over ten repos carry a superseded slot line (blocked-by in 285, requirement in 29). Open: shape A (a tool-written head line naming amended slots; does not meet the literal reach-the-amended-value-first clause) or B (the slot line holds the value in force, history appended; changes last-wins for 375 blocks); whether existing blocks are a finding (migration over ten repos) or a count; and amend would need the commit gate writer exemption. Lane reading: A plus a count plus item_shape.
 
 ## lc-173
 grade: STANDBY
