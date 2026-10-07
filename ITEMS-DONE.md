@@ -2894,5 +2894,19 @@ closed-met: none
 closed-decided: none
 closed-ref: ac8deb9b92b20c67d711bb39c0fcc833a9fdc0a6
 
+## lc-185
+grade: DONE
+requirement: THE WAVE JOIN COMPARES PATH STRINGS NOBODY RESOLVED, SO A TYPO'D WRITE-SET COLLIDES WITH NOTHING AND READS AS A TIDY STANDALONE LANE. items.py _WAVE_PATH_ENTRY accepts any path-shaped token; classify_write_set grades it path-valued; wave_lanes joins on the strings. Nothing asks whether the path names a file that exists. Two items writing the same file, one of them misspelled, come back as TWO DISJOINT LANES — which is an instruction to dispatch them in parallel onto one file. AND THE REPO ALREADY KNOWS: its own CLAUDE.md backlog doctrine carries the measured incident (2026-09-14, four existing files booked under a wrong prefix graded 'shares no file with any schedulable item') and states that the slot's paths RESOLVE at booking because the join consumes them unchecked. The lesson is written down and the mechanism was never built — the join's worst misread presents as its cleanest answer.
+goal: enforce-the-invariants
+write-set: plugin/cli/lifecycle_core/items.py,plugin/cli/lifecycle_core/refusals.py,test/test_items.py
+done-criterion: a write-set path RESOLVES at booking — it names a file that exists, or one the entry itself creates — and an unresolvable path DEMOTES the entry rather than being joined. OUTCOME FIRST: no two items can be reported as disjoint lanes because one of them misspelled the file they share. RED-FIRST, inputs in hand: two items on plugin/cli/lifecycle_core/refusals.py, one spelled plguin/, must NOT return two lanes; the control is that both spelled correctly still return one serialized lane, so the join keeps working. MUST-NOT-MOVE (1): a path the entry CREATES stays legal — the check is resolvability-or-declared-new, never mere existence, or every greenfield booking breaks. MUST-NOT-MOVE (2): the trailing-slash directory form the join already reads stays exactly as it is. MUST-NOT-MOVE (3): the CLEAN line stops claiming coverage it does not have — 'every schedulable item carries a path-valued write-set' is true of the ITEMS and false of the FILES, and the wording follows the predicate.
+evidence: RELAYED (opus review lane, read-only at pinned sha 09ea70a, carried as theirs and RUN by them against the pinned package): two items both writing refusals.py, one spelled plguin/, were both graded path-valued and wave_lanes returned [['lc-a'],['lc-b']] — two disjoint lanes; their control with both spellings correct returned [['lc-a','lc-b']], one serialized lane, so the join is live and only the resolution step is absent. MEASURED (this desk, read at the pinned sha): the CLEAN text at items.py:2907 claims the mapping covers the whole population. MEASURED (this desk): the repo's own CLAUDE.md carries the 2026-09-14 incident and the resolve-at-booking rule verbatim. DERIVED: this is the corpus's own phantom-path case — a phantom collides with nothing by construction, so the join's worst misread is also its most reassuring output, and the cost lands as two writers in one file at integration rather than as a visible red.
+blocked-by: NONE
+bench-reason: 2026-09-25 first bench pass (lc-294, ready_outgrows_head fired 82 unscheduled vs 29 READY exits over 7 days): decision-complete, no open arc schedules it this window - head is lc-161 and lc-256 only; returns by item promote when head_draining fires or an arc cites it
+closed-reason: 2026-10-07 The wave join resolves a path before joining on it; an unresolved path is never joined. Booking-time demotion is booked as lc-325. Wave C 2026-10-07, verified on main at 5e77b52: suite 1531 OK no skips, --test 153 of 153, prove-rows 134 of 134 held with no control red, leak battery 62 of 62; item check unchanged in exit code across all ten rostered repos.
+closed-met: lc-325
+closed-decided: none
+closed-ref: 58fe33654cd5e3cd1bde0fa5222d4cf5341ab7b5
+
 ## Archive (pre-migration)
 
