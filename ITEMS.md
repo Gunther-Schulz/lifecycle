@@ -1430,6 +1430,8 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/items.py
 done-criterion: item add resolves each write-set path at booking by the predicate the wave join now uses and does not grade READY an entry whose path resolves to nothing it does not itself create; how an entry says it creates a file is decided and stated. Red-first: the misspelled-directory pair booked today as READY.
 evidence: RELAYED from lane C4 (opus) 2026-10-07 at 2313550: booking-time demotion sits in item add (verbs.py near line 886), outside that lane; both new CLEAN lines of the join state the basename grain as their limit.
 blocked-by: NONE
+amend-reason: 2026-10-07 2026-10-07 built in wave D and shelved: the desk ruling it implemented refuses honest bookings
+amended-evidence: 2026-10-07 MEASURED by wave D lane D1 2026-10-07 at edb4d2e and relayed, not re-run at the desk: the parent-directory rule the desk ruled, built and red-first proven (6 of 10 arms red, 10 of 10 green after), turned 66 existing tests red in 13 modules, each opened one a booking naming a path under a directory its scratch repo does not track; 29 stayed red after one fixture correction. DERIVED at the desk: an entry creating a file in a directory it also creates is an ordinary booking, so the ruling was wrong and is withdrawn; the patch and the direction for the pickup are in docs/directives/2026-10-07-lc325-built-not-landed.md.
 
 ## lc-326
 grade: STANDBY
