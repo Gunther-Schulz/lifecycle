@@ -212,6 +212,8 @@ decision: whether to spend sessions running comparable work WITHOUT the desk/pee
 dropped: lc-117 — Overtaken: the prover has mutated a copy since lc-163; wave E lane E5 polled a scratch clone through a single-ident run, 0 dirty states of 183 with a positive control showing 1.
 decision: standort quick 2026-10-08 (building machine, session lifecycle-b7): where does lifecycle stand after the drain and the freeze lift, and does the approach still hold → TWEAK, unchanged from LEDGER:203: kill condition 1 still has no measurement (lc-161 READY, no grading run). Five of ten governed repos remain on schema 2 and red on kind check (lc-239, lc-315). Phases 1, 3, 7 only; nothing new booked
 decision: join disposition of LEDGER:213 beside LEDGER:203 → new: a dated position check; LEDGER:203 answered the same question for 2026-10-06, before the drain and the general freeze lift of LEDGER:208
+decision: does the 2026-10-08 drain wave run before the premise is tested → NO - operator doubt first-hand 2026-10-08 (is the goal reachable at all; repos differ in standing docs). Desk decision: repairs held; first a fresh-repo kill trial in three arms (bare, lifecycle init, plus corpus) and a source-attributed classification of operator messages
+decision: join disposition of LEDGER:215 beside LEDGER:83, LEDGER:84, LEDGER:92, LEDGER:213 → new: no earlier line orders repairs against a premise test; LEDGER:207 and :213 record drains and a position check
 
 ## Archive (pre-migration)
 
