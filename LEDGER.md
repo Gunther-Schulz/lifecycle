@@ -218,6 +218,8 @@ decision: is the heavy layer of lifecycle frozen after the 2026-10-08 premise di
 decision: join disposition of LEDGER:217 beside LEDGER:215 → new: the 2026-10-08 premise discussion is new; no earlier line freezes the heavy layer by kind (LEDGER:138 froze new mechanisms, lifted by LEDGER:208)
 decision: what re-opens the 2026-10-08 freeze, and which arc is outside it → New model generation or felt breakage; computable proxies: kind-check red count rising, a hook false-fire logged, conservation breaking. Not frozen: drift-trigger closes by graduation into the asker repo. Record: investigation record lifecycle--premise-doubt-2026-10-08.md
 decision: what happens to the five schema-2 repos under the 2026-10-08 freeze → schema-2 repos: migrate per lc-239 brief (own sessions; skill-craft LEDGER head repair first), then frozen. Nothing migrates from the lifecycle desk. Record: investigation record lifecycle--premise-doubt-2026-10-08.md
+decision: what did the 2026-10-08 premise discussion find the gap to be, and on what evidence → IGNITION, not judgment. Strong basis: the-loop O6, adherence split 5 of 6, close-slot trial (decisions 2/2 vs 0/2), 2026-09-29 specimen. Weak: message classification single-rater same-author n=3; research sweep same-author, 3 IDs unreplicated. Record: lifecycle--premise-doubt-2026-10-08.md
+decision: join disposition of LEDGER:221 beside LEDGER:215, LEDGER:217 → new: the 2026-10-08 premise discussion is new; no earlier line freezes the heavy layer by kind (LEDGER:138 froze new mechanisms, lifted by LEDGER:208)
 
 ## Archive (pre-migration)
 
