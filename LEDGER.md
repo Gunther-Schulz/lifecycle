@@ -220,6 +220,7 @@ decision: what re-opens the 2026-10-08 freeze, and which arc is outside it → N
 decision: what happens to the five schema-2 repos under the 2026-10-08 freeze → schema-2 repos: migrate per lc-239 brief (own sessions; skill-craft LEDGER head repair first), then frozen. Nothing migrates from the lifecycle desk. Record: investigation record lifecycle--premise-doubt-2026-10-08.md
 decision: what did the 2026-10-08 premise discussion find the gap to be, and on what evidence → IGNITION, not judgment. Strong basis: the-loop O6, adherence split 5 of 6, close-slot trial (decisions 2/2 vs 0/2), 2026-09-29 specimen. Weak: message classification single-rater same-author n=3; research sweep same-author, 3 IDs unreplicated. Record: lifecycle--premise-doubt-2026-10-08.md
 decision: join disposition of LEDGER:221 beside LEDGER:215, LEDGER:217 → new: the 2026-10-08 premise discussion is new; no earlier line freezes the heavy layer by kind (LEDGER:138 froze new mechanisms, lifted by LEDGER:208)
+superseded: LEDGER:215 by LEDGER:217 — trial dropped: the 2026-10-08 premise discussion resolved against trials; replaced by the freeze and the asker build
 
 ## Archive (pre-migration)
 
