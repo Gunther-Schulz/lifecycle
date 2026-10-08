@@ -217,6 +217,7 @@ decision: join disposition of LEDGER:215 beside LEDGER:83, LEDGER:84, LEDGER:92,
 decision: is the heavy layer of lifecycle frozen after the 2026-10-08 premise discussion → YES, frozen in place (operator, 2026-10-08, premise discussion at lifecycle-99): roster, prover, schemas, migrations, trials, the answerable arc. Memory core stays live. Repair wave and drain dropped as superseded. Record: investigation record lifecycle--premise-doubt-2026-10-08.md
 decision: join disposition of LEDGER:217 beside LEDGER:215 → new: the 2026-10-08 premise discussion is new; no earlier line freezes the heavy layer by kind (LEDGER:138 froze new mechanisms, lifted by LEDGER:208)
 decision: what re-opens the 2026-10-08 freeze, and which arc is outside it → New model generation or felt breakage; computable proxies: kind-check red count rising, a hook false-fire logged, conservation breaking. Not frozen: drift-trigger closes by graduation into the asker repo. Record: investigation record lifecycle--premise-doubt-2026-10-08.md
+decision: what happens to the five schema-2 repos under the 2026-10-08 freeze → schema-2 repos: migrate per lc-239 brief (own sessions; skill-craft LEDGER head repair first), then frozen. Nothing migrates from the lifecycle desk. Record: investigation record lifecycle--premise-doubt-2026-10-08.md
 
 ## Archive (pre-migration)
 
