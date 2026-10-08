@@ -69,6 +69,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-24
 grade: PARKED
@@ -143,6 +145,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-60
 grade: PARKED
@@ -163,6 +167,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-66
 grade: PARKED
@@ -213,6 +219,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-74
 grade: STANDBY
@@ -243,6 +251,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-76
 grade: STANDBY
@@ -331,6 +341,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-96
 grade: PARKED
@@ -351,6 +363,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-97
 grade: PARKED
@@ -373,6 +387,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-98
 grade: PARKED
@@ -391,6 +407,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-104
 grade: STANDBY
@@ -480,6 +498,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-155
 grade: PARKED
@@ -498,6 +518,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-158
 grade: PARKED
@@ -525,6 +547,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-159
 grade: STANDBY
@@ -620,6 +644,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-181
 grade: PARKED
@@ -642,6 +668,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-189
 grade: STANDBY
@@ -710,6 +738,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-226
 grade: PARKED
@@ -733,6 +763,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-227
 grade: PARKED
@@ -749,6 +781,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-228
 grade: PARKED
@@ -770,6 +804,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-229
 grade: PARKED
@@ -811,6 +847,8 @@ amended-not-derivable: 2026-10-07 2026-10-07 the freeze-exit question is answere
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
 amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:218) and only they lift it
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-236
 grade: STANDBY
@@ -851,6 +889,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-238
 grade: PARKED
@@ -869,6 +909,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-239
 grade: STANDBY
@@ -924,6 +966,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-249
 grade: PARKED
@@ -1031,6 +1075,8 @@ not-derivable: 2026-09-24 searched ITEMS.md and LEDGER.md for kill test and pilo
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
 amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:218) and only they lift it
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-284
 grade: PARKED
@@ -1048,6 +1094,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-285
 grade: NEW
@@ -1089,6 +1137,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-297
 grade: PARKED
@@ -1105,6 +1155,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-298
 grade: PARKED
@@ -1121,6 +1173,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-300
 grade: PARKED
@@ -1137,6 +1191,8 @@ amend-reason: 2026-10-07 freeze lifted in general by the operator 2026-10-07 (LE
 amended-blocked-by: 2026-10-07 NONE
 amend-reason: 2026-10-08 frozen 2026-10-08 (LEDGER:217)
 amended-blocked-by: 2026-10-08 decision is the 2026-10-08 freeze of the heavy layer re-opened (new model generation, kind-check red count rising, a hook false-fire logged, or conservation breaking)?
+amend-reason: 2026-10-08 pointer corrected: the re-open events are LEDGER:219; :218 is a join line
+amended-not-derivable: 2026-10-08 constitutively the operator: the freeze is their decision of 2026-10-08 (LEDGER:217, re-open events LEDGER:219) and only they lift it
 
 ## lc-301
 grade: NEW
