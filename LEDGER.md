@@ -216,6 +216,7 @@ decision: does the 2026-10-08 drain wave run before the premise is tested → NO
 decision: join disposition of LEDGER:215 beside LEDGER:83, LEDGER:84, LEDGER:92, LEDGER:213 → new: no earlier line orders repairs against a premise test; LEDGER:207 and :213 record drains and a position check
 decision: is the heavy layer of lifecycle frozen after the 2026-10-08 premise discussion → YES, frozen in place (operator, 2026-10-08, premise discussion at lifecycle-99): roster, prover, schemas, migrations, trials, the answerable arc. Memory core stays live. Repair wave and drain dropped as superseded. Record: investigation record lifecycle--premise-doubt-2026-10-08.md
 decision: join disposition of LEDGER:217 beside LEDGER:215 → new: the 2026-10-08 premise discussion is new; no earlier line freezes the heavy layer by kind (LEDGER:138 froze new mechanisms, lifted by LEDGER:208)
+decision: what re-opens the 2026-10-08 freeze, and which arc is outside it → New model generation or felt breakage; computable proxies: kind-check red count rising, a hook false-fire logged, conservation breaking. Not frozen: drift-trigger closes by graduation into the asker repo. Record: investigation record lifecycle--premise-doubt-2026-10-08.md
 
 ## Archive (pre-migration)
 
