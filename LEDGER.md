@@ -214,6 +214,8 @@ decision: standort quick 2026-10-08 (building machine, session lifecycle-b7): wh
 decision: join disposition of LEDGER:213 beside LEDGER:203 → new: a dated position check; LEDGER:203 answered the same question for 2026-10-06, before the drain and the general freeze lift of LEDGER:208
 decision: does the 2026-10-08 drain wave run before the premise is tested → NO - operator doubt first-hand 2026-10-08 (is the goal reachable at all; repos differ in standing docs). Desk decision: repairs held; first a fresh-repo kill trial in three arms (bare, lifecycle init, plus corpus) and a source-attributed classification of operator messages
 decision: join disposition of LEDGER:215 beside LEDGER:83, LEDGER:84, LEDGER:92, LEDGER:213 → new: no earlier line orders repairs against a premise test; LEDGER:207 and :213 record drains and a position check
+decision: is the heavy layer of lifecycle frozen after the 2026-10-08 premise discussion → YES, frozen in place (operator, 2026-10-08, premise discussion at lifecycle-99): roster, prover, schemas, migrations, trials, the answerable arc. Memory core stays live. Repair wave and drain dropped as superseded. Record: investigation record lifecycle--premise-doubt-2026-10-08.md
+decision: join disposition of LEDGER:217 beside LEDGER:215 → new: the 2026-10-08 premise discussion is new; no earlier line freezes the heavy layer by kind (LEDGER:138 froze new mechanisms, lifted by LEDGER:208)
 
 ## Archive (pre-migration)
 
