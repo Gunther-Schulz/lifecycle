@@ -210,6 +210,8 @@ decision: does law 2 reach the could-not-verify answer (lc-216) → YES, scoped 
 decision: how the kill test is run: which moment, which work, and who grades the loss → RETROSPECTIVE FIRST: sessions the environment ended mid-work (usage limit, crash, no close) and their successors, from the transcripts; the environment picks the moment. A sonnet lane grades loss from both transcripts. A staged kill only if under five specimens exist. Desk ruling 2026-10-07.
 decision: whether to spend sessions running comparable work WITHOUT the desk/peer split to create a control arm → DECLINED - operator, first-hand at the drain desk 2026-10-07, per the desk recommendation: the arm costs operator attention, which is what the split exists to save, and the catch study already shows the split pays through independent artifact reads (about 21 of 25 cross catches).
 dropped: lc-117 — Overtaken: the prover has mutated a copy since lc-163; wave E lane E5 polled a scratch clone through a single-ident run, 0 dirty states of 183 with a positive control showing 1.
+decision: standort quick 2026-10-08 (building machine, session lifecycle-b7): where does lifecycle stand after the drain and the freeze lift, and does the approach still hold → TWEAK, unchanged from LEDGER:203: kill condition 1 still has no measurement (lc-161 READY, no grading run). Five of ten governed repos remain on schema 2 and red on kind check (lc-239, lc-315). Phases 1, 3, 7 only; nothing new booked
+decision: join disposition of LEDGER:213 beside LEDGER:203 → new: a dated position check; LEDGER:203 answered the same question for 2026-10-06, before the drain and the general freeze lift of LEDGER:208
 
 ## Archive (pre-migration)
 
