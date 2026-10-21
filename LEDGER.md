@@ -222,6 +222,8 @@ decision: what did the 2026-10-08 premise discussion find the gap to be, and on 
 decision: join disposition of LEDGER:221 beside LEDGER:215, LEDGER:217 → new: the 2026-10-08 premise discussion is new; no earlier line freezes the heavy layer by kind (LEDGER:138 froze new mechanisms, lifted by LEDGER:208)
 superseded: LEDGER:215 by LEDGER:217 — trial dropped: the 2026-10-08 premise discussion resolved against trials; replaced by the freeze and the asker build
 decision: is the 2026-10-12 rule-adherence brief (diagnose under-firing afresh, begehung over the adherence axis) run at this desk → NO (operator, 2026-10-12, first-hand at lifecycle-b6). The ignition verdict (LEDGER:221) stands, the freeze (LEDGER:217) is not lifted. The brief's contrast case is parked as item D8 in the interruptor repo, which holds the rest
+decision: why does the operator still have to be the trigger for a what-did-I-miss review, and where does the fix live → No computable event selects that moment (closure before 5 of 32 such questions vs 136 of 1162 other messages); lifecycle reviews never self-start; item close asks what was met, not what is open. Fix: interruptor C1 on a commit cadence. Record: interruptor docs/specimens/2026-10-21-c1-moment
+decision: join disposition of LEDGER:225 beside LEDGER:151 → new: LEDGER:151 shares only the words still/live. The related line is LEDGER:221 (gap is ignition); it never tested whether an event exists at the completeness moment, nor placed a completeness trigger
 
 ## Archive (pre-migration)
 
