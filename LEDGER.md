@@ -224,6 +224,7 @@ superseded: LEDGER:215 by LEDGER:217 — trial dropped: the 2026-10-08 premise d
 decision: is the 2026-10-12 rule-adherence brief (diagnose under-firing afresh, begehung over the adherence axis) run at this desk → NO (operator, 2026-10-12, first-hand at lifecycle-b6). The ignition verdict (LEDGER:221) stands, the freeze (LEDGER:217) is not lifted. The brief's contrast case is parked as item D8 in the interruptor repo, which holds the rest
 decision: why does the operator still have to be the trigger for a what-did-I-miss review, and where does the fix live → No computable event selects that moment (closure before 5 of 32 such questions vs 136 of 1162 other messages); lifecycle reviews never self-start; item close asks what was met, not what is open. Fix: interruptor C1 on a commit cadence. Record: interruptor docs/specimens/2026-10-21-c1-moment
 decision: join disposition of LEDGER:225 beside LEDGER:151 → new: LEDGER:151 shares only the words still/live. The related line is LEDGER:221 (gap is ignition); it never tested whether an event exists at the completeness moment, nor placed a completeness trigger
+decision: Are lc-239 and lc-315 terminal after the close-the-system arc W3? → YES, closed DONE at f81af6953ac3776bfdf4f4c81322bd0f70bd0567 by lane sonnet-lc-close (dev-a2 desk): every governed declaration at schema 6, 0 kind_stage_undeclared, 0 dangling_reference; skill-craft un-governed. Desk-verified at the artifact.
 
 ## Archive (pre-migration)
 
