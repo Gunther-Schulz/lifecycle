@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 330
+added: 331
 compacted: 0
 
 ## lc-3
@@ -1326,3 +1326,13 @@ write-set: plugin/cli/lifecycle_core/verbs.py,plugin/cli/lifecycle_core/retire.p
 done-criterion: DECIDED which side owns it and built there: either every git call the CLI makes carries a timeout and a kill of its own process group, answering COULD NOT VERIFY with the reason when git did not answer, or the CLI documents in --help that a caller bounding it must kill by group and the dotfiles hook does. Red-first with a git stub that never answers first on PATH: after the verb is cut off no stub process started by it remains.
 evidence: RELAYED from peer session dotfiles-2b 2026-10-07, lane-reported there and not re-measured at either desk: with a git stub (exec sleep 100) first on PATH, the dotfiles session-start hook cut the lifecycle CLI off at its bound and two orphaned stub processes remained, started by the CLI; they were retired by PID.
 blocked-by: NONE
+
+## lc-339
+grade: STANDBY
+requirement: The global corpus no longer carries the full Backlog doctrine or the done-criterion pinning rule (corpus-shrink arc, map rows A5 + F6b: dotfiles claude/records/corpus-shrink-map-2026-11-02.md); lifecycle owns these rules and needs their text home.
+goal: one-home-per-kind
+write-set: docs/backlog-doctrine.md,CLAUDE.md
+done-criterion: docs/backlog-doctrine.md exists and carries every clause of the pre-shrink Backlog doctrine bullet (git show corpus-pre-shrink-2026-11-02:plugin/modules/accretion.md in ethos) plus the Fixing done-criterion clause (a booked criterion pins the substance its verifier derives, never a live status word), each clause either kept or dispositioned against the refusal that already enforces it; CLAUDE.md Role files names the file.
+evidence: RELAYED: map A5/F6b graded PASS at the assessment desk 2026-11-02. MEASURED: LEDGER:217 records the 2026-10-08 heavy-layer freeze (roster, prover, schemas, migrations, trials, answerable arc). DERIVED: this item writes docs only, so it sits outside that freeze; any enforcement change the text suggests is a separate item and parks under the freeze.
+blocked-by: NONE
+bench-reason: 2026-11-02 Booked by the corpus-shrink arc (dotfiles peer desk dev-a2), not by a lifecycle desk; no open lifecycle arc cites it, so it waits on the bench until a lifecycle desk schedules it.
