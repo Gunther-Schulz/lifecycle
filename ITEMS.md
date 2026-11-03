@@ -1,6 +1,6 @@
 schema: 6
 baseline: 8
-added: 331
+added: 332
 compacted: 0
 
 ## lc-3
@@ -1296,3 +1296,13 @@ done-criterion: docs/backlog-doctrine.md exists and carries every clause of the 
 evidence: RELAYED: map A5/F6b graded PASS at the assessment desk 2026-11-02. MEASURED: LEDGER:217 records the 2026-10-08 heavy-layer freeze (roster, prover, schemas, migrations, trials, answerable arc). DERIVED: this item writes docs only, so it sits outside that freeze; any enforcement change the text suggests is a separate item and parks under the freeze.
 blocked-by: NONE
 bench-reason: 2026-11-02 Booked by the corpus-shrink arc (dotfiles peer desk dev-a2), not by a lifecycle desk; no open lifecycle arc cites it, so it waits on the bench until a lifecycle desk schedules it.
+
+## lc-340
+grade: NEW
+requirement: Recurring agent failure, the composition class: the agent grades each piece of a problem correctly and never grades the whole the operator named, so he corrects piece after piece and working with AI costs him stress (operator report 2026-11-03, first-hand: "this keeps happening… needs fixing for me to have less stress working with AI"; source record in a private repo, not cited here).
+goal: enforce-the-invariants
+write-set: UNKNOWN
+done-criterion: The fix's home and form are decided and built; replayed on the three instances (prompt reconstructed without private content), the agent's first reply answers the operator's named problem in its lead, and a reply that grades only pieces is caught by the remedy (red first).
+evidence: RELAYED (the operator's first-hand report and corrections in a private repo's session, 2026-11-03, carried as his): three instances: (1) 2026-10-18, a plan vetted move by move while the stack of three proposals in ~12h was never graded; (2) 2026-11-02/03 overnight, seven concessions in about an hour, each sound alone, the stack never graded (found by a fresh-context close audit); (3) 2026-11-03, his first message named one contradiction ("a conflict I don't understand… doesn't compute"); the replies graded four separate factors one by one until he restated the whole himself. DERIVED: the shared tell is a run of corrections, each about a different piece. MEASURED: interim remedy written as a project-level misfire entry in that private repo (visible form: the reply's lead answers the operator's named problem, quoted from his message; re-checked at every correction). MEASURED: no precedent: grep -i -E 'composition|aggregate never|whole.*(graded|question)|pieces' over LEDGER.md, JOURNAL.md and dotfiles claude/modules/*.md found no remedy; the search is live, it matched 'decomposition' at LEDGER.md:325.
+blocked-by: decision where the fix lives (global corpus rule vs lifecycle mechanism) and its form
+not-derivable: 2026-11-03 Where the fix lives is the operator's call: he asked for it in this repo, while agent-behaviour rules normally live in the global corpus (dotfiles claude/modules, under its maintenance doctrine), and lifecycle's mechanisms police carriers, not reply composition. No ledger entry or precedent decides it (search in the evidence slot).
