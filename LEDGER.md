@@ -225,6 +225,8 @@ decision: is the 2026-10-12 rule-adherence brief (diagnose under-firing afresh, 
 decision: why does the operator still have to be the trigger for a what-did-I-miss review, and where does the fix live → No computable event selects that moment (closure before 5 of 32 such questions vs 136 of 1162 other messages); lifecycle reviews never self-start; item close asks what was met, not what is open. Fix: interruptor C1 on a commit cadence. Record: interruptor docs/specimens/2026-10-21-c1-moment
 decision: join disposition of LEDGER:225 beside LEDGER:151 → new: LEDGER:151 shares only the words still/live. The related line is LEDGER:221 (gap is ignition); it never tested whether an event exists at the completeness moment, nor placed a completeness trigger
 decision: Are lc-239 and lc-315 terminal after the close-the-system arc W3? → YES, closed DONE at f81af6953ac3776bfdf4f4c81322bd0f70bd0567 by lane sonnet-lc-close (dev-a2 desk): every governed declaration at schema 6, 0 kind_stage_undeclared, 0 dangling_reference; skill-craft un-governed. Desk-verified at the artifact.
+decision: where the fix lives (global corpus rule vs lifecycle mechanism) and its form → moot (closed by lc-340)
+dropped: lc-340 — moved to dotfiles df-314: operator decision 2026-11-03, the fix lives in the global corpus
 
 ## Archive (pre-migration)
 
